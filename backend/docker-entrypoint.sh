@@ -33,9 +33,9 @@ file_env() {
 file_env 'DATABASE_URL'
 file_env 'JWT_SECRET'
 
-# Executa as migrações
-echo "Executando migrações do Prisma..."
-npx prisma migrate deploy
+# Sincroniza o Schema de forma inteligente (Cria tabelas e colunas faltantes)
+echo "Sincronizando Banco de Dados com o Schema..."
+npx prisma db push --accept-data-loss
 
 # Executa o Seed de Permissões e SuperAdmin original
 echo "Executando Seed de Permissões e SuperAdmin..."
