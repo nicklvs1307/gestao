@@ -21,6 +21,11 @@ async function main() {
     { name: 'delivery:manage', description: 'Gerenciar entregas e motoboys' },
     { name: 'waiter:pos', description: 'Acesso ao terminal do garçom' },
     { name: 'settings:manage', description: 'Gerenciar configurações da loja' },
+    // Permissões de Franquia
+    { name: 'restaurants:manage', description: 'Gerenciar restaurantes da franquia' },
+    { name: 'users:manage', description: 'Gerenciar usuários da franquia' },
+    { name: 'reports:view_all', description: 'Ver relatórios globais' },
+    { name: 'products:global_manage', description: 'Gerenciar cardápio global' },
   ];
 
   console.log('Criando permissões...');
