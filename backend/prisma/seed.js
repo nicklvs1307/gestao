@@ -93,6 +93,7 @@ async function main() {
     data: {
       id: 'clgq0v1y00000t3d8b4e6f2g1', // ID fixo
       name: 'Hamburgueria Sabor Artesanal',
+      slug: 'hamburgueria-sabor-artesanal',
       address: faker.location.streetAddress(),
       phone: faker.phone.number(),
       logoUrl: faker.image.urlLoremFlickr({ category: 'food' }),
