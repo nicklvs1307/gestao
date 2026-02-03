@@ -6,9 +6,23 @@ import { useModal } from '../hooks/useModal';
 import TableMenu from './TableMenu';
 import { useTableSession } from '../hooks/useTableSession';
 
-const TableMenuWrapper: React.FC = () => {
-  const { restaurantId, tableNumber } = useParams<{ restaurantId: string; tableNumber: string }>();
+interface TableMenuWrapperProps {
+  restaurantId?: string;
+  tableNumber?: string;
+}
+
+const TableMenuWrapper: React.FC<TableMenuWrapperProps> = ({ 
+  restaurantId: propRestaurantId, 
+  tableNumber: propTableNumber 
+}) => {
+  const params = useParams<{ restaurantId: string; tableNumber: string }>();
+  
+  // Prioriza props (vindo do TenantHandler) ou cai no fallback dos params da URL
+  const restaurantId = propRestaurantId || params.restaurantId;
+  const tableNumber = propTableNumber || params.tableNumber;
+
   const { isOpen: isThankYouModalOpen, open: openThankYouModal, close: closeThankYouModal } = useModal();
+
 
   const {
     restaurantSettings,

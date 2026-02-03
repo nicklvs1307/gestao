@@ -11,6 +11,7 @@ router.put('/status', needsAuth, SettingsController.toggleStatus);
 router.post('/logo', needsAuth, upload.single('logo'), SettingsController.updateLogo);
 
 // Client
+router.get('/slug/:slug', SettingsController.getRestaurantBySlug);
 router.get('/:restaurantId', SettingsController.getClientSettings);
 
 module.exports = router;

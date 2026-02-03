@@ -138,10 +138,30 @@ const toggleStatus = async (req, res) => {
     }
 };
 
+const getRestaurantBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { slug },
+            select: { id: true, name: true, slug: true }
+        });
+        
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurante não encontrado.' });
+        }
+        
+        res.json(restaurant);
+    } catch (error) {
+        console.error('Erro ao buscar restaurante por slug:', error);
+        res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+};
+
 module.exports = {
     getSettings,
     updateSettings,
     getClientSettings,
     updateLogo,
-    toggleStatus
+    toggleStatus,
+    getRestaurantBySlug
 };

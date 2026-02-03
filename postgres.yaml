@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gestao_network
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_db_password
+      - PG_MAX_CONNECTIONS=500
+    secrets:
+      - postgres_db_password
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+
+secrets:
+  postgres_db_password:
+    external: true
+
+volumes:
+  postgres_data:
+    external: true
+
+networks:
+  gestao_network:
+    external: true
