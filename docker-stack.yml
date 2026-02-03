@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # ====================================================
+  # REVERSE PROXY (TRAEFIK)
+  # ====================================================
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080" # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
+      - internal
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ====================================================
+  # DATABASE (POSTGRES)
+  # ====================================================
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: cardapio_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  # ====================================================
+  # BACKEND (NODE API)
+  # ====================================================
+  backend:
+    image: cardapio-backend:latest
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://admin:adminpassword@db:5432/cardapio_db?schema=public"
+      JWT_SECRET: "seusegredomuitoseguro123" # ALTERE ISSO EM PRODUÇÃO
+      PORT: 3001
+    volumes:
+      - uploads_data:/app/public/uploads
+    networks:
+      - internal
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  # ====================================================
+  # FRONTEND ADMIN
+  # ====================================================
+  frontend-admin:
+    image: cardapio-admin:latest
+    build:
+      context: .
+      dockerfile: frontend/admin/Dockerfile
+    networks:
+      - web
+      - internal
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.admin.rule=Host(`admin.localhost`)" # MUDAR SEU DOMINIO AQUI
+        - "traefik.http.services.admin.loadbalancer.server.port=80"
+
+  # ====================================================
+  # FRONTEND CLIENT (TABLET)
+  # ====================================================
+  frontend-client:
+    image: cardapio-client:latest
+    build:
+      context: .
+      dockerfile: frontend/client/Dockerfile
+    networks:
+      - web
+      - internal
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.client.rule=Host(`app.localhost`)" # MUDAR SEU DOMINIO AQUI
+        - "traefik.http.services.client.loadbalancer.server.port=80"
+
+volumes:
+  db_data:
+  uploads_data:
+
+networks:
+  web:
+    external: true
+  internal:
+    driver: overlay

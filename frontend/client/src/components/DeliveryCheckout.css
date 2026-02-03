@@ -1,0 +1,234 @@
+/* --- DELIVERY CHECKOUT (Deep Ocean Theme) --- */
+
+.delivery-checkout-container {
+  padding: 1.5rem;
+  background-color: var(--bg-app);
+  min-height: 100%;
+}
+
+.checkout-title {
+  font-size: 1.5rem;
+  color: var(--text-main);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.delivery-checkout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-section {
+  background-color: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: var(--border-subtle);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: var(--border-subtle);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.form-group input[type="text"],
+.form-group .IMaskInput {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  background-color: var(--bg-input);
+  transition: all 0.2s;
+  color: var(--text-main);
+}
+
+.form-group input:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
+  background-color: var(--bg-input);
+}
+
+/* Phone Input */
+.phone-input-group {
+  position: relative;
+}
+
+.phone-input-group .fa-whatsapp {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--success);
+  font-size: 1.2rem;
+  z-index: 2;
+}
+
+.phone-input-group .IMaskInput {
+  padding-left: 45px;
+}
+
+/* Address Header */
+.address-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn-my-location {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-my-location:hover {
+  background-color: var(--primary);
+  color: #0f172a;
+}
+
+.btn-my-location:disabled {
+  background-color: var(--bg-hover);
+  border-color: transparent;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.address-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.address-number { flex: 1; }
+.address-neighborhood { flex: 2; }
+
+/* Radio Options (Delivery/Payment) */
+.delivery-type-options,
+.payment-method-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.delivery-type-options label,
+.payment-method-options label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 0.5rem;
+  border: 2px solid transparent;
+  background-color: var(--bg-input);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.delivery-type-options label input[type="radio"],
+.payment-method-options label input[type="radio"] {
+  display: none;
+}
+
+.delivery-type-options label i,
+.payment-method-options label i {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+/* Selected State */
+.delivery-type-options label.active,
+.payment-method-options label.active {
+  border-color: var(--primary);
+  background-color: rgba(56, 189, 248, 0.1);
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.delivery-type-options label.active i,
+.payment-method-options label.active i {
+  color: var(--primary);
+}
+
+/* Actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+.form-actions .btn-cancel,
+.form-actions .btn-submit {
+  flex: 1;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.form-actions .btn-cancel {
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  border: var(--border-subtle);
+}
+
+.form-actions .btn-cancel:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.form-actions .btn-submit {
+  background-color: var(--success);
+  color: #0f172a;
+  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3);
+  text-transform: uppercase;
+}
+
+.form-actions .btn-submit:hover {
+  background-color: #34d399;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4);
+}

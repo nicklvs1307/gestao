@@ -1,0 +1,159 @@
+.pix-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(45, 52, 54, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+  
+  .pix-modal-content {
+    background-color: var(--surface-color);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 450px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .pix-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-color-light);
+    cursor: pointer;
+  }
+  
+  .pix-modal-title {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    font-weight: 700;
+  }
+  
+  .pix-modal-description {
+    color: var(--text-color);
+    margin-bottom: 20px;
+    font-size: 1rem;
+  }
+  
+  .pix-qr-code-container {
+    width: 220px;
+    height: 220px;
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: white;
+    padding: 10px;
+  }
+  
+  .pix-qr-code {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  
+  .pix-qr-code-placeholder {
+    color: var(--text-color-light);
+    font-size: 0.9rem;
+  }
+  
+  .pix-copy-paste-container {
+    width: 100%;
+    margin-bottom: 25px;
+  }
+  
+  .pix-copy-paste-label {
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+  
+  .pix-copy-paste-box {
+    display: flex;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .pix-copy-paste-input {
+    flex-grow: 1;
+    border: none;
+    padding: 12px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    background-color: var(--background-color);
+  }
+  
+  .pix-copy-paste-input:focus {
+    outline: none;
+  }
+  
+  .pix-copy-paste-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: background-color 0.2s;
+  }
+  
+  .pix-copy-paste-btn:hover {
+    background-color: var(--primary-dark);
+  }
+  
+  .pix-modal-actions {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pix-modal-actions .btn-cancel {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+  }
+  
+  .pix-modal-actions .btn-cancel:hover {
+    background-color: #e2e8f0;
+  }
+  
+  .pix-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 40px 0;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+  }
+  
+  .pix-loading i {
+    font-size: 3rem;
+  }
+  

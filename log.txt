@@ -1,0 +1,82 @@
+client:733 [vite] connecting...
+client:827 [vite] connected.
+chunk-NXESFFTV.js?v=e3ab1fa3:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+fiscal:1 [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) <input type=​"password" class=​"w-full border-2 border-gray-100 rounded-xl p-3 font-bold text-sm outline-none focus:​border-blue-500" placeholder=​"Digite a senha" value>​
+GlobalOrderMonitor.tsx:96 Enviando para impressora: Pedido #2
+GlobalOrderMonitor.tsx:96 Enviando para impressora: Pedido #2
+orders.ts:54  PATCH http://localhost:5173/api/admin/orders/cml6m44400007uanss5cuuabg/printed 404 (Not Found)
+dispatchXhrRequest @ axios.js?v=e3ab1fa3:1683
+xhr @ axios.js?v=e3ab1fa3:1560
+dispatchRequest @ axios.js?v=e3ab1fa3:2085
+Promise.then
+_request @ axios.js?v=e3ab1fa3:2288
+request @ axios.js?v=e3ab1fa3:2197
+httpMethod @ axios.js?v=e3ab1fa3:2334
+wrap @ axios.js?v=e3ab1fa3:8
+markOrderAsPrinted @ orders.ts:54
+fetchData @ GlobalOrderMonitor.tsx:112
+await in fetchData
+(anônimo) @ GlobalOrderMonitor.tsx:143
+commitHookEffectListMount @ chunk-NXESFFTV.js?v=e3ab1fa3:16963
+commitPassiveMountOnFiber @ chunk-NXESFFTV.js?v=e3ab1fa3:18206
+commitPassiveMountEffects_complete @ chunk-NXESFFTV.js?v=e3ab1fa3:18179
+commitPassiveMountEffects_begin @ chunk-NXESFFTV.js?v=e3ab1fa3:18169
+commitPassiveMountEffects @ chunk-NXESFFTV.js?v=e3ab1fa3:18159
+flushPassiveEffectsImpl @ chunk-NXESFFTV.js?v=e3ab1fa3:19543
+flushPassiveEffects @ chunk-NXESFFTV.js?v=e3ab1fa3:19500
+(anônimo) @ chunk-NXESFFTV.js?v=e3ab1fa3:19381
+workLoop @ chunk-NXESFFTV.js?v=e3ab1fa3:197
+flushWork @ chunk-NXESFFTV.js?v=e3ab1fa3:176
+performWorkUntilDeadline @ chunk-NXESFFTV.js?v=e3ab1fa3:384
+GlobalOrderMonitor.tsx:115 Falha na impressão: AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+fetchData @ GlobalOrderMonitor.tsx:115
+await in fetchData
+(anônimo) @ GlobalOrderMonitor.tsx:143
+commitHookEffectListMount @ chunk-NXESFFTV.js?v=e3ab1fa3:16963
+commitPassiveMountOnFiber @ chunk-NXESFFTV.js?v=e3ab1fa3:18206
+commitPassiveMountEffects_complete @ chunk-NXESFFTV.js?v=e3ab1fa3:18179
+commitPassiveMountEffects_begin @ chunk-NXESFFTV.js?v=e3ab1fa3:18169
+commitPassiveMountEffects @ chunk-NXESFFTV.js?v=e3ab1fa3:18159
+flushPassiveEffectsImpl @ chunk-NXESFFTV.js?v=e3ab1fa3:19543
+flushPassiveEffects @ chunk-NXESFFTV.js?v=e3ab1fa3:19500
+(anônimo) @ chunk-NXESFFTV.js?v=e3ab1fa3:19381
+workLoop @ chunk-NXESFFTV.js?v=e3ab1fa3:197
+flushWork @ chunk-NXESFFTV.js?v=e3ab1fa3:176
+performWorkUntilDeadline @ chunk-NXESFFTV.js?v=e3ab1fa3:384
+orders.ts:54  PATCH http://localhost:5173/api/admin/orders/cml6m44400007uanss5cuuabg/printed 404 (Not Found)
+dispatchXhrRequest @ axios.js?v=e3ab1fa3:1683
+xhr @ axios.js?v=e3ab1fa3:1560
+dispatchRequest @ axios.js?v=e3ab1fa3:2085
+Promise.then
+_request @ axios.js?v=e3ab1fa3:2288
+request @ axios.js?v=e3ab1fa3:2197
+httpMethod @ axios.js?v=e3ab1fa3:2334
+wrap @ axios.js?v=e3ab1fa3:8
+markOrderAsPrinted @ orders.ts:54
+fetchData @ GlobalOrderMonitor.tsx:112
+await in fetchData
+(anônimo) @ GlobalOrderMonitor.tsx:143
+commitHookEffectListMount @ chunk-NXESFFTV.js?v=e3ab1fa3:16963
+invokePassiveEffectMountInDEV @ chunk-NXESFFTV.js?v=e3ab1fa3:18374
+invokeEffectsInDev @ chunk-NXESFFTV.js?v=e3ab1fa3:19754
+commitDoubleInvokeEffectsInDEV @ chunk-NXESFFTV.js?v=e3ab1fa3:19739
+flushPassiveEffectsImpl @ chunk-NXESFFTV.js?v=e3ab1fa3:19556
+flushPassiveEffects @ chunk-NXESFFTV.js?v=e3ab1fa3:19500
+(anônimo) @ chunk-NXESFFTV.js?v=e3ab1fa3:19381
+workLoop @ chunk-NXESFFTV.js?v=e3ab1fa3:197
+flushWork @ chunk-NXESFFTV.js?v=e3ab1fa3:176
+performWorkUntilDeadline @ chunk-NXESFFTV.js?v=e3ab1fa3:384
+GlobalOrderMonitor.tsx:115 Falha na impressão: AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+fetchData @ GlobalOrderMonitor.tsx:115
+await in fetchData
+(anônimo) @ GlobalOrderMonitor.tsx:143
+commitHookEffectListMount @ chunk-NXESFFTV.js?v=e3ab1fa3:16963
+invokePassiveEffectMountInDEV @ chunk-NXESFFTV.js?v=e3ab1fa3:18374
+invokeEffectsInDev @ chunk-NXESFFTV.js?v=e3ab1fa3:19754
+commitDoubleInvokeEffectsInDEV @ chunk-NXESFFTV.js?v=e3ab1fa3:19739
+flushPassiveEffectsImpl @ chunk-NXESFFTV.js?v=e3ab1fa3:19556
+flushPassiveEffects @ chunk-NXESFFTV.js?v=e3ab1fa3:19500
+(anônimo) @ chunk-NXESFFTV.js?v=e3ab1fa3:19381
+workLoop @ chunk-NXESFFTV.js?v=e3ab1fa3:197
+flushWork @ chunk-NXESFFTV.js?v=e3ab1fa3:176
+performWorkUntilDeadline @ chunk-NXESFFTV.js?v=e3ab1fa3:384

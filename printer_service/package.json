@@ -1,0 +1,39 @@
+{
+  "name": "kicardapio-printer",
+  "version": "1.0.0",
+  "description": "Agente de Impressão KiCardápio",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --win --publish never",
+    "dist": "electron-builder"
+  },
+  "keywords": [],
+  "author": "KiCardápio",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "pdf-to-printer": "^1.6.0"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.kicardapio.printer",
+    "productName": "KiCardapio Printer",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KiCardápio Impressão"
+    }
+  }
+}

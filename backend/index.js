@@ -1,0 +1,92 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const path = require('path');
+
+if (!process.env.JWT_SECRET) {
+  throw new Error('ERRO FATAL: JWT_SECRET não está definido. Verifique seu arquivo .env.');
+}
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+// Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// Arquivos Estáticos (Imagens)
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// ==================================================================
+// ROTAS
+// ==================================================================
+
+const authRoutes = require('./src/routes/authRoutes');
+const productRoutes = require('./src/routes/productRoutes');
+const categoryRoutes = require('./src/routes/categoryRoutes');
+const orderRoutes = require('./src/routes/orderRoutes');
+const cashierRoutes = require('./src/routes/cashierRoutes');
+const financialRoutes = require('./src/routes/financialRoutes');
+const fiscalRoutes = require('./src/routes/fiscalRoutes');
+const stockRoutes = require('./src/routes/stockRoutes');
+const promotionRoutes = require('./src/routes/promotionRoutes');
+const settingsRoutes = require('./src/routes/settingsRoutes');
+const integrationRoutes = require('./src/routes/integrationRoutes');
+const tableRoutes = require('./src/routes/tableRoutes');
+const customerRoutes = require('./src/routes/customerRoutes');
+const reportRoutes = require('./src/routes/reportRoutes');
+const deliveryRoutes = require('./src/routes/deliveryRoutes');
+const driverRoutes = require('./src/routes/driverRoutes');
+const deliveryAreaRoutes = require('./src/routes/deliveryAreaRoutes');
+const paymentMethodRoutes = require('./src/routes/paymentMethodRoutes');
+const superAdminRoutes = require('./src/routes/superAdminRoutes');
+const franchiseRoutes = require('./src/routes/franchiseRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/franchise', franchiseRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/admin/orders', orderRoutes);
+app.use('/api/cashier', cashierRoutes);
+app.use('/api/financial', financialRoutes);
+app.use('/api/fiscal', fiscalRoutes);
+app.use('/api/stock', stockRoutes);
+app.use('/api/ingredients', require('./src/routes/ingredientRoutes'));
+app.use('/api/production', require('./src/routes/productionRoutes'));
+app.use('/api/promotions', promotionRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/integrations', integrationRoutes);
+app.use('/api/tables', tableRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/admin/reports', reportRoutes);
+app.use('/api/admin/waiters', require('./src/routes/waiterRoutes')); // Nova rota de Acerto Garçom
+app.use('/api/delivery', deliveryRoutes);
+app.use('/api/driver', driverRoutes);
+app.use('/api/delivery-areas', deliveryAreaRoutes);
+app.use('/api/payment-methods', paymentMethodRoutes);
+
+// KDS Alias
+const { needsAuth } = require('./src/middlewares/auth');
+const OrderController = require('./src/controllers/OrderController');
+app.get('/api/kds/items', needsAuth, OrderController.getKdsItems);
+
+// Client Specific (Matching old structure)
+const TableController = require('./src/controllers/TableController');
+app.use('/api/client/products', productRoutes);
+app.use('/api/client/categories', categoryRoutes);
+app.use('/api/client/promotions', promotionRoutes);
+app.use('/api/client/settings', settingsRoutes);
+app.get('/api/client/table-info', TableController.checkTableExists);
+app.get('/api/client/order/table', TableController.getClientTableOrder);
+app.post('/api/client/table-requests', TableController.createClientTableRequest);
+
+// Root
+app.get('/api', (req, res) => res.send('API Online!'));
+
+app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
