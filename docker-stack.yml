@@ -23,8 +23,7 @@ services:
     volumes:
       - uploads_data:/app/public/uploads
     networks:
-      - towersfy_network # Para o Traefik acessar
-      - gestao_network   # Para acessar o Postgres
+      - gestao_network   # Rede única para tudo (Traefik e Postgres)
     secrets:
       - db_connection_string
       - jwt_secret
@@ -55,7 +54,7 @@ services:
       context: .
       dockerfile: frontend/admin/Dockerfile
     networks:
-      - towersfy_network
+      - gestao_network
     deploy:
       replicas: 1
       labels:
@@ -76,7 +75,7 @@ services:
       context: .
       dockerfile: frontend/client/Dockerfile
     networks:
-      - towersfy_network
+      - gestao_network
     deploy:
       replicas: 1
       labels:
@@ -93,8 +92,6 @@ volumes:
   uploads_data:
 
 networks:
-  towersfy_network:
-    external: true
   gestao_network:
     external: true
 
@@ -103,4 +100,3 @@ secrets:
     external: true
   jwt_secret:
     external: true
-
