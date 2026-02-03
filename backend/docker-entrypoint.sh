@@ -37,6 +37,10 @@ file_env 'JWT_SECRET'
 echo "Executando migrações do Prisma..."
 npx prisma migrate deploy
 
+# Executa o Seed (Opcional: você pode comentar se não quiser que rode sempre)
+echo "Executando Seeders..."
+npm run seed || echo "Seeders falharam ou já existem dados."
+
 # Inicia a aplicação
 echo "Iniciando a aplicação..."
 exec node index.js
