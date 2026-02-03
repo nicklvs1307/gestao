@@ -101,8 +101,8 @@ async function main() {
   });
   console.log(`Restaurante "${restaurant.name}" criado.`);
 
-  // 3. CRIAÇÃO DE USUÁRIOS
-  console.log('Criando usuários...');
+  // 3. CRIAÇÃO DE USUÁRIO ADMIN
+  console.log('Criando usuário administrador...');
   const adminPasswordHash = await bcrypt.hash('admin123', 10);
   await prisma.user.create({
     data: {
@@ -114,18 +114,6 @@ async function main() {
     },
   });
   console.log('Usuário administrador criado (admin@hamburgueriateste.com / admin123).');
-
-  const superAdminPasswordHash = await bcrypt.hash('super123', 10);
-  await prisma.user.create({
-    data: {
-      email: 'superadmin@kicardapio.com',
-      name: 'Super Admin Sistema',
-      passwordHash: superAdminPasswordHash,
-      isSuperAdmin: true,
-      role: 'superadmin',
-    },
-  });
-  console.log('Usuário SuperAdmin criado (superadmin@kicardapio.com / super123).');
 
   // 4. CRIAÇÃO DE CONFIGURAÇÕES
   console.log('Criando configurações do restaurante...');
