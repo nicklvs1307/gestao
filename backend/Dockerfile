@@ -16,8 +16,12 @@ RUN npx prisma generate
 # Copia o resto do código
 COPY . .
 
+# Configura o script de entrada
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Expõe a porta
 EXPOSE 3001
 
-# Comando de inicialização (garante que as migrações rodem antes de iniciar)
-CMD ["sh", "-c", "npx prisma migrate deploy && node index.js"]
+# Define o Entrypoint para gerenciar secrets e migrações
+ENTRYPOINT ["docker-entrypoint.sh"]

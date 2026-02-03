@@ -2,68 +2,52 @@ version: '3.8'
 
 services:
   # ====================================================
-  # REVERSE PROXY (TRAEFIK)
-  # ====================================================
-  traefik:
-    image: traefik:v2.10
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.swarmMode=true"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-      - "8080:8080" # Dashboard
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - web
-      - internal
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-
-  # ====================================================
-  # DATABASE (POSTGRES)
-  # ====================================================
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpassword
-      POSTGRES_DB: cardapio_db
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - internal
-
-  # ====================================================
   # BACKEND (NODE API)
   # ====================================================
   backend:
     image: cardapio-backend:latest
+    # Em produção, comente o build se for usar imagem de registry
     build:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      DATABASE_URL: "postgresql://admin:adminpassword@db:5432/cardapio_db?schema=public"
-      JWT_SECRET: "seusegredomuitoseguro123" # ALTERE ISSO EM PRODUÇÃO
+      NODE_ENV: production
       PORT: 3001
+      # Conexão com o serviço 'postgres' da stack de banco (nome do serviço no swarm)
+      # Formato: postgresql://<user>:<pass>@<service_name>:5432/<db_name>
+      DATABASE_URL_FILE: /run/secrets/db_connection_string
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      # URLs para CORS e Redirecionamentos
+      FRONTEND_URL: https://kicardapio.towersfy.com # URL do Painel Admin/SaaS
+      ADMIN_URL: https://kicardapio.towersfy.com
     volumes:
       - uploads_data:/app/public/uploads
     networks:
-      - internal
+      - towersfy_network # Para o Traefik acessar
+      - gestao_network   # Para acessar o Postgres
+    secrets:
+      - db_connection_string
+      - jwt_secret
     deploy:
       replicas: 1
-      update_config:
-        parallelism: 1
-        delay: 10s
       restart_policy:
         condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        # Roteamento da API (Prioridade Alta para não conflitar com lojas)
+        - "traefik.http.routers.backend.rule=Host(`api.kicardapio.towersfy.com`)"
+        - "traefik.http.routers.backend.entrypoints=websecure"
+        - "traefik.http.routers.backend.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.backend.loadbalancer.server.port=3001"
+        - "traefik.http.routers.backend.priority=100"
+        # Roteamento de Uploads
+        - "traefik.http.routers.backend-uploads.rule=Host(`api.kicardapio.towersfy.com`) && PathPrefix(`/uploads`)"
+        - "traefik.http.routers.backend-uploads.entrypoints=websecure"
+        - "traefik.http.routers.backend-uploads.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.backend-uploads.priority=100"
 
   # ====================================================
-  # FRONTEND ADMIN
+  # FRONTEND ADMIN (PAINEL DO DONO)
   # ====================================================
   frontend-admin:
     image: cardapio-admin:latest
@@ -71,17 +55,20 @@ services:
       context: .
       dockerfile: frontend/admin/Dockerfile
     networks:
-      - web
-      - internal
+      - towersfy_network
     deploy:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.admin.rule=Host(`admin.localhost`)" # MUDAR SEU DOMINIO AQUI
+        # Acesso principal do sistema (Dashboard)
+        - "traefik.http.routers.admin.rule=Host(`kicardapio.towersfy.com`) || Host(`admin.kicardapio.towersfy.com`)"
+        - "traefik.http.routers.admin.entrypoints=websecure"
+        - "traefik.http.routers.admin.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.admin.loadbalancer.server.port=80"
+        - "traefik.http.routers.admin.priority=100"
 
   # ====================================================
-  # FRONTEND CLIENT (TABLET)
+  # FRONTEND CLIENT (LOJAS / TABLETS)
   # ====================================================
   frontend-client:
     image: cardapio-client:latest
@@ -89,21 +76,31 @@ services:
       context: .
       dockerfile: frontend/client/Dockerfile
     networks:
-      - web
-      - internal
+      - towersfy_network
     deploy:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.client.rule=Host(`app.localhost`)" # MUDAR SEU DOMINIO AQUI
+        # Aceita qualquer subdomínio: pizzaria.kicardapio.towersfy.com
+        - "traefik.http.routers.client.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.kicardapio.towersfy.com`)"
+        - "traefik.http.routers.client.entrypoints=websecure"
+        - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.client.loadbalancer.server.port=80"
+        # Prioridade BAIXA (10) para que 'api' e 'admin' caiam nas regras acima, não aqui
+        - "traefik.http.routers.client.priority=10"
 
 volumes:
-  db_data:
   uploads_data:
 
 networks:
-  web:
+  towersfy_network:
     external: true
-  internal:
-    driver: overlay
+  gestao_network:
+    external: true
+
+secrets:
+  db_connection_string:
+    external: true
+  jwt_secret:
+    external: true
+
