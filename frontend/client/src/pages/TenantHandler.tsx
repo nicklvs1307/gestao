@@ -21,9 +21,12 @@ const TenantHandler = () => {
     // Se não houver subdomínio, mas houver um slug na URL (fallback)
     // Ex: kicardapio.towersfy.com/minha-loja
     const pathSlug = location.pathname.split('/')[1];
-    const finalSlug = slug || (pathSlug && pathSlug !== 'mesa' ? pathSlug : null);
+    const finalSlug = slug || (pathSlug && pathSlug !== 'mesa' && pathSlug !== '' ? pathSlug : null);
+
+    console.log('Domain Debug:', { hostname: window.location.hostname, detectedSlug: slug, finalSlug });
 
     if (!finalSlug) {
+      setError(`Nenhum restaurante identificado no endereço: ${window.location.hostname}. Use um subdomínio como 'loja.kicardapio.towersfy.com'`);
       setLoading(false);
       return;
     }

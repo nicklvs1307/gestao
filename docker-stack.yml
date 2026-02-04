@@ -33,6 +33,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=gestao_network"
         # Roteamento da API (Prioridade Alta para não conflitar com lojas)
         - "traefik.http.routers.backend.rule=Host(`api.kicardapio.towersfy.com`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
@@ -59,6 +60,7 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=gestao_network"
         # Acesso principal do sistema (Dashboard)
         - "traefik.http.routers.admin.rule=Host(`kicardapio.towersfy.com`) || Host(`admin.kicardapio.towersfy.com`)"
         - "traefik.http.routers.admin.entrypoints=websecure"
@@ -80,8 +82,9 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=gestao_network"
         # Aceita qualquer subdomínio: pizzaria.kicardapio.towersfy.com
-        - "traefik.http.routers.client.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.kicardapio.towersfy.com`)"
+        - "traefik.http.routers.client.rule=HostRegexp(`^.+\\.kicardapio\\.towersfy\\.com$`) || HostRegexp(`{subdomain:[a-z0-9-]+}.kicardapio.towersfy.com`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.client.loadbalancer.server.port=80"
