@@ -1,10 +1,8 @@
 Sincronizando Banco de Dados com o Schema...
 Prisma schema loaded from prisma/schema.prisma
 Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
-The database is already in sync with the Prisma schema.
-Running generate... (Use --skip-generate to skip the generators)
-Running generate... - Prisma Client
-✔ Generated Prisma Client (v6.16.3) to ./node_modules/@prisma/client in 743ms
+24 migrations found in prisma/migrations
+No pending migrations to apply.
 Executando Seed de Permissões e SuperAdmin...
 --- INICIANDO SEED DE PERMISSÕES E SUPERADMIN ---
 Criando permissões...
@@ -13,27 +11,26 @@ Criando usuário SuperAdmin...
 Criando roles padrão de franquia...
 --- SEED DE PERMISSÕES FINALIZADO ---
 Login: super@admin.com / Senha: superadmin123
-Executando Seed de Dados de Teste...
-> server@1.0.0 seed
-> node prisma/seed.js
---- INICIANDO SCRIPT DE POPULARIZAÇÃO (SEED) ---
-Limpando dados antigos...
-Dados antigos limpos com sucesso.
-Criando restaurante de teste...
-Restaurante "Hamburgueria Sabor Artesanal" criado.
-Criando usuário administrador...
-Usuário administrador criado (admin@hamburgueriateste.com / admin123).
-Criando configurações do restaurante...
-Configurações padrão criadas.
-Criando mesas...
-20 mesas criadas.
-Criando categorias e produtos em português...
-62 produtos criados em suas categorias.
-Criando promoções em português...
-Promoção de teste criada.
-Criando pedidos falsos para o painel Kanban...
-15 pedidos falsos criados com status variados.
---- SCRIPT DE POPULARIZAÇÃO FINALIZADO ---
 Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
-Servidor rodando em http://localhost:3001
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+INF INF INF INF Servidor rodando em http://localhost:3001 
+ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users. See https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ for more information.
+    at Object.xForwardedForHeader (/app/node_modules/express-rate-limit/dist/index.cjs:185:13)
+    at wrappedValidations.<computed> [as xForwardedForHeader] (/app/node_modules/express-rate-limit/dist/index.cjs:397:22)
+    at Object.keyGenerator (/app/node_modules/express-rate-limit/dist/index.cjs:658:20)
+    at /app/node_modules/express-rate-limit/dist/index.cjs:710:32
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async /app/node_modules/express-rate-limit/dist/index.cjs:691:5 {
+  code: 'ERR_ERL_UNEXPECTED_X_FORWARDED_FOR',
+  help: 'https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/'
+}
+ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users. See https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ for more information.
+    at Object.xForwardedForHeader (/app/node_modules/express-rate-limit/dist/index.cjs:185:13)
+    at wrappedValidations.<computed> [as xForwardedForHeader] (/app/node_modules/express-rate-limit/dist/index.cjs:397:22)
+    at Object.keyGenerator (/app/node_modules/express-rate-limit/dist/index.cjs:658:20)
+    at /app/node_modules/express-rate-limit/dist/index.cjs:710:32
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async /app/node_modules/express-rate-limit/dist/index.cjs:691:5 {
+  code: 'ERR_ERL_UNEXPECTED_X_FORWARDED_FOR',
+  help: 'https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/'
+}

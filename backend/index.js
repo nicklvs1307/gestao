@@ -14,7 +14,11 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 1. LOGGING: Captura requisições HTTP e envia para o Winston
+// 1. SEGURANÇA: Confiar no Proxy (Necessário para Cloudflare/Traefik)
+// Permite que o Express e o Rate Limit obtenham o IP real do cliente
+app.set('trust proxy', 1);
+
+// 2. LOGGING: Captura requisições HTTP e envia para o Winston
 app.use(morgan('combined', { stream: logger.stream }));
 
 // 2. SEGURANÇA: Configuração de Headers (Helmet)
