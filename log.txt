@@ -1,35 +1,43 @@
- => ERROR [ 7/10] RUN npx prisma generate                                                      2.6s
+ => ERROR [builder 8/8] RUN npm run build                                                      9.8s
 ------
- > [ 7/10] RUN npx prisma generate:
-2.350 Prisma schema loaded from prisma/schema.prisma
-2.423 Error: Prisma schema validation - (get-dmmf wasm)
-2.423 Error code: P1012
-2.423 error: Error validating field `restaurant` in model `AddonGroup`: The relation field `restaurant` on model `AddonGroup` is missing an opposite relation field on the model `Restaurant`. Either run `prisma format` or add it manually.
-2.423   -->  prisma/schema.prisma:536
-2.423    |
-2.423 535 |   restaurantId String
-2.423 536 |   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-2.423 537 |
-2.423    |
-2.423 error: Error validating field `ingredient` in model `AddonIngredient`: The relation field `ingredient` on model `AddonIngredient` is missing an opposite relation field on the model `Ingredient`. Either run `prisma format` or add it manually.
-2.423   -->  prisma/schema.prisma:571
-2.423    |
-2.423 570 |   ingredientId String
-2.423 571 |   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-2.423 572 |
-2.423    |
-2.423
-2.423 Validation Error Count: 2
-2.423 [Context: getDmmf]
-2.423
-2.423 Prisma CLI Version : 6.16.3
+ > [builder 8/8] RUN npm run build:
+0.562
+0.562 > admin@0.0.0 build
+0.562 > vite build
+0.562
+0.894 vite v7.1.9 building for production...
+1.308 transforming...
+9.629 ✓ 3377 modules transformed.
+9.632 ✗ Build failed in 8.37s
+9.633 error during build:
+9.633 src/services/api/addonService.ts (1:7): "default" is not exported by "src/services/api.ts", imported by "src/services/api/addonService.ts".
+9.633 file: /app/frontend/admin/src/services/api/addonService.ts:1:7
+9.633
+9.633 1: import api from '../api';
+9.633           ^
+9.633 2:
+9.633 3: export interface AddonIngredient {
+9.633
+9.633     at getRollupError (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+9.633     at error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+9.633     at Module.error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:16939:16)
+9.633     at Module.traceVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:17391:29)
+9.633     at ModuleScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:15061:39)
+9.633     at ReturnValueScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+9.633     at FunctionBodyScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+9.633     at MemberExpression.bind (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:7349:49)
+9.633     at CallExpression.bind (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:2804:23)
+9.633     at CallExpression.bind (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:12108:15)
 ------
-Dockerfile:14
+
+ 1 warning found (use docker --debug to expand):
+ - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+Dockerfile:16
 --------------------
-  12 |     # Instala dependências e gera o Prisma Client
-  13 |     RUN npm ci
-  14 | >>> RUN npx prisma generate
-  15 |
-  16 |     # Copia o resto do código do backend
+  14 |     WORKDIR /app/frontend/admin
+  15 |     RUN npm ci
+  16 | >>> RUN npm run build
+  17 |
+  18 |     # Stage 2: Serve com Nginx
 --------------------
-ERROR: failed to build: failed to solve: process "/bin/sh -c npx prisma generate" did not complete successfully: exit code: 1
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
