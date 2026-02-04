@@ -84,7 +84,7 @@ services:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
         # Aceita qualquer subdomínio: pizzaria.kicardapio.towersfy.com
-        - "traefik.http.routers.client.rule=HostRegexp(`^.+\\.kicardapio\\.towersfy\\.com$`) || HostRegexp(`{subdomain:[a-z0-9-]+}.kicardapio.towersfy.com`)"
+        - "traefik.http.routers.client.rule=HostRegexp(`^.+\\.kicardapio\\.towersfy\\.com$$`) || HostRegexp(`{subdomain:[a-z0-9-]+}.kicardapio.towersfy.com`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.client.loadbalancer.server.port=80"

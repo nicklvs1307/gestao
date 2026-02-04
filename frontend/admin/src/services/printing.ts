@@ -4,6 +4,13 @@ import { format } from 'date-fns';
 
 const AGENT_URL = 'http://localhost:4676';
 
+const getAgentUrl = () => {
+    // Se o site estiver em HTTPS, o agente local também deve ser acessado de forma segura
+    // ou o navegador bloqueará por Mixed Content. 
+    // Por enquanto, o agente é HTTP localhost, o que o Chrome permite.
+    return AGENT_URL;
+};
+
 export interface PrinterConfig {
   // Agora suportamos múltiplas impressoras por setor
   cashierPrinters: string[]; 
@@ -51,9 +58,8 @@ export const getPrinters = async (): Promise<string[]> => {
 const getBase64Image = async (url: string): Promise<string | null> => {
   if (!url) return null;
   try {
-    // Se a URL for relativa (começa com /uploads), adiciona a base do backend
-    // Ajuste conforme a porta do seu backend se necessário
-    const fullUrl = url.startsWith('http') ? url : `http://localhost:3001${url}`;
+    const baseUrl = import.meta.env.VITE_API_URL || '';
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
     
     const response = await fetch(fullUrl);
     const blob = await response.blob();

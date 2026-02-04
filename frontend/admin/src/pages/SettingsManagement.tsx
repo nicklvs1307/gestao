@@ -113,7 +113,7 @@ const SettingsManagement: React.FC = () => {
         setSlug(settingsData.slug || '');
         setServiceTaxPercentage(settingsData.serviceTaxPercentage || 10);
         setOpeningHours(settingsData.openingHours || '');
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const baseUrl = import.meta.env.VITE_API_URL || '';
         const formattedLogoUrl = settingsData.logoUrl 
           ? (settingsData.logoUrl.startsWith('http') ? settingsData.logoUrl : `${baseUrl}${settingsData.logoUrl}`)
           : initialLogo;
@@ -173,7 +173,7 @@ const SettingsManagement: React.FC = () => {
       // Precisamos garantir que a URL esteja completa para exibição se necessário, 
       // ou apenas salvar o caminho relativo se o componente de imagem tratar isso.
       // Como o backend usa static em /uploads, o caminho relativo /uploads/... funciona.
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const baseUrl = import.meta.env.VITE_API_URL || '';
       const fullUrl = newLogoUrl.startsWith('http') ? newLogoUrl : `${baseUrl}${newLogoUrl}`;
       setLogoUrl(fullUrl);
       toast.success('Logo atualizada com sucesso!');
@@ -192,7 +192,7 @@ const SettingsManagement: React.FC = () => {
     try {
       setIsSaving(true);
       const { logoUrl: newCoverUrl } = await uploadLogo(file);
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const baseUrl = import.meta.env.VITE_API_URL || '';
       const fullUrl = newCoverUrl.startsWith('http') ? newCoverUrl : `${baseUrl}${newCoverUrl}`;
       setBackgroundImageUrl(fullUrl);
       toast.success('Imagem de capa atualizada!');

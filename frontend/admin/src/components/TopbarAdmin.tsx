@@ -158,7 +158,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         </div>
                         <div className="h-10 w-10 rounded-xl bg-white border-2 border-slate-100 flex items-center justify-center overflow-hidden shadow-sm">
                             {displayLogo ? (
-                                <img src={`http://localhost:3001${displayLogo}`} alt="Empresa" className="w-full h-full object-cover" />
+                                <img src={displayLogo.startsWith('http') ? displayLogo : `${import.meta.env.VITE_API_URL || ''}${displayLogo}`} alt="Empresa" className="w-full h-full object-cover" />
                             ) : (
                                 <Building2 size={20} className="text-slate-300" />
                             )}

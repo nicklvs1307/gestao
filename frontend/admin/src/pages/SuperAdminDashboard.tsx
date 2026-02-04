@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Store, Briefcase, Shield, X, Check, BarChart3, DollarSign, Settings } from 'lucide-react';
 import { toast } from 'sonner';
@@ -48,10 +48,10 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchData = async () => {
         try {
             const [fRes, rRes, pRes, rolesRes] = await Promise.all([
-                axios.get('http://localhost:3001/api/super-admin/franchises', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('http://localhost:3001/api/super-admin/restaurants', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('http://localhost:3001/api/super-admin/permissions', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('http://localhost:3001/api/super-admin/roles', { headers: { Authorization: `Bearer ${token}` } })
+                api.get('/super-admin/franchises'),
+                api.get('/super-admin/restaurants'),
+                api.get('/super-admin/permissions'),
+                api.get('/super-admin/roles')
             ]);
             setFranchises(fRes.data);
             setRestaurants(rRes.data);
@@ -70,10 +70,10 @@ const SuperAdminDashboard: React.FC = () => {
     const handleCreateFranchise = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3001/api/super-admin/franchises', {
+            await api.post('/super-admin/franchises', {
                 name: formData.franchiseName,
                 slug: formData.franchiseSlug
-            }, { headers: { Authorization: `Bearer ${token}` } });
+            });
             toast.success("Franquia criada com sucesso!");
             setIsFranchiseModalOpen(false);
             fetchData();
@@ -85,7 +85,7 @@ const SuperAdminDashboard: React.FC = () => {
     const handleCreateRestaurant = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3001/api/super-admin/restaurants', {
+            await api.post('/super-admin/restaurants', {
                 name: formData.restaurantName,
                 slug: formData.restaurantSlug,
                 franchiseId: formData.restaurantFranchiseId || null,
@@ -94,7 +94,7 @@ const SuperAdminDashboard: React.FC = () => {
                 adminName: formData.adminName,
                 adminEmail: formData.adminEmail,
                 adminPassword: formData.adminPassword
-            }, { headers: { Authorization: `Bearer ${token}` } });
+            });
             toast.success("Loja e Administrador criados com sucesso!");
             setIsRestaurantModalOpen(false);
             fetchData();
@@ -106,11 +106,11 @@ const SuperAdminDashboard: React.FC = () => {
     const handleCreateRole = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3001/api/super-admin/roles', {
+            await api.post('/super-admin/roles', {
                 name: formData.roleName,
                 description: formData.roleDescription,
                 permissionIds: formData.selectedPermissions
-            }, { headers: { Authorization: `Bearer ${token}` } });
+            });
             toast.success("Cargo criado com sucesso!");
             setIsRoleModalOpen(false);
             fetchData();
@@ -122,11 +122,11 @@ const SuperAdminDashboard: React.FC = () => {
     const handleUpdatePlan = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await axios.patch(`http://localhost:3001/api/super-admin/restaurants/${selectedStore.id}/subscription`, {
+            await api.patch(`/super-admin/restaurants/${selectedStore.id}/subscription`, {
                 plan: formData.editPlan,
                 status: formData.editStatus,
                 expiresAt: formData.editExpiresAt
-            }, { headers: { Authorization: `Bearer ${token}` } });
+            });
             toast.success("Assinatura atualizada!");
             setIsPlanModalOpen(false);
             fetchData();

@@ -1,116 +1,73 @@
-Sincronizando Banco de Dados com o Schema...
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
-The database is already in sync with the Prisma schema.
-Running generate... (Use --skip-generate to skip the generators)
-Running generate... - Prisma Client
-✔ Generated Prisma Client (v6.16.3) to ./node_modules/@prisma/client in 715ms
-Executando Seed de Permissões e SuperAdmin...
---- INICIANDO SEED DE PERMISSÕES E SUPERADMIN ---
-Criando permissões...
-Criando role de Super Admin...
-Criando usuário SuperAdmin...
-Criando roles padrão de franquia...
---- SEED DE PERMISSÕES FINALIZADO ---
-Login: super@admin.com / Senha: superadmin123
-Executando Seed de Dados de Teste...
-> server@1.0.0 seed
-> node prisma/seed.js
---- INICIANDO SCRIPT DE POPULARIZAÇÃO (SEED) ---
-Limpando dados antigos...
-Dados antigos limpos com sucesso.
-Criando restaurante de teste...
-Restaurante "Hamburgueria Sabor Artesanal" criado.
-Criando usuário administrador...
-Usuário administrador criado (admin@hamburgueriateste.com / admin123).
-Criando configurações do restaurante...
-Configurações padrão criadas.
-Criando mesas...
-20 mesas criadas.
-Criando categorias e produtos em português...
-62 produtos criados em suas categorias.
-Criando promoções em português...
-Promoção de teste criada.
-Criando pedidos falsos para o painel Kanban...
-15 pedidos falsos criados com status variados.
---- SCRIPT DE POPULARIZAÇÃO FINALIZADO ---
-Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
-Servidor rodando em http://localhost:3001
-[2026-02-03T23:25:07.377Z] POST /api/
-[2026-02-03T23:25:08.601Z] POST /api/
-[2026-02-03T23:25:22.887Z] POST /api/
-
-
-login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"password" type=​"password" required class=​"flex h-10 w-full rounded-md border border-input bg-background px-3 pl-10 py-2 text-sm ring-offset-background file:​border-0 file:​bg-transparent file:​text-sm file:​font-medium placeholder:​text-muted-foreground focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 disabled:​cursor-not-allowed disabled:​opacity-50" placeholder=​"••••••••" value=​"admin123">​flex
-api/auth/login:1  Failed to load resource: the server responded with a status of 404 ()
-index-Ck8RLmTb.js:666 Erro de login: AxiosError: Request failed with status code 404
-    at m4 (index-Ck8RLmTb.js:663:1091)
-    at XMLHttpRequest.C (index-Ck8RLmTb.js:663:5850)
+index-Ck8RLmTb.js:850 Erro ao buscar dados AxiosError: Network Error
+    at j.onerror (index-Ck8RLmTb.js:663:6228)
     at Fd.request (index-Ck8RLmTb.js:665:2094)
-    at async gR (index-Ck8RLmTb.js:666:5911)
-    at async i (index-Ck8RLmTb.js:666:10644)
-    at async v (index-Ck8RLmTb.js:661:327)
-i @ index-Ck8RLmTb.js:666
-index-Ck8RLmTb.js:663  POST https://kicardapio.towersfy.com/api/auth/login 404 (Not Found)
+    at async Promise.all (index 0)
+    at async B (index-Ck8RLmTb.js:850:493184)
+B @ index-Ck8RLmTb.js:850
+await in B
+(anônimo) @ index-Ck8RLmTb.js:850
+jm @ index-Ck8RLmTb.js:40
+mh @ index-Ck8RLmTb.js:40
+(anônimo) @ index-Ck8RLmTb.js:40
+F @ index-Ck8RLmTb.js:25
+$ @ index-Ck8RLmTb.js:25
+index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/franchises net::ERR_CONNECTION_REFUSED
 (anônimo) @ index-Ck8RLmTb.js:663
 xhr @ index-Ck8RLmTb.js:663
 N_ @ index-Ck8RLmTb.js:665
-Promise.then
 _request @ index-Ck8RLmTb.js:666
 request @ index-Ck8RLmTb.js:665
-(anônimo) @ index-Ck8RLmTb.js:666
+Fd.<computed> @ index-Ck8RLmTb.js:666
 (anônimo) @ index-Ck8RLmTb.js:661
-gR @ index-Ck8RLmTb.js:666
-i @ index-Ck8RLmTb.js:666
-v @ index-Ck8RLmTb.js:661
-Bn @ index-Ck8RLmTb.js:37
-Gr @ index-Ck8RLmTb.js:37
-Yr @ index-Ck8RLmTb.js:37
-xc @ index-Ck8RLmTb.js:37
-bc @ index-Ck8RLmTb.js:37
-(anônimo) @ index-Ck8RLmTb.js:37
-zx @ index-Ck8RLmTb.js:40
-Mt @ index-Ck8RLmTb.js:37
-d @ index-Ck8RLmTb.js:37
-Ko @ index-Ck8RLmTb.js:37
-qc @ index-Ck8RLmTb.js:37
-index-Ck8RLmTb.js:666 Erro de login: AxiosError: Request failed with status code 404
-    at m4 (index-Ck8RLmTb.js:663:1091)
-    at XMLHttpRequest.C (index-Ck8RLmTb.js:663:5850)
-    at Fd.request (index-Ck8RLmTb.js:665:2094)
-    at async gR (index-Ck8RLmTb.js:666:5911)
-    at async i (index-Ck8RLmTb.js:666:10644)
-    at async v (index-Ck8RLmTb.js:661:327)
-i @ index-Ck8RLmTb.js:666
-await in i
-v @ index-Ck8RLmTb.js:661
-Bn @ index-Ck8RLmTb.js:37
-Gr @ index-Ck8RLmTb.js:37
-Yr @ index-Ck8RLmTb.js:37
-xc @ index-Ck8RLmTb.js:37
-bc @ index-Ck8RLmTb.js:37
-(anônimo) @ index-Ck8RLmTb.js:37
-zx @ index-Ck8RLmTb.js:40
-Mt @ index-Ck8RLmTb.js:37
-d @ index-Ck8RLmTb.js:37
-Ko @ index-Ck8RLmTb.js:37
-qc @ index-Ck8RLmTb.js:37
-
-
-URL da solicitação
-https://kicardapio.towersfy.com/api/auth/login
-Método da solicitação
-POST
-Código de status
-404 Not Found
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Error</title>
-</head>
-<body>
-<pre>Cannot POST /api/</pre>
-</body>
-</html>
+B @ index-Ck8RLmTb.js:850
+(anônimo) @ index-Ck8RLmTb.js:850
+jm @ index-Ck8RLmTb.js:40
+mh @ index-Ck8RLmTb.js:40
+(anônimo) @ index-Ck8RLmTb.js:40
+F @ index-Ck8RLmTb.js:25
+$ @ index-Ck8RLmTb.js:25
+index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/restaurants net::ERR_CONNECTION_REFUSED
+(anônimo) @ index-Ck8RLmTb.js:663
+xhr @ index-Ck8RLmTb.js:663
+N_ @ index-Ck8RLmTb.js:665
+_request @ index-Ck8RLmTb.js:666
+request @ index-Ck8RLmTb.js:665
+Fd.<computed> @ index-Ck8RLmTb.js:666
+(anônimo) @ index-Ck8RLmTb.js:661
+B @ index-Ck8RLmTb.js:850
+(anônimo) @ index-Ck8RLmTb.js:850
+jm @ index-Ck8RLmTb.js:40
+mh @ index-Ck8RLmTb.js:40
+(anônimo) @ index-Ck8RLmTb.js:40
+F @ index-Ck8RLmTb.js:25
+$ @ index-Ck8RLmTb.js:25
+index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/permissions net::ERR_CONNECTION_REFUSED
+(anônimo) @ index-Ck8RLmTb.js:663
+xhr @ index-Ck8RLmTb.js:663
+N_ @ index-Ck8RLmTb.js:665
+_request @ index-Ck8RLmTb.js:666
+request @ index-Ck8RLmTb.js:665
+Fd.<computed> @ index-Ck8RLmTb.js:666
+(anônimo) @ index-Ck8RLmTb.js:661
+B @ index-Ck8RLmTb.js:850
+(anônimo) @ index-Ck8RLmTb.js:850
+jm @ index-Ck8RLmTb.js:40
+mh @ index-Ck8RLmTb.js:40
+(anônimo) @ index-Ck8RLmTb.js:40
+F @ index-Ck8RLmTb.js:25
+$ @ index-Ck8RLmTb.js:25
+index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/roles net::ERR_CONNECTION_REFUSED
+(anônimo) @ index-Ck8RLmTb.js:663
+xhr @ index-Ck8RLmTb.js:663
+N_ @ index-Ck8RLmTb.js:665
+_request @ index-Ck8RLmTb.js:666
+request @ index-Ck8RLmTb.js:665
+Fd.<computed> @ index-Ck8RLmTb.js:666
+(anônimo) @ index-Ck8RLmTb.js:661
+B @ index-Ck8RLmTb.js:850
+(anônimo) @ index-Ck8RLmTb.js:850
+jm @ index-Ck8RLmTb.js:40
+mh @ index-Ck8RLmTb.js:40
+(anônimo) @ index-Ck8RLmTb.js:40
+F @ index-Ck8RLmTb.js:25
+$ @ index-Ck8RLmTb.js:25
