@@ -11,7 +11,9 @@ import {
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 
-const clientUrl = 'http://localhost:5174'; 
+const clientUrl = window.location.hostname.includes('towersfy.com') 
+  ? `https://${window.location.hostname.replace('admin.', '').replace('kicardapio.', '')}` 
+  : 'http://localhost:5174'; 
 
 const initialLogo = 'https://via.placeholder.com/150x80.png?text=Sua+Logo';
 const initialBgImage = 'https://via.placeholder.com/800x450.png?text=Fundo+do+Cardapio';
@@ -613,9 +615,63 @@ const SettingsManagement: React.FC = () => {
 
         {activeTab === 'links' && (
             <div className="bg-card border rounded-xl p-6 space-y-6">
-                <h3 className="font-semibold border-b pb-2">Links do Sistema</h3>
-                <div className="grid gap-4">
-                    <div><label className="text-sm">Link Delivery</label><div className="flex gap-2 mt-1"><input readOnly className="flex-1 border rounded h-10 px-3 bg-muted" value={`${clientUrl}/${slug}`} /> <button onClick={() => {navigator.clipboard.writeText(`${clientUrl}/${slug}`); alert('Copiado!');}} className="border px-3 rounded hover:bg-muted"><Copy size={16}/></button></div></div>
+                <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="font-semibold">Links e Acesso ao Cardápio</h3>
+                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full font-bold uppercase">Configuração de Domínio</span>
+                </div>
+                
+                <div className="grid gap-6">
+                    <div className="bg-muted/30 p-4 rounded-lg border border-dashed">
+                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                            <Store size={14} className="text-primary"/> Identificador da Loja (Slug)
+                        </label>
+                        <div className="flex gap-2 mt-2">
+                            <input 
+                                readOnly 
+                                className="flex-1 border rounded-md h-10 px-3 bg-white font-mono text-sm" 
+                                value={slug} 
+                            />
+                            <button 
+                                onClick={() => {navigator.clipboard.writeText(slug); toast.success('Slug copiado!');}} 
+                                className="bg-white border px-3 rounded-md hover:bg-slate-50 transition-colors"
+                                title="Copiar Slug"
+                            >
+                                <Copy size={16}/>
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-2">Este é o identificador único da sua loja no sistema.</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-sm font-bold text-slate-700">URL do seu Cardápio Digital</label>
+                            <div className="flex gap-2 mt-2">
+                                <input 
+                                    readOnly 
+                                    className="flex-1 border rounded-md h-10 px-3 bg-muted/50 font-medium text-blue-600" 
+                                    value={window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`} 
+                                />
+                                <button 
+                                    onClick={() => {
+                                        const url = window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`;
+                                        navigator.clipboard.writeText(url); 
+                                        toast.success('Link copiado!');
+                                    }} 
+                                    className="bg-white border px-3 rounded-md hover:bg-slate-50"
+                                >
+                                    <Copy size={16}/>
+                                </button>
+                                <a 
+                                    href={window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-primary text-white px-4 rounded-md flex items-center gap-2 hover:bg-primary/90 transition-all font-medium"
+                                >
+                                    <ExternalLink size={16}/> Abrir Cardápio
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )}
