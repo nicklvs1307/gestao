@@ -15,8 +15,13 @@ import ProductDetailModal from '../components/ProductDetailModal';
 import { Search, Heart, Clock, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // Importar
 
-const DeliveryPage: React.FC = () => {
+interface DeliveryPageProps {
+  restaurantSlug?: string;
+}
+
+const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const { slug } = useParams<{ slug: string }>();
+  const effectiveSlug = restaurantSlug || slug;
   const navigate = useNavigate(); // Hook para navegação
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,9 +141,9 @@ const DeliveryPage: React.FC = () => {
 
   useEffect(() => {
     const fetchRestaurant = async () => {
-      if (!slug) return;
+      if (!effectiveSlug) return;
       try {
-        const data = await getRestaurantBySlug(slug);
+        const data = await getRestaurantBySlug(effectiveSlug);
         setRestaurant(data);
       } catch (err) {
         setError('Restaurante não encontrado.');
@@ -154,7 +159,7 @@ const DeliveryPage: React.FC = () => {
         clearInterval(pollingIntervalRef.current);
       }
     };
-  }, [slug]);
+  }, [effectiveSlug]);
 
   if (loading) return <div className="flex items-center justify-center min-h-screen bg-background text-foreground text-sm font-bold animate-pulse">Carregando cardápio...</div>;
   if (error) return <div className="flex items-center justify-center min-h-screen bg-background text-destructive font-bold p-8 text-center">{error}</div>;

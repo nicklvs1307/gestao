@@ -146,6 +146,7 @@ export interface SaiposIntegrationSettings {
 
 export interface Restaurant {
   id: string;
+  slug: string; // Adicionado
   name: string;
   logoUrl?: string;
   address?: string;

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente de Impressão - KiCardápio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: #1f2937;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .logo {
+            width: 48px;
+            height: 48px;
+            margin-right: 15px;
+            border-radius: 8px;
+        }
+        .title-container h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #111827;
+        }
+        .title-container p {
+            margin: 2px 0 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .status-card {
+            margin: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: #10b981;
+            border-radius: 50%;
+            margin-right: 10px;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            animation: pulse 2s infinite;
+        }
+        .status-text {
+            font-weight: 600;
+            color: #059669;
+        }
+        .port-info {
+            font-size: 0.875rem;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .log-container {
+            flex: 1;
+            margin: 0 20px 20px;
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            color: #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .log-entry {
+            border-bottom: 1px solid #374151;
+            padding-bottom: 4px;
+        }
+        .log-time {
+            color: #9ca3af;
+            margin-right: 8px;
+        }
+        .info { color: #60a5fa; }
+        .success { color: #34d399; }
+        .error { color: #f87171; }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="icon.png" alt="Logo" class="logo">
+        <div class="title-container">
+            <h1>Agente de Impressão</h1>
+            <p>KiCardápio Delivery & Mesas</p>
+        </div>
+    </div>
+
+    <div class="status-card">
+        <div class="status-indicator">
+            <div class="dot" id="statusDot"></div>
+            <div>
+                <div class="status-text" id="statusText">Serviço Ativo</div>
+                <small style="color: #6b7280;">Aguardando pedidos...</small>
+            </div>
+        </div>
+        <div class="port-info">Porta: 4676</div>
+    </div>
+
+    <div class="log-container" id="logs">
+        <div class="log-entry">
+            <span class="log-time">[Início]</span>
+            <span class="info">Inicializando interface...</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        Este aplicativo roda em segundo plano. Fechar esta janela apenas a minimizará.
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        const logContainer = document.getElementById('logs');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        function addLog(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            
+            const time = new Date().toLocaleTimeString();
+            div.innerHTML = `<span class="log-time">[${time}]</span><span class="${type}">${message}</span>`;
+            
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Ouvir logs do processo principal
+        ipcRenderer.on('log', (event, data) => {
+            addLog(data.message, data.type);
+        });
+
+        // Ouvir alterações de status
+        ipcRenderer.on('status-change', (event, isOnline) => {
+            if (isOnline) {
+                statusDot.style.backgroundColor = '#10b981';
+                statusText.innerText = 'Serviço Ativo';
+                statusText.style.color = '#059669';
+            } else {
+                statusDot.style.backgroundColor = '#ef4444';
+                statusText.innerText = 'Serviço Parado';
+                statusText.style.color = '#b91c1c';
+            }
+        });
+
+        addLog('Conectado ao processo principal.', 'success');
+    </script>
+</body>
+</html>
