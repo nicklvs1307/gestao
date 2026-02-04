@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const logger = require('./src/config/logger');
 require('dotenv').config();
 const path = require('path');
 
@@ -12,13 +14,16 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 1. SEGURANÇA: Configuração de Headers (Helmet)
+// 1. LOGGING: Captura requisições HTTP e envia para o Winston
+app.use(morgan('combined', { stream: logger.stream }));
+
+// 2. SEGURANÇA: Configuração de Headers (Helmet)
 // Remove X-Powered-By, previne Clickjacking, Sniffing de MIME, etc.
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" } // Permite carregar imagens de outros domínios se necessário
 }));
 
-// 2. SEGURANÇA: Configuração de CORS Restrita
+// 3. SEGURANÇA: Configuração de CORS Restrita
 // Em produção, substitua '*' pelo domínio real do seu frontend
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['*'];
 app.use(cors({
@@ -30,12 +35,12 @@ app.use(cors({
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-restaurant-id']
 }));
 
 app.use(express.json());
 
-// 3. SEGURANÇA: Rate Limiting Global
+// 4. SEGURANÇA: Rate Limiting Global
 // Limita cada IP a 100 requisições a cada 15 minutos
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -46,19 +51,13 @@ const globalLimiter = rateLimit({
 });
 app.use('/api/', globalLimiter);
 
-// 4. SEGURANÇA: Rate Limiting Específico para Login (Proteção Brute-force)
+// 5. SEGURANÇA: Rate Limiting Específico para Login (Proteção Brute-force)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10, // Apenas 10 tentativas de login por IP a cada 15 minutos
   message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' }
 });
 app.use('/api/auth/login', loginLimiter);
-
-// Logger
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
 
 // Arquivos Estáticos (Imagens)
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
@@ -131,4 +130,4 @@ app.post('/api/client/table-requests', TableController.createClientTableRequest)
 // Root
 app.get('/api', (req, res) => res.send('API Online!'));
 
-app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
+app.listen(PORT, () => logger.info(`Servidor rodando em http://localhost:${PORT}`));
