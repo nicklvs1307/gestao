@@ -69,7 +69,22 @@ async function main() {
 
   // 1. LIMPEZA DO BANCO DE DADOS
   console.log('Limpando dados antigos...');
+  await prisma.addonIngredient.deleteMany({});
+  await prisma.stockEntryItem.deleteMany({});
+  await prisma.stockEntry.deleteMany({});
+  await prisma.stockLoss.deleteMany({});
+  await prisma.productIngredient.deleteMany({});
+  await prisma.productionLog.deleteMany({});
+  await prisma.ingredientRecipe.deleteMany({});
+  await prisma.ingredient.deleteMany({});
+  await prisma.financialTransaction.deleteMany({});
+  await prisma.cashierSession.deleteMany({});
+  await prisma.bankAccount.deleteMany({});
+  await prisma.supplier.deleteMany({});
+  await prisma.transactionCategory.deleteMany({});
+  await prisma.deliveryOrder.deleteMany({});
   await prisma.orderItem.deleteMany({});
+  await prisma.payment.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.addon.deleteMany({});
   await prisma.addonGroup.deleteMany({});
@@ -77,8 +92,13 @@ async function main() {
   await prisma.promotion.deleteMany({});
   await prisma.product.deleteMany({});
   await prisma.category.deleteMany({});
-  await prisma.user.deleteMany({});
+  await prisma.tableRequest.deleteMany({});
   await prisma.table.deleteMany({});
+  await prisma.paymentMethod.deleteMany({});
+  await prisma.deliveryArea.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.role.deleteMany({});
+  await prisma.permission.deleteMany({});
   await prisma.integrationSettings.deleteMany({});
   await prisma.restaurantSettings.deleteMany({});
   await prisma.restaurant.deleteMany({});
@@ -248,6 +268,7 @@ async function createProduct(categoryId, restaurantId, categoryName) {
               {
                 name: 'Bordas Recheadas',
                 type: 'single',
+                restaurantId: restaurantId,
                 addons: {
                   create: [
                     { name: 'Catupiry', price: 8 },
@@ -266,6 +287,7 @@ async function createProduct(categoryId, restaurantId, categoryName) {
               {
                 name: 'Adicionais',
                 type: 'multiple',
+                restaurantId: restaurantId,
                 addons: {
                   create: [
                     { name: 'Bacon Extra', price: 5 },

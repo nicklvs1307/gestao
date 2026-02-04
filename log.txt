@@ -1,43 +1,55 @@
- => ERROR [builder 8/8] RUN npm run build                                                      9.8s
-------
- > [builder 8/8] RUN npm run build:
-0.562
-0.562 > admin@0.0.0 build
-0.562 > vite build
-0.562
-0.894 vite v7.1.9 building for production...
-1.308 transforming...
-9.629 ✓ 3377 modules transformed.
-9.632 ✗ Build failed in 8.37s
-9.633 error during build:
-9.633 src/services/api/addonService.ts (1:7): "default" is not exported by "src/services/api.ts", imported by "src/services/api/addonService.ts".
-9.633 file: /app/frontend/admin/src/services/api/addonService.ts:1:7
-9.633
-9.633 1: import api from '../api';
-9.633           ^
-9.633 2:
-9.633 3: export interface AddonIngredient {
-9.633
-9.633     at getRollupError (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
-9.633     at error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
-9.633     at Module.error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:16939:16)
-9.633     at Module.traceVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:17391:29)
-9.633     at ModuleScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:15061:39)
-9.633     at ReturnValueScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
-9.633     at FunctionBodyScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
-9.633     at MemberExpression.bind (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:7349:49)
-9.633     at CallExpression.bind (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:2804:23)
-9.633     at CallExpression.bind (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:12108:15)
-------
-
- 1 warning found (use docker --debug to expand):
- - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
-Dockerfile:16
---------------------
-  14 |     WORKDIR /app/frontend/admin
-  15 |     RUN npm ci
-  16 | >>> RUN npm run build
-  17 |
-  18 |     # Stage 2: Serve com Nginx
---------------------
-ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+The database is already in sync with the Prisma schema.
+Running generate... (Use --skip-generate to skip the generators)
+Running generate... - Prisma Client
+✔ Generated Prisma Client (v6.16.3) to ./node_modules/@prisma/client in 745ms
+Executando Seed de Permissões e SuperAdmin...
+--- INICIANDO SEED DE PERMISSÕES E SUPERADMIN ---
+Criando permissões...
+Criando role de Super Admin...
+Criando usuário SuperAdmin...
+Criando roles padrão de franquia...
+--- SEED DE PERMISSÕES FINALIZADO ---
+Login: super@admin.com / Senha: superadmin123
+Executando Seed de Dados de Teste...
+> server@1.0.0 seed
+> node prisma/seed.js
+--- INICIANDO SCRIPT DE POPULARIZAÇÃO (SEED) ---
+Limpando dados antigos...
+Erro durante a execução do seed: PrismaClientKnownRequestError: 
+Invalid `prisma.user.deleteMany()` invocation:
+Foreign key constraint violated on the constraint: `CashierSession_userId_fkey`
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async main (/app/prisma/seed.js:80:3) {
+  code: 'P2003',
+  meta: { modelName: 'User', constraint: 'CashierSession_userId_fkey' },
+  clientVersion: '6.16.3'
+}
+Aviso: Seed de dados de teste falhou ou já existem dados.
+Iniciando a aplicação...
+node:internal/modules/cjs/loader:1210
+
+  throw err;
+  ^
+Error: Cannot find module 'helmet'
+Require stack:
+- /app/index.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/app/index.js:3:16)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/app/index.js' ]
+}
+Node.js v20.20.0
