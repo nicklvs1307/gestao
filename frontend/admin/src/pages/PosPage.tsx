@@ -9,7 +9,7 @@ import {
 import { 
     Search, ShoppingCart, Plus, Minus, X, Trash2, ChefHat, 
     Store, Lock, Unlock, LogOut, Receipt, User, Phone, MapPin, Truck, Utensils,
-    LayoutDashboard, Wallet, Banknote, CreditCard as CreditCardIcon, QrCode, CheckCircle2, Printer, Loader2, ChevronRight,
+    LayoutDashboard, Wallet, Banknote, CreditCard as CreditCardIcon, QrCode, CheckCircle, Printer, Loader2, ChevronRight,
     Pizza as PizzaIcon, ArrowRightLeft, MoveRight, ArrowRight, List
 } from 'lucide-react';
 import { cn } from '../lib/utils';

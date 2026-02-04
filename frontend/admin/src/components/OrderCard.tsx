@@ -5,7 +5,7 @@ import type { Order } from '@/types/index.ts';
 import { updateOrderStatus, getSettings, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printing';
 import { format, differenceInMinutes, differenceInDays, differenceInHours } from 'date-fns';
-import { Clock, Utensils, Truck, MapPin, Printer, Loader2, CheckCircle2, Phone, ChevronRight, Eye } from 'lucide-react';
+import { Clock, Utensils, Truck, MapPin, Printer, Loader2, CheckCircle, Phone, ChevronRight, Eye } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 
@@ -111,7 +111,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
                     isSelected ? "bg-primary border-primary text-white" : "bg-white border-slate-300"
                 )}
               >
-                {isSelected && <CheckCircle2 size={10} strokeWidth={4} />}
+                {isSelected && <CheckCircle size={10} strokeWidth={4} />}
               </button>
               <span className="font-black text-xs italic text-slate-700">
                   {order.dailyOrderNumber || '0'} - {deliveryData?.name || order.customerName || 'Cliente Final'}

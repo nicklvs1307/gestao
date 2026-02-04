@@ -3,7 +3,7 @@ import AdminLayout from '../components/AdminLayout';
 import { api, payDriverSettlement } from '../services/api';
 import { 
   Truck, DollarSign, CreditCard, Landmark, 
-  Calendar, RefreshCw, ChevronRight, User, Package, Wallet, CheckCircle2
+  Calendar, RefreshCw, ChevronRight, User, Package, Wallet, CheckCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -173,7 +173,7 @@ const DriverSettlement: React.FC = () => {
                                 onClick={() => handlePaySettlement(settlement)}
                                 className="w-full ui-button-primary h-10 text-[9px] uppercase tracking-widest italic"
                             >
-                                <CheckCircle2 size={14} className="text-emerald-400" /> Confirmar Acerto
+                                <CheckCircle size={14} className="text-emerald-400" /> Confirmar Acerto
                             </button>
                         </div>
                     </div>

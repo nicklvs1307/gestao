@@ -11,7 +11,7 @@ export const getPricingAnalysis = async () => {
 };
 
 export const createProduct = async (data: Partial<Product>): Promise<Product> => {
-  const response = await apiClient.post('/products', productData);
+  const response = await apiClient.post('/products', data);
   return response.data;
 };
 

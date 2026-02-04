@@ -10,7 +10,7 @@ import {
 } from '../services/api';
 import { 
     Wallet, Lock, Unlock, DollarSign, History, 
-    ArrowUpCircle, ArrowDownCircle, AlertCircle, CheckCircle2,
+    ArrowUpCircle, ArrowDownCircle, AlertCircle, CheckCircle,
     Calendar, Clock, User, Receipt, Plus, Minus, X, Info, Edit2, ChevronDown, Check
 } from 'lucide-react';
 import { cn } from '../lib/utils';

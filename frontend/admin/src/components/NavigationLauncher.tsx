@@ -70,6 +70,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
             icon: Utensils,
             items: [
                 { label: "Cardápio", path: "/products", icon: Pizza },
+                { label: "Categorias", path: "/categories", icon: Layers },
             ]
         },
         {

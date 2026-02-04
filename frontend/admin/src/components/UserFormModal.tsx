@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createUser, updateUser, getRoles } from '../services/api';
-import { X, User, Mail, Lock, ShieldCheck, CheckCircle2, Loader2, Award } from 'lucide-react';
+import { X, User, Mail, Lock, ShieldCheck, CheckCircle, Loader2, Award } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 type UserType = any;
@@ -183,7 +183,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         disabled={isSaving}
                         className="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
                     >
-                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
+                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle size={18} />}
                         {isEditing ? 'Salvar Alterações' : 'Criar Usuário'}
                     </button>
                 </div>

@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { 
     Wallet, Plus, Search, Filter, ArrowUpCircle, 
     ArrowDownCircle, Trash2, Calendar, Tag, User,
-    X, CheckCircle2, DollarSign, Calculator, Receipt, ArrowRightLeft, Repeat
+    X, CheckCircle, DollarSign, Calculator, Receipt, ArrowRightLeft, Repeat
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -416,7 +416,7 @@ const FinancialEntries: React.FC = () => {
                         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-border flex justify-end gap-3">
                             <button type="button" onClick={() => setShowForm(false)} className="ui-button-secondary flex-1">Cancelar</button>
                             <button type="submit" className="ui-button-primary flex-[2] italic uppercase text-xs tracking-widest">
-                                <CheckCircle2 size={18} /> Confirmar
+                                <CheckCircle size={18} /> Confirmar
                             </button>
                         </div>
                     </form>

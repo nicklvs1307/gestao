@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { PaymentMethod } from '../types';
 import { getPaymentMethods, deletePaymentMethod } from '../services/api';
-import { Plus, Edit, Trash2, CreditCard, Loader2, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, CreditCard, Loader2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
@@ -137,7 +137,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
                     <td className="px-6 py-4">
                       {method.isActive ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                          <CheckCircle2 size={12} /> Ativo
+                          <CheckCircle size={12} /> Ativo
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">

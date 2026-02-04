@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-    Bike, MapPin, Navigation, CheckCircle2, 
+    Bike, MapPin, Navigation, CheckCircle, 
     Clock, Phone, ChevronRight, Package, 
     ArrowLeft, ExternalLink, Timer, AlertCircle, LogOut
 } from 'lucide-react';
@@ -336,7 +336,7 @@ const DriverDashboard: React.FC = () => {
                             onClick={() => handleUpdateStatus(selectedOrder.id, 'COMPLETED')}
                             className="w-full bg-emerald-500 text-white font-black py-5 rounded-[2rem] text-sm uppercase tracking-widest shadow-xl shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-3"
                         >
-                            <CheckCircle2 size={20} /> Confirmar Entrega
+                            <CheckCircle size={20} /> Confirmar Entrega
                         </button>
                     )}
                 </div>

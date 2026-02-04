@@ -6,8 +6,8 @@ type Size = any;
 type AddonGroup = any;
 type Addon = any;
 type Category = any;
-import { getCategories, createProduct, updateProduct } from '../services/api';
-import { Pizza, Maximize2, List, Disc, Plus, Trash2, CheckCircle2, Layers } from 'lucide-react';
+import { getCategories, createProduct, updateProduct, api } from '../services/api';
+import { Pizza, Maximize2, List, Disc, Plus, Trash2, CheckCircle, Layers } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
@@ -443,7 +443,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                 </section>
                 
                 <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-blue-800 text-sm">
-                    <p className="flex items-center gap-2 font-bold mb-1"><CheckCircle2 size={16} /> Configuração Concluída</p>
+                    <p className="flex items-center gap-2 font-bold mb-1"><CheckCircle size={16} /> Configuração Concluída</p>
                     <p className="opacity-80 text-xs">Agora basta o cliente escolher os sabores. O sistema calculará o valor automaticamente.</p>
                 </div>
 

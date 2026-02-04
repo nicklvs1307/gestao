@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Wallet, User, Disc, Landmark, Plus, Trash2, Receipt, CreditCard, X, CheckCircle2, QrCode, ArrowUpCircle } from 'lucide-react';
+import { Wallet, User, Disc, Landmark, Plus, Trash2, Receipt, CreditCard, X, CheckCircle, QrCode, ArrowUpCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 

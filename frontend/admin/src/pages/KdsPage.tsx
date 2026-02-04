@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { 
-    ChefHat, Clock, CheckCircle2, RefreshCw, 
+    ChefHat, Clock, CheckCircle, RefreshCw, 
     Filter, LayoutGrid, List, Utensils, 
     AlertCircle, Timer, User, MapPin, Beer, Pizza as PizzaIcon, Plus
 } from 'lucide-react';
@@ -218,7 +218,7 @@ const KdsPage: React.FC = () => {
                                                         onClick={() => handleFinishItem(item.id)}
                                                         className="h-14 w-14 rounded-[1.25rem] bg-slate-800 hover:bg-emerald-500 text-slate-500 hover:text-white transition-all flex items-center justify-center shrink-0 border border-white/5 hover:scale-110 hover:rotate-3 shadow-lg active:scale-90"
                                                     >
-                                                        <CheckCircle2 size={28} strokeWidth={3} />
+                                                        <CheckCircle size={28} strokeWidth={3} />
                                                     </button>
                                                 </div>
                                             </div>

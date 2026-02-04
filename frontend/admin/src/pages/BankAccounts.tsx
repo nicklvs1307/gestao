@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { 
     Building2, Plus, Edit2, Trash2, Landmark, 
-    Wallet, DollarSign, ArrowRight, X, CheckCircle2,
+    Wallet, DollarSign, ArrowRight, X, CheckCircle,
     PieChart, TrendingUp, LandmarkIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -191,7 +191,7 @@ const BankAccounts: React.FC = () => {
                         <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex gap-3">
                             <button type="button" onClick={() => setShowForm(false)} className="flex-1 h-14 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-400 italic">Cancelar</button>
                             <button type="submit" className="flex-[2] h-14 bg-slate-900 dark:bg-primary text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 italic">
-                                <CheckCircle2 size={20} /> {formData.id ? 'Salvar Alterações' : 'Criar Conta'}
+                                <CheckCircle size={20} /> {formData.id ? 'Salvar Alterações' : 'Criar Conta'}
                             </button>
                         </div>
                     </form>

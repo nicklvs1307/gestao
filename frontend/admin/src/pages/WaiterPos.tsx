@@ -5,7 +5,7 @@ import {
 } from '../services/api';
 import { 
     Search, ShoppingCart, Plus, Minus, X, Trash2, 
-    Utensils, ChevronRight, CheckCircle2, 
+    Utensils, ChevronRight, CheckCircle, 
     Send, History, User, Receipt, List, Pizza as PizzaIcon, Check, LogOut, Info,
     ArrowRightLeft, MoveRight // Novos ícones
 } from 'lucide-react';
@@ -552,7 +552,7 @@ const WaiterPos: React.FC = () => {
 
                         <div className="p-6 bg-white border-t border-slate-100">
                             <button onClick={() => addToCart(productWithOptions, selectedSize, selectedAddons, selectedFlavors, obs)} className="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-2 active:scale-95 transition-all">
-                                Adicionar à Sacola <CheckCircle2 size={18} className="text-primary" />
+                                Adicionar à Sacola <CheckCircle size={18} className="text-primary" />
                             </button>
                         </div>
                     </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, payWaiterCommission } from '../services/api';
 import { 
-  Users, DollarSign, RefreshCw, Calendar, User, ShoppingBag, CheckCircle2
+  Users, DollarSign, RefreshCw, Calendar, User, ShoppingBag, CheckCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';

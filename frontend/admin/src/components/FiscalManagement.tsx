@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Upload, FileCheck, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, FileCheck, ShieldCheck, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 
@@ -178,7 +178,7 @@ const FiscalManagement: React.FC = () => {
                             
                             {config.certificate ? (
                                 <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl mb-4 flex items-start gap-3">
-                                    <CheckCircle2 className="text-emerald-500 mt-0.5" size={16} />
+                                    <CheckCircle className="text-emerald-500 mt-0.5" size={16} />
                                     <div>
                                         <p className="text-xs font-black text-emerald-800 uppercase">Certificado Instalado</p>
                                         <p className="text-[10px] text-emerald-600 font-bold">O sistema está pronto para assinar notas.</p>

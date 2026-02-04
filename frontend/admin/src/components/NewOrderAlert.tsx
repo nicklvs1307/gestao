@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Order } from '../types';
 import { format } from 'date-fns';
-import { ShoppingBag, Bell, CheckCircle2, XCircle, Clock, MapPin, Tag } from 'lucide-react';
+import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NewOrderAlertProps {
@@ -96,7 +96,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onRejec
 
                     <div className="bg-slate-50/80 p-3 flex flex-row gap-3 border-t border-slate-100">
                         <button onClick={() => onAccept(order.id)} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 text-white font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-emerald-600 transition-all shadow-md">
-                            <CheckCircle2 size={18} /> Aceitar
+                            <CheckCircle size={18} /> Aceitar
                         </button>
                         <button onClick={() => onReject(order.id)} className="flex-1 flex items-center justify-center gap-2 bg-white text-red-500 border border-red-100 font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-red-50 transition-all">
                             <XCircle size={18} /> Recusar

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SaiposConfigModal from './SaiposConfigModal';
 import { getSaiposSettings } from '../services/api';
-import { Puzzle, RefreshCw, Loader2, CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
+import { Puzzle, RefreshCw, Loader2, CheckCircle, XCircle, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import saiposLogo from '../assets/saipos-logo.png';
 import voltakiLogo from '../assets/voltaki-logo.png';

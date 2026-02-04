@@ -13,7 +13,7 @@ import {
 } from '../services/api';
 import { 
     Package, AlertTriangle, Plus, Disc, ShoppingCart, 
-    Trash2, Receipt, Search, ArrowDownCircle, CheckCircle2, 
+    Trash2, Receipt, Search, ArrowDownCircle, CheckCircle, 
     X, Hammer, History, ClipboardList, Info, ArrowRight, AlertOctagon, Scale, Save
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -337,7 +337,7 @@ const StockManagement: React.FC = () => {
                                         {ingredients.filter(i => i.stock <= (i.minStock || 0)).length === 0 && (
                                             <tr>
                                                 <td colSpan={4} className="py-12 text-center">
-                                                    <CheckCircle2 size={32} className="mx-auto text-emerald-400 mb-2" />
+                                                    <CheckCircle size={32} className="mx-auto text-emerald-400 mb-2" />
                                                     <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Estoque Saudável</p>
                                                 </td>
                                             </tr>
@@ -591,7 +591,7 @@ const StockManagement: React.FC = () => {
                                             <td className="px-6 py-4 text-right">
                                                 {p.status === 'PENDING' ? (
                                                     <button onClick={() => handleConfirmPurchase(p.id)} className="text-primary text-[10px] font-black uppercase hover:underline">Confirmar</button>
-                                                ) : <CheckCircle2 size={16} className="text-emerald-500 ml-auto" />}
+                                                ) : <CheckCircle size={16} className="text-emerald-500 ml-auto" />}
                                             </td>
                                         </tr>
                                     ))}
@@ -726,7 +726,7 @@ const StockManagement: React.FC = () => {
                                 <input type="number" step="0.001" className="ui-input w-full h-14 text-xl text-center font-black" value={formData.quantity || ''} onChange={e => setFormData({...formData, quantity: e.target.value})} required placeholder="0.000" />
                             </div>
                             <button type="submit" className="ui-button-primary w-full h-14 text-sm italic">
-                                <CheckCircle2 size={20} /> Confirmar Produção
+                                <CheckCircle size={20} /> Confirmar Produção
                             </button>
                         </form>
                     </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Users, Search, Edit2, Trash2, MapPin, 
     Phone, ShoppingBag, ChevronLeft, ChevronRight, 
-    X, CheckCircle2, History, Filter, UserPlus
+    X, CheckCircle, History, Filter, UserPlus
 } from 'lucide-react';
 import { api } from '../services/api';
 import { cn } from '../lib/utils';
@@ -254,7 +254,7 @@ const CustomerManagement: React.FC = () => {
 
                             <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-4">
                                 <h4 className="text-[10px] font-black uppercase text-foreground italic flex items-center gap-2">
-                                    <CheckCircle2 size={14} className="text-primary" /> Fidelidade
+                                    <CheckCircle size={14} className="text-primary" /> Fidelidade
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">

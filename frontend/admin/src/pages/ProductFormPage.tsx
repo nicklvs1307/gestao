@@ -8,7 +8,7 @@ import {
     GripVertical, 
     CloudUpload, 
     ChevronDown, 
-    CheckCircle2, 
+    CheckCircle, 
     Pizza, 
     Maximize2, 
     List,
@@ -434,7 +434,7 @@ const ProductFormPage = () => {
                         className="px-8 py-2 bg-orange-500 text-white font-black rounded-xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition text-sm italic flex items-center gap-2"
                     >
                         {isLoading ? 'SALVANDO...' : 'SALVAR PRODUTO'}
-                        {!isLoading && <CheckCircle2 size={16} />}
+                        {!isLoading && <CheckCircle size={16} />}
                     </button>
                 </div>
             </header>
@@ -464,7 +464,7 @@ const ProductFormPage = () => {
                             )}>
                                 <div className="flex items-center gap-3">
                                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", watch('isAvailable') ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400")}>
-                                        <CheckCircle2 size={20} />
+                                        <CheckCircle size={20} />
                                     </div>
                                     <div>
                                         <span className={cn("block text-sm font-black uppercase tracking-tight", watch('isAvailable') ? "text-emerald-700" : "text-slate-500")}>Produto Ativo</span>

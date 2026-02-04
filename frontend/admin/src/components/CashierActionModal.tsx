@@ -99,7 +99,7 @@ const CashierActionModal: React.FC<CashierActionModalProps> = ({ isOpen, onClose
                             type === 'INCOME' ? "bg-emerald-600 hover:bg-emerald-700" : "bg-rose-600 hover:bg-rose-700"
                         )}
                     >
-                        {isSaving ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={18} />}
+                        {isSaving ? <Loader2 className="animate-spin" /> : <CheckCircle size={18} />}
                         Confirmar Lançamento
                     </button>
                 </form>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, UserCheck, CreditCard, X, CheckCircle2, Clock } from 'lucide-react';
+import { Bell, UserCheck, CreditCard, X, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 
@@ -76,7 +76,7 @@ const TableRequestAlert: React.FC<TableRequestAlertProps> = ({ requests, onResol
                         className="bg-emerald-500 text-white p-2.5 rounded-xl shadow-md hover:bg-emerald-600 active:scale-95 transition-all shrink-0"
                         title="Atender"
                     >
-                        <CheckCircle2 size={18} />
+                        <CheckCircle size={18} />
                     </button>
                 </div>
             ))}

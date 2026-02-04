@@ -21,7 +21,7 @@ import {
   DollarSign,
   Utensils,
   AlertCircle,
-  CheckCircle2
+  CheckCircle
 } from 'lucide-react';
 import {
   Chart as ChartJS,

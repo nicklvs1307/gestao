@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, BarChart3, CheckCircle2, Moon, Sun, Building2 } from 'lucide-react';
+import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, BarChart3, CheckCircle, Moon, Sun, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -129,7 +129,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                                             <Plus size={14} className="text-emerald-500" /> Reforço (Suprimento)
                                         </button>
                                         <button onClick={() => { navigate('/cashier'); setCashierDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-lg text-[10px] font-black text-slate-900 bg-slate-100 hover:bg-slate-200 flex items-center gap-2 uppercase mt-2">
-                                            <CheckCircle2 size={14} /> Fechar Caixa
+                                            <CheckCircle size={14} /> Fechar Caixa
                                         </button>
                                     </div>
                                 </div>

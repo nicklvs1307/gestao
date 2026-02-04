@@ -4,7 +4,7 @@ import { getDrivers, assignDriver, getSettings, updateDeliveryType, markOrderAsP
 import { printOrder } from '../services/printing';
 import { format } from 'date-fns';
 import { 
-  X, Clock, MapPin, DollarSign, Utensils, CheckCircle2, 
+  X, Clock, MapPin, DollarSign, Utensils, CheckCircle, 
   Circle, PlayCircle, XCircle, Truck, Printer, Phone, 
   User, ExternalLink, ChevronRight, Package, CreditCard, Loader2,
   ShoppingBag, Bike
@@ -21,8 +21,8 @@ interface OrderDetailModalProps {
 const STATUS_OPTIONS = [
     { value: 'PENDING', label: 'Pendente', icon: Circle, color: 'text-amber-600', bg: 'bg-amber-100', border: 'border-amber-200' },
     { value: 'PREPARING', label: 'Cozinha', icon: PlayCircle, color: 'text-blue-600', bg: 'bg-blue-100', border: 'border-blue-200' },
-    { value: 'READY', label: 'Pronto', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-100', border: 'border-emerald-200' },
-    { value: 'COMPLETED', label: 'Finalizado', icon: CheckCircle2, color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-200' },
+    { value: 'READY', label: 'Pronto', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100', border: 'border-emerald-200' },
+    { value: 'COMPLETED', label: 'Finalizado', icon: CheckCircle, color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-200' },
     { value: 'CANCELED', label: 'Cancelado', icon: XCircle, color: 'text-red-600', bg: 'bg-red-100', border: 'border-red-200' },
 ];
 
