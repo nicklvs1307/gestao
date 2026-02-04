@@ -143,7 +143,26 @@ const getRestaurantBySlug = async (req, res) => {
         const { slug } = req.params;
         const restaurant = await prisma.restaurant.findUnique({
             where: { slug },
-            select: { id: true, name: true, slug: true }
+            include: { 
+                settings: true,
+                categories: {
+                    include: {
+                        products: {
+                            where: { isAvailable: true },
+                            include: {
+                                sizes: true,
+                                addonGroups: {
+                                    include: {
+                                        addons: true
+                                    }
+                                }
+                            },
+                            orderBy: { order: 'asc' }
+                        }
+                    },
+                    orderBy: { order: 'asc' }
+                }
+            }
         });
         
         if (!restaurant) {
