@@ -84,7 +84,7 @@ services:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
         # Regra universal para qualquer subdomínio em towersfy.com, exceto serviços do sistema
-        - 'traefik.http.routers.client.rule=HostRegexp(`^(?!(container|admin|api|kicardapio|www|api\.kicardapio)$)[a-z0-9-]+\.towersfy\.com`)'
+        - 'traefik.http.routers.client.rule=HostRegexp(`^(?!(container|admin|api|kicardapio|www|api\.kicardapio)$$)[a-z0-9-]+\.towersfy\.com`)'
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
