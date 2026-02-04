@@ -32,9 +32,10 @@ const TenantHandler = () => {
       try {
         const data = await getRestaurantBySlug(finalSlug);
         setRestaurant(data);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Erro ao buscar restaurante:', err);
-        setError('Restaurante não encontrado ou erro na conexão.');
+        const debugMsg = err.response?.data?.error || err.message || JSON.stringify(err);
+        setError(`Não foi possível carregar o cardápio da loja '${finalSlug}'. Detalhes: ${debugMsg}`);
       } finally {
         setLoading(false);
       }

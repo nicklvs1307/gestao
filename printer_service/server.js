@@ -7,9 +7,22 @@ const path = require('path');
 const os = require('os');
 
 const app = express();
-const PORT = 4676; // Porta "secreta" do agente
+const PORT = 4676;
 
-app.use(cors());
+// Configuração avançada de CORS para permitir acesso da Nuvem -> Local
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*"); // Em produção, idealmente coloque 'https://kicardapio.towersfy.com'
+    res.header("Access-Control-Allow-Private-Network", "true"); // CRÍTICO: Permite que o Chrome deixe o site público acessar o localhost
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+    next();
+});
+
+app.use(cors({
+    origin: true, // Reflete a origem da requisição
+    credentials: true
+}));
+
 app.use(bodyParser.json({ limit: '50mb' }));
 
 // Rota de Status
