@@ -145,6 +145,7 @@ model PaymentMethod {
   name         String   // Ex: "Dinheiro", "Cartão de Crédito", "Pix", "Vale Refeição"
   type         String   // "CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "VOUCHER", "OTHER"
   isActive     Boolean  @default(true)
+  saiposIntegrationCode String? // Código de integração (DIN, CRE, DEB, etc)
   
   // Configurações de Visibilidade
   allowDelivery Boolean @default(true)
@@ -438,6 +439,7 @@ model Category {
   name        String
   order       Int      @default(0) // Ordem de exibição
   productionArea String?  @default("Cozinha") // Ex: "Cozinha", "Bar", "Pizzaria"
+  saiposIntegrationCode String? // Código de integração da Saipos
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -525,15 +527,18 @@ model AddonGroup {
   type      String  @default("multiple") // "single" ou "multiple"
   isRequired Boolean @default(false) // Novo campo para obrigatoriedade
   order     Int     @default(0)
+  saiposIntegrationCode String? // Código de integração da Saipos
 
-  // Relação com o Produto
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // Relacionamento Global (M:N)
+  products  Product[]
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   // Relações
   addons    Addon[]
 
-  @@index([productId])
+  @@index([restaurantId])
 }
 
 // Novo: Tabela de Adicionais (Ex: "Cheddar", "Bacon")
@@ -542,14 +547,31 @@ model Addon {
   name         String
   price        Float
   maxQuantity  Int     @default(1) // Novo: Quantidade máxima permitida para este adicional
-  order        Int     @default(0)
+  order     Int     @default(0)
   saiposIntegrationCode String?  // Código de integração da Saipos
+
+  // Ficha Técnica do Adicional
+  ingredients  AddonIngredient[]
 
   // Relação com o Grupo de Adicionais
   addonGroupId String
   addonGroup   AddonGroup @relation(fields: [addonGroupId], references: [id], onDelete: Cascade)
 
   @@index([addonGroupId])
+}
+
+model AddonIngredient {
+  id           String     @id @default(cuid())
+  quantity     Float      // Quantidade usada (ex: 0.050 para 50g)
+  
+  addonId      String
+  addon        Addon      @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@index([addonId])
+  @@index([ingredientId])
 }
 
 model Order {
@@ -736,6 +758,7 @@ model Promotion {
   id            String    @id @default(cuid())
   name          String
   description   String?
+  saiposIntegrationCode String? // Código de integração da Saipos/iFood
   
   // === Novos campos para Cupons ===
   code          String?   // Ex: "PIZZA10", "BEMVINDO"

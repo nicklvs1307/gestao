@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const productSchema = require('../schemas/productSchema');
 
 const getProducts = async (req, res) => {
     try {
@@ -23,8 +24,13 @@ const getClientProducts = async (req, res) => {
 };
 
 const createProduct = async (req, res) => {
-    const { name, price, categoryId, sizes, addonGroups, ingredients, ...rest } = req.body;
-    if (!name || !price || !categoryId) return res.status(400).json({ error: 'Dados obrigatórios faltando.' });
+    const { value, error } = productSchema.validate(req.body);
+    
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const { name, price, categoryId, sizes, addonGroups, ingredients, ...rest } = value;
     try {
         const newProduct = await prisma.product.create({
             data: {
@@ -32,7 +38,9 @@ const createProduct = async (req, res) => {
                 category: { connect: { id: categoryId } },
                 restaurant: { connect: { id: req.restaurantId } },
                 sizes: { create: sizes?.map(s => ({ name: s.name, price: s.price })) || [] },
-                addonGroups: { create: addonGroups?.map(g => ({ name: g.name, type: g.type, isRequired: g.isRequired, addons: { create: g.addons?.map(a => ({ name: a.name, price: a.price, maxQuantity: a.maxQuantity || 1 })) || [] } })) || [] },
+                addonGroups: { 
+                    connect: addonGroups?.filter(g => g.id).map(g => ({ id: g.id })) || []
+                },
                 ingredients: { create: ingredients?.map(i => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] }
             },
             include: { category: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
@@ -46,14 +54,22 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     const { id } = req.params;
-    const { sizes, addonGroups, ingredients, restaurantId, createdAt, updatedAt, category, ...productData } = req.body;
+    
+    const { value, error } = productSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const { sizes, addonGroups, ingredients, ...productData } = value;
     try {
         const updatedProduct = await prisma.product.update({
             where: { id },
             data: {
                 ...productData,
                 sizes: { deleteMany: {}, create: sizes?.map(size => ({ name: size.name, price: size.price, order: size.order || 0, saiposIntegrationCode: size.saiposIntegrationCode })) || [] },
-                addonGroups: { deleteMany: {}, create: addonGroups?.map(group => ({ name: group.name, type: group.type, order: group.order || 0, isRequired: group.isRequired, addons: { create: group.addons?.map(addon => ({ name: addon.name, price: addon.price, maxQuantity: addon.maxQuantity || 1, order: addon.order || 0, saiposIntegrationCode: addon.saiposIntegrationCode })) || [] } })) || [] },
+                addonGroups: { 
+                    set: addonGroups?.filter(g => g.id).map(g => ({ id: g.id })) || []
+                },
                 ingredients: { deleteMany: {}, create: ingredients?.map(i => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] }
             },
             include: { sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },

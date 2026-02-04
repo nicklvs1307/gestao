@@ -1,73 +1,98 @@
-index-Ck8RLmTb.js:850 Erro ao buscar dados AxiosError: Network Error
-    at j.onerror (index-Ck8RLmTb.js:663:6228)
-    at Fd.request (index-Ck8RLmTb.js:665:2094)
-    at async Promise.all (index 0)
-    at async B (index-Ck8RLmTb.js:850:493184)
-B @ index-Ck8RLmTb.js:850
-await in B
-(anônimo) @ index-Ck8RLmTb.js:850
-jm @ index-Ck8RLmTb.js:40
-mh @ index-Ck8RLmTb.js:40
-(anônimo) @ index-Ck8RLmTb.js:40
-F @ index-Ck8RLmTb.js:25
-$ @ index-Ck8RLmTb.js:25
-index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/franchises net::ERR_CONNECTION_REFUSED
-(anônimo) @ index-Ck8RLmTb.js:663
-xhr @ index-Ck8RLmTb.js:663
-N_ @ index-Ck8RLmTb.js:665
-_request @ index-Ck8RLmTb.js:666
-request @ index-Ck8RLmTb.js:665
-Fd.<computed> @ index-Ck8RLmTb.js:666
-(anônimo) @ index-Ck8RLmTb.js:661
-B @ index-Ck8RLmTb.js:850
-(anônimo) @ index-Ck8RLmTb.js:850
-jm @ index-Ck8RLmTb.js:40
-mh @ index-Ck8RLmTb.js:40
-(anônimo) @ index-Ck8RLmTb.js:40
-F @ index-Ck8RLmTb.js:25
-$ @ index-Ck8RLmTb.js:25
-index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/restaurants net::ERR_CONNECTION_REFUSED
-(anônimo) @ index-Ck8RLmTb.js:663
-xhr @ index-Ck8RLmTb.js:663
-N_ @ index-Ck8RLmTb.js:665
-_request @ index-Ck8RLmTb.js:666
-request @ index-Ck8RLmTb.js:665
-Fd.<computed> @ index-Ck8RLmTb.js:666
-(anônimo) @ index-Ck8RLmTb.js:661
-B @ index-Ck8RLmTb.js:850
-(anônimo) @ index-Ck8RLmTb.js:850
-jm @ index-Ck8RLmTb.js:40
-mh @ index-Ck8RLmTb.js:40
-(anônimo) @ index-Ck8RLmTb.js:40
-F @ index-Ck8RLmTb.js:25
-$ @ index-Ck8RLmTb.js:25
-index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/permissions net::ERR_CONNECTION_REFUSED
-(anônimo) @ index-Ck8RLmTb.js:663
-xhr @ index-Ck8RLmTb.js:663
-N_ @ index-Ck8RLmTb.js:665
-_request @ index-Ck8RLmTb.js:666
-request @ index-Ck8RLmTb.js:665
-Fd.<computed> @ index-Ck8RLmTb.js:666
-(anônimo) @ index-Ck8RLmTb.js:661
-B @ index-Ck8RLmTb.js:850
-(anônimo) @ index-Ck8RLmTb.js:850
-jm @ index-Ck8RLmTb.js:40
-mh @ index-Ck8RLmTb.js:40
-(anônimo) @ index-Ck8RLmTb.js:40
-F @ index-Ck8RLmTb.js:25
-$ @ index-Ck8RLmTb.js:25
-index-Ck8RLmTb.js:663  GET http://localhost:3001/api/super-admin/roles net::ERR_CONNECTION_REFUSED
-(anônimo) @ index-Ck8RLmTb.js:663
-xhr @ index-Ck8RLmTb.js:663
-N_ @ index-Ck8RLmTb.js:665
-_request @ index-Ck8RLmTb.js:666
-request @ index-Ck8RLmTb.js:665
-Fd.<computed> @ index-Ck8RLmTb.js:666
-(anônimo) @ index-Ck8RLmTb.js:661
-B @ index-Ck8RLmTb.js:850
-(anônimo) @ index-Ck8RLmTb.js:850
-jm @ index-Ck8RLmTb.js:40
-mh @ index-Ck8RLmTb.js:40
-(anônimo) @ index-Ck8RLmTb.js:40
-F @ index-Ck8RLmTb.js:25
-$ @ index-Ck8RLmTb.js:25
+index-DiooYJwe.js:658  POST https://kicardapio.towersfy.com/api/products 400 (Bad Request)
+(anônimo) @ index-DiooYJwe.js:658
+xhr @ index-DiooYJwe.js:658
+j_ @ index-DiooYJwe.js:660
+Promise.then
+_request @ index-DiooYJwe.js:661
+request @ index-DiooYJwe.js:660
+(anônimo) @ index-DiooYJwe.js:661
+(anônimo) @ index-DiooYJwe.js:656
+xR @ index-DiooYJwe.js:661
+ve @ index-DiooYJwe.js:830
+(anônimo) @ index-DiooYJwe.js:830
+await in (anônimo)
+Bn @ index-DiooYJwe.js:37
+Gr @ index-DiooYJwe.js:37
+Yr @ index-DiooYJwe.js:37
+xc @ index-DiooYJwe.js:37
+bc @ index-DiooYJwe.js:37
+(anônimo) @ index-DiooYJwe.js:37
+zx @ index-DiooYJwe.js:40
+Mt @ index-DiooYJwe.js:37
+d @ index-DiooYJwe.js:37
+Ko @ index-DiooYJwe.js:37
+qc @ index-DiooYJwe.js:37
+index-DiooYJwe.js:830 Erro ao salvar produto: AxiosError: Request failed with status code 400
+    at m4 (index-DiooYJwe.js:658:1091)
+    at XMLHttpRequest.C (index-DiooYJwe.js:658:5850)
+    at Fd.request (index-DiooYJwe.js:660:2094)
+    at async xR (index-DiooYJwe.js:661:6330)
+    at async ve (index-DiooYJwe.js:830:92440)
+    at async index-DiooYJwe.js:830:71641
+ve @ index-DiooYJwe.js:830
+await in ve
+(anônimo) @ index-DiooYJwe.js:830
+await in (anônimo)
+Bn @ index-DiooYJwe.js:37
+Gr @ index-DiooYJwe.js:37
+Yr @ index-DiooYJwe.js:37
+xc @ index-DiooYJwe.js:37
+bc @ index-DiooYJwe.js:37
+(anônimo) @ index-DiooYJwe.js:37
+zx @ index-DiooYJwe.js:40
+Mt @ index-DiooYJwe.js:37
+d @ index-DiooYJwe.js:37
+Ko @ index-DiooYJwe.js:37
+qc @ index-DiooYJwe.js:37
+index-DiooYJwe.js:40 ReferenceError: Loader2 is not defined
+    at Xj (index-DiooYJwe.js:830:100633)
+    at ud (index-DiooYJwe.js:38:17880)
+    at wx (index-DiooYJwe.js:40:3163)
+    at Rw (index-DiooYJwe.js:40:45948)
+    at Pw (index-DiooYJwe.js:40:40732)
+    at sP (index-DiooYJwe.js:40:40660)
+    at Tm (index-DiooYJwe.js:40:40513)
+    at Ox (index-DiooYJwe.js:40:36766)
+    at Lw (index-DiooYJwe.js:40:37578)
+    at U (index-DiooYJwe.js:38:3266)
+yx @ index-DiooYJwe.js:40
+X2.b.callback @ index-DiooYJwe.js:40
+io @ index-DiooYJwe.js:38
+Nw @ index-DiooYJwe.js:40
+kw @ index-DiooYJwe.js:40
+eP @ index-DiooYJwe.js:40
+rP @ index-DiooYJwe.js:40
+gd @ index-DiooYJwe.js:40
+Lw @ index-DiooYJwe.js:40
+U @ index-DiooYJwe.js:38
+pd @ index-DiooYJwe.js:40
+Mt @ index-DiooYJwe.js:37
+d @ index-DiooYJwe.js:37
+Ko @ index-DiooYJwe.js:37
+qc @ index-DiooYJwe.js:37
+index-DiooYJwe.js:830 Uncaught ReferenceError: Loader2 is not defined
+    at Xj (index-DiooYJwe.js:830:100633)
+    at ud (index-DiooYJwe.js:38:17880)
+    at wx (index-DiooYJwe.js:40:3163)
+    at Rw (index-DiooYJwe.js:40:45948)
+    at Pw (index-DiooYJwe.js:40:40732)
+    at sP (index-DiooYJwe.js:40:40660)
+    at Tm (index-DiooYJwe.js:40:40513)
+    at Ox (index-DiooYJwe.js:40:36766)
+    at Lw (index-DiooYJwe.js:40:37578)
+    at U (index-DiooYJwe.js:38:3266)
+Xj @ index-DiooYJwe.js:830
+ud @ index-DiooYJwe.js:38
+wx @ index-DiooYJwe.js:40
+Rw @ index-DiooYJwe.js:40
+Pw @ index-DiooYJwe.js:40
+sP @ index-DiooYJwe.js:40
+Tm @ index-DiooYJwe.js:40
+Ox @ index-DiooYJwe.js:40
+Lw @ index-DiooYJwe.js:40
+U @ index-DiooYJwe.js:38
+pd @ index-DiooYJwe.js:40
+Mt @ index-DiooYJwe.js:37
+d @ index-DiooYJwe.js:37
+Ko @ index-DiooYJwe.js:37
+qc @ index-DiooYJwe.js:37

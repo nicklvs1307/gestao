@@ -22,6 +22,7 @@ import TableManagement from './components/TableManagement';
 import TableFormModal from './components/TableFormModal';
 import ReportManagement from './pages/ReportManagement';
 import SettingsManagement from './pages/SettingsManagement';
+import AddonManagement from './pages/AddonManagement';
 import DeliveryAreaManagement from './components/DeliveryAreaManagement';
 import IntegrationManagement from './components/IntegrationManagement';
 import UserManagement from './components/UserManagement';
@@ -152,6 +153,9 @@ const AdminRoutes: React.FC = () => {
       case '/products':
         setPageTitle('Gestão de Produtos');
         break;
+      case '/addons':
+        setPageTitle('Biblioteca de Complementos');
+        break;
       case '/ingredients':
         setPageTitle('Estoque de Insumos');
         break;
@@ -252,6 +256,7 @@ const AdminRoutes: React.FC = () => {
           onEditProductClick={() => {}} // Will be handled by internal navigation
           refetchTrigger={0}
         />} />
+        <Route path="/addons" element={<AddonManagement />} />
         <Route path="/ingredients" element={<StockManagement />} />
         <Route path="/products/new" element={<ProductFormPage />} />
         <Route path="/products/:id" element={<ProductFormPage />} />

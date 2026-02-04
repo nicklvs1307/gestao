@@ -14,12 +14,58 @@ import {
     List,
     Layers,
     Info,
-    Settings2
+    Settings2,
+    Loader2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage } from '../services/api';
+import { addonService, AddonGroup } from '../services/api/addonService';
 import type { Product, Category } from '@/types/index';
 import { toast } from 'sonner';
+
+// --- Sub-componente para Seleção de Biblioteca ---
+const GlobalAddonSelector = ({ availableGroups, selectedGroupIds, onToggle }: { availableGroups: AddonGroup[], selectedGroupIds: string[], onToggle: (id: string) => void }) => {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {availableGroups.map(group => {
+                const isSelected = selectedGroupIds.includes(group.id!);
+                return (
+                    <div 
+                        key={group.id}
+                        onClick={() => onToggle(group.id!)}
+                        className={cn(
+                            "p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group",
+                            isSelected ? "border-blue-500 bg-blue-50" : "border-slate-100 bg-white hover:border-slate-200"
+                        )}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={cn(
+                                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                                isSelected ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                            )}>
+                                <List size={20} />
+                            </div>
+                            <div>
+                                <span className={cn("block text-sm font-black uppercase tracking-tight", isSelected ? "text-blue-700" : "text-slate-500")}>
+                                    {group.name}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                    {group.addons.length} ITENS • {group.type === 'single' ? 'Único' : 'Múltiplo'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className={cn(
+                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                            isSelected ? "border-blue-500 bg-blue-500 text-white" : "border-slate-200"
+                        )}>
+                            {isSelected && <CheckCircle size={14} />}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
 
 // --- Sub-componente para Adicionais ---
 const AddonsList = ({ groupIndex, control, register }: { groupIndex: number, control: any, register: any }) => {
@@ -265,6 +311,7 @@ const ProductFormPage = () => {
     const navigate = useNavigate();
     const [categories, setCategories] = useState<Category[]>([]);
     const [availableIngredients, setAvailableIngredients] = useState<any[]>([]);
+    const [libraryGroups, setLibraryGroups] = useState<AddonGroup[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'tamanhos' | 'complementos' | 'composição'>('geral');
@@ -331,13 +378,15 @@ const ProductFormPage = () => {
         const loadData = async () => {
             try {
                 setIsLoading(true);
-                const [categoriesData, ingredientsData] = await Promise.all([
+                const [categoriesData, ingredientsData, addonLibraryData] = await Promise.all([
                     getCategories(),
-                    getIngredients()
+                    getIngredients(),
+                    addonService.getAll()
                 ]);
                 
                 setCategories(categoriesData);
                 setAvailableIngredients(ingredientsData);
+                setLibraryGroups(addonLibraryData);
 
                 if (id) {
                     const products = await getProducts();
@@ -376,12 +425,8 @@ const ProductFormPage = () => {
                 ...data,
                 price: Number(data.price),
                 stock: Number(data.stock),
-                addonGroups: data.addonGroups?.map((group: any) => ({
-                    ...group,
-                    addons: group.addons?.map((addon: any) => ({
-                        ...addon,
-                        price: Number(addon.price)
-                    }))
+                addonGroups: data.addonGroups?.filter((g: any) => g.id).map((g: any) => ({
+                    id: g.id
                 })),
                 sizes: data.sizes?.map((size: any) => ({
                     ...size,
@@ -795,56 +840,44 @@ const ProductFormPage = () => {
 
                     <div className={cn("space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300", activeTab !== 'complementos' && 'hidden')}>
                         <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 italic">
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-2">
                                 <h2 className="text-lg font-black flex items-center gap-2 italic text-slate-800">
                                     <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-lg flex items-center justify-center text-sm not-italic">03</span>
-                                    Grupos de Complementos
+                                    Biblioteca de Complementos
                                 </h2>
                                 <button 
                                     type="button" 
-                                    onClick={() => appendAddonGroup({ name: 'Novo Grupo', type: 'multiple', isRequired: false, addons: [] })}
-                                    className="text-blue-600 text-xs font-black uppercase tracking-widest hover:underline flex items-center gap-1"
+                                    onClick={() => navigate('/addons')}
+                                    className="text-blue-600 text-[10px] font-black uppercase tracking-widest hover:underline flex items-center gap-1"
                                 >
-                                    <Plus size={12} /> Criar Novo Grupo
+                                    <Settings2 size={12} /> Gerenciar Biblioteca
                                 </button>
                             </div>
+                            <p className="text-[10px] text-slate-400 mb-8 font-bold uppercase tracking-widest">Selecione abaixo os grupos de adicionais que este produto deve oferecer.</p>
 
-                            <div className="space-y-6">
-                                {addonGroupFields.map((field, index) => (
-                                    <div key={field.id} className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:border-blue-200 transition-colors bg-white">
-                                        <div className="bg-slate-50 p-4 flex justify-between items-center border-b border-slate-100">
-                                            <input 
-                                                {...register(`addonGroups.${index}.name`, { required: true })}
-                                                className="bg-transparent border-none text-sm font-black text-slate-700 focus:ring-0 placeholder:text-slate-400 w-full"
-                                                placeholder="Nome do Grupo"
-                                            />
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-2">
-                                                    <label className="text-xs font-bold text-slate-500">Obrigatório?</label>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        {...register(`addonGroups.${index}.isRequired`)}
-                                                        className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 border-slate-300" 
-                                                    />
-                                                </div>
-                                                <button type="button" onClick={() => removeAddonGroup(index)} className="p-1 text-slate-400 hover:text-red-500 transition">
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="p-4">
-                                            <AddonsList groupIndex={index} control={control} register={register} />
-                                        </div>
-                                    </div>
-                                ))}
-                                
-                                {addonGroupFields.length === 0 && (
-                                    <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-3xl">
-                                        <List className="mx-auto text-slate-200 mb-2" size={32} />
-                                        <p className="text-slate-400 font-bold text-sm">Nenhum grupo de adicionais criado.</p>
-                                    </div>
-                                )}
-                            </div>
+                            <GlobalAddonSelector 
+                                availableGroups={libraryGroups}
+                                selectedGroupIds={watch('addonGroups')?.map((g: any) => g.id) || []}
+                                onToggle={(groupId) => {
+                                    const currentGroups = watch('addonGroups') || [];
+                                    const exists = currentGroups.find((g: any) => g.id === groupId);
+                                    
+                                    if (exists) {
+                                        setValue('addonGroups', currentGroups.filter((g: any) => g.id !== groupId));
+                                    } else {
+                                        const groupToAdd = libraryGroups.find(g => g.id === groupId);
+                                        setValue('addonGroups', [...currentGroups, groupToAdd]);
+                                    }
+                                }}
+                            />
+                            
+                            {libraryGroups.length === 0 && (
+                                <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-3xl">
+                                    <List className="mx-auto text-slate-200 mb-2" size={32} />
+                                    <p className="text-slate-400 font-bold text-sm">Sua biblioteca está vazia.</p>
+                                    <button onClick={() => navigate('/addons')} className="mt-2 text-blue-500 font-bold text-xs uppercase hover:underline">Cadastrar Complementos</button>
+                                </div>
+                            )}
                         </section>
                     </div>
 

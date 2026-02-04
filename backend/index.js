@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 const path = require('path');
 
@@ -10,12 +12,47 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// 1. SEGURANÇA: Configuração de Headers (Helmet)
+// Remove X-Powered-By, previne Clickjacking, Sniffing de MIME, etc.
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" } // Permite carregar imagens de outros domínios se necessário
+}));
+
+// 2. SEGURANÇA: Configuração de CORS Restrita
+// Em produção, substitua '*' pelo domínio real do seu frontend
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['*'];
 app.use(cors({
-  origin: '*', // Permite todos os subdomínios durante a fase de setup
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
+
+// 3. SEGURANÇA: Rate Limiting Global
+// Limita cada IP a 100 requisições a cada 15 minutos
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Muitas requisições vindas deste IP. Tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', globalLimiter);
+
+// 4. SEGURANÇA: Rate Limiting Específico para Login (Proteção Brute-force)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // Apenas 10 tentativas de login por IP a cada 15 minutos
+  message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' }
+});
+app.use('/api/auth/login', loginLimiter);
 
 // Logger
 app.use((req, res, next) => {
@@ -56,6 +93,7 @@ app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/franchise', franchiseRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/addons', require('./src/routes/addonRoutes'));
 app.use('/api/admin/orders', orderRoutes);
 app.use('/api/cashier', cashierRoutes);
 app.use('/api/financial', financialRoutes);
