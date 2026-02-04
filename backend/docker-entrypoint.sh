@@ -33,17 +33,13 @@ file_env() {
 file_env 'DATABASE_URL'
 file_env 'JWT_SECRET'
 
-# Sincroniza o Schema de forma inteligente (Cria tabelas e colunas faltantes)
+# Aplica migrações pendentes de forma segura (sem apagar dados)
 echo "Sincronizando Banco de Dados com o Schema..."
-npx prisma db push --accept-data-loss
+npx prisma migrate deploy
 
-# Executa o Seed de Permissões e SuperAdmin original
+# Executa o Seed de Permissões e SuperAdmin (Este script deve ser inteligente para não duplicar)
 echo "Executando Seed de Permissões e SuperAdmin..."
 node prisma/seed_permissions.js || echo "Aviso: Falha ao rodar seed_permissions.js"
-
-# Executa o Seed de Dados de Teste
-echo "Executando Seed de Dados de Teste..."
-npm run seed || echo "Aviso: Seed de dados de teste falhou ou já existem dados."
 
 # Inicia a aplicação
 echo "Iniciando a aplicação..."

@@ -67,43 +67,13 @@ function generateProductName(categoryName) {
 async function main() {
   console.log('--- INICIANDO SCRIPT DE POPULARIZAÇÃO (SEED) ---');
 
-  // 1. LIMPEZA DO BANCO DE DADOS
-  console.log('Limpando dados antigos...');
-  await prisma.addonIngredient.deleteMany({});
-  await prisma.stockEntryItem.deleteMany({});
-  await prisma.stockEntry.deleteMany({});
-  await prisma.stockLoss.deleteMany({});
-  await prisma.productIngredient.deleteMany({});
-  await prisma.productionLog.deleteMany({});
-  await prisma.ingredientRecipe.deleteMany({});
-  await prisma.ingredient.deleteMany({});
-  await prisma.financialTransaction.deleteMany({});
-  await prisma.cashierSession.deleteMany({});
-  await prisma.bankAccount.deleteMany({});
-  await prisma.supplier.deleteMany({});
-  await prisma.transactionCategory.deleteMany({});
-  await prisma.deliveryOrder.deleteMany({});
-  await prisma.orderItem.deleteMany({});
-  await prisma.payment.deleteMany({});
-  await prisma.order.deleteMany({});
-  await prisma.addon.deleteMany({});
-  await prisma.addonGroup.deleteMany({});
-  await prisma.size.deleteMany({});
-  await prisma.promotion.deleteMany({});
-  await prisma.product.deleteMany({});
-  await prisma.category.deleteMany({});
-  await prisma.tableRequest.deleteMany({});
-  await prisma.table.deleteMany({});
-  await prisma.paymentMethod.deleteMany({});
-  await prisma.deliveryArea.deleteMany({});
-  await prisma.user.deleteMany({});
-  await prisma.role.deleteMany({});
-  await prisma.permission.deleteMany({});
-  await prisma.integrationSettings.deleteMany({});
-  await prisma.restaurantSettings.deleteMany({});
-  await prisma.restaurant.deleteMany({});
-  console.log('Dados antigos limpos com sucesso.');
-  
+  // 1. VERIFICAÇÃO DE DADOS EXISTENTES (Proteção)
+  const existingRestaurants = await prisma.restaurant.count();
+  if (existingRestaurants > 0) {
+    console.log('O banco de dados já possui dados. Script de seed abortado para evitar duplicidade ou perda de dados reais.');
+    return;
+  }
+
   // Limpa o set de nomes de produtos gerados
   generatedProductNames.clear();
 

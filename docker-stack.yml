@@ -83,9 +83,10 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Usando a sintaxe de captura de variável do Traefik v3 para forçar o reconhecimento do host
-        - "traefik.http.routers.client.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.kicardapio.towersfy.com`)"
+        # Regra simplificada e explícita para o Traefik conseguir solicitar o certificado
+        - "traefik.http.routers.client.rule=HostRegexp(`kicardapio.towersfy.com`) || HostRegexp(`{subdomain:[a-z0-9-]+}.kicardapio.towersfy.com`)"
         - "traefik.http.routers.client.entrypoints=websecure"
+        - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.client.loadbalancer.server.port=80"
         - "traefik.http.routers.client.priority=10"

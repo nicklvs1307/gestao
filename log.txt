@@ -4,7 +4,7 @@ Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postg
 The database is already in sync with the Prisma schema.
 Running generate... (Use --skip-generate to skip the generators)
 Running generate... - Prisma Client
-✔ Generated Prisma Client (v6.16.3) to ./node_modules/@prisma/client in 745ms
+✔ Generated Prisma Client (v6.16.3) to ./node_modules/@prisma/client in 743ms
 Executando Seed de Permissões e SuperAdmin...
 --- INICIANDO SEED DE PERMISSÕES E SUPERADMIN ---
 Criando permissões...
@@ -18,38 +18,22 @@ Executando Seed de Dados de Teste...
 > node prisma/seed.js
 --- INICIANDO SCRIPT DE POPULARIZAÇÃO (SEED) ---
 Limpando dados antigos...
-Erro durante a execução do seed: PrismaClientKnownRequestError: 
-Invalid `prisma.user.deleteMany()` invocation:
-Foreign key constraint violated on the constraint: `CashierSession_userId_fkey`
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async main (/app/prisma/seed.js:80:3) {
-  code: 'P2003',
-  meta: { modelName: 'User', constraint: 'CashierSession_userId_fkey' },
-  clientVersion: '6.16.3'
-}
-Aviso: Seed de dados de teste falhou ou já existem dados.
+Dados antigos limpos com sucesso.
+Criando restaurante de teste...
+Restaurante "Hamburgueria Sabor Artesanal" criado.
+Criando usuário administrador...
+Usuário administrador criado (admin@hamburgueriateste.com / admin123).
+Criando configurações do restaurante...
+Configurações padrão criadas.
+Criando mesas...
+20 mesas criadas.
+Criando categorias e produtos em português...
+62 produtos criados em suas categorias.
+Criando promoções em português...
+Promoção de teste criada.
+Criando pedidos falsos para o painel Kanban...
+15 pedidos falsos criados com status variados.
+--- SCRIPT DE POPULARIZAÇÃO FINALIZADO ---
 Iniciando a aplicação...
-node:internal/modules/cjs/loader:1210
-
-  throw err;
-  ^
-Error: Cannot find module 'helmet'
-Require stack:
-- /app/index.js
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
-    at Module._load (node:internal/modules/cjs/loader:1038:27)
-    at Module.require (node:internal/modules/cjs/loader:1289:19)
-    at require (node:internal/modules/helpers:182:18)
-    at Object.<anonymous> (/app/index.js:3:16)
-    at Module._compile (node:internal/modules/cjs/loader:1521:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-    at Module.load (node:internal/modules/cjs/loader:1266:32)
-    at Module._load (node:internal/modules/cjs/loader:1091:12)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [ '/app/index.js' ]
-}
-Node.js v20.20.0
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Servidor rodando em http://localhost:3001
