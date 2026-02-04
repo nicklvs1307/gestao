@@ -83,8 +83,8 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Regra universal para qualquer subdomínio em towersfy.com
-        - 'traefik.http.routers.client.rule=HostRegexp(`[a-z0-9-]+\.towersfy\.com`)'
+        # Regra universal para qualquer subdomínio em towersfy.com, exceto serviços do sistema
+        - 'traefik.http.routers.client.rule=HostRegexp(`[a-z0-9-]+\.towersfy\.com`) && !Host(`container.towersfy.com`, `admin.towersfy.com`, `api.towersfy.com`, `kicardapio.towersfy.com`, `www.towersfy.com`, `api.kicardapio.towersfy.com`)'
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"

@@ -19,7 +19,7 @@ export const getTenantSlug = (): string | null => {
     const subdomain = parts[0];
     
     // Ignora subdomínios reservados do sistema
-    if (['www', 'api', 'admin', 'kicardapio', 'app'].includes(subdomain)) {
+    if (['www', 'api', 'admin', 'kicardapio', 'app', 'container'].includes(subdomain)) {
       return null;
     }
     
