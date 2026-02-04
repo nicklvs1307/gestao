@@ -26,6 +26,33 @@ export const RestaurantProvider: React.FC<RestaurantProviderProps> = ({ children
   useEffect(() => {
     if (settings) {
       applyTheme(settings);
+      
+      // Atualiza o Título da Aba
+      if (settings.restaurantName) {
+        document.title = settings.restaurantName;
+      }
+
+      // Atualiza o Favicon Dinamicamente
+      if (settings.logoUrl) {
+        const updateFavicon = (url: string) => {
+          let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+          
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          
+          // Adiciona o domínio se a URL for relativa
+          const fullUrl = url.startsWith('http') 
+            ? url 
+            : `${import.meta.env.VITE_API_URL || ''}${url}`;
+            
+          link.href = fullUrl;
+        };
+        
+        updateFavicon(settings.logoUrl);
+      }
     }
   }, [settings]);
 
