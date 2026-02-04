@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { addonService, AddonGroup, Addon } from '../services/api/addonService';
-import { ingredientService } from '../services/api/ingredientService';
+import { getIngredients } from '../services/api';
 import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -30,7 +30,7 @@ const AddonManagement: React.FC = () => {
       setLoading(true);
       const [groupsData, ingredientsData] = await Promise.all([
         addonService.getAll(),
-        ingredientService.getAll()
+        getIngredients()
       ]);
       setGroups(groupsData);
       setIngredients(ingredientsData);

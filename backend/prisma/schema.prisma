@@ -138,6 +138,7 @@ model Restaurant {
   deliveryAreas       DeliveryArea[]
   paymentMethods      PaymentMethod[]
   productions         ProductionLog[]
+  addonGroups         AddonGroup[]
 }
 
 model PaymentMethod {
@@ -802,6 +803,7 @@ model Ingredient {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   productLinks ProductIngredient[]
+  addonIngredients AddonIngredient[]
   stockEntries StockEntryItem[] // Histórico de entradas deste insumo
   stockLosses  StockLoss[]      // Histórico de perdas
   
