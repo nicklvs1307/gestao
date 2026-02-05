@@ -21,8 +21,28 @@ import { applyTheme } from '../utils/theme';
 const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const { slug } = useParams<{ slug: string }>();
   const effectiveSlug = restaurantSlug || slug;
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState('todos');
+  const [isCartOpen, setCartOpen] = useState(false);
+  const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isCustomerLoggedIn] = useState(false); 
+  
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isProductModalOpen, setProductModalOpen] = useState(false);
+
+  const { localCartItems, handleAddToCart: addToCart, localCartTotal, handleRemoveFromCart, handleUpdateCartItemQuantity, clearCart } = useLocalCart();
+
+  const [isPixModalOpen, setPixModalOpen] = useState(false);
+  const [pixData, setPixData] = useState<{ qrCodeImage: string; pixCopiaECola: string } | null>(null);
+  const [isPixPaymentLoading, setPixPaymentLoading] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
     const fetchRestaurant = async () => {
       if (!effectiveSlug) return;
       try {
@@ -39,7 +59,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     };
 
     fetchRestaurant();
-    // ...
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
   }, [effectiveSlug]);
 
   if (loading) return <div className="flex items-center justify-center min-h-screen bg-background text-foreground text-sm font-bold animate-pulse">Carregando cardápio...</div>;
