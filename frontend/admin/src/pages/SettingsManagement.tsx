@@ -478,29 +478,6 @@ const SettingsManagement: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                        <div className="flex items-center justify-between p-3 border rounded-xl">
-                            <div>
-                                <p className="text-sm font-bold text-slate-700">Cor Primária</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase">Botões e Destaques</p>
-                            </div>
-                            <input type="color" className="w-12 h-12 rounded-lg cursor-pointer border-none" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} />
-                        </div>
-                        <div className="flex items-center justify-between p-3 border rounded-xl">
-                            <div>
-                                <p className="text-sm font-bold text-slate-700">Cor Secundária</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase">Elementos de Apoio</p>
-                            </div>
-                            <input type="color" className="w-12 h-12 rounded-lg cursor-pointer border-none" value={secondaryColor} onChange={e => setSecondaryColor(e.target.value)} />
-                        </div>
-                        <div className="flex items-center justify-between p-3 border rounded-xl">
-                            <div>
-                                <p className="text-sm font-bold text-slate-700">Cor de Fundo</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase">Área Geral</p>
-                            </div>
-                            <input type="color" className="w-12 h-12 rounded-lg cursor-pointer border-none" value={backgroundColor} onChange={e => setBackgroundColor(e.target.value)} />
-                        </div>
-                    </div>
-                </div>
             </div>
         )}
 
