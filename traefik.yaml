@@ -48,12 +48,22 @@ services:
           - node.role == manager
       labels:
         - "traefik.enable=true"
-        # Roteamento para o Dashboard do Traefik
-        - "traefik.http.routers.traefik-dashboard.rule=Host(`container.towersfy.com`)"
+        
+        # Roteamento para o Dashboard do Traefik (Aceita .com e .com.br)
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`container.towersfy.com`) || Host(`container.towersfy.com.br`)"
         - "traefik.http.routers.traefik-dashboard.service=api@internal"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
         - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencryptresolver"
         - "traefik.http.routers.traefik-dashboard.priority=100"
+        - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth@docker,dash-redirect@docker"
+
+        # Middleware para redirecionar / para /dashboard/
+        - "traefik.http.middlewares.dash-redirect.redirectregex.regex=^https?://container\\.towersfy\\.(com|com\\.br)/?$$"
+        - "traefik.http.middlewares.dash-redirect.redirectregex.replacement=https://container.towersfy.$$1/dashboard/"
+
+        # Opcional: Autenticação para o Dashboard (Segurança)
+        # Usuário: admin / Senha: password (Gerado via htpasswd)
+        # - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$869p.v76$$7H8Vj/H2.G.f9I8Kz7P0l."
         
         - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
         - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
