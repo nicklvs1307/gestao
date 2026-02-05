@@ -33,13 +33,29 @@ file_env() {
 file_env 'DATABASE_URL'
 file_env 'JWT_SECRET'
 
-# Aplica migrações pendentes de forma segura (sem apagar dados)
+# Aguarda o banco de dados estar pronto (evita falha na inicialização)
+echo "Aguardando banco de dados responder..."
+MAX_RETRIES=30
+COUNT=0
+until npx prisma db pull --print > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
+  sleep 2
+  COUNT=$((COUNT + 1))
+  echo "Tentativa $COUNT de $MAX_RETRIES..."
+done
+
+if [ $COUNT -eq $MAX_RETRIES ]; then
+  echo "Erro: Banco de dados não respondeu após $MAX_RETRIES tentativas."
+  exit 1
+fi
+
+# Aplica migrações pendentes de forma segura
 echo "Sincronizando Banco de Dados com o Schema..."
 npx prisma migrate deploy
 
-# Executa o Seed de Permissões e SuperAdmin (Este script deve ser inteligente para não duplicar)
-echo "Executando Seed de Permissões e SuperAdmin..."
-node prisma/seed_permissions.js || echo "Aviso: Falha ao rodar seed_permissions.js"
+# Executa o Seed apenas se for necessário ou de forma silenciosa
+# Aqui você pode adicionar uma lógica para checar se já existe um usuário admin por exemplo
+echo "Executando Seed de Permissões..."
+node prisma/seed_permissions.js > /dev/null 2>&1 || echo "Aviso: Seed já executado ou falhou silenciosamente."
 
 # Inicia a aplicação
 echo "Iniciando a aplicação..."

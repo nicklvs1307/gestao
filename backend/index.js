@@ -15,20 +15,17 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // 1. SEGURANÇA: Confiar no Proxy (Necessário para Cloudflare/Traefik)
-// Permite que o Express e o Rate Limit obtenham o IP real do cliente
 app.set('trust proxy', 1);
 
 // 2. LOGGING: Captura requisições HTTP e envia para o Winston
 app.use(morgan('combined', { stream: logger.stream }));
 
 // 2. SEGURANÇA: Configuração de Headers (Helmet)
-// Remove X-Powered-By, previne Clickjacking, Sniffing de MIME, etc.
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" } // Permite carregar imagens de outros domínios se necessário
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 // 3. SEGURANÇA: Configuração de CORS Restrita
-// Em produção, substitua '*' pelo domínio real do seu frontend
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['*'];
 app.use(cors({
   origin: (origin, callback) => {
@@ -44,21 +41,21 @@ app.use(cors({
 
 app.use(express.json());
 
-// 4. SEGURANÇA: Rate Limiting Global
-// Limita cada IP a 100 requisições a cada 15 minutos
+// 4. SEGURANÇA: Rate Limiting Global (SPA Friendly)
+// Aumentado para 1000 requisições a cada 15 min (Cerca de 1 requisição por segundo contínua)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000, 
   message: { error: 'Muitas requisições vindas deste IP. Tente novamente em 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use('/api/', globalLimiter);
 
-// 5. SEGURANÇA: Rate Limiting Específico para Login (Proteção Brute-force)
+// 5. SEGURANÇA: Rate Limiting Específico para Login
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10, // Apenas 10 tentativas de login por IP a cada 15 minutos
+  max: 20, // Aumentado para 20 tentativas para evitar falsos positivos
   message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' }
 });
 app.use('/api/auth/login', loginLimiter);
