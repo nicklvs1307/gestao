@@ -19,9 +19,10 @@ import { applyTheme } from '../utils/theme';
 // ... (mesma interface)
 
 const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
-  // ... (mesmos estados)
-  
-  useEffect(() => {
+  const { slug } = useParams<{ slug: string }>();
+  const effectiveSlug = restaurantSlug || slug;
+  const navigate = useNavigate(); 
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const fetchRestaurant = async () => {
       if (!effectiveSlug) return;
       try {
