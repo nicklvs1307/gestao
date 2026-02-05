@@ -6,6 +6,7 @@ const upload = require('../config/multer');
 
 // Admin
 router.get('/', needsAuth, SettingsController.getSettings);
+router.get('/check-slug', needsAuth, SettingsController.checkSlugAvailability);
 router.put('/', needsAuth, SettingsController.updateSettings);
 router.put('/status', needsAuth, SettingsController.toggleStatus);
 router.post('/logo', needsAuth, upload.single('logo'), SettingsController.updateLogo);

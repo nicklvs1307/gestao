@@ -23,3 +23,8 @@ export const toggleStoreStatus = async (isOpen: boolean) => {
     const response = await apiClient.put('/settings/status', { isOpen });
     return response.data;
 };
+
+export const checkSlugAvailability = async (slug: string) => {
+  const response = await apiClient.get(`/settings/check-slug?slug=${slug}`);
+  return response.data;
+};

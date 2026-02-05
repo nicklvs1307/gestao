@@ -40,13 +40,36 @@ const getSettings = async (req, res) => {
 
 const updateSettings = async (req, res) => {
     const { 
-        name, address, phone, serviceTaxPercentage, openingHours,
+        name, slug, address, phone, serviceTaxPercentage, openingHours,
         primaryColor, secondaryColor, backgroundColor, backgroundType, 
         backgroundImageUrl, isOpen, deliveryFee, deliveryTime, autoAcceptOrders,
         welcomeMessage, menuUrl, allowTakeaway
     } = req.body;
 
     try {
+        // Validação de Slug Personalizada
+        let finalSlug = slug ? slugify(slug) : undefined;
+        
+        if (finalSlug) {
+            const existingSlug = await prisma.restaurant.findFirst({
+                where: { 
+                    slug: finalSlug,
+                    NOT: { id: req.restaurantId }
+                }
+            });
+
+            if (existingSlug) {
+                return res.status(400).json({ error: 'Este endereço (slug) já está em uso por outro restaurante.' });
+            }
+        } else if (name) {
+            // Se mudar o nome e não enviar slug, gera uma nova (opcional, pode-se preferir manter a antiga)
+            // Para evitar quebrar links, só geramos se o restaurante não tiver uma slug ainda
+            const current = await prisma.restaurant.findUnique({ where: { id: req.restaurantId } });
+            if (!current.slug) {
+                finalSlug = slugify(name);
+            }
+        }
+
         const [updatedRest, updatedSettings] = await prisma.$transaction([
             prisma.restaurant.update({ 
                 where: { id: req.restaurantId }, 
@@ -56,7 +79,7 @@ const updateSettings = async (req, res) => {
                     phone, 
                     serviceTaxPercentage: serviceTaxPercentage !== undefined ? parseFloat(serviceTaxPercentage) : undefined,
                     openingHours,
-                    slug: name ? slugify(name) : undefined 
+                    slug: finalSlug 
                 } 
             }),
             prisma.restaurantSettings.update({ 
@@ -81,6 +104,28 @@ const updateSettings = async (req, res) => {
     } catch (error) { 
         console.error('Erro ao atualizar configurações:', error);
         res.status(500).json({ error: 'Erro ao atualizar.' }); 
+    }
+};
+
+const checkSlugAvailability = async (req, res) => {
+    try {
+        const { slug } = req.query;
+        if (!slug) return res.status(400).json({ error: 'Slug não fornecida.' });
+
+        const formattedSlug = slugify(slug);
+        const existing = await prisma.restaurant.findFirst({
+            where: { 
+                slug: formattedSlug,
+                NOT: { id: req.restaurantId } // Ignora o próprio restaurante se já estiver logado
+            }
+        });
+
+        res.json({ 
+            available: !existing,
+            formattedSlug 
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao verificar disponibilidade.' });
     }
 };
 
@@ -182,5 +227,6 @@ module.exports = {
     getClientSettings,
     updateLogo,
     toggleStatus,
-    getRestaurantBySlug
+    getRestaurantBySlug,
+    checkSlugAvailability
 };

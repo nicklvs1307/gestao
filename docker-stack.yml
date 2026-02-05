@@ -35,13 +35,13 @@ services:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
         # Roteamento da API (Prioridade Alta para não conflitar com lojas)
-        - "traefik.http.routers.backend.rule=Host(`api.kicardapio.towersfy.com`)"
+        - "traefik.http.routers.backend.rule=Host(`api.kicardapio.towersfy.com`) || Host(`apikicardapio.towersfy.com`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.backend.loadbalancer.server.port=3001"
         - "traefik.http.routers.backend.priority=100"
         # Roteamento de Uploads
-        - "traefik.http.routers.backend-uploads.rule=Host(`api.kicardapio.towersfy.com`) && PathPrefix(`/uploads`)"
+        - "traefik.http.routers.backend-uploads.rule=(Host(`api.kicardapio.towersfy.com`) || Host(`apikicardapio.towersfy.com`)) && PathPrefix(`/uploads`)"
         - "traefik.http.routers.backend-uploads.entrypoints=websecure"
         - "traefik.http.routers.backend-uploads.tls.certresolver=letsencryptresolver"
         - "traefik.http.routers.backend-uploads.priority=100"

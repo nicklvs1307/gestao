@@ -1,12 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getSettings, updateSettings, getCategories, uploadLogo } from '../services/api';
+import { getSettings, updateSettings, getCategories, uploadLogo, checkSlugAvailability } from '../services/api';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printing';
 import ReceiptPreview from "../components/ReceiptPreview";
 import { 
   Save, Copy, ExternalLink, Upload, Palette, Store, 
   Clock, Percent, MapPin, Phone, Link as LinkIcon, Image as ImageIcon,
-  CheckCircle, Loader2, Printer, RefreshCw, AlertTriangle, LayoutTemplate, Settings, Plus, Trash2
+  CheckCircle, Loader2, Printer, RefreshCw, AlertTriangle, LayoutTemplate, Settings, Plus, Trash2,
+  XCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -49,7 +50,32 @@ const SettingsManagement: React.FC = () => {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [slug, setSlug] = useState('');
+  const [originalSlug, setOriginalSlug] = useState('');
+  const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [serviceTaxPercentage, setServiceTaxPercentage] = useState(10);
+
+  // Debounce para verificação de slug
+  useEffect(() => {
+    if (!slug || slug === originalSlug) {
+      setIsSlugAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingSlug(true);
+      try {
+        const { available } = await checkSlugAvailability(slug);
+        setIsSlugAvailable(available);
+      } catch (error) {
+        console.error('Erro ao verificar slug:', error);
+      } finally {
+        setIsCheckingSlug(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [slug, originalSlug]);
   const [openingHours, setOpeningHours] = useState('');
   const [logoUrl, setLogoUrl] = useState(initialLogo);
   const [deliveryFee, setDeliveryFee] = useState(0);
@@ -113,6 +139,7 @@ const SettingsManagement: React.FC = () => {
         setAddress(settingsData.address || '');
         setPhone(settingsData.phone || '');
         setSlug(settingsData.slug || '');
+        setOriginalSlug(settingsData.slug || '');
         setServiceTaxPercentage(settingsData.serviceTaxPercentage || 10);
         setOpeningHours(settingsData.openingHours || '');
         const baseUrl = import.meta.env.VITE_API_URL || '';
@@ -207,20 +234,25 @@ const SettingsManagement: React.FC = () => {
   };
 
   const handleSaveChanges = async () => {
+    if (slug !== originalSlug && isSlugAvailable === false) {
+      toast.error('O endereço escolhido já está em uso.');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateSettings({
         name: restaurantName, 
+        slug, // Enviando a slug personalizada
         address, 
         phone, 
-        logoUrl: logoUrl, // Salva a URL como está (completa)
         serviceTaxPercentage,
         openingHours, 
         primaryColor, 
         secondaryColor, 
         backgroundColor,
         backgroundType, 
-        backgroundImageUrl: backgroundImageUrl, // Salva a URL da capa completa
+        backgroundImageUrl, 
         isOpen: isStoreOpen,
         deliveryFee, 
         deliveryTime, 
@@ -229,6 +261,8 @@ const SettingsManagement: React.FC = () => {
         pointsPerReal,
         cashbackPercentage
       });
+      setOriginalSlug(slug);
+      setIsSlugAvailable(null);
       localStorage.setItem('printer_config', JSON.stringify(printerConfig));
       localStorage.setItem('receipt_settings', JSON.stringify(receiptSettings));
       toast.success('Configurações salvas!');
@@ -623,14 +657,30 @@ const SettingsManagement: React.FC = () => {
                 <div className="grid gap-6">
                     <div className="bg-muted/30 p-4 rounded-lg border border-dashed">
                         <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                            <Store size={14} className="text-primary"/> Identificador da Loja (Slug)
+                            <Store size={14} className="text-primary"/> Endereço do Cardápio (Slug Personalizada)
                         </label>
-                        <div className="flex gap-2 mt-2">
-                            <input 
-                                readOnly 
-                                className="flex-1 border rounded-md h-10 px-3 bg-white font-mono text-sm" 
-                                value={slug} 
-                            />
+                        <div className="relative flex gap-2 mt-2">
+                            <div className="relative flex-1">
+                                <input 
+                                    type="text"
+                                    className={cn(
+                                        "w-full border rounded-md h-12 px-3 bg-white font-mono text-sm transition-all outline-none",
+                                        isSlugAvailable === true && "border-emerald-500 ring-2 ring-emerald-100",
+                                        isSlugAvailable === false && "border-red-500 ring-2 ring-red-100"
+                                    )}
+                                    value={slug} 
+                                    onChange={e => {
+                                        const val = e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+                                        setSlug(val);
+                                    }}
+                                    placeholder="ex: minha-loja"
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                    {isCheckingSlug && <Loader2 size={16} className="animate-spin text-muted-foreground" />}
+                                    {isSlugAvailable === true && <CheckCircle size={16} className="text-emerald-500" />}
+                                    {isSlugAvailable === false && <XCircle size={16} className="text-red-500" />}
+                                </div>
+                            </div>
                             <button 
                                 onClick={() => {navigator.clipboard.writeText(slug); toast.success('Slug copiado!');}} 
                                 className="bg-white border px-3 rounded-md hover:bg-slate-50 transition-colors"
@@ -639,7 +689,17 @@ const SettingsManagement: React.FC = () => {
                                 <Copy size={16}/>
                             </button>
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-2">Este é o identificador único da sua loja no sistema.</p>
+                        {isSlugAvailable === false && (
+                            <p className="text-[11px] text-red-600 font-bold mt-2 flex items-center gap-1">
+                                <AlertTriangle size={12}/> Este endereço já está em uso por outro restaurante.
+                            </p>
+                        )}
+                        {isSlugAvailable === true && (
+                            <p className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center gap-1">
+                                <CheckCircle size={12}/> Endereço disponível!
+                            </p>
+                        )}
+                        <p className="text-[10px] text-slate-500 mt-2">O endereço deve conter apenas letras, números e hífens. Ex: `pizzaria-do-joao`</p>
                     </div>
 
                     <div className="space-y-4">

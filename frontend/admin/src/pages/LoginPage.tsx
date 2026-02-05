@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
 import { login } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { UtensilsCrossed, ChefHat } from 'lucide-react';
+import logoImg from '../assets/logo.png';
 
 const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
@@ -16,7 +16,6 @@ const LoginPage: React.FC = () => {
       const { token, user } = await login(data);
       authLogin(token, user);
       
-      // Redirecionamento Inteligente
       if (user.role === 'waiter') {
           navigate('/waiter');
       } else {
@@ -29,49 +28,49 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-950">
-      {/* Imagem de Fundo Imersiva */}
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#0f172a]">
+      {/* Imagem de Fundo com Overlay Sólido */}
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-[20s] hover:scale-110"
+        className="absolute inset-0 z-0 bg-cover bg-center"
         style={{ 
           backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=2070&auto=format&fit=crop")',
-          filter: 'brightness(0.3) saturate(1.2)'
         }}
       />
+      <div className="absolute inset-0 z-1 bg-slate-950/80 backdrop-blur-sm" />
 
-      {/* Camada de Overlay Gradiente */}
-      <div className="absolute inset-0 z-1 bg-gradient-to-br from-black/80 via-black/40 to-black/80" />
-
-      {/* Container Central (Glassmorphism) */}
-      <div className="relative z-10 w-full max-w-md p-8 sm:p-12 mx-4 animate-in fade-in zoom-in-95 duration-700">
-        <div className="bg-white/10 dark:bg-black/40 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col items-center">
+      {/* Container Central - Design Sólido e Moderno */}
+      <div className="relative z-10 w-full max-w-[420px] mx-4 animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-white rounded-[2rem] p-10 shadow-2xl flex flex-col items-center border border-slate-200">
           
-          {/* Logo e Branding */}
-          <div className="mb-8 flex flex-col items-center">
-            <div className="w-20 h-20 bg-gold rounded-3xl flex items-center justify-center shadow-lg shadow-gold/20 transform -rotate-6 group transition-transform hover:rotate-0">
-                <ChefHat size={40} className="text-black" />
+          {/* Logo Branding */}
+          <div className="mb-10 flex flex-col items-center">
+            <div className="w-32 h-32 flex items-center justify-center mb-4">
+                <img 
+                  src={logoImg} 
+                  alt="Kicardapio" 
+                  className="w-full h-full object-contain drop-shadow-md"
+                />
             </div>
-            <h1 className="text-3xl font-black text-white mt-6 italic tracking-tight">
-                CARDÁPIO<span className="text-gold">TABLET</span>
-            </h1>
-            <div className="w-12 h-1 bg-gold mt-2 rounded-full opacity-50" />
+            <div className="text-center">
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+                KICARDÁPIO
+              </h1>
+              <p className="text-slate-500 text-sm font-medium">Gestão Inteligente de Pedidos</p>
+            </div>
+            <div className="w-16 h-1 bg-orange-500 mt-4 rounded-full" />
           </div>
 
           <div className="w-full">
             <AuthForm onSubmit={handleSubmit} error={error} />
           </div>
 
-          {/* Footer do Login */}
-          <div className="mt-8 text-center">
-            <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">
-                Sistema de Gestão Profissional v2.5
+          {/* Footer */}
+          <div className="mt-10 text-center">
+            <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-widest">
+                &copy; 2026 Kicardapio. Todos os direitos reservados.
             </p>
           </div>
         </div>
-
-        {/* Efeito Decorativo */}
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-gold/10 rounded-full blur-[80px]" />
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-orange-500/10 rounded-full blur-[80px]" />
       </div>
     </div>
   );
