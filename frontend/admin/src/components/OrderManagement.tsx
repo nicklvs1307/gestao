@@ -105,22 +105,22 @@ const OrderManagement: React.FC = () => {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-1">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 italic uppercase tracking-tighter">
+          <h1 className="text-xl font-black text-slate-900 flex items-center gap-2 italic uppercase tracking-tighter">
             Gestão de Pedidos
-            <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{counts.ALL} ativos</span>
+            <span className="bg-orange-600/10 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{counts.ALL} ativos</span>
           </h1>
-          <p className="text-slate-500 text-[10px] font-medium uppercase tracking-widest">Fluxo de produção e entregas em tempo real.</p>
+          <p className="text-slate-500 text-[10px] font-medium uppercase tracking-widest leading-none mt-1">Fluxo de produção em tempo real.</p>
         </div>
         
         <div className="flex items-center gap-3">
             {selectedOrderIds.length > 0 && (
-                <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <span className="text-[9px] font-black text-primary bg-primary/5 px-2 py-1.5 rounded-lg mr-1 uppercase italic">
+                <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                    <span className="text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-1.5 rounded-lg mr-1 uppercase italic">
                         {selectedOrderIds.length} Selecionados
                     </span>
                     <button 
                         onClick={() => handleBulkStatusChange('READY')}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md transition-all"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md transition-all"
                     >
                         Prontos
                     </button>
@@ -133,38 +133,37 @@ const OrderManagement: React.FC = () => {
                     <button 
                         onClick={() => setSelectedOrderIds([])}
                         className="text-slate-400 hover:text-red-500 transition-colors p-1.5"
-                        title="Limpar Seleção"
                     >
                         <X size={14} />
                     </button>
                 </div>
             )}
 
-            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
                 <button 
                     onClick={() => setActiveSegment('DELIVERY')}
-                    className={cn("px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all", activeSegment === 'DELIVERY' || activeSegment === 'ALL' ? "bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-white" : "text-slate-400 hover:text-slate-600")}
+                    className={cn("px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all", activeSegment === 'DELIVERY' || activeSegment === 'ALL' ? "bg-white shadow-sm text-slate-900" : "text-slate-400 hover:text-slate-600")}
                 >
                     Delivery / Balcão <span className="opacity-50 ml-1">({counts.DELIVERY})</span>
                 </button>
                 <button 
                     onClick={() => navigate('/tables')}
-                    className="px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all text-slate-400 hover:text-primary hover:bg-white"
+                    className="px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all text-slate-400 hover:text-orange-600 hover:bg-white"
                 >
-                    Ir para Mesas (Salão)
+                    Ir para Mesas
                 </button>
             </div>
 
-            <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
                 <button 
                     onClick={() => setViewMode('kanban')} 
-                    className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white dark:bg-slate-900 text-primary shadow-sm" : "text-slate-400")}
+                    className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}
                 >
                     <Kanban size={16} />
                 </button>
                 <button 
                     onClick={() => setViewMode('list')} 
-                    className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white dark:bg-slate-900 text-primary shadow-sm" : "text-slate-400")}
+                    className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}
                 >
                     <List size={16} />
                 </button>
@@ -172,7 +171,7 @@ const OrderManagement: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100/30 p-1">
+      <div className="flex-1 min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-1">
         {viewMode === 'kanban' ? (
           <OrderKanbanBoard 
             orders={filteredOrders} 

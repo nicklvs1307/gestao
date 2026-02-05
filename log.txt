@@ -1,36 +1,22 @@
-Sincronizando Banco de Dados com o Schema...
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
-24 migrations found in prisma/migrations
-No pending migrations to apply.
-Executando Seed de Permissões e SuperAdmin...
---- INICIANDO SEED DE PERMISSÕES E SUPERADMIN ---
-Criando permissões...
-Criando role de Super Admin...
-Criando usuário SuperAdmin...
-Criando roles padrão de franquia...
---- SEED DE PERMISSÕES FINALIZADO ---
-Login: super@admin.com / Senha: superadmin123
-Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
-INF INF INF INF Servidor rodando em http://localhost:3001 
-ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users. See https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ for more information.
-    at Object.xForwardedForHeader (/app/node_modules/express-rate-limit/dist/index.cjs:185:13)
-    at wrappedValidations.<computed> [as xForwardedForHeader] (/app/node_modules/express-rate-limit/dist/index.cjs:397:22)
-    at Object.keyGenerator (/app/node_modules/express-rate-limit/dist/index.cjs:658:20)
-    at /app/node_modules/express-rate-limit/dist/index.cjs:710:32
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async /app/node_modules/express-rate-limit/dist/index.cjs:691:5 {
-  code: 'ERR_ERL_UNEXPECTED_X_FORWARDED_FOR',
-  help: 'https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/'
-}
-ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users. See https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ for more information.
-    at Object.xForwardedForHeader (/app/node_modules/express-rate-limit/dist/index.cjs:185:13)
-    at wrappedValidations.<computed> [as xForwardedForHeader] (/app/node_modules/express-rate-limit/dist/index.cjs:397:22)
-    at Object.keyGenerator (/app/node_modules/express-rate-limit/dist/index.cjs:658:20)
-    at /app/node_modules/express-rate-limit/dist/index.cjs:710:32
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async /app/node_modules/express-rate-limit/dist/index.cjs:691:5 {
-  code: 'ERR_ERL_UNEXPECTED_X_FORWARDED_FOR',
-  help: 'https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/'
-}
+index-1l9QuRnW.js:819 Domain Debug: {hostname: 'romapizzaria.towersfy.com', detectedSlug: 'romapizzaria', finalSlug: 'romapizzaria'}
+index-1l9QuRnW.js:819 Uncaught ReferenceError: handleProductCardClick is not defined
+    at Pb (index-1l9QuRnW.js:819:41289)
+    at Iu (index-1l9QuRnW.js:48:48097)
+    at cc (index-1l9QuRnW.js:48:70898)
+    at np (index-1l9QuRnW.js:48:81231)
+    at Mp (index-1l9QuRnW.js:48:117001)
+    at Ax (index-1l9QuRnW.js:48:116047)
+    at Rc (index-1l9QuRnW.js:48:115879)
+    at _p (index-1l9QuRnW.js:48:112672)
+    at Pp (index-1l9QuRnW.js:48:124472)
+    at MessagePort.W (index-1l9QuRnW.js:25:1609)
+Pb @ index-1l9QuRnW.js:819
+Iu @ index-1l9QuRnW.js:48
+cc @ index-1l9QuRnW.js:48
+np @ index-1l9QuRnW.js:48
+Mp @ index-1l9QuRnW.js:48
+Ax @ index-1l9QuRnW.js:48
+Rc @ index-1l9QuRnW.js:48
+_p @ index-1l9QuRnW.js:48
+Pp @ index-1l9QuRnW.js:48
+W @ index-1l9QuRnW.js:25

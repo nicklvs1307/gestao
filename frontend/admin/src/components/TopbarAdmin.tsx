@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, BarChart3, CheckCircle, Moon, Sun, Building2 } from 'lucide-react';
+import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, BarChart3, CheckCircle, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { getAdminOrders, getTableRequests } from '../services/api';
@@ -17,7 +16,6 @@ interface TopbarAdminProps {
 
 const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
@@ -82,9 +80,9 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
 
   return (
     <>
-        <header className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md h-14 px-6 flex items-center justify-between z-40 sticky top-0 border-b border-slate-100 dark:border-slate-800 shadow-sm transition-all">
+        <header className="bg-white/95 backdrop-blur-md h-14 px-6 flex items-center justify-between z-40 sticky top-0 border-b border-slate-200 shadow-sm transition-all">
             <div className="flex items-center gap-4">
-                <button onClick={onMenuClick} className="p-2 bg-slate-50 dark:bg-slate-900 text-slate-600 rounded-lg hover:bg-slate-900 hover:text-white transition-all">
+                <button onClick={onMenuClick} className="p-2 bg-slate-100 text-slate-900 rounded-lg hover:bg-slate-900 hover:text-white transition-all">
                     <Menu size={18} />
                 </button>
                 <div className="h-8 w-auto cursor-pointer" onClick={() => navigate('/dashboard')}>
@@ -138,20 +136,11 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                     </div>
                 )}
 
-                {/* ALTERNAR TEMA */}
-                <button 
-                    onClick={toggleTheme}
-                    className="p-2 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm"
-                    title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-                >
-                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-                </button>
-
                 {/* NOTIFICAÇÕES */}
                 <div className="relative">
                     <button onClick={() => setNotificationsOpen(!isNotificationsOpen)} className={cn(
-                        "p-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-slate-100 border transition-all relative", 
-                        notifCount > 0 && "text-primary border-primary/20"
+                        "p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 border border-transparent transition-all relative", 
+                        notifCount > 0 && "text-primary border-primary/20 bg-orange-50"
                     )}>
                         <Bell size={18} />
                         {notifCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[8px] font-black rounded-full flex items-center justify-center animate-bounce">{notifCount}</span>}
@@ -160,26 +149,35 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
 
                 {/* PERFIL (LOGO DA EMPRESA) */}
                 <div className="relative">
-                    <div onClick={() => setProfileOpen(!isProfileOpen)} className="flex items-center gap-3 cursor-pointer p-1.5 rounded-lg hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                    <div onClick={() => setProfileOpen(!isProfileOpen)} className="flex items-center gap-3 cursor-pointer p-1.5 rounded-lg hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200">
                         <div className="text-right hidden sm:block">
                             <p className="text-xs font-black text-slate-900 leading-none italic">{user?.name || 'Usuário'}</p>
                             <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-tighter">{displayName}</p>
                         </div>
-                        <div className="h-10 w-10 rounded-xl bg-white border-2 border-slate-100 flex items-center justify-center overflow-hidden shadow-sm">
+                        <div className="h-10 w-10 rounded-xl bg-white border-2 border-slate-200 flex items-center justify-center overflow-hidden shadow-sm">
                             {displayLogo ? (
                                 <img src={displayLogo.startsWith('http') ? displayLogo : `${import.meta.env.VITE_API_URL || ''}${displayLogo}`} alt="Empresa" className="w-full h-full object-cover" />
                             ) : (
                                 <Building2 size={20} className="text-slate-300" />
                             )}
                         </div>
-                        <ChevronDown size={12} className={cn("text-slate-300 transition-transform", isProfileOpen && "rotate-180")} />
+                        <ChevronDown size={12} className={cn("text-slate-400 transition-transform", isProfileOpen && "rotate-180")} />
                     </div>
                     {isProfileOpen && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in slide-in-from-top-2">
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in slide-in-from-top-2">
                             <div className="p-2 space-y-0.5">
                                 <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                                     <Settings size={16} className="text-slate-400" /> Configurações da Loja
                                 </Link>
+                                <button onClick={() => { logout(); navigate('/login'); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest italic mt-1">
+                                    <LogOut size={16} /> Encerrar Sessão
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </header>
                                 <button onClick={() => { logout(); navigate('/login'); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest italic mt-1">
                                     <LogOut size={16} /> Encerrar Sessão
                                 </button>

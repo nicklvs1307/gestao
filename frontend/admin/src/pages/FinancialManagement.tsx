@@ -139,38 +139,37 @@ const FinancialManagement: React.FC = () => {
                         <button 
                             key={tab.id}
                             onClick={() => handleTabChange(tab.id)}
-                            className={cn(
-                                "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap",
-                                activeTab === tab.id 
-                                    ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm" 
-                                    : "text-slate-400 hover:text-slate-600"
-                            )}
-                        >
-                            <tab.icon size={14} /> {tab.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {activeTab === 'transactions' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-300">
-                    <div className="bg-emerald-50 dark:bg-emerald-950/20 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                        <h3 className="text-emerald-600 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest mb-1">Receitas</h3>
-                        <p className="text-2xl font-black text-emerald-900 dark:text-emerald-100 tracking-tighter italic">R$ {summary.totalIncome.toFixed(2)}</p>
-                    </div>
-                    <div className="bg-red-50 dark:bg-red-950/20 p-5 rounded-2xl border border-red-100 dark:border-red-900/30 shadow-sm">
-                        <h3 className="text-red-600 dark:text-red-400 font-black text-[10px] uppercase tracking-widest mb-1">Despesas</h3>
-                        <p className="text-2xl font-black text-red-900 dark:text-red-100 tracking-tighter italic">R$ {summary.totalExpense.toFixed(2)}</p>
-                    </div>
-                    <div className="bg-blue-50 dark:bg-blue-950/20 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/30 shadow-sm">
-                        <h3 className="text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest mb-1">Saldo Atual</h3>
-                        <p className={cn("text-2xl font-black tracking-tighter italic", (summary.totalIncome - summary.totalExpense) >= 0 ? "text-blue-900 dark:text-blue-100" : "text-red-900 dark:text-red-400")}>
-                            R$ {(summary.totalIncome - summary.totalExpense).toFixed(2)}
-                        </p>
-                    </div>
-                </div>
-            )}
-
+                                                            className={cn(
+                                                            "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap",
+                                                            activeTab === tab.id 
+                                                                ? "bg-white text-slate-900 shadow-sm" 
+                                                                : "text-slate-400 hover:text-slate-600"
+                                                        )}
+                                                    >
+                                                        <tab.icon size={14} /> {tab.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                            
+                                        {activeTab === 'transactions' && (
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-300">
+                                                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm">
+                                                    <h3 className="text-emerald-600 font-black text-[10px] uppercase tracking-widest mb-1">Receitas</h3>
+                                                    <p className="text-2xl font-black text-emerald-900 tracking-tighter italic">R$ {summary.totalIncome.toFixed(2)}</p>
+                                                </div>
+                                                <div className="bg-red-50 p-5 rounded-2xl border border-red-100 shadow-sm">
+                                                    <h3 className="text-red-600 font-black text-[10px] uppercase tracking-widest mb-1">Despesas</h3>
+                                                    <p className="text-2xl font-black text-red-900 tracking-tighter italic">R$ {summary.totalExpense.toFixed(2)}</p>
+                                                </div>
+                                                <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 shadow-sm">
+                                                    <h3 className="text-blue-600 font-black text-[10px] uppercase tracking-widest mb-1">Saldo Atual</h3>
+                                                    <p className={cn("text-2xl font-black tracking-tighter italic", (summary.totalIncome - summary.totalExpense) >= 0 ? "text-blue-900" : "text-red-900")}>
+                                                        R$ {(summary.totalIncome - summary.totalExpense).toFixed(2)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
             <div className="ui-card overflow-hidden">
                 <div className="p-5 border-b border-border bg-muted/20 flex justify-between items-center">
                     <h3 className="font-black text-foreground uppercase italic tracking-widest text-xs flex items-center gap-2">

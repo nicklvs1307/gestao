@@ -72,20 +72,20 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+    <div className="ui-modal-overlay">
+      <div className="ui-modal-content w-full max-w-md">
         
         {/* Header */}
-        <div className="px-8 py-6 border-b bg-slate-50 flex justify-between items-center shrink-0">
+        <div className="px-8 py-6 border-b bg-slate-50/50 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-3">
-                <div className="bg-slate-900 text-white p-2.5 rounded-xl">
+                <div className="bg-slate-900 text-white p-2.5 rounded-xl shadow-sm">
                     <User size={20} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter">
+                    <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                         {isEditing ? 'Editar Integrante' : 'Novo Integrante'}
                     </h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Acesso ao Sistema</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Acesso ao Sistema</p>
                 </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-slate-200 text-slate-400 hover:text-slate-900 rounded-full transition-all">
@@ -94,15 +94,15 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <form onSubmit={handleSubmit} className="p-8 space-y-5">
-                <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Nome Completo</label>
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
                     <div className="relative group">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-600 transition-colors" size={18} />
                         <input 
                             type="text" 
                             required
-                            className="w-full h-12 pl-11 pr-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 focus:border-primary focus:bg-white outline-none transition-all"
+                            className="ui-input w-full pl-11"
                             placeholder="Ex: João da Silva"
                             value={name} 
                             onChange={e => setName(e.target.value)} 
@@ -110,14 +110,14 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                 </div>
 
-                <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">E-mail de Login</label>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail de Login</label>
                     <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-600 transition-colors" size={18} />
                         <input 
                             type="email" 
                             required
-                            className="w-full h-12 pl-11 pr-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 focus:border-primary focus:bg-white outline-none transition-all"
+                            className="ui-input w-full pl-11"
                             placeholder="joao@exemplo.com"
                             value={email} 
                             onChange={e => setEmail(e.target.value)} 
@@ -125,16 +125,16 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                 </div>
 
-                <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">
-                        Senha {isEditing && <span className="text-primary italic">(opcional)</span>}
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                        Senha {isEditing && <span className="text-orange-600 italic font-medium">(opcional)</span>}
                     </label>
                     <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-600 transition-colors" size={18} />
                         <input 
                             type="password" 
                             required={!isEditing}
-                            className="w-full h-12 pl-11 pr-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 focus:border-primary focus:bg-white outline-none transition-all"
+                            className="ui-input w-full pl-11"
                             placeholder="••••••••"
                             value={password} 
                             onChange={e => setPassword(e.target.value)} 
@@ -142,28 +142,28 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                 </div>
 
-                <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Cargo / Permissões</label>
-                    <div className="space-y-2 max-h-48 overflow-y-auto p-1">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-2">Cargo / Permissões</label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto p-1 custom-scrollbar">
                         {availableRoles.map(r => (
                             <button
                                 key={r.id}
                                 type="button"
                                 onClick={() => {
                                     setRoleId(r.id);
-                                    setRole(r.name.toLowerCase()); // Fallback role string
+                                    setRole(r.name.toLowerCase()); 
                                 }}
                                 className={cn(
-                                    "w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left",
+                                    "w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left group",
                                     roleId === r.id 
-                                        ? "bg-slate-900 text-white border-slate-900 shadow-md" 
+                                        ? "bg-slate-900 text-white border-slate-900 shadow-lg" 
                                         : "bg-slate-50 text-slate-500 border-slate-100 hover:border-slate-200"
                                 )}
                             >
-                                <Award size={16} className={roleId === r.id ? "text-primary" : "text-slate-300"} />
+                                <Award size={18} className={roleId === r.id ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400"} />
                                 <div>
-                                    <p className="text-xs font-black uppercase tracking-tighter">{r.name}</p>
-                                    {r.description && <p className="text-[10px] opacity-70 font-medium">{r.description}</p>}
+                                    <p className="text-xs font-black uppercase tracking-tight">{r.name}</p>
+                                    {r.description && <p className="text-[10px] opacity-60 font-medium leading-tight">{r.description}</p>}
                                 </div>
                             </button>
                         ))}
@@ -174,17 +174,17 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                     <button 
                         type="button"
                         onClick={onClose}
-                        className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors"
+                        className="flex-1 px-6 py-3 text-xs font-black uppercase text-slate-400 hover:text-slate-900 transition-all"
                     >
                         Cancelar
                     </button>
                     <button 
                         type="submit"
                         disabled={isSaving}
-                        className="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+                        className="ui-button-primary flex-1"
                     >
                         {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle size={18} />}
-                        {isEditing ? 'Salvar Alterações' : 'Criar Usuário'}
+                        {isEditing ? 'Salvar' : 'Criar'}
                     </button>
                 </div>
             </form>

@@ -176,24 +176,28 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                     )}
                 </section>
 
-                <section className="bg-slate-900 text-white rounded-2xl p-5 shadow-xl">
-                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2">
-                        <CreditCard size={14} /> Resumo Financeiro
+                <section className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
+                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2 relative z-10">
+                        <CreditCard size={14} className="text-orange-500" /> Resumo do Pagamento
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-3 relative z-10">
                         <div className="flex justify-between text-sm text-slate-400">
-                            <span>Subtotal</span>
-                            <span>R$ {order.total.toFixed(2).replace('.', ',')}</span>
+                            <span>Total dos Itens</span>
+                            <span className="font-bold">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                         </div>
                         {isDeliveryOrder && deliveryType === 'delivery' && (
                             <div className="flex justify-between text-sm text-slate-400">
                                 <span>Taxa de Entrega</span>
-                                <span>R$ {(order.deliveryOrder?.deliveryFee || 0).toFixed(2).replace('.', ',')}</span>
+                                <span className="font-bold">R$ {(order.deliveryOrder?.deliveryFee || 0).toFixed(2).replace('.', ',')}</span>
                             </div>
                         )}
-                        <div className="pt-3 border-t border-white/10 flex justify-between items-end">
-                            <span className="text-sm font-bold">TOTAL</span>
-                            <span className="text-3xl font-black text-emerald-400">
+                        <div className="pt-4 mt-4 border-t border-white/10 flex justify-between items-end">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Valor Final</span>
+                                <span className="text-sm font-bold">A RECEBER</span>
+                            </div>
+                            <span className="text-4xl font-black text-emerald-400 tracking-tighter italic">
                                 R$ {(order.total + (isDeliveryOrder && deliveryType === 'delivery' ? (order.deliveryOrder?.deliveryFee || 0) : 0)).toFixed(2).replace('.', ',')}
                             </span>
                         </div>

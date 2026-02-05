@@ -42,6 +42,99 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const handleProductCardClick = (product: Product) => {
+    if (!isStoreOpen) {
+        alert("Desculpe, a loja está fechada no momento e não estamos aceitando novos pedidos.");
+        return;
+    }
+    setSelectedProduct(product);
+    setProductModalOpen(true);
+  };
+
+  const handleAddToCartFromModal = (
+    product: Product, 
+    quantity: number, 
+    selectedSize: SizeOption | null, 
+    selectedAddons: AddonOption[],
+    selectedFlavors?: Product[]
+  ) => {
+      addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
+      setProductModalOpen(false);
+      setCartOpen(true);
+  };
+
+  const handlePixPayment = async (orderId: string, deliveryInfo: any) => {
+    setPixPaymentLoading(true);
+    setPixModalOpen(true);
+    setCurrentOrderId(orderId);
+
+    try {
+        const data = await generatePixPayment(orderId);
+        setPixData(data);
+    } catch (error) {
+        console.error("Erro ao gerar PIX:", error);
+        alert("Erro ao gerar pagamento PIX. Tente novamente.");
+        setPixModalOpen(false);
+        return;
+    } finally {
+        setPixPaymentLoading(false);
+    }
+
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const status = await checkPixStatus(orderId);
+        if (status.paid) {
+            if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+            setPixModalOpen(false);
+            clearCart();
+            setSuccessModalOpen(true);
+            setCurrentOrderId(null);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar status do PIX", error);
+      }
+    }, 5000);
+  };
+
+  const handleCancelPixPayment = async () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    setPixModalOpen(false);
+    setPixPaymentLoading(false);
+    setPixData(null);
+    setCurrentOrderId(null);
+    alert('Pedido cancelado. Você pode refazê-lo.');
+  };
+
+  const handleSubmitDeliveryOrder = async (deliveryInfo: any) => {
+    if (!restaurant) return;
+
+    try {
+      const deliveryFee = deliveryInfo.deliveryType === 'delivery' ? (restaurant.settings?.deliveryFee || 0) : 0;
+      const finalTotal = localCartTotal + deliveryFee;
+
+      const newOrder = await createDeliveryOrder(restaurant.id, {
+        items: localCartItems,
+        total: finalTotal, 
+        deliveryInfo: {
+            ...deliveryInfo,
+            deliveryFee: deliveryFee 
+        },
+      });
+
+      if (deliveryInfo.paymentMethod === 'pix_online') {
+        handlePixPayment(newOrder.id, deliveryInfo);
+      } else {
+        clearCart();
+        navigate(`/order-status/${newOrder.id}`);
+      }
+    } catch (err) {
+      alert('Falha ao enviar o pedido de delivery.');
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const fetchRestaurant = async () => {
       if (!effectiveSlug) return;

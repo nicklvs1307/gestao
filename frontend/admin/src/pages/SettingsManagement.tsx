@@ -449,78 +449,35 @@ const SettingsManagement: React.FC = () => {
 
                 <div className="bg-card border rounded-xl p-6 space-y-6">
                     <h3 className="font-semibold border-b pb-2 flex items-center gap-2">
-                        <Palette size={18} /> Temas Rápidos
+                        <Palette size={18} /> Personalização do Cardápio (Cliente)
                     </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        <button 
-                            onClick={() => {
-                                setPrimaryColor('#f97316');
-                                setSecondaryColor('#f1f5f9');
-                                setBackgroundColor('#ffffff');
-                            }}
-                            className="p-3 border rounded-xl flex flex-col items-center gap-2 hover:bg-slate-50 transition-all group"
-                        >
-                            <div className="flex gap-1">
-                                <div className="w-4 h-4 rounded-full bg-[#f97316]" />
-                                <div className="w-4 h-4 rounded-full bg-[#f1f5f9]" />
-                                <div className="w-4 h-4 rounded-full bg-[#ffffff] border" />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+                        Estas cores serão aplicadas apenas ao cardápio digital acessado pelos seus clientes.
+                    </p>
+                    <div className="grid grid-cols-1 gap-4 pt-2">
+                        <div className="flex items-center justify-between p-3 border rounded-xl bg-slate-50">
+                            <div>
+                                <p className="text-sm font-bold text-slate-700">Cor Primária</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">Botões e Destaques</p>
                             </div>
-                            <span className="text-[10px] font-bold uppercase text-slate-500">Padrão KiCardapio</span>
-                        </button>
-                        
-                        <button 
-                            onClick={() => {
-                                setPrimaryColor('#f97316');
-                                setSecondaryColor('#1e293b');
-                                setBackgroundColor('#0f172a');
-                            }}
-                            className="p-3 border rounded-xl flex flex-col items-center gap-2 hover:bg-slate-50 transition-all"
-                        >
-                            <div className="flex gap-1">
-                                <div className="w-4 h-4 rounded-full bg-[#f97316]" />
-                                <div className="w-4 h-4 rounded-full bg-[#1e293b]" />
-                                <div className="w-4 h-4 rounded-full bg-[#0f172a]" />
+                            <input type="color" className="w-12 h-12 rounded-lg cursor-pointer border-none bg-transparent" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 border rounded-xl bg-slate-50">
+                            <div>
+                                <p className="text-sm font-bold text-slate-700">Cor Secundária</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">Elementos de Apoio</p>
                             </div>
-                            <span className="text-[10px] font-bold uppercase text-slate-500">Modo Dark</span>
-                        </button>
-
-                        <button 
-                            onClick={() => {
-                                setPrimaryColor('#d4af37');
-                                setSecondaryColor('#1a1a1a');
-                                setBackgroundColor('#0a0a0a');
-                            }}
-                            className="p-3 border rounded-xl flex flex-col items-center gap-2 hover:bg-slate-50 transition-all"
-                        >
-                            <div className="flex gap-1">
-                                <div className="w-4 h-4 rounded-full bg-[#d4af37]" />
-                                <div className="w-4 h-4 rounded-full bg-[#1a1a1a]" />
-                                <div className="w-4 h-4 rounded-full bg-[#0a0a0a]" />
+                            <input type="color" className="w-12 h-12 rounded-lg cursor-pointer border-none bg-transparent" value={secondaryColor} onChange={e => setSecondaryColor(e.target.value)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 border rounded-xl bg-slate-50">
+                            <div>
+                                <p className="text-sm font-bold text-slate-700">Cor de Fundo</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">Área Geral do Cardápio</p>
                             </div>
-                            <span className="text-[10px] font-bold uppercase text-slate-500">Premium Gold</span>
-                        </button>
-
-                        <button 
-                            onClick={() => {
-                                setPrimaryColor('#ec4899');
-                                setSecondaryColor('#fdf2f8');
-                                setBackgroundColor('#ffffff');
-                            }}
-                            className="p-3 border rounded-xl flex flex-col items-center gap-2 hover:bg-slate-50 transition-all"
-                        >
-                            <div className="flex gap-1">
-                                <div className="w-4 h-4 rounded-full bg-[#ec4899]" />
-                                <div className="w-4 h-4 rounded-full bg-[#fdf2f8]" />
-                                <div className="w-4 h-4 rounded-full bg-[#ffffff] border" />
-                            </div>
-                            <span className="text-[10px] font-bold uppercase text-slate-500">Modern Pink</span>
-                        </button>
+                            <input type="color" className="w-12 h-12 rounded-lg cursor-pointer border-none bg-transparent" value={backgroundColor} onChange={e => setBackgroundColor(e.target.value)} />
+                        </div>
                     </div>
-
-                    <h3 className="font-semibold border-b pb-2 flex items-center gap-2 mt-6">
-                        <Palette size={18} /> Cores Customizadas
-                    </h3>
-                    <div className="grid grid-cols-1 gap-4">
+                </div>
                         <div className="flex items-center justify-between p-3 border rounded-xl">
                             <div>
                                 <p className="text-sm font-bold text-slate-700">Cor Primária</p>

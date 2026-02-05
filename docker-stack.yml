@@ -83,8 +83,8 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Regra universal para lojas (Ignora subdomínios reservados)
-        - "traefik.http.routers.client.rule=HostRegexp(`{subdomain:(?!container|api|admin|apikicardapio)[a-z0-9-]+}\\.towersfy\\.com$$`)"
+        # Regra universal para lojas (Compatível com Go e Prioridade Baixa)
+        - "traefik.http.routers.client.rule=HostRegexp(`^[a-z0-9-]+\\.towersfy\\.(com|com\\.br)$$`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"

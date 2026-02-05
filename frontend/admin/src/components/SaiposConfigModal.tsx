@@ -58,87 +58,87 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
+    <div className="ui-modal-overlay">
+      <div className="ui-modal-content w-full max-w-md">
+        <div className="flex items-center justify-between p-6 border-b bg-slate-50/50">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-              <ShieldCheck size={18} />
+            <div className="h-10 w-10 rounded-xl bg-orange-600/10 flex items-center justify-center text-orange-600 shadow-sm">
+              <ShieldCheck size={24} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 leading-tight">Configurar Saipos</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Integração</p>
+              <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter">Integração Saipos</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Configurações de API</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="h-10 w-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         
         {isLoading ? (
-          <div className="p-10 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-            <span className="text-xs font-medium text-slate-500">Buscando configurações...</span>
+          <div className="p-16 flex flex-col items-center justify-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sincronizando...</span>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div className="p-4 space-y-4">
-              <div className="bg-blue-50/50 border border-blue-100/50 rounded-lg p-3 flex gap-3">
-                <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-blue-800 leading-snug">
-                  Insira as credenciais Saipos para habilitar a sincronização automática de pedidos.
+            <div className="p-8 space-y-6">
+              <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex gap-3 shadow-sm">
+                <Info size={18} className="text-orange-600 shrink-0 mt-0.5" />
+                <p className="text-[11px] font-bold text-orange-900 leading-snug">
+                  Insira as credenciais fornecidas pela Saipos para automatizar seus pedidos.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                <div className="space-y-1">
-                  <label htmlFor="partnerId" className="text-[11px] font-bold text-slate-500 uppercase ml-1">ID do Parceiro</label>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="partnerId" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ID do Parceiro</label>
                   <input
                     id="partnerId"
                     type="text"
                     value={partnerId}
                     onChange={(e) => setPartnerId(e.target.value)}
                     placeholder="partner_id"
-                    className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="ui-input w-full"
                     disabled={isSaving}
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="secret" className="text-[11px] font-bold text-slate-500 uppercase ml-1">Secret Key</label>
+                <div className="space-y-1.5">
+                  <label htmlFor="secret" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Secret Key</label>
                   <input
                     id="secret"
                     type="password"
                     value={secret}
                     onChange={(e) => setSecret(e.target.value)}
                     placeholder="Insira o secret"
-                    className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="ui-input w-full"
                     disabled={isSaving}
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="codStore" className="text-[11px] font-bold text-slate-500 uppercase ml-1">Código da Loja</label>
+                <div className="space-y-1.5">
+                  <label htmlFor="codStore" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Código da Loja</label>
                   <input
                     id="codStore"
                     type="text"
                     value={codStore}
                     onChange={(e) => setCodStore(e.target.value)}
                     placeholder="cod_store"
-                    className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="ui-input w-full"
                     disabled={isSaving}
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-700">Status da Integração</span>
-                  <span className={cn("text-[9px] font-bold uppercase tracking-wider", isActive ? "text-emerald-600" : "text-slate-400")}>
-                    {isActive ? 'Ativada' : 'Desativada'}
+                  <span className="text-[10px] font-black uppercase text-slate-900 tracking-widest">Sincronização Ativa</span>
+                  <span className={cn("text-[9px] font-bold uppercase", isActive ? "text-emerald-600" : "text-slate-400")}>
+                    {isActive ? 'Operando' : 'Pausada'}
                   </span>
                 </div>
                 <button 
@@ -146,41 +146,38 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                   onClick={() => setIsActive(!isActive)} 
                   disabled={isSaving}
                   className={cn(
-                    "w-10 h-5 rounded-full relative transition-all duration-300",
+                    "w-12 h-6 rounded-full relative transition-all duration-300 shadow-inner",
                     isActive ? "bg-emerald-500" : "bg-slate-300"
                   )}
                 >
                   <span className={cn(
-                    "absolute w-3.5 h-3.5 bg-white rounded-full top-0.75 transition-all shadow-sm",
-                    isActive ? "left-5.5" : "left-1"
+                    "absolute w-4 h-4 bg-white rounded-full top-1 transition-all shadow-md",
+                    isActive ? "left-7" : "left-1"
                   )} />
                 </button>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+            <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex gap-3">
               <button 
                 type="button" 
                 onClick={onClose} 
-                className="flex-1 h-9 px-3 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors"
+                className="px-6 py-2.5 text-xs font-black uppercase text-slate-400 hover:text-slate-900 transition-all"
                 disabled={isSaving}
               >
                 Cancelar
               </button>
               <button 
                 type="submit" 
-                className="flex-[2] h-9 px-3 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                className="ui-button-primary flex-1"
                 disabled={isSaving}
               >
                 {isSaving ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Salvando...
-                  </>
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <Save size={14} />
-                    Salvar
+                    <Save size={18} />
+                    <span>Salvar Configuração</span>
                   </>
                 )}
               </button>

@@ -82,14 +82,14 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ isOpen, onClose }) => {
             {/* Sidebar */}
             <motion.aside 
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:block shadow-xl",
+                    "fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0a0a] text-white flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:block shadow-2xl",
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
                 {/* Header */}
-                <div className="h-20 flex items-center justify-between px-6">
+                <div className="h-20 flex items-center justify-between px-6 border-b border-white/5 bg-[#0a0a0a]">
                     <div className="flex items-center justify-center w-full">
-                       <img src={logoImg} alt="Kicardapio" className="h-10 w-auto object-contain" />
+                       <img src={logoImg} alt="Kicardapio" className="h-10 w-auto object-contain brightness-110" />
                     </div>
                     <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white transition">
                         <X size={24} />
@@ -97,36 +97,36 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto py-4 space-y-1">
+                <nav className="flex-1 overflow-y-auto py-6 space-y-1 no-scrollbar">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
                             onClick={() => onClose()}
                             className={({ isActive }) => cn(
-                                "flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-all duration-200 border-l-4",
+                                "flex items-center gap-3 px-6 py-3 text-[13px] font-bold transition-all duration-200 border-r-4",
                                 isActive 
-                                    ? "bg-orange-600 border-white text-white shadow-lg shadow-orange-900/20" 
-                                    : "border-transparent text-slate-400 hover:bg-slate-800 hover:text-white"
+                                    ? "bg-orange-700/10 border-orange-600 text-orange-500" 
+                                    : "border-transparent text-slate-400 hover:text-white hover:bg-white/5"
                             )}
                         >
-                            <item.icon size={20} />
+                            <item.icon size={18} className={cn("transition-colors", isActive ? "text-orange-500" : "text-slate-500")} />
                             <span>{item.name}</span>
                         </NavLink>
                     ))}
                 </nav>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-800 bg-slate-900">
+                <div className="p-4 border-t border-white/5 bg-[#0a0a0a]">
                     <button 
                         onClick={logout}
-                        className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-bold bg-red-600 hover:bg-red-700 text-white transition-colors shadow-lg shadow-red-900/20"
+                        className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-xs font-black bg-white/5 hover:bg-red-600/20 text-slate-400 hover:text-red-500 transition-all border border-white/5"
                     >
-                        <LogOut size={18} />
-                        <span>Fechar Loja (Sair)</span>
+                        <LogOut size={16} />
+                        <span>ENCERRAR SESSÃO</span>
                     </button>
-                    <p className="text-center text-[10px] text-slate-600 mt-3 uppercase font-bold tracking-widest">
-                        v2.4.0 Stable
+                    <p className="text-center text-[9px] text-slate-600 mt-4 uppercase font-bold tracking-widest opacity-50">
+                        KiCardapio &copy; 2026
                     </p>
                 </div>
             </motion.aside>

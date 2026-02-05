@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Importar as páginas de Login e Registro
@@ -343,26 +342,24 @@ const AdminRoutes: React.FC = () => {
 
 function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <AuthProvider>
-          <Toaster position="top-right" richColors closeButton />
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/driver/dashboard" element={
-              <ProtectedRoute>
-                <DriverDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/*" element={
-              <ProtectedRoute>
-                <AdminRoutes />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </AuthProvider>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <AuthProvider>
+        <Toaster position="top-right" richColors closeButton />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/driver/dashboard" element={
+            <ProtectedRoute>
+              <DriverDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <AdminRoutes />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </AuthProvider>
+    </Router>
   );
 }
 

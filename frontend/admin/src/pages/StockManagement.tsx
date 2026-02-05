@@ -236,7 +236,7 @@ const StockManagement: React.FC = () => {
                             className={cn(
                                 "px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap",
                                 activeTab === tab.id 
-                                    ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm" 
+                                    ? "bg-white text-slate-900 shadow-sm" 
                                     : "text-slate-400 hover:text-slate-600"
                             )}
                         >
@@ -249,7 +249,7 @@ const StockManagement: React.FC = () => {
             <div className="ui-card overflow-hidden">
                 <div className="p-4 border-b border-border bg-muted/20 flex justify-between items-center">
                     <h3 className="font-black text-foreground uppercase italic tracking-widest text-xs flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-600" />
                         {activeTab === 'inventory' ? 'Produtos' : 
                          activeTab === 'ingredients' ? 'Insumos' : 
                          activeTab === 'purchases' ? 'Compras' : 
@@ -297,13 +297,13 @@ const StockManagement: React.FC = () => {
                     {/* ABA: LISTA DE COMPRAS */}
                     {activeTab === 'shopping-list' && (
                         <div className="p-4 space-y-4 animate-in fade-in duration-500">
-                            <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
                                 <div>
-                                    <h4 className="text-blue-900 dark:text-blue-100 font-black uppercase italic tracking-tight text-lg">Reposição</h4>
-                                    <p className="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-widest">Insumos abaixo do estoque mínimo.</p>
+                                    <h4 className="text-blue-900 font-black uppercase italic tracking-tight text-lg">Reposição</h4>
+                                    <p className="text-blue-600 text-[10px] font-bold uppercase tracking-widest">Insumos abaixo do estoque mínimo.</p>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-3xl font-black text-blue-900 dark:text-blue-100 italic">{ingredients.filter(i => i.stock <= (i.minStock || 0)).length}</span>
+                                    <span className="text-3xl font-black text-blue-900 italic">{ingredients.filter(i => i.stock <= (i.minStock || 0)).length}</span>
                                     <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Críticos</p>
                                 </div>
                             </div>
