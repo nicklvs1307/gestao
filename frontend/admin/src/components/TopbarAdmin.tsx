@@ -178,15 +178,6 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                 </div>
             </div>
         </header>
-                                <button onClick={() => { logout(); navigate('/login'); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest italic mt-1">
-                                    <LogOut size={16} /> Encerrar Sessão
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </header>
 
         <CashierActionModal 
             isOpen={cashierAction.open} 
