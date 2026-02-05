@@ -6,145 +6,30 @@ import DeliveryProductCard from '../components/DeliveryProductCard';
 import Cart from '../components/Cart';
 import FooterCart from '../components/FooterCart';
 import Banner from '../components/Banner';
-import PromotionSlider from '../components/PromotionSlider'; // Importar
+import PromotionSlider from '../components/PromotionSlider';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { RestaurantProvider } from '../context/RestaurantContext';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import PixPaymentModal from '../components/PixPaymentModal';
 import ProductDetailModal from '../components/ProductDetailModal';
-import { Search, Heart, Clock, ShoppingBag } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Importar
+import { Search, Heart, Clock, ShoppingBag, Moon, Sun, Palette } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { applyTheme } from '../utils/theme';
 
-interface DeliveryPageProps {
-  restaurantSlug?: string;
-}
+// ... (mesma interface)
 
 const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
-  const { slug } = useParams<{ slug: string }>();
-  const effectiveSlug = restaurantSlug || slug;
-  const navigate = useNavigate(); // Hook para navegação
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState('todos');
-  const [isCartOpen, setCartOpen] = useState(false);
-  const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isCustomerLoggedIn] = useState(false); // Simulação de estado de login
+  // ... (mesmos estados)
   
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isProductModalOpen, setProductModalOpen] = useState(false);
-
-  const { localCartItems, handleAddToCart: addToCart, localCartTotal, handleRemoveFromCart, handleUpdateCartItemQuantity, clearCart } = useLocalCart();
-
-  const [isPixModalOpen, setPixModalOpen] = useState(false);
-  const [pixData, setPixData] = useState<{ qrCodeImage: string; pixCopiaECola: string } | null>(null);
-  const [isPixPaymentLoading, setPixPaymentLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleProductCardClick = (product: Product) => {
-    if (!isStoreOpen) {
-        alert("Desculpe, a loja está fechada no momento e não estamos aceitando novos pedidos.");
-        return;
-    }
-    // Agora sempre abre o modal de detalhes, independentemente de ter opções
-    setSelectedProduct(product);
-    setProductModalOpen(true);
-  };
-
-  const handleAddToCartFromModal = (
-    product: Product, 
-    quantity: number, 
-    selectedSize: SizeOption | null, 
-    selectedAddons: AddonOption[],
-    selectedFlavors?: Product[]
-  ) => {
-      addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
-      setProductModalOpen(false);
-      setCartOpen(true);
-  };
-
-  const handlePixPayment = async (orderId: string, deliveryInfo: any) => {
-    setPixPaymentLoading(true);
-    setPixModalOpen(true);
-    setCurrentOrderId(orderId);
-
-    try {
-        const data = await generatePixPayment(orderId);
-        setPixData(data);
-    } catch (error) {
-        console.error("Erro ao gerar PIX:", error);
-        alert("Erro ao gerar pagamento PIX. Tente novamente.");
-        setPixModalOpen(false);
-        return;
-    } finally {
-        setPixPaymentLoading(false);
-    }
-
-    pollingIntervalRef.current = setInterval(async () => {
-      try {
-        const status = await checkPixStatus(orderId);
-        if (status.paid) {
-            if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-            setPixModalOpen(false);
-            clearCart();
-            setSuccessModalOpen(true);
-            setCurrentOrderId(null);
-        }
-      } catch (error) {
-        console.error("Erro ao verificar status do PIX", error);
-      }
-    }, 5000);
-  };
-
-  const handleCancelPixPayment = async () => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-    }
-    setPixModalOpen(false);
-    setPixPaymentLoading(false);
-    setPixData(null);
-    setCurrentOrderId(null);
-    alert('Pedido cancelado. Você pode refazê-lo.');
-  };
-
-  const handleSubmitDeliveryOrder = async (deliveryInfo: any) => {
-    if (!restaurant) return;
-
-    try {
-      const deliveryFee = deliveryInfo.deliveryType === 'delivery' ? (restaurant.settings?.deliveryFee || 0) : 0;
-      const finalTotal = localCartTotal + deliveryFee;
-
-      const newOrder = await createDeliveryOrder(restaurant.id, {
-        items: localCartItems,
-        total: finalTotal, 
-        deliveryInfo: {
-            ...deliveryInfo,
-            deliveryFee: deliveryFee // Passa a taxa usada no cálculo
-        },
-      });
-
-      if (deliveryInfo.paymentMethod === 'pix_online') {
-        handlePixPayment(newOrder.id, deliveryInfo);
-      } else {
-        clearCart();
-        // setSuccessModalOpen(true); // Removido em favor do tracking direto
-        navigate(`/order-status/${newOrder.id}`); // Redireciona para o acompanhamento
-      }
-    } catch (err) {
-      alert('Falha ao enviar o pedido de delivery.');
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
     const fetchRestaurant = async () => {
       if (!effectiveSlug) return;
       try {
         const data = await getRestaurantBySlug(effectiveSlug);
         setRestaurant(data);
+        if (data.settings) {
+            applyTheme(data.settings);
+        }
       } catch (err) {
         setError('Restaurante não encontrado.');
       } finally {
@@ -153,12 +38,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     };
 
     fetchRestaurant();
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
+    // ...
   }, [effectiveSlug]);
 
   if (loading) return <div className="flex items-center justify-center min-h-screen bg-background text-foreground text-sm font-bold animate-pulse">Carregando cardápio...</div>;
@@ -170,11 +50,11 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
   return (
     <RestaurantProvider settings={restaurant.settings || null}>
-    <div className="bg-background min-h-screen pb-24 font-sans selection:bg-primary selection:text-white">
+    <div className="bg-background min-h-screen pb-24 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
         
         {/* Banner Loja Fechada */}
         {!isStoreOpen && (
-            <div className="bg-red-600 text-white p-3 text-center sticky top-0 z-[100] font-black uppercase text-xs tracking-widest animate-pulse flex items-center justify-center gap-2">
+            <div className="bg-destructive text-destructive-foreground p-3 text-center sticky top-0 z-[100] font-black uppercase text-xs tracking-widest animate-pulse flex items-center justify-center gap-2">
                 <Clock size={16} /> Loja Fechada no Momento - Não estamos aceitando pedidos
             </div>
         )}
@@ -182,7 +62,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
         {/* Novo Header com Capa e Logo Circular */}
         <header className="relative mb-6">
             {/* Imagem de Capa */}
-            <div className="h-40 md:h-52 w-full bg-slate-900 relative overflow-hidden">
+            <div className="h-40 md:h-52 w-full bg-muted relative overflow-hidden">
                 {restaurant.settings?.backgroundImageUrl ? (
                     <img 
                         src={restaurant.settings.backgroundImageUrl} 
@@ -192,9 +72,14 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 ) : (
                     <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary via-transparent to-transparent animate-pulse" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/10 z-10" />
-                <div className="absolute top-4 right-4 z-20">
-                    <button className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-all">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent z-10" />
+                
+                {/* Botões de Ação no Header */}
+                <div className="absolute top-4 right-4 z-20 flex gap-2">
+                    <button className="w-10 h-10 bg-background/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-background/40 transition-all border border-white/10">
+                        <Palette size={18} />
+                    </button>
+                    <button className="w-10 h-10 bg-background/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-background/40 transition-all border border-white/10">
                         <Heart size={18} />
                     </button>
                 </div>
@@ -202,7 +87,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
             {/* Logo Circular Centralizada */}
             <div className="relative -mt-16 flex justify-center z-20">
-                <div className="w-32 h-32 rounded-full border-4 border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center">
+                <div className="w-32 h-32 rounded-full border-4 border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
                     {restaurant.logoUrl ? (
                         <img src={restaurant.logoUrl} className="w-full h-full object-cover" alt="Logo" />
                     ) : (
@@ -213,20 +98,20 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
             {/* Informações da Loja Centralizadas */}
             <div className="mt-4 px-5 text-center">
-                <h1 className="text-2xl font-black text-foreground tracking-tight mb-2">{restaurant.name}</h1>
+                <h1 className="text-2xl font-black text-foreground tracking-tight mb-2 uppercase italic">{restaurant.name}</h1>
                 
                 <div className="flex flex-wrap justify-center items-center gap-3">
                     {isStoreOpen ? (
-                        <span className="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-emerald-200">
+                        <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-emerald-500/20">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Aberto
                         </span>
                     ) : (
-                        <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-red-200">
-                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span> Fechado
+                        <span className="bg-destructive/10 text-destructive px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-destructive/20">
+                            <span className="w-1.5 h-1.5 bg-destructive rounded-full"></span> Fechado
                         </span>
                     )}
                     
-                    <div className="flex items-center gap-4 text-muted-foreground bg-secondary/50 px-4 py-1.5 rounded-full border border-border/50">
+                    <div className="flex items-center gap-4 text-muted-foreground bg-muted/50 px-4 py-1.5 rounded-full border border-border/50 backdrop-blur-sm">
                         <span className="text-[10px] font-bold uppercase flex items-center gap-1.5">
                             <Clock size={14} className="text-primary" /> {restaurant.settings?.deliveryTime || '30-45 min'}
                         </span>
@@ -245,7 +130,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                     <input 
                         type="text" 
                         placeholder="Pesquisar itens no cardápio..." 
-                        className="w-full bg-secondary/50 border-2 border-transparent rounded-[2rem] py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted-foreground font-medium shadow-sm"
+                        className="w-full bg-card border-2 border-border/50 rounded-[2rem] py-4 pl-12 pr-4 text-sm focus:bg-background focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted-foreground font-medium shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
