@@ -1,4 +1,4 @@
-root@servergestao:~/gestao/backend# docker logs  03e62089db40
+root@servergestao:~/gestao# docker logs de5b6e48635b
 Aguardando banco de dados responder...
 Sincronizando Banco de Dados com o Schema...
 Prisma schema loaded from prisma/schema.prisma
@@ -10,7 +10,7 @@ Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postg
 No pending migrations to apply.
 Executando Seed de Permissões...
 Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
 node:internal/modules/cjs/loader:1210
   throw err;
   ^
