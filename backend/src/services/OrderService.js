@@ -306,7 +306,7 @@ class OrderService {
     return prisma.order.findUnique({
         where: { id: newOrder.id },
         include: { 
-            items: { include: { product: { include: { category: true } } } }, 
+            items: { include: { product: { include: { categories: true } } } }, 
             deliveryOrder: true, 
             payments: true,
             user: { select: { name: true } }
@@ -717,7 +717,7 @@ class OrderService {
         // B. BAIXA DE ESTOQUE (Com suporte a Ficha Técnica)
         const orderWithItems = await prisma.order.findUnique({
             where: { id: orderId },
-            include: { items: { include: { product: { include: { ingredients: true } } } } }
+            include: { items: { include: { product: { include: { ingredients: true, categories: true } } } } }
         });
 
         for (const item of orderWithItems.items) {
