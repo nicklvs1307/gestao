@@ -70,7 +70,7 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
   }
 
   return (
-    <div className="relative w-full h-64 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 border border-white/10 group">
+    <div className="relative w-full h-52 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 border border-white/10 group">
       {bannerItems.map((item, index) => {
         const product = item.type === 'promotion' ? item.data.product! : item.data;
         const isActive = currentSlide === index;

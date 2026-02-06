@@ -181,18 +181,22 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
         {/* Novo Header com Capa e Logo Circular */}
         <header className="relative mb-6">
             {/* Imagem de Capa */}
-            <div className="h-56 md:h-64 w-full bg-muted relative overflow-hidden">
+            <div className="h-44 md:h-56 w-full bg-muted relative overflow-hidden">
                 {restaurant.settings?.backgroundImageUrl ? (
-                    <img 
-                        src={restaurant.settings.backgroundImageUrl} 
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
-                        alt="Capa" 
-                    />
+                    <>
+                        <img 
+                            src={restaurant.settings.backgroundImageUrl} 
+                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
+                            alt="Capa" 
+                        />
+                        {/* Filtro Preto Transparente */}
+                        <div className="absolute inset-0 bg-black/50 z-10" />
+                    </>
                 ) : (
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-slate-900" />
                 )}
-                {/* Gradiente sutil para legibilidade, sem desbotar a foto */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/20 z-10" />
+                {/* Gradiente sutil para legibilidade */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 z-20" />
                 
                 {/* Botões de Ação no Header */}
                 <div className="absolute top-4 right-4 z-20 flex gap-2">
