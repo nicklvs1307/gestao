@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { getTenantSlug } from '../utils/tenant';
 import { getRestaurantBySlug } from '../services/api';
 import TableMenuWrapper from './TableMenuWrapper';
 import DeliveryPage from './DeliveryPage';
 import { Restaurant } from '../types';
+import { Button } from '../components/ui/Button';
 
 const TenantHandler = () => {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -12,7 +13,6 @@ const TenantHandler = () => {
   const [error, setError] = useState<string | null>(null);
   
   const { tableNumber } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -67,9 +67,6 @@ const TenantHandler = () => {
           <p className="mt-4 text-gray-600 font-medium leading-relaxed">
             O cardápio que você tentou acessar no endereço <span className="text-primary font-bold">{window.location.hostname}</span> não está ativo ou o link está incorreto.
           </p>
-import { Button } from '../components/ui/Button';
-
-// ... inside the error return block ...
           <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">Desenvolvido por</p>
             <h2 className="text-xl font-black text-primary">KiCardapio</h2>

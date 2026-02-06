@@ -1,0 +1,464 @@
+index-Dp306yhn.js:827 Domain Debug: {hostname: 'romapizzaria.towersfy.com', detectedSlug: 'romapizzaria', finalSlug: 'romapizzaria'}
+index-Dp306yhn.js:62  GET https://romapizzaria.towersfy.com/api/delivery/restaurant/romapizzaria 500 (Internal Server Error)
+(anônimo) @ index-Dp306yhn.js:62
+xhr @ index-Dp306yhn.js:62
+$v @ index-Dp306yhn.js:64
+_request @ index-Dp306yhn.js:65
+request @ index-Dp306yhn.js:64
+Di.<computed> @ index-Dp306yhn.js:65
+(anônimo) @ index-Dp306yhn.js:60
+nS @ index-Dp306yhn.js:65
+(anônimo) @ index-Dp306yhn.js:827
+(anônimo) @ index-Dp306yhn.js:827
+_r @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+Cy @ index-Dp306yhn.js:48
+(anônimo) @ index-Dp306yhn.js:48
+J @ index-Dp306yhn.js:25
+index-Dp306yhn.js:827 Erro ao buscar restaurante: Ce {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
+(anônimo) @ index-Dp306yhn.js:827
+await in (anônimo)
+(anônimo) @ index-Dp306yhn.js:827
+_r @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+En @ index-Dp306yhn.js:48
+iy @ index-Dp306yhn.js:48
+Cy @ index-Dp306yhn.js:48
+(anônimo) @ index-Dp306yhn.js:48
+J @ index-Dp306yhn.js:25
+index-Dp306yhn.js:827 Uncaught ReferenceError: Button is not defined
+    at c1 (index-Dp306yhn.js:827:96324)
+    at df (index-Dp306yhn.js:48:48095)
+    at Rf (index-Dp306yhn.js:48:70896)
+    at H0 (index-Dp306yhn.js:48:81228)
+    at vy (index-Dp306yhn.js:48:117000)
+    at lk (index-Dp306yhn.js:48:116046)
+    at ed (index-Dp306yhn.js:48:115878)
+    at dy (index-Dp306yhn.js:48:112671)
+    at jy (index-Dp306yhn.js:48:124471)
+    at MessagePort.J (index-Dp306yhn.js:25:1611)
+c1 @ index-Dp306yhn.js:827
+df @ index-Dp306yhn.js:48
+Rf @ index-Dp306yhn.js:48
+H0 @ index-Dp306yhn.js:48
+vy @ index-Dp306yhn.js:48
+lk @ index-Dp306yhn.js:48
+ed @ index-Dp306yhn.js:48
+dy @ index-Dp306yhn.js:48
+jy @ index-Dp306yhn.js:48
+J @ index-Dp306yhn.js:25
+
+
+
+root@servergestao:~/gestao# docker exec -it 10612dc0626c /bin/sh
+/app # npx prisma migrate deploy
+Prisma schema loaded from prisma/schema.prisma
+Error: Prisma schema validation - (get-config wasm)
+Error code: P1012
+error: Environment variable not found: DATABASE_URL.
+  -->  prisma/schema.prisma:7
+   |
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   |
+
+Validation Error Count: 1
+[Context: getConfig]
+
+Prisma CLI Version : 6.16.3
+/app # export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate deploy
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+26 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+/app # export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate deploy
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+26 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+/app # exir
+/bin/sh: exir: not found
+/app # exit
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                   PORTS                                                                          NAMES
+10612dc0626c   cardapio-backend:latest         "docker-entrypoint.sh"   5 minutes ago    Up 5 minutes (healthy)   3001/tcp                                                                       kicardapio_backend.1.nlaq0ruzcinp0pjen6otccdri
+664d11e3a22e   cardapio-client:latest          "/docker-entrypoint.…"   28 minutes ago   Up 28 minutes            80/tcp                                                                         kicardapio_frontend-client.1.byd7ugarokw5okojcs71sbt09
+3616eb8ae3c1   cardapio-admin:latest           "/docker-entrypoint.…"   28 minutes ago   Up 28 minutes            80/tcp                                                                         kicardapio_frontend-admin.1.zfvxeztz6la6ajhe9cc8n8kh6
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   10 hours ago     Up 10 hours              0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 days ago       Up 3 days                5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 days ago       Up 3 days                8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 days ago       Up 3 days                                                                                               portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker logs 10612dc0626c
+Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+26 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+Executando Seed de Permissões...
+Aviso: Seed já executado ou falhou silenciosamente.
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                   PORTS                                                                          NAMES
+10612dc0626c   cardapio-backend:latest         "docker-entrypoint.sh"   6 minutes ago    Up 6 minutes (healthy)   3001/tcp                                                                       kicardapio_backend.1.nlaq0ruzcinp0pjen6otccdri
+664d11e3a22e   cardapio-client:latest          "/docker-entrypoint.…"   29 minutes ago   Up 29 minutes            80/tcp                                                                         kicardapio_frontend-client.1.byd7ugarokw5okojcs71sbt09
+3616eb8ae3c1   cardapio-admin:latest           "/docker-entrypoint.…"   29 minutes ago   Up 29 minutes            80/tcp                                                                         kicardapio_frontend-admin.1.zfvxeztz6la6ajhe9cc8n8kh6
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   10 hours ago     Up 10 hours              0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 days ago       Up 3 days                5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 days ago       Up 3 days                8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 days ago       Up 3 days                                                                                               portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker stop 10612dc0626c
+10612dc0626c
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                            PORTS                                                                          NAMES
+dca17fcc035a   cardapio-backend:latest         "docker-entrypoint.sh"   9 seconds ago    Up 4 seconds (health: starting)   3001/tcp                                                                       kicardapio_backend.1.tlobv7rnc16i84eqlpysozolx
+664d11e3a22e   cardapio-client:latest          "/docker-entrypoint.…"   29 minutes ago   Up 29 minutes                     80/tcp                                                                         kicardapio_frontend-client.1.byd7ugarokw5okojcs71sbt09
+3616eb8ae3c1   cardapio-admin:latest           "/docker-entrypoint.…"   29 minutes ago   Up 29 minutes                     80/tcp                                                                         kicardapio_frontend-admin.1.zfvxeztz6la6ajhe9cc8n8kh6
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   10 hours ago     Up 10 hours                       0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 days ago       Up 3 days                         5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 days ago       Up 3 days                         8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 days ago       Up 3 days                                                                                                        portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker logs dca17fcc035a
+Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+26 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+Executando Seed de Permissões...
+Aviso: Seed já executado ou falhou silenciosamente.
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro ao buscar pedidos: PrismaClientKnownRequestError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async /app/src/routes/orderRoutes.js:16:18 {
+  code: 'P2021',
+  meta: { modelName: 'Order', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
