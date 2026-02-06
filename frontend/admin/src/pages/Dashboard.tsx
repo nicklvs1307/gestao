@@ -15,7 +15,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import { Eye, ArrowRight, Share2, DollarSign, Clock, LayoutDashboard, ShoppingCart, Utensils, Truck, AlertCircle } from 'lucide-react';
+import { Eye, ArrowRight, Share2, DollarSign, Clock, LayoutDashboard, ShoppingCart, Utensils, Truck, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -73,7 +73,6 @@ const Dashboard: React.FC = () => {
             delivery: ordersData.filter((o:any) => o.orderType === 'DELIVERY').length,
             table: ordersData.filter((o:any) => o.orderType === 'TABLE').length,
         },
-        // Dados para o Checklist
         hasCategories: categoriesData.data.length > 0,
         hasAddons: addonGroupsData.data.length > 0,
         hasProducts: summaryData.activeProducts > 0,
@@ -92,9 +91,64 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // ... (renders específicos mantidos)
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64 text-slate-400 font-medium">Carregando dados...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 rounded-xl bg-red-50 text-red-600 border border-red-100 font-medium">{error}</div>;
+  }
 
   const isConfigComplete = stats?.hasCategories && stats?.hasProducts && stats?.hasPayments;
+
+  // --- DASHBOARD PRINCIPAL ---
+
+  const chartData = {
+    labels: salesHistory.length > 0 ? salesHistory.map(d => new Date(d.date).toLocaleDateString('pt-BR', { weekday: 'short' })) : ['-'],
+    datasets: [
+      {
+        label: 'Faturamento',
+        data: salesHistory.length > 0 ? salesHistory.map(d => d.amount) : [0],
+        fill: true,
+        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+        borderColor: '#f97316',
+        tension: 0.4,
+        pointBackgroundColor: '#f97316',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e293b',
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: false,
+      }
+    },
+    scales: {
+      y: {
+        grid: { color: '#f1f5f9', borderDash: [4, 4] },
+        ticks: { color: '#64748b', font: { size: 11 } },
+        border: { display: false }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: '#64748b', font: { size: 11 } },
+        border: { display: false }
+      }
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -138,6 +192,26 @@ const Dashboard: React.FC = () => {
       )}
 
       {user?.isSuperAdmin && localStorage.getItem('selectedRestaurantId') && (
+          <div className="bg-blue-600 text-white p-4 rounded-2xl flex justify-between items-center shadow-lg animate-in slide-in-from-top-4">
+              <div className="flex items-center gap-3">
+                  <LayoutDashboard size={20} />
+                  <div>
+                      <p className="text-[10px] font-black uppercase opacity-80 leading-none">Modo de Gerenciamento</p>
+                      <p className="text-sm font-bold italic">Você está visualizando os dados de uma unidade específica.</p>
+                  </div>
+              </div>
+              <button 
+                onClick={() => {
+                    localStorage.removeItem('selectedRestaurantId');
+                    navigate('/super-admin');
+                    window.location.reload();
+                }}
+                className="bg-white text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-50 transition-colors"
+              >
+                  Sair da Loja
+              </button>
+          </div>
+      )}
 
       {/* Stats Grid - Kicardapio Style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -160,7 +234,7 @@ const Dashboard: React.FC = () => {
         <div className="ui-card p-5 border-l-4 border-l-green-500 flex flex-col justify-between h-28 hover:shadow-md transition-shadow">
             <div>
                 <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Faturamento Hoje</p>
-                <h3 className="text-2xl font-black text-foreground mt-1">R$ {stats?.revenueToday.toFixed(2) ?? '0.00'}</h3>
+                <h3 className="text-2xl font-black text-foreground mt-1">R$ {stats?.revenueToday?.toFixed(2) ?? '0.00'}</h3>
             </div>
             <div className="text-[10px] text-green-600 font-bold bg-green-50 dark:bg-green-900/20 w-fit px-2 py-0.5 rounded-full uppercase">Meta batida!</div>
         </div>
@@ -168,32 +242,27 @@ const Dashboard: React.FC = () => {
         <div className="ui-card p-5 border-l-4 border-l-purple-500 flex flex-col justify-between h-28 hover:shadow-md transition-shadow">
             <div>
                 <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Ticket Médio</p>
-                <h3 className="text-2xl font-black text-foreground mt-1">R$ {stats?.ticketMedio.toFixed(2) ?? '0.00'}</h3>
+                <h3 className="text-2xl font-black text-foreground mt-1">R$ {stats?.ticketMedio?.toFixed(2) ?? '0.00'}</h3>
             </div>
             <div className="text-[10px] text-slate-400 font-medium uppercase">Estável</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart Section */}
         <div className="lg:col-span-2 ui-card p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-foreground text-base italic uppercase tracking-tight">Visão de Faturamento</h3>
-            <select className="bg-muted text-[10px] font-bold text-muted-foreground rounded-lg py-1.5 px-3 outline-none cursor-pointer border border-border">
-                <option>Últimos 7 dias</option>
-                <option>Este Mês</option>
-            </select>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Últimos 7 dias</div>
           </div>
           <div className="h-[280px] w-full">
             <Line data={chartData} options={chartOptions} />
           </div>
         </div>
 
-        {/* Recent Orders */}
         <div className="ui-card flex flex-col overflow-hidden">
           <div className="p-5 border-b border-border flex justify-between items-center bg-muted/20">
             <h3 className="font-bold text-foreground text-base italic uppercase tracking-tight">Pedidos Recentes</h3>
-            <button className="text-primary text-[10px] font-black uppercase hover:underline flex items-center gap-1">
+            <button onClick={() => navigate('/orders')} className="text-primary text-[10px] font-black uppercase hover:underline flex items-center gap-1">
                 Ver todos <ArrowRight size={12} />
             </button>
           </div>
@@ -214,9 +283,9 @@ const Dashboard: React.FC = () => {
                         <span className="block text-xs font-bold">#{order.id.slice(-4).toUpperCase()}</span>
                         <span className="text-[10px] text-muted-foreground uppercase font-medium">Mesa {order.tableNumber || 'Balcão'}</span>
                       </td>
-                      <td className="px-6 py-3 font-black text-xs italic text-foreground">R$ {order.total.toFixed(2)}</td>
+                      <td className="px-6 py-3 font-black text-xs italic text-foreground">R$ {order.total?.toFixed(2)}</td>
                       <td className="px-6 py-3 text-right">
-                        <button className="text-primary hover:bg-primary hover:text-white font-black text-[9px] border border-primary/20 px-2.5 py-1.5 rounded-lg transition-all uppercase tracking-widest">
+                        <button onClick={() => navigate('/orders')} className="text-primary hover:bg-primary hover:text-white font-black text-[9px] border border-primary/20 px-2.5 py-1.5 rounded-lg transition-all uppercase tracking-widest">
                             Detalhes
                         </button>
                       </td>
