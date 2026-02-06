@@ -5,6 +5,7 @@ import { Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, Zap } fro
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { getImageUrl } from '../utils/image';
 
 // Componente de Toggle Switch
 const ToggleSwitch = ({ checked, onChange }: { checked: boolean, onChange: (checked: boolean) => void }) => {
@@ -182,7 +183,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ refetchTrigger })
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-border shrink-0 shadow-sm">
                                 {product.imageUrl ? (
-                                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                    <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <ImageIcon size={16} className="text-slate-400" />
                                 )}

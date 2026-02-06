@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Product, Promotion } from '../types';
+import { getImageUrl } from '../utils/image';
 
 interface ProductCardProps {
   product: Product;
@@ -36,7 +37,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAd
       <div className="h-56 relative overflow-hidden">
         {product.imageUrl ? (
           <img 
-            src={product.imageUrl} 
+            src={getImageUrl(product.imageUrl)} 
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />

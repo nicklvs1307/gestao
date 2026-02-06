@@ -64,9 +64,7 @@ services:
       context: .
       dockerfile: frontend/admin/Dockerfile
       args:
-        - VITE_API_URL=/api
-    volumes:
-      - uploads_data:/usr/share/nginx/html/uploads:ro
+        - VITE_API_URL=https://apikicardapio.towersfy.com/api
     networks:
       - gestao_network
     deploy:
@@ -93,9 +91,7 @@ services:
       context: .
       dockerfile: frontend/client/Dockerfile
       args:
-        - VITE_API_URL=/api
-    volumes:
-      - uploads_data:/usr/share/nginx/html/uploads:ro
+        - VITE_API_URL=https://apikicardapio.towersfy.com/api
     networks:
       - gestao_network
     deploy:
