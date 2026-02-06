@@ -200,9 +200,17 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ refetchTrigger })
                         </div>
                     </td>
                     <td className="px-6 py-3">
-                        <span className="inline-flex items-center rounded-md bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-slate-500 border border-border">
-                            {product.category.name}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                            {product.categories && product.categories.length > 0 ? (
+                                product.categories.map(cat => (
+                                    <span key={cat.id} className="inline-flex items-center rounded-md bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-slate-500 border border-border">
+                                        {cat.name}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="text-[8px] text-slate-300 italic">Sem categoria</span>
+                            )}
+                        </div>
                     </td>
                     <td className="px-6 py-3 text-center">
                         <span className={cn(

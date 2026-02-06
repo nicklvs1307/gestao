@@ -394,6 +394,7 @@ const ProductFormPage = () => {
                     if (product) {
                         reset({
                             ...product,
+                            categoryIds: product.categories?.map((c: any) => c.id) || [product.categoryId],
                             ingredients: product.ingredients?.map((i: any) => ({
                                 ingredientId: i.ingredientId,
                                 quantity: i.quantity
@@ -599,19 +600,55 @@ const ProductFormPage = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Categoria</label>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Área de Produção (KDS)</label>
                                     <div className="relative">
                                         <select 
-                                            {...register('categoryId', { required: true })}
+                                            {...register('productionArea')}
                                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 outline-none appearance-none font-medium text-slate-600"
                                         >
-                                            <option value="">Selecione...</option>
-                                            {categories.map(cat => (
-                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                            ))}
+                                            <option value="Cozinha">Cozinha</option>
+                                            <option value="Bar">Bar / Copa</option>
+                                            <option value="Pizzaria">Pizzaria</option>
+                                            <option value="Sobremesas">Sobremesas</option>
+                                            <option value="Churrasqueira">Churrasqueira</option>
                                         </select>
                                         <ChevronDown className="absolute right-4 top-3.5 text-slate-400 pointer-events-none" size={16} />
                                     </div>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-slate-500 mb-3 uppercase tracking-wide">Categorias do Produto (Selecione uma ou mais)</label>
+                                    <div className="flex flex-wrap gap-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                        {categories.map(cat => {
+                                            const selectedIds = watch('categoryIds') || [];
+                                            const isSelected = selectedIds.includes(cat.id);
+                                            return (
+                                                <button
+                                                    key={cat.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = watch('categoryIds') || [];
+                                                        if (isSelected) {
+                                                            setValue('categoryIds', current.filter((id: string) => id !== cat.id));
+                                                        } else {
+                                                            setValue('categoryIds', [...current, cat.id]);
+                                                        }
+                                                    }}
+                                                    className={cn(
+                                                        "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-tight transition-all border-2",
+                                                        isSelected 
+                                                            ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-200" 
+                                                            : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
+                                                    )}
+                                                >
+                                                    {cat.name}
+                                                </button>
+                                            );
+                                        })}
+                                        {categories.length === 0 && <p className="text-[10px] text-slate-400 italic">Nenhuma categoria cadastrada.</p>}
+                                    </div>
+                                    {(errors.categoryIds || (watch('categoryIds')?.length === 0)) && (
+                                        <span className="text-red-500 text-[10px] font-bold mt-2 block uppercase tracking-wide">Pelo menos uma categoria é obrigatória.</span>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Estoque</label>

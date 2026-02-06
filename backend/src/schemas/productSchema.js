@@ -6,9 +6,9 @@ const productSchema = {
     validate: (data) => {
         const allowedFields = [
             'name', 'description', 'price', 'imageUrl', 'isFeatured', 
-            'isAvailable', 'stock', 'categoryId', 'saiposIntegrationCode',
-            'ncm', 'cfop', 'cest', 'measureUnit', 'origin', 'taxPercentage',
-            'pizzaConfig', 'sizes', 'addonGroups', 'ingredients'
+            'isAvailable', 'stock', 'categoryId', 'categoryIds', 'productionArea',
+            'saiposIntegrationCode', 'ncm', 'cfop', 'cest', 'measureUnit', 
+            'origin', 'taxPercentage', 'pizzaConfig', 'sizes', 'addonGroups', 'ingredients'
         ];
 
         const errors = [];
@@ -17,7 +17,11 @@ const productSchema = {
         // 1. Verificação de Campos Obrigatórios
         if (!data.name) errors.push({ message: 'O nome do produto é obrigatório.' });
         if (data.price === undefined) errors.push({ message: 'O preço é obrigatório.' });
-        if (!data.categoryId) errors.push({ message: 'A categoria é obrigatória.' });
+        
+        // Suporta tanto o modelo antigo (categoryId) quanto o novo (categoryIds)
+        if (!data.categoryId && (!data.categoryIds || data.categoryIds.length === 0)) {
+            errors.push({ message: 'Pelo menos uma categoria é obrigatória.' });
+        }
 
         if (errors.length > 0) return { error: { details: errors } };
 

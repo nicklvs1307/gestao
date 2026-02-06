@@ -439,7 +439,6 @@ model Category {
   id          String   @id @default(cuid())
   name        String
   order       Int      @default(0) // Ordem de exibição
-  productionArea String?  @default("Cozinha") // Ex: "Cozinha", "Bar", "Pizzaria"
   saiposIntegrationCode String? // Código de integração da Saipos
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -447,7 +446,7 @@ model Category {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  products    Product[] // Renomeado de items
+  products    Product[] // Relacionamento Muitos-para-Muitos automático
 
   // Para sub-categorias
   parentId      String?
@@ -471,6 +470,7 @@ model Product {
   stock         Int      @default(0)     // Estoque
   tags          String[] @default([])   // Tags / Etiquetas
   order         Int      @default(0)     // Ordem de exibição
+  productionArea String?  @default("Cozinha") // Movido da Categoria para o Produto
   saiposIntegrationCode String?  // Código de integração da Saipos
   
   // === Campos Fiscais ===
@@ -488,11 +488,8 @@ model Product {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  // Relação com a Categoria
-  categoryId    String
-  category      Category @relation(fields: [categoryId], references: [id])
-
-
+  // Relação com as Categorias (Muitos-para-Muitos)
+  categories    Category[] 
 
   // Relações
   orderItems    OrderItem[]
@@ -502,7 +499,6 @@ model Product {
   ingredients   ProductIngredient[] // Vínculo com a Ficha Técnica
 
   @@unique([name, restaurantId])
-  @@index([categoryId])
   @@index([restaurantId])
 }
 

@@ -5,7 +5,7 @@ const getProducts = async (req, res) => {
     try {
         const products = await prisma.product.findMany({
             where: { restaurantId: req.restaurantId },
-            include: { category: true, sizes: true, addonGroups: { include: { addons: true } } },
+            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } } },
             orderBy: { order: 'asc' },
         });
         res.json(products);
@@ -16,7 +16,7 @@ const getClientProducts = async (req, res) => {
     try { 
         res.json(await prisma.product.findMany({ 
             where: { restaurantId: req.params.restaurantId }, 
-            include: { category: true, sizes: true, addonGroups: { include: { addons: true } } }, 
+            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } } }, 
             orderBy: { order: 'asc' } 
         })); 
     }
@@ -30,12 +30,16 @@ const createProduct = async (req, res) => {
         return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { name, price, categoryId, sizes, addonGroups, ingredients, ...rest } = value;
+    const { name, price, categoryId, categoryIds, sizes, addonGroups, ingredients, ...rest } = value;
+    
+    // Normaliza categorias para o novo modelo Muitos-para-Muitos
+    const finalCategoryIds = categoryIds || (categoryId ? [categoryId] : []);
+
     try {
         const newProduct = await prisma.product.create({
             data: {
                 ...rest, name, price,
-                category: { connect: { id: categoryId } },
+                categories: { connect: finalCategoryIds.map(id => ({ id })) },
                 restaurant: { connect: { id: req.restaurantId } },
                 sizes: { create: sizes?.map(s => ({ name: s.name, price: s.price })) || [] },
                 addonGroups: { 
@@ -43,7 +47,7 @@ const createProduct = async (req, res) => {
                 },
                 ingredients: { create: ingredients?.map(i => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] }
             },
-            include: { category: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
+            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
         });
         res.status(201).json(newProduct);
     } catch (error) { 
@@ -60,19 +64,28 @@ const updateProduct = async (req, res) => {
         return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { sizes, addonGroups, ingredients, ...productData } = value;
+    const { categoryId, categoryIds, sizes, addonGroups, ingredients, ...productData } = value;
+    
+    // Preparar dados de categorias
+    const categoryUpdate = {};
+    if (categoryIds || categoryId) {
+        const finalIds = categoryIds || (categoryId ? [categoryId] : []);
+        categoryUpdate.set = finalIds.map(id => ({ id }));
+    }
+
     try {
         const updatedProduct = await prisma.product.update({
             where: { id },
             data: {
                 ...productData,
+                categories: categoryUpdate,
                 sizes: { deleteMany: {}, create: sizes?.map(size => ({ name: size.name, price: size.price, order: size.order || 0, saiposIntegrationCode: size.saiposIntegrationCode })) || [] },
                 addonGroups: { 
                     set: addonGroups?.filter(g => g.id).map(g => ({ id: g.id })) || []
                 },
                 ingredients: { deleteMany: {}, create: ingredients?.map(i => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] }
             },
-            include: { sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
+            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
         });
         res.json(updatedProduct);
     } catch (error) { 
