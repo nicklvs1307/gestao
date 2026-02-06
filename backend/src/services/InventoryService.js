@@ -3,24 +3,11 @@ const prisma = require('../lib/prisma');
 class InventoryService {
   /**
    * Processa a baixa de estoque de um pedido completo.
-   * Suporta produtos simples (estoque direto) e compostos (ficha técnica).
-   * 
-   * @param {string} orderId - ID do pedido
-   * @param {Object} tx - Cliente Prisma Transacional (Obrigatório)
    */
   async processOrderStockDeduction(orderId, tx) {
-    // Busca o pedido com todas as informações necessárias para explodir a árvore de produtos
     const orderWithItems = await tx.order.findUnique({
         where: { id: orderId },
-        include: { 
-            items: { 
-                include: { 
-                    product: { 
-                        include: { ingredients: true } 
-                    } 
-                } 
-            } 
-        }
+        include: { items: { include: { product: { include: { ingredients: true } } } } }
     });
 
     if (!orderWithItems) throw new Error("Pedido não encontrado para baixa de estoque.");
@@ -31,29 +18,106 @@ class InventoryService {
   }
 
   /**
-   * Baixa o estoque de um único item (Recursivo se necessário no futuro)
+   * Confirma uma entrada de estoque, incrementando o saldo dos insumos e gerando financeiro.
+   */
+  async confirmStockEntry(entryId, tx) {
+    const entry = await tx.stockEntry.findUnique({
+      where: { id: entryId },
+      include: { items: true }
+    });
+
+    if (!entry) throw new Error('Entrada não encontrada.');
+    if (entry.status === 'CONFIRMED') throw new Error('Esta entrada já foi confirmada.');
+
+    // 1. Atualizar estoque de cada ingrediente
+    for (const item of entry.items) {
+      await tx.ingredient.update({
+        where: { id: item.ingredientId },
+        data: {
+          stock: { increment: item.quantity },
+          lastUnitCost: item.unitCost
+        }
+      });
+    }
+
+    // 2. Gerar Transação Financeira (Despesa)
+    const transaction = await tx.financialTransaction.create({
+      data: {
+        description: `Compra NF #${entry.invoiceNumber || entry.id.slice(-4)}`,
+        amount: entry.totalAmount,
+        type: 'EXPENSE',
+        status: 'PENDING',
+        dueDate: new Date(),
+        restaurantId: entry.restaurantId,
+        supplierId: entry.supplierId,
+        stockEntry: { connect: { id: entryId } }
+      }
+    });
+
+    // 3. Confirmar a Entrada
+    await tx.stockEntry.update({
+      where: { id: entryId },
+      data: { status: 'CONFIRMED', transactionId: transaction.id }
+    });
+
+    return { success: true, transactionId: transaction.id };
+  }
+
+  /**
+   * Processa a produção de um item beneficiado (Massa, Molho, etc)
+   */
+  async processProduction(restaurantId, { ingredientId, quantity }, tx) {
+    const ingredient = await tx.ingredient.findUnique({
+      where: { id: ingredientId },
+      include: { recipe: { include: { componentIngredient: true } } }
+    });
+
+    if (!ingredient || !ingredient.isProduced) throw new Error('Este item não é um produto beneficiado.');
+    if (!ingredient.recipe || ingredient.recipe.length === 0) throw new Error('Este item não possui receita cadastrada.');
+
+    // Baixa insumos da receita
+    for (const item of ingredient.recipe) {
+      const needed = item.quantity * quantity;
+      if (item.componentIngredient.stock < needed) {
+        throw new Error(`Estoque insuficiente de ${item.componentIngredient.name}.`);
+      }
+
+      await tx.ingredient.update({
+        where: { id: item.componentIngredientId },
+        data: { stock: { decrement: needed } }
+      });
+    }
+
+    // Incrementa produto final
+    await tx.ingredient.update({
+      where: { id: ingredientId },
+      data: { stock: { increment: quantity } }
+    });
+
+    // Registra Log
+    return await tx.productionLog.create({
+      data: { restaurantId, ingredientId, quantity, producedAt: new Date() }
+    });
+  }
+
+  /**
+   * Baixa o estoque de um único item
    */
   async _deductItemStock(item, tx) {
     const { product, quantity } = item;
 
-    // Caso 1: Produto com Ficha Técnica (Ingredients)
-    // Baixa os insumos proporcionalmente
     if (product.ingredients && product.ingredients.length > 0) {
-        for (const recipeItem of product.ingredients) {
-            const quantityToDeduct = recipeItem.quantity * quantity;
-            
-            await tx.ingredient.update({
-                where: { id: recipeItem.ingredientId },
-                data: { stock: { decrement: quantityToDeduct } }
-            });
-        }
-    } 
-    // Caso 2: Produto de Revenda (Estoque direto no produto)
-    else {
-        await tx.product.update({
-            where: { id: product.id },
-            data: { stock: { decrement: quantity } }
+      for (const recipeItem of product.ingredients) {
+        await tx.ingredient.update({
+          where: { id: recipeItem.ingredientId },
+          data: { stock: { decrement: recipeItem.quantity * quantity } }
         });
+      }
+    } else {
+      await tx.product.update({
+        where: { id: product.id },
+        data: { stock: { decrement: quantity } }
+      });
     }
   }
 }

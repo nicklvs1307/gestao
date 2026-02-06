@@ -1,193 +1,137 @@
 const prisma = require('../lib/prisma');
+const InventoryService = require('../services/InventoryService');
+const asyncHandler = require('../middlewares/asyncHandler');
+const { CreateStockEntrySchema } = require('../schemas/InventorySchema');
 
-const StockController = {
+class StockController {
+    
     // GET /api/stock/entries
-    async getEntries(req, res) {
-        try {
-            const entries = await prisma.stockEntry.findMany({
-                where: { restaurantId: req.restaurantId },
-                include: { supplier: true, items: { include: { ingredient: true } } },
-                orderBy: { receivedAt: 'desc' }
-            });
-            res.json(entries);
-        } catch (error) {
-            res.status(500).json({ error: 'Erro ao buscar entradas de estoque.' });
-        }
-    },
+    getEntries = asyncHandler(async (req, res) => {
+        const entries = await prisma.stockEntry.findMany({
+            where: { restaurantId: req.restaurantId },
+            include: { supplier: true, items: { include: { ingredient: true } } },
+            orderBy: { receivedAt: 'desc' }
+        });
+        res.json(entries);
+    });
 
     // POST /api/stock/entries
-    async createEntry(req, res) {
-        try {
-            const { supplierId, invoiceNumber, receivedAt, items, generateTransaction } = req.body;
-            
-            const totalAmount = items.reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
+    createEntry = asyncHandler(async (req, res) => {
+        const validatedData = CreateStockEntrySchema.parse(req.body);
+        const totalAmount = validatedData.items.reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
 
-            const newEntry = await prisma.stockEntry.create({
-                data: {
-                    restaurantId: req.restaurantId,
-                    supplierId,
-                    invoiceNumber,
-                    totalAmount,
-                    receivedAt: receivedAt ? new Date(receivedAt) : new Date(),
-                    status: 'PENDING',
-                    items: {
-                        create: items.map(i => ({
-                            ingredientId: i.ingredientId,
-                            quantity: parseFloat(i.quantity),
-                            unitCost: parseFloat(i.unitCost),
-                            batch: i.batch || null,
-                            expirationDate: i.expirationDate ? new Date(i.expirationDate) : null
-                        }))
-                    }
-                },
-                include: { items: true }
-            });
+        const newEntry = await prisma.stockEntry.create({
+            data: {
+                restaurantId: req.restaurantId,
+                supplierId: validatedData.supplierId,
+                invoiceNumber: validatedData.invoiceNumber,
+                totalAmount,
+                receivedAt: validatedData.receivedAt,
+                status: 'PENDING',
+                items: {
+                    create: validatedData.items.map(i => ({
+                        ingredientId: i.ingredientId,
+                        quantity: i.quantity,
+                        unitCost: i.unitCost,
+                        batch: i.batch,
+                        expirationDate: i.expirationDate
+                    }))
+                }
+            },
+            include: { items: true }
+        });
 
-            res.status(201).json(newEntry);
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Erro ao registrar entrada.' });
-        }
-    },
+        res.status(201).json(newEntry);
+    });
 
     // PUT /api/stock/entries/:id/confirm
-    async confirmEntry(req, res) {
+    confirmEntry = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        try {
-            const entry = await prisma.stockEntry.findUnique({
-                where: { id },
-                include: { items: true }
-            });
+        const result = await prisma.$transaction(async (tx) => {
+            return await InventoryService.confirmStockEntry(id, tx);
+        });
+        res.json(result);
+    });
 
-            if (!entry) return res.status(404).json({ error: 'Entrada não encontrada.' });
-            if (entry.status === 'CONFIRMED') return res.status(400).json({ error: 'Esta entrada já foi confirmada.' });
+    // DELETE /api/stock/entries/:id
+    deleteEntry = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const entry = await prisma.stockEntry.findUnique({ where: { id } });
+        
+        if (!entry) {
+            res.status(404);
+            throw new Error('Entrada não encontrada.');
+        }
+        if (entry.status === 'CONFIRMED') {
+            res.status(400);
+            throw new Error('Não é possível excluir uma entrada já confirmada.');
+        }
+        
+        await prisma.stockEntry.delete({ where: { id } });
+        res.status(204).send();
+    });
 
-            await prisma.$transaction(async (tx) => {
-                // 1. Atualizar estoque de cada ingrediente
-                for (const item of entry.items) {
-                    await tx.ingredient.update({
-                        where: { id: item.ingredientId },
+    // POST /api/stock/audit
+    auditInventory = asyncHandler(async (req, res) => {
+        const { items } = req.body; 
+        const { restaurantId } = req;
+        const userId = req.user.id;
+
+        const results = await prisma.$transaction(async (tx) => {
+            const auditLogs = [];
+
+            for (const item of items) {
+                const ingredient = await tx.ingredient.findUnique({
+                    where: { id: item.ingredientId }
+                });
+
+                if (!ingredient) continue;
+
+                const diff = parseFloat(item.physicalStock) - ingredient.stock;
+                if (diff === 0) continue;
+
+                if (diff < 0) {
+                    await tx.stockLoss.create({
                         data: {
-                            stock: { increment: item.quantity },
-                            lastUnitCost: item.unitCost
+                            restaurantId,
+                            ingredientId: item.ingredientId,
+                            userId,
+                            quantity: Math.abs(diff),
+                            reason: 'AUDIT_ADJUSTMENT',
+                            notes: `Ajuste de Inventário. Anterior: ${ingredient.stock}`,
+                            unitCostSnapshot: ingredient.lastUnitCost || 0
+                        }
+                    });
+                } else {
+                    await tx.stockEntry.create({
+                        data: {
+                            restaurantId,
+                            status: 'CONFIRMED',
+                            invoiceNumber: 'AJUSTE_BALANCO',
+                            totalAmount: 0,
+                            items: {
+                                create: {
+                                    ingredientId: item.ingredientId,
+                                    quantity: diff,
+                                    unitCost: ingredient.lastUnitCost || 0
+                                }
+                            }
                         }
                     });
                 }
 
-                // 2. Gerar Transação Financeira (Despesa)
-                const transaction = await tx.financialTransaction.create({
-                    data: {
-                        description: `Compra NF #${entry.invoiceNumber || entry.id.slice(-4)}`,
-                        amount: entry.totalAmount,
-                        type: 'EXPENSE',
-                        status: 'PENDING', // Fica a pagar
-                        dueDate: new Date(),
-                        restaurantId: entry.restaurantId,
-                        supplierId: entry.supplierId
-                    }
+                await tx.ingredient.update({
+                    where: { id: item.ingredientId },
+                    data: { stock: parseFloat(item.physicalStock) }
                 });
 
-                // 3. Confirmar a Entrada
-                await tx.stockEntry.update({
-                    where: { id },
-                    data: { 
-                        status: 'CONFIRMED',
-                        transactionId: transaction.id
-                    }
-                });
-            });
+                auditLogs.push({ ingredientId: item.ingredientId, diff });
+            }
+            return auditLogs;
+        });
 
-            res.json({ success: true });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Erro ao confirmar entrada.' });
-        }
-    },
+        res.json({ success: true, adjustedItems: results.length });
+    });
+}
 
-    // DELETE /api/stock/entries/:id
-    async deleteEntry(req, res) {
-        try {
-            const entry = await prisma.stockEntry.findUnique({ where: { id: req.params.id } });
-            if (entry.status === 'CONFIRMED') return res.status(400).json({ error: 'Não é possível excluir uma entrada já confirmada.' });
-            
-            await prisma.stockEntry.delete({ where: { id: req.params.id } });
-            res.status(204).send();
-        } catch (error) {
-            res.status(500).json({ error: 'Erro ao excluir entrada.' });
-        }
-    },
-
-    // POST /api/stock/audit
-    async auditInventory(req, res) {
-        const { items } = req.body; // Array de { ingredientId, physicalStock }
-        const { restaurantId } = req;
-        const userId = req.user.id;
-
-        try {
-            const results = await prisma.$transaction(async (tx) => {
-                const auditLogs = [];
-
-                for (const item of items) {
-                    const ingredient = await tx.ingredient.findUnique({
-                        where: { id: item.ingredientId }
-                    });
-
-                    if (!ingredient) continue;
-
-                    const diff = parseFloat(item.physicalStock) - ingredient.stock;
-
-                    if (diff === 0) continue;
-
-                    if (diff < 0) {
-                        // Perda (Estoque físico menor que o sistema)
-                        await tx.stockLoss.create({
-                            data: {
-                                restaurantId,
-                                ingredientId: item.ingredientId,
-                                userId,
-                                quantity: Math.abs(diff),
-                                reason: 'AUDIT_ADJUSTMENT',
-                                notes: `Ajuste de Inventário (Balanço). Anterior: ${ingredient.stock}`,
-                                unitCostSnapshot: ingredient.lastUnitCost || 0
-                            }
-                        });
-                    } else {
-                        // Sobra (Estoque físico maior que o sistema) - Criamos uma entrada de ajuste
-                        await tx.stockEntry.create({
-                            data: {
-                                restaurantId,
-                                status: 'CONFIRMED',
-                                invoiceNumber: 'AJUSTE_BALANCO',
-                                totalAmount: 0,
-                                notes: `Ajuste de Inventário (Balanço). Anterior: ${ingredient.stock}`,
-                                items: {
-                                    create: {
-                                        ingredientId: item.ingredientId,
-                                        quantity: diff,
-                                        unitCost: ingredient.lastUnitCost || 0
-                                    }
-                                }
-                            }
-                        });
-                    }
-
-                    // Atualiza o saldo final para bater com o físico
-                    await tx.ingredient.update({
-                        where: { id: item.ingredientId },
-                        data: { stock: parseFloat(item.physicalStock) }
-                    });
-
-                    auditLogs.push({ ingredientId: item.ingredientId, diff });
-                }
-                return auditLogs;
-            });
-
-            res.json({ success: true, adjustedItems: results.length });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Erro ao processar balanço.' });
-        }
-    }
-};
-
-module.exports = StockController;
+module.exports = new StockController();
