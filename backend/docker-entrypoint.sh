@@ -34,13 +34,20 @@ file_env 'DATABASE_URL'
 file_env 'JWT_SECRET'
 
 # Aguarda o banco de dados estar pronto (evita falha na inicialização)
-echo "Aguardando banco de dados responder..."
+echo "Aguardando banco de dados responder em $DATABASE_URL..."
 MAX_RETRIES=30
 COUNT=0
-until npx prisma db pull --print > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
+
+# Extrai host e porta da URL do banco (suporta formatos comuns do Prisma/Postgres)
+DB_HOST=$(echo $DATABASE_URL | sed -e 's|.*@||' -e 's|/.*||' -e 's|:.*||')
+DB_PORT=$(echo $DATABASE_URL | sed -e 's|.*:||' -e 's|/.*||')
+[ -z "$DB_PORT" ] && DB_PORT=5432
+
+# Usa Node para testar a conexão TCP (mais leve que prisma db pull)
+until node -e "const net = require('net'); const client = net.createConnection({host: '$DB_HOST', port: $DB_PORT}, () => client.end()); client.on('error', (e) => process.exit(1));" || [ $COUNT -eq $MAX_RETRIES ]; do
   sleep 2
   COUNT=$((COUNT + 1))
-  echo "Tentativa $COUNT de $MAX_RETRIES..."
+  echo "Tentativa $COUNT de $MAX_RETRIES (Buscando $DB_HOST:$DB_PORT)..."
 done
 
 if [ $COUNT -eq $MAX_RETRIES ]; then
