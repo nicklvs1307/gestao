@@ -34,36 +34,60 @@ interface SidebarAdminProps {
     onClose: () => void;
 }
 
-const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Caixa (Turnos)', path: '/cashier', icon: Wallet }, // Item Novo
-    { name: 'PDV (Vendas)', path: '/pos', icon: Store },
-    { name: 'KDS (Cozinha)', path: '/kds', icon: Monitor }, 
-    { name: 'Pedidos', path: '/orders', icon: ShoppingBag },
-    { name: 'Produtos', path: '/products', icon: UtensilsCrossed },
-    { name: 'Insumos (Estoque)', path: '/ingredients', icon: Scale },
-    { name: 'Cardápio (Cats)', path: '/categories', icon: List },
-    { name: 'Promoções', path: '/promotions', icon: Percent },
-    { name: 'Mesas', path: '/tables', icon: Armchair },
-    { name: 'Relatórios', path: '/reports', icon: BarChart3 },
-    { name: 'Financeiro', path: '/financial/entries', icon: DollarSign },
-    { name: 'Contas Bancárias', path: '/financial/bank-accounts', icon: Landmark },
-    { name: 'Cats Financeiras', path: '/financial/categories', icon: List },
-    { name: 'Fornecedores', path: '/financial/suppliers', icon: Users },
-    { name: 'Formas de Pagamento', path: '/payment-methods', icon: CreditCard },
-    { name: 'Fiscal (NFC-e)', path: '/fiscal', icon: FileText },
-    { name: 'Clientes', path: '/customers', icon: Users }, // Item Novo
-    { name: 'Usuários', path: '/users', icon: Users },
-    { name: 'Comissão Garçom', path: '/waiters/settlement', icon: DollarSign },
-    { name: 'Entregadores', path: '/drivers', icon: Truck },
-    { name: 'Acerto Motoboy', path: '/drivers/settlement', icon: Wallet },
-    { name: 'Integrações', path: '/integrations', icon: Puzzle }, 
-    { name: 'Configurações', path: '/settings', icon: Settings },
-];
-
 const SidebarAdmin: React.FC<SidebarAdminProps> = ({ isOpen, onClose }) => {
     const { logout } = useAuth();
     
+    const menuGroups = [
+        {
+            title: 'OPERACIONAL',
+            items: [
+                { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+                { name: 'Caixa (Turnos)', path: '/cashier', icon: Wallet },
+                { name: 'PDV (Vendas)', path: '/pos', icon: Store },
+                { name: 'KDS (Cozinha)', path: '/kds', icon: Monitor }, 
+                { name: 'Pedidos', path: '/orders', icon: ShoppingBag },
+            ]
+        },
+        {
+            title: 'CARDÁPIO',
+            items: [
+                { name: '1. Categorias', path: '/categories', icon: List },
+                { name: '2. Complementos', path: '/addons', icon: Puzzle },
+                { name: '3. Produtos', path: '/products', icon: UtensilsCrossed },
+                { name: '4. Promoções', path: '/promotions', icon: Percent },
+                { name: 'Mesas & QR Code', path: '/tables', icon: Armchair },
+            ]
+        },
+        {
+            title: 'FINANCEIRO',
+            items: [
+                { name: 'Movimentações', path: '/financial/entries', icon: DollarSign },
+                { name: 'Contas Bancárias', path: '/financial/bank-accounts', icon: Landmark },
+                { name: 'Categorias Fin.', path: '/financial/categories', icon: List },
+                { name: 'Fornecedores', path: '/financial/suppliers', icon: Users },
+                { name: 'Formas de Pagamento', path: '/payment-methods', icon: CreditCard },
+                { name: 'Fiscal (NFC-e)', path: '/fiscal', icon: FileText },
+            ]
+        },
+        {
+            title: 'PESSOAS & GESTÃO',
+            items: [
+                { name: 'Clientes', path: '/customers', icon: Users },
+                { name: 'Usuários (Equipe)', path: '/users', icon: Users },
+                { name: 'Comissão Garçom', path: '/waiters/settlement', icon: DollarSign },
+                { name: 'Entregadores', path: '/drivers', icon: Truck },
+                { name: 'Relatórios', path: '/reports', icon: BarChart3 },
+            ]
+        },
+        {
+            title: 'SISTEMA',
+            items: [
+                { name: 'Integrações', path: '/integrations', icon: Plug }, 
+                { name: 'Configurações', path: '/settings', icon: Settings },
+            ]
+        }
+    ];
+
     return (
         <>
             {/* Mobile Overlay */}
@@ -82,7 +106,7 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ isOpen, onClose }) => {
             {/* Sidebar */}
             <motion.aside 
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0a0a] text-white flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:block shadow-2xl",
+                    "fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0a0a] text-white flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:block shadow-2xl border-r border-white/5",
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
@@ -97,22 +121,27 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto py-6 space-y-1 no-scrollbar">
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            onClick={() => onClose()}
-                            className={({ isActive }) => cn(
-                                "flex items-center gap-3 px-6 py-3 text-[13px] font-bold transition-all duration-200 border-r-4",
-                                isActive 
-                                    ? "bg-orange-700/10 border-orange-600 text-orange-500" 
-                                    : "border-transparent text-slate-400 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            <item.icon size={18} className={cn("transition-colors", isActive ? "text-orange-500" : "text-slate-500")} />
-                            <span>{item.name}</span>
-                        </NavLink>
+                <nav className="flex-1 overflow-y-auto py-6 space-y-8 no-scrollbar scroll-smooth">
+                    {menuGroups.map((group) => (
+                        <div key={group.title} className="px-4 space-y-1">
+                            <h3 className="px-4 text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] mb-3">{group.title}</h3>
+                            {group.items.map((item) => (
+                                <NavLink
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => onClose()}
+                                    className={({ isActive }) => cn(
+                                        "flex items-center gap-3 px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-200",
+                                        isActive 
+                                            ? "bg-orange-600/10 text-orange-500 shadow-sm" 
+                                            : "text-slate-400 hover:text-white hover:bg-white/5"
+                                    )}
+                                >
+                                    <item.icon size={16} className={cn("transition-colors", isActive ? "text-orange-500" : "text-slate-500")} />
+                                    <span>{item.name}</span>
+                                </NavLink>
+                            ))}
+                        </div>
                     ))}
                 </nav>
 

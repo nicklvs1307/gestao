@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import type { Category } from '@/types/index';
-import { getCategories, deleteCategory } from '../services/api';
-import { Plus, Edit, Trash2, ChevronRight, Layers, Loader2, AlertCircle } from 'lucide-react';
+import { getCategories, deleteCategory, reorderCategories } from '../services/api';
+import { Plus, Edit, Trash2, Layers, Loader2, AlertCircle, GripVertical } from 'lucide-react';
 import { cn } from '../lib/utils';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface CategoryManagementProps {
   onAddCategoryClick: () => void;
@@ -10,26 +27,105 @@ interface CategoryManagementProps {
   refetchTrigger: number;
 }
 
+interface SortableRowProps {
+  category: Category;
+  onEdit: (category: Category) => void;
+  onDelete: (id: string) => void;
+}
+
+const SortableRow = ({ category, onEdit, onDelete }: SortableRowProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 0,
+    position: 'relative' as const,
+  };
+
+  return (
+    <tr 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(
+        "hover:bg-muted/30 transition-colors group",
+        isDragging && "bg-muted/50 shadow-lg opacity-80"
+      )}
+    >
+      <td className="px-6 py-3">
+        <div className="flex items-center gap-3">
+           <button 
+            {...attributes} 
+            {...listeners}
+            className="p-1 cursor-grab active:cursor-grabbing text-slate-300 hover:text-primary transition-colors"
+           >
+             <GripVertical size={16} />
+           </button>
+           <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0 border border-primary/20">
+               <Layers size={14} />
+           </div>
+           <span className="font-bold text-xs uppercase italic tracking-tight">{category.name}</span>
+           {(!category.subCategories || category.subCategories.length === 0) && (
+             <span className="text-[7px] bg-muted text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-widest font-black">
+               Base
+             </span>
+           )}
+        </div>
+      </td>
+      <td className="px-6 py-3 text-center font-black text-xs text-slate-400">{category.order}</td>
+      <td className="px-6 py-3 text-right">
+        <div className="flex items-center justify-end gap-1.5">
+          <button 
+              className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" 
+              onClick={() => onEdit(category)}
+          >
+            <Edit size={16} />
+          </button>
+          <button 
+              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" 
+              onClick={() => onDelete(category.id)}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+};
+
 const CategoryManagement: React.FC<CategoryManagementProps> = ({ onAddCategoryClick, onEditCategoryClick, refetchTrigger }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
       const data = await getCategories();
-      // Garante que data é um array antes de setar
       if (Array.isArray(data)) {
         setCategories(data);
       } else {
-        console.error("Formato de dados inválido recebido:", data);
         setCategories([]);
         setError('Dados inválidos recebidos do servidor.');
       }
       setError(null);
     } catch (err) {
-      setError('Falha ao buscar as categorias. Verifique sua conexão.');
+      setError('Falha ao buscar as categorias.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -40,18 +136,44 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ onAddCategoryCl
     fetchCategories();
   }, [refetchTrigger]);
 
-  const handleDelete = async (categoryId: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta categoria? Subcategorias e produtos associados podem ser afetados.')) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
+    if (over && active.id !== over.id) {
+      const oldIndex = categories.findIndex((c) => c.id === active.id);
+      const newIndex = categories.findIndex((c) => c.id === over.id);
+
+      const newOrder = arrayMove(categories, oldIndex, newIndex);
+      setCategories(newOrder);
+
+      try {
+        setIsReordering(true);
+        const updates = newOrder.map((cat, index) => ({
+          id: cat.id,
+          order: index
+        }));
+        await reorderCategories(updates);
+      } catch (error) {
+        console.error('Erro ao salvar nova ordem:', error);
+        alert('Falha ao salvar a nova ordem das categorias.');
+        fetchCategories(); // Reverte
+      } finally {
+        setIsReordering(false);
+      }
+    }
+  };
+
+  const handleDelete = async (categoryId: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta categoria?')) return;
     try {
       await deleteCategory(categoryId);
-      fetchCategories(); // Re-fetch categories to update the list
+      fetchCategories();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Falha ao excluir a categoria.');
     }
   };
 
-  if (isLoading) return (
+  if (isLoading && !isReordering) return (
       <div className="flex h-64 flex-col items-center justify-center gap-4 text-muted-foreground animate-pulse">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p>Carregando categorias...</p>
@@ -65,12 +187,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ onAddCategoryCl
           <h3 className="text-lg font-semibold">Erro ao carregar</h3>
           <p className="text-sm opacity-90">{error}</p>
         </div>
-        <button 
-          onClick={fetchCategories}
-          className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90 transition-colors"
-        >
-          Tentar Novamente
-        </button>
+        <button onClick={fetchCategories} className="ui-button-primary">Tentar Novamente</button>
       </div>
   );
 
@@ -82,7 +199,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ onAddCategoryCl
             <Layers className="h-5 w-5 text-primary" />
             Categorias
           </h2>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">Estrutura do cardápio e subcategorias.</p>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">
+            Arraste para reordenar a exibição no cardápio.
+          </p>
         </div>
         <button 
           className="ui-button-primary h-10 px-4 text-[10px] uppercase tracking-widest"
@@ -112,75 +231,36 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ onAddCategoryCl
                     </td>
                  </tr>
               ) : (
-                categories.flatMap(cat => [
-                  // Categoria Principal
-                  <tr key={cat.id} className="hover:bg-muted/30 transition-colors group">
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-3">
-                         <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0 border border-primary/20">
-                             <Layers size={14} />
-                         </div>
-                         <span className="font-bold text-xs uppercase italic tracking-tight">{cat.name}</span>
-                         {(!cat.subCategories || cat.subCategories.length === 0) && (
-                           <span className="text-[7px] bg-muted text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-widest font-black">
-                             Base
-                           </span>
-                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-center font-black text-xs text-slate-400">{cat.order}</td>
-                    <td className="px-6 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button 
-                            className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" 
-                            onClick={() => onEditCategoryClick(cat)}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button 
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" 
-                            onClick={() => handleDelete(cat.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>,
-                  // Subcategorias
-                  ...(cat.subCategories || []).map(subCat => (
-                    <tr key={subCat.id} className="bg-muted/5 hover:bg-muted/30 transition-colors group">
-                      <td className="px-6 py-2">
-                        <div className="flex items-center gap-2 pl-10 text-slate-500 relative">
-                            <div className="absolute left-6 top-1/2 -translate-y-1/2 w-3 h-px bg-border"></div>
-                            <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></div>
-                            <span className="text-[11px] font-medium uppercase tracking-tight italic">{subCat.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-2 text-center text-[10px] font-bold text-slate-400">{subCat.order}</td>
-                      <td className="px-6 py-2 text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                          <button 
-                            className="p-1 text-slate-400 hover:text-primary rounded transition-colors" 
-                            onClick={() => onEditCategoryClick(subCat)}
-                          >
-                            <Edit size={14} />
-                          </button>
-                          <button 
-                            className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors" 
-                            onClick={() => handleDelete(subCat.id)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ])
+                <DndContext 
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext 
+                    items={categories.map(c => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {categories.map((cat) => (
+                      <SortableRow 
+                        key={cat.id} 
+                        category={cat} 
+                        onEdit={onEditCategoryClick} 
+                        onDelete={handleDelete} 
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               )}
             </tbody>
           </table>
         </div>
       </div>
+      {isReordering && (
+        <div className="fixed bottom-10 right-10 bg-primary text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 animate-bounce z-50">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-xs font-bold uppercase tracking-widest">Salvando ordem...</span>
+        </div>
+      )}
     </div>
   );
 };
