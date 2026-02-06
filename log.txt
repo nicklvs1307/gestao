@@ -1,14 +1,89 @@
-root@servergestao:~/gestao# docker logs 0f016d2c0595
-Aguardando banco de dados responder...
-Sincronizando Banco de Dados com o Schema...
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
-
-25 migrations found in prisma/migrations
-
-
-No pending migrations to apply.
-Executando Seed de Permissões...
-Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
-{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"password" type=​"password" required class=​"flex h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-10 py-2 text-sm transition-all focus:​bg-white focus:​ring-2 focus:​ring-orange-500/​20 focus:​border-orange-500 outline-none disabled:​opacity-50" placeholder=​"••••••••" value>​flex
+index-CiGonU5j.js:668  POST https://kicardapio.towersfy.com/api/auth/login 405 (Method Not Allowed)
+(anônimo) @ index-CiGonU5j.js:668
+xhr @ index-CiGonU5j.js:668
+I_ @ index-CiGonU5j.js:670
+Promise.then
+_request @ index-CiGonU5j.js:671
+request @ index-CiGonU5j.js:670
+(anônimo) @ index-CiGonU5j.js:671
+(anônimo) @ index-CiGonU5j.js:666
+PR @ index-CiGonU5j.js:671
+r @ index-CiGonU5j.js:671
+v @ index-CiGonU5j.js:666
+Vn @ index-CiGonU5j.js:37
+Gi @ index-CiGonU5j.js:37
+Yi @ index-CiGonU5j.js:37
+xc @ index-CiGonU5j.js:37
+bc @ index-CiGonU5j.js:37
+(anônimo) @ index-CiGonU5j.js:37
+Kx @ index-CiGonU5j.js:40
+Pt @ index-CiGonU5j.js:37
+d @ index-CiGonU5j.js:37
+Ko @ index-CiGonU5j.js:37
+Hc @ index-CiGonU5j.js:37
+index-CiGonU5j.js:671 Erro de login: AxiosError: Request failed with status code 405
+    at j4 (index-CiGonU5j.js:668:1091)
+    at XMLHttpRequest.C (index-CiGonU5j.js:668:5850)
+    at Fd.request (index-CiGonU5j.js:670:2094)
+    at async PR (index-CiGonU5j.js:671:5911)
+    at async r (index-CiGonU5j.js:671:10798)
+    at async v (index-CiGonU5j.js:666:327)
+r @ index-CiGonU5j.js:671
+await in r
+v @ index-CiGonU5j.js:666
+Vn @ index-CiGonU5j.js:37
+Gi @ index-CiGonU5j.js:37
+Yi @ index-CiGonU5j.js:37
+xc @ index-CiGonU5j.js:37
+bc @ index-CiGonU5j.js:37
+(anônimo) @ index-CiGonU5j.js:37
+Kx @ index-CiGonU5j.js:40
+Pt @ index-CiGonU5j.js:37
+d @ index-CiGonU5j.js:37
+Ko @ index-CiGonU5j.js:37
+Hc @ index-CiGonU5j.js:37
+index-CiGonU5j.js:668  POST https://kicardapio.towersfy.com/api/auth/login 405 (Method Not Allowed)
+(anônimo) @ index-CiGonU5j.js:668
+xhr @ index-CiGonU5j.js:668
+I_ @ index-CiGonU5j.js:670
+Promise.then
+_request @ index-CiGonU5j.js:671
+request @ index-CiGonU5j.js:670
+(anônimo) @ index-CiGonU5j.js:671
+(anônimo) @ index-CiGonU5j.js:666
+PR @ index-CiGonU5j.js:671
+r @ index-CiGonU5j.js:671
+v @ index-CiGonU5j.js:666
+Vn @ index-CiGonU5j.js:37
+Gi @ index-CiGonU5j.js:37
+Yi @ index-CiGonU5j.js:37
+xc @ index-CiGonU5j.js:37
+bc @ index-CiGonU5j.js:37
+(anônimo) @ index-CiGonU5j.js:37
+Kx @ index-CiGonU5j.js:40
+Pt @ index-CiGonU5j.js:37
+d @ index-CiGonU5j.js:37
+Ko @ index-CiGonU5j.js:37
+Hc @ index-CiGonU5j.js:37
+index-CiGonU5j.js:671 Erro de login: AxiosError: Request failed with status code 405
+    at j4 (index-CiGonU5j.js:668:1091)
+    at XMLHttpRequest.C (index-CiGonU5j.js:668:5850)
+    at Fd.request (index-CiGonU5j.js:670:2094)
+    at async PR (index-CiGonU5j.js:671:5911)
+    at async r (index-CiGonU5j.js:671:10798)
+    at async v (index-CiGonU5j.js:666:327)
+r @ index-CiGonU5j.js:671
+await in r
+v @ index-CiGonU5j.js:666
+Vn @ index-CiGonU5j.js:37
+Gi @ index-CiGonU5j.js:37
+Yi @ index-CiGonU5j.js:37
+xc @ index-CiGonU5j.js:37
+bc @ index-CiGonU5j.js:37
+(anônimo) @ index-CiGonU5j.js:37
+Kx @ index-CiGonU5j.js:40
+Pt @ index-CiGonU5j.js:37
+d @ index-CiGonU5j.js:37
+Ko @ index-CiGonU5j.js:37
+Hc @ index-CiGonU5j.js:37
