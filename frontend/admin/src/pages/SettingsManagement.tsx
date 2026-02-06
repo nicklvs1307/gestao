@@ -673,15 +673,10 @@ const SettingsManagement: React.FC = () => {
                                     )}
                                     value={slug} 
                                     onChange={e => {
-                                        // Nova Lógica: Tudo junto, sem hífens, sem acentos
-                                        const val = e.target.value.toLowerCase()
-                                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                                            .replace(/\s+/g, '')
-                                            .replace(/[^\w]+/g, '')
-                                            .replace(/_/g, '');
+                                        const val = e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
                                         setSlug(val);
                                     }}
-                                    placeholder="ex: minhaloja"
+                                    placeholder="ex: minha-loja"
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                                     {isCheckingSlug && <Loader2 size={16} className="animate-spin text-muted-foreground" />}
@@ -707,7 +702,7 @@ const SettingsManagement: React.FC = () => {
                                 <CheckCircle size={12}/> Endereço disponível!
                             </p>
                         )}
-                        <p className="text-[10px] text-slate-500 mt-2">O endereço deve conter apenas letras e números, tudo junto. Ex: `pizzariadojoao`</p>
+                        <p className="text-[10px] text-slate-500 mt-2">O endereço deve conter apenas letras, números e hífens. Ex: `pizzaria-do-joao`</p>
                     </div>
 
                     <div className="space-y-4">
