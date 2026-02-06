@@ -70,14 +70,14 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
   }
 
   return (
-    <div className="relative w-full h-48 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200 border border-white/20 group">
+    <div className="relative w-full h-64 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 border border-white/10 group">
       {bannerItems.map((item, index) => {
         const product = item.type === 'promotion' ? item.data.product! : item.data;
         const isActive = currentSlide === index;
 
         let title = 'Destaque da Casa';
         let priceElement = (
-             <span className="text-xl font-black italic tracking-tighter">
+             <span className="text-2xl font-black italic tracking-tighter">
                 R$ {product.price.toFixed(2).replace('.', ',')}
              </span>
         );
@@ -88,8 +88,8 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
           title = promo.name;
           priceElement = (
             <div className="flex flex-col items-end">
-              <span className="text-[10px] line-through opacity-60 font-bold">R$ {product.price.toFixed(2).replace('.', ',')}</span>
-              <span className="text-2xl font-black italic text-white tracking-tighter">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
+              <span className="text-[12px] line-through opacity-60 font-bold">R$ {product.price.toFixed(2).replace('.', ',')}</span>
+              <span className="text-3xl font-black italic text-white tracking-tighter">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
             </div>
           );
         }
@@ -103,39 +103,39 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
             )}
             onClick={() => onProductClick(product)}
           >
-            {/* Imagem de Fundo com Zoom Lento */}
+            {/* Imagem de Fundo com Zoom Lento e Opacidade Realista */}
             <div 
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-[10000ms] ease-linear"
                 style={{ 
                     backgroundImage: `url('${product.imageUrl}')`,
-                    transform: isActive ? 'scale(1.1)' : 'scale(1)'
+                    transform: isActive ? 'scale(1.15)' : 'scale(1)'
                 }}
             />
             
-            {/* Gradiente de Contraste Profissional */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+            {/* Gradiente de Contraste Profissional - Menos invasivo no topo */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
 
             {/* Conteúdo Posicionado */}
-            <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
-                <div className="flex justify-between items-end gap-4">
+            <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
+                <div className="flex justify-between items-end gap-6">
                     <div className="flex-1 min-w-0">
                         <div className={cn(
-                            "flex items-center gap-1.5 px-3 py-1 rounded-full w-fit mb-2 border border-white/20 backdrop-blur-md shadow-lg",
-                            item.type === 'promotion' ? "bg-orange-500/80" : "bg-primary/80"
+                            "flex items-center gap-2 px-4 py-1.5 rounded-full w-fit mb-3 border border-white/20 backdrop-blur-md shadow-xl",
+                            item.type === 'promotion' ? "bg-orange-500/90" : "bg-primary/90"
                         )}>
-                            {item.type === 'promotion' ? <Flame size={12} className="fill-white" /> : <Award size={12} />}
-                            <span className="text-[9px] font-black uppercase tracking-[0.15em]">
-                                {item.type === 'promotion' ? 'Promoção' : 'Destaque'}
+                            {item.type === 'promotion' ? <Flame size={14} className="fill-white" /> : <Award size={14} />}
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                                {item.type === 'promotion' ? 'Oferta Especial' : 'Destaque'}
                             </span>
                         </div>
-                        <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-tight mb-1 truncate">
+                        <h2 className="text-3xl font-black italic tracking-tighter uppercase leading-none mb-2 truncate drop-shadow-lg">
                             {product.name}
                         </h2>
-                        <p className="text-xs font-medium opacity-80 line-clamp-1 max-w-[80%]">{product.description}</p>
+                        <p className="text-sm font-medium opacity-90 line-clamp-1 max-w-[85%] drop-shadow-md">{product.description}</p>
                     </div>
                     
-                    <div className="shrink-0 pb-1">
+                    <div className="shrink-0 pb-1 drop-shadow-2xl">
                         {priceElement}
                     </div>
                 </div>

@@ -181,56 +181,66 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
         {/* Novo Header com Capa e Logo Circular */}
         <header className="relative mb-6">
             {/* Imagem de Capa */}
-            <div className="h-40 md:h-52 w-full bg-muted relative overflow-hidden">
+            <div className="h-56 md:h-64 w-full bg-muted relative overflow-hidden">
                 {restaurant.settings?.backgroundImageUrl ? (
                     <img 
                         src={restaurant.settings.backgroundImageUrl} 
-                        className="w-full h-full object-cover opacity-60" 
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
                         alt="Capa" 
                     />
                 ) : (
-                    <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary via-transparent to-transparent animate-pulse" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent z-10" />
+                {/* Gradiente sutil para legibilidade, sem desbotar a foto */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/20 z-10" />
                 
                 {/* Botões de Ação no Header */}
                 <div className="absolute top-4 right-4 z-20 flex gap-2">
-                    <button className="w-10 h-10 bg-background/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-background/40 transition-all border border-white/10">
+                    <button className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-all border border-white/10">
                         <Palette size={18} />
                     </button>
-                    <button className="w-10 h-10 bg-background/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-background/40 transition-all border border-white/10">
+                    <button className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-all border border-white/10">
                         <Heart size={18} />
                     </button>
                 </div>
             </div>
 
             {/* Logo Circular Centralizada */}
-            <div className="relative -mt-16 flex justify-center z-20">
-                <div className="w-32 h-32 rounded-full border-4 border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
+            <div className="relative -mt-20 flex justify-center z-20">
+                <div className="w-36 h-36 rounded-full border-[6px] border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
                     {restaurant.logoUrl ? (
                         <img src={restaurant.logoUrl} className="w-full h-full object-cover" alt="Logo" />
                     ) : (
-                        <span className="text-3xl font-black italic text-primary">FS</span>
+                        <div className="w-full h-full bg-primary flex items-center justify-center">
+                            <span className="text-4xl font-black italic text-white uppercase">{restaurant.name.substring(0, 2)}</span>
+                        </div>
                     )}
                 </div>
             </div>
 
             {/* Informações da Loja Centralizadas */}
             <div className="mt-4 px-5 text-center">
-                <h1 className="text-2xl font-black text-foreground tracking-tight mb-2 uppercase italic">{restaurant.name}</h1>
+                <h1 className="text-3xl font-black text-foreground tracking-tight mb-1 uppercase italic leading-none">{restaurant.name}</h1>
+                
+                {/* Endereço */}
+                {restaurant.settings?.address && (
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-8 line-clamp-1">
+                        📍 {restaurant.settings.address}
+                    </p>
+                )}
                 
                 <div className="flex flex-wrap justify-center items-center gap-3">
                     {isStoreOpen ? (
-                        <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-emerald-500/20">
+                        <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-emerald-500/20 shadow-sm">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Aberto
                         </span>
                     ) : (
-                        <span className="bg-destructive/10 text-destructive px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-destructive/20">
+                        <span className="bg-destructive/10 text-destructive px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-destructive/20 shadow-sm">
                             <span className="w-1.5 h-1.5 bg-destructive rounded-full"></span> Fechado
                         </span>
                     )}
                     
-                    <div className="flex items-center gap-4 text-muted-foreground bg-muted/50 px-4 py-1.5 rounded-full border border-border/50 backdrop-blur-sm">
+                    <div className="flex items-center gap-4 text-muted-foreground bg-muted/30 px-4 py-1.5 rounded-full border border-border/40 backdrop-blur-sm shadow-sm">
                         <span className="text-[10px] font-bold uppercase flex items-center gap-1.5">
                             <Clock size={14} className="text-primary" /> {restaurant.settings?.deliveryTime || '30-45 min'}
                         </span>
