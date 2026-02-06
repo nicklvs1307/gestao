@@ -9,18 +9,25 @@ const getProducts = async (req, res) => {
             orderBy: { order: 'asc' },
         });
         res.json(products);
-    } catch (error) { res.status(500).json({ error: 'Erro ao buscar produtos.' }); }
+    } catch (error) { 
+        console.error('Erro em getProducts:', error);
+        res.status(500).json({ error: 'Erro ao buscar produtos.' }); 
+    }
 };
 
 const getClientProducts = async (req, res) => {
     try { 
-        res.json(await prisma.product.findMany({ 
+        const products = await prisma.product.findMany({ 
             where: { restaurantId: req.params.restaurantId }, 
             include: { categories: true, sizes: true, addonGroups: { include: { addons: true } } }, 
             orderBy: { order: 'asc' } 
-        })); 
+        });
+        res.json(products);
     }
-    catch (error) { res.status(500).json({ error: 'Erro ao buscar produtos para cliente.' }); }
+    catch (error) { 
+        console.error('Erro em getClientProducts:', error);
+        res.status(500).json({ error: 'Erro ao buscar produtos para cliente.' }); 
+    }
 };
 
 const createProduct = async (req, res) => {
