@@ -1,22 +1,19 @@
-index-1l9QuRnW.js:819 Domain Debug: {hostname: 'romapizzaria.towersfy.com', detectedSlug: 'romapizzaria', finalSlug: 'romapizzaria'}
-index-1l9QuRnW.js:819 Uncaught ReferenceError: handleProductCardClick is not defined
-    at Pb (index-1l9QuRnW.js:819:41289)
-    at Iu (index-1l9QuRnW.js:48:48097)
-    at cc (index-1l9QuRnW.js:48:70898)
-    at np (index-1l9QuRnW.js:48:81231)
-    at Mp (index-1l9QuRnW.js:48:117001)
-    at Ax (index-1l9QuRnW.js:48:116047)
-    at Rc (index-1l9QuRnW.js:48:115879)
-    at _p (index-1l9QuRnW.js:48:112672)
-    at Pp (index-1l9QuRnW.js:48:124472)
-    at MessagePort.W (index-1l9QuRnW.js:25:1609)
-Pb @ index-1l9QuRnW.js:819
-Iu @ index-1l9QuRnW.js:48
-cc @ index-1l9QuRnW.js:48
-np @ index-1l9QuRnW.js:48
-Mp @ index-1l9QuRnW.js:48
-Ax @ index-1l9QuRnW.js:48
-Rc @ index-1l9QuRnW.js:48
-_p @ index-1l9QuRnW.js:48
-Pp @ index-1l9QuRnW.js:48
-W @ index-1l9QuRnW.js:25
+login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"password" type=​"password" required class=​"flex h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-10 py-2 text-sm transition-all focus:​bg-white focus:​ring-2 focus:​ring-orange-500/​20 focus:​border-orange-500 outline-none disabled:​opacity-50" placeholder=​"••••••••" value=​"rom@pizza@2026">​flex
+api/auth/login:1  Failed to load resource: the server responded with a status of 404 ()
+index-OjmdgXri.js:661 Erro de login: AxiosError: Request failed with status code 404
+    at m4 (index-OjmdgXri.js:658:1091)
+    at XMLHttpRequest.C (index-OjmdgXri.js:658:5850)
+    at Fd.request (index-OjmdgXri.js:660:2094)
+    at async pR (index-OjmdgXri.js:661:5911)
+    at async i (index-OjmdgXri.js:661:10731)
+    at async v (index-OjmdgXri.js:656:327)
+i @ index-OjmdgXri.js:661
+api/auth/login:1  Failed to load resource: the server responded with a status of 404 ()
+index-OjmdgXri.js:661 Erro de login: AxiosError: Request failed with status code 404
+    at m4 (index-OjmdgXri.js:658:1091)
+    at XMLHttpRequest.C (index-OjmdgXri.js:658:5850)
+    at Fd.request (index-OjmdgXri.js:660:2094)
+    at async pR (index-OjmdgXri.js:661:5911)
+    at async i (index-OjmdgXri.js:661:10731)
+    at async v (index-OjmdgXri.js:656:327)
+i @ index-OjmdgXri.js:661

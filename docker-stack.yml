@@ -93,15 +93,15 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Regra precisa com âncoras para Traefik v3
-        - "traefik.http.routers.client.rule=HostRegexp(`^[a-z0-9-]+\\.towersfy\\.com$$`) && !Host(`container.towersfy.com`, `kicardapio.towersfy.com`, `apikicardapio.towersfy.com`, `admin.kicardapio.towersfy.com`)"
+        # Regra simplificada e robusta para subdomínios no Traefik v3
+        - "traefik.http.routers.client.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.towersfy.com`) && !Host(`container.towersfy.com`, `kicardapio.towersfy.com`, `apikicardapio.towersfy.com`, `admin.kicardapio.towersfy.com`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
         - "traefik.http.routers.client.tls.domains[0].main=towersfy.com"
         - "traefik.http.routers.client.tls.domains[0].sans=*.towersfy.com"
         - "traefik.http.services.client.loadbalancer.server.port=80"
-        - "traefik.http.routers.client.priority=1"
+        - "traefik.http.routers.client.priority=10"
 
 volumes:
   uploads_data:
