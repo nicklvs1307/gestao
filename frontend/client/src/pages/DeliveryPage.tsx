@@ -282,7 +282,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                     </button>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                     {categories.flatMap(cat => cat.products || [])
                         .filter(p => p.isAvailable && p.name.toLowerCase().includes(searchTerm.toLowerCase()))
                         .map(product => (
@@ -349,7 +349,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                                 <h2 className="text-lg font-black text-foreground mb-4 italic uppercase tracking-tighter">
                                     {category.name}
                                 </h2>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     {products.map(product => (
                                         <DeliveryProductCard 
                                             key={product.id} 

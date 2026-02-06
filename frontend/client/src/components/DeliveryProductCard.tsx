@@ -30,52 +30,61 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
 
   return (
     <div 
-      className="group bg-card p-2 rounded-[2rem] border border-border/40 transition-all active:scale-[0.98] hover:shadow-2xl hover:shadow-primary/5 cursor-pointer flex flex-col h-full shadow-sm relative overflow-hidden"
+      className="group bg-white rounded-[2rem] border border-slate-100 transition-all active:scale-[0.98] hover:shadow-xl cursor-pointer flex h-36 overflow-hidden shadow-sm relative"
       onClick={handleClick}
     >
-      {/* Imagem com Aspect Ratio fixo */}
-      <div className="aspect-[4/3] w-full rounded-[1.6rem] overflow-hidden mb-3 bg-muted relative">
+      {/* Imagem Estilo Borda Infinita (Esquerda) */}
+      <div className="w-36 h-full shrink-0 bg-slate-50 relative overflow-hidden">
         {product.imageUrl ? (
-          <img 
-            src={product.imageUrl} 
-            alt={product.name} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-          />
+          <>
+            <img 
+              src={product.imageUrl} 
+              alt={product.name} 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+            />
+            {/* Overlay sutil para integração da imagem */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
+          </>
         ) : (
-          <div className="flex items-center justify-center w-full h-full text-muted-foreground/30 bg-muted">
-             <ShoppingBag size={40} strokeWidth={1.5} />
+          <div className="flex items-center justify-center w-full h-full text-slate-200">
+             <ShoppingBag size={40} strokeWidth={1} />
           </div>
         )}
         
-        {/* Badge de Promoção Flutuante */}
+        {/* Badge de Promoção Pequena na Imagem */}
         {hasDiscount && (
-             <div className="absolute top-3 right-3 bg-primary text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg animate-bounce">
+             <div className="absolute top-2 left-2 bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-lg">
                 Oferta
              </div>
         )}
       </div>
       
-      <div className="flex flex-col flex-grow px-2 pb-2">
-          <h3 className="text-sm font-black text-foreground leading-tight line-clamp-1 uppercase italic tracking-tight">{product.name}</h3>
-          <p className="text-[10px] text-muted-foreground my-2 line-clamp-2 flex-grow leading-relaxed font-medium">{product.description}</p>
+      {/* Conteúdo à Direita */}
+      <div className="flex flex-col flex-grow p-4 min-w-0 justify-between">
+          <div className="space-y-1">
+              <div className="flex justify-between items-start gap-2">
+                <h3 className="text-base font-black text-slate-900 leading-tight uppercase italic tracking-tighter truncate">{product.name}</h3>
+              </div>
+              <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed font-medium">{product.description}</p>
+          </div>
           
-          <div className="flex justify-between items-end mt-2">
+          <div className="flex justify-between items-end">
             <div className="flex flex-col">
                  {hasDiscount && (
-                     <span className="text-[9px] text-muted-foreground/60 line-through font-bold">R$ {product.price.toFixed(2).replace('.', ',')}</span>
+                     <span className="text-[10px] text-slate-400 line-through font-bold">R$ {product.price.toFixed(2).replace('.', ',')}</span>
                  )}
-                 <div className="flex items-baseline gap-0.5">
-                    <span className="text-[10px] font-bold text-primary">R$</span>
-                    <span className="text-lg font-black text-foreground tracking-tighter">
+                 <div className="flex items-baseline gap-1">
+                    <span className="text-xs font-black text-primary">R$</span>
+                    <span className="text-xl font-black text-slate-900 tracking-tighter">
                         {finalPrice.toFixed(2).replace('.', ',')}
                     </span>
                  </div>
             </div>
             
-            {/* Botão de Adicionar Estilizado */}
-            <button className="w-10 h-10 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 transition-all hover:scale-110 active:scale-90 group-hover:rotate-6">
+            {/* Botão de Adicionar mais discreto e elegante */}
+            <div className="w-10 h-10 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg transition-all group-hover:bg-primary group-hover:scale-105 active:scale-90">
                 <Plus size={20} strokeWidth={3} />
-            </button>
+            </div>
           </div>
       </div>
     </div>
