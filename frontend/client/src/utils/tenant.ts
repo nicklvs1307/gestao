@@ -16,7 +16,7 @@ export const getTenantSlug = (): string | null => {
   
   // Se tiver 3 ou mais partes, assumimos que a primeira é o slug
   if (parts.length >= 3) {
-    const subdomain = parts[0];
+    const subdomain = parts[0].toLowerCase();
     
     // Ignora subdomínios reservados do sistema
     if (['www', 'api', 'admin', 'kicardapio', 'app', 'container'].includes(subdomain)) {

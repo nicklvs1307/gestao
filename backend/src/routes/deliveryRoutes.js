@@ -21,8 +21,13 @@ const optionalAuth = (req, res, next) => {
 router.get('/restaurant/:slug', async (req, res) => {
     const { slug } = req.params;
     try {
-      const restaurant = await prisma.restaurant.findUnique({
-        where: { slug },
+      const restaurant = await prisma.restaurant.findFirst({
+        where: { 
+          slug: {
+            equals: slug,
+            mode: 'insensitive'
+          }
+        },
         include: {
           settings: true,
           categories: {
