@@ -40,11 +40,30 @@ const deleteCategory = async (req, res) => {
     catch (error) { res.status(500).json({ error: 'Erro ao excluir categoria.' }); }
 };
 
+const reorderCategories = async (req, res) => {
+    const { items } = req.body; // Array de { id, order }
+    try {
+        await prisma.$transaction(
+            items.map(item => 
+                prisma.category.update({
+                    where: { id: item.id },
+                    data: { order: item.order }
+                })
+            )
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erro ao reordenar categorias:', error);
+        res.status(500).json({ error: 'Erro ao reordenar categorias.' });
+    }
+};
+
 module.exports = {
     getCategoriesFlat,
     getCategoriesHierarchy,
     getClientCategories,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    reorderCategories
 };

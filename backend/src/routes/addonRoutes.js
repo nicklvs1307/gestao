@@ -6,6 +6,7 @@ const { needsAuth } = require('../middlewares/auth');
 router.use(needsAuth);
 
 router.get('/', AddonGroupController.getAddonGroups);
+router.patch('/reorder', AddonGroupController.reorderGroups);
 router.post('/', AddonGroupController.createAddonGroup);
 router.put('/:id', AddonGroupController.updateAddonGroup);
 router.delete('/:id', AddonGroupController.deleteAddonGroup);

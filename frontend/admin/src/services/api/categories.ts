@@ -20,3 +20,8 @@ export const deleteCategory = async (id: string) => {
   const response = await apiClient.delete(`/categories/${id}`);
   return response.data;
 };
+
+export const reorderCategories = async (items: { id: string, order: number }[]) => {
+  const response = await apiClient.patch('/categories/reorder', { items });
+  return response.data;
+};

@@ -113,9 +113,27 @@ const deleteAddonGroup = async (req, res) => {
     }
 };
 
+const reorderGroups = async (req, res) => {
+    const { items } = req.body;
+    try {
+        await prisma.$transaction(
+            items.map(item => 
+                prisma.addonGroup.update({
+                    where: { id: item.id },
+                    data: { order: item.order }
+                })
+            )
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao reordenar grupos.' });
+    }
+};
+
 module.exports = {
     getAddonGroups,
     createAddonGroup,
     updateAddonGroup,
-    deleteAddonGroup
+    deleteAddonGroup,
+    reorderGroups
 };

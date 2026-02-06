@@ -43,5 +43,10 @@ export const addonService = {
 
   delete: async (id: string) => {
     await api.delete(`/addons/${id}`);
+  },
+
+  reorder: async (items: { id: string, order: number }[]) => {
+    const response = await api.patch('/addons/reorder', { items });
+    return response.data;
   }
 };

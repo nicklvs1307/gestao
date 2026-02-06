@@ -766,10 +766,23 @@ const ProductFormPage = () => {
                                         }));
                                     };
 
+                                    const moveSize = (idx: number, direction: 'up' | 'down') => {
+                                        const newIndex = direction === 'up' ? idx - 1 : idx + 1;
+                                        if (newIndex < 0 || newIndex >= sizeFields.length) return;
+                                        
+                                        const currentSizes = [...watch('sizes')];
+                                        [currentSizes[idx], currentSizes[newIndex]] = [currentSizes[newIndex], currentSizes[idx]];
+                                        setValue('sizes', currentSizes);
+                                    };
+
                                     return (
                                         <div key={field.id} className={cn("relative p-5 rounded-2xl border-2 transition-all", isPizza ? "border-orange-100 bg-white shadow-sm" : "border-slate-100 bg-slate-50/30")}>
                                             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                                <div className="md:col-span-4">
+                                                <div className="md:col-span-1 flex flex-col items-center gap-1">
+                                                    <button type="button" onClick={() => moveSize(index, 'up')} disabled={index === 0} className="p-1 text-slate-300 hover:text-primary disabled:opacity-10"><ChevronUp size={16} /></button>
+                                                    <button type="button" onClick={() => moveSize(index, 'down')} disabled={index === sizeFields.length - 1} className="p-1 text-slate-300 hover:text-primary disabled:opacity-10"><ChevronDown size={16} /></button>
+                                                </div>
+                                                <div className="md:col-span-3">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 mb-1 block">Nome do Tamanho</label>
                                                     <input 
                                                         {...register(`sizes.${index}.name`, { required: true })}
@@ -870,6 +883,56 @@ const ProductFormPage = () => {
                                     }
                                 }}
                             />
+
+                            {/* Nova Lista de Reordenação de Grupos Selecionados */}
+                            {watch('addonGroups')?.length > 0 && (
+                                <div className="mt-10 pt-10 border-t border-slate-100 space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-1.5 h-5 bg-blue-500 rounded-full" />
+                                        <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest">Ordem de Exibição dos Grupos</h3>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {watch('addonGroups').map((group: any, index: number) => (
+                                            <div key={group.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex flex-col">
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => {
+                                                                const current = [...watch('addonGroups')];
+                                                                if (index > 0) {
+                                                                    [current[index], current[index-1]] = [current[index-1], current[index]];
+                                                                    setValue('addonGroups', current);
+                                                                }
+                                                            }}
+                                                            disabled={index === 0}
+                                                            className="text-slate-300 hover:text-blue-500 disabled:opacity-10"
+                                                        >
+                                                            <ChevronUp size={14} />
+                                                        </button>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => {
+                                                                const current = [...watch('addonGroups')];
+                                                                if (index < current.length - 1) {
+                                                                    [current[index], current[index+1]] = [current[index+1], current[index]];
+                                                                    setValue('addonGroups', current);
+                                                                }
+                                                            }}
+                                                            disabled={index === watch('addonGroups').length - 1}
+                                                            className="text-slate-300 hover:text-blue-500 disabled:opacity-10"
+                                                        >
+                                                            <ChevronDown size={14} />
+                                                        </button>
+                                                    </div>
+                                                    <span className="text-sm font-black uppercase text-slate-700 italic">{group.name}</span>
+                                                </div>
+                                                <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-lg">POSIÇÃO #{index + 1}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             
                             {libraryGroups.length === 0 && (
                                 <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-3xl">

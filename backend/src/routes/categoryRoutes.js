@@ -7,6 +7,7 @@ const { needsAuth, checkPermission } = require('../middlewares/auth');
 router.get('/flat', needsAuth, CategoryController.getCategoriesFlat);
 router.get('/', needsAuth, CategoryController.getCategoriesHierarchy);
 router.post('/', needsAuth, checkPermission('products:manage'), CategoryController.createCategory);
+router.patch('/reorder', needsAuth, checkPermission('products:manage'), CategoryController.reorderCategories);
 router.put('/:id', needsAuth, checkPermission('products:manage'), CategoryController.updateCategory);
 router.delete('/:id', needsAuth, checkPermission('products:manage'), CategoryController.deleteCategory);
 
