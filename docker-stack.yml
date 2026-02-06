@@ -13,13 +13,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      # Conexão com o serviço 'postgres' da stack de banco (nome do serviço no swarm)
-      # Formato: postgresql://<user>:<pass>@<service_name>:5432/<db_name>
       DATABASE_URL_FILE: /run/secrets/db_connection_string
       JWT_SECRET_FILE: /run/secrets/jwt_secret
-      # URLs para CORS e Redirecionamentos
-      FRONTEND_URL: https://kicardapio.towersfy.com # URL do Painel Admin/SaaS
+      # URLs corrigidas
+      FRONTEND_URL: https://kicardapio.towersfy.com
       ADMIN_URL: https://kicardapio.towersfy.com
+      API_URL: https://apikicardapio.towersfy.com
+      ALLOWED_ORIGINS: "*"
     volumes:
       - uploads_data:/app/public/uploads
     networks:
@@ -34,17 +34,20 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Roteamento da API (Prioridade Alta para não conflitar com lojas)
-        - "traefik.http.routers.backend.rule=Host(`api.kicardapio.towersfy.com`) || Host(`apikicardapio.towersfy.com`)"
+        # Roteamento da API (Domínio Correto: apikicardapio.towersfy.com)
+        - "traefik.http.routers.backend.rule=Host(`apikicardapio.towersfy.com`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
+        - "traefik.http.routers.backend.tls=true"
         - "traefik.http.routers.backend.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.backend.tls.domains[0].main=towersfy.com"
+        - "traefik.http.routers.backend.tls.domains[0].sans=*.towersfy.com"
         - "traefik.http.services.backend.loadbalancer.server.port=3001"
-        - "traefik.http.routers.backend.priority=100"
+        - "traefik.http.routers.backend.priority=1000"
         # Roteamento de Uploads
-        - "traefik.http.routers.backend-uploads.rule=(Host(`api.kicardapio.towersfy.com`) || Host(`apikicardapio.towersfy.com`)) && PathPrefix(`/uploads`)"
+        - "traefik.http.routers.backend-uploads.rule=Host(`apikicardapio.towersfy.com`) && PathPrefix(`/uploads`)"
         - "traefik.http.routers.backend-uploads.entrypoints=websecure"
         - "traefik.http.routers.backend-uploads.tls.certresolver=letsencryptresolver"
-        - "traefik.http.routers.backend-uploads.priority=100"
+        - "traefik.http.routers.backend-uploads.priority=1000"
 
   # ====================================================
   # FRONTEND ADMIN (PAINEL DO DONO)
@@ -64,9 +67,12 @@ services:
         # Acesso principal do sistema (Dashboard)
         - "traefik.http.routers.admin.rule=Host(`kicardapio.towersfy.com`) || Host(`admin.kicardapio.towersfy.com`)"
         - "traefik.http.routers.admin.entrypoints=websecure"
+        - "traefik.http.routers.admin.tls=true"
         - "traefik.http.routers.admin.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.admin.tls.domains[0].main=towersfy.com"
+        - "traefik.http.routers.admin.tls.domains[0].sans=*.towersfy.com"
         - "traefik.http.services.admin.loadbalancer.server.port=80"
-        - "traefik.http.routers.admin.priority=100"
+        - "traefik.http.routers.admin.priority=1000"
 
   # ====================================================
   # FRONTEND CLIENT (LOJAS / TABLETS)
@@ -76,6 +82,8 @@ services:
     build:
       context: .
       dockerfile: frontend/client/Dockerfile
+      args:
+        - VITE_API_URL=/api
     networks:
       - gestao_network
     deploy:
@@ -83,11 +91,13 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Regra universal para lojas (Compatível com Go e Prioridade Baixa)
-        - "traefik.http.routers.client.rule=HostRegexp(`^[a-z0-9-]+\\.towersfy\\.(com|com\\.br)$$`)"
+        # Regra simplificada e robusta para subdomínios de lojas
+        - "traefik.http.routers.client.rule=HostRegexp(`[a-z0-9-]+\\.towersfy\\.com`) && !Host(`container.towersfy.com`, `kicardapio.towersfy.com`, `apikicardapio.towersfy.com`, `admin.kicardapio.towersfy.com`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.client.tls.domains[0].main=towersfy.com"
+        - "traefik.http.routers.client.tls.domains[0].sans=*.towersfy.com"
         - "traefik.http.services.client.loadbalancer.server.port=80"
         - "traefik.http.routers.client.priority=1"
 

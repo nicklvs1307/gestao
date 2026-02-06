@@ -5,34 +5,34 @@ services:
 
   traefik:
     image: traefik:v3.5.3
+    environment:
+      - CF_DNS_API_TOKEN=exlAF_0Iq7lt4UlJxbgoYvBDAVcLdg8DpgalM0Zi
+
     command:
       - "--api.dashboard=true"
       - "--providers.swarm=true"
-      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=gestao_network" ## Nome da rede interna
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.swarm.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.web.transport.respondingTimeouts.idleTimeout=3600"
-      - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge.entrypoint=web"
+      - "--entrypoints.websecure.http.tls.certResolver=letsencryptresolver"
+      - "--entrypoints.websecure.forwardedHeaders.insecure=true"
+      - "--certificatesresolvers.letsencryptresolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencryptresolver.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.letsencryptresolver.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
       - "--certificatesresolvers.letsencryptresolver.acme.storage=/etc/traefik/letsencrypt/acme.json"
-      - "--certificatesresolvers.letsencryptresolver.acme.email=lucas.niquele.ln@gmail.com" ## Email para receber as notificações
+      - "--certificatesresolvers.letsencryptresolver.acme.email=lucas.niquele.ln@gmail.com"
       - "--log.level=DEBUG"
-      - "--log.format=common"
-      - "--log.filePath=/var/log/traefik/traefik.log"
       - "--accesslog=true"
-      - "--accesslog.filepath=/var/log/traefik/access-log"
 
     volumes:
       - "vol_certificates:/etc/traefik/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
     networks:
-      - gestao_network ## Nome da rede interna
+      - gestao_network
 
     ports:
       - target: 80
@@ -49,28 +49,17 @@ services:
       labels:
         - "traefik.enable=true"
         
-        # Roteamento para o Dashboard do Traefik (Aceita .com e .com.br)
-        - "traefik.http.routers.traefik-dashboard.rule=Host(`container.towersfy.com`) || Host(`container.towersfy.com.br`)"
+        # Dashboard do Traefik
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`container.towersfy.com`)"
         - "traefik.http.routers.traefik-dashboard.service=api@internal"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
         - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencryptresolver"
-        - "traefik.http.routers.traefik-dashboard.priority=100"
-        - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth@docker,dash-redirect@docker"
+        - "traefik.http.routers.traefik-dashboard.priority=1000"
+        - "traefik.http.routers.traefik-dashboard.middlewares=dash-redirect@swarm"
 
-        # Middleware para redirecionar / para /dashboard/
-        - "traefik.http.middlewares.dash-redirect.redirectregex.regex=^https?://container\\.towersfy\\.(com|com\\.br)/?$$"
-        - "traefik.http.middlewares.dash-redirect.redirectregex.replacement=https://container.towersfy.$$1/dashboard/"
-
-        # Opcional: Autenticação para o Dashboard (Segurança)
-        # Usuário: admin / Senha: password (Gerado via htpasswd)
-        # - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$869p.v76$$7H8Vj/H2.G.f9I8Kz7P0l."
-        
-        - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-        - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
-        - "traefik.http.routers.http-catchall.rule=Host(`{host:.+}`)"
-        - "traefik.http.routers.http-catchall.entrypoints=web"
-        - "traefik.http.routers.http-catchall.middlewares=redirect-https@docker"
-        - "traefik.http.routers.http-catchall.priority=1"
+        # Redirecionamento para /dashboard/
+        - "traefik.http.middlewares.dash-redirect.redirectregex.regex=^https?://container\\.towersfy\\.com/?$$"
+        - "traefik.http.middlewares.dash-redirect.redirectregex.replacement=https://container.towersfy.com/dashboard/"
 
 ## --------------------------- ORION --------------------------- ##
 
