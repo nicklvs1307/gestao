@@ -1,25 +1,20 @@
 const { z } = require('zod');
 
 const CreateTableSchema = z.object({
-  number: z.number().int().positive("Número da mesa deve ser positivo"),
-  status: z.enum(['free', 'occupied', 'awaiting_payment']).default('free'),
+  number: z.coerce.number().int().positive('Número da mesa deve ser positivo'),
 });
 
 const TableCheckoutSchema = z.object({
-  orderIds: z.array(z.string()).optional(),
-  payments: z.array(z.object({
-    amount: z.number().positive(),
-    method: z.string()
-  })).min(1, "Pelo menos um pagamento é necessário")
+  paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória'), 
+  splitCount: z.number().int().min(1).optional().default(1),
+  
+  // Opcional: Se for pagar só uma parte do valor total agora (não suportado totalmente ainda no service, mas bom prever)
+  paidAmount: z.number().positive().optional()
 });
 
 const PartialPaymentSchema = z.object({
-  orderId: z.string().optional(),
-  itemIds: z.array(z.string()).optional(),
-  payments: z.array(z.object({
-    amount: z.number().positive(),
-    method: z.string()
-  })).min(1)
+  itemIds: z.array(z.string()).min(1, 'Selecione ao menos um item para pagar'),
+  paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória')
 });
 
 module.exports = {

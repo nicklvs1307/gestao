@@ -15,7 +15,6 @@ model User {
   email        String   @unique
   name         String?
   passwordHash String
-  role         String   @default("staff") // Mantido para compatibilidade, mas o Role model é o novo padrão
   phone        String?  // Contato do entregador
   isActive     Boolean  @default(true) // Status de disponibilidade
   

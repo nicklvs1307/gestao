@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getRestaurantBySlug, createDeliveryOrder, generatePixPayment, checkPixStatus } from '../services/api';
+import { getTenantSlug } from '../utils/tenant';
 import type { Product, Restaurant, SizeOption, AddonOption } from '../types';
 import DeliveryProductCard from '../components/DeliveryProductCard';
 import Cart from '../components/Cart';
@@ -12,16 +13,25 @@ import { RestaurantProvider } from '../context/RestaurantContext';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import PixPaymentModal from '../components/PixPaymentModal';
 import ProductDetailModal from '../components/ProductDetailModal';
-import { Search, Heart, Clock, ShoppingBag, Moon, Sun, Palette } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Heart, Clock, ShoppingBag, Palette } from 'lucide-react';
 import { applyTheme } from '../utils/theme';
+import { Button } from '../components/ui/Button';
 
-// ... (mesma interface)
+interface DeliveryPageProps {
+  restaurantSlug?: string;
+}
 
 const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const { slug } = useParams<{ slug: string }>();
-  const effectiveSlug = restaurantSlug || slug;
   const navigate = useNavigate();
+
+  // Lógica de Resolução do Slug:
+  // 1. Prop passada explicitamente (ex: via TenantHandler)
+  // 2. Subdomínio (ex: pizzaria.towersfy.com)
+  // 3. Parâmetro da URL (ex: towersfy.com/pizzaria)
+  const tenantSlug = getTenantSlug();
+  const effectiveSlug = restaurantSlug || tenantSlug || slug;
+
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +39,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const [isCartOpen, setCartOpen] = useState(false);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCustomerLoggedIn] = useState(false); 
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setProductModalOpen] = useState(false);
@@ -39,6 +48,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const [isPixModalOpen, setPixModalOpen] = useState(false);
   const [pixData, setPixData] = useState<{ qrCodeImage: string; pixCopiaECola: string } | null>(null);
   const [isPixPaymentLoading, setPixPaymentLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -200,12 +210,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 
                 {/* Botões de Ação no Header */}
                 <div className="absolute top-4 right-4 z-20 flex gap-2">
-                    <button className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-all border border-white/10">
+                    <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 border border-white/10">
                         <Palette size={18} />
-                    </button>
-                    <button className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-all border border-white/10">
+                    </Button>
+                    <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 border border-white/10">
                         <Heart size={18} />
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -278,12 +288,14 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                     <h2 className="text-lg font-black text-foreground italic uppercase tracking-tighter">
                         Resultados para "{searchTerm}"
                     </h2>
-                    <button 
+                    <Button 
+                        variant="ghost" 
+                        size="sm"
                         onClick={() => setSearchTerm('')}
                         className="text-xs font-bold text-primary uppercase tracking-widest"
                     >
                         Limpar
-                    </button>
+                    </Button>
                 </div>
                 
                 <div className="grid grid-cols-1 gap-4">

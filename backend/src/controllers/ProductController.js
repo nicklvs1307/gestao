@@ -1,6 +1,6 @@
 const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { CreateProductSchema, UpdateProductSchema } = require('../schemas/ProductSchema');
+const { CreateProductSchema, UpdateProductSchema } = require('../schemas/productSchema');
 
 class ProductController {
   

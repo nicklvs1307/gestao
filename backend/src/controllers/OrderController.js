@@ -1,6 +1,6 @@
 const OrderService = require('../services/OrderService');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { CreateDeliveryOrderSchema, AddItemsSchema, UpdateStatusSchema } = require('../schemas/OrderSchema');
+const { CreateDeliveryOrderSchema, AddItemsSchema, UpdateStatusSchema } = require('../schemas/orderSchema');
 
 class OrderController {
   // POST /api/delivery/restaurants/:restaurantId/delivery-orders
@@ -15,12 +15,12 @@ class OrderController {
 
     const order = await OrderService.createOrder({
       restaurantId,
-      items: validatedData.items, // Já transformado pelo Zod (ids extraídos)
-      orderType: validatedData.orderType,
+      items: validatedData.items, 
+      orderType: validatedData.orderType === 'PICKUP' ? 'DELIVERY' : 'DELIVERY', // Normaliza enum do banco se necessário
       deliveryInfo: validatedData.deliveryInfo,
       paymentMethod,
       tableNumber: validatedData.tableNumber,
-      customerName: validatedData.customerName,
+      customerName: validatedData.deliveryInfo.customerName,
       userId: validatedData.userId || req.user?.id
     });
 

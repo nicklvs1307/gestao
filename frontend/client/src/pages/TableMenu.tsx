@@ -19,6 +19,7 @@ import { useModal } from '../hooks/useModal';
 import { Search, Heart, Clock, Utensils, User, History, ReceiptText } from 'lucide-react';
 import DeliveryProductCard from '../components/DeliveryProductCard';
 import { cn } from '../lib/utils';
+import { Button } from '../components/ui/Button';
 
 const TableMenu = () => {
   const { restaurantId, tableNumber } = useParams<{ restaurantId: string; tableNumber: string }>();
@@ -107,9 +108,9 @@ const TableMenu = () => {
     selectedAddons: AddonOption[],
     selectedFlavors?: Product[]
   ) => {
-    addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
-    closeProductDetailModal();
-    openCart();
+      addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
+      closeProductDetailModal();
+      openCart();
   };
 
   const handlePlaceOrder = async () => {
@@ -206,13 +207,14 @@ const TableMenu = () => {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button 
+                    <Button 
                         onClick={openAccountModal}
-                        className="w-12 h-12 bg-white rounded-2xl flex flex-col items-center justify-center text-slate-400 shadow-lg border border-slate-100 hover:text-primary transition-all active:scale-90"
+                        variant="secondary"
+                        className="w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-slate-400 shadow-lg border border-slate-100 hover:text-primary transition-all active:scale-90 p-0"
                     >
                         <ReceiptText size={20} />
                         <span className="text-[7px] font-black uppercase mt-0.5">Conta</span>
-                    </button>
+                    </Button>
                 </div>
             </div>
 

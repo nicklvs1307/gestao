@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 const TableService = require('../services/TableService');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { CreateTableSchema, TableCheckoutSchema, PartialPaymentSchema } = require('../schemas/TableSchema');
+const { CreateTableSchema, TableCheckoutSchema, PartialPaymentSchema } = require('../schemas/tableSchema');
 
 class TableController {
 

@@ -67,16 +67,20 @@ const TenantHandler = () => {
           <p className="mt-4 text-gray-600 font-medium leading-relaxed">
             O cardápio que você tentou acessar no endereço <span className="text-primary font-bold">{window.location.hostname}</span> não está ativo ou o link está incorreto.
           </p>
+import { Button } from '../components/ui/Button';
+
+// ... inside the error return block ...
           <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">Desenvolvido por</p>
             <h2 className="text-xl font-black text-primary">KiCardapio</h2>
           </div>
-          <button 
+          <Button 
             onClick={() => window.location.href = 'https://kicardapio.towersfy.com'}
-            className="mt-8 w-full rounded-xl bg-primary py-3 text-white font-bold shadow-lg shadow-primary/30 hover:scale-[1.02] transition-transform"
+            fullWidth
+            size="lg"
           >
             Conhecer o Sistema
-          </button>
+          </Button>
         </div>
       </div>
     );
