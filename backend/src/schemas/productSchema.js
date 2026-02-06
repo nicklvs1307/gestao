@@ -1,44 +1,46 @@
-/**
- * Esquema de Validação para Produtos (Whitelist)
- * Define quais campos são permitidos e seus tipos básicos.
- */
-const productSchema = {
-    validate: (data) => {
-        const allowedFields = [
-            'name', 'description', 'price', 'imageUrl', 'isFeatured', 
-            'isAvailable', 'stock', 'categoryId', 'categoryIds', 'productionArea',
-            'saiposIntegrationCode', 'ncm', 'cfop', 'cest', 'measureUnit', 
-            'origin', 'taxPercentage', 'pizzaConfig', 'sizes', 'addonGroups', 'ingredients'
-        ];
+const { z } = require('zod');
 
-        const errors = [];
-        const validatedData = {};
+const ProductSizeSchema = z.object({
+  name: z.string(),
+  price: z.number().min(0),
+  order: z.number().default(0),
+  saiposIntegrationCode: z.string().optional().nullable(),
+});
 
-        // 1. Verificação de Campos Obrigatórios
-        if (!data.name) errors.push({ message: 'O nome do produto é obrigatório.' });
-        if (data.price === undefined) errors.push({ message: 'O preço é obrigatório.' });
-        
-        // Suporta tanto o modelo antigo (categoryId) quanto o novo (categoryIds)
-        if (!data.categoryId && (!data.categoryIds || data.categoryIds.length === 0)) {
-            errors.push({ message: 'Pelo menos uma categoria é obrigatória.' });
-        }
+const ProductIngredientSchema = z.object({
+  ingredientId: z.string(),
+  quantity: z.number().min(0.0001),
+});
 
-        if (errors.length > 0) return { error: { details: errors } };
+const CreateProductSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  description: z.string().optional().nullable(),
+  price: z.number().min(0),
+  imageUrl: z.string().optional().nullable(),
+  isFeatured: z.boolean().default(false),
+  isAvailable: z.boolean().default(true),
+  stock: z.number().int().default(0),
+  productionArea: z.string().default("Cozinha"),
+  saiposIntegrationCode: z.string().optional().nullable(),
+  
+  // Categorias (Suporta ID único legado ou array)
+  categoryId: z.string().optional().nullable(),
+  categoryIds: z.array(z.string()).optional(),
 
-        // 2. Whitelist e Sanitização Básica
-        allowedFields.forEach(field => {
-            if (data[field] !== undefined) {
-                validatedData[field] = data[field];
-            }
-        });
+  // Relações complexas
+  sizes: z.array(ProductSizeSchema).optional().default([]),
+  addonGroups: z.array(z.object({ id: z.string() })).optional().default([]),
+  ingredients: z.array(ProductIngredientSchema).optional().default([]),
+  
+  // Campos Fiscais
+  ncm: z.string().optional().nullable(),
+  cfop: z.string().optional().nullable(),
+  measureUnit: z.string().default("UN"),
+});
 
-        // 3. Validação de Tipos Específicos
-        if (typeof validatedData.price !== 'number') {
-            validatedData.price = parseFloat(validatedData.price);
-        }
+const UpdateProductSchema = CreateProductSchema.partial();
 
-        return { value: validatedData };
-    }
+module.exports = {
+  CreateProductSchema,
+  UpdateProductSchema
 };
-
-module.exports = productSchema;

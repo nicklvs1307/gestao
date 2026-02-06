@@ -1,304 +1,165 @@
 const OrderService = require('../services/OrderService');
+const asyncHandler = require('../middlewares/asyncHandler');
+const { CreateDeliveryOrderSchema, AddItemsSchema, UpdateStatusSchema } = require('../schemas/OrderSchema');
 
 class OrderController {
-  constructor() {
-    this._extractIdsFromItem = this._extractIdsFromItem.bind(this);
-    this.createDeliveryOrder = this.createDeliveryOrder.bind(this);
-    this.addItemsToOrder = this.addItemsToOrder.bind(this);
-    this.updateStatus = this.updateStatus.bind(this);
-    this.transferTable = this.transferTable.bind(this);
-    this.transferItems = this.transferItems.bind(this);
-    this.removeItem = this.removeItem.bind(this);
-    this.updateDeliveryType = this.updateDeliveryType.bind(this);
-    this.getDriverSettlement = this.getDriverSettlement.bind(this);
-    this.payDriverSettlement = this.payDriverSettlement.bind(this);
-    this.getKdsItems = this.getKdsItems.bind(this);
-    this.finishKdsItem = this.finishKdsItem.bind(this);
-    this.markAsPrinted = this.markAsPrinted.bind(this);
-    this.updatePaymentMethod = this.updatePaymentMethod.bind(this);
-  }
+  // POST /api/delivery/restaurants/:restaurantId/delivery-orders
+  createDeliveryOrder = asyncHandler(async (req, res) => {
+    const restaurantId = req.params.restaurantId || req.restaurantId || req.user?.restaurantId;
+    
+    // Validação e Transformação com Zod
+    const validatedData = CreateDeliveryOrderSchema.parse(req.body);
+    
+    // Sobrescreve paymentMethod se vier no corpo principal
+    const paymentMethod = validatedData.paymentMethod || validatedData.deliveryInfo?.paymentMethod;
 
-  async updatePaymentMethod(req, res) {
+    const order = await OrderService.createOrder({
+      restaurantId,
+      items: validatedData.items, // Já transformado pelo Zod (ids extraídos)
+      orderType: validatedData.orderType,
+      deliveryInfo: validatedData.deliveryInfo,
+      paymentMethod,
+      tableNumber: validatedData.tableNumber,
+      customerName: validatedData.customerName,
+      userId: validatedData.userId || req.user?.id
+    });
+
+    res.status(201).json(order);
+  });
+
+  // POST /api/client/orders/:orderId/batch-add-items
+  addItemsToOrder = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    
+    // Validação e Transformação
+    const validatedData = AddItemsSchema.parse(req.body);
+
+    const updatedOrder = await OrderService.addItemsToOrder(
+      orderId, 
+      validatedData.items, 
+      validatedData.userId || req.user?.id
+    );
+    
+    res.status(201).json(updatedOrder);
+  });
+
+  // PUT /api/admin/orders/:orderId/status
+  updateStatus = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    
+    const validatedData = UpdateStatusSchema.parse(req.body);
+
+    const updatedOrder = await OrderService.updateOrderStatus(orderId, validatedData.status);
+    res.json(updatedOrder);
+  });
+
+  // POST /api/admin/orders/transfer-table
+  transferTable = asyncHandler(async (req, res) => {
+      const { currentTableNumber, targetTableNumber, restaurantId } = req.body;
+      
+      if (!currentTableNumber || !targetTableNumber || !restaurantId) {
+          res.status(400);
+          throw new Error("Dados incompletos para transferência.");
+      }
+
+      const result = await OrderService.transferTable(currentTableNumber, targetTableNumber, restaurantId);
+      res.json(result);
+  });
+
+  // POST /api/admin/orders/transfer-items
+  transferItems = asyncHandler(async (req, res) => {
+      const { sourceOrderId, targetTableNumber, itemIds, restaurantId, userId } = req.body;
+
+      if (!sourceOrderId || !targetTableNumber || !itemIds || !itemIds.length) {
+          res.status(400);
+          throw new Error("Dados incompletos para transferência de itens.");
+      }
+
+      const result = await OrderService.transferItems(sourceOrderId, targetTableNumber, itemIds, restaurantId, userId);
+      res.json(result);
+  });
+
+  // DELETE /api/admin/orders/:orderId/items/:itemId
+  removeItem = asyncHandler(async (req, res) => {
+      const { orderId, itemId } = req.params;
+      const result = await OrderService.removeItemFromOrder(orderId, itemId);
+      res.json(result);
+  });
+
+  // PATCH /api/admin/orders/:orderId/delivery-type
+  updateDeliveryType = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const { deliveryType } = req.body;
+
+    const result = await OrderService.updateDeliveryType(orderId, deliveryType);
+    res.json(result);
+  });
+
+  // GET /api/admin/orders/drivers/settlement
+  getDriverSettlement = asyncHandler(async (req, res) => {
+    const { date } = req.query;
+    const restaurantId = req.restaurantId || req.user?.restaurantId; 
+    
+    if (!restaurantId) {
+        res.status(403);
+        throw new Error('Restaurante não identificado.');
+    }
+
+    const settlement = await OrderService.getDriverSettlement(restaurantId, date);
+    res.json(settlement);
+  });
+
+  // POST /api/admin/orders/drivers/settlement/pay
+  payDriverSettlement = asyncHandler(async (req, res) => {
+    const { driverName, amount, date, driverId } = req.body;
+    const restaurantId = req.restaurantId || req.user?.restaurantId;
+
+    if (!restaurantId) {
+        res.status(403);
+        throw new Error('Restaurante não identificado.');
+    }
+    
+    await OrderService.payDriverSettlement(restaurantId, driverName, amount, date, driverId);
+    res.json({ success: true });
+  });
+
+  // GET /api/kds/items
+  getKdsItems = asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId || req.user?.restaurantId;
+    const { area } = req.query;
+
+    if (!restaurantId) {
+        res.status(403);
+        throw new Error('Acesso negado.');
+    }
+
+    const items = await OrderService.getKdsItems(restaurantId, area);
+    res.json(items);
+  });
+
+  // PUT /api/admin/orders/kds/items/:itemId/finish
+  finishKdsItem = asyncHandler(async (req, res) => {
+    const { itemId } = req.params;
+    await OrderService.finishKdsItem(itemId);
+    res.json({ success: true });
+  });
+
+  // PUT /api/admin/orders/:orderId/payment-method
+  updatePaymentMethod = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
     const { newMethod } = req.body;
     const restaurantId = req.restaurantId;
 
-    try {
-        const result = await OrderService.updatePaymentMethod(orderId, newMethod, restaurantId);
-        res.json(result);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message || 'Erro ao atualizar forma de pagamento.' });
-    }
-  }
+    const result = await OrderService.updatePaymentMethod(orderId, newMethod, restaurantId);
+    res.json(result);
+  });
 
-  async markAsPrinted(req, res) {
+  // PUT /api/admin/orders/:orderId/printed
+  markAsPrinted = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
-    try {
-        await OrderService.markAsPrinted(orderId);
-        res.json({ success: true });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao marcar como impresso.' });
-    }
-  }
-
-  /**
-   * Helper para extrair IDs dos JSONs legados enviados pelo frontend
-   * (Mantido aqui pois é específico de parsing da requisição HTTP)
-   */
-  _extractIdsFromItem(item) {
-    let sizeId = item.sizeId || null;
-    let addonsIds = item.addonsIds || [];
-    let flavorIds = item.flavorIds || [];
-
-    if (!sizeId && item.sizeJson) {
-      try {
-        const sizeObj = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
-        sizeId = sizeObj?.id || null;
-      } catch (e) {}
-    }
-
-    if (addonsIds.length === 0 && item.addonsJson) {
-      try {
-        const addonsArr = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
-        if (Array.isArray(addonsArr)) {
-          addonsArr.forEach(a => {
-            const qty = a.quantity || 1;
-            for (let i = 0; i < qty; i++) {
-              if (a.id) addonsIds.push(a.id);
-            }
-          });
-        }
-      } catch (e) {}
-    }
-
-    if (flavorIds.length === 0 && item.flavorsJson) {
-      try {
-        const flavorsArr = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
-        if (Array.isArray(flavorsArr)) {
-          flavorIds = flavorsArr.map(f => f.id).filter(id => id);
-        }
-      } catch (e) {}
-    }
-
-    return { sizeId, addonsIds, flavorIds };
-  }
-
-  // POST /api/delivery/restaurants/:restaurantId/delivery-orders
-  async createDeliveryOrder(req, res) {
-    const restaurantId = req.params.restaurantId || req.restaurantId || req.user?.restaurantId;
-    const { items, deliveryInfo, orderType, tableNumber, userId, customerName } = req.body;
-    const paymentMethod = req.body.paymentMethod || deliveryInfo?.paymentMethod;
-
-    if (!items || !items.length) {
-      return res.status(400).json({ error: 'Carrinho vazio.' });
-    }
-
-    try {
-      // Normalização dos itens
-      const formattedItems = items.map(item => {
-        const { sizeId, addonsIds, flavorIds } = this._extractIdsFromItem(item);
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          observations: item.observations || item.observation,
-          sizeId,
-          addonsIds,
-          flavorIds,
-          sizeJson: item.sizeJson,
-          addonsJson: item.addonsJson,
-          flavorsJson: item.flavorsJson
-        };
-      });
-
-      const order = await OrderService.createOrder({
-        restaurantId,
-        items: formattedItems,
-        orderType: orderType || 'DELIVERY',
-        deliveryInfo,
-        paymentMethod,
-        tableNumber,
-        customerName,
-        userId: userId || req.user?.id
-      });
-
-      res.status(201).json(order);
-    } catch (error) {
-      console.error('Erro ao criar pedido:', error);
-      res.status(400).json({ error: error.message || 'Erro ao processar pedido.' });
-    }
-  }
-
-  // POST /api/client/orders/:orderId/batch-add-items
-  async addItemsToOrder(req, res) {
-    const { orderId } = req.params;
-    const { items, userId } = req.body;
-
-    if (!items || !items.length) {
-      return res.status(400).json({ error: 'Nenhum item para adicionar.' });
-    }
-
-    try {
-      const formattedItems = items.map(item => {
-        const { sizeId, addonsIds, flavorIds } = this._extractIdsFromItem(item);
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          observations: item.observations || item.observation,
-          sizeId,
-          addonsIds,
-          flavorIds,
-          sizeJson: item.sizeJson,
-          addonsJson: item.addonsJson,
-          flavorsJson: item.flavorsJson
-        };
-      });
-
-      const updatedOrder = await OrderService.addItemsToOrder(orderId, formattedItems, userId || req.user?.id);
-      res.status(201).json(updatedOrder);
-    } catch (error) {
-      console.error('Erro ao adicionar itens:', error);
-      res.status(400).json({ error: error.message || 'Erro ao processar itens.' });
-    }
-  }
-
-  // PUT /api/admin/orders/:orderId/status
-  async updateStatus(req, res) {
-    const { orderId } = req.params;
-    const { status } = req.body;
-
-    try {
-        // Delega TODA a lógica de efeitos colaterais (estoque, financeiro, fiscal) para o Service
-        const updatedOrder = await OrderService.updateOrderStatus(orderId, status);
-        res.json(updatedOrder);
-    } catch (error) {
-        console.error('Erro ao atualizar status:', error);
-        res.status(500).json({ error: error.message || 'Erro ao atualizar status.' });
-    }
-  }
-
-  // POST /api/admin/orders/transfer-table
-  async transferTable(req, res) {
-      const { currentTableNumber, targetTableNumber, restaurantId } = req.body;
-      
-      if (!currentTableNumber || !targetTableNumber || !restaurantId) {
-          return res.status(400).json({ error: "Dados incompletos para transferência." });
-      }
-
-      try {
-          const result = await OrderService.transferTable(currentTableNumber, targetTableNumber, restaurantId);
-          res.json(result);
-      } catch (error) {
-          console.error('Erro ao transferir mesa:', error);
-          res.status(400).json({ error: error.message });
-      }
-  }
-
-  // POST /api/admin/orders/transfer-items
-  async transferItems(req, res) {
-      const { sourceOrderId, targetTableNumber, itemIds, restaurantId, userId } = req.body;
-
-      if (!sourceOrderId || !targetTableNumber || !itemIds || !itemIds.length) {
-          return res.status(400).json({ error: "Dados incompletos para transferência de itens." });
-      }
-
-      try {
-          const result = await OrderService.transferItems(sourceOrderId, targetTableNumber, itemIds, restaurantId, userId);
-          res.json(result);
-      } catch (error) {
-          console.error('Erro ao transferir itens:', error);
-          res.status(400).json({ error: error.message });
-      }
-  }
-
-  // DELETE /api/admin/orders/:orderId/items/:itemId
-  async removeItem(req, res) {
-      const { orderId, itemId } = req.params;
-
-      try {
-          const result = await OrderService.removeItemFromOrder(orderId, itemId);
-          res.json(result);
-      } catch (error) {
-          console.error('Erro ao remover item:', error);
-          res.status(400).json({ error: error.message });
-      }
-  }
-
-  // PATCH /api/admin/orders/:orderId/delivery-type
-  async updateDeliveryType(req, res) {
-    const { orderId } = req.params;
-    const { deliveryType } = req.body;
-
-    try {
-        const result = await OrderService.updateDeliveryType(orderId, deliveryType);
-        res.json(result);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao alterar tipo de entrega.' });
-    }
-  }
-
-  // GET /api/admin/orders/drivers/settlement
-  async getDriverSettlement(req, res) {
-    try {
-        const { date } = req.query;
-        // Assume req.restaurantId vindo do middleware de auth
-        const restaurantId = req.restaurantId || req.user?.restaurantId; 
-        
-        if (!restaurantId) return res.status(403).json({ error: 'Restaurante não identificado.' });
-
-        const settlement = await OrderService.getDriverSettlement(restaurantId, date);
-        res.json(settlement);
-    } catch (error) {
-        console.error("Erro no acerto:", error);
-        res.status(500).json({ error: 'Erro ao gerar acerto.' });
-    }
-  }
-
-  // POST /api/admin/orders/drivers/settlement/pay
-  async payDriverSettlement(req, res) {
-    try {
-        const { driverName, amount, date, driverId } = req.body;
-        const restaurantId = req.restaurantId || req.user?.restaurantId;
-
-        if (!restaurantId) return res.status(403).json({ error: 'Restaurante não identificado.' });
-        
-        await OrderService.payDriverSettlement(restaurantId, driverName, amount, date, driverId);
-        res.json({ success: true });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao processar acerto.' });
-    }
-  }
-
-  // GET /api/kds/items
-  async getKdsItems(req, res) {
-    const restaurantId = req.restaurantId || req.user?.restaurantId;
-    const { area } = req.query;
-
-    if (!restaurantId) return res.status(403).json({ error: 'Acesso negado.' });
-
-    try {
-        const items = await OrderService.getKdsItems(restaurantId, area);
-        res.json(items);
-    } catch (error) {
-        console.error('Erro ao buscar itens KDS:', error);
-        res.status(500).json({ error: 'Erro ao buscar itens KDS.' });
-    }
-  }
-
-  // PUT /api/admin/orders/kds/items/:itemId/finish
-  async finishKdsItem(req, res) {
-    const { itemId } = req.params;
-    try {
-        await OrderService.finishKdsItem(itemId);
-        res.json({ success: true });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao finalizar item no KDS.' });
-    }
-  }
+    await OrderService.markAsPrinted(orderId);
+    res.json({ success: true });
+  });
 }
 
 module.exports = new OrderController();

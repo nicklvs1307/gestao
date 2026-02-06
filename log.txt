@@ -1,19 +1,71 @@
-login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"password" type=​"password" required class=​"flex h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-10 py-2 text-sm transition-all focus:​bg-white focus:​ring-2 focus:​ring-orange-500/​20 focus:​border-orange-500 outline-none disabled:​opacity-50" placeholder=​"••••••••" value=​"rom@pizza@2026">​flex
-api/auth/login:1  Failed to load resource: the server responded with a status of 404 ()
-index-OjmdgXri.js:661 Erro de login: AxiosError: Request failed with status code 404
-    at m4 (index-OjmdgXri.js:658:1091)
-    at XMLHttpRequest.C (index-OjmdgXri.js:658:5850)
-    at Fd.request (index-OjmdgXri.js:660:2094)
-    at async pR (index-OjmdgXri.js:661:5911)
-    at async i (index-OjmdgXri.js:661:10731)
-    at async v (index-OjmdgXri.js:656:327)
-i @ index-OjmdgXri.js:661
-api/auth/login:1  Failed to load resource: the server responded with a status of 404 ()
-index-OjmdgXri.js:661 Erro de login: AxiosError: Request failed with status code 404
-    at m4 (index-OjmdgXri.js:658:1091)
-    at XMLHttpRequest.C (index-OjmdgXri.js:658:5850)
-    at Fd.request (index-OjmdgXri.js:660:2094)
-    at async pR (index-OjmdgXri.js:661:5911)
-    at async i (index-OjmdgXri.js:661:10731)
-    at async v (index-OjmdgXri.js:656:327)
-i @ index-OjmdgXri.js:661
+root@servergestao:~/gestao# docker logs e1dccf104938
+Aguardando banco de dados responder...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+25 migrations found in prisma/migrations
+
+Applying migration `20260206150000_sync_production_and_fiscal_fields`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260206150000_sync_production_and_fiscal_fields/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+Executando Seed de Permissões...
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+root@servergestao:~/gestao# docker logs e1dccf104938
+Aguardando banco de dados responder...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+25 migrations found in prisma/migrations
+
+Applying migration `20260206150000_sync_production_and_fiscal_fields`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260206150000_sync_production_and_fiscal_fields/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+Executando Seed de Permissões...
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+Erro em getProducts: PrismaClientKnownRequestError:
+Invalid `prisma.product.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async getProducts (/app/src/controllers/ProductController.js:6:26) {
+  code: 'P2021',
+  meta: { modelName: 'Product', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+Erro em getProducts: PrismaClientKnownRequestError:
+Invalid `prisma.product.findMany()` invocation:
+
+
+The table `public._CategoryToProduct` does not exist in the current database.
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async getProducts (/app/src/controllers/ProductController.js:6:26) {
+  code: 'P2021',
+  meta: { modelName: 'Product', table: 'public._CategoryToProduct' },
+  clientVersion: '6.16.3'
+}
+root@servergestao:~/gestao#

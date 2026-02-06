@@ -1,128 +1,21 @@
 const prisma = require('../lib/prisma');
 const SaiposService = require('./SaiposService');
+const PricingService = require('./PricingService');
+const InventoryService = require('./InventoryService');
+const LoyaltyService = require('./LoyaltyService');
 
 class OrderService {
   
   /**
-   * Calcula o preço total de um item (produto base + tamanho + adicionais + sabores)
-   * Valida a existência e disponibilidade dos itens.
-   */
-  async calculateItemPrice(productId, quantity, sizeId, addonsIds = [], flavorIds = []) {
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: { sizes: true, addonGroups: { include: { addons: true } } }
-    });
-
-    if (!product) throw new Error(`Produto não encontrado: ${productId}`);
-    if (!product.isAvailable) throw new Error(`Produto indisponível: ${product.name}`);
-
-    let unitPrice = product.price;
-    let sizeName = null;
-    let sizeObj = null;
-
-    // 1. Verificar Tamanho (se aplicável)
-    if (sizeId) {
-      const size = product.sizes.find(s => s.id === sizeId);
-      if (!size) throw new Error(`Tamanho inválido para o produto ${product.name}`);
-      unitPrice = size.price; // Preço base do tamanho
-      sizeName = size.name;
-      sizeObj = { id: size.id, name: size.name, price: size.price, saiposIntegrationCode: size.saiposIntegrationCode };
-    }
-
-    // 2. Lógica de Pizza (Multi-sabores)
-    const flavorsObjects = [];
-    
-    if (flavorIds && flavorIds.length > 0) {
-      const flavors = await prisma.product.findMany({
-        where: { id: { in: flavorIds } },
-        include: { sizes: true }
-      });
-
-      if (flavors.length > 0) {
-          const config = product.pizzaConfig || {};
-          const priceRule = config.priceRule || 'higher'; 
-
-          const flavorPrices = flavors.map(f => {
-            if (sizeName) {
-               const s = f.sizes.find(sz => sz.name === sizeName);
-               return s ? s.price : f.price;
-            }
-            return f.price;
-          });
-
-          if (product.pizzaConfig) {
-              let calculatedPrice = 0;
-              if (priceRule === 'higher') {
-                calculatedPrice = Math.max(...flavorPrices);
-              } else if (priceRule === 'average') {
-                calculatedPrice = flavorPrices.reduce((a, b) => a + b, 0) / flavorPrices.length;
-              }
-
-              if (calculatedPrice > 0) {
-                  unitPrice = calculatedPrice;
-              }
-          }
-          
-          flavors.forEach(f => {
-              flavorsObjects.push({ 
-                id: f.id, 
-                name: f.name, 
-                price: sizeName ? (f.sizes.find(sz => sz.name === sizeName)?.price || f.price) : f.price 
-              });
-          });
-      }
-    }
-
-    // 3. Verificar Adicionais
-    let addonsTotal = 0;
-    const addonsObjects = [];
-    
-    if (addonsIds && addonsIds.length > 0) {
-        const allProductAddons = product.addonGroups.flatMap(g => g.addons);
-        
-        const counts = {};
-        addonsIds.forEach(id => {
-          counts[id] = (counts[id] || 0) + 1;
-        });
-
-        for (const [addonId, qty] of Object.entries(counts)) {
-            const addon = allProductAddons.find(a => a.id === addonId);
-            if (!addon) throw new Error(`Adicional inválido (ID: ${addonId}) para o produto ${product.name}`);
-            
-            addonsTotal += (addon.price * qty);
-            addonsObjects.push({ 
-                id: addon.id, 
-                name: addon.name, 
-                price: addon.price, 
-                quantity: qty,
-                saiposIntegrationCode: addon.saiposIntegrationCode 
-            });
-        }
-    }
-
-    const finalUnitPrice = unitPrice + addonsTotal;
-    const totalItemPrice = finalUnitPrice * quantity;
-
-    return {
-      product,
-      unitPrice: finalUnitPrice, 
-      basePrice: unitPrice,      
-      totalPrice: totalItemPrice,
-      sizeObj,
-      addonsObjects,
-      flavorsObjects
-    };
-  }
-
-  /**
-   * Cria um pedido completo
+   * Cria um pedido completo de forma transacional.
    */
   async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName }) {
     let orderTotal = 0;
     const processedItems = [];
 
+    // 1. Preparação dos Itens (Cálculo de Preço via PricingService)
     for (const item of items) {
-      const calculation = await this.calculateItemPrice(
+      const calculation = await PricingService.calculateItemPrice(
         item.productId, 
         item.quantity, 
         item.sizeId, 
@@ -144,12 +37,7 @@ class OrderService {
     }
 
     const restaurant = await prisma.restaurant.findFirst({
-        where: {
-            OR: [
-                { id: restaurantId },
-                { slug: restaurantId }
-            ]
-        },
+        where: { OR: [{ id: restaurantId }, { slug: restaurantId }] },
         include: { settings: true }
     });
 
@@ -159,6 +47,7 @@ class OrderService {
     const isAutoAccept = restaurant.settings?.autoAcceptOrders || false;
     const initialStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
 
+    // Lógica para adicionar itens em pedido existente de mesa
     if (orderType === 'TABLE' && tableNumber) {
         const existingOrder = await prisma.order.findFirst({
             where: {
@@ -181,47 +70,43 @@ class OrderService {
       status: initialStatus,
       userId: userId || null, 
       customerName: customerName || null,
-      items: {
-        create: processedItems
-      }
+      items: { create: processedItems }
     };
 
-    if (tableNumber) {
-        orderData.tableNumber = parseInt(tableNumber);
-    }
+    if (tableNumber) orderData.tableNumber = parseInt(tableNumber);
 
+    // 2. Transação de Criação
     const newOrder = await prisma.$transaction(async (tx) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
+        // Gerar número diário sequencial
+        const today = new Date(); today.setHours(0, 0, 0, 0);
         const lastOrder = await tx.order.findFirst({
-            where: {
-                restaurantId: realRestaurantId,
-                createdAt: { gte: today }
-            },
+            where: { restaurantId: realRestaurantId, createdAt: { gte: today } },
             orderBy: { dailyOrderNumber: 'desc' },
             select: { dailyOrderNumber: true }
         });
 
-        const nextNumber = (lastOrder?.dailyOrderNumber || 0) + 1;
-        orderData.dailyOrderNumber = nextNumber;
+        orderData.dailyOrderNumber = (lastOrder?.dailyOrderNumber || 0) + 1;
 
         const createdOrder = await tx.order.create({ data: orderData });
 
         if (orderType === 'TABLE' && tableNumber) {
             await tx.table.updateMany({
-                where: { number: tableNumber, restaurantId: realRestaurantId },
+                where: { number: parseInt(tableNumber), restaurantId: realRestaurantId },
                 data: { status: 'occupied' }
             });
         }
 
+        // Processar Delivery Info
         if (orderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
              let fullAddress = 'Retirada no Balcão';
+             
              if (isDelivery && deliveryInfo.street) {
                  fullAddress = `${deliveryInfo.street}${deliveryInfo.number ? ', ' + deliveryInfo.number : ''}${deliveryInfo.neighborhood ? ' - ' + deliveryInfo.neighborhood : ''}`;
              }
+             
              const cleanPhone = deliveryInfo.phone.replace(/\D/g, '');
+             
              const customer = await tx.customer.upsert({
                  where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
                  update: {
@@ -251,6 +136,7 @@ class OrderService {
              });
         }
 
+        // Registrar Pagamento Inicial (se houver)
         if (paymentMethod) {
             await tx.payment.create({
                 data: {
@@ -264,7 +150,9 @@ class OrderService {
         return createdOrder;
     });
 
-    SaiposService.sendOrderToSaipos(newOrder.id).catch(err => console.error('Erro Saipos:', err));
+    // 3. Integrações Pós-Commit (Fire & Forget)
+    // Não bloqueia a resposta se a Saipos demorar
+    SaiposService.sendOrderToSaipos(newOrder.id).catch(err => console.error('[SAIPOS] Erro ao enviar pedido:', err));
 
     return prisma.order.findUnique({
         where: { id: newOrder.id },
@@ -290,13 +178,14 @@ class OrderService {
     });
 
     if (!originalOrder) throw new Error("Pedido não encontrado.");
-    const isAutoAccept = originalOrder.restaurant.settings?.autoAcceptOrders || false;
 
+    // Cálculo via PricingService
     for (const item of items) {
-       const calculation = await this.calculateItemPrice(
+       const calculation = await PricingService.calculateItemPrice(
         item.productId, item.quantity, item.sizeId, item.addonsIds, item.flavorIds
       );
       additionalTotal += calculation.totalPrice;
+      
       processedItems.push({
         orderId: orderId, productId: item.productId, quantity: item.quantity,
         priceAtTime: calculation.unitPrice,
@@ -309,11 +198,17 @@ class OrderService {
 
     const result = await prisma.$transaction(async (tx) => {
         await tx.orderItem.createMany({ data: processedItems });
-        const newTotal = originalOrder.total + additionalTotal;
+        
+        const isAutoAccept = originalOrder.restaurant.settings?.autoAcceptOrders || false;
         const newStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
+        
         return await tx.order.update({
             where: { id: orderId },
-            data: { total: newTotal, status: originalOrder.status === 'COMPLETED' ? 'COMPLETED' : newStatus, userId },
+            data: { 
+                total: originalOrder.total + additionalTotal, 
+                status: originalOrder.status === 'COMPLETED' ? 'COMPLETED' : newStatus, // Não reabre pedido finalizado
+                userId 
+            },
             include: { 
                 items: { include: { product: { include: { categories: true } } } },
                 deliveryOrder: true, payments: true, user: { select: { name: true } }
@@ -321,8 +216,120 @@ class OrderService {
         });
     });
 
-    SaiposService.sendOrderToSaipos(orderId).catch(err => console.error('Erro Saipos (AddItems):', err));
+    SaiposService.sendOrderToSaipos(orderId).catch(err => console.error('[SAIPOS] AddItems Error:', err));
     return result;
+  }
+
+  /**
+   * Atualiza o status do pedido e dispara eventos de fim de ciclo (Estoque, Financeiro, Fidelidade)
+   * Agora 100% Transacional.
+   */
+  async updateOrderStatus(orderId, status) {
+    // 1. Inicia Transação
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+        // Atualiza Status Principal
+        const order = await tx.order.update({
+            where: { id: orderId }, 
+            data: { status }, 
+            include: { deliveryOrder: true, payments: true }
+        });
+
+        // Sincroniza Status Delivery
+        if (order.orderType === 'DELIVERY' && order.deliveryOrder) {
+            let deliveryStatus = 'PENDING';
+            if (status === 'PREPARING' || status === 'READY') deliveryStatus = 'CONFIRMED';
+            if (status === 'COMPLETED') deliveryStatus = 'DELIVERED';
+            if (status === 'CANCELED') deliveryStatus = 'CANCELED';
+            
+            await tx.deliveryOrder.update({ where: { orderId }, data: { status: deliveryStatus } });
+        }
+
+        // === EFEITOS COLATERAIS QUANDO FINALIZADO (COMPLETED) ===
+        if (status === 'COMPLETED') {
+            
+            // A. Fidelidade (Pontos e Cashback)
+            await LoyaltyService.processLoyaltyRewards(order, tx);
+
+            // B. Financeiro (Lançamento no Caixa)
+            const openSession = await tx.cashierSession.findFirst({ 
+                where: { restaurantId: order.restaurantId, status: 'OPEN' } 
+            });
+
+            if (openSession) {
+                const paymentMethodKey = order.payments?.[0]?.method || order.deliveryOrder?.paymentMethod || 'other';
+                const totalAmount = order.total + (order.deliveryOrder?.deliveryFee || 0);
+                
+                // Busca config de taxas
+                const paymentConfig = await tx.paymentMethod.findFirst({ 
+                    where: { restaurantId: order.restaurantId, OR: [{ type: paymentMethodKey }, { name: paymentMethodKey }] } 
+                });
+
+                let finalAmount = totalAmount;
+                let dueDate = new Date();
+                let transactionStatus = 'PAID';
+                let description = `Venda Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`;
+
+                if (paymentConfig) {
+                    if (paymentConfig.feePercentage > 0) {
+                        finalAmount = totalAmount * (1 - paymentConfig.feePercentage / 100);
+                    }
+                    if (paymentConfig.daysToReceive > 0) { 
+                        dueDate.setDate(dueDate.getDate() + paymentConfig.daysToReceive); 
+                        transactionStatus = 'PENDING'; 
+                        description += ` (Prev. ${new Date(dueDate).toLocaleDateString()})`; 
+                    }
+                }
+
+                await tx.financialTransaction.create({ 
+                    data: { 
+                        description, 
+                        amount: parseFloat(finalAmount.toFixed(2)), 
+                        type: 'INCOME', 
+                        status: transactionStatus, 
+                        dueDate, 
+                        paymentDate: transactionStatus === 'PAID' ? new Date() : null, 
+                        paymentMethod: paymentMethodKey, 
+                        restaurantId: order.restaurantId, 
+                        orderId: order.id, 
+                        cashierId: openSession.id 
+                    } 
+                });
+            }
+
+            // C. Baixa de Estoque
+            await InventoryService.processOrderStockDeduction(orderId, tx);
+        }
+
+        return order;
+    });
+
+    // Eventos Pós-Transação (Não críticos para a integridade do pedido)
+    if (status === 'COMPLETED') {
+        this._triggerAutomaticInvoice(updatedOrder).catch(err => console.error('[FISCAL BACKGROUND]', err));
+    }
+
+    return updatedOrder;
+  }
+
+  // --- MÉTODOS AUXILIARES ---
+
+  async _triggerAutomaticInvoice(order) {
+    try {
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({ where: { restaurantId: order.restaurantId } });
+        if (fiscalConfig?.emissionMode === 'AUTOMATIC') {
+            const FiscalService = require('./FiscalService');
+            const fullOrder = await prisma.order.findUnique({ 
+                where: { id: order.id }, 
+                include: { items: { include: { product: { include: { categories: true } } } } } 
+            });
+            const result = await FiscalService.autorizarNfce(fullOrder, fiscalConfig, fullOrder.items);
+            if (result.success) {
+                await prisma.invoice.create({ 
+                    data: { restaurantId: order.restaurantId, orderId: order.id, type: 'NFCe', status: 'AUTHORIZED', issuedAt: new Date() } 
+                });
+            }
+        }
+    } catch (error) { console.error('[FISCAL] Erro automático:', error.message); }
   }
 
   async transferTable(currentTableNumber, targetTableNumber, restaurantId) {
@@ -330,18 +337,21 @@ class OrderService {
         where: { restaurantId, tableNumber: parseInt(currentTableNumber), status: { notIn: ['COMPLETED', 'CANCELED'] } }
     });
     if (!currentOrder) throw new Error("Não há pedido aberto na mesa de origem.");
+    
     const targetOrder = await prisma.order.findFirst({
         where: { restaurantId, tableNumber: parseInt(targetTableNumber), status: { notIn: ['COMPLETED', 'CANCELED'] } }
     });
 
     return await prisma.$transaction(async (tx) => {
         if (targetOrder) {
+            // Merge de Mesas
             await tx.orderItem.updateMany({ where: { orderId: currentOrder.id }, data: { orderId: targetOrder.id } });
             await tx.order.update({ where: { id: targetOrder.id }, data: { total: targetOrder.total + currentOrder.total } });
             await tx.order.update({ where: { id: currentOrder.id }, data: { status: 'CANCELED', total: 0 } });
             await tx.table.updateMany({ where: { number: parseInt(currentTableNumber), restaurantId }, data: { status: 'free' } });
             return targetOrder;
         } else {
+            // Transferência Simples
             const updatedOrder = await tx.order.update({ where: { id: currentOrder.id }, data: { tableNumber: parseInt(targetTableNumber) } });
             await tx.table.updateMany({ where: { number: parseInt(currentTableNumber), restaurantId }, data: { status: 'free' } });
             await tx.table.updateMany({ where: { number: parseInt(targetTableNumber), restaurantId }, data: { status: 'occupied' } });
@@ -353,14 +363,17 @@ class OrderService {
   async transferItems(sourceOrderId, targetTableNumber, itemIds, restaurantId, userId) {
     const sourceOrder = await prisma.order.findUnique({ where: { id: sourceOrderId }, include: { items: true } });
     if (!sourceOrder) throw new Error("Pedido de origem não encontrado.");
+    
     const itemsToTransfer = sourceOrder.items.filter(item => itemIds.includes(item.id));
     if (itemsToTransfer.length === 0) throw new Error("Nenhum item válido selecionado.");
+    
     const transferTotal = itemsToTransfer.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
 
     return await prisma.$transaction(async (tx) => {
         let targetOrder = await tx.order.findFirst({
             where: { restaurantId, tableNumber: parseInt(targetTableNumber), status: { notIn: ['COMPLETED', 'CANCELED'] } }
         });
+        
         if (!targetOrder) {
              const today = new Date(); today.setHours(0, 0, 0, 0);
              const lastOrder = await tx.order.findFirst({ where: { restaurantId, createdAt: { gte: today } }, orderBy: { dailyOrderNumber: 'desc' } });
@@ -369,6 +382,7 @@ class OrderService {
             });
             await tx.table.updateMany({ where: { number: parseInt(targetTableNumber), restaurantId }, data: { status: 'occupied' } });
         }
+
         await tx.orderItem.updateMany({ where: { id: { in: itemIds } }, data: { orderId: targetOrder.id } });
         await tx.order.update({ where: { id: sourceOrderId }, data: { total: { decrement: transferTotal } } });
         await tx.order.update({ where: { id: targetOrder.id }, data: { total: { increment: transferTotal } } });
@@ -379,7 +393,9 @@ class OrderService {
   async removeItemFromOrder(orderId, itemId) {
     const item = await prisma.orderItem.findUnique({ where: { id: itemId } });
     if (!item || item.orderId !== orderId) throw new Error("Item inválido.");
+    
     const itemTotal = item.priceAtTime * item.quantity;
+    
     return await prisma.$transaction(async (tx) => {
         await tx.orderItem.delete({ where: { id: itemId } });
         const updatedOrder = await tx.order.update({ where: { id: orderId }, data: { total: { decrement: itemTotal } }, include: { items: true } });
@@ -388,90 +404,7 @@ class OrderService {
     });
   }
 
-  async updateOrderStatus(orderId, status) {
-    const updatedOrder = await prisma.order.update({
-        where: { id: orderId }, data: { status }, include: { deliveryOrder: true, payments: true }
-    });
-
-    if (updatedOrder.orderType === 'DELIVERY' && updatedOrder.deliveryOrder) {
-        let deliveryStatus = 'PENDING';
-        if (status === 'PREPARING' || status === 'READY') deliveryStatus = 'CONFIRMED';
-        if (status === 'COMPLETED') deliveryStatus = 'DELIVERED';
-        if (status === 'CANCELED') deliveryStatus = 'CANCELED';
-        await prisma.deliveryOrder.update({ where: { orderId }, data: { status: deliveryStatus } });
-    }
-
-    if (status === 'COMPLETED') {
-        const openSession = await prisma.cashierSession.findFirst({ where: { restaurantId: updatedOrder.restaurantId, status: 'OPEN' } });
-        const restaurant = await prisma.restaurant.findUnique({ where: { id: updatedOrder.restaurantId }, include: { settings: true } });
-
-        if (restaurant?.settings?.loyaltyEnabled) {
-            let customerId = updatedOrder.deliveryOrder?.customerId;
-            if (!customerId && updatedOrder.deliveryOrder?.phone) {
-                 const cleanPhone = updatedOrder.deliveryOrder.phone.replace(/\D/g, '');
-                 const customer = await prisma.customer.findFirst({ where: { phone: cleanPhone, restaurantId: updatedOrder.restaurantId } });
-                 customerId = customer?.id;
-            }
-            if (customerId) {
-                const pointsToCredit = Math.floor(updatedOrder.total * (restaurant.settings.pointsPerReal || 0));
-                const cashbackToCredit = updatedOrder.total * ((restaurant.settings.cashbackPercentage || 0) / 100);
-                await prisma.customer.update({ where: { id: customerId }, data: { loyaltyPoints: { increment: pointsToCredit }, cashbackBalance: { increment: cashbackToCredit } } });
-            }
-        }
-
-        if (openSession) {
-            const paymentMethodKey = updatedOrder.payments?.[0]?.method || updatedOrder.deliveryOrder?.paymentMethod || 'other';
-            const totalAmount = updatedOrder.total + (updatedOrder.deliveryOrder?.deliveryFee || 0);
-            const paymentConfig = await prisma.paymentMethod.findFirst({ where: { restaurantId: updatedOrder.restaurantId, OR: [{ type: paymentMethodKey }, { name: paymentMethodKey }] } });
-
-            let finalAmount = totalAmount, dueDate = new Date(), transactionStatus = 'PAID', description = `Venda Pedido #${updatedOrder.dailyOrderNumber || updatedOrder.id.slice(-4)}`;
-            if (paymentConfig) {
-                if (paymentConfig.feePercentage > 0) finalAmount = totalAmount * (1 - paymentConfig.feePercentage / 100);
-                if (paymentConfig.daysToReceive > 0) { dueDate.setDate(dueDate.getDate() + paymentConfig.daysToReceive); transactionStatus = 'PENDING'; description += ` (Prev. ${new Date(dueDate).toLocaleDateString()})`; }
-            }
-            await prisma.financialTransaction.create({ data: { description, amount: parseFloat(finalAmount.toFixed(2)), type: 'INCOME', status: transactionStatus, dueDate, paymentDate: transactionStatus === 'PAID' ? new Date() : null, paymentMethod: paymentMethodKey, restaurantId: updatedOrder.restaurantId, orderId: updatedOrder.id, cashierId: openSession.id } });
-        }
-
-        const orderWithItems = await prisma.order.findUnique({
-            where: { id: orderId },
-            include: { items: { include: { product: { include: { ingredients: true, categories: true } } } } }
-        });
-
-        for (const item of orderWithItems.items) {
-            if (item.product.ingredients?.length > 0) {
-                for (const recipeItem of item.product.ingredients) {
-                    await prisma.ingredient.update({ where: { id: recipeItem.ingredientId }, data: { stock: { decrement: recipeItem.quantity * item.quantity } } });
-                }
-            } else {
-                await prisma.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } });
-            }
-        }
-        this._triggerAutomaticInvoice(updatedOrder).catch(err => console.error('[FISCAL BACKGROUND]', err));
-    }
-    return updatedOrder;
-  }
-
-  async _triggerAutomaticInvoice(order) {
-    try {
-        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({ where: { restaurantId: order.restaurantId } });
-        if (fiscalConfig?.emissionMode === 'AUTOMATIC') {
-            const FiscalService = require('./FiscalService');
-            const fullOrder = await prisma.order.findUnique({ where: { id: order.id }, include: { items: { include: { product: { include: { categories: true } } } } } });
-            const result = await FiscalService.autorizarNfce(fullOrder, fiscalConfig, fullOrder.items);
-            if (result.success) await prisma.invoice.create({ data: { restaurantId: order.restaurantId, orderId: order.id, type: 'NFCe', status: 'AUTHORIZED', issuedAt: new Date() } });
-        }
-    } catch (error) { console.error('[FISCAL] Erro crítico:', error.message); }
-  }
-
-  async updateDeliveryType(orderId, deliveryType) {
-    const order = await prisma.order.findUnique({ where: { id: orderId }, include: { deliveryOrder: true, restaurant: { include: { settings: true } } } });
-    if (!order?.deliveryOrder) throw new Error('Pedido não encontrado.');
-    const deliveryFee = deliveryType === 'delivery' ? (order.restaurant.settings?.deliveryFee || 0) : 0;
-    const updateData = { deliveryType, deliveryFee };
-    if (deliveryType === 'pickup') updateData.driverId = null;
-    return await prisma.deliveryOrder.update({ where: { id: order.deliveryOrder.id }, data: updateData });
-  }
-
+  // Métodos de Driver e KDS mantidos (são apenas consultas ou updates simples)
   async getDriverSettlement(restaurantId, date) {
     const targetDate = date ? new Date(date) : new Date(); targetDate.setHours(0,0,0,0);
     const nextDay = new Date(targetDate); nextDay.setDate(targetDate.getDate() + 1);
@@ -523,6 +456,15 @@ class OrderService {
         await tx.financialTransaction.updateMany({ where: { orderId, restaurantId }, data: { paymentMethod: newMethod } });
         return { success: true };
     });
+  }
+
+  async updateDeliveryType(orderId, deliveryType) {
+    const order = await prisma.order.findUnique({ where: { id: orderId }, include: { deliveryOrder: true, restaurant: { include: { settings: true } } } });
+    if (!order?.deliveryOrder) throw new Error('Pedido não encontrado.');
+    const deliveryFee = deliveryType === 'delivery' ? (order.restaurant.settings?.deliveryFee || 0) : 0;
+    const updateData = { deliveryType, deliveryFee };
+    if (deliveryType === 'pickup') updateData.driverId = null;
+    return await prisma.deliveryOrder.update({ where: { id: order.deliveryOrder.id }, data: updateData });
   }
 }
 

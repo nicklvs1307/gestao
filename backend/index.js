@@ -131,4 +131,8 @@ app.post('/api/client/table-requests', TableController.createClientTableRequest)
 // Root
 app.get('/api', (req, res) => res.send('API Online!'));
 
+// Middleware de Tratamento de Erros Global (DEVE SER O ÚLTIMO)
+const errorHandler = require('./src/middlewares/errorHandler');
+app.use(errorHandler);
+
 app.listen(PORT, () => logger.info(`Servidor rodando em http://localhost:${PORT}`));

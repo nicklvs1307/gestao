@@ -1,195 +1,186 @@
 const prisma = require('../lib/prisma');
-const productSchema = require('../schemas/productSchema');
+const asyncHandler = require('../middlewares/asyncHandler');
+const { CreateProductSchema, UpdateProductSchema } = require('../schemas/ProductSchema');
 
-const getProducts = async (req, res) => {
-    try {
-        const products = await prisma.product.findMany({
-            where: { restaurantId: req.restaurantId },
-            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } } },
-            orderBy: { order: 'asc' },
-        });
-        res.json(products);
-    } catch (error) { 
-        console.error('Erro em getProducts:', error);
-        res.status(500).json({ error: 'Erro ao buscar produtos.' }); 
-    }
-};
+class ProductController {
+  
+  // GET /api/products
+  getProducts = asyncHandler(async (req, res) => {
+    const products = await prisma.product.findMany({
+      where: { restaurantId: req.restaurantId },
+      include: { 
+        categories: true, 
+        sizes: true, 
+        addonGroups: { include: { addons: true } } 
+      },
+      orderBy: { order: 'asc' },
+    });
+    res.json(products);
+  });
 
-const getClientProducts = async (req, res) => {
-    try { 
-        const products = await prisma.product.findMany({ 
-            where: { restaurantId: req.params.restaurantId }, 
-            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } } }, 
-            orderBy: { order: 'asc' } 
-        });
-        res.json(products);
-    }
-    catch (error) { 
-        console.error('Erro em getClientProducts:', error);
-        res.status(500).json({ error: 'Erro ao buscar produtos para cliente.' }); 
-    }
-};
+  // GET /api/client/products/:restaurantId
+  getClientProducts = asyncHandler(async (req, res) => {
+    const { restaurantId } = req.params;
+    const products = await prisma.product.findMany({ 
+      where: { restaurantId, isAvailable: true }, 
+      include: { 
+        categories: true, 
+        sizes: true, 
+        addonGroups: { include: { addons: true } } 
+      }, 
+      orderBy: { order: 'asc' } 
+    });
+    res.json(products);
+  });
 
-const createProduct = async (req, res) => {
-    const { value, error } = productSchema.validate(req.body);
+  // POST /api/products
+  createProduct = asyncHandler(async (req, res) => {
+    const validatedData = CreateProductSchema.parse(req.body);
+    const { categoryId, categoryIds, sizes, addonGroups, ingredients, ...rest } = validatedData;
     
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
-
-    const { name, price, categoryId, categoryIds, sizes, addonGroups, ingredients, ...rest } = value;
-    
-    // Normaliza categorias para o novo modelo Muitos-para-Muitos
+    // Normaliza categorias
     const finalCategoryIds = categoryIds || (categoryId ? [categoryId] : []);
 
-    try {
-        const newProduct = await prisma.product.create({
-            data: {
-                ...rest, name, price,
-                categories: { connect: finalCategoryIds.map(id => ({ id })) },
-                restaurant: { connect: { id: req.restaurantId } },
-                sizes: { create: sizes?.map(s => ({ name: s.name, price: s.price })) || [] },
-                addonGroups: { 
-                    connect: addonGroups?.filter(g => g.id).map(g => ({ id: g.id })) || []
-                },
-                ingredients: { create: ingredients?.map(i => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] }
-            },
-            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
-        });
-        res.status(201).json(newProduct);
-    } catch (error) { 
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao criar produto.' }); 
-    }
-};
+    const newProduct = await prisma.product.create({
+      data: {
+        ...rest,
+        restaurantId: req.restaurantId,
+        categories: { 
+          connect: finalCategoryIds.map(id => ({ id })) 
+        },
+        sizes: { 
+          create: sizes.map(s => ({ 
+            name: s.name, 
+            price: s.price, 
+            order: s.order, 
+            saiposIntegrationCode: s.saiposIntegrationCode 
+          })) 
+        },
+        addonGroups: { 
+          connect: addonGroups.map(g => ({ id: g.id }))
+        },
+        ingredients: { 
+          create: ingredients.map(i => ({ 
+            ingredientId: i.ingredientId, 
+            quantity: i.quantity 
+          })) 
+        }
+      },
+      include: { categories: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
+    });
+    
+    res.status(201).json(newProduct);
+  });
 
-const updateProduct = async (req, res) => {
+  // PUT /api/products/:id
+  updateProduct = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    
-    const { value, error } = productSchema.validate(req.body);
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
+    const validatedData = UpdateProductSchema.parse(req.body);
 
-    const { categoryId, categoryIds, sizes, addonGroups, ingredients, ...productData } = value;
+    const { categoryId, categoryIds, sizes, addonGroups, ingredients, ...productData } = validatedData;
     
-    // Preparar dados de categorias
+    // Preparar atualização de categorias
     const categoryUpdate = {};
     if (categoryIds || categoryId) {
         const finalIds = categoryIds || (categoryId ? [categoryId] : []);
         categoryUpdate.set = finalIds.map(id => ({ id }));
     }
 
-    try {
-        const updatedProduct = await prisma.product.update({
-            where: { id },
-            data: {
-                ...productData,
-                categories: categoryUpdate,
-                sizes: { deleteMany: {}, create: sizes?.map(size => ({ name: size.name, price: size.price, order: size.order || 0, saiposIntegrationCode: size.saiposIntegrationCode })) || [] },
-                addonGroups: { 
-                    set: addonGroups?.filter(g => g.id).map(g => ({ id: g.id })) || []
-                },
-                ingredients: { deleteMany: {}, create: ingredients?.map(i => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] }
-            },
-            include: { categories: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
-        });
-        res.json(updatedProduct);
-    } catch (error) { 
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao atualizar produto.' }); 
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: {
+        ...productData,
+        categories: categoryUpdate,
+        sizes: { 
+          deleteMany: {}, 
+          create: sizes?.map(s => ({ 
+            name: s.name, 
+            price: s.price, 
+            order: s.order || 0, 
+            saiposIntegrationCode: s.saiposIntegrationCode 
+          })) || [] 
+        },
+        addonGroups: { 
+          set: addonGroups?.map(g => ({ id: g.id })) || []
+        },
+        ingredients: { 
+          deleteMany: {}, 
+          create: ingredients?.map(i => ({ 
+            ingredientId: i.ingredientId, 
+            quantity: i.quantity 
+          })) || [] 
+        }
+      },
+      include: { categories: true, sizes: true, addonGroups: { include: { addons: true } }, ingredients: true },
+    });
+
+    res.json(updatedProduct);
+  });
+
+  // DELETE /api/products/:id
+  deleteProduct = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    await prisma.product.delete({ where: { id } }); 
+    res.status(204).send();
+  });
+
+  // POST /api/products/upload
+  uploadImage = asyncHandler(async (req, res) => {
+    if (!req.file) {
+      res.status(400);
+      throw new Error('Nenhum arquivo enviado.');
     }
-};
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.json({ imageUrl });
+  });
 
-const deleteProduct = async (req, res) => {
-    try { await prisma.product.delete({ where: { id: req.params.id } }); res.status(204).send(); }
-    catch (error) { res.status(500).json({ error: 'Erro ao excluir produto.' }); }
-};
+  // GET /api/products/pricing-analysis
+  getPricingAnalysis = asyncHandler(async (req, res) => {
+    const products = await prisma.product.findMany({
+      where: { restaurantId: req.restaurantId },
+      include: {
+        ingredients: { include: { ingredient: true } },
+        categories: true
+      }
+    });
 
-const uploadImage = async (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
-        const imageUrl = `/uploads/${req.file.filename}`;
-        res.json({ imageUrl });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao fazer upload da imagem.' });
-    }
-};
+    const analysis = products.map(product => {
+      let totalCost = 0;
+      product.ingredients.forEach(pi => {
+        totalCost += (pi.ingredient.lastUnitCost || 0) * pi.quantity;
+      });
 
-const getPricingAnalysis = async (req, res) => {
-    try {
-        const products = await prisma.product.findMany({
-            where: { restaurantId: req.restaurantId },
-            include: {
-                ingredients: {
-                    include: {
-                        ingredient: true
-                    }
-                },
-                categories: true
-            }
-        });
+      const profit = product.price - totalCost;
+      const margin = product.price > 0 ? (profit / product.price) * 100 : 0;
 
-        const analysis = products.map(product => {
-            let totalCost = 0;
-            
-            // Calcula o custo baseado nos insumos da Ficha Técnica
-            product.ingredients.forEach(pi => {
-                const cost = (pi.ingredient.lastUnitCost || 0) * pi.quantity;
-                totalCost += cost;
-            });
+      return {
+        id: product.id,
+        name: product.name,
+        category: product.categories?.[0]?.name || 'S/ Cat',
+        sellingPrice: product.price,
+        totalCost,
+        profit,
+        margin,
+        isWarning: margin < 60
+      };
+    });
 
-            const sellingPrice = product.price;
-            const profit = sellingPrice - totalCost;
-            const margin = sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
-            const markup = totalCost > 0 ? (sellingPrice / totalCost) : 0;
+    res.json(analysis);
+  });
 
-            return {
-                id: product.id,
-                name: product.name,
-                category: product.categories?.[0]?.name || 'S/ Cat',
-                sellingPrice,
-                totalCost,
-                profit,
-                margin,
-                markup,
-                isWarning: margin < 60 // Alerta se a margem bruta for menor que 60% (comum em restaurantes)
-            };
-        });
+  // PATCH /api/products/reorder
+  reorderProducts = asyncHandler(async (req, res) => {
+    const { items } = req.body; // TODO: Validar com Zod se necessário
+    await prisma.$transaction(
+      items.map(item => 
+        prisma.product.update({
+          where: { id: item.id },
+          data: { order: item.order }
+        })
+      )
+    );
+    res.json({ success: true });
+  });
+}
 
-        res.json(analysis);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao gerar análise de preços.' });
-    }
-};
-
-const reorderProducts = async (req, res) => {
-    const { items } = req.body;
-    try {
-        await prisma.$transaction(
-            items.map(item => 
-                prisma.product.update({
-                    where: { id: item.id },
-                    data: { order: item.order }
-                })
-            )
-        );
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Erro ao reordenar produtos:', error);
-        res.status(500).json({ error: 'Erro ao reordenar produtos.' });
-    }
-};
-
-module.exports = {
-    getProducts,
-    getClientProducts,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    uploadImage,
-    getPricingAnalysis,
-    reorderProducts
-};
+module.exports = new ProductController();
