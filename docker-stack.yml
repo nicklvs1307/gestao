@@ -93,8 +93,8 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Regra simplificada e robusta para subdomínios de lojas
-        - "traefik.http.routers.client.rule=HostRegexp(`[a-z0-9-]+\\.towersfy\\.com`) && !Host(`container.towersfy.com`, `kicardapio.towersfy.com`, `apikicardapio.towersfy.com`, `admin.kicardapio.towersfy.com`)"
+        # Regra precisa com âncoras para Traefik v3
+        - "traefik.http.routers.client.rule=HostRegexp(`^[a-z0-9-]+\\.towersfy\\.com$$`) && !Host(`container.towersfy.com`, `kicardapio.towersfy.com`, `apikicardapio.towersfy.com`, `admin.kicardapio.towersfy.com`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
