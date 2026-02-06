@@ -1,4 +1,4 @@
-root@servergestao:~/gestao# docker logs de5b6e48635b
+root@servergestao:~/gestao# docker logs 0f016d2c0595
 Aguardando banco de dados responder...
 Sincronizando Banco de Dados com o Schema...
 Prisma schema loaded from prisma/schema.prisma
@@ -10,32 +10,5 @@ Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postg
 No pending migrations to apply.
 Executando Seed de Permissões...
 Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
-node:internal/modules/cjs/loader:1210
-  throw err;
-  ^
-
-Error: Cannot find module '../schemas/ProductSchema'
-Require stack:
-- /app/src/controllers/ProductController.js
-- /app/src/routes/productRoutes.js
-- /app/index.js
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
-    at Module._load (node:internal/modules/cjs/loader:1038:27)
-    at Module.require (node:internal/modules/cjs/loader:1289:19)
-    at require (node:internal/modules/helpers:182:18)
-    at Object.<anonymous> (/app/src/controllers/ProductController.js:3:54)
-    at Module._compile (node:internal/modules/cjs/loader:1521:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-    at Module.load (node:internal/modules/cjs/loader:1266:32)
-    at Module._load (node:internal/modules/cjs/loader:1091:12)
-    at Module.require (node:internal/modules/cjs/loader:1289:19) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [
-    '/app/src/controllers/ProductController.js',
-    '/app/src/routes/productRoutes.js',
-    '/app/index.js'
-  ]
-}
-
-Node.js v20.20.0
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}

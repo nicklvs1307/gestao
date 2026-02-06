@@ -1,69 +1,91 @@
 const prisma = require('../lib/prisma');
+const asyncHandler = require('../middlewares/asyncHandler');
+const { CreateCategorySchema, UpdateCategorySchema, ReorderCategoriesSchema } = require('../schemas/CategorySchema');
 
-const getCategoriesFlat = async (req, res) => {
-    try { res.json(await prisma.category.findMany({ where: { restaurantId: req.restaurantId }, orderBy: { name: 'asc' } })); }
-    catch (error) { res.status(500).json({ error: 'Erro ao buscar categorias.' }); }
-};
+class CategoryController {
+  
+  // GET /api/categories (Flat)
+  getCategoriesFlat = asyncHandler(async (req, res) => {
+    const categories = await prisma.category.findMany({ 
+        where: { restaurantId: req.restaurantId }, 
+        orderBy: { name: 'asc' } 
+    });
+    res.json(categories);
+  });
 
-const getCategoriesHierarchy = async (req, res) => {
-    try { res.json(await prisma.category.findMany({ where: { restaurantId: req.restaurantId, parentId: null }, include: { subCategories: { orderBy: { order: 'asc' } } }, orderBy: { order: 'asc' } })); }
-    catch (error) { res.status(500).json({ error: 'Erro ao buscar categorias.' }); }
-};
+  // GET /api/categories/hierarchy
+  getCategoriesHierarchy = asyncHandler(async (req, res) => {
+    const categories = await prisma.category.findMany({ 
+        where: { restaurantId: req.restaurantId, parentId: null }, 
+        include: { 
+            subCategories: { orderBy: { order: 'asc' } } 
+        }, 
+        orderBy: { order: 'asc' } 
+    });
+    res.json(categories);
+  });
 
-const getClientCategories = async (req, res) => {
-    try { 
-        res.json(await prisma.category.findMany({ 
-            where: { restaurantId: req.params.restaurantId }, 
-            orderBy: { order: 'asc' } 
-        })); 
+  // GET /api/client/categories/:restaurantId
+  getClientCategories = asyncHandler(async (req, res) => {
+    const { restaurantId } = req.params;
+    const categories = await prisma.category.findMany({ 
+        where: { restaurantId }, 
+        orderBy: { order: 'asc' } 
+    }); 
+    res.json(categories);
+  });
+
+  // POST /api/categories
+  createCategory = asyncHandler(async (req, res) => {
+    const validatedData = CreateCategorySchema.parse(req.body);
+    const { parentId, ...rest } = validatedData;
+
+    const data = { 
+        ...rest, 
+        restaurant: { connect: { id: req.restaurantId } } 
+    };
+    
+    if (parentId) {
+        data.parent = { connect: { id: parentId } };
     }
-    catch (error) { res.status(500).json({ error: 'Erro ao buscar categorias.' }); }
-};
 
-const createCategory = async (req, res) => {
-    const { name, parentId } = req.body;
-    if (!name) return res.status(400).json({ error: 'Nome obrigatório.' });
-    try {
-        const data = { name, restaurant: { connect: { id: req.restaurantId } } };
-        if (parentId) data.parent = { connect: { id: parentId } };
-        res.status(201).json(await prisma.category.create({ data }));
-    } catch (error) { res.status(500).json({ error: 'Erro ao criar categoria.' }); }
-};
+    const category = await prisma.category.create({ data });
+    res.status(201).json(category);
+  });
 
-const updateCategory = async (req, res) => {
-    try { res.json(await prisma.category.update({ where: { id: req.params.id }, data: req.body })); }
-    catch (error) { res.status(500).json({ error: 'Erro ao atualizar categoria.' }); }
-};
+  // PUT /api/categories/:id
+  updateCategory = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const validatedData = UpdateCategorySchema.parse(req.body);
 
-const deleteCategory = async (req, res) => {
-    try { await prisma.category.delete({ where: { id: req.params.id } }); res.status(204).send(); }
-    catch (error) { res.status(500).json({ error: 'Erro ao excluir categoria.' }); }
-};
+    const category = await prisma.category.update({ 
+        where: { id }, 
+        data: validatedData 
+    });
+    res.json(category);
+  });
 
-const reorderCategories = async (req, res) => {
-    const { items } = req.body; // Array de { id, order }
-    try {
-        await prisma.$transaction(
-            items.map(item => 
-                prisma.category.update({
-                    where: { id: item.id },
-                    data: { order: item.order }
-                })
-            )
-        );
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Erro ao reordenar categorias:', error);
-        res.status(500).json({ error: 'Erro ao reordenar categorias.' });
-    }
-};
+  // DELETE /api/categories/:id
+  deleteCategory = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    await prisma.category.delete({ where: { id } }); 
+    res.status(204).send();
+  });
 
-module.exports = {
-    getCategoriesFlat,
-    getCategoriesHierarchy,
-    getClientCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    reorderCategories
-};
+  // PATCH /api/categories/reorder
+  reorderCategories = asyncHandler(async (req, res) => {
+    const validatedData = ReorderCategoriesSchema.parse(req.body);
+    
+    await prisma.$transaction(
+        validatedData.items.map(item => 
+            prisma.category.update({
+                where: { id: item.id },
+                data: { order: item.order }
+            })
+        )
+    );
+    res.json({ success: true });
+  });
+}
+
+module.exports = new CategoryController();
