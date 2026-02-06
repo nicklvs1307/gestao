@@ -158,6 +158,24 @@ const getPricingAnalysis = async (req, res) => {
     }
 };
 
+const reorderProducts = async (req, res) => {
+    const { items } = req.body;
+    try {
+        await prisma.$transaction(
+            items.map(item => 
+                prisma.product.update({
+                    where: { id: item.id },
+                    data: { order: item.order }
+                })
+            )
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erro ao reordenar produtos:', error);
+        res.status(500).json({ error: 'Erro ao reordenar produtos.' });
+    }
+};
+
 module.exports = {
     getProducts,
     getClientProducts,
@@ -165,5 +183,6 @@ module.exports = {
     updateProduct,
     deleteProduct,
     uploadImage,
-    getPricingAnalysis
+    getPricingAnalysis,
+    reorderProducts
 };
