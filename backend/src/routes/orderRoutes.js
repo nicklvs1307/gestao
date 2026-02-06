@@ -16,7 +16,7 @@ router.get('/', needsAuth, checkPermission('orders:view'), async (req, res) => {
         res.json(await prisma.order.findMany({ 
             where: { restaurantId: req.restaurantId }, 
             include: { 
-                items: { include: { product: { include: { category: true } } } },
+                items: { include: { product: { include: { categories: true } } } },
                 deliveryOrder: { include: { customer: true, driver: { select: { id: true, name: true } } } },
                 user: { select: { name: true } }
             }, 

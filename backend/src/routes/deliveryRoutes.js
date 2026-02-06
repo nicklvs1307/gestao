@@ -26,13 +26,17 @@ router.get('/restaurant/:slug', async (req, res) => {
         include: {
           settings: true,
           categories: {
+            orderBy: { order: 'asc' },
             include: {
               products: {
+                where: { isAvailable: true },
+                orderBy: { order: 'asc' },
                 include: {
-                  sizes: true,
+                  sizes: { orderBy: { order: 'asc' } },
                   addonGroups: {
+                    orderBy: { order: 'asc' },
                     include: {
-                      addons: true,
+                      addons: { orderBy: { order: 'asc' } },
                     },
                   },
                 },

@@ -120,7 +120,7 @@ const getPricingAnalysis = async (req, res) => {
                         ingredient: true
                     }
                 },
-                category: true
+                categories: true
             }
         });
 
@@ -141,7 +141,7 @@ const getPricingAnalysis = async (req, res) => {
             return {
                 id: product.id,
                 name: product.name,
-                category: product.category?.name,
+                category: product.categories?.[0]?.name || 'S/ Cat',
                 sellingPrice,
                 totalCost,
                 profit,

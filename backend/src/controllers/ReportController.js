@@ -529,7 +529,7 @@ const ReportController = {
                     }
                 },
                 include: {
-                    product: { select: { name: true, category: { select: { name: true } } } },
+                    product: { select: { name: true, categories: { select: { name: true } } } },
                     order: { select: { dailyOrderNumber: true, tableNumber: true } }
                 },
                 orderBy: { createdAt: 'desc' }

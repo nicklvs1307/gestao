@@ -369,7 +369,7 @@ class OrderService {
                 userId: userId // Atualiza o atendente/garçom
             },
             include: { 
-                items: { include: { product: { include: { category: true } } } },
+                items: { include: { product: { include: { categories: true } } } },
                 deliveryOrder: true,
                 payments: true,
                 user: { select: { name: true } }
@@ -914,14 +914,12 @@ class OrderService {
                   status: { in: ['PENDING', 'PREPARING'] }
               },
               product: {
-                  category: {
-                      productionArea: area || undefined
-                  }
+                  productionArea: area || undefined
               },
               isReady: false
           },
           include: {
-              product: { include: { category: true } },
+              product: { include: { categories: true } },
               order: {
                   select: {
                       id: true,
