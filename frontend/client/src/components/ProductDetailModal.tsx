@@ -6,186 +6,7 @@ import {
   Plus, 
   Check, 
   ShoppingBag,
-  Pizza as PizzaIcon,
-  Info,
-  Tag
-} from 'lucide-react';
-import { cn } from '../lib/utils';
-import { getProducts } from '../services/api';
-
-interface ProductDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  product: Product | null;
-  onAddToCart: (
-    product: Product, 
-    quantity: number, 
-    selectedSize: SizeOption | null, 
-    selectedAddons: AddonOption[],
-    selectedFlavors?: Product[]
-  ) => void;
-}
-
-const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, onAddToCart }) => {
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
-  const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
-  const [isAdded, setIsAdded] = useState(false);
-  
-  // Estados para Pizza
-  const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
-  const [selectedFlavors, setSelectedFlavors] = useState<Product[]>([]);
-  const [isLoadingFlavors, setIsLoadingFlavors] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && product) {
-      setQuantity(1);
-      // SEGURANÇA: Verifica se sizes existe antes de acessar length
-      const sizes = product.sizes || [];
-      setSelectedSize(sizes.length > 0 ? sizes[0] : null);
-      setSelectedAddons([]);
-      setSelectedFlavors([]);
-      setIsAdded(false);
-
-      if (product.pizzaConfig?.flavorCategoryId) {
-        loadFlavors(product.restaurantId, product.pizzaConfig.flavorCategoryId);
-      }
-    }
-  }, [isOpen, product]);
-
-  const loadFlavors = async (restaurantId: string, categoryId: string) => {
-    setIsLoadingFlavors(true);
-    try {
-      const allProducts = await getProducts(restaurantId);
-      const flavors = allProducts.filter(p => p.categoryId === categoryId && p.isAvailable);
-      setAvailableFlavors(flavors);
-    } catch (error) {
-      console.error("Erro ao carregar sabores:", error);
-    } finally {
-      setIsLoadingFlavors(false);
-    }
-  };
-
-  const handleQuantityChange = (val: number) => {
-      setQuantity(prev => Math.max(1, prev + val));
-  };
-
-  const handleAddonQuantityChange = (addon: AddonOption, delta: number, type: string) => {
-    if (isAdded) return;
-    
-    const currentAddon = selectedAddons.find(a => a.id === addon.id);
-    const currentQty = currentAddon?.quantity || 0;
-    const newQty = Math.max(0, currentQty + delta);
-    const maxQty = addon.maxQuantity || 1;
-
-    if (newQty > maxQty && delta > 0) return;
-
-    if (newQty === 0) {
-      setSelectedAddons(prev => prev.filter(a => a.id !== addon.id));
-    } else {
-      if (currentAddon) {
-        setSelectedAddons(prev => prev.map(a => a.id === addon.id ? { ...a, quantity: newQty } : a));
-      } else {
-        if (type === 'single') {
-          // Para 'single', poderíamos remover outros do mesmo grupo se tivéssemos o groupId. 
-          // Como não temos fácil aqui sem mudar mais coisas, vamos apenas adicionar.
-          setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
-        } else {
-          setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
-        }
-      }
-    }
-  };
-
-  const getMaxFlavors = () => {
-    if (!product?.pizzaConfig || !selectedSize) return 1;
-    const sizeConfig = product.pizzaConfig.sizes ? product.pizzaConfig.sizes[selectedSize.name] : null;
-    return sizeConfig?.maxFlavors || product.pizzaConfig.maxFlavors || 1;
-  };
-
-  const handleFlavorToggle = (flavor: Product) => {
-    if (isAdded) return;
-    const max = getMaxFlavors();
-    const isSelected = selectedFlavors.some(f => f.id === flavor.id);
-    if (isSelected) {
-      setSelectedFlavors(prev => prev.filter(f => f.id !== flavor.id));
-    } else {
-      if (selectedFlavors.length < max) {
-        setSelectedFlavors(prev => [...prev, flavor]);
-      } else if (max === 1) {
-        setSelectedFlavors([flavor]);
-      }
-    }
-  };
-
-  const calculateCurrentPrice = () => {
-    if (!product) return 0;
-    let basePrice = product.price;
-    if (product.pizzaConfig && selectedFlavors.length > 0) {
-      const rule = product.pizzaConfig.priceRule || 'higher';
-      const flavorPrices = selectedFlavors.map(f => {
-        if (selectedSize) {
-          const s = (f.sizes || []).find(sz => sz.name === selectedSize.name);
-          return s ? s.price : f.price;
-        }
-        return f.price;
-      });
-      const calculatedFlavorPrice = rule === 'higher' ? Math.max(...flavorPrices) : flavorPrices.reduce((a, b) => a + b, 0) / flavorPrices.length;
-      
-      // PROTEÇÃO: Se o cálculo dos sabores der 0 (ex: sabores sem custo extra), mantém o preço do tamanho selecionado
-      if (calculatedFlavorPrice > 0) {
-          basePrice = calculatedFlavorPrice;
-      } else if (selectedSize) {
-          basePrice = selectedSize.price;
-      }
-
-    } else if (selectedSize) {
-      basePrice = selectedSize.price;
-    }
-    let total = basePrice;
-    total += selectedAddons.reduce((acc, addon) => acc + (addon.price * (addon.quantity || 1)), 0);
-    return total * quantity;
-  };
-
-  const handleAddToCartClick = () => {
-    if (isAdded || !product) return;
-    if (product.pizzaConfig && selectedFlavors.length === 0) {
-      alert("Por favor, selecione pelo menos 1 sabor.");
-      return;
-    }
-    // Validação de Adicionais Obrigatórios com segurança
-    const groups = product.addonGroups || [];
-    for (const group of groups) {
-      if (group.isRequired) {
-        const addons = group.addons || [];
-        const hasSelection = addons.some(addon => selectedAddons.some(sa => sa.id === addon.id));
-        if (!hasSelection) {
-          alert(`Por favor, selecione uma opção em "${group.name}"`);
-          return;
-        }
-      }
-    }
-    onAddToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
-    setIsAdded(true);
-    setTimeout(onClose, 800);
-  };
-
-  if (!isOpen || !product) return null;
-
-  const sizes = product.sizes || [];
-  const addonGroups = product.addonGroups || [];
-
-import React, { useState, useEffect } from 'react';
-import type { Product, SizeOption, AddonOption } from '../types';
-import { 
-  X, 
-  Minus, 
-  Plus, 
-  Check, 
-  ShoppingBag,
-  Pizza as PizzaIcon,
-  Info,
-  Tag
+  Pizza as PizzaIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getProducts } from '../services/api';
@@ -210,7 +31,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
   const [isAdded, setIsAdded] = useState(false);
   
-  // Estados para Pizza
   const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
   const [selectedFlavors, setSelectedFlavors] = useState<Product[]>([]);
   const [isLoadingFlavors, setIsLoadingFlavors] = useState(false);
@@ -344,7 +164,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     <AnimatePresence>
       {isOpen && product && (
         <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center">
-          {/* Backdrop Animado */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -353,11 +172,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             className="absolute inset-0 bg-black/80 backdrop-blur-[6px]" 
           />
           
-          {/* Conteúdo do Modal (Bottom Sheet no Mobile, Modal Central no Desktop) */}
           <motion.div 
-            initial={{ y: "100%", scale: 1 }}
-            animate={{ y: 0, scale: 1 }}
-            exit={{ y: "100%", transition: { type: "spring", damping: 25, stiffness: 200 } }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             drag="y"
             dragConstraints={{ top: 0 }}
@@ -367,10 +185,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             }}
             className="relative w-full max-w-5xl bg-white rounded-t-[3rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[94vh] md:h-auto md:max-h-[90vh]"
           >
-            {/* Handle de Arrasto (Mobile) */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-slate-300 rounded-full z-50 md:hidden" />
             
-            {/* Botão Fechar (Desktop) */}
             <button 
                 onClick={onClose} 
                 className="absolute top-6 right-6 z-50 w-12 h-12 bg-white/10 hover:bg-white/30 backdrop-blur-xl rounded-full flex items-center justify-center text-white md:text-slate-900 md:bg-slate-100 md:hover:bg-slate-200 transition-all active:scale-90"
@@ -378,7 +194,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 <X size={24} strokeWidth={3} />
             </button>
 
-            {/* Imagem do Produto */}
             <div className="w-full md:w-5/12 h-72 md:h-auto relative shrink-0">
               <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden" />
@@ -387,7 +202,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
               </div>
             </div>
 
-            {/* Detalhes e Opções */}
             <div className="w-full md:w-7/12 flex flex-col min-h-0 flex-1 bg-white relative">
               <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-10 scroll-smooth no-scrollbar">
                 <div className="space-y-4 hidden md:block">
@@ -399,7 +213,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                    <p className="text-slate-500 text-sm font-medium leading-relaxed">{product.description}</p>
                 </div>
 
-                {/* Tamanhos */}
                 {sizes.length > 0 && (
                   <div className="space-y-6">
                     <div className="flex items-center gap-3">
@@ -428,7 +241,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                   </div>
                 )}
 
-                {/* Configuração de Pizza */}
                 {product.pizzaConfig && (
                   <div className="space-y-6 bg-slate-50 p-6 rounded-[3rem] border border-slate-100">
                     <div className="flex items-center justify-between">
@@ -471,7 +283,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                   </div>
                 )}
 
-                {/* Grupos de Adicionais */}
                 {addonGroups.map((group) => (
                   <div key={group.id} className="space-y-6">
                     <div className="flex items-center justify-between">
@@ -526,7 +337,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 ))}
               </div>
 
-              {/* Rodapé Fixo */}
               <div className="p-8 md:p-12 bg-white/80 backdrop-blur-2xl border-t border-slate-100 shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.05)]">
                  <div className="flex items-center gap-6">
                     <div className="flex items-center bg-slate-100 rounded-[2rem] p-1.5">
@@ -557,9 +367,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       )}
     </AnimatePresence>
   );
-};
-
-export default ProductDetailModal;
 };
 
 export default ProductDetailModal;
