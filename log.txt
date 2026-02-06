@@ -1,4 +1,4 @@
-root@servergestao:~/gestao# docker logs e1dccf104938
+root@servergestao:~/gestao/backend# docker logs  03e62089db40
 Aguardando banco de dados responder...
 Sincronizando Banco de Dados com o Schema...
 Prisma schema loaded from prisma/schema.prisma
@@ -6,66 +6,36 @@ Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postg
 
 25 migrations found in prisma/migrations
 
-Applying migration `20260206150000_sync_production_and_fiscal_fields`
 
-The following migration(s) have been applied:
-
-migrations/
-  └─ 20260206150000_sync_production_and_fiscal_fields/
-    └─ migration.sql
-
-All migrations have been successfully applied.
+No pending migrations to apply.
 Executando Seed de Permissões...
 Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
-{"level":"info","message":"Servidor rodando em http://localhost:3001"}
-root@servergestao:~/gestao# docker logs e1dccf104938
-Aguardando banco de dados responder...
-Sincronizando Banco de Dados com o Schema...
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+node:internal/modules/cjs/loader:1210
+  throw err;
+  ^
 
-25 migrations found in prisma/migrations
-
-Applying migration `20260206150000_sync_production_and_fiscal_fields`
-
-The following migration(s) have been applied:
-
-migrations/
-  └─ 20260206150000_sync_production_and_fiscal_fields/
-    └─ migration.sql
-
-All migrations have been successfully applied.
-Executando Seed de Permissões...
-Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
-{"level":"info","message":"Servidor rodando em http://localhost:3001"}
-Erro em getProducts: PrismaClientKnownRequestError:
-Invalid `prisma.product.findMany()` invocation:
-
-
-The table `public._CategoryToProduct` does not exist in the current database.
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async getProducts (/app/src/controllers/ProductController.js:6:26) {
-  code: 'P2021',
-  meta: { modelName: 'Product', table: 'public._CategoryToProduct' },
-  clientVersion: '6.16.3'
+Error: Cannot find module '../schemas/ProductSchema'
+Require stack:
+- /app/src/controllers/ProductController.js
+- /app/src/routes/productRoutes.js
+- /app/index.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/app/src/controllers/ProductController.js:3:54)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/app/src/controllers/ProductController.js',
+    '/app/src/routes/productRoutes.js',
+    '/app/index.js'
+  ]
 }
-Erro em getProducts: PrismaClientKnownRequestError:
-Invalid `prisma.product.findMany()` invocation:
 
-
-The table `public._CategoryToProduct` does not exist in the current database.
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async getProducts (/app/src/controllers/ProductController.js:6:26) {
-  code: 'P2021',
-  meta: { modelName: 'Product', table: 'public._CategoryToProduct' },
-  clientVersion: '6.16.3'
-}
-root@servergestao:~/gestao#
+Node.js v20.20.0
