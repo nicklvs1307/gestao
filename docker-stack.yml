@@ -59,6 +59,8 @@ services:
       dockerfile: frontend/admin/Dockerfile
       args:
         - VITE_API_URL=/api
+    volumes:
+      - uploads_data:/usr/share/nginx/html/uploads:ro
     networks:
       - gestao_network
     deploy:
@@ -86,6 +88,8 @@ services:
       dockerfile: frontend/client/Dockerfile
       args:
         - VITE_API_URL=/api
+    volumes:
+      - uploads_data:/usr/share/nginx/html/uploads:ro
     networks:
       - gestao_network
     deploy:
@@ -93,9 +97,8 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Regra simplificada e robusta para Traefik v3 (Nomeação de subdomínio)
-        # A prioridade baixa (10) garante que subdomínios específicos (admin, api, container) tenham preferência (1000)
-        - "traefik.http.routers.client.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.towersfy.com`)"
+        # Sintaxe corrigida para Traefik v3 (Expressão Regular Go)
+        - "traefik.http.routers.client.rule=HostRegexp(`^[a-z0-9-]+\\.towersfy\\.com$$`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
         - "traefik.http.routers.client.tls.certresolver=letsencryptresolver"
