@@ -1,6 +1,9 @@
 # Stage 1: Build
 FROM node:20-alpine as builder
 
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
+
 WORKDIR /app
 
 # Copia arquivos compartilhados (Necessário pois o vite.config.ts referencia eles)
