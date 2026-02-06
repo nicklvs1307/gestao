@@ -2,11 +2,10 @@ const prisma = require('../lib/prisma');
 
 function slugify(text) {
     return text.toString().toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/\s+/g, '')        // Remove espaços
+        .replace(/[^\w]+/g, '')     // Remove caracteres especiais e hífens
+        .replace(/_/g, '');         // Remove underscores
 }
 
 const getSettings = async (req, res) => {
