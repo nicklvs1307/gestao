@@ -57,6 +57,8 @@ services:
     build:
       context: .
       dockerfile: frontend/admin/Dockerfile
+      args:
+        - VITE_API_URL=/api
     networks:
       - gestao_network
     deploy:
