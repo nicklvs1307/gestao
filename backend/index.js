@@ -62,6 +62,7 @@ app.use('/api/auth/login', loginLimiter);
 
 // Arquivos Estáticos (Imagens)
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // ==================================================================
 // ROTAS
