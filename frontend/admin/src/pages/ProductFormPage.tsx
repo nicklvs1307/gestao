@@ -18,7 +18,7 @@ import { Input } from '../components/ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // --- Sub-componente para Seleção de Biblioteca ---
-const GlobalAddonSelector = ({ availableGroups, selectedGroupIds, onToggle }: { availableGroups: AddonGroup[], selectedGroupIds: string[], onToggle: (id: string) => void }) => {
+function GlobalAddonSelector({ availableGroups, selectedGroupIds, onToggle }: { availableGroups: AddonGroup[], selectedGroupIds: string[], onToggle: (id: string) => void }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {availableGroups.map(group => {
@@ -65,7 +65,7 @@ const GlobalAddonSelector = ({ availableGroups, selectedGroupIds, onToggle }: { 
 };
 
 // --- Sub-componente para Ficha Técnica (Insumos) ---
-const CompositionList = ({ control, register, availableIngredients }: { control: any, register: any, availableIngredients: any[] }) => {
+function CompositionList({ control, register, availableIngredients }: { control: any, register: any, availableIngredients: any[] }) {
     const { fields, append, remove } = useFieldArray({ control, name: "ingredients" });
 
     return (
@@ -130,7 +130,7 @@ const CompositionList = ({ control, register, availableIngredients }: { control:
 };
 
 // --- Componente de Preview Realista ---
-const ProductMobilePreview = ({ watchFields, isPizza, pizzaConfig }: { watchFields: any, isPizza: boolean, pizzaConfig: any }) => {
+function ProductMobilePreview({ watchFields, isPizza, pizzaConfig }: { watchFields: any, isPizza: boolean, pizzaConfig: any }) {
     const { name, description, price, imageUrl, addonGroups, sizes } = watchFields;
     const [selectedSizePreview, setSelectedSizePreview] = useState<any>(null);
 
@@ -204,7 +204,7 @@ const ProductMobilePreview = ({ watchFields, isPizza, pizzaConfig }: { watchFiel
     );
 };
 
-const ProductFormPage = () => {
+function ProductFormPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [categories, setCategories] = useState<Category[]>([]);
