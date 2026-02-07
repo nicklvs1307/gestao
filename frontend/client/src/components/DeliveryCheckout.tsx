@@ -140,6 +140,34 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
     );
   };
 
+  // Buscar endereço pelo CEP
+  const handleCepBlur = async () => {
+    if (cep.replace(/\D/g, '').length === 8) {
+      setIsLoadingCep(true);
+      const data = await LocationService.getAddressByCep(cep);
+      setIsLoadingCep(false);
+      
+      if (data) {
+        setStreet(data.logradouro || '');
+        setNeighborhood(data.bairro || '');
+        setState(data.uf || '');
+        setCity(data.localidade || '');
+      }
+    }
+  };
+
+  const validateAndNext = () => {
+    if (!name.trim()) return alert('Por favor, informe seu nome.');
+    if (phone.length < 10) return alert('Por favor, informe um WhatsApp válido.');
+    
+    if (deliveryType === 'delivery') {
+        if (!cep.replace(/\D/g, '')) return alert('Informe o CEP.');
+        if (!street.trim() || !number.trim()) return alert('Preencha o endereço completo.');
+        if (!city || !state) return alert('Selecione a cidade e o estado.');
+    }
+    setStep('review');
+  };
+
   const handleFinalSubmit = () => {
     const deliveryInfo: DeliveryInfo = {
       name, 
