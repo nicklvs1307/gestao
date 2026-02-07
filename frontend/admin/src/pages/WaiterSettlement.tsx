@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api, payWaiterCommission } from '../services/api';
 import { 
-  Users, DollarSign, RefreshCw, Calendar, User, ShoppingBag, CheckCircle
+  Users, DollarSign, RefreshCw, Calendar, User, ShoppingBag, CheckCircle, ChevronRight, TrendingUp, Wallet, ArrowUpRight, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 
 interface WaiterSettlementData {
     waiterId: string;
@@ -28,6 +30,7 @@ const WaiterSettlement: React.FC = () => {
             setData(res.data);
         } catch (e) {
             console.error(e);
+            toast.error("Erro ao carregar acertos.");
         } finally {
             setLoading(false);
         }
@@ -42,7 +45,7 @@ const WaiterSettlement: React.FC = () => {
                 amount: waiter.commissionAmount,
                 date: date
             });
-            toast.success(`Pagamento de ${waiter.waiterName} registrado no financeiro!`);
+            toast.success(`Pagamento de ${waiter.waiterName} registrado!`);
             fetchSettlement();
         } catch (error) {
             toast.error("Erro ao registrar pagamento.");
@@ -53,106 +56,122 @@ const WaiterSettlement: React.FC = () => {
         fetchSettlement();
     }, [date]);
 
-    // Totais do dia
     const totalSales = data.reduce((acc, curr) => acc + curr.totalSales, 0);
     const totalCommission = data.reduce((acc, curr) => acc + curr.commissionAmount, 0);
 
     return (
-        <div className="space-y-5 animate-in fade-in duration-500 bg-background text-foreground min-h-full">
-            {/* Header com Filtro */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ui-card p-4">
+        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+            {/* Header Premium */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <h2 className="text-xl font-black text-foreground tracking-tighter italic uppercase flex items-center gap-2">
-                        <DollarSign className="text-primary" size={24} /> Comissões
-                    </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-none mt-1">Acertos e taxa de serviço.</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Acertos de Turno</h1>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                        <Wallet size={14} className="text-orange-500" /> Comissões e Taxas de Serviço
+                    </p>
                 </div>
                 
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:flex-initial">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <Calendar size={16} className="text-orange-500" />
                         <input 
                             type="date" 
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="ui-input pl-10 h-10 w-full"
+                            className="bg-transparent border-none font-black text-[10px] uppercase outline-none text-slate-600"
                         />
                     </div>
-                    <button 
-                        onClick={fetchSettlement}
-                        className="ui-button-secondary h-10 px-3"
-                    >
-                        <RefreshCw size={18} className={cn(loading && "animate-spin")} />
-                    </button>
+                    <Button variant="outline" size="icon" className="bg-white rounded-xl h-11 w-11" onClick={fetchSettlement}>
+                        <RefreshCw size={18} className={cn(loading && "animate-spin text-orange-500")} />
+                    </Button>
                 </div>
             </div>
 
-            {/* Resumo Geral do Dia */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden group">
-                    <div className="absolute -right-4 -top-4 text-white/5 group-hover:scale-110 transition-transform">
-                        <DollarSign size={80} />
+            {/* Dashboards de Resumo Financeiro */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-8 border-slate-100 bg-slate-900 text-white relative overflow-hidden group shadow-2xl">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
+                    <div className="flex justify-between items-start mb-6 relative z-10">
+                        <div className="w-12 h-12 bg-white text-slate-900 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <ArrowUpRight size={24} />
+                        </div>
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest border border-orange-500/30 px-2 py-1 rounded-md">Venda do Dia</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 leading-none">Vendas Totais</p>
-                    <h3 className="text-2xl font-black text-white tracking-tighter italic">
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 relative z-10 italic">Faturamento em Atendimentos</p>
+                    <h3 className="text-4xl font-black text-white tracking-tighter italic relative z-10">
                         R$ {totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </h3>
-                </div>
+                </Card>
 
-                <div className="bg-orange-50 dark:bg-orange-950/20 p-5 rounded-2xl border border-orange-100 dark:border-orange-900/30 flex flex-col justify-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 mb-1 leading-none">Comissões ({data[0]?.serviceRate || 10}%)</p>
-                    <h3 className="text-2xl font-black text-orange-600 dark:text-orange-400 tracking-tighter italic">
+                <Card className="p-8 border-orange-100 bg-orange-50/20 group hover:bg-white transition-all shadow-xl">
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-100 group-hover:scale-110 transition-transform">
+                            <TrendingUp size={24} />
+                        </div>
+                        <div className="text-right">
+                            <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest block">Total Comissões</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Taxa Aplicada: {data[0]?.serviceRate || 10}%</span>
+                        </div>
+                    </div>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 italic">Montante para Repasse</p>
+                    <h3 className="text-4xl font-black text-orange-600 tracking-tighter italic">
                         R$ {totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </h3>
-                </div>
+                </Card>
             </div>
 
-            {/* Lista por Garçom */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {data.length > 0 ? data.map((waiter, idx) => (
-                    <div key={idx} className="ui-card overflow-hidden hover:shadow-md transition-all">
-                        <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center text-slate-400 border border-border shadow-sm">
-                                    <User size={20} />
+            {/* Listagem por Colaborador */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {loading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <Card key={i} className="p-8 animate-pulse bg-slate-50/50 border-slate-100 min-h-[200px]" />
+                    ))
+                ) : data.length > 0 ? data.map((waiter, idx) => (
+                    <Card key={idx} className="p-0 overflow-hidden border-2 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-2xl bg-white" noPadding>
+                        <div className="p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center shadow-inner group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
+                                        <User size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-lg text-slate-900 uppercase italic tracking-tighter leading-none">{waiter.waiterName}</h4>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 flex items-center gap-1">
+                                                <ShoppingBag size={10} /> {waiter.totalOrders} Atendimentos
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-foreground uppercase italic tracking-tight">{waiter.waiterName}</h4>
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                        <ShoppingBag size={10} /> {waiter.totalOrders} Pedidos
-                                    </span>
+                                <div className="p-2 rounded-lg bg-emerald-50 text-emerald-500"><CheckCircle size={18} /></div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Vendas</p>
+                                    <p className="text-sm font-black text-slate-700 italic tracking-tighter">R$ {waiter.totalSales.toFixed(2).replace('.', ',')}</p>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="p-5 grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Vendas</p>
-                                <p className="text-sm font-bold text-foreground italic">R$ {waiter.totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                            </div>
-
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Repasse</p>
-                                <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight italic">R$ {waiter.commissionAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                                    <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1 italic">Comissão</p>
+                                    <p className="text-xl font-black text-emerald-600 italic tracking-tighter leading-none">R$ {waiter.commissionAmount.toFixed(2).replace('.', ',')}</p>
+                                </div>
                             </div>
                         </div>
                         
-                        <div className="px-5 pb-5">
-                            <button 
-                                className="w-full ui-button-secondary h-10 text-[9px] uppercase tracking-widest italic"
+                        <div className="px-6 pb-6 pt-2">
+                            <Button 
+                                fullWidth 
+                                variant="secondary"
+                                className="h-12 rounded-xl text-[10px] font-black uppercase tracking-widest italic gap-2 border-slate-200"
                                 onClick={() => handlePayCommission(waiter)}
                             >
-                                <DollarSign size={14} /> Registrar Pagamento
-                            </button>
+                                <DollarSign size={16} /> REGISTRAR PAGAMENTO
+                            </Button>
                         </div>
-                    </div>
+                    </Card>
                 )) : (
-                    <div className="lg:col-span-2 ui-card p-12 flex flex-col items-center justify-center text-center bg-muted/10 border-dashed">
-                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center text-slate-300 mb-4">
-                            <User size={32} />
-                        </div>
-                        <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Nenhum atendimento</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Nenhum acerto pendente para esta data.</p>
+                    <div className="lg:col-span-full py-24 flex flex-col items-center justify-center text-center opacity-20">
+                        <Users size={64} strokeWidth={1} className="text-slate-300 mb-4" />
+                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] italic">Nenhum atendimento no período</h3>
                     </div>
                 )}
             </div>
