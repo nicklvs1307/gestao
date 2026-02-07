@@ -1,28 +1,4 @@
-[Violation] Forced reflow while executing JavaScript took 33ms
-index-C2uG1Gko.js:668  POST https://kicardapio.towersfy.com/api/products 500 (Internal Server Error)
-(anônimo) @ index-C2uG1Gko.js:668
-xhr @ index-C2uG1Gko.js:668
-O_ @ index-C2uG1Gko.js:670
-Promise.then
-_request @ index-C2uG1Gko.js:671
-request @ index-C2uG1Gko.js:670
-(anônimo) @ index-C2uG1Gko.js:671
-(anônimo) @ index-C2uG1Gko.js:666
-TR @ index-C2uG1Gko.js:671
-ce @ index-C2uG1Gko.js:840
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
+/api/products:1  Failed to load resource: the server responded with a status of 500 ()
 index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with status code 500
     at SS (index-C2uG1Gko.js:668:1091)
     at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
@@ -31,44 +7,7 @@ index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with st
     at async ce (index-C2uG1Gko.js:840:89671)
     at async index-C2uG1Gko.js:840:69471
 ce @ index-C2uG1Gko.js:840
-await in ce
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
-index-C2uG1Gko.js:668  POST https://kicardapio.towersfy.com/api/products 500 (Internal Server Error)
-(anônimo) @ index-C2uG1Gko.js:668
-xhr @ index-C2uG1Gko.js:668
-O_ @ index-C2uG1Gko.js:670
-Promise.then
-_request @ index-C2uG1Gko.js:671
-request @ index-C2uG1Gko.js:670
-(anônimo) @ index-C2uG1Gko.js:671
-(anônimo) @ index-C2uG1Gko.js:666
-TR @ index-C2uG1Gko.js:671
-ce @ index-C2uG1Gko.js:840
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
+/api/products:1  Failed to load resource: the server responded with a status of 500 ()
 index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with status code 500
     at SS (index-C2uG1Gko.js:668:1091)
     at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
@@ -77,44 +16,7 @@ index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with st
     at async ce (index-C2uG1Gko.js:840:89671)
     at async index-C2uG1Gko.js:840:69471
 ce @ index-C2uG1Gko.js:840
-await in ce
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
-index-C2uG1Gko.js:668  POST https://kicardapio.towersfy.com/api/products 500 (Internal Server Error)
-(anônimo) @ index-C2uG1Gko.js:668
-xhr @ index-C2uG1Gko.js:668
-O_ @ index-C2uG1Gko.js:670
-Promise.then
-_request @ index-C2uG1Gko.js:671
-request @ index-C2uG1Gko.js:670
-(anônimo) @ index-C2uG1Gko.js:671
-(anônimo) @ index-C2uG1Gko.js:666
-TR @ index-C2uG1Gko.js:671
-ce @ index-C2uG1Gko.js:840
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
+/api/products:1  Failed to load resource: the server responded with a status of 500 ()
 index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with status code 500
     at SS (index-C2uG1Gko.js:668:1091)
     at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
@@ -123,44 +25,7 @@ index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with st
     at async ce (index-C2uG1Gko.js:840:89671)
     at async index-C2uG1Gko.js:840:69471
 ce @ index-C2uG1Gko.js:840
-await in ce
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
-index-C2uG1Gko.js:668  POST https://kicardapio.towersfy.com/api/products 500 (Internal Server Error)
-(anônimo) @ index-C2uG1Gko.js:668
-xhr @ index-C2uG1Gko.js:668
-O_ @ index-C2uG1Gko.js:670
-Promise.then
-_request @ index-C2uG1Gko.js:671
-request @ index-C2uG1Gko.js:670
-(anônimo) @ index-C2uG1Gko.js:671
-(anônimo) @ index-C2uG1Gko.js:666
-TR @ index-C2uG1Gko.js:671
-ce @ index-C2uG1Gko.js:840
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
+/api/products:1  Failed to load resource: the server responded with a status of 500 ()
 index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with status code 500
     at SS (index-C2uG1Gko.js:668:1091)
     at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
@@ -169,44 +34,7 @@ index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with st
     at async ce (index-C2uG1Gko.js:840:89671)
     at async index-C2uG1Gko.js:840:69471
 ce @ index-C2uG1Gko.js:840
-await in ce
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
-index-C2uG1Gko.js:668  POST https://kicardapio.towersfy.com/api/products 500 (Internal Server Error)
-(anônimo) @ index-C2uG1Gko.js:668
-xhr @ index-C2uG1Gko.js:668
-O_ @ index-C2uG1Gko.js:670
-Promise.then
-_request @ index-C2uG1Gko.js:671
-request @ index-C2uG1Gko.js:670
-(anônimo) @ index-C2uG1Gko.js:671
-(anônimo) @ index-C2uG1Gko.js:666
-TR @ index-C2uG1Gko.js:671
-ce @ index-C2uG1Gko.js:840
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
+/api/products:1  Failed to load resource: the server responded with a status of 500 ()
 index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with status code 500
     at SS (index-C2uG1Gko.js:668:1091)
     at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
@@ -215,17 +43,29 @@ index-C2uG1Gko.js:840 Erro ao salvar produto: AxiosError: Request failed with st
     at async ce (index-C2uG1Gko.js:840:89671)
     at async index-C2uG1Gko.js:840:69471
 ce @ index-C2uG1Gko.js:840
-await in ce
-(anônimo) @ index-C2uG1Gko.js:840
-await in (anônimo)
-Bs @ index-C2uG1Gko.js:37
-Gi @ index-C2uG1Gko.js:37
-Yi @ index-C2uG1Gko.js:37
-xc @ index-C2uG1Gko.js:37
-bc @ index-C2uG1Gko.js:37
-(anônimo) @ index-C2uG1Gko.js:37
-Kx @ index-C2uG1Gko.js:40
-Pt @ index-C2uG1Gko.js:37
-d @ index-C2uG1Gko.js:37
-Xo @ index-C2uG1Gko.js:37
-qc @ index-C2uG1Gko.js:37
+
+
+No pending migrations to apply.
+Executando Seed de Permissões...
+Aviso: Seed já executado ou falhou silenciosamente.
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`) - /api/products - POST - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.create()` invocation:\n\n\nNull constraint violation on the fields: (`categoryId`)\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:44:24"}

@@ -483,6 +483,9 @@ model Product {
   productionArea String?  @default("Cozinha") // Movido da Categoria para o Produto
   saiposIntegrationCode String?  // Código de integração da Saipos
   
+  // === Campo Legado (Manter como opcional para evitar quebra no banco) ===
+  categoryId    String?
+
   // === Campos Fiscais ===
   ncm           String?  // Nomenclatura Comum do Mercosul (8 dígitos)
   cfop          String?  // Código Fiscal de Operações e Prestações (Ex: 5102)
