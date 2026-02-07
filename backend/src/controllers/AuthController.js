@@ -22,16 +22,17 @@ const login = async (req, res) => {
         }
         
         let permissions = user.roleRef?.permissions.map(p => p.name) || [];
+        const roleName = user.roleRef?.name || (user.isSuperAdmin ? 'superadmin' : 'staff');
         
-        // Compatibilidade com usuários antigos que não tem RoleId mas tem role='admin'
-        if (permissions.length === 0 && user.role === 'admin') {
+        // Compatibilidade: Se não tem permissões explícitas mas é admin (via RoleRef ou SuperAdmin)
+        if (permissions.length === 0 && (roleName === 'admin' || user.isSuperAdmin)) {
             permissions = ['orders:view', 'orders:manage', 'products:manage', 'stock:manage', 'reports:view', 'financial:view', 'settings:manage'];
         }
         
         const tokenData = { 
             id: user.id, 
             email: user.email, 
-            role: user.role, 
+            role: roleName, 
             restaurantId: user.restaurantId,
             isSuperAdmin: user.isSuperAdmin,
             franchiseId: user.franchiseId,
@@ -46,7 +47,7 @@ const login = async (req, res) => {
                 id: user.id, 
                 email: user.email, 
                 name: user.name, 
-                role: user.role, 
+                role: roleName, 
                 isSuperAdmin: user.isSuperAdmin,
                 restaurantId: user.restaurantId,
                 franchiseId: user.franchiseId,
@@ -66,7 +67,8 @@ const getUsers = async (req, res) => {
         const whereClause = req.restaurantId ? { restaurantId: req.restaurantId } : {};
         
         // Se não for SuperAdmin e não tiver restaurantId, bloqueamos por segurança
-        if (!req.user.isSuperAdmin && !req.restaurantId) {
+        const isUserSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
+        if (!isUserSuperAdmin && !req.restaurantId) {
             return res.status(403).json({ error: 'Acesso negado.' });
         }
 
@@ -76,16 +78,27 @@ const getUsers = async (req, res) => {
                 id: true, 
                 email: true, 
                 name: true, 
-                role: true, 
                 isSuperAdmin: true, 
                 roleId: true, 
                 restaurantId: true,
                 roleRef: {
-                    include: { permissions: true }
+                    select: {
+                        name: true,
+                        permissions: {
+                            select: { name: true }
+                        }
+                    }
                 }
             } 
         });
-        res.json(users); 
+
+        // Mapeia para manter o formato esperado pelo frontend (adicionando campo 'role' virtual)
+        const mappedUsers = users.map(u => ({
+            ...u,
+            role: u.roleRef?.name || (u.isSuperAdmin ? 'superadmin' : 'staff')
+        }));
+
+        res.json(mappedUsers); 
     } catch (error) { 
         console.error("Erro ao buscar usuários:", error);
         res.status(500).json({ error: 'Erro ao buscar usuários.' }); 
@@ -93,20 +106,20 @@ const getUsers = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-    const { email, password, role, name, roleId } = req.body;
+    const { email, password, name, roleId } = req.body;
     try {
         const passwordHash = await bcrypt.hash(password, 10);
         res.status(201).json(await prisma.user.create({ 
             data: { 
                 email, 
                 passwordHash, 
-                role, 
                 name, 
                 restaurantId: req.restaurantId,
                 roleId: roleId || undefined
             } 
         }));
     } catch (error) { 
+        console.error("Erro ao criar usuário:", error);
         res.status(500).json({ error: 'Erro ao criar usuário.' }); 
     }
 };

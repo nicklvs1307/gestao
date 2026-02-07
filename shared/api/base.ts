@@ -19,7 +19,9 @@ export const createApiClient = (baseURL: string = import.meta.env.VITE_API_URL |
   apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Somente desloga se for 401 (Não Autorizado / Token Expirado)
+      // 403 (Proibido) apenas significa que o usuário não tem permissão para aquela rota específica
+      if (error.response && error.response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         if (!window.location.pathname.includes('/login')) {
