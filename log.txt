@@ -1,141 +1,83 @@
-login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"k71zg2zqn" class=​"
-          flex h-12 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm ring-offset-white 
-          file:​border-0 file:​bg-transparent file:​text-sm file:​font-medium 
-          placeholder:​text-slate-400 focus:​border-primary focus:​outline-none focus:​ring-4 focus:​ring-primary/​10
-          disabled:​cursor-not-allowed disabled:​opacity-50 transition-all font-medium text-slate-900
-          
-          h-14
-        " type=​"password" required icon=​"[object Object]​" placeholder=​"••••••••" value>​flex
-index-Cr49r5zA.js:40 ReferenceError: DollarSign is not defined
-    at xj (index-Cr49r5zA.js:847:62973)
-    at cu (index-Cr49r5zA.js:38:17887)
-    at cw (index-Cr49r5zA.js:40:45174)
-    at rw (index-Cr49r5zA.js:40:40732)
-    at yP (index-Cr49r5zA.js:40:40660)
-    at Em (index-Cr49r5zA.js:40:40513)
-    at Cx (index-Cr49r5zA.js:40:36766)
-    at tw (index-Cr49r5zA.js:40:35708)
-    at z (index-Cr49r5zA.js:25:1653)
-    at MessagePort.q (index-Cr49r5zA.js:25:2024)
-ux @ index-Cr49r5zA.js:40
-v.callback @ index-Cr49r5zA.js:40
-to @ index-Cr49r5zA.js:38
-J2 @ index-Cr49r5zA.js:40
-X2 @ index-Cr49r5zA.js:40
-xP @ index-Cr49r5zA.js:40
-_P @ index-Cr49r5zA.js:40
-mu @ index-Cr49r5zA.js:40
-tw @ index-Cr49r5zA.js:40
-z @ index-Cr49r5zA.js:25
-q @ index-Cr49r5zA.js:25
-index-Cr49r5zA.js:847 Uncaught ReferenceError: DollarSign is not defined
-    at xj (index-Cr49r5zA.js:847:62973)
-    at cu (index-Cr49r5zA.js:38:17887)
-    at cw (index-Cr49r5zA.js:40:45174)
-    at rw (index-Cr49r5zA.js:40:40732)
-    at yP (index-Cr49r5zA.js:40:40660)
-    at Em (index-Cr49r5zA.js:40:40513)
-    at Cx (index-Cr49r5zA.js:40:36766)
-    at tw (index-Cr49r5zA.js:40:35708)
-    at z (index-Cr49r5zA.js:25:1653)
-    at MessagePort.q (index-Cr49r5zA.js:25:2024)
-xj @ index-Cr49r5zA.js:847
-cu @ index-Cr49r5zA.js:38
-cw @ index-Cr49r5zA.js:40
-rw @ index-Cr49r5zA.js:40
-yP @ index-Cr49r5zA.js:40
-Em @ index-Cr49r5zA.js:40
-Cx @ index-Cr49r5zA.js:40
-tw @ index-Cr49r5zA.js:40
-z @ index-Cr49r5zA.js:25
-q @ index-Cr49r5zA.js:25
+ => ERROR [builder 8/8] RUN npm run build                                                                                                       2.6s
+------
+ > [builder 8/8] RUN npm run build:
+0.636
+0.636 > admin@0.0.0 build
+0.636 > vite build
+0.636
+0.973 vite v7.1.9 building for production...
+1.416 transforming...
+2.511 ✓ 34 modules transformed.
+2.514 ✗ Build failed in 1.14s
+2.515 error during build:
+2.515 [vite:esbuild] Transform failed with 5 errors:
+2.515 /app/frontend/admin/src/pages/ProductFormPage.tsx:456:34: ERROR: Unexpected closing "Card" tag does not match opening "AnimatePresence" tag
+2.515 /app/frontend/admin/src/pages/ProductFormPage.tsx:457:30: ERROR: Unexpected closing "motion.div" tag does not match opening "div" tag
+2.515 /app/frontend/admin/src/pages/ProductFormPage.tsx:458:25: ERROR: The character "}" is not valid inside a JSX element
+2.515 /app/frontend/admin/src/pages/ProductFormPage.tsx:548:22: ERROR: Unexpected closing "AnimatePresence" tag does not match opening "div" tag
+2.515 /app/frontend/admin/src/pages/ProductFormPage.tsx:551:16: ERROR: Expected ")" but found "{"
+2.515 file: /app/frontend/admin/src/pages/ProductFormPage.tsx:456:34
+2.515
+2.515 Unexpected closing "Card" tag does not match opening "AnimatePresence" tag
+2.515 454 |                                          </div>
+2.515 455 |                                      </div>
+2.515 456 |                                  </Card>
+2.515     |                                    ^
+2.515 457 |                              </motion.div>
+2.515 458 |                          )}
+2.515
+2.515 Unexpected closing "motion.div" tag does not match opening "div" tag
+2.515 455 |                                      </div>
+2.515 456 |                                  </Card>
+2.515 457 |                              </motion.div>
+2.515     |                                ^
+2.515 458 |                          )}
+2.515 459 |
+2.515
+2.515 The character "}" is not valid inside a JSX element
+2.515 456 |                                  </Card>
+2.515 457 |                              </motion.div>
+2.515 458 |                          )}
+2.515     |                           ^
+2.515 459 |
+2.515 460 |                          {/* CONTEÚDO: ABA TAMANHOS & PIZZA */}
+2.515
+2.515 Unexpected closing "AnimatePresence" tag does not match opening "div" tag
+2.515 546 |                              </motion.div>
+2.515 547 |                          )}
+2.515 548 |                      </AnimatePresence>
+2.515     |                        ^
+2.515 549 |                  </div>
+2.515 550 |
+2.515
+2.515 Expected ")" but found "{"
+2.515 549 |                  </div>
+2.515 550 |
+2.515 551 |                  {/* Coluna de Preview Master */}
+2.515     |                  ^
+2.515 552 |                  <div className="xl:col-span-4 h-full">
+2.515 553 |                      <ProductMobilePreview watchFields={watchAllFields} isPizza={isPizza} pizzaConfig={pizzaConfig} />
+2.515
+2.515     at failureErrorWithLog (/app/frontend/admin/node_modules/esbuild/lib/main.js:1467:15)
+2.515     at /app/frontend/admin/node_modules/esbuild/lib/main.js:736:50
+2.515     at responseCallbacks.<computed> (/app/frontend/admin/node_modules/esbuild/lib/main.js:603:9)
+2.515     at handleIncomingPacket (/app/frontend/admin/node_modules/esbuild/lib/main.js:658:12)
+2.515     at Socket.readFromStdout (/app/frontend/admin/node_modules/esbuild/lib/main.js:581:7)
+2.515     at Socket.emit (node:events:524:28)
+2.515     at addChunk (node:internal/streams/readable:561:12)
+2.515     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2.515     at Readable.push (node:internal/streams/readable:392:5)
+2.515     at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+------
 
-
-index-Cr49r5zA.js:40 ReferenceError: handleCoverChange is not defined
-    at Ij (index-Cr49r5zA.js:859:62654)
-    at cu (index-Cr49r5zA.js:38:17887)
-    at hx (index-Cr49r5zA.js:40:3163)
-    at cw (index-Cr49r5zA.js:40:45948)
-    at rw (index-Cr49r5zA.js:40:40732)
-    at yP (index-Cr49r5zA.js:40:40660)
-    at Em (index-Cr49r5zA.js:40:40513)
-    at Cx (index-Cr49r5zA.js:40:36766)
-    at tw (index-Cr49r5zA.js:40:35708)
-    at z (index-Cr49r5zA.js:25:1653)
-ux @ index-Cr49r5zA.js:40
-v.callback @ index-Cr49r5zA.js:40
-to @ index-Cr49r5zA.js:38
-J2 @ index-Cr49r5zA.js:40
-X2 @ index-Cr49r5zA.js:40
-xP @ index-Cr49r5zA.js:40
-_P @ index-Cr49r5zA.js:40
-mu @ index-Cr49r5zA.js:40
-tw @ index-Cr49r5zA.js:40
-z @ index-Cr49r5zA.js:25
-q @ index-Cr49r5zA.js:25
-index-Cr49r5zA.js:859 Uncaught ReferenceError: handleCoverChange is not defined
-    at Ij (index-Cr49r5zA.js:859:62654)
-    at cu (index-Cr49r5zA.js:38:17887)
-    at hx (index-Cr49r5zA.js:40:3163)
-    at cw (index-Cr49r5zA.js:40:45948)
-    at rw (index-Cr49r5zA.js:40:40732)
-    at yP (index-Cr49r5zA.js:40:40660)
-    at Em (index-Cr49r5zA.js:40:40513)
-    at Cx (index-Cr49r5zA.js:40:36766)
-    at tw (index-Cr49r5zA.js:40:35708)
-    at z (index-Cr49r5zA.js:25:1653)
-Ij @ index-Cr49r5zA.js:859
-cu @ index-Cr49r5zA.js:38
-hx @ index-Cr49r5zA.js:40
-cw @ index-Cr49r5zA.js:40
-rw @ index-Cr49r5zA.js:40
-yP @ index-Cr49r5zA.js:40
-Em @ index-Cr49r5zA.js:40
-Cx @ index-Cr49r5zA.js:40
-tw @ index-Cr49r5zA.js:40
-z @ index-Cr49r5zA.js:25
-q @ index-Cr49r5zA.js:25
-index-Cr49r5zA.js:40 ReferenceError: handleCoverChange is not defined
-    at Ij (index-Cr49r5zA.js:859:62654)
-    at cu (index-Cr49r5zA.js:38:17887)
-    at hx (index-Cr49r5zA.js:40:3163)
-    at cw (index-Cr49r5zA.js:40:45948)
-    at rw (index-Cr49r5zA.js:40:40732)
-    at yP (index-Cr49r5zA.js:40:40660)
-    at Em (index-Cr49r5zA.js:40:40513)
-    at Cx (index-Cr49r5zA.js:40:36766)
-    at tw (index-Cr49r5zA.js:40:35708)
-    at z (index-Cr49r5zA.js:25:1653)
-ux @ index-Cr49r5zA.js:40
-v.callback @ index-Cr49r5zA.js:40
-to @ index-Cr49r5zA.js:38
-J2 @ index-Cr49r5zA.js:40
-X2 @ index-Cr49r5zA.js:40
-xP @ index-Cr49r5zA.js:40
-_P @ index-Cr49r5zA.js:40
-mu @ index-Cr49r5zA.js:40
-tw @ index-Cr49r5zA.js:40
-z @ index-Cr49r5zA.js:25
-q @ index-Cr49r5zA.js:25
-index-Cr49r5zA.js:859 Uncaught ReferenceError: handleCoverChange is not defined
-    at Ij (index-Cr49r5zA.js:859:62654)
-    at cu (index-Cr49r5zA.js:38:17887)
-    at hx (index-Cr49r5zA.js:40:3163)
-    at cw (index-Cr49r5zA.js:40:45948)
-    at rw (index-Cr49r5zA.js:40:40732)
-    at yP (index-Cr49r5zA.js:40:40660)
-    at Em (index-Cr49r5zA.js:40:40513)
-    at Cx (index-Cr49r5zA.js:40:36766)
-    at tw (index-Cr49r5zA.js:40:35708)
-    at z (index-Cr49r5zA.js:25:1653)
-Ij @ index-Cr49r5zA.js:859
-cu @ index-Cr49r5zA.js:38
-hx @ index-Cr49r5zA.js:40
-cw @ index-Cr49r5zA.js:40
-rw @ index-Cr49r5zA.js:40
-yP @ index-Cr49r5zA.js:40
-Em @ index-Cr49r5zA.js:40
-Cx @ index-Cr49r5zA.js:40
-tw @ index-Cr49r5zA.js:40
-z @ index-Cr49r5zA.js:25
-q @ index-Cr49r5zA.js:25
+ 1 warning found (use docker --debug to expand):
+ - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+Dockerfile:19
+--------------------
+  17 |     WORKDIR /app/frontend/admin
+  18 |     RUN npm ci
+  19 | >>> RUN npm run build
+  20 |
+  21 |     # Stage 2: Serve com Nginx
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1

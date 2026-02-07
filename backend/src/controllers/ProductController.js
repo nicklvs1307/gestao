@@ -9,8 +9,10 @@ class ProductController {
     const products = await prisma.product.findMany({
       where: { restaurantId: req.restaurantId },
       include: { 
-        categories: true, 
-        sizes: true, 
+        categories: {
+          include: { addonGroups: { include: { addons: true } } }
+        }, 
+        sizes: { include: { globalSize: true } }, 
         addonGroups: { include: { addons: true } } 
       },
       orderBy: { order: 'asc' },
@@ -24,8 +26,10 @@ class ProductController {
     const products = await prisma.product.findMany({ 
       where: { restaurantId, isAvailable: true }, 
       include: { 
-        categories: true, 
-        sizes: true, 
+        categories: {
+          include: { addonGroups: { include: { addons: true } } }
+        }, 
+        sizes: { include: { globalSize: true } }, 
         addonGroups: { include: { addons: true } } 
       }, 
       orderBy: { order: 'asc' } 

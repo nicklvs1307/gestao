@@ -138,6 +138,7 @@ model Restaurant {
   paymentMethods      PaymentMethod[]
   productions         ProductionLog[]
   addonGroups         AddonGroup[]
+  globalSizes         GlobalSize[]
 }
 
 model PaymentMethod {
@@ -457,6 +458,7 @@ model Category {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   products    Product[] 
+  addonGroups AddonGroup[] // Vínculo com categorias para herança automática (Estilo Uai Rango)
 
   // Para sub-categorias
   parentId      String?
@@ -466,6 +468,21 @@ model Category {
   @@unique([name, restaurantId])
   @@index([restaurantId])
   @@index([parentId])
+}
+
+// Novo: Padronização de Tamanhos (P, M, G, 2L, Lata) para evitar erros de digitação
+model GlobalSize {
+  id           String   @id @default(cuid())
+  name         String   // Ex: "Grande", "Lata 350ml"
+  description  String?
+  
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  sizes        Size[]   // Vínculo com os preços nos produtos
+
+  @@unique([name, restaurantId])
+  @@index([restaurantId])
 }
 
 // Renomeado de Item para Product
@@ -518,16 +535,21 @@ model Product {
 // Novo: Tabela de Tamanhos (P, M, G de uma pizza)
 model Size {
   id        String  @id @default(cuid())
-  name      String  // Ex: "Pequena", "Média"
+  name      String  // Mantido para compatibilidade, mas o ideal é vir do GlobalSize
   price     Float
   order     Int     @default(0)
   saiposIntegrationCode String?  // Código de integração da Saipos
+
+  // Relação com o Tamanho Global para evitar erros
+  globalSizeId String?
+  globalSize   GlobalSize? @relation(fields: [globalSizeId], references: [id])
 
   // Relação com o Produto
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
+  @@index([globalSizeId])
 }
 
 // Novo: Tabela para agrupar adicionais (Ex: "Bordas", "Adicionais")
@@ -535,12 +557,18 @@ model AddonGroup {
   id        String  @id @default(cuid())
   name      String  // Ex: "Molhos", "Acompanhamentos"
   type      String  @default("multiple") // "single" ou "multiple"
-  isRequired Boolean @default(false) // Novo campo para obrigatoriedade
+  isRequired Boolean @default(false) 
+  
+  // Novos campos para limites do GRUPO (Combo)
+  minQuantity Int     @default(0) // Mínimo total de itens que devem ser selecionados no grupo
+  maxQuantity Int     @default(1) // Máximo total de itens permitidos no grupo (Ex: 10 para combo de esfihas)
+  
   order     Int     @default(0)
-  saiposIntegrationCode String? // Código de integração da Saipos
+  saiposIntegrationCode String? 
 
   // Relacionamento Global (M:N)
   products  Product[]
+  categories Category[] // Vínculo com categorias para herança automática (Estilo Uai Rango)
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
@@ -550,7 +578,6 @@ model AddonGroup {
 
   @@index([restaurantId])
 }
-
 // Novo: Tabela de Adicionais (Ex: "Cheddar", "Bacon")
 model Addon {
   id           String  @id @default(cuid())

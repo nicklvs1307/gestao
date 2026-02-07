@@ -96,6 +96,7 @@ app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/franchise', franchiseRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/global-sizes', require('./src/routes/globalSizeRoutes'));
 app.use('/api/addons', require('./src/routes/addonRoutes'));
 app.use('/api/admin/orders', orderRoutes);
 app.use('/api/cashier', cashierRoutes);

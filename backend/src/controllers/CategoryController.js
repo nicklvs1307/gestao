@@ -38,7 +38,7 @@ class CategoryController {
   // POST /api/categories
   createCategory = asyncHandler(async (req, res) => {
     const validatedData = CreateCategorySchema.parse(req.body);
-    const { parentId, ...rest } = validatedData;
+    const { parentId, addonGroups, ...rest } = validatedData;
 
     const data = { 
         ...rest, 
@@ -49,7 +49,16 @@ class CategoryController {
         data.parent = { connect: { id: parentId } };
     }
 
-    const category = await prisma.category.create({ data });
+    if (addonGroups && addonGroups.length > 0) {
+        data.addonGroups = {
+            connect: addonGroups.map(id => ({ id }))
+        };
+    }
+
+    const category = await prisma.category.create({ 
+      data,
+      include: { addonGroups: true }
+    });
     res.status(201).json(category);
   });
 
@@ -57,7 +66,7 @@ class CategoryController {
   updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const validatedData = UpdateCategorySchema.parse(req.body);
-    const { parentId, ...rest } = validatedData;
+    const { parentId, addonGroups, ...rest } = validatedData;
 
     const data = { ...rest };
     
@@ -66,9 +75,16 @@ class CategoryController {
         data.parentId = parentId;
     }
 
+    if (addonGroups !== undefined) {
+        data.addonGroups = {
+            set: addonGroups.map(groupId => ({ id: groupId }))
+        };
+    }
+
     const category = await prisma.category.update({ 
         where: { id }, 
-        data 
+        data,
+        include: { addonGroups: true }
     });
     res.json(category);
   });

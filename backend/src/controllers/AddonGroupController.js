@@ -26,7 +26,7 @@ const getAddonGroups = async (req, res) => {
 };
 
 const createAddonGroup = async (req, res) => {
-    const { name, type, isRequired, order, saiposIntegrationCode, addons } = req.body;
+    const { name, type, isRequired, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
     
     try {
         const newGroup = await prisma.addonGroup.create({
@@ -34,6 +34,8 @@ const createAddonGroup = async (req, res) => {
                 name,
                 type: type || 'multiple',
                 isRequired: isRequired || false,
+                minQuantity: minQuantity || 0,
+                maxQuantity: maxQuantity || 1,
                 order: order || 0,
                 saiposIntegrationCode,
                 restaurant: { connect: { id: req.restaurantId } },
@@ -64,7 +66,7 @@ const createAddonGroup = async (req, res) => {
 
 const updateAddonGroup = async (req, res) => {
     const { id } = req.params;
-    const { name, type, isRequired, order, saiposIntegrationCode, addons } = req.body;
+    const { name, type, isRequired, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
 
     try {
         // Para manter a integridade, vamos atualizar o grupo e reconstruir os addons
@@ -75,6 +77,8 @@ const updateAddonGroup = async (req, res) => {
                 name,
                 type,
                 isRequired,
+                minQuantity: minQuantity || 0,
+                maxQuantity: maxQuantity || 1,
                 order,
                 saiposIntegrationCode,
                 addons: {

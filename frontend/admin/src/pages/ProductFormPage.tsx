@@ -7,7 +7,7 @@ import {
     Save, Check, List, DollarSign
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage } from '../services/api';
+import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage, globalSizeService, GlobalSize } from '../services/api';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
 import type { Category } from '@/types/index';
@@ -210,6 +210,7 @@ const ProductFormPage = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [availableIngredients, setAvailableIngredients] = useState<any[]>([]);
     const [libraryGroups, setLibraryGroups] = useState<AddonGroup[]>([]);
+    const [globalSizes, setGlobalSizes] = useState<GlobalSize[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'tamanhos' | 'complementos' | 'composição'>('geral');
@@ -227,8 +228,16 @@ const ProductFormPage = () => {
         const loadData = async () => {
             try {
                 setIsLoading(true);
-                const [cats, ings, library] = await Promise.all([ getCategories(), getIngredients(), addonService.getAll() ]);
-                setCategories(cats); setAvailableIngredients(ings); setLibraryGroups(library);
+                const [cats, ings, library, gSizes] = await Promise.all([ 
+                    getCategories(), 
+                    getIngredients(), 
+                    addonService.getAll(),
+                    globalSizeService.getAll()
+                ]);
+                setCategories(cats); 
+                setAvailableIngredients(ings); 
+                setLibraryGroups(library);
+                setGlobalSizes(gSizes);
                 
                 if (id) {
                     const products = await getProducts();
@@ -488,7 +497,25 @@ const ProductFormPage = () => {
                                             return (
                                                 <Card key={field.id} className="p-6 border-2 border-slate-100 hover:border-orange-500/20 transition-all bg-white" noPadding>
                                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center px-6 py-2">
-                                                        <div className="md:col-span-3"><Input label="Identificador" {...register(`sizes.${index}.name`, { required: true })} placeholder="Ex: Grande, GG..." /></div>
+                                                        <div className="md:col-span-3">
+                                                            <label className="text-[9px] font-black uppercase text-slate-400 ml-1 italic">Tamanho Padrão</label>
+                                                            <select 
+                                                                {...register(`sizes.${index}.globalSizeId`, { required: true })}
+                                                                onChange={(e) => {
+                                                                    const selected = globalSizes.find(s => s.id === e.target.value);
+                                                                    if (selected) {
+                                                                        setValue(`sizes.${index}.name`, selected.name);
+                                                                    }
+                                                                }}
+                                                                className="ui-input w-full h-12 italic font-black"
+                                                            >
+                                                                <option value="">Selecione...</option>
+                                                                {globalSizes.map(gs => (
+                                                                    <option key={gs.id} value={gs.id}>{gs.name}</option>
+                                                                ))}
+                                                            </select>
+                                                            <input type="hidden" {...register(`sizes.${index}.name`)} />
+                                                        </div>
                                                         <div className="md:col-span-3"><Input label="Preço (R$)" type="number" step="0.01" {...register(`sizes.${index}.price`, { required: true, valueAsNumber: true })} icon={DollarSign} /></div>
                                                         {isPizza && (
                                                             <div className="md:col-span-4 grid grid-cols-2 gap-4">

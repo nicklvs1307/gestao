@@ -17,6 +17,7 @@ export * from './api/waiters';
 export * from './api/paymentMethods';
 export * from './api/reports';
 export * from './api/superAdmin';
+export * from './api/globalSizes';
 
 // Funções que ainda não foram movidas para arquivos específicos podem ficar aqui ou ser movidas conforme necessário
 
