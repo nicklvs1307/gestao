@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
     getProducts, getCategories, createOrder, getTables, 
-    toggleStoreStatus, getCashierStatus, openCashier, closeCashier, getSettings,
-    getPosTableSummary, checkoutTable, getCashierSummary, searchCustomers,
-    transferTable, transferItems, removeOrderItem, partialTablePayment,
-    getPaymentMethods, partialValuePayment
+    toggleStoreStatus, getCashierStatus, openCashier, getSettings,
+    getPosTableSummary, getPaymentMethods, sendTableRequest
 } from '../services/api';
 import { 
-    Search, ShoppingCart, Plus, Minus, X, Trash2, ChefHat, 
-    Store, Lock, Unlock, LogOut, Receipt, User, Phone, MapPin, Truck, Utensils,
-    LayoutDashboard, Wallet, Banknote, CreditCard as CreditCardIcon, QrCode, CheckCircle, Printer, Loader2, ChevronRight,
-    Pizza as PizzaIcon, ArrowRightLeft, MoveRight, ArrowRight, List
+    Search, ShoppingCart, Plus, Minus, X, Trash2, 
+    Store, User, Truck, Utensils,
+    Wallet, Banknote, CheckCircle, Printer, Loader2, ChevronRight,
+    Pizza as PizzaIcon, Bike, Info
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IMaskInput } from 'react-imask';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 import type { Product, Category, CartItem, TableSummary, PaymentMethod } from '../types';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 
 const PosPage: React.FC = () => {
     const navigate = useNavigate();
@@ -30,6 +30,7 @@ const PosPage: React.FC = () => {
     
     const [isStoreOpen, setIsStoreOpen] = useState(false);
     const [isCashierOpen, setIsCashierOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [cashierSession, setCashierSession] = useState<any>(null);
 
     const [loading, setLoading] = useState(true);
@@ -37,13 +38,14 @@ const PosPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [activeTab, setActiveTab] = useState<'pos' | 'tables'>('pos');
     
-    const [activeModal, setActiveModal] = useState<'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items'>('none');
+    const [activeModal, setActiveModal] = useState<'none' | 'cashier_open' | 'delivery_info'>('none');
     const [showProductDrawer, setShowProductDrawer] = useState(false);
     
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderMode, setOrderMode] = useState<'table' | 'delivery'>('table');
     const [selectedTable, setSelectedTable] = useState('');
     const [customerName, setCustomerName] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [directPaymentMethod, setDirectPaymentMethod] = useState('cash');
 
     const [deliveryInfo, setDeliveryInfo] = useState({
@@ -63,7 +65,6 @@ const PosPage: React.FC = () => {
     // Estados específicos para Pizza
     const [selectedFlavorIds, setSelectedFlavorIds] = useState<string[]>([]);
     const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
-    const [isLoadingFlavors, setIsLoadingFlavors] = useState(false);
     
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,7 +127,7 @@ const PosPage: React.FC = () => {
     };
 
     const handleProductClick = (product: Product) => {
-        if (!isCashierOpen) return toast.error("Caixa fechado!");
+        if (!isCashierOpen) return toast.error("Abra o caixa antes de vender!");
         setSelectedProductForAdd(product);
         setTempQty(1);
         setTempObs('');
@@ -163,7 +164,6 @@ const PosPage: React.FC = () => {
         
         let basePrice = size?.price || product.price;
 
-        // Regra de Preço de Pizza (Maior valor ou Média)
         if (product.pizzaConfig && selectedFlavorIds.length > 0) {
             const rule = product.pizzaConfig.priceRule || 'higher';
             const flavors = availableFlavors.filter(f => selectedFlavorIds.includes(f.id));
@@ -253,7 +253,7 @@ const PosPage: React.FC = () => {
                 })),
                 orderType: orderMode === 'table' ? 'TABLE' : 'DELIVERY',
                 tableNumber: orderMode === 'table' ? parseInt(selectedTable) : null,
-                paymentMethod: directPaymentMethod,
+                paymentMethod: 'PENDING',
                 customerName: orderMode === 'table' ? customerName : deliveryInfo.name
             };
             await createOrder(orderPayload);
@@ -274,9 +274,8 @@ const PosPage: React.FC = () => {
         toast.success(newState ? "Loja Aberta" : "Loja Fechada");
     };
 
-    const handleOpenCloseModal = () => navigate('/cashier');
-
     const handleOpenCashier = async () => {
+        if (!cashierAmount) return toast.error("Informe o fundo de caixa");
         await openCashier(parseFloat(cashierAmount));
         setIsCashierOpen(true);
         setActiveModal('none');
@@ -285,7 +284,7 @@ const PosPage: React.FC = () => {
 
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
-            const matchCat = selectedCategory === 'all' || p.categoryId === selectedCategory;
+            const matchCat = selectedCategory === 'all' || p.categories?.some(c => c.id === selectedCategory);
             const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
             return matchCat && matchSearch;
         });
@@ -299,208 +298,331 @@ const PosPage: React.FC = () => {
             setOrderMode('table');
             setActiveTab('pos');
         } else {
-            setViewingTable(table);
-            setActiveModal('table_details');
+            // Em um PDV real, clicar em mesa ocupada abriria os detalhes/pagamento
+            toast.info(`Mesa ${table.number} está ocupada.`);
         }
     };
 
     const [cashierAmount, setCashierAmount] = useState('');
 
-    if (loading) return <div className="flex h-full w-full items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+            <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
+            <p className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Sincronizando PDV...</p>
+        </div>
+    );
 
     return (
-        <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-[#f0f2f5]">
-            <div className="flex flex-1 overflow-hidden">
-                {/* SIDEBAR ESQUERDA: CARRINHO */}
-                <aside className="w-[380px] bg-white border-r border-slate-200 flex flex-col shadow-xl z-20">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-black text-slate-700 uppercase italic tracking-tighter leading-none">
-                                {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Venda de Balcão'}
-                            </h3>
-                            <div className="flex bg-slate-200 p-1 rounded-lg">
-                                <button onClick={() => setOrderMode('table')} className={cn("px-3 py-1 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'table' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Utensils size={12} className="inline mr-1"/>Mesa</button>
-                                <button onClick={() => setOrderMode('delivery')} className={cn("px-3 py-1 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'delivery' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Truck size={12} className="inline mr-1"/>Delivery</button>
-                            </div>
+        <div className="flex h-[calc(100vh-4rem)] bg-[#f8fafc] overflow-hidden -m-8">
+            {/* BARRA LATERAL: CARRINHO E FINALIZAÇÃO */}
+            <aside className="w-[400px] bg-white border-r border-slate-200 flex flex-col shadow-2xl z-20">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter leading-none">
+                            {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Venda Balcão'}
+                        </h3>
+                        <div className="flex bg-slate-200/50 p-1 rounded-xl">
+                            <button onClick={() => setOrderMode('table')} className={cn("px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all", orderMode === 'table' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Utensils size={14} className="inline mr-2"/>Mesa</button>
+                            <button onClick={() => setOrderMode('delivery')} className={cn("px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all", orderMode === 'delivery' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Truck size={14} className="inline mr-2"/>Balcão</button>
                         </div>
+                    </div>
 
-                        {orderMode === 'table' ? (
-                            <div className="space-y-2">
-                                <select value={selectedTable} onChange={e => setSelectedTable(e.target.value)} className="w-full h-10 px-3 rounded-xl bg-white border-2 border-slate-100 text-slate-700 text-xs font-bold outline-none focus:border-blue-500 transition-all">
-                                    <option value="">Selecione a mesa...</option>
+                    {orderMode === 'table' ? (
+                        <div className="space-y-3">
+                            <div className="relative">
+                                <select 
+                                    value={selectedTable} 
+                                    onChange={e => setSelectedTable(e.target.value)} 
+                                    className="w-full h-12 px-4 rounded-xl bg-white border-2 border-slate-100 text-slate-700 text-sm font-bold outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="">Selecionar Mesa...</option>
                                     {tables.map(t => <option key={t.id} value={t.number}>Mesa {t.number}</option>)}
                                 </select>
-                                <input type="text" placeholder="Nome na Comanda" className="w-full h-10 px-3 rounded-xl bg-white border-2 border-slate-100 text-xs font-bold outline-none focus:border-blue-500" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 rotate-90" size={18} />
                             </div>
+                            <Input 
+                                placeholder="Identificação (Ex: Nome do Cliente)" 
+                                value={customerName} 
+                                onChange={e => setCustomerName(e.target.value)}
+                                className="h-12"
+                            />
+                        </div>
+                    ) : (
+                        <Card 
+                            onClick={() => setActiveModal('delivery_info')} 
+                            className="p-4 border-2 border-dashed border-slate-200 flex items-center justify-between cursor-pointer hover:border-orange-500 hover:bg-orange-50/30 transition-all"
+                        >
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest leading-none mb-1">Cliente / Balcão</p>
+                                <p className="text-sm font-bold text-slate-700 truncate">{deliveryInfo.name || 'Consumidor Final'}</p>
+                            </div>
+                            <div className="bg-orange-100 text-orange-600 p-2 rounded-xl"><User size={20} /></div>
+                        </Card>
+                    )}
+                </div>
+
+                {/* Lista de Itens do Carrinho */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/20">
+                    {cart.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-40 space-y-4">
+                            <div className="w-20 h-20 bg-slate-100 rounded-[2.5rem] flex items-center justify-center">
+                                <ShoppingCart size={40} />
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center">Carrinho Vazio</p>
+                        </div>
+                    ) : cart.map(item => (
+                        <Card key={item.cartItemId} className="p-4 border-slate-100 shadow-sm animate-in slide-in-from-left-4">
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="min-w-0">
+                                    <span className="font-black text-xs text-slate-900 block uppercase italic leading-tight truncate">{item.name}</span>
+                                    {item.observation && (
+                                        <span className="inline-block mt-1 text-[9px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-bold uppercase">Obs: {item.observation}</span>
+                                    )}
+                                </div>
+                                <span className="font-black text-xs text-slate-900 italic shrink-0">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between mt-4">
+                                <span className="text-[10px] font-black text-slate-400 italic">R$ {item.price.toFixed(2)} un</span>
+                                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                                    <button onClick={() => updateCartItemQty(item.cartItemId, -1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-rose-500 transition-all active:scale-90"><Minus size={14} strokeWidth={3} /></button>
+                                    <span className="text-sm font-black w-6 text-center italic">{item.quantity}</span>
+                                    <button onClick={() => updateCartItemQty(item.cartItemId, 1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-emerald-500 transition-all active:scale-90"><Plus size={14} strokeWidth={3} /></button>
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+
+                <div className="p-8 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)]">
+                    <div className="flex justify-between items-end mb-8">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-1 leading-none">Total da Venda</span>
+                            <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">{cart.length} itens</span>
+                        </div>
+                        <div className="text-4xl font-black italic text-slate-900 tracking-tighter">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                    
+                    <Button 
+                        onClick={handlePreparePayment} 
+                        disabled={cart.length === 0} 
+                        fullWidth
+                        size="lg"
+                        className="h-16 rounded-[2rem] text-sm uppercase tracking-widest italic gap-3 shadow-2xl shadow-slate-200"
+                    >
+                        Lançar Pedido <ChevronRight size={20} strokeWidth={3} />
+                    </Button>
+                </div>
+            </aside>
+
+            {/* ÁREA PRINCIPAL: CATÁLOGO E MESAS */}
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* Header de Controle Superior */}
+                <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between gap-6 z-10">
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={handleToggleStore} 
+                            className={cn(
+                                "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all shadow-sm", 
+                                isStoreOpen ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100"
+                            )}
+                        >
+                            {isStoreOpen ? "Loja Aberta" : "Loja Fechada"}
+                        </button>
+                        <div className={cn(
+                            "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 flex items-center gap-2", 
+                            isCashierOpen ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                        )}>
+                            <div className={cn("w-1.5 h-1.5 rounded-full", isCashierOpen ? "bg-blue-500 animate-pulse" : "bg-slate-300")} />
+                            Caixa {isCashierOpen ? 'Aberto' : 'Fechado'}
+                        </div>
+                    </div>
+
+                    <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1.5 w-full max-w-sm shadow-inner">
+                        <button onClick={() => setActiveTab('pos')} className={cn("flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'pos' ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-400 hover:text-slate-600")}>Catálogo</button>
+                        <button onClick={() => { setActiveTab('tables'); loadTableSummary(); }} className={cn("flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'tables' ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-400 hover:text-slate-600")}>Mesas</button>
+                    </div>
+
+                    <div className="flex gap-2">
+                        {!isCashierOpen ? (
+                            <Button size="sm" className="rounded-xl px-6 bg-slate-900" onClick={() => setActiveModal('cashier_open')}>Abrir Caixa</Button>
                         ) : (
-                            <div onClick={() => setActiveModal('delivery_info')} className="flex items-center justify-between p-3 bg-white border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 transition-colors">
-                                <div><p className="text-[10px] font-black text-blue-600 uppercase leading-none mb-1">Cliente</p><p className="text-xs font-bold text-slate-700">{deliveryInfo.name || 'Consumidor não identificado'}</p></div>
-                                <User size={18} className="text-slate-300" />
-                            </div>
+                            <Button variant="danger" size="sm" className="rounded-xl px-6" onClick={() => navigate('/cashier')}>Fechar Caixa</Button>
                         )}
                     </div>
+                </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/30">
-                        {cart.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50 space-y-2">
-                                <ShoppingCart size={48} />
-                                <p className="text-[10px] font-black uppercase tracking-widest text-center">Nenhum item adicionado</p>
+                {activeTab === 'pos' ? (
+                    /* VISÃO CATÁLOGO */
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="p-6 bg-white border-b border-slate-100 flex flex-col gap-6">
+                            <div className="relative group w-full max-w-3xl mx-auto">
+                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                <input 
+                                    ref={searchInputRef} 
+                                    type="text" 
+                                    className="w-full h-14 pl-14 pr-6 rounded-[2rem] bg-slate-50 border-2 border-slate-100 focus:border-orange-500 focus:bg-white outline-none font-bold text-sm transition-all shadow-inner" 
+                                    placeholder="Pesquisar produto pelo nome ou código..." 
+                                    value={searchTerm} 
+                                    onChange={e => setSearchTerm(e.target.value)} 
+                                />
                             </div>
-                        ) : cart.map(item => (
-                            <div key={item.cartItemId} className="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm group animate-in slide-in-from-left-2">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex-1">
-                                        <span className="font-bold text-xs text-slate-800 block leading-tight">{item.name}</span>
-                                        {item.observation && <span className="text-[9px] text-slate-400 italic">Obs: {item.observation}</span>}
-                                    </div>
-                                    <span className="font-black text-xs text-slate-900 ml-2">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center justify-between mt-3">
-                                    <span className="text-[10px] font-bold text-slate-400 italic">R$ {item.price.toFixed(2)} un</span>
-                                    <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-                                        <button onClick={() => updateCartItemQty(item.cartItemId, -1)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-red-500 transition-colors"><Minus size={12} /></button>
-                                        <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                                        <button onClick={() => updateCartItemQty(item.cartItemId, 1)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-blue-500 transition-colors"><Plus size={12} /></button>
-                                    </div>
-                                </div>
+                            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                                <button className={cn("px-6 h-10 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap", selectedCategory === 'all' ? "bg-slate-900 text-white shadow-lg" : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100")} onClick={() => setSelectedCategory('all')}>Todos os Itens</button>
+                                {categories.map(cat => (
+                                    <button key={cat.id} className={cn("px-6 h-10 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-2", selectedCategory === cat.id ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-100" : "bg-white border-slate-50 text-slate-400 hover:border-slate-200")} onClick={() => setSelectedCategory(cat.id)}>{cat.name}</button>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-
-                    <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-                        <div className="flex justify-between items-end mb-6">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Valor Total</span>
-                            <div className="text-3xl font-black italic text-slate-900 tracking-tighter">R$ {cartTotal.toFixed(2)}</div>
-                        </div>
-                        <button onClick={handlePreparePayment} disabled={cart.length === 0} className="w-full h-14 bg-slate-900 hover:bg-black text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg transition-all">FINALIZAR PEDIDO</button>
-                    </div>
-                </aside>
-
-                {/* CENTRO: CATÁLOGO */}
-                <main className="flex-1 flex flex-col bg-[#f0f2f5] overflow-hidden">
-                    <div className="flex items-center justify-between p-2 bg-white border-b border-slate-200 shadow-sm gap-4 shrink-0">
-                        <div className="flex items-center gap-2">
-                            <button onClick={handleToggleStore} className={cn("px-3 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all", isStoreOpen ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-red-50 text-red-700 border-red-100")}>{isStoreOpen ? "LOJA ON" : "LOJA OFF"}</button>
-                            <div className={cn("px-3 py-2 rounded-xl text-[10px] font-black uppercase border-2", isCashierOpen ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-50 text-slate-400 border-slate-100")}>{isCashierOpen ? "CAIXA ON" : "CAIXA OFF"}</div>
                         </div>
 
-                        <div className="flex flex-1 max-w-md bg-slate-100 p-1 rounded-2xl gap-1">
-                            <button onClick={() => setActiveTab('pos')} className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase transition-all", activeTab === 'pos' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400")}>Catálogo</button>
-                            <button onClick={() => { setActiveTab('tables'); loadTableSummary(); }} className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase transition-all", activeTab === 'tables' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400")}>Mesas</button>
-                        </div>
-
-                        <div className="flex gap-2">
-                            {!isCashierOpen ? (
-                                <button onClick={() => setActiveModal('cashier_open')} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase shadow-md">Abrir</button>
-                            ) : (
-                                <button onClick={handleOpenCloseModal} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase shadow-md">Fechar</button>
-                            )}
-                        </div>
-                    </div>
-
-                    {activeTab === 'pos' ? (
-                        <>
-                            <header className="p-4 bg-white border-b border-slate-200 flex flex-col gap-4">
-                                <div className="relative group w-full max-w-2xl mx-auto">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                    <input ref={searchInputRef} type="text" className="w-full h-12 pl-11 pr-4 rounded-xl bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none font-bold text-xs" placeholder="Pesquise produtos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                                </div>
-                                <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-                                    <button className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", selectedCategory === 'all' ? "bg-slate-900 text-white shadow-md" : "bg-white text-slate-400 border border-slate-200")} onClick={() => setSelectedCategory('all')}>Tudo</button>
-                                    {categories.map(cat => (
-                                        <button key={cat.id} className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap", selectedCategory === cat.id ? "bg-slate-900 text-white shadow-lg" : "bg-white text-slate-400 border border-slate-200")} onClick={() => setSelectedCategory(cat.id)}>{cat.name}</button>
-                                    ))}
-                                </div>
-                            </header>
-
-                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                                    {filteredProducts.map(product => (
-                                        <button key={product.id} className="group flex flex-col bg-white border border-slate-200 rounded-[2rem] overflow-hidden hover:border-blue-500 hover:shadow-xl transition-all active:scale-95 shadow-sm" onClick={() => handleProductClick(product)}>
-                                            <div className="p-4 flex flex-col flex-1 gap-1 text-center justify-center min-h-[120px]">
-                                                <h3 className="font-black text-[11px] uppercase leading-tight text-slate-800">{product.name}</h3>
-                                                <div className="mt-3"><span className="font-black text-xs text-blue-600 italic">R$ {product.price.toFixed(2)}</span></div>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="flex-1 p-6 overflow-y-auto">
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                {tablesSummary.map(table => (
-                                    <button key={table.id} onClick={() => handleTableClick(table)} className={cn("flex flex-col rounded-xl border-2 p-4 transition-all hover:scale-105 shadow-sm min-h-[160px] relative overflow-hidden", table.status === 'free' ? "bg-white border-slate-200 hover:border-emerald-400" : "bg-red-50 border-red-200 hover:border-red-400")}>
-                                        <span className={cn("text-2xl font-black", table.status === 'free' ? "text-slate-300" : "text-red-600")}>{table.number}</span>
-                                        <div className="mt-auto">
-                                            {table.status === 'free' ? <span className="text-[10px] font-black uppercase text-slate-300">Livre</span> : <span className="font-black text-red-700">R$ {table.totalAmount.toFixed(2)}</span>}
+                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
+                                {filteredProducts.map(product => (
+                                    <button 
+                                        key={product.id} 
+                                        className="group flex flex-col bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden hover:border-orange-500 hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 shadow-sm relative p-1" 
+                                        onClick={() => handleProductClick(product)}
+                                    >
+                                        <div className="aspect-square bg-slate-50 rounded-[2.2rem] overflow-hidden border border-slate-50 shrink-0">
+                                            {product.imageUrl ? (
+                                                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-200"><ShoppingBag size={32} /></div>
+                                            )}
+                                        </div>
+                                        <div className="p-4 flex flex-col flex-1 gap-1 text-center items-center justify-center min-h-[90px]">
+                                            <h3 className="font-black text-[11px] uppercase leading-tight text-slate-800 italic line-clamp-2">{product.name}</h3>
+                                            <div className="mt-2"><span className="font-black text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">R$ {product.price.toFixed(2)}</span></div>
                                         </div>
                                     </button>
                                 ))}
                             </div>
+                            {filteredProducts.length === 0 && (
+                                <div className="flex flex-col items-center justify-center py-20 opacity-20 grayscale">
+                                    <Search size={64} strokeWidth={1} />
+                                    <p className="text-xs font-black uppercase tracking-[0.3em] mt-4">Nenhum resultado</p>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </main>
-            </div>
+                    </div>
+                ) : (
+                    /* VISÃO MESAS */
+                    <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                            {tablesSummary.map(table => (
+                                <button 
+                                    key={table.id} 
+                                    onClick={() => handleTableClick(table)} 
+                                    className={cn(
+                                        "flex flex-col rounded-[2.5rem] border-4 p-6 transition-all hover:scale-105 active:scale-95 shadow-lg min-h-[180px] relative overflow-hidden group", 
+                                        table.status === 'free' ? "bg-white border-slate-50 hover:border-emerald-400" : "bg-rose-50 border-rose-100 hover:border-rose-400 shadow-rose-100"
+                                    )}
+                                >
+                                    <div className={cn("absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-10 transition-transform group-hover:scale-150", table.status === 'free' ? "bg-emerald-500" : "bg-rose-500")} />
+                                    <span className={cn("text-4xl font-black italic tracking-tighter", table.status === 'free' ? "text-slate-200" : "text-rose-600")}>0{table.number}</span>
+                                    <div className="mt-auto flex flex-col items-start gap-1">
+                                        <span className={cn("text-[10px] font-black uppercase tracking-widest", table.status === 'free' ? "text-slate-300" : "text-rose-400")}>{table.status === 'free' ? 'Livre' : 'Ocupada'}</span>
+                                        {table.status !== 'free' && <span className="font-black text-xl text-rose-900 tracking-tighter italic leading-none">R$ {table.totalAmount.toFixed(2)}</span>}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </main>
 
-            {/* --- DRAWER DE PERSONALIZAÇÃO AMPLO --- */}
+            {/* --- DRAWER DE PERSONALIZAÇÃO PREMIUM --- */}
             <AnimatePresence>
                 {showProductDrawer && selectedProductForAdd && (
                     <div className="fixed inset-0 z-[150] flex justify-end">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowProductDrawer(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-                        <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 35, stiffness: 300 }} className="relative w-[calc(100%-380px)] bg-white shadow-2xl flex flex-col h-full border-l border-slate-200">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowProductDrawer(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                        <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: "spring", damping: 35, stiffness: 300 }} className="relative w-[calc(100%-400px)] bg-white shadow-2xl flex flex-col h-full">
                             
-                            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-12 bg-slate-50/20">
+                            <header className="h-20 border-b border-slate-100 px-10 flex items-center justify-between shrink-0 bg-white sticky top-0 z-10">
+                                <div className="flex items-center gap-4">
+                                    <Button variant="ghost" size="icon" onClick={() => setShowProductDrawer(false)} className="bg-slate-50"><X size={20} /></Button>
+                                    <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">{selectedProductForAdd.name}</h3>
+                                </div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Personalizar Item</span>
+                            </header>
+
+                            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-12 bg-slate-50/30">
                                 {/* Seção de Tamanhos */}
                                 {selectedProductForAdd.sizes?.length > 0 && (
                                     <div className="space-y-4">
-                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Escolha o Tamanho:</h4>
-                                        <div className="flex flex-wrap gap-4">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-2"><div className="w-1 h-4 bg-orange-500 rounded-full" /> 1. Escolha o Tamanho</h4>
+                                        <div className="flex flex-wrap gap-3">
                                             {selectedProductForAdd.sizes.map(size => (
-                                                <button key={size.id} onClick={() => { setSelectedSizeId(size.id); setSelectedFlavorIds([]); }} className={cn("px-10 py-4 rounded-xl border-2 text-xs font-black uppercase transition-all shadow-sm", selectedSizeId === size.id ? "bg-orange-500 border-orange-500 text-white shadow-lg" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200")}>{size.name}</button>
+                                                <Card 
+                                                    key={size.id} 
+                                                    onClick={() => { setSelectedSizeId(size.id); setSelectedFlavorIds([]); }} 
+                                                    className={cn(
+                                                        "px-8 py-4 border-2 transition-all shadow-sm cursor-pointer min-w-[120px] text-center", 
+                                                        selectedSizeId === size.id ? "border-orange-500 bg-orange-50 shadow-orange-100" : "border-slate-100 bg-white text-slate-400 hover:border-slate-200"
+                                                    )}
+                                                >
+                                                    <span className={cn("font-black text-xs uppercase italic", selectedSizeId === size.id ? "text-orange-600" : "text-slate-500")}>{size.name}</span>
+                                                </Card>
                                             ))}
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Seção de Sabores (EXCLUSIVO PIZZA) */}
+                                {/* Seção de Sabores (Pizza) */}
                                 {selectedProductForAdd.pizzaConfig && availableFlavors.length > 0 && (
                                     <div className="space-y-4">
-                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Selecione os Sabores:</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-2"><PizzaIcon size={14} className="text-orange-500" /> 2. Selecione os Sabores</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                                             {availableFlavors.map(flavor => {
                                                 const isSelected = selectedFlavorIds.includes(flavor.id);
                                                 return (
-                                                    <button key={flavor.id} onClick={() => handleFlavorToggle(flavor.id)} className={cn("p-4 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm", isSelected ? "bg-orange-500 border-orange-500 text-white shadow-lg" : "bg-white border-slate-100 text-slate-500 hover:border-slate-200")}>
-                                                        <span>{flavor.name}</span>
-                                                    </button>
+                                                    <Card 
+                                                        key={flavor.id} 
+                                                        onClick={() => handleFlavorToggle(flavor.id)} 
+                                                        className={cn(
+                                                            "p-4 border-2 transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm cursor-pointer", 
+                                                            isSelected ? "border-orange-500 bg-orange-50 shadow-lg shadow-orange-100 scale-105" : "border-slate-50 bg-white text-slate-500 hover:border-slate-200"
+                                                        )}
+                                                    >
+                                                        <span className={cn("font-black text-[10px] uppercase italic leading-tight", isSelected ? "text-orange-700" : "text-slate-600")}>{flavor.name}</span>
+                                                    </Card>
                                                 );
                                             })}
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Grupos de Complementos Dinâmicos */}
+                                {/* Complementos */}
                                 {selectedProductForAdd.addonGroups?.map(group => (
                                     <div key={group.id} className="space-y-4">
-                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">{group.name}: <span className="text-[10px] text-slate-400 ml-3 font-bold">(máx de {group.type === 'single' ? '1' : 'várias'} opções)</span></h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
+                                            <div className="w-1 h-4 bg-blue-500 rounded-full" /> 
+                                            {group.name} 
+                                            <span className="text-[8px] opacity-50 ml-2">(Max: {group.type === 'single' ? '1' : 'Vários'})</span>
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                                             {group.addons.map(addon => {
                                                 const isSelected = selectedAddonIds.includes(addon.id);
                                                 return (
-                                                    <button key={addon.id} onClick={() => {
-                                                        if (group.type === 'single') {
-                                                            const othersInGroup = group.addons.map(a => a.id);
-                                                            const newIds = selectedAddonIds.filter(id => !othersInGroup.includes(id));
-                                                            setSelectedAddonIds([...newIds, addon.id]);
-                                                        } else {
-                                                            if (isSelected) setSelectedAddonIds(prev => prev.filter(id => id !== addon.id));
-                                                            else setSelectedAddonIds(prev => [...prev, addon.id]);
-                                                        }
-                                                    }} className={cn("p-4 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm", isSelected ? "bg-blue-500 border-blue-500 text-white shadow-lg" : "bg-white border-slate-100 text-slate-500 hover:border-slate-200")}>
-                                                        <span>{addon.name}</span>
-                                                        {addon.price > 0 && <span className="text-[9px] opacity-70 italic">R$ {addon.price.toFixed(2)}</span>}
-                                                    </button>
+                                                    <Card 
+                                                        key={addon.id} 
+                                                        onClick={() => {
+                                                            if (group.type === 'single') {
+                                                                const othersInGroup = group.addons.map(a => a.id);
+                                                                const newIds = selectedAddonIds.filter(id => !othersInGroup.includes(id));
+                                                                setSelectedAddonIds([...newIds, addon.id]);
+                                                            } else {
+                                                                if (isSelected) setSelectedAddonIds(prev => prev.filter(id => id !== addon.id));
+                                                                else setSelectedAddonIds(prev => [...prev, addon.id]);
+                                                            }
+                                                        }} 
+                                                        className={cn(
+                                                            "p-4 border-2 transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm cursor-pointer", 
+                                                            isSelected ? "border-blue-500 bg-blue-50 shadow-lg shadow-blue-100" : "border-slate-50 bg-white text-slate-500 hover:border-slate-200"
+                                                        )}
+                                                    >
+                                                        <span className={cn("font-black text-[10px] uppercase italic leading-none", isSelected ? "text-blue-700" : "text-slate-600")}>{addon.name}</span>
+                                                        {addon.price > 0 && <span className="text-[9px] font-black text-emerald-600 mt-1">+ R$ {addon.price.toFixed(2)}</span>}
+                                                    </Card>
                                                 );
                                             })}
                                         </div>
@@ -508,45 +630,104 @@ const PosPage: React.FC = () => {
                                 ))}
 
                                 <div className="space-y-4">
-                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Observações:</h4>
-                                    <textarea className="w-full h-32 rounded-3xl bg-white border-2 border-slate-100 p-6 font-bold text-sm outline-none focus:border-blue-500 transition-all shadow-inner" placeholder="Ex: Tirar picles, molho à parte..." value={tempObs} onChange={e => setTempObs(e.target.value)} />
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Observações Adicionais</h4>
+                                    <textarea 
+                                        className="w-full h-32 rounded-[2rem] bg-white border-2 border-slate-100 p-6 font-bold text-sm outline-none focus:border-orange-500 transition-all shadow-inner resize-none" 
+                                        placeholder="Ex: Tirar cebola, maionese à parte..." 
+                                        value={tempObs} 
+                                        onChange={e => setTempObs(e.target.value)} 
+                                    />
                                 </div>
                             </div>
 
-                            <div className="h-28 bg-[#f8f9fa] border-t-4 border-slate-100 flex items-center justify-between px-10 shrink-0">
-                                <div className="flex flex-col gap-2">
-                                    <h3 className="text-3xl font-black text-slate-700 italic tracking-tighter leading-none">{selectedProductForAdd.name}</h3>
-                                    <button onClick={() => setShowProductDrawer(false)} className="bg-red-500 hover:bg-red-600 text-white px-8 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest transition-all w-fit shadow-lg shadow-red-100">Voltar</button>
+                            {/* Rodapé do Drawer */}
+                            <footer className="h-32 bg-white border-t border-slate-100 flex items-center justify-between px-10 shrink-0 shadow-[0_-20px_50px_rgba(0,0,0,0.03)]">
+                                <div className="flex items-center bg-slate-100 border-2 border-slate-200 rounded-2xl p-1 shadow-inner">
+                                    <button onClick={() => setTempQty(Math.max(1, tempQty - 1))} className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 hover:text-rose-500 active:scale-90 transition-all"><Minus size={20} strokeWidth={3} /></button>
+                                    <span className="w-16 text-center text-2xl font-black italic text-slate-900">{tempQty}</span>
+                                    <button onClick={() => setTempQty(tempQty + 1)} className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 hover:text-emerald-500 active:scale-90 transition-all"><Plus size={20} strokeWidth={3} /></button>
                                 </div>
-                                <div className="flex items-center bg-white border-2 border-slate-200 rounded-2xl p-1 shadow-inner">
-                                    <button onClick={() => setTempQty(Math.max(1, tempQty - 1))} className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500"><Minus size={20} /></button>
-                                    <span className="w-16 text-center text-2xl font-black italic">{tempQty}</span>
-                                    <button onClick={() => setTempQty(tempQty + 1)} className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-500"><Plus size={20} /></button>
-                                </div>
+                                
                                 <div className="flex items-center gap-8">
-                                    <div className="text-right"><p className="text-4xl font-black text-slate-900 italic tracking-tighter">R$ {calculateCurrentPrice().toFixed(2)}</p></div>
-                                    <button onClick={confirmAddToCart} className="bg-blue-500 hover:bg-blue-600 text-white px-14 h-16 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-blue-200 transition-all active:scale-95 flex items-center gap-3">Salvar</button>
+                                    <div className="text-right flex flex-col">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Valor Unitário</span>
+                                        <p className="text-4xl font-black text-slate-900 italic tracking-tighter leading-none">R$ {calculateCurrentPrice().toFixed(2).replace('.', ',')}</p>
+                                    </div>
+                                    <Button 
+                                        onClick={confirmAddToCart} 
+                                        className="h-16 px-12 rounded-[2rem] text-sm uppercase tracking-widest italic gap-3 shadow-xl"
+                                    >
+                                        Adicionar Item <CheckCircle size={20} />
+                                    </Button>
                                 </div>
+                            </footer>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* MODAL DE ABERTURA DE CAIXA */}
+            <AnimatePresence>
+                {activeModal === 'cashier_open' && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-sm bg-white rounded-[2.5rem] p-10 shadow-2xl overflow-hidden border border-slate-100">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl -mr-16 -mt-16 rounded-full" />
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-lg"><Wallet size={24} /></div>
+                                <h3 className="text-xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Abertura de Caixa</h3>
+                            </div>
+                            
+                            <div className="space-y-6 relative z-10">
+                                <Input 
+                                    label="Fundo de Caixa Inicial (R$)"
+                                    type="number" 
+                                    placeholder="0,00"
+                                    value={cashierAmount} 
+                                    onChange={e => setCashierAmount(e.target.value)} 
+                                    className="text-2xl font-black text-emerald-600"
+                                />
+                                <Button fullWidth size="lg" className="h-14 rounded-2xl gap-3" onClick={handleOpenCashier}>
+                                    <CheckCircle size={20} /> Abrir Turno
+                                </Button>
+                                <Button variant="ghost" fullWidth onClick={() => setActiveModal('none')} className="text-slate-400 uppercase text-[10px] font-black tracking-widest">Cancelar</Button>
                             </div>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
 
-            {activeModal === 'cashier_open' && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95">
-                        <h3 className="text-xl font-black uppercase italic mb-6 text-slate-900">Abertura de Caixa</h3>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Fundo de Caixa (R$)</label>
-                            <input type="number" className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 font-bold text-lg outline-none focus:border-blue-500 transition-all" value={cashierAmount} onChange={e => setCashierAmount(e.target.value)} />
-                            <button className="w-full h-14 bg-slate-900 text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-black transition-all" onClick={handleOpenCashier}>Confirmar Abertura</button>
-                        </div>
+            {/* MODAL DE DADOS DO CLIENTE (BALCÃO) */}
+            <AnimatePresence>
+                {activeModal === 'delivery_info' && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 bg-orange-500 text-white rounded-2xl shadow-lg shadow-orange-100"><User size={24} /></div>
+                                <h3 className="text-xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Dados do Cliente</h3>
+                            </div>
+                            <div className="space-y-4">
+                                <Input label="Nome do Cliente" placeholder="Como devemos chamar?" value={deliveryInfo.name} onChange={e => setDeliveryInfo({...deliveryInfo, name: e.target.value})} />
+                                <Input label="Telefone / WhatsApp" placeholder="(00) 00000-0000" value={deliveryInfo.phone} onChange={e => setDeliveryInfo({...deliveryInfo, phone: e.target.value})} />
+                                <Button fullWidth size="lg" className="h-14 rounded-2xl mt-4" onClick={() => setActiveModal('none')}>Salvar Identificação</Button>
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     );
+};
+
+// Funções auxiliares para buscar status do caixa
+const getCashierStatus = async () => {
+    try {
+        const response = await fetch('/api/cashier/status', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        return await response.json();
+    } catch (e) { return null; }
 };
 
 export default PosPage;
