@@ -70,15 +70,29 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       setQuantity(prev => Math.max(1, prev + val));
   };
 
-  const handleAddonQuantityChange = (addon: AddonOption, delta: number) => {
+  const handleAddonQuantityChange = (addon: AddonOption, delta: number, group: any) => {
     if (isAdded) return;
     
     const currentAddon = selectedAddons.find(a => a.id === addon.id);
     const currentQty = currentAddon?.quantity || 0;
     const newQty = Math.max(0, currentQty + delta);
+    
+    // 1. Verificar limite INDIVIDUAL do adicional
     const maxQty = addon.maxQuantity || 1;
-
     if (newQty > maxQty && delta > 0) return;
+
+    // 2. Verificar limite TOTAL do GRUPO (Combo)
+    if (delta > 0 && group.maxQuantity > 0) {
+        const groupAddonIds = group.addons.map((a: any) => a.id);
+        const currentGroupTotal = selectedAddons
+            .filter(a => groupAddonIds.includes(a.id))
+            .reduce((sum, a) => sum + (a.quantity || 0), 0);
+        
+        if (currentGroupTotal + delta > group.maxQuantity) {
+            alert(`O limite total para "${group.name}" é de ${group.maxQuantity} itens.`);
+            return;
+        }
+    }
 
     if (newQty === 0) {
       setSelectedAddons(prev => prev.filter(a => a.id !== addon.id));
@@ -146,11 +160,23 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     }
     const groups = product.addonGroups || [];
     for (const group of groups) {
-      if (group.isRequired) {
-        const addons = group.addons || [];
-        const hasSelection = addons.some(addon => selectedAddons.some(sa => sa.id === addon.id));
-        if (!hasSelection) {
-          alert(`Por favor, selecione uma opção em "${group.name}"`);
+      const groupAddons = group.addons || [];
+      const selectedInGroup = selectedAddons.filter(sa => groupAddons.some(ga => ga.id === sa.id));
+      const totalSelectedInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
+
+      // Validação de Mínimo
+      if (group.isRequired || (group.minQuantity && group.minQuantity > 0)) {
+        const min = group.minQuantity || 1;
+        if (totalSelectedInGroup < min) {
+          alert(`Por favor, selecione pelo menos ${min} item(ns) em "${group.name}" (atualmente ${totalSelectedInGroup})`);
+          return;
+        }
+      }
+
+      // Validação de Máximo (Segurança extra no clique)
+      if (group.maxQuantity && group.maxQuantity > 0) {
+        if (totalSelectedInGroup > group.maxQuantity) {
+          alert(`Você selecionou itens demais em "${group.name}". O limite é ${group.maxQuantity}.`);
           return;
         }
       }
@@ -315,7 +341,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                 isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200"
                             )}
                           >
-                            <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1)}>
+                            <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)}>
                                <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300", isSelected ? "border-primary bg-primary" : "border-slate-300")}>
                                   {isSelected && <Check size={12} className="text-white" strokeWidth={4} />}
                                </div>
@@ -327,9 +353,9 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                             
                             {isSelected && maxQty > 1 && (
                               <div className="flex items-center bg-white rounded-xl p-1 border border-slate-100 shadow-sm ml-4">
-                                <button onClick={() => handleAddonQuantityChange(addon, -1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={14} strokeWidth={3} /></button>
+                                <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={14} strokeWidth={3} /></button>
                                 <span className="w-6 text-center font-black text-sm text-slate-900 italic">{currentQty}</span>
-                                <button onClick={() => handleAddonQuantityChange(addon, 1)} disabled={currentQty >= maxQty} className={cn("w-8 h-8 flex items-center justify-center transition-colors", currentQty >= maxQty ? "text-slate-200" : "text-primary hover:text-primary/80")}><Plus size={14} strokeWidth={3} /></button>
+                                <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={currentQty >= maxQty} className={cn("w-8 h-8 flex items-center justify-center transition-colors", currentQty >= maxQty ? "text-slate-200" : "text-primary hover:text-primary/80")}><Plus size={14} strokeWidth={3} /></button>
                               </div>
                             )}
                           </Card>

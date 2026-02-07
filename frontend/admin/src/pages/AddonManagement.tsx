@@ -136,7 +136,7 @@ const AddonManagement: React.FC = () => {
   );
 
   const [formData, setFormData] = useState<AddonGroup>({
-    name: '', type: 'multiple', isRequired: false, order: 0, saiposIntegrationCode: '', addons: []
+    name: '', type: 'multiple', isRequired: false, minQuantity: 0, maxQuantity: 1, order: 0, saiposIntegrationCode: '', addons: []
   });
 
   useEffect(() => { fetchData(); }, []);
@@ -174,7 +174,7 @@ const AddonManagement: React.FC = () => {
       setFormData({ ...group });
     } else {
       setEditingGroup(null);
-      setFormData({ name: '', type: 'multiple', isRequired: false, order: 0, saiposIntegrationCode: '', addons: [] });
+      setFormData({ name: '', type: 'multiple', isRequired: false, minQuantity: 0, maxQuantity: 1, order: 0, saiposIntegrationCode: '', addons: [] });
     }
     setIsModalOpen(true);
   };
@@ -327,11 +327,34 @@ const AddonManagement: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="flex items-end">
+                    <div className="flex flex-col justify-end gap-4">
                         <Card className={cn("p-4 border-2 transition-all cursor-pointer flex items-center gap-3 w-full h-12 flex-row", formData.isRequired ? "border-rose-500 bg-rose-50" : "border-slate-100 bg-white")} onClick={() => setFormData({...formData, isRequired: !formData.isRequired})}>
                             <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all", formData.isRequired ? "bg-rose-500 border-rose-500" : "border-slate-300")}>{formData.isRequired && <CheckCircle size={14} className="text-white" />}</div>
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Este grupo é OBRIGATÓRIO</span>
                         </Card>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+                    <div className="space-y-2">
+                        <Input 
+                            label="Qtd Mínima Total (Combo)" 
+                            type="number" 
+                            value={formData.minQuantity} 
+                            onChange={e => setFormData({ ...formData, minQuantity: parseInt(e.target.value) })} 
+                            placeholder="Ex: 20"
+                        />
+                        <p className="text-[9px] text-slate-400 uppercase font-bold ml-1 italic">* Seleção mínima obrigatória no grupo</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Input 
+                            label="Qtd Máxima Total (Combo)" 
+                            type="number" 
+                            value={formData.maxQuantity} 
+                            onChange={e => setFormData({ ...formData, maxQuantity: parseInt(e.target.value) })} 
+                            placeholder="Ex: 20"
+                        />
+                        <p className="text-[9px] text-slate-400 uppercase font-bold ml-1 italic">* Limite máximo de itens neste grupo</p>
                     </div>
                 </div>
 

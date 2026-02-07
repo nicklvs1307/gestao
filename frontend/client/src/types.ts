@@ -20,6 +20,8 @@ export interface AddonGroup {
   name: string;
   type: 'single' | 'multiple';
   isRequired: boolean;
+  minQuantity?: number;
+  maxQuantity?: number;
   order: number;
   productId: string;
   addons: Addon[];

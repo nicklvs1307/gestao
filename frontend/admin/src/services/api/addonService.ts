@@ -20,6 +20,8 @@ export interface AddonGroup {
   name: string;
   type: 'single' | 'multiple';
   isRequired: boolean;
+  minQuantity?: number; // Mínimo total de itens no grupo
+  maxQuantity?: number; // Máximo total de itens no grupo
   order: number;
   saiposIntegrationCode?: string;
   addons: Addon[];
