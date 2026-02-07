@@ -16,6 +16,7 @@ import ProductDetailModal from '../components/ProductDetailModal';
 import { Search, Heart, Clock, ShoppingBag, Palette } from 'lucide-react';
 import { applyTheme } from '../utils/theme';
 import { Button } from '../components/ui/Button';
+import { isCategoryAvailable } from '../utils/availability';
 
 interface DeliveryPageProps {
   restaurantSlug?: string;
@@ -174,7 +175,8 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   if (error) return <div className="flex items-center justify-center min-h-screen bg-background text-destructive font-bold p-8 text-center">{error}</div>;
   if (!restaurant) return <div className="flex items-center justify-center min-h-screen bg-background text-foreground font-bold">Restaurante não encontrado.</div>;
 
-  const categories = restaurant.categories || [];
+  const allCategories = restaurant.categories || [];
+  const categories = allCategories.filter(isCategoryAvailable);
   const isStoreOpen = restaurant.settings?.isOpen ?? true;
 
   return (

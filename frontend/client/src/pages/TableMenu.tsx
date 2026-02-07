@@ -20,6 +20,7 @@ import { Search, Heart, Clock, Utensils, User, History, ReceiptText } from 'luci
 import DeliveryProductCard from '../components/DeliveryProductCard';
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui/Button';
+import { isCategoryAvailable } from '../utils/availability';
 
 const TableMenu = () => {
   const { restaurantId, tableNumber } = useParams<{ restaurantId: string; tableNumber: string }>();
@@ -78,6 +79,10 @@ const TableMenu = () => {
     setIsAppVisible,
     onFinishLoading: handleStartSplashExit,
   });
+
+  const availableCategories = useMemo(() => {
+    return categories.filter(isCategoryAvailable);
+  }, [categories]);
 
   useEffect(() => {
     if (!isLoading && showSplashScreen) {
@@ -254,7 +259,7 @@ const TableMenu = () => {
             >
                 🔥 Tudo
             </button>
-            {categories.map(cat => (
+            {availableCategories.map(cat => (
                 <button 
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
