@@ -140,10 +140,12 @@ const SidebarAdmin: React.FC<SidebarAdminProps> = ({ isOpen, onClose }) => {
                                                 : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                                         )}
                                     >
-                                        <item.icon size={18} className={cn("transition-colors shrink-0", isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300")} />
-                                        <span>{item.name}</span>
-                                        {/* Indicador de Active lateral sutil */}
-                                        {/* {isActive && <div className="absolute left-0 w-1 h-5 bg-white rounded-r-full" />} */}
+                                        {({ isActive }) => (
+                                            <>
+                                                <item.icon size={18} className={cn("transition-colors shrink-0", isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300")} />
+                                                <span>{item.name}</span>
+                                            </>
+                                        )}
                                     </NavLink>
                                 ))}
                             </div>
