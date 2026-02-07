@@ -1,279 +1,206 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Product } from '@/types/index';
 import { getProducts, updateProduct, deleteProduct, getCategories } from '../services/api';
-import { Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, Zap } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, RefreshCw, Loader2, Package, Tag, ArrowUpRight, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getImageUrl } from '../utils/image';
+import { Card } from './ui/Card';
+import { Button } from './ui/Button';
 
-// Componente de Toggle Switch
-const ToggleSwitch = ({ checked, onChange }: { checked: boolean, onChange: (checked: boolean) => void }) => {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={(e) => {
-          e.stopPropagation();
-          onChange(!checked);
-      }}
-      className={cn(
-        "relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 focus:outline-none shadow-inner",
-        checked ? "bg-emerald-500" : "bg-slate-300"
-      )}
-    >
-      <span
-        className={cn(
-          "pointer-events-none block h-4 w-4 rounded-full bg-white shadow-md ring-0 transition-transform duration-200",
-          checked ? "translate-x-5" : "translate-x-0"
-        )}
-      />
-    </button>
-  );
-};
-
-interface ProductManagementProps {
-  onAddProductClick: () => void;
-  onEditProductClick: (product: Product) => void;
-  refetchTrigger: number;
-}
-
-const ProductManagement: React.FC<ProductManagementProps> = ({ refetchTrigger }) => {
+const ProductManagement: React.FC<{ refetchTrigger: number }> = ({ refetchTrigger }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
-  const fetchProductsAndCategories = async () => {
+  const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [productsData, categoriesData] = await Promise.all([
-        getProducts(),
-        getCategories(true) // Fetch flat list of categories
-      ]);
+      const [productsData, categoriesData] = await Promise.all([ getProducts(), getCategories(true) ]);
       setProducts(productsData);
       setCategories(['all', ...categoriesData.map((c: any) => c.name)]);
-      setError(null);
-    } catch (err: any) {
-      setError('Falha ao buscar dados.');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) { toast.error("Erro ao carregar cardápio."); }
+    finally { setIsLoading(false); }
   };
 
-  useEffect(() => {
-    fetchProductsAndCategories();
-  }, [refetchTrigger]);
+  useEffect(() => { fetchData(); }, [refetchTrigger]);
 
   const handleAvailabilityChange = async (productId: string, isAvailable: boolean) => {
-    const originalProducts = [...products];
-    setProducts(prevProducts =>
-      prevProducts.map(p => (p.id === productId ? { ...p, isAvailable } : p))
-    );
-
+    const original = [...products];
+    setProducts(prev => prev.map(p => (p.id === productId ? { ...p, isAvailable } : p)));
     try {
       await updateProduct(productId, { isAvailable });
-      toast.success(isAvailable ? "Produto ativado!" : "Produto desativado.");
+      toast.success(isAvailable ? "Item ativado!" : "Item pausado.");
     } catch (err) {
-      toast.error('Falha ao atualizar o produto.');
-      setProducts(originalProducts);
+      toast.error('Erro ao atualizar.');
+      setProducts(original);
     }
   };
 
   const handleDelete = async (productId: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
-      return;
-    }
-
+    if (!window.confirm('Excluir este produto permanentemente?')) return;
     try {
       await deleteProduct(productId);
-      setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
-      toast.success("Produto excluído.");
-    } catch (err: any) {
-        toast.error(err.response?.data?.error || 'Falha ao excluir o produto.');
-    }
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      toast.success("Produto removido.");
+    } catch (err: any) { toast.error('Falha na exclusão.'); }
   };
 
   const filteredProducts = useMemo(() => {
     return products
-      .filter(product => 
-        categoryFilter === 'all' || product.category.name === categoryFilter
-      )
-      .filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      .filter(p => categoryFilter === 'all' || p.category.name === categoryFilter)
+      .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())));
   }, [products, searchTerm, categoryFilter]);
 
-  if (isLoading) return (
-    <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-  );
-  
-  if (error) return (
-    <div className="p-4 rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
-        Erro: {error}
+  if (isLoading && products.length === 0) return (
+    <div className="flex flex-col h-64 items-center justify-center opacity-30 gap-4">
+      <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      <span className="text-[10px] font-black uppercase tracking-widest">Sincronizando Cardápio...</span>
     </div>
   );
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-            <h2 className="text-xl font-black text-foreground uppercase tracking-tighter italic">Gestão de Produtos</h2>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">Catálogo de itens e controle de venda.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Meus Produtos</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+            <Package size={14} className="text-orange-500" /> Gestão de Itens, Preços e Estoque
+          </p>
         </div>
-        <button 
-            onClick={() => navigate('/products/new')}
-            className="ui-button-primary h-10 px-4 text-[10px] uppercase tracking-widest"
-        >
-          <Plus size={16} />
-          Novo Produto
-        </button>
+        <Button onClick={() => navigate('/products/new')} className="rounded-xl px-8 italic font-black h-14 shadow-xl shadow-orange-900/10">
+          <Plus size={20} className="mr-2" /> NOVO PRODUTO
+        </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      {/* Toolbar de Busca e Filtros */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="relative group flex-1">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
             <input 
                 type="text" 
-                placeholder="Buscar..." 
-                className="ui-input w-full pl-9 h-10 text-xs"
+                placeholder="Pesquisar por nome ou descrição..." 
+                className="w-full h-16 pl-14 pr-6 rounded-2xl bg-white border-2 border-slate-100 focus:border-orange-500 outline-none transition-all font-black text-slate-900 uppercase italic tracking-tight shadow-sm"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
             />
         </div>
-        <div className="relative w-full sm:w-[200px]">
-             <select 
-                className="ui-input w-full h-10 text-xs appearance-none cursor-pointer"
-                value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
-            >
-                {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat === 'all' ? 'Todas Categorias' : cat}</option>
-                ))}
-            </select>
-            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+        <div className="flex gap-2">
+            <div className="relative">
+                <select 
+                    className="h-16 px-6 rounded-2xl bg-white border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest outline-none focus:border-orange-500 appearance-none min-w-[220px] cursor-pointer shadow-sm"
+                    value={categoryFilter}
+                    onChange={e => setCategoryFilter(e.target.value)}
+                >
+                    <option value="all">Todas as Categorias</option>
+                    {categories.filter(c => c !== 'all').map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+                <Filter className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
+            </div>
+            <Button variant="outline" size="icon" className="h-16 w-16 bg-white border-slate-100 rounded-2xl" onClick={fetchData}>
+                <RefreshCw size={20} className="text-slate-400" />
+            </Button>
         </div>
       </div>
 
-      <div className="ui-card overflow-hidden">
+      {/* Listagem de Alta Fidelidade */}
+      <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white" noPadding>
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-            <thead className="text-[9px] uppercase bg-muted/10 text-slate-400 border-b border-border font-black tracking-widest">
+            <thead className="bg-slate-50/50">
                 <tr>
-                <th className="px-6 py-3">Produto</th>
-                <th className="px-6 py-3">Categoria</th>
-                <th className="px-6 py-3 text-center">Estoque</th>
-                <th className="px-6 py-3 text-center">Preço</th>
-                <th className="px-6 py-3 text-center">Status</th>
-                <th className="px-6 py-3 text-right">Ações</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Informações do Item</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Categoria / Mix</th>
+                    <th className="px-8 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Estoque</th>
+                    <th className="px-8 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Preço Base</th>
+                    <th className="px-8 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Visibilidade</th>
+                    <th className="px-8 py-4 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Gerenciar</th>
                 </tr>
             </thead>
-            <tbody className="divide-y divide-border text-foreground">
-                {filteredProducts.map(product => (
-                <tr key={product.id} className="hover:bg-muted/30 transition-colors group">
-                    <td className="px-6 py-3">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-border shrink-0 shadow-sm">
-                                {product.imageUrl ? (
-                                    <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
-                                ) : (
-                                    <ImageIcon size={16} className="text-slate-400" />
-                                )}
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="font-bold text-xs uppercase italic tracking-tight">{product.name}</span>
-                                <div className="flex flex-wrap gap-1 mt-0.5">
-                                    {product.isFeatured && (
-                                        <span className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 text-[7px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900/30">
-                                            <Star size={7} fill="currentColor" /> Destaque
-                                        </span>
-                                    )}
+            <tbody className="divide-y divide-slate-50 text-slate-900">
+                {filteredProducts.map(product => {
+                    const lowestPrice = product.sizes && product.sizes.length > 0 
+                        ? Math.min(...product.sizes.map(s => s.price)) 
+                        : product.price;
+
+                    return (
+                        <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="px-8 py-5">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-14 h-14 rounded-[1.25rem] bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-lg shrink-0 group-hover:scale-110 transition-transform">
+                                        {product.imageUrl ? (
+                                            <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <ImageIcon size={24} className="text-slate-300" />
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{product.name}</span>
+                                            {product.isFeatured && <div className="p-1 bg-orange-500 text-white rounded-md shadow-lg shadow-orange-500/20"><Star size={8} fill="currentColor"/></div>}
+                                        </div>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Ref: {product.id.slice(-6).toUpperCase()}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </td>
-                    <td className="px-6 py-3">
-                        <div className="flex flex-wrap gap-1">
-                            {product.categories && product.categories.length > 0 ? (
-                                product.categories.map(cat => (
-                                    <span key={cat.id} className="inline-flex items-center rounded-md bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-slate-500 border border-border">
-                                        {cat.name}
-                                    </span>
-                                ))
-                            ) : (
-                                <span className="text-[8px] text-slate-300 italic">Sem categoria</span>
-                            )}
-                        </div>
-                    </td>
-                    <td className="px-6 py-3 text-center">
-                        <span className={cn(
-                            "inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest border shadow-sm",
-                            product.stock < 10 
-                                ? "bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20" 
-                                : "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20"
-                        )}>
-                            {product.stock} un
-                        </span>
-                    </td>
-                    <td className="px-6 py-3 text-center font-black text-xs italic text-foreground/80">
-                        {product.sizes && product.sizes.length > 0 ? (
-                            <>
-                                <span className="block text-[8px] uppercase not-italic text-slate-400 leading-none mb-1">A partir de</span>
-                                R$ {Math.min(...product.sizes.map(s => s.price)).toFixed(2).replace('.', ',')}
-                            </>
-                        ) : (
-                            <>R$ {product.price.toFixed(2).replace('.', ',')}</>
-                        )}
-                    </td>
-                    <td className="px-6 py-3">
-                        <div className="flex flex-col items-center gap-1">
-                            <ToggleSwitch 
-                                checked={product.isAvailable} 
-                                onChange={(isChecked) => handleAvailabilityChange(product.id, isChecked)} 
-                            />
-                            <span className={cn("text-[7px] font-black uppercase tracking-widest", product.isAvailable ? "text-emerald-600" : "text-slate-400")}>
-                                {product.isAvailable ? "Ativo" : "Pausado"}
-                            </span>
-                        </div>
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                            <button 
-                                onClick={() => navigate(`/products/${product.id}`)}
-                                className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
-                                title="Editar"
-                            >
-                                <Edit size={16} />
-                            </button>
-                            <button 
-                                onClick={() => handleDelete(product.id)}
-                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                title="Excluir"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                ))}
+                            </td>
+                            <td className="px-8 py-5">
+                                <div className="flex flex-wrap gap-1.5">
+                                    {product.categories?.length > 0 ? product.categories.map(cat => (
+                                        <span key={cat.id} className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase border border-slate-200 shadow-sm">{cat.name}</span>
+                                    )) : <span className="text-[8px] text-slate-300 italic uppercase">Sem Vínculo</span>}
+                                </div>
+                            </td>
+                            <td className="px-8 py-5 text-center">
+                                <span className={cn(
+                                    "inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase border shadow-sm",
+                                    product.stock < 10 ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                )}>
+                                    <ArrowUpRight size={10} className="mr-1"/> {product.stock} Unid.
+                                </span>
+                            </td>
+                            <td className="px-8 py-5 text-center">
+                                <div className="flex flex-col items-center">
+                                    {product.sizes?.length > 0 && <span className="text-[7px] font-black text-orange-500 uppercase leading-none mb-1">A PARTIR DE</span>}
+                                    <span className="font-black text-sm text-slate-900 italic tracking-tighter">R$ {lowestPrice.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            </td>
+                            <td className="px-8 py-5">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div 
+                                        onClick={() => handleAvailabilityChange(product.id, !product.isAvailable)}
+                                        className={cn("w-10 h-5 rounded-full relative transition-all cursor-pointer shadow-inner", product.isAvailable ? "bg-emerald-500" : "bg-slate-200")}
+                                    >
+                                        <div className={cn("absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-md", product.isAvailable ? "left-6" : "left-1")} />
+                                    </div>
+                                    <span className={cn("text-[7px] font-black uppercase tracking-widest", product.isAvailable ? "text-emerald-600" : "text-slate-400")}>{product.isAvailable ? 'ATIVO' : 'PAUSADO'}</span>
+                                </div>
+                            </td>
+                            <td className="px-8 py-5 text-right">
+                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 bg-slate-100 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200" onClick={() => navigate(`/products/${product.id}`)}><Edit size={16}/></Button>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 bg-slate-100 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200" onClick={() => handleDelete(product.id)}><Trash2 size={16}/></Button>
+                                </div>
+                            </td>
+                        </tr>
+                    );
+                })}
             </tbody>
             </table>
         </div>
         {filteredProducts.length === 0 && (
-            <div className="p-16 text-center flex flex-col items-center justify-center text-slate-300">
-                <Search size={40} strokeWidth={1} className="mb-2 opacity-20" />
-                <p className="font-black text-[10px] uppercase tracking-widest">Nenhum produto</p>
+            <div className="p-24 text-center">
+                <div className="flex flex-col items-center justify-center opacity-20 grayscale">
+                    <Package size={64} strokeWidth={1} className="mb-4" />
+                    <p className="font-black text-[10px] uppercase tracking-[0.3em] italic">Nenhum item localizado no cardápio</p>
+                </div>
             </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
