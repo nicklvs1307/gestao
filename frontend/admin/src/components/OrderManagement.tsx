@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import OrderKanbanBoard from './OrderKanbanBoard';
 import OrderListView from './OrderListView';
 import OrderDetailModal from './OrderDetailModal';
 import { getAdminOrders, updateOrderStatus } from '../services/api';
 import type { Order } from '@/types/index.ts';
-import { Kanban, List, Loader2 } from 'lucide-react';
+import { Kanban, List, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { toast } from 'sonner';
 
 type ViewMode = 'kanban' | 'list';
 type OrderSegment = 'ALL' | 'TABLE' | 'DELIVERY';
 
 const OrderManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeSegment, setActiveSegment] = useState<OrderSegment>('ALL');
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
@@ -24,10 +28,9 @@ const OrderManagement: React.FC = () => {
       const data = await getAdminOrders();
       const sortedOrders = data.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setAllOrders(sortedOrders);
-      setError(null);
     } catch (err) {
-      setError('Não foi possível carregar os pedidos.');
       console.error(err);
+      toast.error("Erro ao sincronizar pedidos.");
     } finally {
       setIsLoading(false);
     }
@@ -35,52 +38,39 @@ const OrderManagement: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000); // Polling de 10s para manter Kanban atualizado
+    const interval = setInterval(fetchOrders, 15000); 
     return () => clearInterval(interval);
   }, []);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
       setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      // Se o pedido alterado for o que está aberto no modal, atualiza ele também
       if (selectedOrder && selectedOrder.id === orderId) {
           setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
       await updateOrderStatus(orderId, newStatus);
+      toast.success(`Pedido #${orderId.slice(-4).toUpperCase()} atualizado!`);
     } catch (error) { 
-      console.error('Falha ao atualizar status:', error);
       fetchOrders(); 
     }
   };
 
   const handleBulkStatusChange = async (newStatus: string) => {
       if (selectedOrderIds.length === 0) return;
-      
-      const confirmMsg = newStatus === 'COMPLETED' ? `Deseja finalizar ${selectedOrderIds.length} pedidos?` : `Deseja mover ${selectedOrderIds.length} pedidos para a próxima etapa?`;
-      if (!window.confirm(confirmMsg)) return;
-
       try {
-          // Otimista: Atualiza localmente
           setAllOrders(prev => prev.map(o => selectedOrderIds.includes(o.id) ? { ...o, status: newStatus } : o));
           const idsToProcess = [...selectedOrderIds];
-          setSelectedOrderIds([]); // Limpa seleção
-
-          // Dispara as atualizações em paralelo
+          setSelectedOrderIds([]); 
           await Promise.all(idsToProcess.map(id => updateOrderStatus(id, newStatus)));
+          toast.success(`${idsToProcess.length} pedidos atualizados!`);
       } catch (error) {
-          console.error("Erro na atualização em massa", error);
           fetchOrders();
       }
   };
 
   const toggleSelectOrder = (id: string) => {
-      setSelectedOrderIds(prev => 
-          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-      );
+      setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
-
-  const openDetailsModal = (order: Order) => setSelectedOrder(order);
-  const closeDetailsModal = () => setSelectedOrder(null);
 
   const filteredOrders = allOrders.filter(o => {
       const isStatusMatch = ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'].includes(o.status);
@@ -95,95 +85,85 @@ const OrderManagement: React.FC = () => {
   };
 
   if (isLoading && allOrders.length === 0) return (
-    <div className="flex h-[calc(100vh-100px)] w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
+      <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Monitorando Pedidos em Tempo Real...</span>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5.5rem)] space-y-3 relative px-2">
+    <div className="space-y-6 animate-in fade-in duration-500 -m-2">
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-1">
-        <div>
-          <h1 className="text-xl font-black text-slate-900 flex items-center gap-2 italic uppercase tracking-tighter">
-            Gestão de Pedidos
-            <span className="bg-orange-600/10 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{counts.ALL} ativos</span>
-          </h1>
-          <p className="text-slate-500 text-[10px] font-medium uppercase tracking-widest leading-none mt-1">Fluxo de produção em tempo real.</p>
+      {/* Header Gestão de Pedidos */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-5">
+            <div className="p-3.5 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200">
+                <ShoppingBag size={28} />
+            </div>
+            <div>
+                <h1 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Pedidos</h1>
+                <div className="flex items-center gap-2 mt-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{counts.ALL} Pedidos em Produção</span>
+                </div>
+            </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+            {/* Ações em Massa */}
             {selectedOrderIds.length > 0 && (
-                <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-1.5 rounded-lg mr-1 uppercase italic">
-                        {selectedOrderIds.length} Selecionados
-                    </span>
-                    <button 
-                        onClick={() => handleBulkStatusChange('READY')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md transition-all"
-                    >
-                        Prontos
-                    </button>
-                    <button 
-                        onClick={() => handleBulkStatusChange('COMPLETED')}
-                        className="bg-slate-900 hover:bg-black text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md transition-all"
-                    >
-                        Finalizar
-                    </button>
-                    <button 
-                        onClick={() => setSelectedOrderIds([])}
-                        className="text-slate-400 hover:text-red-500 transition-colors p-1.5"
-                    >
-                        <X size={14} />
-                    </button>
+                <div className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300 bg-orange-50 p-1.5 rounded-2xl border border-orange-100 shadow-lg">
+                    <span className="text-[10px] font-black text-orange-600 px-3 uppercase italic">{selectedOrderIds.length} Selecionados</span>
+                    <Button onClick={() => handleBulkStatusChange('READY')} size="sm" className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 italic">PRONTOS</Button>
+                    <Button onClick={() => handleBulkStatusChange('COMPLETED')} size="sm" className="h-9 px-4 rounded-xl bg-slate-900 italic">FINALIZAR</Button>
+                    <Button onClick={() => setSelectedOrderIds([])} variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400"><X size={16} /></Button>
                 </div>
             )}
 
-            <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
-                <button 
-                    onClick={() => setActiveSegment('DELIVERY')}
-                    className={cn("px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all", activeSegment === 'DELIVERY' || activeSegment === 'ALL' ? "bg-white shadow-sm text-slate-900" : "text-slate-400 hover:text-slate-600")}
-                >
-                    Delivery / Balcão <span className="opacity-50 ml-1">({counts.DELIVERY})</span>
-                </button>
-                <button 
-                    onClick={() => navigate('/tables')}
-                    className="px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all text-slate-400 hover:text-orange-600 hover:bg-white"
-                >
-                    Ir para Mesas
-                </button>
+            {/* Filtro de Segmento */}
+            <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+                {[
+                    { id: 'ALL', label: 'TUDO', icon: List },
+                    { id: 'DELIVERY', label: 'DELIVERY/BALCÃO', icon: Package },
+                    { id: 'TABLE', label: 'MESAS', icon: Smartphone }
+                ].map(seg => (
+                    <button 
+                        key={seg.id}
+                        onClick={() => seg.id === 'TABLE' ? navigate('/tables') : setActiveSegment(seg.id as any)}
+                        className={cn(
+                            "px-4 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
+                            activeSegment === seg.id ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        <seg.icon size={12} /> {seg.label}
+                    </button>
+                ))}
             </div>
 
-            <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
-                <button 
-                    onClick={() => setViewMode('kanban')} 
-                    className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}
-                >
-                    <Kanban size={16} />
-                </button>
-                <button 
-                    onClick={() => setViewMode('list')} 
-                    className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}
-                >
-                    <List size={16} />
-                </button>
+            {/* Alternador de Visão */}
+            <div className="flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                <button onClick={() => setViewMode('kanban')} className={cn("p-2.5 rounded-xl transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-md" : "text-slate-400")}><Kanban size={18} /></button>
+                <button onClick={() => setViewMode('list')} className={cn("p-2.5 rounded-xl transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-md" : "text-slate-400")}><List size={18} /></button>
             </div>
+
+            <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl bg-white border-slate-200" onClick={fetchOrders}><RefreshCw size={18} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-1">
+      {/* Conteúdo Principal (Kanban ou Lista) */}
+      <div className="flex-1 min-h-0 overflow-hidden rounded-[2.5rem] border-2 border-slate-100 bg-slate-50/50 shadow-inner p-2">
         {viewMode === 'kanban' ? (
           <OrderKanbanBoard 
             orders={filteredOrders} 
             onStatusChange={handleStatusChange} 
-            onOpenDetails={openDetailsModal}
+            onOpenDetails={setSelectedOrder}
             selectedOrderIds={selectedOrderIds}
             toggleSelectOrder={toggleSelectOrder}
           />
         ) : (
           <OrderListView 
             orders={allOrders} 
-            onOpenDetails={openDetailsModal}
+            onOpenDetails={setSelectedOrder}
             selectedOrderIds={selectedOrderIds}
             toggleSelectOrder={toggleSelectOrder}
           />
@@ -193,7 +173,7 @@ const OrderManagement: React.FC = () => {
       {selectedOrder && (
         <OrderDetailModal 
           order={selectedOrder} 
-          onClose={closeDetailsModal} 
+          onClose={() => setSelectedOrder(null)} 
           onStatusChange={handleStatusChange} 
         />
       )}
