@@ -34,8 +34,22 @@ function ProductFormPage() {
     // Novo: Grupos herdados da categoria selecionada
     const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
     
-    const { register, control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<any>({
-        defaultValues: { name: '', description: '', price: 0, imageUrl: '', categoryIds: [], isAvailable: true, isFeatured: false, stock: 0, addonGroups: [], sizes: [], ingredients: [], productionArea: 'Cozinha' }
+    const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
+        defaultValues: { 
+            name: '', 
+            description: '', 
+            price: 0, 
+            imageUrl: '', 
+            categoryIds: [], 
+            isAvailable: true, 
+            isFeatured: false, 
+            stock: 0, 
+            addonGroups: [], 
+            sizes: [], 
+            ingredients: [], 
+            productionArea: 'Cozinha',
+            measureUnit: 'UN'
+        }
     });
 
     const watchedCategoryIds = watch('categoryIds');
@@ -74,7 +88,7 @@ function ProductFormPage() {
             try {
                 setIsLoading(true);
                 const [cats, ings, library, gSizes] = await Promise.all([ 
-                    getCategories(), 
+                    getCategories(true), // Usar flat=true para facilitar a busca
                     getIngredients(), 
                     addonService.getAll(),
                     globalSizeService.getAll()
@@ -89,22 +103,28 @@ function ProductFormPage() {
                     const product = products.find((p: any) => p.id === id);
                     if (product) {
                         const initialCategoryIds = product.categories?.map((c: any) => c.id) || (product.categoryId ? [product.categoryId] : []);
-                        reset({ 
-                            ...product, 
-                            categoryIds: initialCategoryIds, 
-                            ingredients: product.ingredients?.map((i: any) => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] 
-                        });
+                        
+                        // Atualiza o estado da pizza se houver config
                         if (product.pizzaConfig) { 
                             setIsPizza(true); 
                             setPizzaConfig((prev: any) => ({ ...prev, ...product.pizzaConfig })); 
                         }
+
+                        // Reseta o formulário com os dados do produto
+                        reset({ 
+                            ...product, 
+                            categoryIds: initialCategoryIds, 
+                            ingredients: product.ingredients?.map((i: any) => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [],
+                            productionArea: product.productionArea || 'Cozinha',
+                            measureUnit: product.measureUnit || 'UN'
+                        });
                     } else {
                         toast.error("Produto não encontrado.");
                         navigate('/products');
                     }
                 }
             } catch (error) { 
-                console.error(error); 
+                console.error("Erro ao carregar dados do produto:", error); 
                 toast.error("Erro ao carregar dados.");
             } finally { 
                 setIsLoading(false); 
@@ -120,6 +140,11 @@ function ProductFormPage() {
         catch (e) { toast.error("Erro no upload."); } finally { setIsUploading(false); }
     };
 
+    const onFormError = (errors: any) => {
+        console.error("Erros de validação:", errors);
+        toast.error("Verifique os campos obrigatórios.");
+    };
+
     const onSubmit = async (data: any) => {
         setIsLoading(true);
         try {
@@ -133,10 +158,17 @@ function ProductFormPage() {
                 ingredients: data.ingredients?.filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })), 
                 pizzaConfig: isPizza ? pizzaConfig : null 
             };
-            if (id) await updateProduct(id, payload); else await createProduct(payload);
-            toast.success(id ? "Produto atualizado!" : "Produto criado com sucesso!"); 
+            
+            if (id) {
+                await updateProduct(id, payload);
+                toast.success("Produto atualizado!");
+            } else {
+                await createProduct(payload);
+                toast.success("Produto criado com sucesso!");
+            }
             navigate('/products');
         } catch (e) { 
+            console.error("Erro ao salvar produto:", e);
             toast.error("Erro ao salvar produto."); 
         } finally { 
             setIsLoading(false); 
@@ -158,7 +190,7 @@ function ProductFormPage() {
                 </div>
                 <div className="flex items-center gap-3 w-full lg:w-auto">
                     <Button variant="ghost" type="button" className="flex-1 lg:flex-none h-14 rounded-2xl font-black uppercase text-[10px] text-slate-400" onClick={() => navigate('/products')}>DESCARTAR</Button>
-                    <Button onClick={handleSubmit(onSubmit)} isLoading={isLoading} className="flex-1 lg:flex-none h-14 rounded-2xl px-10 shadow-xl shadow-orange-900/10 font-black italic uppercase tracking-widest gap-2">
+                    <Button onClick={handleSubmit(onSubmit, onFormError)} isLoading={isLoading} className="flex-1 lg:flex-none h-14 rounded-2xl px-10 shadow-xl shadow-orange-900/10 font-black italic uppercase tracking-widest gap-2">
                         <Save size={20} /> {id ? 'SALVAR ALTERAÇÕES' : 'CRIAR PRODUTO'}
                     </Button>
                 </div>
