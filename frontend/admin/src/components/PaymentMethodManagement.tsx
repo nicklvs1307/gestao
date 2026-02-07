@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { PaymentMethod } from '../types';
 import { getPaymentMethods, deletePaymentMethod, updatePaymentMethod } from '../services/api';
-import { Plus, Edit, Trash2, CreditCard, Loader2, AlertCircle, CheckCircle, XCircle, RefreshCw, Wallet, QrCode, Ticket, Landmark } from 'lucide-react';
+import { Plus, Edit, Trash2, CreditCard, Loader2, AlertCircle, CheckCircle, XCircle, RefreshCw, Wallet, QrCode, Ticket, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -59,7 +59,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
       case 'CREDIT_CARD': 
       case 'DEBIT_CARD': return { icon: CreditCard, color: 'text-blue-500 bg-blue-50' };
       case 'VOUCHER': return { icon: Ticket, color: 'text-purple-500 bg-purple-50' };
-      default: return { icon: Landmark, color: 'text-slate-500 bg-slate-50' };
+      default: return { icon: Building2, color: 'text-slate-500 bg-slate-50' };
     }
   };
 

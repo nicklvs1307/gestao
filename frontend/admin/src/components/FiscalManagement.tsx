@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { 
     Upload, FileCheck, ShieldCheck, AlertCircle, CheckCircle, 
-    RefreshCw, History, Settings, FileText, Download, Lock, Loader2, Landmark
+    RefreshCw, History, Settings, FileText, Download, Lock, Loader2, Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -64,7 +64,7 @@ const FiscalManagement: React.FC = () => {
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Módulo Fiscal</h1>
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                        <Landmark size={14} className="text-orange-500" /> Gestão de NFC-e e SEFAZ-MG
+                        <Building2 size={14} className="text-orange-500" /> Gestão de NFC-e e SEFAZ-MG
                     </p>
                 </div>
                 <div className="flex bg-slate-200/50 p-1.5 rounded-2xl gap-1 shadow-inner">

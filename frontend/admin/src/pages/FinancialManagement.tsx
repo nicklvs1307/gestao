@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Wallet, User, Disc, Landmark, Plus, Trash2, Receipt, CreditCard, X, CheckCircle, QrCode, ArrowUpCircle, TrendingUp, TrendingDown, DollarSign, Loader2 } from 'lucide-react';
+import { Wallet, User, Disc, Building2, Plus, Trash2, Receipt, CreditCard, X, CheckCircle, QrCode, ArrowUpCircle, TrendingUp, TrendingDown, DollarSign, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
@@ -142,7 +142,7 @@ const FinancialManagement: React.FC = () => {
                         { id: 'transactions', label: 'Lançamentos', icon: Wallet },
                         { id: 'suppliers', label: 'Fornecedores', icon: User },
                         { id: 'categories', label: 'Categorias', icon: Disc },
-                        { id: 'bank-accounts', label: 'Contas', icon: Landmark }
+                        { id: 'bank-accounts', label: 'Contas', icon: Building2 }
                     ].map(tab => (
                         <button 
                             key={tab.id}
@@ -262,7 +262,7 @@ const FinancialManagement: React.FC = () => {
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-colors shadow-sm">
-                                                    <Landmark size={20} />
+                                                    <Building2 size={20} />
                                                 </div>
                                                 <span className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{b.bankName}</span>
                                             </div>

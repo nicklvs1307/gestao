@@ -7,7 +7,7 @@ import {
     Layers, ClipboardList, Tag, FileText, 
     Clock, MapPin, Users2, Ticket, Calculator,
     Receipt, Warehouse, MoveHorizontal, ShoppingCart,
-    Bell, UserCog, Database, Landmark, ChefHat, ListOrdered, Search, CreditCard, Monitor
+    Bell, UserCog, Database, Building2, ChefHat, ListOrdered, Search, CreditCard, Monitor
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -82,7 +82,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                 { label: "Acerto de Entregadores", path: "/drivers/settlement", icon: Truck },
                 { label: "Acerto de Garçons", path: "/waiters/settlement", icon: Users2 },
                 { label: "Categorias Financeiras", path: "/financial/categories", icon: ListOrdered },
-                { label: "Contas Bancárias", path: "/financial/bank-accounts", icon: Landmark },
+                { label: "Contas Bancárias", path: "/financial/bank-accounts", icon: Building2 },
                 { label: "Fluxo de Caixa", path: "/financial", icon: Wallet },
                 { label: "Formas de Pagamento", path: "/payment-methods", icon: CreditCard },
                 { label: "Fornecedores", path: "/financial/suppliers", icon: Users2 },

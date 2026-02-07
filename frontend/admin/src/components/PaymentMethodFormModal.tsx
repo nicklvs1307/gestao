@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, CreditCard, LayoutDashboard, Truck, Utensils, CheckCircle, Info, ChevronRight, Loader2, DollarSign, Calendar, Percent, XCircle } from 'lucide-react';
+import { X, Save, CreditCard, LayoutDashboard, Truck, Utensils, CheckCircle, Info, ChevronRight, Loader2, DollarSign, Calendar, Percent, XCircle, Building2 } from 'lucide-react';
 import type { PaymentMethod } from '../types';
 import { createPaymentMethod, updatePaymentMethod } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -121,7 +121,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                 {(type !== 'CASH') && (
                     <Card className="p-6 border-blue-100 bg-blue-50/20 space-y-6">
                         <h4 className="text-xs font-black text-blue-900 uppercase italic flex items-center gap-2">
-                            <Landmark size={16} className="text-blue-500" /> Custos de Operação
+                            <Building2 size={16} className="text-blue-500" /> Custos de Operação
                         </h4>
                         <div className="grid grid-cols-2 gap-6">
                             <Input label="Taxa Adm (%)" type="number" step="0.01" value={feePercentage} onChange={e => setFeePercentage(e.target.value)} icon={Percent} />

@@ -38,9 +38,27 @@ class PaymentMethodController {
   async listPublic(req, res) {
     try {
       const { restaurantId } = req.params;
-      const methods = await prisma.paymentMethod.findMany({
+      
+      // Tenta buscar o restaurante primeiro para garantir que temos o ID real (caso enviem o slug)
+      const restaurant = await prisma.restaurant.findFirst({
+        where: {
+          OR: [
+            { id: restaurantId },
+            { slug: restaurantId }
+          ]
+        },
+        select: { id: true }
+      });
+
+      if (!restaurant) {
+        return res.status(404).json({ error: 'Restaurante não encontrado' });
+      }
+
+      const realId = restaurant.id;
+
+      let methods = await prisma.paymentMethod.findMany({
         where: { 
-          restaurantId,
+          restaurantId: realId,
           isActive: true
         },
         select: {
@@ -54,8 +72,40 @@ class PaymentMethodController {
         orderBy: { createdAt: 'asc' }
       });
 
+      // Se for público e não tiver nada, vamos criar os padrões marcados como allowDelivery: true
+      // Isso evita que o checkout do delivery fique travado se o admin nunca configurou
+      if (methods.length === 0) {
+        const defaults = [
+          { name: 'Dinheiro', type: 'CASH', allowDelivery: true, allowPos: true, allowTable: true },
+          { name: 'Pix', type: 'PIX', allowDelivery: true, allowPos: true, allowTable: true },
+          { name: 'Cartão de Crédito', type: 'CREDIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
+          { name: 'Cartão de Débito', type: 'DEBIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
+        ];
+
+        await prisma.paymentMethod.createMany({
+          data: defaults.map(d => ({ ...d, restaurantId: realId }))
+        });
+
+        methods = await prisma.paymentMethod.findMany({
+          where: { 
+            restaurantId: realId,
+            isActive: true
+          },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            allowDelivery: true,
+            allowPos: true,
+            allowTable: true
+          },
+          orderBy: { createdAt: 'asc' }
+        });
+      }
+
       res.json(methods);
     } catch (error) {
+      console.error('Erro ao listar formas de pagamento públicas:', error);
       res.status(500).json({ error: 'Erro ao listar formas de pagamento' });
     }
   }

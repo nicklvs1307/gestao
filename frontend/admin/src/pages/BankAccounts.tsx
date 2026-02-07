@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { 
-    Building2, Plus, Edit2, Trash2, Landmark, 
+    Building2, Plus, Edit2, Trash2, 
     Wallet, DollarSign, ArrowRight, X, CheckCircle,
-    PieChart, TrendingUp, LandmarkIcon
+    PieChart, TrendingUp
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -67,7 +67,7 @@ const BankAccounts: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic flex items-center gap-3">
-                        <Landmark size={32} className="text-primary" /> Contas Bancárias
+                        <Building2 size={32} className="text-primary" /> Contas Bancárias
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 font-medium">Gerencie seus saldos em bancos, caixas e carteiras digitais.</p>
                 </div>

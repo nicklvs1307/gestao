@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, payDriverSettlement } from '../services/api';
 import { 
-  Truck, DollarSign, CreditCard, Landmark, 
+  Truck, DollarSign, CreditCard, Building2, 
   Calendar, RefreshCw, User, Package, Wallet, CheckCircle, ArrowUpRight, TrendingUp, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -154,7 +154,7 @@ const DriverSettlement: React.FC = () => {
                                 {[
                                     { label: 'Dinheiro', val: settlement.cash, icon: Wallet, color: 'emerald' },
                                     { label: 'Cartão', val: settlement.card, icon: CreditCard, color: 'blue' },
-                                    { label: 'PIX', val: settlement.pix, icon: Landmark, color: 'purple' },
+                                    { label: 'PIX', val: settlement.pix, icon: Building2, color: 'purple' },
                                     { label: 'Taxas', val: settlement.deliveryFees, icon: DollarSign, color: 'orange' },
                                 ].map((item, i) => (
                                     <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
