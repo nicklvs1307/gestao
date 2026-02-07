@@ -52,7 +52,10 @@ const ProductManagement: React.FC<{ refetchTrigger: number }> = ({ refetchTrigge
 
   const filteredProducts = useMemo(() => {
     return products
-      .filter(p => categoryFilter === 'all' || p.category.name === categoryFilter)
+      .filter(p => {
+        if (categoryFilter === 'all') return true;
+        return p.categories?.some(cat => cat.name === categoryFilter);
+      })
       .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())));
   }, [products, searchTerm, categoryFilter]);
 

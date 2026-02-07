@@ -214,10 +214,10 @@ const ProductFormPage = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'tamanhos' | 'complementos' | 'composição'>('geral');
     const [isPizza, setIsPizza] = useState(false);
-    const [pizzaConfig, setPizzaConfig] = useState<any>({ maxFlavors: 2, sliceCount: 8, priceRule: 'higher', flavorCategoryId: '', sizes: { 'Grande': { active: true, slices: 8, maxFlavors: 2 }, 'Família': { active: false, slices: 12, maxFlavors: 4 } } });
+    const [pizzaConfig, setPizzaConfig] = useState<any>({ maxFlavors: 2, sliceCount: 8, priceRule: 'higher', flavorCategoryId: '', sizes: { 'Grande': { active: true, maxFlavors: 2 }, 'Média': { active: true, maxFlavors: 2 }, 'Pequena': { active: true, maxFlavors: 1 } } });
     
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<any>({
-        defaultValues: { name: '', description: '', price: 0, imageUrl: '', categoryId: '', isAvailable: true, isFeatured: false, stock: 0, addonGroups: [], sizes: [], ingredients: [], categoryIds: [] }
+        defaultValues: { name: '', description: '', price: 0, imageUrl: '', categoryIds: [], isAvailable: true, isFeatured: false, stock: 0, addonGroups: [], sizes: [], ingredients: [], productionArea: 'Cozinha' }
     });
 
     const { fields: sizeFields, append: appendSize, remove: removeSize } = useFieldArray({ control, name: "sizes" });
@@ -229,19 +229,35 @@ const ProductFormPage = () => {
                 setIsLoading(true);
                 const [cats, ings, library] = await Promise.all([ getCategories(), getIngredients(), addonService.getAll() ]);
                 setCategories(cats); setAvailableIngredients(ings); setLibraryGroups(library);
+                
                 if (id) {
                     const products = await getProducts();
                     const product = products.find((p: any) => p.id === id);
                     if (product) {
-                        reset({ ...product, categoryIds: product.categories?.map((c: any) => c.id) || [product.categoryId], ingredients: product.ingredients?.map((i: any) => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] });
-                        if (product.pizzaConfig) { setIsPizza(true); setPizzaConfig((prev: any) => ({ ...prev, ...product.pizzaConfig, sizes: product.pizzaConfig.sizes || prev.sizes })); }
+                        const initialCategoryIds = product.categories?.map((c: any) => c.id) || (product.categoryId ? [product.categoryId] : []);
+                        reset({ 
+                            ...product, 
+                            categoryIds: initialCategoryIds, 
+                            ingredients: product.ingredients?.map((i: any) => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [] 
+                        });
+                        if (product.pizzaConfig) { 
+                            setIsPizza(true); 
+                            setPizzaConfig((prev: any) => ({ ...prev, ...product.pizzaConfig })); 
+                        }
+                    } else {
+                        toast.error("Produto não encontrado.");
+                        navigate('/products');
                     }
                 }
-            } catch (error) { console.error(error); }
-            finally { setIsLoading(false); }
+            } catch (error) { 
+                console.error(error); 
+                toast.error("Erro ao carregar dados.");
+            } finally { 
+                setIsLoading(false); 
+            }
         };
         loadData();
-    }, [id, reset]);
+    }, [id, reset, navigate]);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]; if (!file) return;
@@ -253,27 +269,41 @@ const ProductFormPage = () => {
     const onSubmit = async (data: any) => {
         setIsLoading(true);
         try {
-            const payload = { ...data, price: Number(data.price), stock: Number(data.stock), addonGroups: data.addonGroups?.map((g: any) => ({ id: g.id })), sizes: data.sizes?.map((s: any) => ({ ...s, price: Number(s.price) })), ingredients: data.ingredients?.filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })), pizzaConfig: isPizza ? pizzaConfig : null };
+            const payload = { 
+                ...data, 
+                price: Number(data.price), 
+                stock: Number(data.stock), 
+                categoryIds: data.categoryIds,
+                addonGroups: data.addonGroups?.map((g: any) => ({ id: g.id })), 
+                sizes: data.sizes?.map((s: any) => ({ ...s, price: Number(s.price) })), 
+                ingredients: data.ingredients?.filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })), 
+                pizzaConfig: isPizza ? pizzaConfig : null 
+            };
             if (id) await updateProduct(id, payload); else await createProduct(payload);
-            toast.success(id ? "Produto atualizado!" : "Produto criado com sucesso!"); navigate('/products');
-        } catch (e) { toast.error("Erro ao salvar produto."); } finally { setIsLoading(false); }
+            toast.success(id ? "Produto atualizado!" : "Produto criado com sucesso!"); 
+            navigate('/products');
+        } catch (e) { 
+            toast.error("Erro ao salvar produto."); 
+        } finally { 
+            setIsLoading(false); 
+        }
     };
 
-    if (isLoading && !watchAllFields.name) return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
+    if (isLoading && !watchAllFields.name && id) return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
             {/* Header Fixo Premium */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-4 border-b border-slate-200">
                 <div className="flex items-center gap-5">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/products')} className="rounded-full bg-white h-12 w-12 shadow-sm"><ArrowLeft size={24}/></Button>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => navigate('/products')} className="rounded-full bg-white h-12 w-12 shadow-sm"><ArrowLeft size={24}/></Button>
                     <div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">{id ? 'Editar Produto' : 'Novo Produto'}</h1>
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mt-2 italic">Configuração Master de Cardápio</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 w-full lg:w-auto">
-                    <Button variant="ghost" className="flex-1 lg:flex-none h-14 rounded-2xl font-black uppercase text-[10px] text-slate-400" onClick={() => navigate('/products')}>DESCARTAR</Button>
+                    <Button variant="ghost" type="button" className="flex-1 lg:flex-none h-14 rounded-2xl font-black uppercase text-[10px] text-slate-400" onClick={() => navigate('/products')}>DESCARTAR</Button>
                     <Button onClick={handleSubmit(onSubmit)} isLoading={isLoading} className="flex-1 lg:flex-none h-14 rounded-2xl px-10 shadow-xl shadow-orange-900/10 font-black italic uppercase tracking-widest gap-2">
                         <Save size={20} /> {id ? 'SALVAR ALTERAÇÕES' : 'CRIAR PRODUTO'}
                     </Button>
@@ -293,7 +323,7 @@ const ProductFormPage = () => {
                             { id: 'complementos', label: 'Opcionais', icon: List },
                             { id: 'composição', label: 'Ficha Técnica', icon: Layers }
                         ].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap px-6", activeTab === tab.id ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-500 hover:text-slate-700")}>
+                            <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap px-6", activeTab === tab.id ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-500 hover:text-slate-700")}>
                                 <tab.icon size={14} /> {tab.label}
                             </button>
                         ))}
@@ -322,11 +352,86 @@ const ProductFormPage = () => {
 
                                 <Card className="p-10 border-slate-200 shadow-xl bg-white space-y-10">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="md:col-span-2"><Input label="Nome Comercial do Produto" {...register('name', { required: true })} required placeholder="Ex: Pizza Margherita Premium" /></div>
+                                        <div className="md:col-span-2">
+                                            <Input label="Nome Comercial do Produto" {...register('name', { required: true })} required placeholder="Ex: Pizza Margherita Premium" />
+                                        </div>
+                                        
+                                        {/* NOVO: SELEÇÃO DE CATEGORIAS (MÚLTIPLA) */}
+                                        <div className="md:col-span-2 space-y-2">
+                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic flex items-center gap-2">
+                                                <Layers size={14} className="text-orange-500" /> Categorias de Exibição
+                                            </label>
+                                            <div className="flex flex-wrap gap-2 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl">
+                                                {categories.map(cat => {
+                                                    const currentIds = watch('categoryIds') || [];
+                                                    const isSelected = currentIds.includes(cat.id);
+                                                    return (
+                                                        <button
+                                                            key={cat.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (isSelected) setValue('categoryIds', currentIds.filter((id: string) => id !== cat.id));
+                                                                else setValue('categoryIds', [...currentIds, cat.id]);
+                                                            }}
+                                                            className={cn(
+                                                                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2",
+                                                                isSelected ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-200" : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
+                                                            )}
+                                                        >
+                                                            {cat.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                                {categories.length === 0 && <p className="text-[10px] font-bold text-slate-400 uppercase p-2">Nenhuma categoria cadastrada.</p>}
+                                            </div>
+                                        </div>
+
                                         <div className="md:col-span-2"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Descrição Gastronômica</label><textarea {...register('description')} rows={3} className="ui-input w-full h-auto py-4 font-bold text-sm italic" placeholder="Descreva os sabores e ingredientes..." /></div>
-                                        <Input label="Preço Base (R$)" type="number" step="0.01" {...register('price', { valueAsNumber: true })} icon={DollarSign} disabled={watch('sizes')?.length > 0} />
-                                        <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Área de Preparo</label><select {...register('productionArea')} className="ui-input w-full h-14 italic uppercase text-xs font-black"><option value="Cozinha">Cozinha Principal</option><option value="Bar">Bar / Bebidas</option><option value="Pizzaria">Pizzaria / Forno</option><option value="Sobremesas">Confeitaria</option></select></div>
+                                        
+                                        <div className="space-y-6 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-50">
+                                            <Input label="Preço Base (R$)" type="number" step="0.01" {...register('price', { valueAsNumber: true })} icon={DollarSign} disabled={watch('sizes')?.length > 0} />
+                                            <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Área de Preparo</label><select {...register('productionArea')} className="ui-input w-full h-14 italic uppercase text-xs font-black"><option value="Cozinha">Cozinha Principal</option><option value="Bar">Bar / Bebidas</option><option value="Pizzaria">Pizzaria / Forno</option><option value="Sobremesas">Confeitaria</option></select></div>
+                                        </div>
+
+                                        {/* CAMPOS FISCAIS (QUE PODEM TER SUMIDO) */}
+                                        <div className="md:col-span-2 space-y-6 pt-6 border-t border-slate-50">
+                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-3 italic"><Settings2 size={14} className="text-blue-500" /> Parâmetros Fiscais & Integração</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <Input label="NCM (8 dígitos)" {...register('ncm')} placeholder="Ex: 21069090" />
+                                                    <Input label="CFOP" {...register('cfop')} placeholder="Ex: 5102" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Unidade</label><select {...register('measureUnit')} className="ui-input w-full h-14 italic uppercase text-xs font-black"><option value="UN">Unidade (UN)</option><option value="KG">Quilo (KG)</option><option value="LT">Litro (LT)</option><option value="DZ">Dúzia (DZ)</option></select></div>
+                                                    <Input label="Cód. Integração" {...register('saiposIntegrationCode')} placeholder="Ex: SKU-123" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    <div className="space-y-6 pt-10 border-t border-slate-50">
+                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-3 italic"><ImageIcon size={14} className="text-orange-500" /> Identidade Visual</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                                            <div className="space-y-4">
+                                                <div className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex items-center justify-center p-6 group hover:border-orange-500 transition-all cursor-pointer overflow-hidden relative" onClick={() => (document.getElementById('img-upload') as any).click()}>
+                                                    {watch('imageUrl') ? <img src={watch('imageUrl')} className="w-full h-full object-contain drop-shadow-xl" alt="" /> : <div className="text-center"><ImageIcon size={48} className="mx-auto text-slate-200 mb-2"/><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Enviar Foto</p></div>}
+                                                    {isUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-orange-500" size={32}/></div>}
+                                                </div>
+                                                <input type="file" id="img-upload" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                                            </div>
+                                            <div className="space-y-6">
+                                                <Input label="URL da Imagem (Opcional)" {...register('imageUrl')} />
+                                                <div className="p-6 bg-slate-900 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+                                                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 blur-3xl rounded-full" />
+                                                    <p className="text-white font-black uppercase italic tracking-tighter text-sm mb-2 relative z-10">Dica Pro</p>
+                                                    <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest leading-relaxed relative z-10">Fotos reais aumentam a conversão em até 40%. Use iluminação natural.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </motion.div>
+                        )}
 
                                     <div className="space-y-6 pt-10 border-t border-slate-50">
                                         <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-3 italic"><ImageIcon size={14} className="text-orange-500" /> Identidade Visual</h4>
