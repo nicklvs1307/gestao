@@ -1,77 +1,43 @@
-root@servergestao:~/gestao# docker ps
-CONTAINER ID   IMAGE                           COMMAND                  CREATED         STATUS                   PORTS                                                                          NAMES
-6423badc9698   cardapio-backend:latest         "docker-entrypoint.sh"   4 minutes ago   Up 4 minutes (healthy)   3001/tcp                                                                       kicardapio_backend.1.jbkh7j036pfpc7vri5sjl69el
-265b5eb634bb   cardapio-admin:latest           "/docker-entrypoint.…"   4 minutes ago   Up 4 minutes             80/tcp                                                                         kicardapio_frontend-admin.1.kp7q0211t5i623ijm5oksvbc1
-aae95db41aa7   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago     Up 2 hours               80/tcp                                                                         kicardapio_frontend-client.1.qnzpomms1sg47o1y8hdqsh0nz
-f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   29 hours ago    Up 29 hours              0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
-30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   4 days ago      Up 4 days                5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
-c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   4 days ago      Up 4 days                8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
-f993feca46ff   portainer/agent:latest          "./agent"                4 days ago      Up 4 days                                                                                               portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
-root@servergestao:~/gestao# docker exec -it 6423badc9698 /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate deploy'
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
-
-29 migrations found in prisma/migrations
-
-
-No pending migrations to apply.
-root@servergestao:~/gestao# docker stop docker exec -it 6423badc9698 /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate deploy'
-unknown shorthand flag: 'i' in -it
-
-Usage:  docker stop [OPTIONS] CONTAINER [CONTAINER...]
-
-Run 'docker stop --help' for more information
-root@servergestao:~/gestao# docker stop 6423badc9698
-docker stop 6423badc9698
-root@servergestao:~/gestao# docker stop 265b5eb634bb aae95db41aa7
-265b5eb634bb
-aae95db41aa7
-root@servergestao:~/gestao# docker ps
-CONTAINER ID   IMAGE                           COMMAND                  CREATED              STATUS                        PORTS                                                                          NAMES
-81b460be6fed   cardapio-admin:latest           "/docker-entrypoint.…"   About a minute ago   Up About a minute             80/tcp                                                                         kicardapio_frontend-admin.1.z5kscjr3m5z42byeyr2s1lp0k
-01c324ff12e8   cardapio-client:latest          "/docker-entrypoint.…"   About a minute ago   Up About a minute             80/tcp                                                                         kicardapio_frontend-client.1.8uv754cwo5zxcxt6pm1so6sgm
-cb917c0fa2be   cardapio-backend:latest         "docker-entrypoint.sh"   About a minute ago   Up About a minute (healthy)   3001/tcp                                                                       kicardapio_backend.1.gh99s40i04rqgvyy1hd4rjok1
-f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   29 hours ago         Up 29 hours                   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
-30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   4 days ago           Up 4 days                     5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
-c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   4 days ago           Up 4 days                     8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
-f993feca46ff   portainer/agent:latest          "./agent"                4 days ago           Up 4 days                                                                                                    portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
-root@servergestao:~/gestao# docker ps
-CONTAINER ID   IMAGE                           COMMAND                  CREATED              STATUS                        PORTS                                                                          NAMES
-81b460be6fed   cardapio-admin:latest           "/docker-entrypoint.…"   About a minute ago   Up About a minute             80/tcp                                                                         kicardapio_frontend-admin.1.z5kscjr3m5z42byeyr2s1lp0k
-01c324ff12e8   cardapio-client:latest          "/docker-entrypoint.…"   About a minute ago   Up About a minute             80/tcp                                                                         kicardapio_frontend-client.1.8uv754cwo5zxcxt6pm1so6sgm
-cb917c0fa2be   cardapio-backend:latest         "docker-entrypoint.sh"   About a minute ago   Up About a minute (healthy)   3001/tcp                                                                       kicardapio_backend.1.gh99s40i04rqgvyy1hd4rjok1
-f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   29 hours ago         Up 29 hours                   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
-30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   4 days ago           Up 4 days                     5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
-c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   4 days ago           Up 4 days                     8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
-f993feca46ff   portainer/agent:latest          "./agent"                4 days ago           Up 4 days                                                                                                    portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
-root@servergestao:~/gestao# docker logs cb917c0fa2be
-Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
-Sincronizando Banco de Dados com o Schema...
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
-
-29 migrations found in prisma/migrations
-
-
-No pending migrations to apply.
-Executando Seed de Permissões...
-Aviso: Seed já executado ou falhou silenciosamente.
-Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
-{"level":"info","message":"Servidor rodando em http://localhost:3001"}
-Erro ao buscar restaurante pelo slug romapizzaria: PrismaClientKnownRequestError:
-Invalid `prisma.restaurant.findFirst()` invocation:
-
-
-The column `Size.globalSizeId` does not exist in the current database.
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async /app/src/routes/deliveryRoutes.js:24:26 {
-  code: 'P2022',
-  meta: { modelName: 'Restaurant', column: 'Size.globalSizeId' },
-  clientVersion: '6.16.3'
-}
-{"level":"error","message":"500 - \nInvalid `prisma.product.findMany()` invocation:\n\n\nThe table `public._AddonGroupToCategory` does not exist in the current database. - /api/products - GET - IP: 10.0.1.202"}
-{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.findMany()` invocation:\n\n\nThe table `public._AddonGroupToCategory` does not exist in the current database.\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:9:22"}
+index-CTzvTImg.js:40 ReferenceError: Maximize2 is not defined
+    at iU (index-CTzvTImg.js:716:29990)
+    at pu (index-CTzvTImg.js:38:17887)
+    at vw (index-CTzvTImg.js:40:45174)
+    at pw (index-CTzvTImg.js:40:40732)
+    at jP (index-CTzvTImg.js:40:40660)
+    at Bm (index-CTzvTImg.js:40:40513)
+    at Dx (index-CTzvTImg.js:40:36766)
+    at dw (index-CTzvTImg.js:40:35708)
+    at F (index-CTzvTImg.js:25:1653)
+    at MessagePort.q (index-CTzvTImg.js:25:2024)
+xx @ index-CTzvTImg.js:40
+D2.v.callback @ index-CTzvTImg.js:40
+no @ index-CTzvTImg.js:38
+ow @ index-CTzvTImg.js:40
+aw @ index-CTzvTImg.js:40
+_P @ index-CTzvTImg.js:40
+LP @ index-CTzvTImg.js:40
+yu @ index-CTzvTImg.js:40
+dw @ index-CTzvTImg.js:40
+F @ index-CTzvTImg.js:25
+q @ index-CTzvTImg.js:25
+index-CTzvTImg.js:716 Uncaught ReferenceError: Maximize2 is not defined
+    at iU (index-CTzvTImg.js:716:29990)
+    at pu (index-CTzvTImg.js:38:17887)
+    at vw (index-CTzvTImg.js:40:45174)
+    at pw (index-CTzvTImg.js:40:40732)
+    at jP (index-CTzvTImg.js:40:40660)
+    at Bm (index-CTzvTImg.js:40:40513)
+    at Dx (index-CTzvTImg.js:40:36766)
+    at dw (index-CTzvTImg.js:40:35708)
+    at F (index-CTzvTImg.js:25:1653)
+    at MessagePort.q (index-CTzvTImg.js:25:2024)
+iU @ index-CTzvTImg.js:716
+pu @ index-CTzvTImg.js:38
+vw @ index-CTzvTImg.js:40
+pw @ index-CTzvTImg.js:40
+jP @ index-CTzvTImg.js:40
+Bm @ index-CTzvTImg.js:40
+Dx @ index-CTzvTImg.js:40
+dw @ index-CTzvTImg.js:40
+F @ index-CTzvTImg.js:25
+q @ index-CTzvTImg.js:25
