@@ -45,6 +45,7 @@ import IngredientManagement from './components/IngredientManagement';
 import CmvAnalysis from './pages/CmvAnalysis';
 import DreManagement from './components/DreManagement';
 import StaffPerformance from './components/StaffPerformance';
+import GlobalSizesPage from './pages/GlobalSizesPage';
 import { Toaster } from 'sonner';
 
 import GlobalModals from './components/GlobalModals';
@@ -164,6 +165,9 @@ const AdminRoutes: React.FC = () => {
       case '/categories':
         setPageTitle('Gestão de Categorias');
         break;
+      case '/global-sizes':
+        setPageTitle('Biblioteca de Tamanhos');
+        break;
       case '/promotions':
         setPageTitle('Gestão de Promoções');
         break;
@@ -264,6 +268,7 @@ const AdminRoutes: React.FC = () => {
           onEditCategoryClick={handleEditCategoryClick}
           refetchTrigger={refetchCategories}
         />} />
+        <Route path="/global-sizes" element={<GlobalSizesPage />} />
         <Route path="/promotions" element={<PromotionManagement 
           onAddPromotionClick={() => setPromotionModalOpen(true)}
           onEditPromotionClick={handleEditPromotionClick}

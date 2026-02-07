@@ -71,6 +71,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
             items: [
                 { label: "Cardápio", path: "/products", icon: Pizza },
                 { label: "Categorias", path: "/categories", icon: Layers },
+                { label: "Tamanhos Globais", path: "/global-sizes", icon: Maximize2 },
                 { label: "Complementos", path: "/addons", icon: ListOrdered },
                 { label: "Promoções", path: "/promotions", icon: Tag },
             ]
