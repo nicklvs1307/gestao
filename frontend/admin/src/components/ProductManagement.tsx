@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Product } from '@/types/index';
-import { getProducts, updateProduct, deleteProduct, getCategories } from '../services/api';
+import { getProducts, updateProduct, deleteProduct } from '../services/api/products';
+import { getCategories } from '../services/api/categories';
 import { Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, RefreshCw, Loader2, Package, Tag, ArrowUpRight, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +10,7 @@ import { getImageUrl } from '../utils/image';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 
-const ProductManagement: React.FC<{ refetchTrigger: number }> = ({ refetchTrigger }) => {
+function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);

@@ -36,7 +36,7 @@ interface SortableRowProps {
   onDelete: (id: string) => void;
 }
 
-const SortableRow = ({ category, onEdit, onDelete }: SortableRowProps) => {
+function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
   const {
     attributes,
     listeners,
@@ -132,7 +132,7 @@ const SortableRow = ({ category, onEdit, onDelete }: SortableRowProps) => {
   );
 };
 
-const CategoryManagement: React.FC<CategoryManagementProps> = ({ onAddCategoryClick, onEditCategoryClick, refetchTrigger }) => {
+function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTrigger }: CategoryManagementProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

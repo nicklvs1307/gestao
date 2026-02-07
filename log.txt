@@ -1,26 +1,43 @@
-index-DDoWKyUH.js:886 Failed to fetch categories ReferenceError: data is not defined
-    at index-DDoWKyUH.js:886:48706
-(anônimo) @ index-DDoWKyUH.js:886
-index-DDoWKyUH.js:40 ReferenceError: Cannot access 'R' before initialization
-    at Cj (index-DDoWKyUH.js:882:56070)
-    at pu (index-DDoWKyUH.js:38:17887)
-    at bw (index-DDoWKyUH.js:40:45174)
-    at mw (index-DDoWKyUH.js:40:40732)
-    at jP (index-DDoWKyUH.js:40:40660)
-    at Bm (index-DDoWKyUH.js:40:40513)
-    at Dx (index-DDoWKyUH.js:40:36766)
-    at uw (index-DDoWKyUH.js:40:35708)
-    at F (index-DDoWKyUH.js:25:1653)
-    at MessagePort.q (index-DDoWKyUH.js:25:2024)
-xx @ index-DDoWKyUH.js:40
-index-DDoWKyUH.js:40 Uncaught ReferenceError: Cannot access 'R' before initialization
-    at Cj (index-DDoWKyUH.js:882:56070)
-    at pu (index-DDoWKyUH.js:38:17887)
-    at bw (index-DDoWKyUH.js:40:45174)
-    at mw (index-DDoWKyUH.js:40:40732)
-    at jP (index-DDoWKyUH.js:40:40660)
-    at Bm (index-DDoWKyUH.js:40:40513)
-    at Dx (index-DDoWKyUH.js:40:36766)
-    at uw (index-DDoWKyUH.js:40:35708)
-    at F (index-DDoWKyUH.js:25:1653)
-    at MessagePort.q (index-DDoWKyUH.js:25:2024)
+index-Duvmjyui.js:40 ReferenceError: Cannot access 'R' before initialization
+    at Cj (index-Duvmjyui.js:882:56070)
+    at pu (index-Duvmjyui.js:38:17887)
+    at bw (index-Duvmjyui.js:40:45174)
+    at mw (index-Duvmjyui.js:40:40732)
+    at jP (index-Duvmjyui.js:40:40660)
+    at Bm (index-Duvmjyui.js:40:40513)
+    at Dx (index-Duvmjyui.js:40:36766)
+    at uw (index-Duvmjyui.js:40:35708)
+    at F (index-Duvmjyui.js:25:1653)
+    at MessagePort.q (index-Duvmjyui.js:25:2024)
+xx @ index-Duvmjyui.js:40
+R2.v.callback @ index-Duvmjyui.js:40
+no @ index-Duvmjyui.js:38
+lw @ index-Duvmjyui.js:40
+ow @ index-Duvmjyui.js:40
+_P @ index-Duvmjyui.js:40
+LP @ index-Duvmjyui.js:40
+yu @ index-Duvmjyui.js:40
+uw @ index-Duvmjyui.js:40
+F @ index-Duvmjyui.js:25
+q @ index-Duvmjyui.js:25
+index-Duvmjyui.js:882 Uncaught ReferenceError: Cannot access 'R' before initialization
+    at Cj (index-Duvmjyui.js:882:56070)
+    at pu (index-Duvmjyui.js:38:17887)
+    at bw (index-Duvmjyui.js:40:45174)
+    at mw (index-Duvmjyui.js:40:40732)
+    at jP (index-Duvmjyui.js:40:40660)
+    at Bm (index-Duvmjyui.js:40:40513)
+    at Dx (index-Duvmjyui.js:40:36766)
+    at uw (index-Duvmjyui.js:40:35708)
+    at F (index-Duvmjyui.js:25:1653)
+    at MessagePort.q (index-Duvmjyui.js:25:2024)
+Cj @ index-Duvmjyui.js:882
+pu @ index-Duvmjyui.js:38
+bw @ index-Duvmjyui.js:40
+mw @ index-Duvmjyui.js:40
+jP @ index-Duvmjyui.js:40
+Bm @ index-Duvmjyui.js:40
+Dx @ index-Duvmjyui.js:40
+uw @ index-Duvmjyui.js:40
+F @ index-Duvmjyui.js:25
+q @ index-Duvmjyui.js:25

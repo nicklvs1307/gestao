@@ -16,7 +16,7 @@ import { Input } from './ui/Input';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 
-const GlobalSizeManagement: React.FC = () => {
+function GlobalSizeManagement() {
   const [sizes, setSizes] = useState<GlobalSize[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<string | null>(null);
