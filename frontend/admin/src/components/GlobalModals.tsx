@@ -36,13 +36,13 @@ interface GlobalModalsProps {
   paymentMethodToEdit: any;
 }
 
-const GlobalModals: React.FC<GlobalModalsProps> = ({
+function GlobalModals({
   isTableModalOpen, closeTableModal, saveTableModal, tableToEdit,
   isCategoryModalOpen, closeCategoryModal, saveCategoryModal, categoryToEdit,
   isPromotionModalOpen, closePromotionModal, savePromotionModal, promotionToEdit,
   isOrderDetailModalOpen, closeOrderDetailModal, orderToView,
   isPaymentMethodModalOpen, closePaymentMethodModal, savePaymentMethodModal, paymentMethodToEdit
-}) => {
+}: GlobalModalsProps) {
   return (
     <>
       <TableFormModal 
@@ -76,6 +76,6 @@ const GlobalModals: React.FC<GlobalModalsProps> = ({
       />
     </>
   );
-};
+}
 
 export default GlobalModals;

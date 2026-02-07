@@ -51,7 +51,7 @@ import { Toaster } from 'sonner';
 import GlobalModals from './components/GlobalModals';
 
 // Componente Wrapper para injetar o layout
-const AdminRoutes: React.FC = () => {
+function AdminRoutes() {
   const [pageTitle, setPageTitle] = useState('Dashboard');
   const location = useLocation();
 
