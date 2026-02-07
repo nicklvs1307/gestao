@@ -7,7 +7,10 @@ import {
     Save, Check, List, DollarSign
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage, globalSizeService, GlobalSize } from '../services/api';
+import { getCategories } from '../services/api/categories';
+import { getProducts, createProduct, updateProduct, uploadProductImage } from '../services/api/products';
+import { getIngredients } from '../services/api/stock';
+import { globalSizeService, GlobalSize } from '../services/api/globalSizes';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
 import type { Category } from '@/types/index';

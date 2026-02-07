@@ -1,23 +1,26 @@
-index-q-IovHbp.js:40 ReferenceError: Cannot access 'R' before initialization
-    at Cj (index-q-IovHbp.js:882:56040)
-    at pu (index-q-IovHbp.js:38:17887)
-    at bw (index-q-IovHbp.js:40:45174)
-    at mw (index-q-IovHbp.js:40:40732)
-    at jP (index-q-IovHbp.js:40:40660)
-    at Bm (index-q-IovHbp.js:40:40513)
-    at Dx (index-q-IovHbp.js:40:36766)
-    at uw (index-q-IovHbp.js:40:35708)
-    at F (index-q-IovHbp.js:25:1653)
-    at MessagePort.q (index-q-IovHbp.js:25:2024)
-xx @ index-q-IovHbp.js:40
-index-q-IovHbp.js:40 Uncaught ReferenceError: Cannot access 'R' before initialization
-    at Cj (index-q-IovHbp.js:882:56040)
-    at pu (index-q-IovHbp.js:38:17887)
-    at bw (index-q-IovHbp.js:40:45174)
-    at mw (index-q-IovHbp.js:40:40732)
-    at jP (index-q-IovHbp.js:40:40660)
-    at Bm (index-q-IovHbp.js:40:40513)
-    at Dx (index-q-IovHbp.js:40:36766)
-    at uw (index-q-IovHbp.js:40:35708)
-    at F (index-q-IovHbp.js:25:1653)
-    at MessagePort.q (index-q-IovHbp.js:25:2024)
+index-DDoWKyUH.js:886 Failed to fetch categories ReferenceError: data is not defined
+    at index-DDoWKyUH.js:886:48706
+(anônimo) @ index-DDoWKyUH.js:886
+index-DDoWKyUH.js:40 ReferenceError: Cannot access 'R' before initialization
+    at Cj (index-DDoWKyUH.js:882:56070)
+    at pu (index-DDoWKyUH.js:38:17887)
+    at bw (index-DDoWKyUH.js:40:45174)
+    at mw (index-DDoWKyUH.js:40:40732)
+    at jP (index-DDoWKyUH.js:40:40660)
+    at Bm (index-DDoWKyUH.js:40:40513)
+    at Dx (index-DDoWKyUH.js:40:36766)
+    at uw (index-DDoWKyUH.js:40:35708)
+    at F (index-DDoWKyUH.js:25:1653)
+    at MessagePort.q (index-DDoWKyUH.js:25:2024)
+xx @ index-DDoWKyUH.js:40
+index-DDoWKyUH.js:40 Uncaught ReferenceError: Cannot access 'R' before initialization
+    at Cj (index-DDoWKyUH.js:882:56070)
+    at pu (index-DDoWKyUH.js:38:17887)
+    at bw (index-DDoWKyUH.js:40:45174)
+    at mw (index-DDoWKyUH.js:40:40732)
+    at jP (index-DDoWKyUH.js:40:40660)
+    at Bm (index-DDoWKyUH.js:40:40513)
+    at Dx (index-DDoWKyUH.js:40:36766)
+    at uw (index-DDoWKyUH.js:40:35708)
+    at F (index-DDoWKyUH.js:25:1653)
+    at MessagePort.q (index-DDoWKyUH.js:25:2024)

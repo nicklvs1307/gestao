@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Category } from '@/types/index';
-import { getCategories, createCategory, updateCategory } from '../services/api';
+import { getCategories, createCategory, updateCategory } from '../services/api/categories';
 import { addonService, AddonGroup } from '../services/api/addonService';
 import { X, Layers, Save, Loader2, ChevronDown, Clock, Calendar, Pizza, Info, Plus, Trash2, List } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -55,9 +55,9 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
           setAvailableAddonGroups(addons);
           if (isEditing && categoryToEdit) {
             // Filtra para evitar auto-referência ou circularidade
-            setAllCategories(data.filter((c: Category) => c.id !== categoryToEdit.id && c.parentId !== categoryToEdit.id));
+            setAllCategories(cats.filter((c: Category) => c.id !== categoryToEdit.id && c.parentId !== categoryToEdit.id));
           } else {
-            setAllCategories(data);
+            setAllCategories(cats);
           }
         } catch (error) {
           console.error("Failed to fetch categories", error);
