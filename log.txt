@@ -1,233 +1,141 @@
-login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) null
-index-C2uG1Gko.js:37 Uncaught ReferenceError: navigate is not defined
-    at onClick (index-C2uG1Gko.js:844:94628)
-    at Object.Bs (index-C2uG1Gko.js:37:9857)
-    at Gi (index-C2uG1Gko.js:37:10017)
-    at Yi (index-C2uG1Gko.js:37:10077)
-    at xc (index-C2uG1Gko.js:37:31505)
-    at bc (index-C2uG1Gko.js:37:31949)
-    at index-C2uG1Gko.js:37:37176
-    at Kx (index-C2uG1Gko.js:40:37796)
-    at Pt (index-C2uG1Gko.js:37:8990)
-    at d (index-C2uG1Gko.js:37:33275)
-index-C2uG1Gko.js:37 Uncaught ReferenceError: navigate is not defined
-    at onClick (index-C2uG1Gko.js:844:94628)
-    at Object.Bs (index-C2uG1Gko.js:37:9857)
-    at Gi (index-C2uG1Gko.js:37:10017)
-    at Yi (index-C2uG1Gko.js:37:10077)
-    at xc (index-C2uG1Gko.js:37:31505)
-    at bc (index-C2uG1Gko.js:37:31949)
-    at index-C2uG1Gko.js:37:37176
-    at Kx (index-C2uG1Gko.js:40:37796)
-    at Pt (index-C2uG1Gko.js:37:8990)
-    at d (index-C2uG1Gko.js:37:33275)
-index-C2uG1Gko.js:37 Uncaught ReferenceError: navigate is not defined
-    at onClick (index-C2uG1Gko.js:844:94628)
-    at Object.Bs (index-C2uG1Gko.js:37:9857)
-    at Gi (index-C2uG1Gko.js:37:10017)
-    at Yi (index-C2uG1Gko.js:37:10077)
-    at xc (index-C2uG1Gko.js:37:31505)
-    at bc (index-C2uG1Gko.js:37:31949)
-    at index-C2uG1Gko.js:37:37176
-    at Kx (index-C2uG1Gko.js:40:37796)
-    at Pt (index-C2uG1Gko.js:37:8990)
-    at d (index-C2uG1Gko.js:37:33275)
-index-C2uG1Gko.js:823 Debug Impressão: Item="Bruschetta Exclusivo" | Categoria="Geral" | Destino="k1"
-index-C2uG1Gko.js:823 Enviando 1 itens para Cozinha: Cozinha 1 (ELGIN i9(USB))
-api/settings:1  Failed to load resource: the server responded with a status of 502 ()
-index-C2uG1Gko.js:671 Erro ao buscar dados da loja AxiosError: Request failed with status code 502
-    at SS (index-C2uG1Gko.js:668:1091)
-    at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
-    at Bd.request (index-C2uG1Gko.js:670:2094)
-    at async Y (index-C2uG1Gko.js:671:98879)
-Y @ index-C2uG1Gko.js:671
-api/tables/requests/pending:1  Failed to load resource: the server responded with a status of 502 ()
-index-C2uG1Gko.js:823 Monitor: Falha ao carregar chamados AxiosError: Request failed with status code 502
-    at SS (index-C2uG1Gko.js:668:1091)
-    at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
-    at Bd.request (index-C2uG1Gko.js:670:2094)
-    at async BS (index-C2uG1Gko.js:671:8822)
-    at async w (index-C2uG1Gko.js:823:14436)
-w @ index-C2uG1Gko.js:823
-api/tables/requests/pending:1  Failed to load resource: the server responded with a status of 502 ()
-index-C2uG1Gko.js:671 AxiosError: Request failed with status code 502
-    at SS (index-C2uG1Gko.js:668:1091)
-    at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
-    at Bd.request (index-C2uG1Gko.js:670:2094)
-    at async BS (index-C2uG1Gko.js:671:8822)
-    at async Promise.all (index 1)
-    at async Y (index-C2uG1Gko.js:671:99076)
-Y @ index-C2uG1Gko.js:671
-api/cashier/status:1  Failed to load resource: the server responded with a status of 502 ()
-api/admin/orders:1  Failed to load resource: the server responded with a status of 502 ()
-api/settings:1  Failed to load resource: the server responded with a status of 502 ()
-index-C2uG1Gko.js:823 Monitor: Falha ao carregar settings AxiosError: Request failed with status code 502
-    at SS (index-C2uG1Gko.js:668:1091)
-    at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
-    at Bd.request (index-C2uG1Gko.js:670:2094)
-    at async tf (index-C2uG1Gko.js:671:7997)
-    at async w (index-C2uG1Gko.js:823:14759)
-w @ index-C2uG1Gko.js:823
-api/admin/orders:1  Failed to load resource: the server responded with a status of 502 ()
-index-C2uG1Gko.js:823 Monitor: Falha ao carregar pedidos AxiosError: Request failed with status code 502
-    at SS (index-C2uG1Gko.js:668:1091)
-    at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
-    at Bd.request (index-C2uG1Gko.js:670:2094)
-    at async X0 (index-C2uG1Gko.js:671:6959)
-    at async w (index-C2uG1Gko.js:823:14888)
-w @ index-C2uG1Gko.js:823
-api/admin/orders:1  Failed to load resource: the server responded with a status of 502 ()
-index-C2uG1Gko.js:844 AxiosError: Request failed with status code 502
-    at SS (index-C2uG1Gko.js:668:1091)
-    at XMLHttpRequest.C (index-C2uG1Gko.js:668:5850)
-    at Bd.request (index-C2uG1Gko.js:670:2094)
-    at async X0 (index-C2uG1Gko.js:671:6959)
-    at async _ (index-C2uG1Gko.js:844:90945)
-_ @ index-C2uG1Gko.js:844
-index-C2uG1Gko.js:40 ReferenceError: Loader2 is not defined
-    at tQ (index-C2uG1Gko.js:855:459517)
-    at dd (index-C2uG1Gko.js:38:17887)
-    at Mx (index-C2uG1Gko.js:40:3163)
-    at Yw (index-C2uG1Gko.js:40:45948)
-    at qw (index-C2uG1Gko.js:40:40732)
-    at vP (index-C2uG1Gko.js:40:40660)
-    at zm (index-C2uG1Gko.js:40:40513)
-    at Yx (index-C2uG1Gko.js:40:36766)
-    at Vw (index-C2uG1Gko.js:40:37578)
-    at U (index-C2uG1Gko.js:38:3267)
-Px @ index-C2uG1Gko.js:40
-index-C2uG1Gko.js:38 Uncaught ReferenceError: Loader2 is not defined
-    at tQ (index-C2uG1Gko.js:855:459517)
-    at dd (index-C2uG1Gko.js:38:17887)
-    at Mx (index-C2uG1Gko.js:40:3163)
-    at Yw (index-C2uG1Gko.js:40:45948)
-    at qw (index-C2uG1Gko.js:40:40732)
-    at vP (index-C2uG1Gko.js:40:40660)
-    at zm (index-C2uG1Gko.js:40:40513)
-    at Yx (index-C2uG1Gko.js:40:36766)
-    at Vw (index-C2uG1Gko.js:40:37578)
-    at U (index-C2uG1Gko.js:38:3267)
+login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"k71zg2zqn" class=​"
+          flex h-12 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm ring-offset-white 
+          file:​border-0 file:​bg-transparent file:​text-sm file:​font-medium 
+          placeholder:​text-slate-400 focus:​border-primary focus:​outline-none focus:​ring-4 focus:​ring-primary/​10
+          disabled:​cursor-not-allowed disabled:​opacity-50 transition-all font-medium text-slate-900
+          
+          h-14
+        " type=​"password" required icon=​"[object Object]​" placeholder=​"••••••••" value>​flex
+index-Cr49r5zA.js:40 ReferenceError: DollarSign is not defined
+    at xj (index-Cr49r5zA.js:847:62973)
+    at cu (index-Cr49r5zA.js:38:17887)
+    at cw (index-Cr49r5zA.js:40:45174)
+    at rw (index-Cr49r5zA.js:40:40732)
+    at yP (index-Cr49r5zA.js:40:40660)
+    at Em (index-Cr49r5zA.js:40:40513)
+    at Cx (index-Cr49r5zA.js:40:36766)
+    at tw (index-Cr49r5zA.js:40:35708)
+    at z (index-Cr49r5zA.js:25:1653)
+    at MessagePort.q (index-Cr49r5zA.js:25:2024)
+ux @ index-Cr49r5zA.js:40
+v.callback @ index-Cr49r5zA.js:40
+to @ index-Cr49r5zA.js:38
+J2 @ index-Cr49r5zA.js:40
+X2 @ index-Cr49r5zA.js:40
+xP @ index-Cr49r5zA.js:40
+_P @ index-Cr49r5zA.js:40
+mu @ index-Cr49r5zA.js:40
+tw @ index-Cr49r5zA.js:40
+z @ index-Cr49r5zA.js:25
+q @ index-Cr49r5zA.js:25
+index-Cr49r5zA.js:847 Uncaught ReferenceError: DollarSign is not defined
+    at xj (index-Cr49r5zA.js:847:62973)
+    at cu (index-Cr49r5zA.js:38:17887)
+    at cw (index-Cr49r5zA.js:40:45174)
+    at rw (index-Cr49r5zA.js:40:40732)
+    at yP (index-Cr49r5zA.js:40:40660)
+    at Em (index-Cr49r5zA.js:40:40513)
+    at Cx (index-Cr49r5zA.js:40:36766)
+    at tw (index-Cr49r5zA.js:40:35708)
+    at z (index-Cr49r5zA.js:25:1653)
+    at MessagePort.q (index-Cr49r5zA.js:25:2024)
+xj @ index-Cr49r5zA.js:847
+cu @ index-Cr49r5zA.js:38
+cw @ index-Cr49r5zA.js:40
+rw @ index-Cr49r5zA.js:40
+yP @ index-Cr49r5zA.js:40
+Em @ index-Cr49r5zA.js:40
+Cx @ index-Cr49r5zA.js:40
+tw @ index-Cr49r5zA.js:40
+z @ index-Cr49r5zA.js:25
+q @ index-Cr49r5zA.js:25
 
 
-index-9bgYO3wF.js:832 Domain Debug: {hostname: 'hamburgueria.towersfy.com', detectedSlug: 'hamburgueria', finalSlug: 'hamburgueria'}
-via.placeholder.com/800x450.png?text=Fundo+do+Cardapio:1  GET https://via.placeholder.com/800x450.png?text=Fundo+do+Cardapio net::ERR_NAME_NOT_RESOLVED
-Image
-$0 @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-na @ index-9bgYO3wF.js:48
-W0 @ index-9bgYO3wF.js:48
-Ey @ index-9bgYO3wF.js:48
-Sy @ index-9bgYO3wF.js:48
-hy @ index-9bgYO3wF.js:48
-dy @ index-9bgYO3wF.js:48
-jy @ index-9bgYO3wF.js:48
-J @ index-9bgYO3wF.js:25
-index-9bgYO3wF.js:62  POST https://hamburgueria.towersfy.com/api/delivery/restaurants/clgq0v1y00000t3d8b4e6f2g1/delivery-orders 502 (Bad Gateway)
-(anônimo) @ index-9bgYO3wF.js:62
-xhr @ index-9bgYO3wF.js:62
-$v @ index-9bgYO3wF.js:64
-_request @ index-9bgYO3wF.js:65
-request @ index-9bgYO3wF.js:64
-(anônimo) @ index-9bgYO3wF.js:65
-(anônimo) @ index-9bgYO3wF.js:60
-lN @ index-9bgYO3wF.js:65
-Se @ index-9bgYO3wF.js:832
-fe @ index-9bgYO3wF.js:255
-zy @ index-9bgYO3wF.js:48
-(anônimo) @ index-9bgYO3wF.js:48
-Up @ index-9bgYO3wF.js:48
-od @ index-9bgYO3wF.js:48
-wd @ index-9bgYO3wF.js:49
-$k @ index-9bgYO3wF.js:49
-
-
-/app/src/controllers/OrderController.js:11
-    const validatedData = CreateDeliveryOrderSchema.parse(req.body);
-                                                    ^
-
-ZodError: [
-  {
-    "expected": "string",
-    "code": "invalid_type",
-    "path": [
-      "deliveryInfo",
-      "customerName"
-    ],
-    "message": "Invalid input: expected string, received undefined"
-  },
-  {
-    "expected": "string",
-    "code": "invalid_type",
-    "path": [
-      "deliveryInfo",
-      "customerPhone"
-    ],
-    "message": "Invalid input: expected string, received undefined"
-  },
-  {
-    "expected": "object",
-    "code": "invalid_type",
-    "path": [
-      "deliveryInfo",
-      "address"
-    ],
-    "message": "Invalid input: expected object, received string"
-  },
-  {
-    "origin": "string",
-    "code": "too_small",
-    "minimum": 1,
-    "inclusive": true,
-    "path": [
-      "deliveryInfo",
-      "paymentMethod"
-    ],
-    "message": "Forma de pagamento obrigatória"
-  }
-]
-    at /app/src/controllers/OrderController.js:11:53
-    at OrderController.createDeliveryOrder (/app/src/middlewares/asyncHandler.js:2:19)
-    at /app/src/routes/deliveryRoutes.js:90:103
-    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)
-    at next (/app/node_modules/router/lib/route.js:157:13)
-    at optionalAuth (/app/src/routes/deliveryRoutes.js:17:9)
-    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)
-    at next (/app/node_modules/router/lib/route.js:157:13)
-    at Route.dispatch (/app/node_modules/router/lib/route.js:117:3)
-    at handle (/app/node_modules/router/index.js:435:11)
-
-Node.js v20.20.0
+index-Cr49r5zA.js:40 ReferenceError: handleCoverChange is not defined
+    at Ij (index-Cr49r5zA.js:859:62654)
+    at cu (index-Cr49r5zA.js:38:17887)
+    at hx (index-Cr49r5zA.js:40:3163)
+    at cw (index-Cr49r5zA.js:40:45948)
+    at rw (index-Cr49r5zA.js:40:40732)
+    at yP (index-Cr49r5zA.js:40:40660)
+    at Em (index-Cr49r5zA.js:40:40513)
+    at Cx (index-Cr49r5zA.js:40:36766)
+    at tw (index-Cr49r5zA.js:40:35708)
+    at z (index-Cr49r5zA.js:25:1653)
+ux @ index-Cr49r5zA.js:40
+v.callback @ index-Cr49r5zA.js:40
+to @ index-Cr49r5zA.js:38
+J2 @ index-Cr49r5zA.js:40
+X2 @ index-Cr49r5zA.js:40
+xP @ index-Cr49r5zA.js:40
+_P @ index-Cr49r5zA.js:40
+mu @ index-Cr49r5zA.js:40
+tw @ index-Cr49r5zA.js:40
+z @ index-Cr49r5zA.js:25
+q @ index-Cr49r5zA.js:25
+index-Cr49r5zA.js:859 Uncaught ReferenceError: handleCoverChange is not defined
+    at Ij (index-Cr49r5zA.js:859:62654)
+    at cu (index-Cr49r5zA.js:38:17887)
+    at hx (index-Cr49r5zA.js:40:3163)
+    at cw (index-Cr49r5zA.js:40:45948)
+    at rw (index-Cr49r5zA.js:40:40732)
+    at yP (index-Cr49r5zA.js:40:40660)
+    at Em (index-Cr49r5zA.js:40:40513)
+    at Cx (index-Cr49r5zA.js:40:36766)
+    at tw (index-Cr49r5zA.js:40:35708)
+    at z (index-Cr49r5zA.js:25:1653)
+Ij @ index-Cr49r5zA.js:859
+cu @ index-Cr49r5zA.js:38
+hx @ index-Cr49r5zA.js:40
+cw @ index-Cr49r5zA.js:40
+rw @ index-Cr49r5zA.js:40
+yP @ index-Cr49r5zA.js:40
+Em @ index-Cr49r5zA.js:40
+Cx @ index-Cr49r5zA.js:40
+tw @ index-Cr49r5zA.js:40
+z @ index-Cr49r5zA.js:25
+q @ index-Cr49r5zA.js:25
+index-Cr49r5zA.js:40 ReferenceError: handleCoverChange is not defined
+    at Ij (index-Cr49r5zA.js:859:62654)
+    at cu (index-Cr49r5zA.js:38:17887)
+    at hx (index-Cr49r5zA.js:40:3163)
+    at cw (index-Cr49r5zA.js:40:45948)
+    at rw (index-Cr49r5zA.js:40:40732)
+    at yP (index-Cr49r5zA.js:40:40660)
+    at Em (index-Cr49r5zA.js:40:40513)
+    at Cx (index-Cr49r5zA.js:40:36766)
+    at tw (index-Cr49r5zA.js:40:35708)
+    at z (index-Cr49r5zA.js:25:1653)
+ux @ index-Cr49r5zA.js:40
+v.callback @ index-Cr49r5zA.js:40
+to @ index-Cr49r5zA.js:38
+J2 @ index-Cr49r5zA.js:40
+X2 @ index-Cr49r5zA.js:40
+xP @ index-Cr49r5zA.js:40
+_P @ index-Cr49r5zA.js:40
+mu @ index-Cr49r5zA.js:40
+tw @ index-Cr49r5zA.js:40
+z @ index-Cr49r5zA.js:25
+q @ index-Cr49r5zA.js:25
+index-Cr49r5zA.js:859 Uncaught ReferenceError: handleCoverChange is not defined
+    at Ij (index-Cr49r5zA.js:859:62654)
+    at cu (index-Cr49r5zA.js:38:17887)
+    at hx (index-Cr49r5zA.js:40:3163)
+    at cw (index-Cr49r5zA.js:40:45948)
+    at rw (index-Cr49r5zA.js:40:40732)
+    at yP (index-Cr49r5zA.js:40:40660)
+    at Em (index-Cr49r5zA.js:40:40513)
+    at Cx (index-Cr49r5zA.js:40:36766)
+    at tw (index-Cr49r5zA.js:40:35708)
+    at z (index-Cr49r5zA.js:25:1653)
+Ij @ index-Cr49r5zA.js:859
+cu @ index-Cr49r5zA.js:38
+hx @ index-Cr49r5zA.js:40
+cw @ index-Cr49r5zA.js:40
+rw @ index-Cr49r5zA.js:40
+yP @ index-Cr49r5zA.js:40
+Em @ index-Cr49r5zA.js:40
+Cx @ index-Cr49r5zA.js:40
+tw @ index-Cr49r5zA.js:40
+z @ index-Cr49r5zA.js:25
+q @ index-Cr49r5zA.js:25

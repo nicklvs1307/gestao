@@ -19,6 +19,15 @@ export const uploadLogo = async (file: File) => {
   return response.data;
 };
 
+export const uploadCover = async (file: File) => {
+  const formData = new FormData();
+  formData.append('cover', file);
+  const response = await apiClient.post('/settings/cover', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
 export const toggleStoreStatus = async (isOpen: boolean) => {
     const response = await apiClient.put('/settings/status', { isOpen });
     return response.data;

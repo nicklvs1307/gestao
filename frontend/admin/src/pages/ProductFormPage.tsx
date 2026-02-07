@@ -4,11 +4,12 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { 
     ArrowLeft, Plus, Trash2, CloudUpload, ChevronDown, ChevronUp, CheckCircle, Pizza, 
     Layers, Info, Settings2, Loader2, Image as ImageIcon, Smartphone, Package, Target, 
-    Save, X, Check, Eye, List
+    Save, X, Check, Eye, List, DollarSign
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage, getSettings } from '../services/api';
-import { addonService, AddonGroup } from '../services/api/addonService';
+import { addonService } from '../services/api/addonService';
+import type { AddonGroup } from '../services/api/addonService';
 import type { Product, Category } from '@/types/index';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';

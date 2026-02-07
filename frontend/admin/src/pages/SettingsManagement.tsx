@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getSettings, updateSettings, getCategories, uploadLogo, checkSlugAvailability } from '../services/api';
+import { getSettings, updateSettings, getCategories, uploadLogo, uploadCover, checkSlugAvailability } from '../services/api';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printing';
 import ReceiptPreview from "../components/ReceiptPreview";
 import { 
   Save, Copy, ExternalLink, Palette, Store, 
   Clock, MapPin, Phone, Link as LinkIcon, Image as ImageIcon,
   CheckCircle, Loader2, Printer as PrinterIcon, RefreshCw, AlertTriangle, LayoutTemplate, Plus, Trash2,
-  XCircle, Smartphone, MousePointer2, CreditCard
+  XCircle, Smartphone, MousePointer2, CreditCard, DollarSign
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -176,6 +176,18 @@ const SettingsManagement: React.FC = () => {
       setLogoUrl(`/api${newUrl}`);
       toast.success('Logo atualizada!');
     } catch (e) { toast.error('Falha no upload.'); }
+    finally { setIsSaving(false); }
+  };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsSaving(true);
+      const { coverUrl: newUrl } = await uploadCover(file);
+      setBackgroundImageUrl(`/api${newUrl}`);
+      toast.success('Capa atualizada!');
+    } catch (e) { toast.error('Falha no upload da capa.'); }
     finally { setIsSaving(false); }
   };
 

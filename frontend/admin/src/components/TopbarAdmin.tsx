@@ -80,7 +80,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                     variant="ghost" 
                     size="icon" 
                     onClick={onMenuClick} 
-                    className="lg:hidden bg-slate-50 border-slate-100"
+                    className="bg-slate-50 border-slate-100"
                 >
                     <Menu size={20} />
                 </Button>

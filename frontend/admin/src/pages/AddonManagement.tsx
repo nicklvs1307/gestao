@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { addonService, AddonGroup, Addon } from '../services/api/addonService';
+import { addonService } from '../services/api/addonService';
+import type { AddonGroup, Addon } from '../services/api/addonService';
 import { getIngredients } from '../services/api';
 import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, GripVertical, Loader2, List, Settings, CheckCircle, Info, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,7 +12,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  type DragEndEvent
 } from '@dnd-kit/core';
 import {
   arrayMove,

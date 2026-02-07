@@ -7,7 +7,7 @@ import {
     Layers, ClipboardList, Tag, FileText, 
     Clock, MapPin, Users2, Ticket, Calculator,
     Receipt, Warehouse, MoveHorizontal, ShoppingCart,
-    Bell, UserCog, Database, Landmark, ChefHat, ListOrdered, Search, CreditCard
+    Bell, UserCog, Database, Landmark, ChefHat, ListOrdered, Search, CreditCard, Monitor
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -72,6 +72,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                 { label: "Cardápio", path: "/products", icon: Pizza },
                 { label: "Categorias", path: "/categories", icon: Layers },
                 { label: "Complementos", path: "/addons", icon: ListOrdered },
+                { label: "Promoções", path: "/promotions", icon: Tag },
             ]
         },
         {
@@ -87,6 +88,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                 { label: "Fornecedores", path: "/financial/suppliers", icon: Users2 },
                 { label: "Frentes de Caixa", path: "/cashier", icon: Calculator },
                 { label: "Lançamentos Financeiros", path: "/financial/entries", icon: Receipt },
+                { label: "Fiscal (NFC-e)", path: "/fiscal", icon: Monitor },
             ]
         },
         {
