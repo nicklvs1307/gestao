@@ -65,6 +65,7 @@ class PaymentMethodController {
           id: true,
           name: true,
           type: true,
+          isActive: true,
           allowDelivery: true,
           allowPos: true,
           allowTable: true
@@ -95,6 +96,7 @@ class PaymentMethodController {
             id: true,
             name: true,
             type: true,
+            isActive: true,
             allowDelivery: true,
             allowPos: true,
             allowTable: true

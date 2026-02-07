@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { IMaskInput } from 'react-imask';
 import { 
   CreditCard, ShoppingBag, 
-  ChevronRight, ArrowLeft, CheckCircle2, Truck, Info, Search, User, Package
+  ChevronRight, ArrowLeft, CheckCircle2, Truck, Info, Search, User, Package, MapPin, Loader2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { LocationService } from '../services/LocationService';
 import { getPaymentMethods } from '../services/api';
+import { useRestaurant } from '../context/RestaurantContext'; // Adicionado
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
@@ -37,6 +36,7 @@ interface DeliveryCheckoutProps {
 
 const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, total, deliveryFee, restaurantId }) => {
   const { localCartItems } = useLocalCart();
+  const { restaurantSettings } = useRestaurant(); // Acesso ao contexto
   const [step, setStep] = useState<'form' | 'review'>('form');
   
   // Tenta carregar dados salvos do localStorage para agilizar a compra
@@ -59,20 +59,30 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
   const [statesList, setStatesList] = useState<{sigla: string, nome: string}[]>([]);
   const [citiesList, setCitiesList] = useState<{nome: string}[]>([]);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   // Carregar meios de pagamento e estados
   useEffect(() => {
     LocationService.getStates().then(setStatesList);
-    if (restaurantId) {
-        getPaymentMethods(restaurantId).then(methods => {
-            const filtered = methods.filter((m: any) => m.isActive && m.allowDelivery);
+    
+    // Tenta carregar usando restaurantId ou o slug do contexto como fallback
+    const targetId = restaurantId || restaurantSettings?.restaurant?.slug || restaurantSettings?.restaurantId;
+    
+    if (targetId) {
+        getPaymentMethods(targetId).then(methods => {
+            // O backend já filtra por isActive: true, então filtramos apenas por allowDelivery
+            const filtered = methods.filter((m: any) => m.allowDelivery);
             setAvailableMethods(filtered);
-            if (filtered.length > 0 && !paymentMethod) {
-                setPaymentMethod(filtered[0].name);
+            
+            if (filtered.length > 0) {
+                // Se já temos um método salvo que existe na lista, mantém ele. Senão, pega o primeiro.
+                if (!paymentMethod || !filtered.find(f => f.name === paymentMethod)) {
+                    setPaymentMethod(filtered[0].name);
+                }
             }
-        });
+        }).catch(err => console.error('Erro API Pagamentos:', err));
     }
-  }, [restaurantId]);
+  }, [restaurantId, restaurantSettings]);
 
   // Carregar cidades quando o estado muda
   useEffect(() => {
@@ -83,32 +93,49 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
     }
   }, [state]);
 
-  // Buscar endereço pelo CEP
-  const handleCepBlur = async () => {
-    if (cep.replace(/\D/g, '').length === 8) {
-      setIsLoadingCep(true);
-      const data = await LocationService.getAddressByCep(cep);
-      setIsLoadingCep(false);
-      
-      if (data) {
-        setStreet(data.logradouro || '');
-        setNeighborhood(data.bairro || '');
-        setState(data.uf || '');
-        setCity(data.localidade || '');
-      }
+  // Função para usar Geolocalização
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      return alert('Seu navegador não suporta geolocalização.');
     }
-  };
 
-  const validateAndNext = () => {
-    if (!name.trim()) return alert('Por favor, informe seu nome.');
-    if (phone.length < 10) return alert('Por favor, informe um WhatsApp válido.');
-    
-    if (deliveryType === 'delivery') {
-        if (!cep.replace(/\D/g, '')) return alert('Informe o CEP.');
-        if (!street.trim() || !number.trim()) return alert('Preencha o endereço completo.');
-        if (!city || !state) return alert('Selecione a cidade e o estado.');
-    }
-    setStep('review');
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          // Aqui usamos o Google Maps ou um serviço similar via LocationService
+          // Se o seu LocationService não tiver, podemos usar a API do Google diretamente ou Nominatim
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+          const data = await response.json();
+          
+          if (data && data.address) {
+            const addr = data.address;
+            setStreet(addr.road || '');
+            setNeighborhood(addr.suburb || addr.neighbourhood || addr.city_district || '');
+            setCity(addr.city || addr.town || addr.village || '');
+            setState(addr.state_code || ''); // Alguns retornam código, outros nome
+            
+            if (addr.postcode) {
+              setCep(addr.postcode.replace(/\D/g, ''));
+            }
+            
+            toast.success('Localização preenchida!');
+          }
+        } catch (error) {
+          console.error('Erro ao obter endereço:', error);
+          alert('Não foi possível obter seu endereço pela localização.');
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.error('Erro GPS:', error);
+        setIsLocating(false);
+        alert('Permissão de localização negada ou GPS desligado.');
+      },
+      { enableHighAccuracy: true }
+    );
   };
 
   const handleFinalSubmit = () => {
@@ -186,19 +213,36 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
 
                     {deliveryType === 'delivery' && (
                         <div className="space-y-4 pt-2">
-                            {/* CEP */}
-                            <div className="relative">
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">CEP</label>
+                            {/* CEP e Localização */}
+                            <div className="space-y-3">
                                 <div className="relative">
-                                  <IMaskInput
-                                      mask="00000-000" placeholder="00000-000"
-                                      className="flex h-12 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium text-slate-900"
-                                      value={cep} 
-                                      onAccept={(v) => setCep(String(v))}
-                                      onBlur={handleCepBlur}
-                                  />
-                                  {isLoadingCep && <div className="absolute right-4 top-3 text-primary animate-spin"><Search size={18} /></div>}
+                                    <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">CEP</label>
+                                    <div className="relative">
+                                      <IMaskInput
+                                          mask="00000-000" placeholder="00000-000"
+                                          className="flex h-12 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium text-slate-900"
+                                          value={cep} 
+                                          onAccept={(v) => setCep(String(v))}
+                                          onBlur={handleCepBlur}
+                                      />
+                                      {isLoadingCep && <div className="absolute right-4 top-3 text-primary animate-spin"><Search size={18} /></div>}
+                                    </div>
                                 </div>
+
+                                <Button 
+                                    type="button"
+                                    variant="outline" 
+                                    fullWidth 
+                                    className="h-12 rounded-xl border-dashed border-2 border-slate-200 text-slate-500 hover:border-primary hover:text-primary hover:bg-primary/5 gap-2 text-[10px] font-black uppercase tracking-widest"
+                                    onClick={handleUseMyLocation}
+                                    disabled={isLocating}
+                                >
+                                    {isLocating ? (
+                                        <> <Loader2 size={16} className="animate-spin" /> Localizando... </>
+                                    ) : (
+                                        <> <MapPin size={16} /> Usar minha localização </>
+                                    )}
+                                </Button>
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
