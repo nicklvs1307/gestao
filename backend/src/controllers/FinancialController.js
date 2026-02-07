@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 const FinancialService = require('../services/FinancialService');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { CreateTransactionSchema, TransferSchema, SupplierSchema } = require('../schemas/FinancialSchema');
+const { CreateTransactionSchema, TransferSchema, SupplierSchema } = require('../schemas/financialSchema');
 
 class FinancialController {
 

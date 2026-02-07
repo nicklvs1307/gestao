@@ -1,6 +1,6 @@
 const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { IngredientSchema } = require('../schemas/InventorySchema');
+const { IngredientSchema } = require('../schemas/inventorySchema');
 
 class IngredientController {
   

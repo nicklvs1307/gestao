@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 const InventoryService = require('../services/InventoryService');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { ProductionSchema, SaveRecipeSchema } = require('../schemas/InventorySchema');
+const { ProductionSchema, SaveRecipeSchema } = require('../schemas/inventorySchema');
 
 class ProductionController {
     

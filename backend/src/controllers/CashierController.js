@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 const CashierService = require('../services/CashierService');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { OpenCashierSchema, CloseCashierSchema, CashierTransactionSchema } = require('../schemas/CashierSchema');
+const { OpenCashierSchema, CloseCashierSchema, CashierTransactionSchema } = require('../schemas/cashierSchema');
 
 class CashierController {
 

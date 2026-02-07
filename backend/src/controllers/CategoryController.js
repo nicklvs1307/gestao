@@ -1,6 +1,6 @@
 const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { CreateCategorySchema, UpdateCategorySchema, ReorderCategoriesSchema } = require('../schemas/CategorySchema');
+const { CreateCategorySchema, UpdateCategorySchema, ReorderCategoriesSchema } = require('../schemas/categorySchema');
 
 class CategoryController {
   
