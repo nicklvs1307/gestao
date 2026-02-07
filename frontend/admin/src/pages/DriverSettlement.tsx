@@ -1,36 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import { api, payDriverSettlement } from '../services/api';
 import { 
   Truck, DollarSign, CreditCard, Landmark, 
-  Calendar, RefreshCw, ChevronRight, User, Package, Wallet, CheckCircle
+  Calendar, RefreshCw, User, Package, Wallet, CheckCircle, ArrowUpRight, TrendingUp, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 
-// ... (interface)
+interface SettlementData {
+    driverId: string;
+    driverName: string;
+    totalOrders: number;
+    cash: number;
+    card: number;
+    pix: number;
+    deliveryFees: number;
+    totalToPay: number;
+    storeNet: number;
+}
 
 const DriverSettlement: React.FC = () => {
-    // ... (state)
-
-    const handlePaySettlement = async (settlement: SettlementData) => {
-        if(!confirm(`Confirmar acerto de R$ ${settlement.totalToPay.toFixed(2)} com ${settlement.driverName}?`)) return;
-
-        try {
-            await payDriverSettlement({
-                driverName: settlement.driverName,
-                amount: settlement.totalToPay,
-                date: date,
-                driverId: settlement.driverId // Envia o ID para vincular o usuário
-            });
-            toast.success(`Acerto de ${settlement.driverName} registrado com sucesso!`);
-            fetchSettlement();
-        } catch (error) {
-            toast.error("Erro ao registrar acerto.");
-        }
-    };
     const [data, setData] = useState<SettlementData[]>([]);
     const [loading, setLoading] = useState(false);
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -42,8 +34,26 @@ const DriverSettlement: React.FC = () => {
             setData(res.data);
         } catch (e) {
             console.error(e);
+            toast.error("Erro ao carregar acertos.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePaySettlement = async (settlement: SettlementData) => {
+        if(!confirm(`Confirmar acerto de R$ ${settlement.totalToPay.toFixed(2)} com ${settlement.driverName}?`)) return;
+
+        try {
+            await payDriverSettlement({
+                driverName: settlement.driverName,
+                amount: settlement.totalToPay,
+                date: date,
+                driverId: settlement.driverId
+            });
+            toast.success(`Acerto de ${settlement.driverName} registrado!`);
+            fetchSettlement();
+        } catch (error) {
+            toast.error("Erro ao registrar acerto.");
         }
     };
 
@@ -55,132 +65,136 @@ const DriverSettlement: React.FC = () => {
     const totalStoreNet = data.reduce((acc, curr) => acc + curr.storeNet, 0);
 
     return (
-        <div className="space-y-5 animate-in fade-in duration-500 bg-background text-foreground min-h-full">
-            {/* Header com Filtro */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ui-card p-4">
+        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+            {/* Header Premium */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <h2 className="text-xl font-black text-foreground tracking-tighter italic uppercase flex items-center gap-2">
-                        <Truck className="text-primary" size={24} /> Acertos
-                    </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-none mt-1">Acertos de motoboys e diárias.</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Acerto de Entregas</h1>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                        <Truck size={14} className="text-orange-500" /> Prestação de Contas Logística
+                    </p>
                 </div>
                 
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:flex-initial">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <Calendar size={16} className="text-orange-500" />
                         <input 
                             type="date" 
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="ui-input pl-10 h-10 w-full"
+                            className="bg-transparent border-none font-black text-[10px] uppercase outline-none text-slate-600"
                         />
                     </div>
-                    <button 
-                        onClick={fetchSettlement}
-                        className="ui-button-secondary h-10 px-3"
-                    >
-                        <RefreshCw size={18} className={cn(loading && "animate-spin")} />
-                    </button>
+                    <Button variant="outline" size="icon" className="bg-white rounded-xl h-11 w-11" onClick={fetchSettlement}>
+                        <RefreshCw size={18} className={cn(loading && "animate-spin text-orange-500")} />
+                    </Button>
                 </div>
             </div>
 
-            {/* Resumo Geral do Dia */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden group">
-                    <div className="absolute -right-4 -top-4 text-white/5 group-hover:scale-110 transition-transform">
-                        <DollarSign size={80} />
+            {/* Dashboards de Resumo Financeiro */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-8 border-slate-100 bg-slate-900 text-white relative overflow-hidden group shadow-2xl">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
+                    <div className="flex justify-between items-start mb-6 relative z-10">
+                        <div className="w-12 h-12 bg-white text-slate-900 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <Truck size={24} />
+                        </div>
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest border border-orange-500/30 px-2 py-1 rounded-md italic">Custo Logístico</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 leading-none">Total Diárias/Taxas</p>
-                    <h3 className="text-2xl font-black text-orange-400 tracking-tighter italic">
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 relative z-10 italic">Total Diárias/Taxas a Pagar</p>
+                    <h3 className="text-4xl font-black text-white tracking-tighter italic relative z-10">
                         R$ {totalToPayToDrivers.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </h3>
-                </div>
+                </Card>
 
-                <div className="ui-card p-5 border border-border flex flex-col justify-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 leading-none">Saldo Líquido Loja</p>
-                    <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter italic">
+                <Card className="p-8 border-emerald-100 bg-emerald-50/20 group hover:bg-white transition-all shadow-xl">
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100 group-hover:scale-110 transition-transform">
+                            <TrendingUp size={24} />
+                        </div>
+                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border border-emerald-500/30 px-2 py-1 rounded-md italic">Resultado</span>
+                    </div>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 italic">Saldo Líquido Loja (Delivery)</p>
+                    <h3 className="text-4xl font-black text-emerald-600 tracking-tighter italic">
                         R$ {totalStoreNet.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </h3>
-                </div>
+                </Card>
             </div>
 
-            {/* Lista por Entregador */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {data.length > 0 ? data.map((settlement, idx) => (
-                    <div key={idx} className="ui-card overflow-hidden hover:shadow-md transition-all">
-                        <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center text-slate-400 border border-border">
-                                    <User size={20} />
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-foreground uppercase italic tracking-tight">{settlement.driverName}</h4>
-                                    <span className="text-[9px] font-bold text-orange-600 uppercase tracking-widest flex items-center gap-1">
-                                        <Package size={10} /> {settlement.totalOrders} Entregas
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">A Pagar</p>
-                                <p className="text-lg font-black text-orange-600 dark:text-orange-400 tracking-tight italic">R$ {settlement.totalToPay.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                            </div>
-                        </div>
-
-                        <div className="p-4 grid grid-cols-2 gap-4 border-b border-border/50">
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><Wallet size={12} /></div>
+            {/* Listagem por Entregador */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {loading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <Card key={i} className="p-8 animate-pulse bg-slate-50/50 border-slate-100 min-h-[300px]" />
+                    ))
+                ) : data.length > 0 ? data.map((settlement, idx) => (
+                    <Card key={idx} className="p-0 overflow-hidden border-2 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-2xl bg-white" noPadding>
+                        <div className="p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center shadow-inner group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
+                                        <User size={24} />
+                                    </div>
                                     <div>
-                                        <p className="text-[8px] font-black text-slate-400 uppercase leading-none">Dinheiro</p>
-                                        <p className="text-xs font-bold text-foreground italic">R$ {settlement.cash.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                        <h4 className="font-black text-lg text-slate-900 uppercase italic tracking-tighter leading-none">{settlement.driverName}</h4>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <span className="text-[8px] font-black uppercase tracking-widest bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded border border-orange-100 flex items-center gap-1">
+                                                <Package size={10} /> {settlement.totalOrders} Entregas
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center"><CreditCard size={12} /></div>
-                                    <div>
-                                        <p className="text-[8px] font-black text-slate-400 uppercase leading-none">Cartão</p>
-                                        <p className="text-xs font-bold text-foreground italic">R$ {settlement.card.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                                    </div>
+                                <div className="text-right">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">A Repassar</p>
+                                    <p className="text-xl font-black text-orange-600 italic tracking-tighter leading-none">R$ {settlement.totalToPay.toFixed(2).replace('.', ',')}</p>
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-md bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 flex items-center justify-center"><Landmark size={12} /></div>
-                                    <div>
-                                        <p className="text-[8px] font-black text-slate-400 uppercase leading-none">PIX</p>
-                                        <p className="text-xs font-bold text-foreground italic">R$ {settlement.pix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: 'Dinheiro', val: settlement.cash, icon: Wallet, color: 'emerald' },
+                                    { label: 'Cartão', val: settlement.card, icon: CreditCard, color: 'blue' },
+                                    { label: 'PIX', val: settlement.pix, icon: Landmark, color: 'purple' },
+                                    { label: 'Taxas', val: settlement.deliveryFees, icon: DollarSign, color: 'orange' },
+                                ].map((item, i) => (
+                                    <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
+                                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-white border border-slate-100", `text-${item.color}-500`)}>
+                                            <item.icon size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase leading-none mb-1">{item.label}</p>
+                                            <p className="text-xs font-black text-slate-700 italic">R$ {item.val.toFixed(2)}</p>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
+                            </div>
+
+                            <div className="bg-slate-900 rounded-[1.5rem] p-4 flex items-center justify-between border border-white/5 shadow-xl">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-md bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 flex items-center justify-center"><DollarSign size={12} /></div>
-                                    <div>
-                                        <p className="text-[8px] font-black text-slate-400 uppercase leading-none">Taxas</p>
-                                        <p className="text-xs font-bold text-foreground italic">R$ {settlement.deliveryFees.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                                    </div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Saldo Líquido Loja</span>
                                 </div>
+                                <span className={cn("text-base font-black italic tracking-tighter", settlement.storeNet >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                                    R$ {settlement.storeNet.toFixed(2).replace('.', ',')}
+                                </span>
                             </div>
                         </div>
                         
-                        <div className="p-4 space-y-2">
-                            <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-3 flex items-center justify-between border border-border/50">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">Líquido p/ Loja</span>
-                                <span className={cn("text-sm font-black italic", settlement.storeNet >= 0 ? "text-emerald-400" : "text-red-400")}>
-                                    R$ {settlement.storeNet.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                </span>
-                            </div>
-                            <button 
+                        <div className="px-6 pb-6 pt-2">
+                            <Button 
+                                fullWidth 
+                                variant="secondary"
+                                className="h-12 rounded-xl text-[10px] font-black uppercase tracking-widest italic gap-2 border-slate-200"
                                 onClick={() => handlePaySettlement(settlement)}
-                                className="w-full ui-button-primary h-10 text-[9px] uppercase tracking-widest italic"
                             >
-                                <CheckCircle size={14} className="text-emerald-400" /> Confirmar Acerto
-                            </button>
+                                <CheckCircle size={16} className="text-emerald-500" /> CONFIRMAR ACERTO
+                            </Button>
                         </div>
-                    </div>
+                    </Card>
                 )) : (
-                    <div className="lg:col-span-2 ui-card p-12 flex flex-col items-center justify-center text-center bg-muted/10 border-dashed">
-                        <Package size={32} className="text-slate-300 mb-4 opacity-20" />
-                        <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Sem entregas finalizadas</h3>
+                    <div className="lg:col-span-full py-24 flex flex-col items-center justify-center text-center opacity-20">
+                        <Truck size={64} strokeWidth={1} className="text-slate-300 mb-4" />
+                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] italic">Nenhuma entrega finalizada para esta data</h3>
                     </div>
                 )}
             </div>
