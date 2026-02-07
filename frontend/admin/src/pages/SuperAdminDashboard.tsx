@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Store, Briefcase, Shield, X, Check, BarChart3, DollarSign, Settings } from 'lucide-react';
+import { Plus, Store, Briefcase, Shield, X, Check, BarChart3, DollarSign, Settings, Users, Key, Calendar, RefreshCw, ChevronRight, LayoutDashboard, Loader2, ArrowUpRight, Target, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const SuperAdminDashboard: React.FC = () => {
     const { token, user } = useAuth();
@@ -27,25 +31,14 @@ const SuperAdminDashboard: React.FC = () => {
 
     // Form States
     const [formData, setFormData] = useState({
-        franchiseName: '',
-        franchiseSlug: '',
-        restaurantName: '',
-        restaurantSlug: '',
-        restaurantFranchiseId: '',
-        restaurantPlan: 'FREE',
-        restaurantExpiresAt: '',
-        adminName: '',
-        adminEmail: '',
-        adminPassword: '',
-        roleName: '',
-        roleDescription: '',
-        selectedPermissions: [] as string[],
-        editPlan: '',
-        editStatus: '',
-        editExpiresAt: ''
+        franchiseName: '', franchiseSlug: '', restaurantName: '', restaurantSlug: '',
+        restaurantFranchiseId: '', restaurantPlan: 'FREE', restaurantExpiresAt: '',
+        adminName: '', adminEmail: '', adminPassword: '', roleName: '', roleDescription: '',
+        selectedPermissions: [] as string[], editPlan: '', editStatus: '', editExpiresAt: ''
     });
 
     const fetchData = async () => {
+        setLoading(true);
         try {
             const [fRes, rRes, pRes, rolesRes] = await Promise.all([
                 api.get('/super-admin/franchises'),
@@ -57,83 +50,11 @@ const SuperAdminDashboard: React.FC = () => {
             setRestaurants(rRes.data);
             setPermissions(pRes.data);
             setRoles(rolesRes.data);
-        } catch (error) {
-            console.error("Erro ao buscar dados", error);
-            toast.error("Erro ao carregar dados.");
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { toast.error("Erro ao sincronizar dados globais."); }
+        finally { setLoading(false); }
     };
 
     useEffect(() => { fetchData(); }, [token]);
-
-    const handleCreateFranchise = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await api.post('/super-admin/franchises', {
-                name: formData.franchiseName,
-                slug: formData.franchiseSlug
-            });
-            toast.success("Franquia criada com sucesso!");
-            setIsFranchiseModalOpen(false);
-            fetchData();
-        } catch (error) {
-            toast.error("Erro ao criar franquia.");
-        }
-    };
-
-    const handleCreateRestaurant = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await api.post('/super-admin/restaurants', {
-                name: formData.restaurantName,
-                slug: formData.restaurantSlug,
-                franchiseId: formData.restaurantFranchiseId || null,
-                plan: formData.restaurantPlan,
-                expiresAt: formData.restaurantExpiresAt,
-                adminName: formData.adminName,
-                adminEmail: formData.adminEmail,
-                adminPassword: formData.adminPassword
-            });
-            toast.success("Loja e Administrador criados com sucesso!");
-            setIsRestaurantModalOpen(false);
-            fetchData();
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || "Erro ao criar loja.");
-        }
-    };
-
-    const handleCreateRole = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await api.post('/super-admin/roles', {
-                name: formData.roleName,
-                description: formData.roleDescription,
-                permissionIds: formData.selectedPermissions
-            });
-            toast.success("Cargo criado com sucesso!");
-            setIsRoleModalOpen(false);
-            fetchData();
-        } catch (error) {
-            toast.error("Erro ao criar cargo.");
-        }
-    };
-
-    const handleUpdatePlan = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await api.patch(`/super-admin/restaurants/${selectedStore.id}/subscription`, {
-                plan: formData.editPlan,
-                status: formData.editStatus,
-                expiresAt: formData.editExpiresAt
-            });
-            toast.success("Assinatura atualizada!");
-            setIsPlanModalOpen(false);
-            fetchData();
-        } catch (error) {
-            toast.error("Erro ao atualizar plano.");
-        }
-    };
 
     const togglePermission = (id: string) => {
         setFormData(prev => ({
@@ -144,403 +65,237 @@ const SuperAdminDashboard: React.FC = () => {
         }));
     };
 
-    if (loading) return <div className="p-10 text-center font-bold">Carregando painel...</div>;
+    if (loading && franchises.length === 0) return (
+        <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Autenticando Nível Mestre...</span>
+        </div>
+    );
 
     const renderContent = () => {
         switch (activeTab) {
             case 'subscriptions':
                 return (
-                    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col min-h-[500px]">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-2">
-                                <DollarSign className="text-emerald-500" /> Gestão de Assinaturas
-                            </h2>
+                    <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white animate-in fade-in duration-500">
+                        <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                            <div><h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><DollarSign size={24} className="text-emerald-500" /> Gestão de Receita SaaS</h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Status de faturamento das unidades</p></div>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-400">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50/50">
                                     <tr>
-                                        <th className="px-6 py-4">Loja</th>
-                                        <th className="px-6 py-4">Plano</th>
-                                        <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4">Expiração</th>
-                                        <th className="px-6 py-4 text-right">Ação</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Loja / Cliente</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Plano Ativo</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Status de Conta</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Próx. Vencimento</th>
+                                        <th className="px-8 py-4 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Gerenciar</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-50">
                                     {restaurants.map(r => (
-                                        <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-slate-700">{r.name}</td>
-                                            <td className="px-6 py-4">
-                                                <span className="text-[10px] font-black px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">{r.plan}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={cn(
-                                                    "text-[10px] font-black px-2 py-1 rounded-lg border",
-                                                    r.status === 'ACTIVE' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-red-50 text-red-600 border-red-100"
-                                                )}>{r.status}</span>
-                                            </td>
-                                            <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                                                {r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : 'Vitalício'}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedStore(r);
-                                                        setFormData({...formData, editPlan: r.plan, editStatus: r.status, editExpiresAt: r.expiresAt?.split('T')[0] || ''});
-                                                        setIsPlanModalOpen(true);
-                                                    }}
-                                                    className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all"
-                                                >
-                                                    <Settings size={16} className="text-slate-400" />
-                                                </button>
-                                            </td>
+                                        <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
+                                            <td className="px-8 py-5 font-black text-xs text-slate-900 uppercase italic">{r.name}</td>
+                                            <td className="px-8 py-5"><span className="text-[9px] font-black px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 shadow-sm">{r.plan}</span></td>
+                                            <td className="px-8 py-5"><span className={cn("text-[9px] font-black px-2 py-1 rounded-lg border shadow-sm", r.status === 'ACTIVE' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-rose-50 text-rose-600 border-rose-100")}>{r.status}</span></td>
+                                            <td className="px-8 py-5 text-[10px] font-bold text-slate-500 italic uppercase">{r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : 'VITALÍCIO'}</td>
+                                            <td className="px-8 py-5 text-right"><Button variant="ghost" size="icon" className="bg-slate-100 text-slate-400 hover:text-orange-600 rounded-xl" onClick={() => { setSelectedStore(r); setFormData({...formData, editPlan: r.plan, editStatus: r.status, editExpiresAt: r.expiresAt?.split('T')[0] || ''}); setIsPlanModalOpen(true); }}><Settings size={16} /></Button></td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </Card>
                 );
             case 'franchises':
                 return (
-                    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col min-h-[500px]">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-2">
-                                <Briefcase className="text-yellow-500" /> Gerenciar Franquias
-                            </h2>
-                            <button onClick={() => setIsFranchiseModalOpen(true)} className="bg-yellow-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">+ Nova Franquia</button>
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Briefcase size={24} className="text-orange-500" /> Redes de Franquias</h2>
+                            <Button onClick={() => setIsFranchiseModalOpen(true)} className="rounded-xl px-6 italic"><Plus size={18} /> NOVA REDE</Button>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {franchises.map(f => (
-                                <div key={f.id} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 group hover:border-yellow-500 transition-all">
-                                    <h3 className="font-black text-lg text-slate-900 italic uppercase tracking-tighter mb-2">{f.name}</h3>
-                                    <p className="text-xs text-slate-400 font-bold uppercase mb-4 tracking-widest">{f.slug}</p>
-                                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
-                                        <span>Lojas: {f._count.restaurants}</span>
-                                        <span>Usuários: {f._count.users}</span>
+                                <Card key={f.id} className="p-8 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-2xl group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-slate-100 opacity-20 -mr-12 -mt-12 rounded-full" />
+                                    <h3 className="font-black text-xl text-slate-900 italic uppercase tracking-tighter mb-2 leading-none">{f.name}</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">SLUG: {f.slug}</p>
+                                    <div className="flex justify-between items-center pt-6 border-t border-slate-50">
+                                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-400 uppercase">Unidades</span><span className="text-sm font-black italic text-orange-600">{f._count.restaurants}</span></div>
+                                        <div className="flex flex-col text-right"><span className="text-[8px] font-black text-slate-400 uppercase">Usuários</span><span className="text-sm font-black italic text-slate-900">{f._count.users}</span></div>
                                     </div>
-                                </div>
+                                </Card>
                             ))}
                         </div>
                     </div>
                 );
             case 'restaurants':
-            case 'my-restaurants':
-                const displayRestaurants = activeTab === 'my-restaurants' 
-                    ? restaurants.filter(r => r.franchiseId === user?.franchiseId)
-                    : restaurants;
                 return (
-                    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col min-h-[500px]">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-2">
-                                <Store className="text-blue-500" /> {activeTab === 'my-restaurants' ? 'Minhas Lojas' : 'Gerenciar Lojas'}
-                            </h2>
-                            {activeTab === 'restaurants' && (
-                                <button onClick={() => setIsRestaurantModalOpen(true)} className="bg-blue-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">+ Nova Loja</button>
-                            )}
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Store size={24} className="text-blue-500" /> Portfólio de Lojas</h2>
+                            <Button onClick={() => setIsRestaurantModalOpen(true)} className="rounded-xl px-6 italic"><Plus size={18} /> NOVO ONBOARDING</Button>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {displayRestaurants.map(r => {
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {restaurants.map(r => {
                                 const isCurrent = localStorage.getItem('selectedRestaurantId') === r.id;
                                 return (
-                                    <div key={r.id} className={cn(
-                                        "p-6 rounded-[2rem] border transition-all relative overflow-hidden",
-                                        isCurrent ? "bg-blue-50 border-blue-500 shadow-md" : "bg-slate-50 border-slate-100 group hover:border-blue-500"
-                                    )}>
-                                        <h3 className="font-black text-lg text-slate-900 italic uppercase tracking-tighter mb-2">{r.name}</h3>
-                                        <p className="text-xs text-slate-400 font-bold uppercase mb-2 tracking-widest">Franquia: {r.franchise?.name || 'Independente'}</p>
-                                        <p className="text-[10px] font-black uppercase text-slate-500 mb-4">Plano: <span className="text-blue-600">{r.plan}</span></p>
-                                        
-                                        <button 
-                                            onClick={() => {
-                                                localStorage.setItem('selectedRestaurantId', r.id);
-                                                toast.success(`Contexto alterado para: ${r.name}`);
-                                                navigate('/dashboard');
-                                            }} 
-                                            className={cn(
-                                                "w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                                isCurrent ? "bg-blue-600 text-white" : "bg-white text-blue-600 border border-blue-100 hover:bg-blue-600 hover:text-white"
-                                            )}
+                                    <Card key={r.id} className={cn("p-8 border-2 transition-all duration-300 group hover:shadow-2xl relative overflow-hidden flex flex-col justify-between", isCurrent ? "border-blue-500 bg-blue-50/30 shadow-blue-900/10" : "border-slate-100 bg-white")}>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-6">
+                                                <h3 className="font-black text-xl text-slate-900 italic uppercase tracking-tighter leading-none pr-4">{r.name}</h3>
+                                                <span className={cn("text-[8px] font-black px-2 py-0.5 rounded border shadow-sm tracking-widest", r.plan === 'DIAMOND' ? "bg-slate-900 text-white border-slate-900" : "bg-blue-50 text-blue-600 border-blue-100")}>{r.plan}</span>
+                                            </div>
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-8">FRANQUIA: <b className="text-slate-600">{r.franchise?.name || 'INDEPENDENTE'}</b></p>
+                                        </div>
+                                        <Button 
+                                            fullWidth 
+                                            variant={isCurrent ? "primary" : "outline"}
+                                            onClick={() => { localStorage.setItem('selectedRestaurantId', r.id); toast.success(`Contexto: ${r.name}`); navigate('/dashboard'); }}
+                                            className={cn("h-11 rounded-xl text-[10px] font-black uppercase italic tracking-widest gap-2", isCurrent ? "bg-blue-600 shadow-blue-900/20" : "bg-white text-blue-600 border-blue-100")}
                                         >
-                                            {isCurrent ? 'Gerenciando Agora' : 'Gerenciar Loja'}
-                                        </button>
-                                    </div>
+                                            {isCurrent ? <CheckCircle size={14}/> : <Settings size={14}/>}
+                                            {isCurrent ? 'GERENCIANDO AGORA' : 'ACESSAR PAINEL'}
+                                        </Button>
+                                    </Card>
                                 );
                             })}
                         </div>
                     </div>
                 );
-            case 'permissions':
-                return (
-                    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col min-h-[500px]">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-2">
-                                <Shield className="text-purple-500" /> Cargos e Permissões
-                            </h2>
-                            <button onClick={() => setIsRoleModalOpen(true)} className="bg-purple-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">+ Novo Cargo</button>
-                        </div>
-                        <div className="space-y-3">
-                            {roles.map(role => (
-                                <div key={role.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
-                                    <div>
-                                        <h3 className="font-black text-slate-900 uppercase italic tracking-tighter">{role.name}</h3>
-                                        <p className="text-xs text-slate-500 font-medium">{role.description || 'Sem descrição'}</p>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        {role.permissions?.slice(0, 3).map((p: any) => (
-                                            <span key={p.id} className="text-[8px] font-black uppercase px-2 py-0.5 bg-white border rounded">{p.name}</span>
-                                        ))}
-                                        {role.permissions?.length > 3 && <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-white border rounded">+{role.permissions.length - 3}</span>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            case 'reports':
-                return (
-                    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col min-h-[500px] items-center justify-center text-center">
-                        <BarChart3 size={64} className="text-slate-200 mb-4" />
-                        <h2 className="text-xl font-black italic uppercase tracking-tighter text-slate-400">Relatórios Consolidados</h2>
-                        <p className="text-slate-400 font-medium max-w-xs">Em breve: Visão Geral de faturamento e desempenho de toda a rede.</p>
-                    </div>
-                );
             default:
                 return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[
-                            { label: 'Franquias', count: franchises.length, icon: Briefcase, color: 'text-yellow-500', bg: 'bg-yellow-50', path: '/super-admin/franchises' },
-                            { label: 'Lojas', count: restaurants.length, icon: Store, color: 'text-blue-500', bg: 'bg-blue-50', path: '/super-admin/restaurants' },
-                            { label: 'Assinaturas Ativas', count: restaurants.filter(r => r.status === 'ACTIVE').length, icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-50', path: '/super-admin/subscriptions' },
-                            { label: 'Cargos Criados', count: roles.length, icon: Shield, color: 'text-purple-500', bg: 'bg-purple-50', path: '/super-admin/permissions' },
-                        ].map((stat, idx) => (
-                            <div key={idx} onClick={() => navigate(stat.path)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center group hover:shadow-xl transition-all cursor-pointer">
-                                <div className={cn("w-16 h-16 rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform", stat.bg, stat.color)}>
-                                    <stat.icon size={32} />
+                    <div className="space-y-10 animate-in fade-in duration-700">
+                        {/* KPIs Globais */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {[
+                                { label: 'Total Franquias', count: franchises.length, icon: Briefcase, color: 'orange', path: '/super-admin/franchises' },
+                                { label: 'Lojas Ativas', count: restaurants.length, icon: Store, color: 'blue', path: '/super-admin/restaurants' },
+                                { label: 'Contratos Ativos', count: restaurants.filter(r => r.status === 'ACTIVE').length, icon: DollarSign, color: 'emerald', path: '/super-admin/subscriptions' },
+                                { label: 'Cargos Criados', count: roles.length, icon: ShieldCheck, color: 'purple', path: '/super-admin/permissions' },
+                            ].map((stat, idx) => (
+                                <Card key={idx} onClick={() => navigate(stat.path)} className="p-8 border-slate-100 shadow-sm flex flex-col items-center text-center group hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer bg-white">
+                                    <div className={cn("w-16 h-16 rounded-3xl flex items-center justify-center mb-6 shadow-lg transition-transform group-hover:scale-110", `bg-${stat.color}-500 text-white shadow-${stat.color}-100`)}>
+                                        <stat.icon size={32} />
+                                    </div>
+                                    <h2 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-2 leading-none">{stat.label}</h2>
+                                    <p className="text-4xl font-black italic text-slate-900 tracking-tighter leading-none">{stat.count}</p>
+                                    <div className="mt-6 pt-6 border-t border-slate-50 w-full flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><span className="text-[8px] font-black uppercase text-orange-500 tracking-widest italic">Ver Detalhes</span><ChevronRight size={10} className="text-orange-500"/></div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        {/* Visão de Performance da Plataforma */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <Card className="lg:col-span-8 p-10 bg-slate-900 text-white relative overflow-hidden shadow-2xl">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] -translate-y-1/2 translate-x-1/2" />
+                                <div className="relative z-10 space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <div><h3 className="text-2xl font-black italic uppercase tracking-tighter">Crescimento da Rede</h3><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Volume de novas unidades por período</p></div>
+                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-orange-500"><Target size={32}/></div>
+                                    </div>
+                                    <div className="h-[250px] w-full flex items-center justify-center border-2 border-dashed border-white/5 rounded-[2rem] bg-black/20 opacity-30"><p className="text-[10px] font-black uppercase tracking-[0.3em]">Gráfico de Escalabilidade (Em Breve)</p></div>
                                 </div>
-                                <h2 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-1">{stat.label}</h2>
-                                <p className="text-3xl font-black italic text-slate-900 leading-none">{stat.count}</p>
-                            </div>
-                        ))}
+                            </Card>
+                            <Card className="lg:col-span-4 p-10 border-slate-100 bg-white shadow-xl space-y-8">
+                                <h3 className="text-sm font-black uppercase italic tracking-tighter text-slate-900 border-b border-slate-50 pb-4">Acesso Direto</h3>
+                                <div className="space-y-3">
+                                    {[
+                                        { label: 'Monitor de Infraestrutura', icon: RefreshCw },
+                                        { label: 'Logs de Segurança', icon: Key },
+                                        { label: 'Gestão de Usuários Globais', icon: Users },
+                                        { label: 'Configurações de Planos', icon: Settings }
+                                    ].map((item, i) => (
+                                        <button key={i} className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-orange-500/20 group transition-all text-left">
+                                            <div className="flex items-center gap-3"><item.icon size={18} className="text-slate-400 group-hover:text-orange-500 transition-colors"/><span className="text-[10px] font-black uppercase text-slate-600 group-hover:text-slate-900">{item.label}</span></div>
+                                            <ChevronRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
                     </div>
                 );
         }
     };
 
     return (
-        <div className="p-6 space-y-6 animate-in fade-in duration-500">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-10 animate-in fade-in duration-500 pb-20">
+            {/* Header Mestre Super Admin */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 border-b border-slate-200 pb-8">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 italic uppercase tracking-tighter">
-                        {activeTab === 'super-admin' ? 'Painel Super Admin' : 
-                         activeTab === 'franchises' ? 'Gestão de Franquias' :
-                         activeTab === 'restaurants' ? 'Gestão de Lojas' :
-                         activeTab === 'subscriptions' ? 'Gestão de Assinaturas' :
-                         activeTab === 'permissions' ? 'Cargos & Permissões' : 'Painel'}
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
+                        {activeTab === 'super-admin' ? 'Controle Mestre' : activeTab === 'franchises' ? 'Rede de Franquias' : activeTab === 'restaurants' ? 'Portfólio de Lojas' : activeTab === 'subscriptions' ? 'Gestão Financeira SaaS' : 'Painel'}
                     </h1>
-                    <p className="text-slate-500 font-medium">Controle total do ecossistema.</p>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.3em] mt-3 flex items-center gap-2"><ShieldCheck size={16} className="text-orange-500" /> Administrador Global do Sistema</p>
                 </div>
                 
-                {user?.isSuperAdmin && (
-                    <div className="flex bg-slate-100 p-1 rounded-2xl">
-                        {[
-                            { id: 'super-admin', label: 'Início', icon: Shield },
-                            { id: 'franchises', label: 'Franquias', icon: Briefcase },
-                            { id: 'restaurants', label: 'Lojas', icon: Store },
-                            { id: 'subscriptions', label: 'Assinaturas', icon: DollarSign },
-                            { id: 'permissions', label: 'Cargos', icon: Shield },
-                        ].map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => navigate(tab.id === 'super-admin' ? '/super-admin' : `/super-admin/${tab.id}`)}
-                                className={cn(
-                                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-                                    activeTab === tab.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                )}
-                            >
-                                <tab.icon size={14} /> {tab.label}
-                            </button>
-                        ))}
+                <div className="flex bg-slate-200/50 p-1.5 rounded-[1.5rem] gap-1 shadow-inner overflow-x-auto no-scrollbar max-w-full">
+                    {[
+                        { id: 'super-admin', label: 'Dashboard', icon: LayoutDashboard },
+                        { id: 'franchises', label: 'Franquias', icon: Briefcase },
+                        { id: 'restaurants', label: 'Unidades', icon: Store },
+                        { id: 'subscriptions', label: 'Contratos', icon: DollarSign },
+                        { id: 'permissions', label: 'Segurança', icon: Shield },
+                    ].map(tab => (
+                        <button key={tab.id} onClick={() => navigate(tab.id === 'super-admin' ? '/super-admin' : `/super-admin/${tab.id}`)} className={cn("px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all whitespace-nowrap", activeTab === tab.id ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-500 hover:text-slate-700")}>
+                            <tab.icon size={14} /> {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            
+            <main className="mt-10">{renderContent()}</main>
+
+            {/* MODAIS SUPER ADMIN PREMIUM */}
+            <AnimatePresence>
+                {/* Modal Franquia */}
+                {isFranchiseModalOpen && (
+                    <div className="ui-modal-overlay">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
+                            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-4"><div className="bg-orange-500 text-white p-3 rounded-2xl shadow-xl shadow-orange-100"><Briefcase size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Nova Franquia</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Estrutura de Rede</p></div></div>
+                                <Button variant="ghost" size="icon" onClick={() => setIsFranchiseModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleCreateFranchise} className="p-10 space-y-6 bg-slate-50/30">
+                                <Input label="Nome da Rede" required value={formData.franchiseName} onChange={e => setFormData({...formData, franchiseName: e.target.value})} placeholder="Ex: Roma Pizzaria Group"/>
+                                <Input label="Slug / Subdomínio" required value={formData.franchiseSlug} onChange={e => setFormData({...formData, franchiseSlug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} placeholder="ex: roma-group"/>
+                                <div className="pt-6"><Button fullWidth size="lg" className="h-14 rounded-2xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200">CRIAR ESTRUTURA</Button></div>
+                            </form>
+                        </motion.div>
                     </div>
                 )}
-            </header>
-            
-            <div className="mt-8">
-                {renderContent()}
-            </div>
 
-            {/* Modais */}
-            {isFranchiseModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black italic uppercase tracking-tighter">Nova Franquia</h3>
-                            <button onClick={() => setIsFranchiseModalOpen(false)} className="p-2 bg-slate-100 rounded-full"><X size={20}/></button>
-                        </div>
-                        <form onSubmit={handleCreateFranchise} className="space-y-4">
-                            <div>
-                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nome da Franquia</label>
-                                <input required className="ui-input w-full" value={formData.franchiseName} onChange={e => setFormData({...formData, franchiseName: e.target.value})}/>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Slug (URL amigável)</label>
-                                <input required className="ui-input w-full" value={formData.franchiseSlug} onChange={e => setFormData({...formData, franchiseSlug: e.target.value.toLowerCase().replace(/\s+/g, '-')})}/>
-                            </div>
-                            <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs mt-4">Criar Franquia</button>
-                        </form>
+                {/* Modal Loja (Onboarding) */}
+                {isRestaurantModalOpen && (
+                    <div className="ui-modal-overlay">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-3xl overflow-hidden flex flex-col">
+                            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-4"><div className="bg-blue-600 text-white p-3 rounded-2xl shadow-xl shadow-blue-100"><Store size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Onboarding Unidade</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Provisionamento de Loja e Admin</p></div></div>
+                                <Button variant="ghost" size="icon" onClick={() => setIsRestaurantModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleCreateRestaurant} className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-10">
+                                <div className="space-y-6"><h4 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-100 pb-4"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Dados da Operação</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <Input label="Nome da Unidade" required value={formData.restaurantName} onChange={e => setFormData({...formData, restaurantName: e.target.value})} placeholder="Ex: Unidade Shopping Centro"/>
+                                        <Input label="Slug / Identificador" required value={formData.restaurantSlug} onChange={e => setFormData({...formData, restaurantSlug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} placeholder="unidade-centro"/>
+                                        <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Plano do Contrato</label><select className="ui-input w-full h-12" value={formData.restaurantPlan} onChange={e => setFormData({...formData, restaurantPlan: e.target.value})}><option value="FREE">FREE (Limitado)</option><option value="SILVER">SILVER (Standard)</option><option value="GOLD">GOLD (Premium)</option><option value="DIAMOND">DIAMOND (Unlimited)</option></select></div>
+                                        <Input label="Validade Contratual" type="date" value={formData.restaurantExpiresAt} onChange={e => setFormData({...formData, restaurantExpiresAt: e.target.value})}/>
+                                        <div className="md:col-span-2 space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Franquia Vinculada (Opcional)</label><select className="ui-input w-full h-12" value={formData.restaurantFranchiseId} onChange={e => setFormData({...formData, restaurantFranchiseId: e.target.value})}><option value="">LOJA INDEPENDENTE</option>{franchises.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
+                                    </div>
+                                </div>
+                                <div className="space-y-6 pt-4"><h4 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-100 pb-4"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Usuário Mestre (Proprietário)</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="md:col-span-2"><Input label="Nome Completo do Admin" required value={formData.adminName} onChange={e => setFormData({...formData, adminName: e.target.value})} placeholder="Gerente ou Dono"/></div>
+                                        <Input label="E-mail de Login" type="email" required value={formData.adminEmail} onChange={e => setFormData({...formData, adminEmail: e.target.value})} placeholder="dono@loja.com"/>
+                                        <Input label="Senha Temporária" type="password" required value={formData.adminPassword} onChange={e => setFormData({...formData, adminPassword: e.target.value})} placeholder="••••••"/>
+                                    </div>
+                                </div>
+                            </form>
+                            <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0"><Button variant="ghost" onClick={() => setIsRestaurantModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button><Button type="submit" onClick={handleCreateRestaurant} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black bg-blue-600 hover:bg-blue-500">FINALIZAR E CRIAR LOJA</Button></footer>
+                        </motion.div>
                     </div>
-                </div>
-            )}
-
-            {isRestaurantModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl p-8 shadow-2xl animate-in zoom-in-95 my-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black italic uppercase tracking-tighter">Onboarding de Nova Loja</h3>
-                            <button onClick={() => setIsRestaurantModalOpen(false)} className="p-2 bg-slate-100 rounded-full"><X size={20}/></button>
-                        </div>
-                        <form onSubmit={handleCreateRestaurant} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                                <div className="md:col-span-2"><h4 className="text-xs font-black uppercase text-blue-600 mb-2">Dados da Unidade</h4></div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nome da Loja</label>
-                                    <input required className="ui-input w-full" placeholder="Ex: Unidade Centro" value={formData.restaurantName} onChange={e => setFormData({...formData, restaurantName: e.target.value})}/>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Slug / URL</label>
-                                    <input required className="ui-input w-full" placeholder="unidade-centro" value={formData.restaurantSlug} onChange={e => setFormData({...formData, restaurantSlug: e.target.value.toLowerCase().replace(/\s+/g, '-')})}/>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Plano de Acesso</label>
-                                    <select className="ui-input w-full" value={formData.restaurantPlan} onChange={e => setFormData({...formData, restaurantPlan: e.target.value})}>
-                                        <option value="FREE">Plano Free</option>
-                                        <option value="SILVER">Plano Silver</option>
-                                        <option value="GOLD">Plano Gold</option>
-                                        <option value="DIAMOND">Plano Diamond</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Expiração (Opcional)</label>
-                                    <input type="date" className="ui-input w-full" value={formData.restaurantExpiresAt} onChange={e => setFormData({...formData, restaurantExpiresAt: e.target.value})}/>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Franquia (Opcional)</label>
-                                    <select className="ui-input w-full" value={formData.restaurantFranchiseId} onChange={e => setFormData({...formData, restaurantFranchiseId: e.target.value})}>
-                                        <option value="">Independente (Sem Franquia)</option>
-                                        {franchises.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/30 p-6 rounded-3xl border border-blue-100">
-                                <div className="md:col-span-2"><h4 className="text-xs font-black uppercase text-blue-600 mb-2">Usuário Mestre (Admin)</h4></div>
-                                <div className="md:col-span-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nome do Responsável</label>
-                                    <input required className="ui-input w-full" placeholder="Ex: Gerente Geral" value={formData.adminName} onChange={e => setFormData({...formData, adminName: e.target.value})}/>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">E-mail de Acesso</label>
-                                    <input required type="email" className="ui-input w-full" placeholder="admin@loja.com" value={formData.adminEmail} onChange={e => setFormData({...formData, adminEmail: e.target.value})}/>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Senha Inicial</label>
-                                    <input required type="password" title="Mínimo 6 caracteres" className="ui-input w-full" placeholder="••••••" value={formData.adminPassword} onChange={e => setFormData({...formData, adminPassword: e.target.value})}/>
-                                </div>
-                            </div>
-
-                            <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:bg-blue-600 transition-all">Finalizar Onboarding e Criar Loja</button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {isRoleModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl p-8 shadow-2xl animate-in zoom-in-95 max-h-[90vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-6 shrink-0">
-                            <h3 className="text-xl font-black italic uppercase tracking-tighter">Novo Cargo Personalizado</h3>
-                            <button onClick={() => setIsRoleModalOpen(false)} className="p-2 bg-slate-100 rounded-full"><X size={20}/></button>
-                        </div>
-                        <form onSubmit={handleCreateRole} className="space-y-6 overflow-y-auto pr-2 custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nome do Cargo</label>
-                                    <input required className="ui-input w-full" value={formData.roleName} onChange={e => setFormData({...formData, roleName: e.target.value})}/>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Descrição</label>
-                                    <input className="ui-input w-full" value={formData.roleDescription} onChange={e => setFormData({...formData, roleDescription: e.target.value})}/>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 mb-3 block">Permissões Vinculadas</label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {permissions.map(p => (
-                                        <button 
-                                            key={p.id}
-                                            type="button"
-                                            onClick={() => togglePermission(p.id)}
-                                            className={cn(
-                                                "p-3 rounded-xl border-2 text-left flex items-center justify-between transition-all",
-                                                formData.selectedPermissions.includes(p.id)
-                                                    ? "bg-purple-50 border-purple-600 text-purple-700 shadow-sm"
-                                                    : "bg-slate-50 border-slate-100 text-slate-500"
-                                            )}
-                                        >
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-black uppercase">{p.name}</span>
-                                                <span className="text-[9px] opacity-70 font-medium">{p.description}</span>
-                                            </div>
-                                            {formData.selectedPermissions.includes(p.id) && <Check size={14}/>}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            
-                            <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs sticky bottom-0 shadow-2xl">Criar Cargo</button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {isPlanModalOpen && selectedStore && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black italic uppercase tracking-tighter text-emerald-600">Ajustar Assinatura</h3>
-                            <button onClick={() => setIsPlanModalOpen(false)} className="p-2 bg-slate-100 rounded-full"><X size={20}/></button>
-                        </div>
-                        <p className="text-xs font-bold text-slate-400 uppercase mb-6">Editando: <span className="text-slate-900">{selectedStore.name}</span></p>
-                        
-                        <form onSubmit={handleUpdatePlan} className="space-y-4">
-                            <div>
-                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Plano</label>
-                                <select className="ui-input w-full" value={formData.editPlan} onChange={e => setFormData({...formData, editPlan: e.target.value})}>
-                                    <option value="FREE">FREE</option>
-                                    <option value="SILVER">SILVER</option>
-                                    <option value="GOLD">GOLD</option>
-                                    <option value="DIAMOND">DIAMOND</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Status da Conta</label>
-                                <select className="ui-input w-full" value={formData.editStatus} onChange={e => setFormData({...formData, editStatus: e.target.value})}>
-                                    <option value="ACTIVE">ATIVA (Normal)</option>
-                                    <option value="SUSPENDED">SUSPENSA (Inadimplência)</option>
-                                    <option value="TRIAL">TESTE (Gratuito Temporário)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Data de Expiração</label>
-                                <input type="date" className="ui-input w-full" value={formData.editExpiresAt} onChange={e => setFormData({...formData, editExpiresAt: e.target.value})}/>
-                            </div>
-                            <button className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs mt-4 hover:bg-emerald-700 shadow-xl shadow-emerald-100">Atualizar Assinatura</button>
-                        </form>
-                    </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     );
 };
