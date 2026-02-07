@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { getUsers, deleteUser } from '../services/api';
-import { Plus, Trash2, Edit2, Loader2, Mail, User, ShieldCheck, ShoppingBag, Utensils, Truck, MoreVertical } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, Mail, User, ShieldCheck, ShoppingBag, Utensils, Truck } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import UserFormModal from './UserFormModal';
+import { Card } from './ui/Card';
+import { Button } from './ui/Button';
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -36,11 +38,6 @@ const UserManagement: React.FC = () => {
   };
 
   const handleEditClick = (user: any) => {
-    if (user.role === 'driver') {
-        // Redireciona para a tela específica de entregadores que tem os campos financeiros
-        navigate('/drivers');
-        return;
-    }
     setUserToEdit(user);
     setIsModalOpen(true);
   };
@@ -62,90 +59,111 @@ const UserManagement: React.FC = () => {
 
   const getRoleBadge = (role: string) => {
       switch(role) {
-          case 'admin': return { label: 'Administrador', icon: ShieldCheck, color: 'text-blue-600 bg-blue-50 border-blue-100' };
-          case 'staff': return { label: 'Atendente', icon: ShoppingBag, color: 'text-slate-600 bg-slate-50 border-slate-100' };
-          case 'waiter': return { label: 'Garçom', icon: Utensils, color: 'text-orange-600 bg-orange-50 border-orange-100' };
-          case 'driver': return { label: 'Entregador', icon: Truck, color: 'text-indigo-600 bg-indigo-50 border-indigo-100' };
-          default: return { label: role, icon: User, color: 'text-gray-600 bg-gray-50 border-gray-100' };
+          case 'admin': 
+          case 'superadmin':
+              return { label: 'Administrador', icon: ShieldCheck, color: 'text-orange-600 bg-orange-50 border-orange-100' };
+          case 'staff': 
+              return { label: 'Atendente', icon: ShoppingBag, color: 'text-blue-600 bg-blue-50 border-blue-100' };
+          case 'waiter': 
+              return { label: 'Garçom', icon: Utensils, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
+          default: 
+              return { label: role, icon: User, color: 'text-slate-600 bg-slate-50 border-slate-100' };
       }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase">Gestão de Equipe</h2>
-          <p className="text-slate-500 text-sm font-medium">Controle quem acessa o seu sistema.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Minha Equipe</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+            <User size={14} className="text-orange-500" /> Gerenciamento de Membros e Permissões
+          </p>
         </div>
         <div className="flex items-center gap-3">
-            <button 
+            <Button 
+                variant="outline"
+                className="bg-white rounded-xl"
                 onClick={() => navigate('/drivers')}
-                className="flex items-center gap-2 bg-blue-50 text-blue-600 px-6 py-3 rounded-2xl font-bold hover:bg-blue-100 transition-all border border-blue-100 shadow-sm active:scale-95"
             >
-                <Truck size={20} /> Equipe de Entrega
-            </button>
-            <button 
+                <Truck size={18} /> Equipe de Entrega
+            </Button>
+            <Button 
                 onClick={handleAddClick}
-                className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                className="rounded-xl px-6 italic"
             >
-                <Plus size={20} /> Adicionar Usuário
-            </button>
+                <Plus size={18} /> NOVO USUÁRIO
+            </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader2 className="animate-spin text-primary" size={32} />
+        <div className="flex flex-col items-center justify-center h-64 space-y-4 opacity-30">
+          <Loader2 className="animate-spin text-orange-500" size={32} />
+          <span className="text-[10px] font-black uppercase tracking-widest">Carregando Equipe...</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {users.map(user => {
             const badge = getRoleBadge(user.role);
             return (
-              <div key={user.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-                {/* Background Decoration */}
-                <div className={cn("absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-[0.03] transition-transform group-hover:scale-110", badge.color.split(' ')[1])} />
+              <Card key={user.id} className="p-6 group relative overflow-hidden flex flex-col justify-between h-full border-slate-100 hover:border-orange-500/20 transition-all duration-300 shadow-sm hover:shadow-xl">
+                {/* Visual Accent */}
+                <div className={cn("absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.05] transition-transform group-hover:scale-125", badge.color.split(' ')[1])} />
                 
-                <div className="flex items-center gap-4 mb-6 relative z-10">
-                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner", badge.color)}>
-                        <badge.icon size={28} />
-                    </div>
-                    <div>
-                        <h3 className="font-black text-slate-900 uppercase italic tracking-tighter leading-none mb-1">{user.name || 'Sem Nome'}</h3>
-                        <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border", badge.color)}>
+                <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-6">
+                        <div className={cn("w-14 h-14 rounded-[1.25rem] flex items-center justify-center shadow-lg transition-transform group-hover:rotate-3", badge.color, "shadow-current/5")}>
+                            <badge.icon size={28} />
+                        </div>
+                        <span className={cn("text-[8px] font-black uppercase px-2 py-1 rounded-lg border tracking-widest", badge.color)}>
                             {badge.label}
                         </span>
                     </div>
-                </div>
 
-                <div className="space-y-2 mb-8 relative z-10">
-                    <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-                        <Mail size={14} className="text-slate-300" />
-                        {user.email}
+                    <div className="space-y-1 mb-8">
+                        <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-lg leading-tight">{user.name || 'Sem Nome'}</h3>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                            <Mail size={12} />
+                            {user.email}
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex gap-2 relative z-10">
-                    <button 
+                <div className="flex gap-2 relative z-10 pt-4 border-t border-slate-50">
+                    <Button 
+                        variant="secondary"
                         onClick={() => handleEditClick(user)}
-                        className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 h-10 text-[10px] uppercase tracking-widest gap-2 rounded-xl italic"
                     >
                         <Edit2 size={14} /> Editar
-                    </button>
-                    <button 
+                    </Button>
+                    <Button 
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleDelete(user.id)}
-                        className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-90"
+                        className="h-10 w-10 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-300 hover:text-rose-500 transition-all"
                     >
-                        <Trash2 size={20} />
-                    </button>
+                        <Trash2 size={18} />
+                    </Button>
                 </div>
-              </div>
+              </Card>
             );
           })}
+
+          {/* Card de Adicionar Rápido */}
+          <Card 
+            onClick={handleAddClick}
+            className="p-6 border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-orange-500/50 hover:bg-orange-50/30 transition-all duration-300 min-h-[220px]"
+          >
+            <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-orange-500 group-hover:border-orange-500 transition-all">
+                <Plus size={24} />
+            </div>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] group-hover:text-orange-600 transition-colors">Adicionar Membro</p>
+          </Card>
         </div>
       )}
 
-      {/* Modal de Formulário Corrigido */}
       <UserFormModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

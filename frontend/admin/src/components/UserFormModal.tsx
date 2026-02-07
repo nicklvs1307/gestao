@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createUser, updateUser, getRoles } from '../services/api';
-import { X, User, Mail, Lock, ShieldCheck, CheckCircle, Loader2, Award } from 'lucide-react';
+import { X, User, Mail, Lock, CheckCircle, Loader2, Award } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Card } from './ui/Card';
+import { toast } from 'sonner';
 
 type UserType = any;
 
@@ -16,6 +20,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [role, setRole] = useState('staff');
   const [roleId, setRoleId] = useState<string | null>(null);
   const [availableRoles, setAvailableRoles] = useState<any[]>([]);
@@ -52,18 +57,22 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!roleId) return toast.error("Selecione um cargo para o usuário");
+    
     setIsSaving(true);
     const userData = { email, name, role, roleId, password: password || undefined };
 
     try {
       if (isEditing) {
         await updateUser(userToEdit.id, userData);
+        toast.success("Usuário atualizado com sucesso!");
       } else {
         await createUser(userData);
+        toast.success("Usuário criado com sucesso!");
       }
       onSave();
     } catch (error) {
-      alert((error as Error).message);
+      toast.error((error as Error).message);
     } finally {
       setIsSaving(false);
     }
@@ -73,121 +82,115 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
 
   return (
     <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-md">
+      <div className="ui-modal-content w-full max-w-lg overflow-hidden flex flex-col">
         
-        {/* Header */}
-        <div className="px-8 py-6 border-b bg-slate-50/50 flex justify-between items-center shrink-0">
-            <div className="flex items-center gap-3">
-                <div className="bg-slate-900 text-white p-2.5 rounded-xl shadow-sm">
-                    <User size={20} />
+        {/* Header Master */}
+        <div className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-4">
+                <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl shadow-slate-200">
+                    <User size={24} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                         {isEditing ? 'Editar Integrante' : 'Novo Integrante'}
                     </h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Acesso ao Sistema</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Acesso e Permissões</p>
                 </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-200 text-slate-400 hover:text-slate-900 rounded-full transition-all">
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50">
                 <X size={24} />
-            </button>
+            </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                    <div className="relative group">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-600 transition-colors" size={18} />
-                        <input 
-                            type="text" 
-                            required
-                            className="ui-input w-full pl-11"
-                            placeholder="Ex: João da Silva"
-                            value={name} 
-                            onChange={e => setName(e.target.value)} 
-                        />
-                    </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
+            <form onSubmit={handleSubmit} id="user-form" className="p-10 space-y-8">
+                <div className="space-y-4">
+                    <Input 
+                        label="Nome Completo"
+                        required
+                        placeholder="Ex: João Silva"
+                        value={name} 
+                        onChange={e => setName(e.target.value)} 
+                    />
+
+                    <Input 
+                        label="E-mail Corporativo"
+                        type="email" 
+                        required
+                        placeholder="joao@restaurante.com"
+                        value={email} 
+                        onChange={e => setEmail(e.target.value)} 
+                    />
+
+                    <Input 
+                        label={isEditing ? "Senha (Deixe em branco para manter)" : "Senha de Acesso"}
+                        type="password" 
+                        required={!isEditing}
+                        placeholder="••••••••"
+                        value={password} 
+                        onChange={e => setPassword(e.target.value)} 
+                    />
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail de Login</label>
-                    <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-600 transition-colors" size={18} />
-                        <input 
-                            type="email" 
-                            required
-                            className="ui-input w-full pl-11"
-                            placeholder="joao@exemplo.com"
-                            value={email} 
-                            onChange={e => setEmail(e.target.value)} 
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                        Senha {isEditing && <span className="text-orange-600 italic font-medium">(opcional)</span>}
-                    </label>
-                    <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-600 transition-colors" size={18} />
-                        <input 
-                            type="password" 
-                            required={!isEditing}
-                            className="ui-input w-full pl-11"
-                            placeholder="••••••••"
-                            value={password} 
-                            onChange={e => setPassword(e.target.value)} 
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-2">Cargo / Permissões</label>
-                    <div className="space-y-2 max-h-48 overflow-y-auto p-1 custom-scrollbar">
+                {/* Seleção de Cargo Premium */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Cargo do Colaborador</label>
+                    <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                         {availableRoles.map(r => (
-                            <button
+                            <Card
                                 key={r.id}
-                                type="button"
                                 onClick={() => {
                                     setRoleId(r.id);
                                     setRole(r.name.toLowerCase()); 
                                 }}
                                 className={cn(
-                                    "w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left group",
+                                    "flex items-center gap-4 p-4 border-2 transition-all text-left cursor-pointer",
                                     roleId === r.id 
-                                        ? "bg-slate-900 text-white border-slate-900 shadow-lg" 
-                                        : "bg-slate-50 text-slate-500 border-slate-100 hover:border-slate-200"
+                                        ? "bg-slate-900 text-white border-slate-900 shadow-xl scale-[1.02]" 
+                                        : "bg-white text-slate-500 border-slate-100 hover:border-orange-500/30"
                                 )}
+                                noPadding
                             >
-                                <Award size={18} className={roleId === r.id ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400"} />
-                                <div>
-                                    <p className="text-xs font-black uppercase tracking-tight">{r.name}</p>
-                                    {r.description && <p className="text-[10px] opacity-60 font-medium leading-tight">{r.description}</p>}
+                                <div className="pl-4">
+                                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors", roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400")}>
+                                      <Award size={20} />
+                                  </div>
                                 </div>
-                            </button>
+                                <div className="py-4 pr-4">
+                                    <p className={cn("text-sm font-black uppercase italic tracking-tight", roleId === r.id ? "text-white" : "text-slate-800")}>{r.name}</p>
+                                    {r.description && <p className={cn("text-[10px] font-medium leading-tight mt-0.5", roleId === r.id ? "text-slate-400" : "text-slate-400")}>{r.description}</p>}
+                                </div>
+                                {roleId === r.id && (
+                                  <div className="ml-auto pr-6 text-emerald-400">
+                                    <CheckCircle size={20} />
+                                  </div>
+                                )}
+                            </Card>
                         ))}
                     </div>
                 </div>
-
-                <div className="pt-6 flex gap-3">
-                    <button 
-                        type="button"
-                        onClick={onClose}
-                        className="flex-1 px-6 py-3 text-xs font-black uppercase text-slate-400 hover:text-slate-900 transition-all"
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        type="submit"
-                        disabled={isSaving}
-                        className="ui-button-primary flex-1"
-                    >
-                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle size={18} />}
-                        {isEditing ? 'Salvar' : 'Criar'}
-                    </button>
-                </div>
             </form>
+        </div>
+
+        {/* Rodapé Fixo */}
+        <div className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+            <Button 
+                type="button"
+                variant="ghost"
+                onClick={onClose}
+                className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400"
+            >
+                Cancelar
+            </Button>
+            <Button 
+                type="submit"
+                form="user-form"
+                disabled={isSaving}
+                isLoading={isSaving}
+                className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black"
+            >
+                {isEditing ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR MEMBRO'}
+            </Button>
         </div>
       </div>
     </div>
