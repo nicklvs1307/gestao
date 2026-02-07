@@ -5,7 +5,7 @@ const orderItemSchema = z.object({
   id: z.string().optional(), // Pode ser um produto existente ou item novo
   productId: z.string().min(1, 'Produto é obrigatório'),
   quantity: z.number().int().min(1, 'Quantidade mínima é 1'),
-  observations: z.string().optional(),
+  observations: z.string().optional().nullable(),
   
   // Detalhes opcionais
   size: z.object({
@@ -22,12 +22,12 @@ const orderItemSchema = z.object({
   flavors: z.array(z.object({
     id: z.string(), // ID do produto sabor
     name: z.string()
-  })).optional()
+  })).optional().nullable()
 });
 
 // Schema para Pedido Delivery
 const CreateDeliveryOrderSchema = z.object({
-  restaurantId: z.string().optional(), // Pode vir da rota ou token
+  restaurantId: z.string().optional().nullable(), // Pode vir da rota ou token
   
   items: z.array(orderItemSchema).min(1, 'O pedido deve ter pelo menos 1 item'),
   
@@ -39,23 +39,23 @@ const CreateDeliveryOrderSchema = z.object({
     
     // Endereço (Obrigatório se for Delivery)
     address: z.object({
-      street: z.string().optional(),
-      number: z.string().optional(),
-      neighborhood: z.string().optional(),
-      city: z.string().optional(),
-      zipCode: z.string().optional(),
-      complement: z.string().optional()
-    }).optional(),
+      street: z.string().optional().nullable(),
+      number: z.string().optional().nullable(),
+      neighborhood: z.string().optional().nullable(),
+      city: z.string().optional().nullable(),
+      zipCode: z.string().optional().nullable(),
+      complement: z.string().optional().nullable()
+    }).optional().nullable(),
 
     deliveryType: z.enum(['delivery', 'pickup']),
     paymentMethod: z.string().min(1, 'Forma de pagamento obrigatória'),
-    changeFor: z.number().optional(),
+    changeFor: z.number().optional().nullable(),
   }),
 
   // Campos opcionais de compatibilidade
-  paymentMethod: z.string().optional(), 
-  tableNumber: z.number().optional(),
-  userId: z.string().optional()
+  paymentMethod: z.string().optional().nullable(), 
+  tableNumber: z.number().optional().nullable(),
+  userId: z.string().optional().nullable()
 });
 
 // Schema para Adicionar Itens (Mesa ou Delivery)

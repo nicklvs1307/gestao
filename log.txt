@@ -1,66 +1,11 @@
-logo-1770414511958-802361921.png:1  GET https://kicardapio.towersfy.com/api/uploads/logo-1770414511958-802361921.png 404 (Not Found)
-Image
-Iw @ index-CiGonU5j.js:40
-Rw @ index-CiGonU5j.js:40
-mP @ index-CiGonU5j.js:40
-yP @ index-CiGonU5j.js:40
-gd @ index-CiGonU5j.js:40
-zw @ index-CiGonU5j.js:40
-F @ index-CiGonU5j.js:25
-q @ index-CiGonU5j.js:25
-login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"password" type=​"password" required class=​"flex h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-10 py-2 text-sm transition-all focus:​bg-white focus:​ring-2 focus:​ring-orange-500/​20 focus:​border-orange-500 outline-none disabled:​opacity-50" placeholder=​"••••••••" value=​"rom@pizza@2026">​flex
-logo-1770414511958-802361921.png:1  GET https://kicardapio.towersfy.com/api/uploads/logo-1770414511958-802361921.png 404 (Not Found)
-Image
-R @ index-CiGonU5j.js:33
-dP @ index-CiGonU5j.js:40
-qw @ index-CiGonU5j.js:40
-Hw @ index-CiGonU5j.js:40
-vP @ index-CiGonU5j.js:40
-zw @ index-CiGonU5j.js:40
-F @ index-CiGonU5j.js:25
-q @ index-CiGonU5j.js:25
-index-CiGonU5j.js:40 ReferenceError: ChevronUp is not defined
-    at index-CiGonU5j.js:840:109150
-    at Array.map (<anonymous>)
-    at lS (index-CiGonU5j.js:840:108668)
-    at ud (index-CiGonU5j.js:38:17887)
-    at Mx (index-CiGonU5j.js:40:3163)
-    at Gw (index-CiGonU5j.js:40:45948)
-    at Hw (index-CiGonU5j.js:40:40732)
-    at bP (index-CiGonU5j.js:40:40660)
-    at zm (index-CiGonU5j.js:40:40513)
-    at Yx (index-CiGonU5j.js:40:36766)
-Px @ index-CiGonU5j.js:40
-b.callback @ index-CiGonU5j.js:40
-so @ index-CiGonU5j.js:38
-Iw @ index-CiGonU5j.js:40
-Rw @ index-CiGonU5j.js:40
-mP @ index-CiGonU5j.js:40
-yP @ index-CiGonU5j.js:40
-gd @ index-CiGonU5j.js:40
-zw @ index-CiGonU5j.js:40
-F @ index-CiGonU5j.js:25
-q @ index-CiGonU5j.js:25
-index-CiGonU5j.js:840 Uncaught ReferenceError: ChevronUp is not defined
-    at index-CiGonU5j.js:840:109150
-    at Array.map (<anonymous>)
-    at lS (index-CiGonU5j.js:840:108668)
-    at ud (index-CiGonU5j.js:38:17887)
-    at Mx (index-CiGonU5j.js:40:3163)
-    at Gw (index-CiGonU5j.js:40:45948)
-    at Hw (index-CiGonU5j.js:40:40732)
-    at bP (index-CiGonU5j.js:40:40660)
-    at zm (index-CiGonU5j.js:40:40513)
-    at Yx (index-CiGonU5j.js:40:36766)
-(anônimo) @ index-CiGonU5j.js:840
-lS @ index-CiGonU5j.js:840
-ud @ index-CiGonU5j.js:38
-Mx @ index-CiGonU5j.js:40
-Gw @ index-CiGonU5j.js:40
-Hw @ index-CiGonU5j.js:40
-bP @ index-CiGonU5j.js:40
-zm @ index-CiGonU5j.js:40
-Yx @ index-CiGonU5j.js:40
-zw @ index-CiGonU5j.js:40
-F @ index-CiGonU5j.js:25
-q @ index-CiGonU5j.js:25
+RL da solicitação
+https://kicardapio.towersfy.com/api/products/cml8pxhnd000nmy01h868vxlc
+Método da solicitação
+PUT
+Código de status
+500 Internal Server Erro
+
+{
+    "success": false,
+    "error": "[\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"ncm\"\n    ],\n    \"message\": \"Invalid input: expected string, received null\"\n  },\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"cfop\"\n    ],\n    \"message\": \"Invalid input: expected string, received null\"\n  },\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"cest\"\n    ],\n    \"message\": \"Invalid input: expected string, received null\"\n  }\n]"
+}
