@@ -61,8 +61,10 @@ const loginLimiter = rateLimit({
 app.use('/api/auth/login', loginLimiter);
 
 // Arquivos Estáticos (Imagens)
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-app.use('/api/uploads', express.static(path.join(__dirname, 'public/uploads')));
+// Serve tanto via /uploads quanto via /api/uploads para compatibilidade com Proxy
+const uploadsPath = path.join(__dirname, 'public/uploads');
+app.use('/uploads', express.static(uploadsPath));
+app.use('/api/uploads', express.static(uploadsPath));
 
 // ==================================================================
 // ROTAS
