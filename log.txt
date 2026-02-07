@@ -1,11 +1,208 @@
-RL da solicitação
-https://kicardapio.towersfy.com/api/products/cml8pxhnd000nmy01h868vxlc
-Método da solicitação
-PUT
-Código de status
-500 Internal Server Erro
+settings:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:671 Erro ao buscar dados da loja AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Y (index-B2bwHmEr.js:671:98879)
+Y @ index-B2bwHmEr.js:671
+pending:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:823 Monitor: Falha ao carregar chamados AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async B4 (index-B2bwHmEr.js:671:8822)
+    at async _ (index-B2bwHmEr.js:823:14436)
+_ @ index-B2bwHmEr.js:823
+pending:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:823 Monitor: Falha ao carregar chamados AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async B4 (index-B2bwHmEr.js:671:8822)
+    at async _ (index-B2bwHmEr.js:823:14436)
+_ @ index-B2bwHmEr.js:823
+settings:1  Failed to load resource: the server responded with a status of 502 ()
+orders:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:671 AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async X0 (index-B2bwHmEr.js:671:6959)
+    at async Promise.all (index 0)
+    at async Y (index-B2bwHmEr.js:671:99076)
+Y @ index-B2bwHmEr.js:671
+api/cashier/status:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:671 Erro ao buscar dados da loja AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Y (index-B2bwHmEr.js:671:98879)
+Y @ index-B2bwHmEr.js:671
+settings:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:823 Monitor: Falha ao carregar settings AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Qh (index-B2bwHmEr.js:671:7997)
+    at async _ (index-B2bwHmEr.js:823:14759)
+_ @ index-B2bwHmEr.js:823
+pending:1  Failed to load resource: the server responded with a status of 502 ()
+api/cashier/status:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:671 AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Promise.all (index 2)
+    at async Y (index-B2bwHmEr.js:671:99076)
+Y @ index-B2bwHmEr.js:671
+orders:1  Failed to load resource: the server responded with a status of 502 ()
+settings:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:823 Monitor: Falha ao carregar settings AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Qh (index-B2bwHmEr.js:671:7997)
+    at async _ (index-B2bwHmEr.js:823:14759)
+_ @ index-B2bwHmEr.js:823
+pending:1  Failed to load resource: the server responded with a status of 502 ()
+orders:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:823 Monitor: Falha ao carregar pedidos AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async X0 (index-B2bwHmEr.js:671:6959)
+    at async _ (index-B2bwHmEr.js:823:14888)
+_ @ index-B2bwHmEr.js:823
+orders:1  Failed to load resource: the server responded with a status of 502 ()
+index-B2bwHmEr.js:823 Monitor: Falha ao carregar pedidos AxiosError: Request failed with status code 502
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async X0 (index-B2bwHmEr.js:671:6959)
+    at async _ (index-B2bwHmEr.js:823:14888)
+_ @ index-B2bwHmEr.js:823
+api/categories/flat:1  Failed to load resource: the server responded with a status of 500 ()
+index-B2bwHmEr.js:840 AxiosError: Request failed with status code 500
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Promise.all (index 5)
+    at async j (index-B2bwHmEr.js:840:29878)
+j @ index-B2bwHmEr.js:840
+api/categories/flat:1  Failed to load resource: the server responded with a status of 500 ()
+index-B2bwHmEr.js:840 AxiosError: Request failed with status code 500
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Jd (index-B2bwHmEr.js:671:6694)
+    at async Promise.all (index 1)
+    at async w (index-B2bwHmEr.js:840:39936)
+w @ index-B2bwHmEr.js:840
+api/products:1  Failed to load resource: the server responded with a status of 500 ()
+login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"password" type=​"password" required class=​"flex h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pl-10 py-2 text-sm transition-all focus:​bg-white focus:​ring-2 focus:​ring-orange-500/​20 focus:​border-orange-500 outline-none disabled:​opacity-50" placeholder=​"••••••••" value=​"rom@pizza@2026">​
+api/categories/flat:1  Failed to load resource: the server responded with a status of 500 ()
+index-B2bwHmEr.js:840 AxiosError: Request failed with status code 500
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Promise.all (index 5)
+    at async j (index-B2bwHmEr.js:840:29878)
+j @ index-B2bwHmEr.js:840
+api/categories/flat:1  Failed to load resource: the server responded with a status of 500 ()
+api/products:1  Failed to load resource: the server responded with a status of 500 ()
+index-B2bwHmEr.js:840 AxiosError: Request failed with status code 500
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async im (index-B2bwHmEr.js:671:6285)
+    at async Promise.all (index 0)
+    at async w (index-B2bwHmEr.js:840:39936)
+w @ index-B2bwHmEr.js:840
+index-B2bwHmEr.js:668  GET https://kicardapio.towersfy.com/api/categories/flat 500 (Internal Server Error)
+(anônimo) @ index-B2bwHmEr.js:668
+xhr @ index-B2bwHmEr.js:668
+O_ @ index-B2bwHmEr.js:670
+Promise.then
+_request @ index-B2bwHmEr.js:671
+request @ index-B2bwHmEr.js:670
+Fd.<computed> @ index-B2bwHmEr.js:671
+(anônimo) @ index-B2bwHmEr.js:666
+j @ index-B2bwHmEr.js:840
+(anônimo) @ index-B2bwHmEr.js:840
+Pm @ index-B2bwHmEr.js:40
+gh @ index-B2bwHmEr.js:40
+(anônimo) @ index-B2bwHmEr.js:40
+F @ index-B2bwHmEr.js:25
+q @ index-B2bwHmEr.js:25
+index-B2bwHmEr.js:840 AxiosError: Request failed with status code 500
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Promise.all (index 5)
+    at async j (index-B2bwHmEr.js:840:29878)
+j @ index-B2bwHmEr.js:840
+await in j
+(anônimo) @ index-B2bwHmEr.js:840
+Pm @ index-B2bwHmEr.js:40
+gh @ index-B2bwHmEr.js:40
+(anônimo) @ index-B2bwHmEr.js:40
+F @ index-B2bwHmEr.js:25
+q @ index-B2bwHmEr.js:25
+index-B2bwHmEr.js:668  GET https://kicardapio.towersfy.com/api/categories 500 (Internal Server Error)
+(anônimo) @ index-B2bwHmEr.js:668
+xhr @ index-B2bwHmEr.js:668
+O_ @ index-B2bwHmEr.js:670
+Promise.then
+_request @ index-B2bwHmEr.js:671
+request @ index-B2bwHmEr.js:670
+Fd.<computed> @ index-B2bwHmEr.js:671
+(anônimo) @ index-B2bwHmEr.js:666
+Jd @ index-B2bwHmEr.js:671
+v @ index-B2bwHmEr.js:844
+(anônimo) @ index-B2bwHmEr.js:844
+Pm @ index-B2bwHmEr.js:40
+gh @ index-B2bwHmEr.js:40
+(anônimo) @ index-B2bwHmEr.js:40
+F @ index-B2bwHmEr.js:25
+q @ index-B2bwHmEr.js:25
+index-B2bwHmEr.js:844 AxiosError: Request failed with status code 500
+    at S4 (index-B2bwHmEr.js:668:1091)
+    at XMLHttpRequest.C (index-B2bwHmEr.js:668:5850)
+    at Fd.request (index-B2bwHmEr.js:670:2094)
+    at async Jd (index-B2bwHmEr.js:671:6694)
+    at async v (index-B2bwHmEr.js:844:43069)
+v @ index-B2bwHmEr.js:844
+await in v
+(anônimo) @ index-B2bwHmEr.js:844
+Pm @ index-B2bwHmEr.js:40
+gh @ index-B2bwHmEr.js:40
+(anônimo) @ index-B2bwHmEr.js:40
+F @ index-B2bwHmEr.js:25
+q @ index-B2bwHmEr.js:25
 
-{
-    "success": false,
-    "error": "[\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"ncm\"\n    ],\n    \"message\": \"Invalid input: expected string, received null\"\n  },\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"cfop\"\n    ],\n    \"message\": \"Invalid input: expected string, received null\"\n  },\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"cest\"\n    ],\n    \"message\": \"Invalid input: expected string, received null\"\n  }\n]"
-}
+
+root@servergestao:~/gestao# docker logs 7fe15c62c690
+Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+27 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+Executando Seed de Permissões...
+Aviso: Seed já executado ou falhou silenciosamente.
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+{"level":"error","message":"500 - \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database. - /api/categories/flat - GET - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database.\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/CategoryController.js:9:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database. - /api/categories/flat - GET - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database.\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/CategoryController.js:9:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.product.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database. - /api/products - GET - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.product.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database.\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/ProductController.js:9:22"}
+{"level":"error","message":"500 - \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database. - /api/categories/flat - GET - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database.\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/CategoryController.js:9:24"}
+{"level":"error","message":"500 - \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database. - /api/categories - GET - IP: 10.0.1.202"}
+{"level":"error","message":"PrismaClientKnownRequestError: \nInvalid `prisma.category.findMany()` invocation:\n\n\nThe column `Category.description` does not exist in the current database.\n    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async /app/src/controllers/CategoryController.js:18:24"}
