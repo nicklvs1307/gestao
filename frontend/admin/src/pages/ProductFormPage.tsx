@@ -211,6 +211,30 @@ const ProductFormPage = () => {
     const [availableIngredients, setAvailableIngredients] = useState<any[]>([]);
     const [libraryGroups, setLibraryGroups] = useState<AddonGroup[]>([]);
     const [globalSizes, setGlobalSizes] = useState<GlobalSize[]>([]);
+    
+    // Novo: Grupos herdados da categoria selecionada
+    const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
+
+    useEffect(() => {
+        const selectedCatIds = watch('categoryIds') || [];
+        if (selectedCatIds.length > 0 && categories.length > 0) {
+            const inherited: AddonGroup[] = [];
+            selectedCatIds.forEach((id: string) => {
+                const cat = categories.find(c => c.id === id);
+                if (cat?.addonGroups) {
+                    cat.addonGroups.forEach((g: any) => {
+                        if (!inherited.find(ig => ig.id === g.id)) {
+                            inherited.push(g);
+                        }
+                    });
+                }
+            });
+            setInheritedAddonGroups(inherited);
+        } else {
+            setInheritedAddonGroups([]);
+        }
+    }, [watch('categoryIds'), categories]);
+
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'tamanhos' | 'complementos' | 'composição'>('geral');
@@ -538,6 +562,30 @@ const ProductFormPage = () => {
                         {/* CONTEÚDO: ABA COMPLEMENTOS */}
                         {activeTab === 'complementos' && (
                             <motion.div key="complementos" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} className="space-y-8">
+                                {inheritedAddonGroups.length > 0 && (
+                                    <Card className="p-8 border-orange-200 bg-orange-50/20 shadow-xl space-y-6">
+                                        <div>
+                                            <h3 className="text-xl font-black text-orange-600 uppercase italic tracking-tighter leading-none">Opcionais Herdados (Categoria)</h3>
+                                            <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mt-2">Estes itens são automáticos para esta categoria</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {inheritedAddonGroups.map(group => (
+                                                <div key={group.id} className="p-4 bg-white border-2 border-orange-200 rounded-2xl flex items-center justify-between shadow-sm">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                                                            <CheckCircle size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <span className="block text-[11px] font-black uppercase italic text-slate-900">{group.name}</span>
+                                                            <span className="text-[8px] font-bold text-slate-400 uppercase">HERDADO DA CATEGORIA</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                )}
+
                                 <Card className="p-8 border-slate-200 shadow-xl bg-white space-y-10">
                                     <div className="flex justify-between items-center border-b border-slate-50 pb-6">
                                         <div><h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Biblioteca de Adicionais</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Vincule grupos pré-cadastrados ao produto</p></div>
