@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Category } from '@/types/index';
 import { getCategories, createCategory, updateCategory } from '../services/api';
-import { X, Layers, Save, Loader2, ChevronDown, Clock, Calendar, Pizza, Info, Plus, Trash2 } from 'lucide-react';
+import { addonService, AddonGroup } from '../services/api/addonService';
+import { X, Layers, Save, Loader2, ChevronDown, Clock, Calendar, Pizza, Info, Plus, Trash2, List } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 
@@ -24,9 +25,11 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
     startTime: '00:00',
     endTime: '00:00',
     parentId: null as string | null,
+    addonGroups: [] as string[],
   });
 
   const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [availableAddonGroups, setAvailableAddonGroups] = useState<AddonGroup[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!categoryToEdit;
 
@@ -45,7 +48,11 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
     if (isOpen) {
       const fetchAllCategories = async () => {
         try {
-          const data = await getCategories(true);
+          const [cats, addons] = await Promise.all([
+            getCategories(true),
+            addonService.getAll()
+          ]);
+          setAvailableAddonGroups(addons);
           if (isEditing && categoryToEdit) {
             // Filtra para evitar auto-referência ou circularidade
             setAllCategories(data.filter((c: Category) => c.id !== categoryToEdit.id && c.parentId !== categoryToEdit.id));
@@ -72,6 +79,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
         startTime: categoryToEdit.startTime || '00:00',
         endTime: categoryToEdit.endTime || '00:00',
         parentId: categoryToEdit.parentId || null,
+        addonGroups: categoryToEdit.addonGroups?.map((g: any) => g.id) || [],
       });
     } else {
       setFormData({
@@ -84,6 +92,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
         startTime: '00:00',
         endTime: '00:00',
         parentId: null,
+        addonGroups: [],
       });
     }
   }, [categoryToEdit, isEditing, isOpen]);
@@ -300,6 +309,43 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
                     </div>
                     <p className="text-[9px] text-blue-400 mt-3 italic flex items-center gap-1">
                         <Info size={10}/> Use para organizar sub-itens (ex: Vinhos dentro de Bebidas).
+                    </p>
+                </div>
+
+                {/* Herança de Opcionais por Categoria (Estilo Uai Rango) */}
+                <div className="p-6 bg-orange-50/50 rounded-[2rem] border-2 border-dashed border-orange-100">
+                    <label className="text-[10px] font-black uppercase text-orange-500 tracking-widest mb-3 block flex items-center gap-2">
+                        <List size={14} /> Opcionais da Categoria
+                    </label>
+                    <div className="space-y-2">
+                        {availableAddonGroups.map(group => {
+                            const isSelected = formData.addonGroups.includes(group.id!);
+                            return (
+                                <div 
+                                    key={group.id}
+                                    onClick={() => {
+                                        const current = formData.addonGroups;
+                                        if (isSelected) setFormData({ ...formData, addonGroups: current.filter(id => id !== group.id) });
+                                        else setFormData({ ...formData, addonGroups: [...current, group.id!] });
+                                    }}
+                                    className={cn(
+                                        "flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition-all",
+                                        isSelected ? "bg-white border-orange-500 shadow-sm" : "bg-white/50 border-transparent hover:border-orange-200"
+                                    )}
+                                >
+                                    <div className="flex flex-col">
+                                        <span className={cn("text-[11px] font-black uppercase italic", isSelected ? "text-orange-600" : "text-slate-500")}>{group.name}</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase">{group.addons.length} ITENS • {group.type === 'single' ? 'ÚNICA' : 'MÚLTIPLA'}</span>
+                                    </div>
+                                    <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", isSelected ? "bg-orange-500 border-orange-500 text-white" : "border-slate-200")}>
+                                        {isSelected && <Save size={8} strokeWidth={4} />}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <p className="text-[9px] text-orange-400 mt-3 italic flex items-center gap-1">
+                        <Info size={10}/> Todos os produtos desta categoria herdarão esses opcionais automaticamente.
                     </p>
                 </div>
             </div>
