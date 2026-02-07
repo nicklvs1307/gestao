@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-// import type { Promotion, Product } from '@/types/index';
-type Promotion = any;
-type Product = any;
+import type { Promotion, Product } from '@/types/index';
 import { createPromotion, updatePromotion, getProducts } from '../services/api';
-import { X, Percent, Save, Loader2, Calendar, Tag, AlertCircle } from 'lucide-react';
+import { X, Percent, Save, Loader2, Calendar, Tag, Ticket, Info, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Card } from './ui/Card';
+import { toast } from 'sonner';
 
 interface PromotionFormModalProps {
   isOpen: boolean;
@@ -13,104 +15,77 @@ interface PromotionFormModalProps {
   promotionToEdit?: Promotion | null;
 }
 
-const DISCOUNT_TYPES = [
-    { value: 'percentage', label: 'Porcentagem (%)' },
-    { value: 'fixed_amount', label: 'Valor Fixo (R$)' }
-];
-
 const PromotionFormModal: React.FC<PromotionFormModalProps> = ({ isOpen, onClose, onSave, promotionToEdit }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [discountType, setDiscountType] = useState('percentage');
-  const [discountValue, setDiscountValue] = useState<number | string>('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState<string>('');
-  
-  // Novos campos: Cupons
-  const [code, setCode] = useState('');
-  const [minOrderValue, setMinOrderValue] = useState<number | string>(0);
-  const [usageLimit, setUsageLimit] = useState<number | string>('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    discountType: 'percentage',
+    discountValue: '' as number | string,
+    startDate: '',
+    endDate: '',
+    isActive: true,
+    productId: '',
+    code: '',
+    minOrderValue: 0 as number | string,
+    usageLimit: '' as number | string,
+  });
 
+  const [products, setProducts] = useState<Product[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!promotionToEdit;
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const productsData = await getProducts();
-        if (Array.isArray(productsData)) {
-            setProducts(productsData);
-        }
-      } catch (error) {
-        console.error("Failed to fetch products", error);
-      }
-    };
-
     if (isOpen) {
-      fetchProducts();
+      getProducts().then(setProducts).catch(console.error);
     }
   }, [isOpen]);
 
   useEffect(() => {
     if (isEditing && promotionToEdit) {
-      setName(promotionToEdit.name);
-      setDescription(promotionToEdit.description || '');
-      setDiscountType(promotionToEdit.discountType);
-      setDiscountValue(promotionToEdit.discountValue);
-      setStartDate(promotionToEdit.startDate ? new Date(promotionToEdit.startDate).toISOString().split('T')[0] : '');
-      setEndDate(promotionToEdit.endDate ? new Date(promotionToEdit.endDate).toISOString().split('T')[0] : '');
-      setIsActive(promotionToEdit.isActive);
-      setSelectedProductId(promotionToEdit.productId || '');
-      setCode(promotionToEdit.code || '');
-      setMinOrderValue(promotionToEdit.minOrderValue || 0);
-      setUsageLimit(promotionToEdit.usageLimit || '');
+      setFormData({
+        name: promotionToEdit.name,
+        description: promotionToEdit.description || '',
+        discountType: promotionToEdit.discountType,
+        discountValue: promotionToEdit.discountValue,
+        startDate: promotionToEdit.startDate ? new Date(promotionToEdit.startDate).toISOString().split('T')[0] : '',
+        endDate: promotionToEdit.endDate ? new Date(promotionToEdit.endDate).toISOString().split('T')[0] : '',
+        isActive: promotionToEdit.isActive,
+        productId: promotionToEdit.productId || '',
+        code: promotionToEdit.code || '',
+        minOrderValue: promotionToEdit.minOrderValue || 0,
+        usageLimit: promotionToEdit.usageLimit || '',
+      });
     } else {
-      setName('');
-      setDescription('');
-      setDiscountType('percentage');
-      setDiscountValue('');
-      setStartDate('');
-      setEndDate('');
-      setIsActive(true);
-      setSelectedProductId('');
-      setCode('');
-      setMinOrderValue(0);
-      setUsageLimit('');
+      setFormData({
+        name: '', description: '', discountType: 'percentage', discountValue: '',
+        startDate: '', endDate: '', isActive: true, productId: '',
+        code: '', minOrderValue: 0, usageLimit: '',
+      });
     }
   }, [promotionToEdit, isEditing, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !discountValue || !startDate || !endDate) return;
+    if (!formData.name || !formData.discountValue || !formData.startDate || !formData.endDate) return;
 
     setIsSubmitting(true);
-    const promotionData = { 
-      name, 
-      description, 
-      discountType, 
-      discountValue: Number(discountValue), 
-      startDate, 
-      endDate, 
-      isActive,
-      productId: selectedProductId || null,
-      code: code || null,
-      minOrderValue: Number(minOrderValue),
-      usageLimit: usageLimit ? Number(usageLimit) : null
-    };
-
     try {
-      if (isEditing && promotionToEdit) {
-        await updatePromotion(promotionToEdit.id, promotionData);
-      } else {
-        await createPromotion(promotionData);
-      }
+      const payload = {
+        ...formData,
+        discountValue: Number(formData.discountValue),
+        minOrderValue: Number(formData.minOrderValue),
+        usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null,
+        productId: formData.productId || null,
+        code: formData.code || null
+      };
+
+      if (isEditing && promotionToEdit) await updatePromotion(promotionToEdit.id, payload);
+      else await createPromotion(payload);
+      
+      toast.success(isEditing ? "Promoção atualizada!" : "Promoção criada com sucesso!");
       onSave();
     } catch (error) {
-      console.error('Failed to save promotion:', error);
-      alert('Falha ao salvar a promoção.');
+      toast.error("Erro ao salvar promoção.");
     } finally {
       setIsSubmitting(false);
     }
@@ -120,171 +95,88 @@ const PromotionFormModal: React.FC<PromotionFormModalProps> = ({ isOpen, onClose
 
   return (
     <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-2xl">
-        {/* Cabeçalho */}
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-              <Percent size={20} />
+      <div className="ui-modal-content w-full max-w-2xl overflow-hidden flex flex-col">
+        {/* Header Premium */}
+        <div className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-4">
+                <div className="bg-orange-500 text-white p-3 rounded-2xl shadow-xl shadow-orange-100">
+                    <Percent size={24} />
+                </div>
+                <div>
+                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                        {isEditing ? 'Editar Oferta' : 'Criar Promoção'}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Campanhas e Descontos</p>
+                </div>
             </div>
-            <h3 className="font-bold text-slate-900">{isEditing ? 'Editar Promoção' : 'Nova Promoção'}</h3>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-all"><X size={20} /></button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50">
+                <X size={24} />
+            </Button>
         </div>
 
-        {/* Corpo Scrollável */}
-        <div className="overflow-y-auto p-6 custom-scrollbar max-h-[70vh]">
-            <form id="promotion-form" onSubmit={handleSubmit} className="space-y-5">
-                {/* Nome e Descrição */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
+            <form onSubmit={handleSubmit} id="promotion-form" className="p-10 space-y-8">
+                {/* Dados Básicos */}
                 <div className="space-y-4">
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome da Promoção</label>
-                        <input 
-                          type="text" 
-                          value={name} 
-                          onChange={e => setName(e.target.value)} 
-                          required 
-                          placeholder="Ex: Happy Hour de Sexta"
-                          className="ui-input w-full"
-                        />
-                    </div>
-                    
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Descrição</label>
-                        <textarea 
-                            value={description} 
-                            onChange={e => setDescription(e.target.value)} 
-                            placeholder="Regras ou detalhes..."
-                            rows={2}
-                            className="ui-input w-full h-auto py-2 resize-none"
-                        />
-                    </div>
+                    <Input label="Nome da Campanha" required placeholder="Ex: Cupom de Boas-vindas" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <Input label="Descrição Curta (Opcional)" placeholder="Ex: Válido apenas para o primeiro pedido via Delivery." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </div>
 
-                {/* CONFIGURAÇÕES DE CUPOM */}
-                <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 space-y-3">
-                    <h4 className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-2">
-                        <Tag size={14} /> Regras de Cupom (Opcional)
+                {/* Configurações de Desconto */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modalidade</label>
+                        <div className="flex p-1 bg-white border border-slate-100 rounded-xl gap-1">
+                            <button type="button" onClick={() => setFormData({...formData, discountType: 'percentage'})} className={cn("flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all", formData.discountType === 'percentage' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}>Porcentagem</button>
+                            <button type="button" onClick={() => setFormData({...formData, discountType: 'fixed_amount'})} className={cn("flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all", formData.discountType === 'fixed_amount' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}>Valor Fixo</button>
+                        </div>
+                    </div>
+                    <Input label={`Valor do Desconto (${formData.discountType === 'percentage' ? '%' : 'R$'})`} type="number" required placeholder="0.00" value={formData.discountValue} onChange={e => setFormData({...formData, discountValue: e.target.value})} />
+                </div>
+
+                {/* REGRAS DE CUPOM - CARD ESPECIAL */}
+                <Card className="p-6 border-purple-100 bg-purple-50/20 space-y-6">
+                    <h4 className="text-xs font-black text-purple-900 uppercase italic flex items-center gap-2">
+                        <Ticket size={16} className="text-purple-500" /> Ativar como Cupom?
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-slate-500 uppercase">Código</label>
-                            <input 
-                                type="text"
-                                placeholder="PIZZA10"
-                                className="ui-input w-full h-9 text-xs uppercase font-black"
-                                value={code}
-                                onChange={e => setCode(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-slate-500 uppercase">Vlr Mín</label>
-                            <input 
-                                type="number"
-                                className="ui-input w-full h-9 text-xs"
-                                value={minOrderValue}
-                                onChange={e => setMinOrderValue(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-slate-500 uppercase">Limite</label>
-                            <input 
-                                type="number"
-                                placeholder="∞"
-                                className="ui-input w-full h-9 text-xs"
-                                value={usageLimit}
-                                onChange={e => setUsageLimit(e.target.value)}
-                            />
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Input label="Código" placeholder="CUPOM10" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} />
+                        <Input label="Valor Mínimo" type="number" value={formData.minOrderValue} onChange={e => setFormData({...formData, minOrderValue: e.target.value})} />
+                        <Input label="Uso Máximo" type="number" placeholder="∞" value={formData.usageLimit} onChange={e => setFormData({...formData, usageLimit: e.target.value})} />
                     </div>
-                </div>
+                    <p className="text-[9px] text-purple-400 font-bold uppercase italic leading-tight flex items-center gap-2">
+                        <Info size={12}/> Deixe o código em branco se quiser aplicar o desconto automaticamente a todos.
+                    </p>
+                </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Produto Alvo</label>
-                        <select 
-                            value={selectedProductId} 
-                            onChange={e => setSelectedProductId(e.target.value)} 
-                            className="ui-input w-full cursor-pointer"
-                        >
-                            <option value="">Aplicar no Carrinho Geral</option>
-                            {products.map(product => (
-                                <option key={product.id} value={product.id}>{product.name}</option>
-                            ))}
+                {/* ALVO E VALIDADE */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Aplicar Desconto Em:</label>
+                        <select className="ui-input w-full h-12" value={formData.productId} onChange={e => setFormData({...formData, productId: e.target.value})}>
+                            <option value="">Todo o Cardápio (Geral)</option>
+                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Tipo</label>
-                            <select 
-                                value={discountType} 
-                                onChange={e => setDiscountType(e.target.value)}
-                                className="ui-input w-full cursor-pointer"
-                            >
-                                {DISCOUNT_TYPES.map(type => (
-                                    <option key={type.value} value={type.value}>{type.label}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor</label>
-                            <input 
-                                type="number" 
-                                value={discountValue} 
-                                onChange={e => setDiscountValue(e.target.value)} 
-                                required 
-                                className="ui-input w-full"
-                            />
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label="Válido De" type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
+                        <Input label="Até" type="date" value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-5">
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Início</label>
-                        <input 
-                            type="date" 
-                            value={startDate} 
-                            onChange={e => setStartDate(e.target.value)} 
-                            required 
-                            className="ui-input w-full"
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Término</label>
-                        <input 
-                            type="date" 
-                            value={endDate} 
-                            onChange={e => setEndDate(e.target.value)} 
-                            required 
-                            className="ui-input w-full"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <input 
-                        type="checkbox" 
-                        id="isActive"
-                        checked={isActive} 
-                        onChange={e => setIsActive(e.target.checked)} 
-                        className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary cursor-pointer"
-                    />
-                    <label htmlFor="isActive" className="text-xs font-bold text-slate-700 cursor-pointer select-none uppercase">
-                        Promoção Ativa
-                    </label>
-                </div>
+                <Card className={cn("p-4 border-2 transition-all cursor-pointer flex items-center gap-3", formData.isActive ? "border-emerald-500 bg-emerald-50" : "border-slate-100 bg-white")} onClick={() => setFormData({...formData, isActive: !formData.isActive})}>
+                    <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all", formData.isActive ? "bg-emerald-500 border-emerald-500" : "border-slate-300")}>{formData.isActive && <CheckCircle size={14} className="text-white" />}</div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Promoção Ativa e Visível no Cardápio</span>
+                </Card>
             </form>
         </div>
 
-        {/* Rodapé com Ações */}
-        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex gap-3">
-          <button type="button" className="ui-button-secondary flex-1" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="ui-button-primary flex-1" form="promotion-form" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-            {isEditing ? 'Salvar' : 'Criar'}
-          </button>
+        {/* Rodapé Fixo */}
+        <div className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+            <Button variant="ghost" onClick={onClose} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
+            <Button type="submit" form="promotion-form" disabled={isSubmitting} isLoading={isSubmitting} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">
+                {isEditing ? 'SALVAR ALTERAÇÕES' : 'CRIAR CAMPANHA'}
+            </Button>
         </div>
       </div>
     </div>
