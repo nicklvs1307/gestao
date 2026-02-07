@@ -6,13 +6,17 @@ const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Erro Interno do Servidor';
 
   // Tratamento especial para erros de validação do Zod
-  if (err instanceof ZodError) {
+  if (err instanceof ZodError || err.name === 'ZodError') {
     statusCode = 400;
     message = 'Erro de validação nos dados enviados.';
-    const validationErrors = err.errors.map(e => ({
-      field: e.path.join('.'),
+    
+    // Se err.errors existir (Zod real), mapeia. Senão, tenta parsear a mensagem se for string
+    const errors = err.errors || (typeof err.message === 'string' ? JSON.parse(err.message) : []);
+    
+    const validationErrors = Array.isArray(errors) ? errors.map(e => ({
+      field: e.path?.join('.') || 'unknown',
       message: e.message
-    }));
+    })) : [];
     
     return res.status(statusCode).json({
       success: false,
