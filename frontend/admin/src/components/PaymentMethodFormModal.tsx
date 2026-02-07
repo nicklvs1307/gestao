@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, CreditCard, LayoutDashboard, Truck, Utensils } from 'lucide-react';
+import { X, Save, CreditCard, LayoutDashboard, Truck, Utensils, CheckCircle, Info, ChevronRight, Loader2, DollarSign, Calendar } from 'lucide-react';
 import type { PaymentMethod } from '../types';
 import { createPaymentMethod, updatePaymentMethod } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Card } from './ui/Card';
 
 interface PaymentMethodFormModalProps {
   isOpen: boolean;
@@ -21,220 +24,131 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
   const [allowDelivery, setAllowDelivery] = useState(true);
   const [allowPos, setAllowPos] = useState(true);
   const [allowTable, setAllowTable] = useState(true);
-  
-  // Novos campos financeiros
   const [feePercentage, setFeePercentage] = useState<string>('0');
   const [daysToReceive, setDaysToReceive] = useState<string>('0');
-
   const [isSubmitting, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (methodToEdit) {
-      setName(methodToEdit.name);
-      setType(methodToEdit.type);
-      setIsActive(methodToEdit.isActive);
-      setAllowDelivery(methodToEdit.allowDelivery);
-      setAllowPos(methodToEdit.allowPos);
-      setAllowTable(methodToEdit.allowTable);
+      setName(methodToEdit.name); setType(methodToEdit.type); setIsActive(methodToEdit.isActive);
+      setAllowDelivery(methodToEdit.allowDelivery); setAllowPos(methodToEdit.allowPos); setAllowTable(methodToEdit.allowTable);
       setFeePercentage(methodToEdit.feePercentage ? String(methodToEdit.feePercentage) : '0');
       setDaysToReceive(methodToEdit.daysToReceive ? String(methodToEdit.daysToReceive) : '0');
     } else {
-      setName('');
-      setType('CASH');
-      setIsActive(true);
-      setAllowDelivery(true);
-      setAllowPos(true);
-      setAllowTable(true);
-      setFeePercentage('0');
-      setDaysToReceive('0');
+      setName(''); setType('CASH'); setIsActive(true); setAllowDelivery(true); setAllowPos(true); setAllowTable(true);
+      setFeePercentage('0'); setDaysToReceive('0');
     }
   }, [methodToEdit, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.restaurantId) return;
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const data = { 
-        name, 
-        type, 
-        isActive, 
-        allowDelivery, 
-        allowPos, 
-        allowTable,
-        feePercentage: parseFloat(feePercentage),
-        daysToReceive: parseInt(daysToReceive)
-      };
-      
-      if (methodToEdit) {
-        await updatePaymentMethod(methodToEdit.id, data);
-        toast.success('Forma de pagamento atualizada!');
-      } else {
-        await createPaymentMethod(user.restaurantId, data);
-        toast.success('Forma de pagamento criada!');
-      }
+      const data = { name, type, isActive, allowDelivery, allowPos, allowTable, feePercentage: parseFloat(feePercentage), daysToReceive: parseInt(daysToReceive) };
+      if (methodToEdit) await updatePaymentMethod(methodToEdit.id, data);
+      else await createPaymentMethod(user.restaurantId, data);
+      toast.success(methodToEdit ? 'Atualizado com sucesso!' : 'Criado com sucesso!');
       onSave();
-    } catch (err) {
-      toast.error('Erro ao salvar forma de pagamento.');
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) { toast.error('Erro ao processar solicitação.'); }
+    finally { setIsLoading(false); }
   };
 
   if (!isOpen) return null;
 
   const types = [
-    { value: 'CASH', label: 'Dinheiro' },
-    { value: 'PIX', label: 'Pix' },
+    { value: 'CASH', label: 'Dinheiro Físico' },
+    { value: 'PIX', label: 'Transferência Pix' },
     { value: 'CREDIT_CARD', label: 'Cartão de Crédito' },
     { value: 'DEBIT_CARD', label: 'Cartão de Débito' },
-    { value: 'VOUCHER', label: 'Vale Refeição / Voucher' },
-    { value: 'OTHER', label: 'Outros' },
+    { value: 'VOUCHER', label: 'Vale Refeição / Ticket' },
+    { value: 'OTHER', label: 'Outros Métodos' },
   ];
 
   return (
     <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-xl">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 text-primary rounded-lg">
-              <CreditCard size={20} />
+      <div className="ui-modal-content w-full max-w-xl overflow-hidden flex flex-col">
+        {/* Header Premium */}
+        <div className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-4">
+                <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl shadow-slate-200">
+                    <CreditCard size={24} />
+                </div>
+                <div>
+                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                        {methodToEdit ? 'Editar Cobrança' : 'Nova Forma de Receber'}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Checkout e Configuração Financeira</p>
+                </div>
             </div>
-            <h3 className="font-bold text-slate-900">
-              {methodToEdit ? 'Editar Forma de Pagamento' : 'Nova Forma de Pagamento'}
-            </h3>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-all text-slate-400"><X size={20}/></button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50"><X size={24}/></Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 gap-5">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome de Exibição</label>
-              <input 
-                className="ui-input w-full"
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                required 
-                placeholder="Ex: Cartão de Crédito"
-              />
-            </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
+            <form onSubmit={handleSubmit} id="payment-form" className="p-10 space-y-8">
+                <div className="space-y-6">
+                    <Input label="Nome para o Cliente" value={name} onChange={e => setName(e.target.value)} required placeholder="Ex: Cartão de Crédito (Maquininha)" />
+                    
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Tipo de Processamento</label>
+                        <select className="ui-input w-full h-12 italic" value={type} onChange={e => setType(e.target.value as any)}>
+                            {types.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
+                    </div>
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Tipo de Pagamento</label>
-              <select 
-                className="ui-input w-full cursor-pointer"
-                value={type}
-                onChange={e => setType(e.target.value as any)}
-              >
-                {types.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
+                {/* Canais de Aceite */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block italic">Disponibilidade de Uso</label>
+                    <div className="grid grid-cols-3 gap-4">
+                        {[
+                            { id: 'delivery', label: 'DELIVERY', icon: Truck, state: allowDelivery, set: setAllowDelivery, color: 'emerald' },
+                            { id: 'pos', label: 'BALCÃO/PDV', icon: LayoutDashboard, state: allowPos, set: setAllowPos, color: 'blue' },
+                            { id: 'table', label: 'MESA/TABLET', icon: Utensils, state: allowTable, set: setAllowTable, color: 'orange' }
+                        ].map(item => (
+                            <button key={item.id} type="button" onClick={() => item.set(!item.state)} className={cn(
+                                "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2",
+                                item.state ? `bg-${item.color}-50 border-${item.color}-500 text-${item.color}-700 shadow-lg scale-[1.02]` : "bg-white border-slate-100 text-slate-300 grayscale opacity-50"
+                            )}>
+                                <item.icon size={20} />
+                                <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Onde aceitar?</label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAllowDelivery(!allowDelivery)}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-1.5",
-                    allowDelivery ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-white border-slate-100 text-slate-400 opacity-50"
-                  )}
-                >
-                  <Truck size={18} />
-                  <span className="text-[8px] font-black uppercase">Delivery</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAllowPos(!allowPos)}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-1.5",
-                    allowPos ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white border-slate-100 text-slate-400 opacity-50"
-                  )}
-                >
-                  <LayoutDashboard size={18} />
-                  <span className="text-[8px] font-black uppercase">PDV</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAllowTable(!allowTable)}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-1.5",
-                    allowTable ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white border-slate-100 text-slate-400 opacity-50"
-                  )}
-                >
-                  <Utensils size={18} />
-                  <span className="text-[8px] font-black uppercase">Mesa</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div>
-                <p className="text-xs font-bold text-slate-900 leading-none">Meio de Pagamento Ativo</p>
-                <p className="text-[9px] font-medium text-slate-400 uppercase mt-1">Exibir para clientes e equipe.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsActive(!isActive)}
-                className={cn(
-                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none",
-                  isActive ? 'bg-primary' : 'bg-slate-200'
+                {/* Taxas Financeiras - Card Premium */}
+                {(type !== 'CASH') && (
+                    <Card className="p-6 border-blue-100 bg-blue-50/20 space-y-6">
+                        <h4 className="text-xs font-black text-blue-900 uppercase italic flex items-center gap-2">
+                            <Landmark size={16} className="text-blue-500" /> Custos de Operação
+                        </h4>
+                        <div className="grid grid-cols-2 gap-6">
+                            <Input label="Taxa Adm (%)" type="number" step="0.01" value={feePercentage} onChange={e => setFeePercentage(e.target.value)} icon={Percent} />
+                            <Input label="Prazo Receb. (Dias)" type="number" value={daysToReceive} onChange={e => setDaysToReceive(e.target.value)} icon={Calendar} />
+                        </div>
+                        <p className="text-[9px] text-blue-400 font-bold uppercase italic leading-tight flex items-center gap-2">
+                            <Info size={12}/> Estes valores serão usados para o cálculo do Lucro Líquido no seu DRE.
+                        </p>
+                    </Card>
                 )}
-              >
-                <span className={cn(
-                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow-sm",
-                  isActive ? 'translate-x-6' : 'translate-x-1'
-                )} />
-              </button>
-            </div>
 
-            {/* Configurações de Taxas e Prazos */}
-            {(type === 'CREDIT_CARD' || type === 'DEBIT_CARD' || type === 'VOUCHER' || type === 'PIX') && (
-              <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
-                  <h4 className="text-[10px] font-black uppercase text-blue-900 tracking-widest flex items-center gap-2">
-                      <CreditCard size={14} /> Configurações Financeiras
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ml-1">Taxa (%)</label>
-                          <input 
-                              type="number" step="0.01"
-                              className="ui-input w-full h-10"
-                              value={feePercentage}
-                              onChange={e => setFeePercentage(e.target.value)}
-                              placeholder="0.00"
-                          />
-                      </div>
-                      <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ml-1">Prazo (Dias)</label>
-                          <input 
-                              type="number"
-                              className="ui-input w-full h-10"
-                              value={daysToReceive}
-                              onChange={e => setDaysToReceive(e.target.value)}
-                              placeholder="0"
-                          />
-                      </div>
-                  </div>
-              </div>
-            )}
-          </div>
-        </form>
+                <Card className={cn("p-4 border-2 transition-all cursor-pointer flex items-center justify-between", isActive ? "border-emerald-500 bg-emerald-50" : "border-slate-100 bg-white")} onClick={() => setIsActive(!isActive)}>
+                    <div className="flex items-center gap-3">
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", isActive ? "bg-emerald-500 text-white shadow-emerald-100" : "bg-slate-100 text-slate-300")}>{isActive ? <CheckCircle size={20} /> : <XCircle size={20} />}</div>
+                        <div><p className="text-xs font-black text-slate-900 uppercase italic tracking-tighter leading-none mb-1">Status Ativo</p><span className="text-[9px] font-bold text-slate-400 uppercase">Habilitar opção para uso imediato</span></div>
+                    </div>
+                    <div className={cn("w-12 h-6 rounded-full relative transition-all shadow-inner", isActive ? "bg-emerald-500" : "bg-slate-200")}><div className={cn("absolute w-4 h-4 bg-white rounded-full top-1 transition-all shadow-md", isActive ? "left-7" : "left-1")} /></div>
+                </Card>
+            </form>
+        </div>
 
-        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex gap-3">
-          <button type="button" onClick={onClose} className="ui-button-secondary flex-1">Cancelar</button>
-          <button 
-            type="submit" 
-            disabled={isSubmitting}
-            onClick={handleSubmit}
-            className="ui-button-primary flex-1"
-          >
-            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-            {methodToEdit ? 'Salvar Alterações' : 'Criar Forma'}
-          </button>
+        {/* Footer Fixo */}
+        <div className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+            <Button variant="ghost" onClick={onClose} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button>
+            <Button type="submit" form="payment-form" disabled={isSubmitting} isLoading={isSubmitting} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">
+                {methodToEdit ? 'SALVAR ALTERAÇÕES' : 'CONFIRMAR CADASTRO'}
+            </Button>
         </div>
       </div>
     </div>

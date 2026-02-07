@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import type { PaymentMethod } from '../types';
-import { getPaymentMethods, deletePaymentMethod } from '../services/api';
-import { Plus, Edit, Trash2, CreditCard, Loader2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { getPaymentMethods, deletePaymentMethod, updatePaymentMethod } from '../services/api';
+import { Plus, Edit, Trash2, CreditCard, Loader2, AlertCircle, CheckCircle, XCircle, RefreshCw, Wallet, QrCode, Ticket, Landmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { cn } from '../lib/utils';
+import { Card } from './ui/Card';
+import { Button } from './ui/Button';
 
 interface PaymentMethodManagementProps {
   onAddClick: () => void;
@@ -15,7 +18,6 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
   const { user } = useAuth();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchMethods = async () => {
     if (!user?.restaurantId) return;
@@ -23,152 +25,125 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
       setIsLoading(true);
       const data = await getPaymentMethods(user.restaurantId);
       setMethods(data);
-      setError(null);
     } catch (err) {
-      setError('Falha ao buscar formas de pagamento.');
-      console.error(err);
+      toast.error('Erro ao carregar pagamentos.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMethods();
-  }, [refetchTrigger, user?.restaurantId]);
+  useEffect(() => { fetchMethods(); }, [refetchTrigger, user?.restaurantId]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta forma de pagamento?')) return;
-
+    if (!window.confirm('Excluir esta forma de pagamento?')) return;
     try {
       await deletePaymentMethod(id);
-      toast.success('Forma de pagamento excluída com sucesso!');
+      toast.success('Removido com sucesso!');
       fetchMethods();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Falha ao excluir.');
-    }
+    } catch (err: any) { toast.error('Falha ao excluir.'); }
   };
 
-  const getTypeName = (type: string) => {
+  const handleToggleStatus = async (method: PaymentMethod) => {
+    try {
+        const newStatus = !method.isActive;
+        await updatePaymentMethod(method.id, { ...method, isActive: newStatus });
+        setMethods(prev => prev.map(m => m.id === method.id ? { ...m, isActive: newStatus } : m));
+        toast.success(newStatus ? 'Pagamento ativado!' : 'Pagamento pausado.');
+    } catch (e) { toast.error('Erro ao alterar status.'); }
+  };
+
+  const getMethodIcon = (type: string) => {
     switch (type) {
-      case 'CASH': return 'Dinheiro';
-      case 'CREDIT_CARD': return 'Cartão de Crédito';
-      case 'DEBIT_CARD': return 'Cartão de Débito';
-      case 'PIX': return 'Pix';
-      case 'VOUCHER': return 'Vale Refeição';
-      default: return 'Outros';
+      case 'PIX': return { icon: QrCode, color: 'text-emerald-500 bg-emerald-50' };
+      case 'CASH': return { icon: Wallet, color: 'text-orange-500 bg-orange-50' };
+      case 'CREDIT_CARD': 
+      case 'DEBIT_CARD': return { icon: CreditCard, color: 'text-blue-500 bg-blue-50' };
+      case 'VOUCHER': return { icon: Ticket, color: 'text-purple-500 bg-purple-50' };
+      default: return { icon: Landmark, color: 'text-slate-500 bg-slate-50' };
     }
   };
 
-  if (isLoading) return (
-    <div className="flex h-64 flex-col items-center justify-center gap-4 text-muted-foreground animate-pulse">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p>Carregando formas de pagamento...</p>
-    </div>
-  );
-
-  if (error) return (
-    <div className="flex flex-col items-center justify-center h-64 gap-4 p-8 text-center rounded-lg bg-destructive/5 border border-destructive/20 text-destructive mx-auto max-w-2xl mt-8">
-      <AlertCircle className="h-12 w-12" />
-      <div>
-        <h3 className="text-lg font-semibold">Erro ao carregar</h3>
-        <p className="text-sm opacity-90">{error}</p>
-      </div>
-      <button 
-        onClick={fetchMethods}
-        className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90 transition-colors"
-      >
-        Tentar Novamente
-      </button>
+  if (isLoading && methods.length === 0) return (
+    <div className="flex flex-col h-64 items-center justify-center opacity-30 gap-4">
+      <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      <span className="text-[10px] font-black uppercase tracking-widest">Configurando Checkout...</span>
     </div>
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-6 rounded-lg border border-border shadow-sm">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <CreditCard className="h-6 w-6 text-primary" />
-            Formas de Pagamento
-          </h2>
-          <p className="text-muted-foreground">Gerencie as formas de pagamento aceitas no seu estabelecimento.</p>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Pagamentos</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+            <CreditCard size={14} className="text-orange-500" /> Métodos de Recebimento Ativos
+          </p>
         </div>
-        <button 
-          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 h-10 px-6 py-2 shadow-sm"
-          onClick={onAddClick}
-        >
-          <Plus size={18} />
-          Nova Forma de Pagamento
-        </button>
+        <div className="flex gap-3">
+            <Button variant="outline" size="sm" className="bg-white rounded-xl" onClick={fetchMethods}>
+                <RefreshCw size={16} />
+            </Button>
+            <Button onClick={onAddClick} className="rounded-xl px-6 italic">
+                <Plus size={18} /> NOVA FORMA
+            </Button>
+        </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border">
-              <tr>
-                <th className="px-6 py-4 font-medium">Nome</th>
-                <th className="px-6 py-4 font-medium">Tipo</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {methods.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="p-12 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                        <CreditCard className="h-8 w-8 text-muted-foreground/50" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">Nenhuma forma de pagamento cadastrada</p>
-                        <p className="text-sm">Clique em "Nova Forma de Pagamento" para começar.</p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                methods.map((method) => (
-                  <tr key={method.id} className="bg-card hover:bg-muted/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <span className="font-semibold text-foreground text-base">{method.name}</span>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">{getTypeName(method.type)}</td>
-                    <td className="px-6 py-4">
-                      {method.isActive ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                          <CheckCircle size={12} /> Ativo
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                          <XCircle size={12} /> Inativo
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                        <button 
-                          className="p-2 hover:bg-primary/10 hover:text-primary rounded-md transition-colors" 
-                          title="Editar" 
-                          onClick={() => onEditClick(method)}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button 
-                          className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-md transition-colors" 
-                          title="Excluir" 
-                          onClick={() => handleDelete(method.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {methods.length === 0 ? (
+            <Card className="col-span-full p-20 flex flex-col items-center justify-center text-slate-300 opacity-20 border-dashed border-2">
+                <CreditCard size={64} strokeWidth={1} className="mb-4" />
+                <p className="font-black text-[10px] uppercase tracking-[0.3em] italic">Nenhuma forma configurada</p>
+            </Card>
+        ) : (
+            methods.map(method => {
+                const info = getMethodIcon(method.type);
+                return (
+                    <Card key={method.id} className={cn("p-0 overflow-hidden border-2 transition-all duration-300 group hover:shadow-2xl hover:-translate-y-1 bg-white", method.isActive ? "border-slate-100" : "border-slate-100 opacity-60")} noPadding>
+                        <div className="p-6">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="flex items-center gap-4">
+                                    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110", info.color)}>
+                                        <info.icon size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-lg text-slate-900 uppercase italic tracking-tighter leading-none">{method.name}</h3>
+                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 mt-2 inline-block italic">{method.type}</span>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-slate-50" onClick={() => onEditClick(method)}><Edit size={14}/></Button>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-rose-50 text-rose-500" onClick={() => handleDelete(method.id)}><Trash2 size={14}/></Button>
+                                </div>
+                            </div>
+
+                            {/* Status e Ação Rápida */}
+                            <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => handleToggleStatus(method)}>
+                                    <div className={cn("w-10 h-5 rounded-full relative transition-all duration-300", method.isActive ? "bg-emerald-500 shadow-lg shadow-emerald-100" : "bg-slate-200")}>
+                                        <div className={cn("absolute top-1 w-3 h-3 rounded-full bg-white transition-all shadow-sm", method.isActive ? "left-6" : "left-1")} />
+                                    </div>
+                                    <span className={cn("text-[9px] font-black uppercase tracking-widest", method.isActive ? "text-emerald-600" : "text-slate-400")}>{method.isActive ? 'OPERANTE' : 'PAUSADO'}</span>
+                                </div>
+                                {method.isActive && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                            </div>
+                        </div>
+                    </Card>
+                );
+            })
+        )}
+        
+        {/* Card de Adicionar Rápido */}
+        <Card 
+            onClick={onAddClick}
+            className="p-6 border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-orange-500/50 hover:bg-orange-50/30 transition-all duration-300 min-h-[180px]"
+        >
+            <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-orange-500 group-hover:border-orange-500 transition-all">
+                <Plus size={24} />
+            </div>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] group-hover:text-orange-600 transition-colors">Nova Opção</p>
+        </Card>
       </div>
     </div>
   );
