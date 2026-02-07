@@ -57,10 +57,18 @@ class CategoryController {
   updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const validatedData = UpdateCategorySchema.parse(req.body);
+    const { parentId, ...rest } = validatedData;
+
+    const data = { ...rest };
+    
+    // Se parentId vier null explicitamente, desconecta. Se vier string, conecta.
+    if (parentId !== undefined) {
+        data.parentId = parentId;
+    }
 
     const category = await prisma.category.update({ 
         where: { id }, 
-        data: validatedData 
+        data 
     });
     res.json(category);
   });

@@ -437,15 +437,26 @@ model IntegrationSettings {
 model Category {
   id          String   @id @default(cuid())
   name        String
-  order       Int      @default(0) // Ordem de exibição
-  saiposIntegrationCode String? // Código de integração da Saipos
+  description String?
+  cuisineType String?  @default("Geral") // Ex: Pizza, Bebidas, Sobremesas
+  order       Int      @default(0)
+  saiposIntegrationCode String?
+  
+  // Regras para Pizzas
+  halfAndHalfRule String? @default("NONE") // "NONE", "HIGHER_VALUE", "AVERAGE_VALUE"
+  
+  // Disponibilidade
+  availableDays String? @default("1,2,3,4,5,6,7") // Dias da semana separados por vírgula
+  startTime     String? // Formato HH:mm
+  endTime       String? // Formato HH:mm
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  products    Product[] // Relacionamento Muitos-para-Muitos automático
+  products    Product[] 
 
   // Para sub-categorias
   parentId      String?
