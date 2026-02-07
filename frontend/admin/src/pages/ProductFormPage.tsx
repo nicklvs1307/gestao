@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { 
-    ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, CheckCircle, Pizza, 
-    Layers, Settings2, Loader2, Image as ImageIcon, Package, Target, 
-    Save, Check, List, DollarSign
-} from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getCategories } from '../services/api/categories';
 import { getProducts, createProduct, updateProduct, uploadProductImage } from '../services/api/products';
@@ -20,192 +17,11 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
 
-// --- Sub-componente para Seleção de Biblioteca ---
-function GlobalAddonSelector({ availableGroups, selectedGroupIds, onToggle }: { availableGroups: AddonGroup[], selectedGroupIds: string[], onToggle: (id: string) => void }) {
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {availableGroups.map(group => {
-                const isSelected = selectedGroupIds.includes(group.id!);
-                return (
-                    <Card 
-                        key={group.id}
-                        onClick={() => onToggle(group.id!)}
-                        className={cn(
-                            "p-4 border-2 transition-all cursor-pointer flex items-center justify-between group",
-                            isSelected ? "border-orange-500 bg-orange-50/30 shadow-lg shadow-orange-900/5" : "border-slate-100 bg-white hover:border-slate-200"
-                        )}
-                        noPadding
-                    >
-                        <div className="flex items-center gap-4 pl-4 py-4">
-                            <div className={cn(
-                                "w-12 h-12 rounded-[1.25rem] flex items-center justify-center shadow-lg transition-all",
-                                isSelected ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
-                            )}>
-                                <Settings2 size={24} />
-                            </div>
-                            <div>
-                                <span className={cn("block text-sm font-black uppercase italic tracking-tight", isSelected ? "text-slate-900" : "text-slate-500")}>
-                                    {group.name}
-                                </span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                    {group.addons.length} ITENS • {group.type === 'single' ? 'ESCOLHA ÚNICA' : 'MÚLTIPLA'}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="pr-6">
-                            <div className={cn(
-                                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                isSelected ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20" : "border-slate-200"
-                            )}>
-                                {isSelected && <Check size={14} strokeWidth={4} />}
-                            </div>
-                        </div>
-                    </Card>
-                );
-            })}
-        </div>
-    );
-};
-
-// --- Sub-componente para Ficha Técnica (Insumos) ---
-function CompositionList({ control, register, availableIngredients }: { control: any, register: any, availableIngredients: any[] }) {
-    const { fields, append, remove } = useFieldArray({ control, name: "ingredients" });
-
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center mb-6 px-2">
-                <h3 className="text-xs font-black uppercase text-slate-400 tracking-[0.2em] italic flex items-center gap-2">
-                    <Target size={14} className="text-orange-500" /> Composição Estrutural
-                </h3>
-                <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => append({ ingredientId: '', quantity: 0 })}
-                    className="h-10 rounded-xl border-orange-500 text-orange-600 font-black italic gap-2 hover:bg-orange-50"
-                >
-                    <Plus size={16} /> VINCULAR INSUMO
-                </Button>
-            </div>
-
-            <div className="space-y-3">
-                {fields.map((field, index) => (
-                    <Card key={field.id} className="p-5 bg-white border-2 border-slate-100 rounded-[2rem] hover:border-orange-500/20 transition-all shadow-sm group" noPadding>
-                        <div className="flex items-center gap-6 px-6 py-2">
-                            <div className="flex-1">
-                                <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 ml-1 block italic">Matéria-prima / Insumo</label>
-                                <select 
-                                    {...register(`ingredients.${index}.ingredientId`, { required: true })}
-                                    className="ui-input w-full h-12 italic"
-                                >
-                                    <option value="">Selecione na lista...</option>
-                                    {availableIngredients.map(ing => (
-                                        <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="w-40">
-                                <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 ml-1 block italic">Qtd. Utilizada</label>
-                                <div className="relative">
-                                    <input 
-                                        type="number" step="0.001"
-                                        {...register(`ingredients.${index}.quantity`, { required: true, valueAsNumber: true })}
-                                        className="ui-input w-full h-12 font-black text-orange-600 pr-12 italic"
-                                    />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">UNI.</span>
-                                </div>
-                            </div>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="mt-5 h-12 w-12 rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 transition-all">
-                                <Trash2 size={20} />
-                            </Button>
-                        </div>
-                    </Card>
-                ))}
-            </div>
-
-            {fields.length === 0 && (
-                <div className="text-center py-20 border-2 border-dashed border-slate-100 rounded-[3rem] bg-slate-50/30 opacity-30">
-                    <Layers className="mx-auto text-slate-300 mb-4" size={64} strokeWidth={1} />
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhum insumo vinculado</p>
-                </div>
-            )}
-        </div>
-    );
-};
-
-// --- Componente de Preview Realista ---
-function ProductMobilePreview({ watchFields, isPizza, pizzaConfig }: { watchFields: any, isPizza: boolean, pizzaConfig: any }) {
-    const { name, description, price, imageUrl, addonGroups, sizes } = watchFields;
-    const [selectedSizePreview, setSelectedSizePreview] = useState<any>(null);
-
-    useEffect(() => { if (sizes && sizes.length > 0 && !selectedSizePreview) setSelectedSizePreview(sizes[0]); }, [sizes, selectedSizePreview]);
-
-    return (
-        <div className="sticky top-28 hidden xl:block animate-in fade-in zoom-in-95 duration-700">
-            <div className="w-[320px] h-[650px] bg-slate-900 rounded-[3.5rem] p-3 shadow-2xl border-[10px] border-slate-800 relative">
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-slate-800 rounded-b-2xl z-50 flex items-center justify-center"><div className="w-12 h-1 bg-slate-700 rounded-full" /></div>
-                
-                <div className="w-full h-full bg-slate-50 rounded-[2.5rem] overflow-hidden flex flex-col relative">
-                    <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
-                        {/* Imagem Cardápio */}
-                        <div className="h-48 bg-slate-200 relative group overflow-hidden">
-                            {imageUrl ? <img src={imageUrl} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" /> : <div className="absolute inset-0 flex items-center justify-center text-slate-300"><ImageIcon size={48} strokeWidth={1} /></div>}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
-                                <h3 className="text-white font-black text-lg italic tracking-tighter uppercase leading-none mb-1">{name || 'Nome do Item'}</h3>
-                                <p className="text-white/60 text-[10px] font-medium leading-relaxed line-clamp-2">{description || 'Descrição detalhada aparecerá aqui para seus clientes...'}</p>
-                            </div>
-                        </div>
-
-                        <div className="p-5 space-y-5">
-                            {sizes && sizes.length > 0 && (
-                                <div className="bg-white p-4 rounded-[1.5rem] shadow-sm border border-slate-100">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <span className="text-[10px] font-black uppercase text-slate-900 italic tracking-widest">1. Selecione o Tamanho</span>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        {sizes.map((s: any, i: number) => (
-                                            <div key={i} onClick={() => setSelectedSizePreview(s)} className={cn("p-3 rounded-xl border-2 flex justify-between items-center transition-all cursor-pointer", selectedSizePreview?.name === s.name ? "border-orange-500 bg-orange-50" : "border-slate-50")}>
-                                                <span className={cn("text-[11px] font-black uppercase italic", selectedSizePreview?.name === s.name ? "text-orange-600" : "text-slate-700")}>{s.name}</span>
-                                                <span className="text-xs font-black text-slate-900 italic">R$ {Number(s.price).toFixed(2)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {isPizza && (
-                                <div className="bg-white p-4 rounded-[1.5rem] shadow-sm border border-orange-100 flex items-center justify-center text-center py-8">
-                                    <div><Pizza size={32} className="text-orange-200 mx-auto mb-2" /><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Seleção de Sabores Ativa</p></div>
-                                </div>
-                            )}
-
-                            {addonGroups?.map((group: any, i: number) => (
-                                <div key={i} className="bg-white p-4 rounded-[1.5rem] shadow-sm border border-slate-100">
-                                    <span className="text-[10px] font-black uppercase text-slate-900 italic tracking-widest block mb-3">{group.name}</span>
-                                    <div className="space-y-2">
-                                        {group.addons?.slice(0, 3).map((a: any, idx: number) => (
-                                            <div key={idx} className="flex justify-between items-center text-[10px] font-bold text-slate-500">
-                                                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-slate-100 border border-slate-200" /><span>{a.name}</span></div>
-                                                <span className="text-emerald-600">+ R$ {Number(a.price).toFixed(2)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Botão Inferior Mobile */}
-                    <div className="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-slate-100 flex items-center justify-between shadow-2xl">
-                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-400 uppercase">Subtotal</span><span className="text-xl font-black text-slate-900 italic tracking-tighter">R$ {Number(selectedSizePreview?.price || price || 0).toFixed(2)}</span></div>
-                        <Button size="sm" className="h-12 px-6 rounded-2xl italic font-black text-[10px] shadow-lg shadow-orange-500/20">ADICIONAR</Button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+const { 
+    ArrowLeft, Plus, Trash2, CheckCircle, Pizza, 
+    Layers, Settings2, Loader2, Image: ImageIcon, Package, 
+    Save, Check, List, DollarSign, Target, ChevronRight
+} = LucideIcons;
 
 function ProductFormPage() {
     const { id } = useParams();
@@ -217,9 +33,15 @@ function ProductFormPage() {
     
     // Novo: Grupos herdados da categoria selecionada
     const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
+    
+    const { register, control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<any>({
+        defaultValues: { name: '', description: '', price: 0, imageUrl: '', categoryIds: [], isAvailable: true, isFeatured: false, stock: 0, addonGroups: [], sizes: [], ingredients: [], productionArea: 'Cozinha' }
+    });
+
+    const watchedCategoryIds = watch('categoryIds');
 
     useEffect(() => {
-        const selectedCatIds = watch('categoryIds') || [];
+        const selectedCatIds = watchedCategoryIds || [];
         if (selectedCatIds.length > 0 && categories.length > 0) {
             const inherited: AddonGroup[] = [];
             selectedCatIds.forEach((id: string) => {
@@ -236,7 +58,7 @@ function ProductFormPage() {
         } else {
             setInheritedAddonGroups([]);
         }
-    }, [watch('categoryIds'), categories]);
+    }, [watchedCategoryIds, categories]);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -244,10 +66,6 @@ function ProductFormPage() {
     const [isPizza, setIsPizza] = useState(false);
     const [pizzaConfig, setPizzaConfig] = useState<any>({ maxFlavors: 2, sliceCount: 8, priceRule: 'higher', flavorCategoryId: '', sizes: { 'Grande': { active: true, maxFlavors: 2 }, 'Média': { active: true, maxFlavors: 2 }, 'Pequena': { active: true, maxFlavors: 1 } } });
     
-    const { register, control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<any>({
-        defaultValues: { name: '', description: '', price: 0, imageUrl: '', categoryIds: [], isAvailable: true, isFeatured: false, stock: 0, addonGroups: [], sizes: [], ingredients: [], productionArea: 'Cozinha' }
-    });
-
     const { fields: sizeFields, append: appendSize, remove: removeSize } = useFieldArray({ control, name: "sizes" });
     const watchAllFields = watch();
 
@@ -624,6 +442,193 @@ function ProductFormPage() {
                     <ProductMobilePreview watchFields={watchAllFields} isPizza={isPizza} pizzaConfig={pizzaConfig} />
                 </div>
 
+            </div>
+        </div>
+    );
+}
+
+// --- Sub-componente para Seleção de Biblioteca ---
+function GlobalAddonSelector({ availableGroups, selectedGroupIds, onToggle }: { availableGroups: AddonGroup[], selectedGroupIds: string[], onToggle: (id: string) => void }) {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {availableGroups.map(group => {
+                const isSelected = selectedGroupIds.includes(group.id!);
+                return (
+                    <Card 
+                        key={group.id}
+                        onClick={() => onToggle(group.id!)}
+                        className={cn(
+                            "p-4 border-2 transition-all cursor-pointer flex items-center justify-between group",
+                            isSelected ? "border-orange-500 bg-orange-50/30 shadow-lg shadow-orange-900/5" : "border-slate-100 bg-white hover:border-slate-200"
+                        )}
+                        noPadding
+                    >
+                        <div className="flex items-center gap-4 pl-4 py-4">
+                            <div className={cn(
+                                "w-12 h-12 rounded-[1.25rem] flex items-center justify-center shadow-lg transition-all",
+                                isSelected ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                            )}>
+                                <Settings2 size={24} />
+                            </div>
+                            <div>
+                                <span className={cn("block text-sm font-black uppercase italic tracking-tight", isSelected ? "text-slate-900" : "text-slate-500")}>
+                                    {group.name}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {group.addons.length} ITENS • {group.type === 'single' ? 'ESCOLHA ÚNICA' : 'MÚLTIPLA'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="pr-6">
+                            <div className={cn(
+                                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                isSelected ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20" : "border-slate-200"
+                            )}>
+                                {isSelected && <Check size={14} strokeWidth={4} />}
+                            </div>
+                        </div>
+                    </Card>
+                );
+            })}
+        </div>
+    );
+};
+
+// --- Sub-componente para Ficha Técnica (Insumos) ---
+function CompositionList({ control, register, availableIngredients }: { control: any, register: any, availableIngredients: any[] }) {
+    const { fields, append, remove } = useFieldArray({ control, name: "ingredients" });
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6 px-2">
+                <h3 className="text-xs font-black uppercase text-slate-400 tracking-[0.2em] italic flex items-center gap-2">
+                    <Target size={14} className="text-orange-500" /> Composição Estrutural
+                </h3>
+                <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => append({ ingredientId: '', quantity: 0 })}
+                    className="h-10 rounded-xl border-orange-500 text-orange-600 font-black italic gap-2 hover:bg-orange-50"
+                >
+                    <Plus size={16} /> VINCULAR INSUMO
+                </Button>
+            </div>
+
+            <div className="space-y-3">
+                {fields.map((field, index) => (
+                    <Card key={field.id} className="p-5 bg-white border-2 border-slate-100 rounded-[2rem] hover:border-orange-500/20 transition-all shadow-sm group" noPadding>
+                        <div className="flex items-center gap-6 px-6 py-2">
+                            <div className="flex-1">
+                                <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 ml-1 block italic">Matéria-prima / Insumo</label>
+                                <select 
+                                    {...register(`ingredients.${index}.ingredientId`, { required: true })}
+                                    className="ui-input w-full h-12 italic"
+                                >
+                                    <option value="">Selecione na lista...</option>
+                                    {availableIngredients.map(ing => (
+                                        <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="w-40">
+                                <label className="text-[9px] font-black uppercase text-slate-400 mb-1.5 ml-1 block italic">Qtd. Utilizada</label>
+                                <div className="relative">
+                                    <input 
+                                        type="number" step="0.001"
+                                        {...register(`ingredients.${index}.quantity`, { required: true, valueAsNumber: true })}
+                                        className="ui-input w-full h-12 font-black text-orange-600 pr-12 italic"
+                                    />
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">UNI.</span>
+                                </div>
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="mt-5 h-12 w-12 rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 transition-all">
+                                <Trash2 size={20} />
+                            </Button>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+
+            {fields.length === 0 && (
+                <div className="text-center py-20 border-2 border-dashed border-slate-100 rounded-[3rem] bg-slate-50/30 opacity-30">
+                    <Layers className="mx-auto text-slate-300 mb-4" size={64} strokeWidth={1} />
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhum insumo vinculado</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- Componente de Preview Realista ---
+function ProductMobilePreview({ watchFields, isPizza, pizzaConfig }: { watchFields: any, isPizza: boolean, pizzaConfig: any }) {
+    const { name, description, price, imageUrl, addonGroups, sizes } = watchFields;
+    const [selectedSizePreview, setSelectedSizePreview] = useState<any>(null);
+
+    useEffect(() => { if (sizes && sizes.length > 0 && !selectedSizePreview) setSelectedSizePreview(sizes[0]); }, [sizes, selectedSizePreview]);
+
+    return (
+        <div className="sticky top-28 hidden xl:block animate-in fade-in zoom-in-95 duration-700">
+            <div className="w-[320px] h-[650px] bg-slate-900 rounded-[3.5rem] p-3 shadow-2xl border-[10px] border-slate-800 relative">
+                {/* Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-slate-800 rounded-b-2xl z-50 flex items-center justify-center"><div className="w-12 h-1 bg-slate-700 rounded-full" /></div>
+                
+                <div className="w-full h-full bg-slate-50 rounded-[2.5rem] overflow-hidden flex flex-col relative">
+                    <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+                        {/* Imagem Cardápio */}
+                        <div className="h-48 bg-slate-200 relative group overflow-hidden">
+                            {imageUrl ? <img src={imageUrl} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" /> : <div className="absolute inset-0 flex items-center justify-center text-slate-300"><ImageIcon size={48} strokeWidth={1} /></div>}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
+                                <h3 className="text-white font-black text-lg italic tracking-tighter uppercase leading-none mb-1">{name || 'Nome do Item'}</h3>
+                                <p className="text-white/60 text-[10px] font-medium leading-relaxed line-clamp-2">{description || 'Descrição detalhada aparecerá aqui para seus clientes...'}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-5 space-y-5">
+                            {sizes && sizes.length > 0 && (
+                                <div className="bg-white p-4 rounded-[1.5rem] shadow-sm border border-slate-100">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <span className="text-[10px] font-black uppercase text-slate-900 italic tracking-widest">1. Selecione o Tamanho</span>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        {sizes.map((s: any, i: number) => (
+                                            <div key={i} onClick={() => setSelectedSizePreview(s)} className={cn("p-3 rounded-xl border-2 flex justify-between items-center transition-all cursor-pointer", selectedSizePreview?.name === s.name ? "border-orange-500 bg-orange-50" : "border-slate-50")}>
+                                                <span className={cn("text-[11px] font-black uppercase italic", selectedSizePreview?.name === s.name ? "text-orange-600" : "text-slate-700")}>{s.name}</span>
+                                                <span className="text-xs font-black text-slate-900 italic">R$ {Number(s.price).toFixed(2)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {isPizza && (
+                                <div className="bg-white p-4 rounded-[1.5rem] shadow-sm border border-orange-100 flex items-center justify-center text-center py-8">
+                                    <div><Pizza size={32} className="text-orange-200 mx-auto mb-2" /><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Seleção de Sabores Ativa</p></div>
+                                </div>
+                            )}
+
+                            {addonGroups?.map((group: any, i: number) => (
+                                <div key={i} className="bg-white p-4 rounded-[1.5rem] shadow-sm border border-slate-100">
+                                    <span className="text-[10px] font-black uppercase text-slate-900 italic tracking-widest block mb-3">{group.name}</span>
+                                    <div className="space-y-2">
+                                        {group.addons?.slice(0, 3).map((a: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                                                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-slate-100 border border-slate-200" /><span>{a.name}</span></div>
+                                                <span className="text-emerald-600">+ R$ {Number(a.price).toFixed(2)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Botão Inferior Mobile */}
+                    <div className="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-slate-100 flex items-center justify-between shadow-2xl">
+                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-400 uppercase">Subtotal</span><span className="text-xl font-black text-slate-900 italic tracking-tighter">R$ {Number(selectedSizePreview?.price || price || 0).toFixed(2)}</span></div>
+                        <Button size="sm" className="h-12 px-6 rounded-2xl italic font-black text-[10px] shadow-lg shadow-orange-500/20">ADICIONAR</Button>
+                    </div>
+                </div>
             </div>
         </div>
     );
