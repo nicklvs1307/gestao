@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { getSaiposSettings, updateSaiposSettings } from '../services/api';
-import { X, Save, Loader2, Info, ShieldCheck, Key, Store } from 'lucide-react';
+import { X, Save, Loader2, Info, ShieldCheck, Key, Lock, Store, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Card } from './ui/Card';
 
 interface SaiposConfigModalProps {
   onClose: () => void;
@@ -26,8 +29,8 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
         setCodStore(settings.saiposCodStore || '');
         setIsActive(settings.saiposIntegrationActive || false);
       } catch (error) {
-        console.error('Erro ao buscar configurações da Saipos:', error);
-        toast.error('Não foi possível carregar as configurações.');
+        console.error(error);
+        toast.error('Erro ao carregar credenciais.');
       } finally {
         setIsLoading(false);
       }
@@ -38,20 +41,17 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    const settingsToSave = { 
-      saiposPartnerId: partnerId,
-      saiposSecret: secret,
-      saiposCodStore: codStore, 
-      saiposIntegrationActive: isActive 
-    };
-    
     try {
-      await updateSaiposSettings(settingsToSave);
-      toast.success('Configurações da Saipos atualizadas!');
+      await updateSaiposSettings({ 
+        saiposPartnerId: partnerId,
+        saiposSecret: secret,
+        saiposCodStore: codStore, 
+        saiposIntegrationActive: isActive 
+      });
+      toast.success('Configurações Saipos sincronizadas!');
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar configurações da Saipos:', error);
-      toast.error('Erro ao salvar as configurações.');
+      toast.error('Falha ao salvar configurações.');
     } finally {
       setIsSaving(false);
     }
@@ -59,130 +59,67 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
 
   return (
     <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-orange-600/10 flex items-center justify-center text-orange-600 shadow-sm">
-              <ShieldCheck size={24} />
+      <div className="ui-modal-content w-full max-w-lg overflow-hidden flex flex-col">
+        {/* Header Master */}
+        <div className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-4">
+                <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl shadow-slate-200">
+                    <ShieldCheck size={24} />
+                </div>
+                <div>
+                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Configurar Saipos</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Credenciais de API e Sincronismo</p>
+                </div>
             </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter">Integração Saipos</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Configurações de API</p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose} 
-            className="h-10 w-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all"
-          >
-            <X size={20} />
-          </button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50"><X size={24} /></Button>
         </div>
         
         {isLoading ? (
-          <div className="p-16 flex flex-col items-center justify-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sincronizando...</span>
+          <div className="p-24 flex flex-col items-center justify-center gap-4 opacity-30">
+            <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Autenticando...</span>
           </div>
         ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="p-8 space-y-6">
-              <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex gap-3 shadow-sm">
-                <Info size={18} className="text-orange-600 shrink-0 mt-0.5" />
-                <p className="text-[11px] font-bold text-orange-900 leading-snug">
-                  Insira as credenciais fornecidas pela Saipos para automatizar seus pedidos.
-                </p>
-              </div>
+          <>
+            <form onSubmit={handleSubmit} id="saipos-form" className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-8">
+                <Card className="p-5 border-orange-100 bg-orange-50/20 flex gap-4 items-start shadow-inner">
+                    <Info size={20} className="text-orange-500 shrink-0 mt-0.5" />
+                    <p className="text-[11px] font-bold text-orange-900 leading-relaxed uppercase italic">
+                        Insira as chaves de acesso fornecidas pelo suporte técnico da Saipos para ativar o recebimento automático de pedidos.
+                    </p>
+                </Card>
 
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="partnerId" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ID do Parceiro</label>
-                  <input
-                    id="partnerId"
-                    type="text"
-                    value={partnerId}
-                    onChange={(e) => setPartnerId(e.target.value)}
-                    placeholder="partner_id"
-                    className="ui-input w-full"
-                    disabled={isSaving}
-                  />
+                <div className="space-y-6">
+                    <Input label="Partner ID" value={partnerId} onChange={e => setPartnerId(e.target.value)} placeholder="Ex: partner_123..." required />
+                    <Input label="API Secret Key" type="password" value={secret} onChange={e => setSecret(e.target.value)} placeholder="••••••••••••••••" required />
+                    <Input label="Código da Loja (Saipos)" value={codStore} onChange={e => setCodStore(e.target.value)} placeholder="Ex: store_99" required />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="secret" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Secret Key</label>
-                  <input
-                    id="secret"
-                    type="password"
-                    value={secret}
-                    onChange={(e) => setSecret(e.target.value)}
-                    placeholder="Insira o secret"
-                    className="ui-input w-full"
-                    disabled={isSaving}
-                  />
-                </div>
+                {/* Toggle de Ativação Premium */}
+                <Card className={cn("p-6 border-2 transition-all cursor-pointer flex items-center justify-between", isActive ? "border-emerald-500 bg-emerald-50" : "border-slate-100 bg-white")} onClick={() => setIsActive(!isActive)}>
+                    <div className="flex items-center gap-4">
+                        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shadow-lg", isActive ? "bg-emerald-500 text-white shadow-emerald-100" : "bg-slate-100 text-slate-400")}>
+                            <RefreshCw size={20} className={isActive ? "animate-spin-slow" : ""} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none mb-1">Status da Operação</p>
+                            <span className={cn("text-[9px] font-black uppercase tracking-widest", isActive ? "text-emerald-600" : "text-slate-400")}>{isActive ? 'TRANSMISSÃO ATIVA' : 'INTEGRAÇÃO PAUSADA'}</span>
+                        </div>
+                    </div>
+                    <div className={cn("w-14 h-7 rounded-full relative transition-all shadow-inner", isActive ? "bg-emerald-500" : "bg-slate-300")}>
+                        <div className={cn("absolute w-5 h-5 bg-white rounded-full top-1 transition-all shadow-md", isActive ? "left-8" : "left-1")} />
+                    </div>
+                </Card>
+            </form>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="codStore" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Código da Loja</label>
-                  <input
-                    id="codStore"
-                    type="text"
-                    value={codStore}
-                    onChange={(e) => setCodStore(e.target.value)}
-                    placeholder="cod_store"
-                    className="ui-input w-full"
-                    disabled={isSaving}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase text-slate-900 tracking-widest">Sincronização Ativa</span>
-                  <span className={cn("text-[9px] font-bold uppercase", isActive ? "text-emerald-600" : "text-slate-400")}>
-                    {isActive ? 'Operando' : 'Pausada'}
-                  </span>
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setIsActive(!isActive)} 
-                  disabled={isSaving}
-                  className={cn(
-                    "w-12 h-6 rounded-full relative transition-all duration-300 shadow-inner",
-                    isActive ? "bg-emerald-500" : "bg-slate-300"
-                  )}
-                >
-                  <span className={cn(
-                    "absolute w-4 h-4 bg-white rounded-full top-1 transition-all shadow-md",
-                    isActive ? "left-7" : "left-1"
-                  )} />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex gap-3">
-              <button 
-                type="button" 
-                onClick={onClose} 
-                className="px-6 py-2.5 text-xs font-black uppercase text-slate-400 hover:text-slate-900 transition-all"
-                disabled={isSaving}
-              >
-                Cancelar
-              </button>
-              <button 
-                type="submit" 
-                className="ui-button-primary flex-1"
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    <Save size={18} />
-                    <span>Salvar Configuração</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+            {/* Footer Fixo */}
+            <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+                <Button variant="ghost" onClick={onClose} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400" disabled={isSaving}>CANCELAR</Button>
+                <Button type="submit" form="saipos-form" isLoading={isSaving} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">
+                    <Save size={18} className="mr-2" /> SALVAR CREDENCIAIS
+                </Button>
+            </footer>
+          </>
         )}
       </div>
     </div>
