@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { 
-    ArrowLeft, Plus, Trash2, CloudUpload, ChevronDown, ChevronUp, CheckCircle, Pizza, 
-    Layers, Info, Settings2, Loader2, Image as ImageIcon, Smartphone, Package, Target, 
-    Save, X, Check, Eye, List, DollarSign
+    ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, CheckCircle, Pizza, 
+    Layers, Settings2, Loader2, Image as ImageIcon, Package, Target, 
+    Save, Check, List, DollarSign
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage, getSettings } from '../services/api';
+import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage } from '../services/api';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
-import type { Product, Category } from '@/types/index';
+import type { Category } from '@/types/index';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -332,7 +332,7 @@ const ProductFormPage = () => {
                     {/* CONTEÚDO: ABA GERAL */}
                     <AnimatePresence mode="wait">
                         {activeTab === 'geral' && (
-                            <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
+                            <motion.div key="geral" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} className="space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <Card className={cn("p-6 border-2 transition-all cursor-pointer flex items-center justify-between", watch('isAvailable') ? "border-emerald-500 bg-emerald-50/10" : "border-slate-100 bg-white")} onClick={() => setValue('isAvailable', !watch('isAvailable'))}>
                                         <div className="flex items-center gap-4">
@@ -356,7 +356,6 @@ const ProductFormPage = () => {
                                             <Input label="Nome Comercial do Produto" {...register('name', { required: true })} required placeholder="Ex: Pizza Margherita Premium" />
                                         </div>
                                         
-                                        {/* NOVO: SELEÇÃO DE CATEGORIAS (MÚLTIPLA) */}
                                         <div className="md:col-span-2 space-y-2">
                                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic flex items-center gap-2">
                                                 <Layers size={14} className="text-orange-500" /> Categorias de Exibição
@@ -386,14 +385,24 @@ const ProductFormPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="md:col-span-2"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Descrição Gastronômica</label><textarea {...register('description')} rows={3} className="ui-input w-full h-auto py-4 font-bold text-sm italic" placeholder="Descreva os sabores e ingredientes..." /></div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Descrição Gastronômica</label>
+                                            <textarea {...register('description')} rows={3} className="ui-input w-full h-auto py-4 font-bold text-sm italic" placeholder="Descreva os sabores e ingredientes..." />
+                                        </div>
                                         
                                         <div className="space-y-6 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-50">
                                             <Input label="Preço Base (R$)" type="number" step="0.01" {...register('price', { valueAsNumber: true })} icon={DollarSign} disabled={watch('sizes')?.length > 0} />
-                                            <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Área de Preparo</label><select {...register('productionArea')} className="ui-input w-full h-14 italic uppercase text-xs font-black"><option value="Cozinha">Cozinha Principal</option><option value="Bar">Bar / Bebidas</option><option value="Pizzaria">Pizzaria / Forno</option><option value="Sobremesas">Confeitaria</option></select></div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Área de Preparo</label>
+                                                <select {...register('productionArea')} className="ui-input w-full h-14 italic uppercase text-xs font-black">
+                                                    <option value="Cozinha">Cozinha Principal</option>
+                                                    <option value="Bar">Bar / Bebidas</option>
+                                                    <option value="Pizzaria">Pizzaria / Forno</option>
+                                                    <option value="Sobremesas">Confeitaria</option>
+                                                </select>
+                                            </div>
                                         </div>
 
-                                        {/* CAMPOS FISCAIS (QUE PODEM TER SUMIDO) */}
                                         <div className="md:col-span-2 space-y-6 pt-6 border-t border-slate-50">
                                             <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-3 italic"><Settings2 size={14} className="text-blue-500" /> Parâmetros Fiscais & Integração</h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -402,7 +411,15 @@ const ProductFormPage = () => {
                                                     <Input label="CFOP" {...register('cfop')} placeholder="Ex: 5102" />
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Unidade</label><select {...register('measureUnit')} className="ui-input w-full h-14 italic uppercase text-xs font-black"><option value="UN">Unidade (UN)</option><option value="KG">Quilo (KG)</option><option value="LT">Litro (LT)</option><option value="DZ">Dúzia (DZ)</option></select></div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Unidade</label>
+                                                        <select {...register('measureUnit')} className="ui-input w-full h-14 italic uppercase text-xs font-black">
+                                                            <option value="UN">Unidade (UN)</option>
+                                                            <option value="KG">Quilo (KG)</option>
+                                                            <option value="LT">Litro (LT)</option>
+                                                            <option value="DZ">Dúzia (DZ)</option>
+                                                        </select>
+                                                    </div>
                                                     <Input label="Cód. Integração" {...register('saiposIntegrationCode')} placeholder="Ex: SKU-123" />
                                                 </div>
                                             </div>
@@ -433,33 +450,9 @@ const ProductFormPage = () => {
                             </motion.div>
                         )}
 
-                                    <div className="space-y-6 pt-10 border-t border-slate-50">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-3 italic"><ImageIcon size={14} className="text-orange-500" /> Identidade Visual</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                                            <div className="space-y-4">
-                                                <div className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex items-center justify-center p-6 group hover:border-orange-500 transition-all cursor-pointer overflow-hidden relative" onClick={() => (document.getElementById('img-upload') as any).click()}>
-                                                    {watch('imageUrl') ? <img src={watch('imageUrl')} className="w-full h-full object-contain drop-shadow-xl" alt="" /> : <div className="text-center"><ImageIcon size={48} className="mx-auto text-slate-200 mb-2"/><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Enviar Foto</p></div>}
-                                                    {isUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-orange-500" size={32}/></div>}
-                                                </div>
-                                                <input type="file" id="img-upload" className="hidden" onChange={handleImageUpload} accept="image/*" />
-                                            </div>
-                                            <div className="space-y-6">
-                                                <Input label="URL da Imagem (Opcional)" {...register('imageUrl')} />
-                                                <div className="p-6 bg-slate-900 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
-                                                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 blur-3xl rounded-full" />
-                                                    <p className="text-white font-black uppercase italic tracking-tighter text-sm mb-2 relative z-10">Dica Pro</p>
-                                                    <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest leading-relaxed relative z-10">Fotos reais aumentam a conversão em até 40%. Use iluminação natural.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Card>
-                            </motion.div>
-                        )}
-
                         {/* CONTEÚDO: ABA TAMANHOS & PIZZA */}
                         {activeTab === 'tamanhos' && (
-                            <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
+                            <motion.div key="tamanhos" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} className="space-y-8">
                                 <Card className={cn("p-8 border-2 transition-all cursor-pointer flex items-center justify-between", isPizza ? "border-orange-500 bg-orange-50/10 shadow-lg shadow-orange-900/5" : "border-slate-100 bg-white")} onClick={() => setIsPizza(!isPizza)}>
                                     <div className="flex items-center gap-5">
                                         <div className={cn("w-16 h-16 rounded-[1.5rem] flex items-center justify-center shadow-xl transition-transform", isPizza ? "bg-orange-500 text-white shadow-orange-100 scale-110" : "bg-slate-100 text-slate-400")}><Pizza size={32} /></div>
@@ -487,7 +480,7 @@ const ProductFormPage = () => {
                                 )}
 
                                 <div className="space-y-6">
-                                    <div className="flex justify-between items-center px-2"><h3 className="text-xs font-black uppercase text-slate-400 tracking-[0.2em] italic flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Variações de Tamanho</h3><Button variant="outline" size="sm" onClick={() => appendSize({ name: '', price: 0 })} className="rounded-xl border-slate-200 text-slate-500 gap-2 font-black italic"><Plus size={16} /> ADICIONAR VARIAÇÃO</Button></div>
+                                    <div className="flex justify-between items-center px-2"><h3 className="text-xs font-black uppercase text-slate-400 tracking-[0.2em] italic flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Variações de Tamanho</h3><Button variant="outline" size="sm" type="button" onClick={() => appendSize({ name: '', price: 0 })} className="rounded-xl border-slate-200 text-slate-500 gap-2 font-black italic"><Plus size={16} /> ADICIONAR VARIAÇÃO</Button></div>
                                     <div className="space-y-4">
                                         {sizeFields.map((field, index) => {
                                             const sizeName = watch(`sizes.${index}.name`);
@@ -504,7 +497,7 @@ const ProductFormPage = () => {
                                                             </div>
                                                         )}
                                                         <div className="md:col-span-2 flex justify-end gap-2">
-                                                            <Button variant="ghost" size="icon" onClick={() => removeSize(index)} className="h-12 w-12 rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 transition-all"><Trash2 size={20}/></Button>
+                                                            <Button variant="ghost" size="icon" type="button" onClick={() => removeSize(index)} className="h-12 w-12 rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 transition-all"><Trash2 size={20}/></Button>
                                                         </div>
                                                     </div>
                                                 </Card>
@@ -517,11 +510,11 @@ const ProductFormPage = () => {
 
                         {/* CONTEÚDO: ABA COMPLEMENTOS */}
                         {activeTab === 'complementos' && (
-                            <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
+                            <motion.div key="complementos" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} className="space-y-8">
                                 <Card className="p-8 border-slate-200 shadow-xl bg-white space-y-10">
                                     <div className="flex justify-between items-center border-b border-slate-50 pb-6">
                                         <div><h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Biblioteca de Adicionais</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Vincule grupos pré-cadastrados ao produto</p></div>
-                                        <Button variant="outline" size="sm" onClick={() => navigate('/addons')} className="rounded-xl border-blue-500 text-blue-600 gap-2 font-black italic"><Settings2 size={16}/> GERENCIAR BIBLIOTECA</Button>
+                                        <Button variant="outline" size="sm" type="button" onClick={() => navigate('/addons')} className="rounded-xl border-blue-500 text-blue-600 gap-2 font-black italic"><Settings2 size={16}/> GERENCIAR BIBLIOTECA</Button>
                                     </div>
                                     <GlobalAddonSelector 
                                         availableGroups={libraryGroups} 
@@ -539,7 +532,7 @@ const ProductFormPage = () => {
 
                         {/* CONTEÚDO: ABA FICHA TÉCNICA */}
                         {activeTab === 'composição' && (
-                            <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
+                            <motion.div key="composição" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} className="space-y-8">
                                 <Card className="p-10 border-emerald-100 bg-white shadow-xl">
                                     <CompositionList control={control} register={register} availableIngredients={availableIngredients} />
                                 </Card>
