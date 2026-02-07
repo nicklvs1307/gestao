@@ -21,6 +21,13 @@ const calculateDiscountedPrice = (price: number, promotion: Promotion) => {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAddToCartFromCard }) => {
   const activePromotion = product.promotions?.find(p => p.isActive);
+  const hasSizes = product.sizes && product.sizes.length > 0;
+  
+  const basePrice = hasSizes 
+    ? Math.min(...product.sizes.map(s => s.price)) 
+    : product.price;
+
+  const finalPrice = activePromotion ? calculateDiscountedPrice(basePrice, activePromotion) : basePrice;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
     e.stopPropagation(); 
@@ -31,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAd
 
   return (
     <div 
-      className="group bg-white rounded-[32px] overflow-hidden shadow-md border border-slate-100 flex flex-col transition-all active:scale-[0.98]"
+      className="group bg-white rounded-[32px] overflow-hidden shadow-md border border-slate-100 border-b-4 border-b-slate-200 flex flex-col transition-all active:scale-[0.98] hover:shadow-xl"
       onClick={() => onProductClick(product)}
     >
       <div className="h-56 relative overflow-hidden">
@@ -64,20 +71,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAd
 
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-2 gap-2">
-          <h3 className="text-xl font-black text-foreground leading-tight italic line-clamp-2">
+          <h3 className="text-xl font-black text-foreground leading-tight italic line-clamp-2 uppercase">
             {product.name}
           </h3>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end shrink-0">
+             {hasSizes && (
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">A partir de</span>
+             )}
              {activePromotion ? (
                 <>
-                  <span className="text-xs text-muted-foreground line-through font-bold">R$ {formatPrice(product.price)}</span>
+                  <span className="text-xs text-muted-foreground line-through font-bold">R$ {formatPrice(basePrice)}</span>
                   <span className="text-xl font-black text-primary italic whitespace-nowrap">
-                    R$ {formatPrice(calculateDiscountedPrice(product.price, activePromotion))}
+                    R$ {formatPrice(finalPrice)}
                   </span>
                 </>
              ) : (
                 <span className="text-xl font-black text-primary italic whitespace-nowrap">
-                  R$ {formatPrice(product.price)}
+                  R$ {formatPrice(basePrice)}
                 </span>
              )}
           </div>
@@ -88,7 +98,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAd
         </p>
         
         <button 
-          className="w-full bg-foreground text-background py-4 rounded-2xl font-black text-sm hover:bg-primary hover:text-white transition-colors shadow-xl uppercase tracking-wide"
+          className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm hover:bg-primary transition-all shadow-lg shadow-slate-200 uppercase tracking-widest italic"
           onClick={handleAddToCartClick}
         >
           Adicionar ao Pedido

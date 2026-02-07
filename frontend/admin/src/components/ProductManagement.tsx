@@ -224,7 +224,14 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ refetchTrigger })
                         </span>
                     </td>
                     <td className="px-6 py-3 text-center font-black text-xs italic text-foreground/80">
-                        R$ {product.price.toFixed(2).replace('.', ',')}
+                        {product.sizes && product.sizes.length > 0 ? (
+                            <>
+                                <span className="block text-[8px] uppercase not-italic text-slate-400 leading-none mb-1">A partir de</span>
+                                R$ {Math.min(...product.sizes.map(s => s.price)).toFixed(2).replace('.', ',')}
+                            </>
+                        ) : (
+                            <>R$ {product.price.toFixed(2).replace('.', ',')}</>
+                        )}
                     </td>
                     <td className="px-6 py-3">
                         <div className="flex flex-col items-center gap-1">
