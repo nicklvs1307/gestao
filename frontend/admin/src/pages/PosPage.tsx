@@ -649,11 +649,4 @@ const PosPage: React.FC = () => {
     );
 };
 
-const getCashierStatus = async () => {
-    try {
-        const response = await fetch('/api/cashier/status', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
-        return await response.json();
-    } catch (e) { return null; }
-};
-
 export default PosPage;
