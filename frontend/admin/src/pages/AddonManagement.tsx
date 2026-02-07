@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { addonService, AddonGroup, Addon } from '../services/api/addonService';
 import { getIngredients } from '../services/api';
-import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, GripVertical, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, GripVertical, Loader2, List, Settings, CheckCircle, Info, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 import {
@@ -21,6 +21,9 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 
 interface SortableGroupProps {
   group: AddonGroup;
@@ -49,59 +52,77 @@ const SortableGroupCard = ({ group, onEdit, onDelete }: SortableGroupProps) => {
       ref={setNodeRef} 
       style={style}
       className={cn(
-        "bg-card-dark border border-white/10 rounded-xl p-5 hover:border-gold/50 transition-all group relative",
-        isDragging && "opacity-50 border-gold shadow-2xl z-50 scale-105"
+        "animate-in fade-in zoom-in-95 duration-300",
+        isDragging && "z-50"
       )}
     >
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-start gap-3">
-          <button 
-            {...attributes} 
-            {...listeners}
-            className="mt-1 p-1 cursor-grab active:cursor-grabbing text-gray-600 hover:text-gold transition-colors"
-          >
-            <GripVertical size={18} />
-          </button>
-          <div>
-            <h3 className="text-lg font-bold text-white">{group.name}</h3>
-            <span className={`text-xs px-2 py-1 rounded ${group.type === 'single' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
-              {group.type === 'single' ? 'Seleção Única' : 'Múltipla Escolha'}
-            </span>
-            {group.isRequired && <span className="ml-2 text-xs px-2 py-1 rounded bg-red-500/20 text-red-400">Obrigatório</span>}
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => onEdit(group)} className="p-2 text-gray-400 hover:text-gold hover:bg-gold/10 rounded-lg">
-            <Edit2 size={16} />
-          </button>
-          <button onClick={() => onDelete(group.id!)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg">
-            <Trash2 size={16} />
-          </button>
-        </div>
-      </div>
+      <Card 
+        className={cn(
+            "p-0 overflow-hidden border-2 transition-all duration-300 group hover:shadow-2xl hover:-translate-y-1 bg-white",
+            isDragging ? "border-orange-500 scale-105 shadow-orange-900/20" : "border-slate-100"
+        )}
+        noPadding
+      >
+        <div className="p-6">
+            <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-4">
+                    <button 
+                        {...attributes} 
+                        {...listeners}
+                        className="p-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-orange-500 transition-colors bg-slate-50 rounded-xl"
+                    >
+                        <GripVertical size={18} />
+                    </button>
+                    <div>
+                        <h3 className="font-black text-lg text-slate-900 uppercase italic tracking-tighter leading-none">{group.name}</h3>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className={cn(
+                                "text-[8px] font-black uppercase px-2 py-0.5 rounded border tracking-widest",
+                                group.type === 'single' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-purple-50 text-purple-600 border-purple-100"
+                            )}>
+                                {group.type === 'single' ? 'Seleção Única' : 'Múltipla'}
+                            </span>
+                            {group.isRequired && (
+                                <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100 tracking-widest">Obrigatório</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-slate-50" onClick={() => onEdit(group)}><Edit2 size={14}/></Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-rose-50 text-rose-500" onClick={() => onDelete(group.id!)}><Trash2 size={14}/></Button>
+                </div>
+            </div>
 
-      <div className="space-y-2 pl-8">
-        <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">Itens ({group.addons.length})</p>
-        <div className="flex flex-wrap gap-2">
-          {group.addons.map((addon, i) => (
-            <span key={i} className="text-[10px] font-bold uppercase bg-white/5 border border-white/5 px-2 py-1 rounded text-gray-400">
-              {addon.name}
-            </span>
-          ))}
+            <div className="space-y-3">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Itens no Grupo ({group.addons.length})</p>
+                <div className="flex flex-wrap gap-2">
+                    {group.addons.slice(0, 6).map((addon, i) => (
+                        <span key={i} className="text-[10px] font-bold uppercase italic bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg text-slate-600">
+                            {addon.name}
+                        </span>
+                    ))}
+                    {group.addons.length > 6 && (
+                        <span className="text-[10px] font-black text-slate-300 uppercase italic px-2 py-1">+{group.addons.length - 6} mais</span>
+                    )}
+                </div>
+            </div>
+            
+            {group.saiposIntegrationCode && (
+                <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Integração: <b className="text-orange-500">{group.saiposIntegrationCode}</b></span>
+                    <Settings size={14} className="text-slate-200" />
+                </div>
+            )}
         </div>
-      </div>
-      
-      {group.saiposIntegrationCode && (
-        <div className="mt-4 pt-4 border-t border-white/5 text-[9px] uppercase font-black text-gray-600 tracking-widest">
-          Integração: <span className="text-gold">{group.saiposIntegrationCode}</span>
-        </div>
-      )}
+      </Card>
     </div>
   );
 };
 
 const AddonManagement: React.FC = () => {
   const [groups, setGroups] = useState<AddonGroup[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ingredients, setIngredients] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<AddonGroup | null>(null);
@@ -110,38 +131,23 @@ const AddonManagement: React.FC = () => {
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const [formData, setFormData] = useState<AddonGroup>({
-    name: '',
-    type: 'multiple',
-    isRequired: false,
-    order: 0,
-    saiposIntegrationCode: '',
-    addons: []
+    name: '', type: 'multiple', isRequired: false, order: 0, saiposIntegrationCode: '', addons: []
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [groupsData, ingredientsData] = await Promise.all([
-        addonService.getAll(),
-        getIngredients()
-      ]);
+      const [groupsData, ingredientsData] = await Promise.all([ addonService.getAll(), getIngredients() ]);
       setGroups(Array.isArray(groupsData) ? groupsData : []);
       setIngredients(ingredientsData);
-    } catch (error) {
-      toast.error('Erro ao carregar dados.');
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { toast.error('Erro ao carregar dados.'); }
+    finally { setLoading(false); }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -155,12 +161,9 @@ const AddonManagement: React.FC = () => {
         setIsReordering(true);
         const updates = newOrder.map((g, index) => ({ id: g.id!, order: index }));
         await addonService.reorder(updates);
-      } catch (error) {
-        toast.error('Falha ao salvar ordem.');
-        fetchData();
-      } finally {
-        setIsReordering(false);
-      }
+        toast.success("Ordem atualizada!");
+      } catch (error) { toast.error('Falha ao salvar ordem.'); fetchData(); }
+      finally { setIsReordering(false); }
     }
   };
 
@@ -170,47 +173,29 @@ const AddonManagement: React.FC = () => {
       setFormData({ ...group });
     } else {
       setEditingGroup(null);
-      setFormData({
-        name: '',
-        type: 'multiple',
-        isRequired: false,
-        order: 0,
-        saiposIntegrationCode: '',
-        addons: []
-      });
+      setFormData({ name: '', type: 'multiple', isRequired: false, order: 0, saiposIntegrationCode: '', addons: [] });
     }
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (!formData.name) {
-      toast.error('O nome do grupo é obrigatório.');
-      return;
-    }
+    if (!formData.name) return toast.error('O nome do grupo é obrigatório.');
     try {
-      if (editingGroup?.id) {
-        await addonService.update(editingGroup.id, formData);
-        toast.success('Grupo atualizado!');
-      } else {
-        await addonService.create(formData);
-        toast.success('Grupo criado!');
-      }
+      if (editingGroup?.id) await addonService.update(editingGroup.id, formData);
+      else await addonService.create(formData);
+      toast.success(editingGroup ? 'Grupo atualizado!' : 'Grupo criado!');
       setIsModalOpen(false);
       fetchData();
-    } catch (error) {
-      toast.error('Erro ao salvar grupo.');
-    }
+    } catch (error) { toast.error('Erro ao salvar.'); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este grupo?')) return;
+    if (!confirm('Excluir este grupo permanentemente?')) return;
     try {
       await addonService.delete(id);
-      toast.success('Grupo excluído.');
+      toast.success('Grupo removido.');
       fetchData();
-    } catch (error) {
-      toast.error('Erro ao excluir.');
-    }
+    } catch (error) { toast.error('Erro ao excluir.'); }
   };
 
   const moveAddon = (index: number, direction: 'up' | 'down') => {
@@ -240,26 +225,36 @@ const AddonManagement: React.FC = () => {
     setFormData({ ...formData, addons: newAddons });
   };
 
-  if (loading && !isReordering) return <div className="p-8 text-center text-white animate-pulse font-black uppercase tracking-widest text-xs">Carregando Biblioteca...</div>;
+  if (loading && !isReordering) return (
+      <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando Biblioteca...</span>
+      </div>
+  );
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center bg-card-dark border border-white/10 p-6 rounded-2xl">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-2xl font-black text-white uppercase italic tracking-tighter">Biblioteca de Complementos</h1>
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Arraste os cards para reordenar a exibição.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Complementos</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+            <List size={14} className="text-orange-500" /> Biblioteca de Adicionais e Personalização
+          </p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-gold hover:bg-yellow-600 text-black px-6 h-12 rounded-xl flex items-center gap-2 font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-gold/20"
-        >
-          <Plus size={20} /> Novo Grupo
-        </button>
+        <div className="flex gap-3">
+            <Button variant="outline" size="sm" className="bg-white rounded-xl" onClick={fetchData}>
+                <RefreshCw size={16} />
+            </Button>
+            <Button onClick={() => handleOpenModal()} className="rounded-xl px-6 italic">
+                <Plus size={18} /> NOVO GRUPO
+            </Button>
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={groups.map(g => g.id!)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {groups.map((group) => (
               <SortableGroupCard 
                 key={group.id} 
@@ -268,146 +263,119 @@ const AddonManagement: React.FC = () => {
                 onDelete={handleDelete} 
               />
             ))}
+            {/* Card de Adicionar Rápido */}
+            <Card 
+                onClick={() => handleOpenModal()}
+                className="p-6 border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-orange-500/50 hover:bg-orange-50/30 transition-all duration-300 min-h-[200px]"
+            >
+                <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-orange-500 group-hover:border-orange-500 transition-all">
+                    <Plus size={24} />
+                </div>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] group-hover:text-orange-600 transition-colors">Novo Grupo</p>
+            </Card>
           </div>
         </SortableContext>
       </DndContext>
 
       {groups.length === 0 && (
-        <div className="text-center py-20 bg-card-dark border border-dashed border-white/10 rounded-3xl">
-           <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Nenhum grupo cadastrado</p>
-        </div>
+        <Card className="p-24 flex flex-col items-center justify-center text-slate-300 opacity-20 border-dashed border-2">
+            <List size={64} strokeWidth={1} className="mb-4" />
+            <p className="font-black text-[10px] uppercase tracking-[0.3em] italic">Nenhuma configuração ativa</p>
+        </Card>
       )}
 
       {isReordering && (
-        <div className="fixed bottom-10 right-10 bg-gold text-black px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 animate-bounce z-50">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-xs font-black uppercase tracking-widest">Salvando ordem...</span>
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-10 duration-300 z-50 border border-white/10">
+          <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] italic">Salvando nova ordem...</span>
         </div>
       )}
 
-      {/* Modal de Cadastro/Edição */}
+      {/* Modal de Cadastro Premium */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-          <div className="bg-card-dark border border-white/10 rounded-[2.5rem] w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-8 border-b border-white/10 flex justify-between items-center">
-              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
-                {editingGroup ? 'Editar Grupo' : 'Novo Grupo'}
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white"><X /></button>
-            </div>
-
-            <div className="p-8 overflow-y-auto flex-1 space-y-8 scrollbar-hide">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nome do Grupo</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-3 text-white focus:border-gold outline-none transition-all font-bold"
-                    placeholder="Ex: Escolha a Borda"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Código Saipos/iFood</label>
-                  <input
-                    type="text"
-                    value={formData.saiposIntegrationCode}
-                    onChange={(e) => setFormData({ ...formData, saiposIntegrationCode: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-3 text-white focus:border-gold outline-none transition-all font-bold"
-                    placeholder="Ex: BORDAS_01"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-8 items-center bg-white/5 p-6 rounded-3xl border border-white/5">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={formData.isRequired}
-                      onChange={(e) => setFormData({ ...formData, isRequired: e.target.checked })}
-                    />
-                    <div className={`w-12 h-6 rounded-full transition-colors ${formData.isRequired ? 'bg-gold' : 'bg-gray-700'}`}></div>
-                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.isRequired ? 'translate-x-6' : ''}`}></div>
-                  </div>
-                  <span className="text-xs text-white font-black uppercase tracking-widest">Obrigatório</span>
-                </label>
-
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" checked={formData.type === 'single'} onChange={() => setFormData({ ...formData, type: 'single' })} className="accent-gold w-4 h-4" />
-                    <span className="text-xs text-white font-black uppercase tracking-widest">Única</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" checked={formData.type === 'multiple'} onChange={() => setFormData({ ...formData, type: 'multiple' })} className="accent-gold w-4 h-4" />
-                    <span className="text-xs text-white font-black uppercase tracking-widest">Múltipla</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">Itens do Grupo</h3>
-                  <button onClick={addAddonRow} className="bg-gold/10 text-gold border border-gold/20 px-4 py-2 rounded-xl hover:bg-gold/20 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"><Plus size={14} /> Novo Item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {formData.addons.map((addon, index) => (
-                    <div key={index} className="bg-white/5 border border-white/5 rounded-2xl p-5 hover:bg-white/[0.08] transition-all">
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <input
-                            placeholder="Nome"
-                            value={addon.name}
-                            onChange={(e) => updateAddon(index, 'name', e.target.value)}
-                            className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-gold font-bold"
-                            />
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gold text-[10px] font-bold">R$</span>
-                                <input
-                                type="number"
-                                placeholder="Preço"
-                                value={addon.price}
-                                onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value))}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-white outline-none focus:border-gold font-bold"
-                                />
-                            </div>
-                            <input
-                            placeholder="Cód. Integração"
-                            value={addon.saiposIntegrationCode}
-                            onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)}
-                            className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-gold font-bold"
-                            />
-                            <input
-                            type="number"
-                            placeholder="Qtd Máx"
-                            value={addon.maxQuantity}
-                            onChange={(e) => updateAddon(index, 'maxQuantity', parseInt(e.target.value))}
-                            className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-gold font-bold"
-                            />
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <div className="flex flex-col gap-1">
-                            <button onClick={() => moveAddon(index, 'up')} disabled={index === 0} className="p-1.5 text-gray-500 hover:text-gold disabled:opacity-20 transition-colors"><ChevronUp size={16} /></button>
-                            <button onClick={() => moveAddon(index, 'down')} disabled={index === formData.addons.length - 1} className="p-1.5 text-gray-500 hover:text-gold disabled:opacity-20 transition-colors"><ChevronDown size={16} /></button>
-                          </div>
-                          <button onClick={() => removeAddonRow(index)} className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
+        <div className="ui-modal-overlay">
+          <div className="ui-modal-content w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+            {/* Header Master */}
+            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-4">
+                    <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl shadow-slate-200">
+                        <Settings size={24} />
                     </div>
-                  ))}
+                    <div>
+                        <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                            {editingGroup ? 'Editar Estrutura' : 'Novo Grupo de Adicionais'}
+                        </h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Configuração de Regras e Itens</p>
+                    </div>
                 </div>
-              </div>
+                <Button variant="ghost" size="icon" onClick={() => setIsModalOpen(false)} className="rounded-full bg-slate-50"><X size={24} /></Button>
+            </header>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 p-10 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Input label="Nome do Grupo" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Ex: Escolha o Ponto da Carne" required />
+                    <Input label="Código de Integração" value={formData.saiposIntegrationCode} onChange={e => setFormData({ ...formData, saiposIntegrationCode: e.target.value })} placeholder="Ex: REF_PONTO_01" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modalidade de Escolha</label>
+                        <div className="flex p-1 bg-white border border-slate-100 rounded-xl gap-1">
+                            <button type="button" onClick={() => setFormData({...formData, type: 'single'})} className={cn("flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all", formData.type === 'single' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}>Única (Rádio)</button>
+                            <button type="button" onClick={() => setFormData({...formData, type: 'multiple'})} className={cn("flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all", formData.type === 'multiple' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}>Múltipla (Check)</button>
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-end">
+                        <Card className={cn("p-4 border-2 transition-all cursor-pointer flex items-center gap-3 w-full h-12 flex-row", formData.isRequired ? "border-rose-500 bg-rose-50" : "border-slate-100 bg-white")} onClick={() => setFormData({...formData, isRequired: !formData.isRequired})}>
+                            <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all", formData.isRequired ? "bg-rose-500 border-rose-500" : "border-slate-300")}>{formData.isRequired && <CheckCircle size={14} className="text-white" />}</div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Este grupo é OBRIGATÓRIO</span>
+                        </Card>
+                    </div>
+                </div>
+
+                <div className="space-y-6 pt-4 border-t border-slate-100">
+                    <div className="flex justify-between items-center">
+                        <h4 className="text-xs font-black text-slate-900 uppercase italic flex items-center gap-2"><Info size={16} className="text-orange-500" /> Itens e Preços individuais</h4>
+                        <Button variant="outline" size="sm" onClick={addAddonRow} className="rounded-xl border-orange-500 text-orange-600 hover:bg-orange-50 gap-2 font-black italic"><Plus size={14} /> ADICIONAR ITEM</Button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {formData.addons.map((addon, index) => (
+                            <div key={index} className="bg-white border-2 border-slate-100 rounded-[2rem] p-6 hover:border-orange-500/20 transition-all shadow-sm group">
+                                <div className="flex flex-col lg:flex-row gap-6 items-end lg:items-center">
+                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+                                        <Input label="Nome do Item" placeholder="Ex: Bacon Extra" value={addon.name} onChange={(e) => updateAddon(index, 'name', e.target.value)} />
+                                        <Input label="Preço (R$)" type="number" step="0.01" value={addon.price} onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value))} />
+                                        <Input label="Cód. Integração" value={addon.saiposIntegrationCode} onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} />
+                                        <Input label="Qtd Máx" type="number" value={addon.maxQuantity} onChange={(e) => updateAddon(index, 'maxQuantity', parseInt(e.target.value))} />
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex flex-col gap-1">
+                                            <Button variant="ghost" size="icon" onClick={() => moveAddon(index, 'up')} disabled={index === 0} className="h-8 w-8 rounded-lg bg-slate-50 disabled:opacity-20"><ChevronUp size={16} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => moveAddon(index, 'down')} disabled={index === formData.addons.length - 1} className="h-8 w-8 rounded-lg bg-slate-50 disabled:opacity-20"><ChevronDown size={16} /></Button>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => removeAddonRow(index)} className="h-12 w-12 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={20} /></Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {formData.addons.length === 0 && (
+                            <div className="p-10 border-2 border-dashed border-slate-100 rounded-[2rem] text-center opacity-30">
+                                <p className="text-[10px] font-black uppercase tracking-widest italic text-slate-400">Nenhum item adicionado a este grupo</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            <div className="p-8 border-t border-white/10 bg-black/40 flex justify-end gap-4">
-              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-2xl text-gray-400 font-black uppercase tracking-widest text-[10px] hover:bg-white/5 transition-all">Cancelar</button>
-              <button onClick={handleSave} className="bg-gold hover:bg-yellow-600 text-black px-10 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 shadow-xl shadow-gold/20 transition-all active:scale-95"><Save size={20} /> Salvar Alterações</button>
-            </div>
+            {/* Footer Fixo */}
+            <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+                <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button>
+                <Button onClick={handleSave} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">
+                    <Save size={20} className="mr-2" /> SALVAR ALTERAÇÕES
+                </Button>
+            </footer>
           </div>
         </div>
       )}
