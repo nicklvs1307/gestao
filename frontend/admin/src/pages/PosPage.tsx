@@ -9,7 +9,7 @@ import {
 import { printOrder } from '../services/printing';
 import { 
     Search, ShoppingCart, Plus, Minus, X, Trash2, 
-    Store, User, Truck, Utensils,
+    Store, User, Truck, Utensils, List,
     Wallet, Banknote, CheckCircle, Printer, Loader2, ChevronRight,
     Pizza as PizzaIcon, Bike, Info, ArrowRightLeft, MoveRight, Receipt, Phone, MapPin
 } from 'lucide-react';
@@ -415,7 +415,7 @@ const PosPage: React.FC = () => {
                         </div>
                         <div className="text-4xl font-black italic text-slate-900 tracking-tighter">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
                     </div>
-                    <Button onClick={() => cart.length > 0 && handlePreparePayment()} disabled={cart.length === 0} fullWidth size="lg" className="h-16 rounded-[2rem] text-sm uppercase tracking-widest italic gap-3 shadow-2xl">
+                    <Button onClick={() => cart.length > 0 && submitOrder()} disabled={cart.length === 0} fullWidth size="lg" className="h-16 rounded-[2rem] text-sm uppercase tracking-widest italic gap-3 shadow-2xl">
                         Lançar Pedido <ChevronRight size={20} strokeWidth={3} />
                     </Button>
                 </div>

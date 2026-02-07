@@ -34,18 +34,21 @@ const CreateDeliveryOrderSchema = z.object({
   orderType: z.enum(['DELIVERY', 'PICKUP']).default('DELIVERY'),
   
   deliveryInfo: z.object({
-    customerName: z.string().min(1, 'Nome do cliente é obrigatório'),
-    customerPhone: z.string().min(8, 'Telefone inválido'),
+    name: z.string().min(1, 'Nome do cliente é obrigatório'),
+    phone: z.string().min(8, 'Telefone inválido'),
     
-    // Endereço (Obrigatório se for Delivery)
-    address: z.object({
-      street: z.string().optional().nullable(),
-      number: z.string().optional().nullable(),
-      neighborhood: z.string().optional().nullable(),
-      city: z.string().optional().nullable(),
-      zipCode: z.string().optional().nullable(),
-      complement: z.string().optional().nullable()
-    }).optional().nullable(),
+    // Endereço (Opcional, pode ser string ou objeto)
+    address: z.union([
+      z.string(),
+      z.object({
+        street: z.string().optional().nullable(),
+        number: z.string().optional().nullable(),
+        neighborhood: z.string().optional().nullable(),
+        city: z.string().optional().nullable(),
+        zipCode: z.string().optional().nullable(),
+        complement: z.string().optional().nullable()
+      })
+    ]).optional().nullable(),
 
     deliveryType: z.enum(['delivery', 'pickup']),
     paymentMethod: z.string().min(1, 'Forma de pagamento obrigatória'),

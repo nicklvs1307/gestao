@@ -82,7 +82,7 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
 };
 
 export const getPaymentMethods = async (restaurantId: string): Promise<any[]> => {
-  const response = await apiClient.get(`/payment-methods/${restaurantId}`);
+  const response = await apiClient.get(`/payment-methods/public/${restaurantId}`);
   return response.data;
 };
 

@@ -35,6 +35,31 @@ class PaymentMethodController {
     }
   }
 
+  async listPublic(req, res) {
+    try {
+      const { restaurantId } = req.params;
+      const methods = await prisma.paymentMethod.findMany({
+        where: { 
+          restaurantId,
+          isActive: true
+        },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          allowDelivery: true,
+          allowPos: true,
+          allowTable: true
+        },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      res.json(methods);
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao listar formas de pagamento' });
+    }
+  }
+
   async create(req, res) {
     try {
       const { restaurantId } = req.params;

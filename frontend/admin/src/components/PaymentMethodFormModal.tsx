@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, CreditCard, LayoutDashboard, Truck, Utensils, CheckCircle, Info, ChevronRight, Loader2, DollarSign, Calendar } from 'lucide-react';
+import { X, Save, CreditCard, LayoutDashboard, Truck, Utensils, CheckCircle, Info, ChevronRight, Loader2, DollarSign, Calendar, Percent, XCircle } from 'lucide-react';
 import type { PaymentMethod } from '../types';
 import { createPaymentMethod, updatePaymentMethod } from '../services/api';
 import { useAuth } from '../context/AuthContext';

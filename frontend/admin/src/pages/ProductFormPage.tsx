@@ -4,7 +4,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { 
     ArrowLeft, Plus, Trash2, CloudUpload, ChevronDown, ChevronUp, CheckCircle, Pizza, 
     Layers, Info, Settings2, Loader2, Image as ImageIcon, Smartphone, Package, Target, 
-    Save, X, Check, Eye
+    Save, X, Check, Eye, List
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getCategories, createProduct, updateProduct, getProducts, getIngredients, uploadProductImage, getSettings } from '../services/api';
