@@ -289,7 +289,7 @@ const WaiterPos: React.FC = () => {
                         </div>
                     </div>
                 )}
-            </div>
+            </main>
 
             {/* MODAL DE OPÇÕES (TOUCH FRIENDLY) */}
             <AnimatePresence>
