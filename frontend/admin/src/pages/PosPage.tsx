@@ -54,6 +54,12 @@ const PosPage: React.FC = () => {
         deliveryType: 'pickup' as 'delivery' | 'pickup'
     });
 
+    // --- ESTADOS DE BUSCA DE CLIENTE ---
+    const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+    const [customerResults, setCustomerResults] = useState<any[]>([]);
+    const [customerAddresses, setCustomerAddresses] = useState<string[]>([]);
+    const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+
     // --- ESTADOS DE MODAIS E INTERAÇÃO ---
     const [activeModal, setActiveModal] = useState<'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items'>('none');
     const [showProductDrawer, setShowProductDrawer] = useState(false);
@@ -127,6 +133,43 @@ const PosPage: React.FC = () => {
         } catch (error) {
             console.error("Erro ao carregar mesas:", error);
         }
+    };
+
+    const handleSearchCustomer = async (term: string) => {
+        setCustomerSearchTerm(term);
+        if (term.length < 3) {
+            setCustomerResults([]);
+            return;
+        }
+        setIsSearchingCustomer(true);
+        try {
+            const results = await searchCustomers(term);
+            setCustomerResults(results.customers || []);
+        } catch (error) {
+            console.error("Erro na busca:", error);
+        } finally {
+            setIsSearchingCustomer(false);
+        }
+    };
+
+    const handleSelectCustomer = (customer: any) => {
+        setDeliveryInfo({
+            ...deliveryInfo,
+            name: customer.name,
+            phone: customer.phone,
+            address: customer.address || ''
+        });
+        // Extrair endereços únicos dos pedidos anteriores
+        const historyAddresses = customer.deliveryOrders
+            ?.map((o: any) => o.address)
+            .filter((addr: string, i: number, self: string[]) => addr && self.indexOf(addr) === i) || [];
+        
+        if (customer.address && !historyAddresses.includes(customer.address)) {
+            historyAddresses.unshift(customer.address);
+        }
+        setCustomerAddresses(historyAddresses);
+        setCustomerResults([]);
+        setCustomerSearchTerm('');
     };
 
     // --- LÓGICA DE PRODUTOS ---
@@ -330,7 +373,7 @@ const PosPage: React.FC = () => {
     return (
         <div className="flex h-[calc(100vh-4rem)] bg-[#f8fafc] overflow-hidden -m-8">
             {/* BARRA LATERAL: CARRINHO */}
-            <aside className="w-[320px] bg-white border-r border-slate-200 flex flex-col shadow-2xl z-20">
+            <aside className="w-[380px] bg-white border-r border-slate-200 flex flex-col shadow-2xl z-20">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-base font-black text-slate-900 uppercase italic tracking-tighter leading-none">
@@ -363,16 +406,26 @@ const PosPage: React.FC = () => {
                             />
                         </div>
                     ) : (
-                        <Card 
-                            onClick={() => setActiveModal('delivery_info')} 
-                            className="p-3 border-2 border-dashed border-slate-200 flex items-center justify-between cursor-pointer hover:border-orange-500 hover:bg-orange-50/30 transition-all"
-                        >
-                            <div className="min-w-0">
-                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-widest leading-none mb-1">Cliente / Balcão</p>
-                                <p className="text-xs font-bold text-slate-700 truncate">{deliveryInfo.name || 'Consumidor Final'}</p>
-                            </div>
-                            <div className="bg-orange-100 text-orange-600 p-1.5 rounded-lg"><User size={16} /></div>
-                        </Card>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setActiveModal('delivery_info')} 
+                                className="flex-1 h-10 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-between px-3 hover:border-orange-500 hover:bg-orange-50/30 transition-all text-left"
+                            >
+                                <div className="min-w-0 flex flex-col">
+                                    <span className="text-[8px] font-black text-orange-600 uppercase tracking-widest leading-none">Cliente</span>
+                                    <span className="text-xs font-bold text-slate-700 truncate">{deliveryInfo.name || 'Selecionar...'}</span>
+                                </div>
+                                <User size={16} className="text-orange-400" />
+                            </button>
+                            {deliveryInfo.name && (
+                                <button 
+                                    onClick={() => { setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' }); setCustomerAddresses([]); }}
+                                    className="w-10 h-10 rounded-lg border-2 border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
 
@@ -634,13 +687,84 @@ const PosPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Modal de Dados do Cliente */}
+                {/* Modal de Dados do Cliente Avançado */}
                 {activeModal === 'delivery_info' && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100">
-                            <div className="flex items-center gap-4 mb-8"><div className="p-3 bg-orange-500 text-white rounded-2xl shadow-lg"><User size={24} /></div><h3 className="text-xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Dados do Cliente</h3></div>
-                            <div className="space-y-4"><Input label="Nome do Cliente" placeholder="Como devemos chamar?" value={deliveryInfo.name} onChange={e => setDeliveryInfo({...deliveryInfo, name: e.target.value})} /><Input label="Telefone / WhatsApp" placeholder="(00) 00000-0000" value={deliveryInfo.phone} onChange={e => setDeliveryInfo({...deliveryInfo, phone: e.target.value})} /><Button fullWidth size="lg" className="h-14 rounded-2xl mt-4" onClick={() => setActiveModal('none')}>Salvar Identificação</Button></div>
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh]">
+                            <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white/10 rounded-xl"><User size={20} /></div>
+                                    <h3 className="text-lg font-black uppercase italic tracking-tighter leading-none">Identificar Cliente</h3>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="text-white hover:bg-white/10 rounded-full"><X size={20}/></Button>
+                            </div>
+                            
+                            <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+                                {/* Busca */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Buscar Cliente Cadastrado</label>
+                                    <div className="relative">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Nome, telefone ou endereço..." 
+                                            className="w-full h-12 pl-12 pr-4 rounded-xl bg-slate-50 border-2 border-slate-100 focus:border-orange-500 outline-none font-bold text-sm transition-all"
+                                            value={customerSearchTerm}
+                                            onChange={e => handleSearchCustomer(e.target.value)}
+                                        />
+                                        {isSearchingCustomer && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-500 animate-spin" size={18} />}
+                                    </div>
+                                    
+                                    {/* Resultados da Busca */}
+                                    {customerResults.length > 0 && (
+                                        <div className="bg-white border-2 border-slate-100 rounded-xl overflow-hidden shadow-lg max-h-48 overflow-y-auto">
+                                            {customerResults.map(c => (
+                                                <button key={c.id} onClick={() => handleSelectCustomer(c)} className="w-full text-left p-3 hover:bg-orange-50 hover:text-orange-900 border-b border-slate-50 last:border-0 transition-all flex justify-between items-center group">
+                                                    <div>
+                                                        <p className="font-bold text-sm text-slate-800 group-hover:text-orange-700">{c.name}</p>
+                                                        <p className="text-[10px] font-medium text-slate-400">{c.phone}</p>
+                                                    </div>
+                                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-orange-400" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="h-px bg-slate-100 w-full" />
+
+                                {/* Formulário Manual / Dados Preenchidos */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2"><Input label="Nome do Cliente" placeholder="Nome completo" value={deliveryInfo.name} onChange={e => setDeliveryInfo({...deliveryInfo, name: e.target.value})} /></div>
+                                    <Input label="Telefone" placeholder="(00) 00000-0000" value={deliveryInfo.phone} onChange={e => setDeliveryInfo({...deliveryInfo, phone: e.target.value})} />
+                                    <div className="col-span-2 space-y-2">
+                                        <Input label="Endereço de Entrega" placeholder="Rua, Número, Bairro..." value={deliveryInfo.address} onChange={e => setDeliveryInfo({...deliveryInfo, address: e.target.value})} />
+                                        
+                                        {/* Histórico de Endereços */}
+                                        {customerAddresses.length > 0 && (
+                                            <div className="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar">
+                                                {customerAddresses.map((addr, i) => (
+                                                    <button 
+                                                        key={i} 
+                                                        onClick={() => setDeliveryInfo({...deliveryInfo, address: addr})}
+                                                        className={cn(
+                                                            "px-3 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wide border transition-all whitespace-nowrap flex items-center gap-2",
+                                                            deliveryInfo.address === addr ? "bg-orange-500 text-white border-orange-500 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-orange-300"
+                                                        )}
+                                                    >
+                                                        <MapPin size={10} /> {addr.substring(0, 20)}...
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <Button fullWidth size="lg" className="h-14 rounded-2xl shadow-xl shadow-slate-200" onClick={() => setActiveModal('none')}>
+                                    Confirmar Dados <CheckCircle size={18} />
+                                </Button>
+                            </div>
                         </motion.div>
                     </div>
                 )}

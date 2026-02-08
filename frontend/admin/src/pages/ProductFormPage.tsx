@@ -34,6 +34,9 @@ function ProductFormPage() {
     // Novo: Grupos herdados da categoria selecionada
     const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
     
+    // Estado para armazenar os dados carregados do produto (Controlado pelo RHF via 'values')
+    const [productData, setProductData] = useState<any>(null);
+
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
         defaultValues: { 
             name: '', 
@@ -49,7 +52,8 @@ function ProductFormPage() {
             ingredients: [], 
             productionArea: 'Cozinha',
             measureUnit: 'UN'
-        }
+        },
+        values: productData // Sincronização automática
     });
 
     const watchedCategoryIds = watch('categoryIds');
@@ -139,19 +143,13 @@ function ProductFormPage() {
                             measureUnit: product.measureUnit || 'UN',
                             stock: Number(product.stock) || 0,
                             price: Number(product.price) || 0,
+                            addonGroups: product.addonGroups || [], // Garante que addons venham
                             ncm: product.ncm || '',
                             cfop: product.cfop || '',
                             saiposIntegrationCode: product.saiposIntegrationCode || ''
                         };
 
-                        console.log("Resetando formulário com:", formData);
-                        reset(formData);
-                        
-                        // Fallback: Se o reset não disparar o watch, forçamos o estado de carregamento a terminar
-                        // mas garantimos que os valores básicos existam
-                        if (product.name) {
-                            setValue('name', product.name);
-                        }
+                        setProductData(formData);
                     } else {
                         toast.error("Produto não encontrado.");
                         navigate('/products');
