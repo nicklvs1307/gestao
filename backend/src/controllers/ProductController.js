@@ -110,7 +110,7 @@ class ProductController {
     const categoryUpdate = {};
     if (categoryIds || categoryId) {
         const finalIds = categoryIds || (categoryId ? [categoryId] : []);
-        categoryUpdate.set = finalIds.map(id => ({ id }));
+        categoryUpdate.set = finalIds.filter(id => id && id.length > 0).map(id => ({ id }));
     }
 
     const updatedProduct = await prisma.product.update({
@@ -122,9 +122,9 @@ class ProductController {
           deleteMany: {}, 
           create: sizes?.map(s => ({ 
             name: s.name, 
-            price: s.price, 
-            order: s.order || 0, 
-            globalSizeId: s.globalSizeId,
+            price: Number(s.price) || 0, 
+            order: Number(s.order) || 0, 
+            globalSizeId: (s.globalSizeId && s.globalSizeId.length > 0) ? s.globalSizeId : null,
             saiposIntegrationCode: s.saiposIntegrationCode 
           })) || [] 
         },
@@ -135,7 +135,7 @@ class ProductController {
           deleteMany: {}, 
           create: ingredients?.map(i => ({ 
             ingredientId: i.ingredientId, 
-            quantity: i.quantity 
+            quantity: Number(i.quantity) || 0 
           })) || [] 
         }
       },

@@ -136,10 +136,11 @@ function ProductFormPage() {
                             })) || [],
                             productionArea: product.productionArea || 'Cozinha',
                             measureUnit: product.measureUnit || 'UN',
-                            stock: product.stock ?? 0,
-                            price: product.price ?? 0
+                            stock: Number(product.stock) || 0,
+                            price: Number(product.price) || 0
                         };
 
+                        console.log("Resetando formulário com:", formData);
                         reset(formData);
                     } else {
                         toast.error("Produto não encontrado.");
