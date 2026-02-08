@@ -51,10 +51,45 @@ const CreateProductSchema = z.object({
 });
 
 const UpdateProductSchema = z.object({
-  ...productBase,
-  // No update, quase tudo é opcional, mas se vier, deve seguir a regra base
-  name: z.string().min(1).optional(),
+  name: z.string().min(1, 'Nome é obrigatório').optional(),
+  description: z.string().optional().nullable(),
   price: z.coerce.number().min(0).optional(),
+  imageUrl: z.string().optional().nullable().or(z.literal('')),
+  isAvailable: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  productionArea: z.string().optional(),
+  saiposIntegrationCode: z.string().optional().nullable(),
+  stock: z.coerce.number().int().optional(),
+  measureUnit: z.string().optional(),
+  order: z.coerce.number().optional(),
+  
+  categoryId: z.string().optional().nullable(),
+  categoryIds: z.array(z.string()).optional(),
+  
+  ncm: z.string().optional().nullable(),
+  cfop: z.string().optional().nullable(),
+  cest: z.string().optional().nullable(),
+  origin: z.coerce.number().optional(),
+  taxPercentage: z.coerce.number().optional().nullable(),
+
+  sizes: z.array(z.object({
+    name: z.string(),
+    price: z.coerce.number(),
+    globalSizeId: z.string().optional().nullable(),
+    order: z.coerce.number().optional(),
+    saiposIntegrationCode: z.string().optional()
+  })).optional(),
+  
+  addonGroups: z.array(z.object({
+    id: z.string()
+  })).optional(),
+  
+  ingredients: z.array(z.object({
+    ingredientId: z.string(),
+    quantity: z.coerce.number()
+  })).optional(),
+
+  pizzaConfig: z.any().optional().nullable()
 });
 
 module.exports = { 
