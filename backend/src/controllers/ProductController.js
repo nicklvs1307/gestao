@@ -120,13 +120,16 @@ class ProductController {
         categories: categoryUpdate,
         sizes: { 
           deleteMany: {}, 
-          create: sizes?.map(s => ({ 
-            name: s.name, 
-            price: Number(s.price) || 0, 
-            order: Number(s.order) || 0, 
-            globalSizeId: (s.globalSizeId && s.globalSizeId.length > 0) ? s.globalSizeId : null,
-            saiposIntegrationCode: s.saiposIntegrationCode 
-          })) || [] 
+          create: sizes?.filter(s => s.name).map(s => {
+            const price = parseFloat(s.price);
+            return { 
+              name: s.name, 
+              price: isNaN(price) ? 0 : price, 
+              order: parseInt(s.order) || 0, 
+              globalSizeId: (s.globalSizeId && s.globalSizeId.trim() !== "") ? s.globalSizeId : null,
+              saiposIntegrationCode: s.saiposIntegrationCode || null
+            };
+          }) || [] 
         },
         addonGroups: { 
           set: addonGroups?.map(g => ({ id: g.id })) || []
