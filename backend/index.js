@@ -124,8 +124,11 @@ app.get('/api/kds/items', needsAuth, OrderController.getKdsItems);
 
 // Client Specific (Matching old structure)
 const TableController = require('./src/controllers/TableController');
-app.use('/api/client/products', productRoutes);
-app.use('/api/client/categories', categoryRoutes);
+const ProductController = require('./src/controllers/ProductController');
+const CategoryController = require('./src/controllers/CategoryController');
+
+app.get('/api/client/products/:restaurantId', ProductController.getClientProducts);
+app.get('/api/client/categories/:restaurantId', CategoryController.getClientCategories);
 app.use('/api/client/promotions', promotionRoutes);
 app.use('/api/client/settings', settingsRoutes);
 app.get('/api/client/table-info', TableController.checkTableExists);

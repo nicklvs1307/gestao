@@ -35,7 +35,7 @@ function ProductFormPage() {
     const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
     
     // State para armazenar os dados carregados do produto
-    const [isDataLoaded, setIsDataLoaded] = useState(false);
+    const [productData, setProductData] = useState<any>(null);
 
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
         defaultValues: { 
@@ -77,7 +77,7 @@ function ProductFormPage() {
         }
     }, [watchedCategoryIds, categories]);
 
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'tamanhos' | 'complementos' | 'composição'>('geral');
     const [isPizza, setIsPizza] = useState(false);
@@ -98,12 +98,15 @@ function ProductFormPage() {
         const loadData = async () => {
             try {
                 setIsLoading(true);
+                console.log("Iniciando carregamento de dados para ID:", id);
+                
                 const [cats, ings, library, gSizes] = await Promise.all([ 
                     getCategories(true),
                     getIngredients(), 
                     addonService.getAll(),
                     globalSizeService.getAll()
                 ]);
+                
                 setCategories(cats); 
                 setAvailableIngredients(ings); 
                 setLibraryGroups(library);
@@ -111,19 +114,26 @@ function ProductFormPage() {
                 
                 if (id) {
                     const product = await getProductById(id);
+                    console.log("Resposta da API getProductById:", product);
                     
                     if (product) {
-                        console.log("Produto carregado para edição:", product);
-                        
-                        const initialCategoryIds = product.categories?.map((c: any) => c.id) || (product.categoryId ? [product.categoryId] : []);
+                        // Tenta extrair IDs de categorias de várias formas possíveis
+                        let initialCategoryIds: string[] = [];
+                        if (Array.isArray(product.categories)) {
+                            initialCategoryIds = product.categories.map((c: any) => c.id);
+                        } else if (product.category?.id) {
+                            initialCategoryIds = [product.category.id];
+                        } else if (product.categoryId) {
+                            initialCategoryIds = [product.categoryId];
+                        }
                         
                         if (product.pizzaConfig) { 
                             setIsPizza(true); 
                             setPizzaConfig((prev: any) => ({ ...prev, ...product.pizzaConfig })); 
                         }
 
-                        // Garante que o nome e outros campos básicos não sejam perdidos
-                        const formData = {
+                        // Formatação rigorosa dos dados para o formulário
+                        const formattedData = {
                             ...product,
                             name: product.name || '',
                             description: product.description || '',
@@ -136,36 +146,36 @@ function ProductFormPage() {
                             sizes: product.sizes?.map((s: any) => ({
                                 ...s,
                                 price: Number(s.price) || 0,
-                                globalSizeId: s.globalSizeId || ''
+                                globalSizeId: s.globalSizeId || '',
+                                name: s.name || ''
                             })) || [],
                             productionArea: product.productionArea || 'Cozinha',
                             measureUnit: product.measureUnit || 'UN',
                             stock: Number(product.stock) || 0,
                             price: Number(product.price) || 0,
-                            addonGroups: product.addonGroups || [], // Garante que addons venham
+                            addonGroups: product.addonGroups || [],
                             ncm: product.ncm || '',
                             cfop: product.cfop || '',
                             saiposIntegrationCode: product.saiposIntegrationCode || ''
                         };
 
-                        reset(formData);
-                        setIsDataLoaded(true);
+                        console.log("Dados formatados para reset:", formattedData);
+                        setProductData(formattedData);
+                        reset(formattedData); // Força o reset do formulário com os dados carregados
                     } else {
                         toast.error("Produto não encontrado.");
                         navigate('/products');
                     }
-                } else {
-                    setIsDataLoaded(true);
                 }
             } catch (error) { 
-                console.error("Erro ao carregar dados do produto:", error); 
+                console.error("Erro fatal ao carregar dados do produto:", error); 
                 toast.error("Erro ao carregar dados.");
             } finally { 
                 setIsLoading(false); 
             }
         };
         loadData();
-    }, [id, reset, navigate]);
+    }, [id, navigate]);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]; if (!file) return;
@@ -209,7 +219,7 @@ function ProductFormPage() {
         }
     };
 
-    if (isLoading && !isDataLoaded) return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
+    if (isLoading && !productData && id) return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
