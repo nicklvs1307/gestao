@@ -330,135 +330,135 @@ const PosPage: React.FC = () => {
     return (
         <div className="flex h-[calc(100vh-4rem)] bg-[#f8fafc] overflow-hidden -m-8">
             {/* BARRA LATERAL: CARRINHO */}
-            <aside className="w-[400px] bg-white border-r border-slate-200 flex flex-col shadow-2xl z-20">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter leading-none">
-                            {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Venda Balcão'}
+            <aside className="w-[320px] bg-white border-r border-slate-200 flex flex-col shadow-2xl z-20">
+                <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-black text-slate-900 uppercase italic tracking-tighter leading-none">
+                            {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Balcão'}
                         </h3>
-                        <div className="flex bg-slate-200/50 p-1 rounded-xl">
-                            <button onClick={() => setOrderMode('table')} className={cn("px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all", orderMode === 'table' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Utensils size={14} className="inline mr-2"/>Mesa</button>
-                            <button onClick={() => setOrderMode('delivery')} className={cn("px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all", orderMode === 'delivery' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Truck size={14} className="inline mr-2"/>Balcão</button>
+                        <div className="flex bg-slate-200/50 p-0.5 rounded-lg">
+                            <button onClick={() => setOrderMode('table')} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'table' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Utensils size={12} className="inline mr-1"/>Mesa</button>
+                            <button onClick={() => setOrderMode('delivery')} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'delivery' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Truck size={12} className="inline mr-1"/>Balcão</button>
                         </div>
                     </div>
 
                     {orderMode === 'table' ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             <div className="relative">
                                 <select 
                                     value={selectedTable} 
                                     onChange={e => setSelectedTable(e.target.value)} 
-                                    className="w-full h-12 px-4 rounded-xl bg-white border-2 border-slate-100 text-slate-700 text-sm font-bold outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
+                                    className="w-full h-10 px-3 rounded-lg bg-white border-2 border-slate-100 text-slate-700 text-xs font-bold outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="">Selecionar Mesa...</option>
                                     {tables.map(t => <option key={t.id} value={t.number}>Mesa {t.number}</option>)}
                                 </select>
-                                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 rotate-90" size={18} />
+                                <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 rotate-90" size={14} />
                             </div>
-                            <Input 
-                                placeholder="Identificação (Ex: Nome do Cliente)" 
+                            <input 
+                                placeholder="Identificação / Cliente" 
                                 value={customerName} 
                                 onChange={e => setCustomerName(e.target.value)}
-                                className="h-12"
+                                className="w-full h-10 px-3 rounded-lg bg-white border-2 border-slate-100 text-xs font-bold outline-none focus:border-orange-500 transition-all"
                             />
                         </div>
                     ) : (
                         <Card 
                             onClick={() => setActiveModal('delivery_info')} 
-                            className="p-4 border-2 border-dashed border-slate-200 flex items-center justify-between cursor-pointer hover:border-orange-500 hover:bg-orange-50/30 transition-all"
+                            className="p-3 border-2 border-dashed border-slate-200 flex items-center justify-between cursor-pointer hover:border-orange-500 hover:bg-orange-50/30 transition-all"
                         >
                             <div className="min-w-0">
-                                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest leading-none mb-1">Cliente / Balcão</p>
-                                <p className="text-sm font-bold text-slate-700 truncate">{deliveryInfo.name || 'Consumidor Final'}</p>
+                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-widest leading-none mb-1">Cliente / Balcão</p>
+                                <p className="text-xs font-bold text-slate-700 truncate">{deliveryInfo.name || 'Consumidor Final'}</p>
                             </div>
-                            <div className="bg-orange-100 text-orange-600 p-2 rounded-xl"><User size={20} /></div>
+                            <div className="bg-orange-100 text-orange-600 p-1.5 rounded-lg"><User size={16} /></div>
                         </Card>
                     )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/20">
+                <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-slate-50/20">
                     {cart.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-40 space-y-4">
-                            <div className="w-20 h-20 bg-slate-100 rounded-[2.5rem] flex items-center justify-center shadow-inner">
-                                <ShoppingCart size={40} />
+                        <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-40 space-y-2">
+                            <div className="w-16 h-16 bg-slate-100 rounded-[2rem] flex items-center justify-center shadow-inner">
+                                <ShoppingCart size={32} />
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center italic">Aguardando Itens</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-center italic">Carrinho Vazio</p>
                         </div>
                     ) : cart.map(item => (
-                        <Card key={item.cartItemId} className="p-4 border-slate-100 shadow-sm animate-in slide-in-from-left-4 duration-300">
-                            <div className="flex justify-between items-start gap-4">
+                        <Card key={item.cartItemId} className="p-3 border-slate-100 shadow-sm animate-in slide-in-from-left-2 duration-300">
+                            <div className="flex justify-between items-start gap-2">
                                 <div className="min-w-0">
-                                    <span className="font-black text-xs text-slate-900 block uppercase italic leading-tight truncate">{item.name}</span>
+                                    <span className="font-black text-[10px] text-slate-900 block uppercase italic leading-tight truncate">{item.name}</span>
                                     {item.observation && (
-                                        <span className="inline-block mt-1 text-[9px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-bold uppercase">Obs: {item.observation}</span>
+                                        <span className="inline-block mt-0.5 text-[8px] bg-amber-50 text-amber-600 px-1 py-0.5 rounded font-bold uppercase">Obs: {item.observation}</span>
                                     )}
                                 </div>
-                                <span className="font-black text-xs text-slate-900 italic shrink-0">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="font-black text-[10px] text-slate-900 italic shrink-0">R$ {(item.price * item.quantity).toFixed(2)}</span>
                             </div>
-                            <div className="flex items-center justify-between mt-4">
-                                <span className="text-[10px] font-black text-slate-400 italic">R$ {item.price.toFixed(2)} un</span>
-                                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
-                                    <button onClick={() => updateCartItemQty(item.cartItemId, -1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-rose-500 transition-all active:scale-90"><Minus size={14} strokeWidth={3} /></button>
-                                    <span className="text-sm font-black w-6 text-center italic">{item.quantity}</span>
-                                    <button onClick={() => updateCartItemQty(item.cartItemId, 1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white shadow-sm hover:text-emerald-500 transition-all active:scale-90"><Plus size={14} strokeWidth={3} /></button>
+                            <div className="flex items-center justify-between mt-2">
+                                <span className="text-[9px] font-black text-slate-400 italic">R$ {item.price.toFixed(2)} un</span>
+                                <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-inner">
+                                    <button onClick={() => updateCartItemQty(item.cartItemId, -1)} className="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm hover:text-rose-500 transition-all active:scale-90"><Minus size={12} strokeWidth={3} /></button>
+                                    <span className="text-xs font-black w-4 text-center italic">{item.quantity}</span>
+                                    <button onClick={() => updateCartItemQty(item.cartItemId, 1)} className="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm hover:text-emerald-500 transition-all active:scale-90"><Plus size={12} strokeWidth={3} /></button>
                                 </div>
                             </div>
                         </Card>
                     ))}
                 </div>
 
-                <div className="p-8 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)]">
-                    <div className="flex justify-between items-end mb-8">
+                <div className="p-4 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+                    <div className="flex justify-between items-end mb-4">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-1 leading-none">Total da Venda</span>
-                            <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">{cart.length} itens</span>
+                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em] mb-0.5 leading-none">Subtotal</span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{cart.length} itens</span>
                         </div>
-                        <div className="text-4xl font-black italic text-slate-900 tracking-tighter">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
+                        <div className="text-2xl font-black italic text-slate-900 tracking-tighter leading-none">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
                     </div>
-                    <Button onClick={() => cart.length > 0 && submitOrder()} disabled={cart.length === 0} fullWidth size="lg" className="h-16 rounded-[2rem] text-sm uppercase tracking-widest italic gap-3 shadow-2xl">
-                        Lançar Pedido <ChevronRight size={20} strokeWidth={3} />
+                    <Button onClick={() => cart.length > 0 && submitOrder()} disabled={cart.length === 0} fullWidth size="lg" className="h-12 rounded-xl text-[10px] uppercase tracking-widest font-black italic gap-2 shadow-lg">
+                        Finalizar Pedido <CheckCircle size={16} strokeWidth={3} />
                     </Button>
                 </div>
             </aside>
 
             {/* ÁREA PRINCIPAL: CATÁLOGO */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between gap-6 z-10">
-                    <div className="flex items-center gap-3">
-                        <button onClick={handleToggleStore} className={cn("px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all", isStoreOpen ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100")}>{isStoreOpen ? "LOJA ON" : "LOJA OFF"}</button>
-                        <div className={cn("px-4 py-2.5 rounded-xl text-[10px] font-black uppercase border-2 flex items-center gap-2", isCashierOpen ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-50 text-slate-400 border-slate-100")}><div className={cn("w-1.5 h-1.5 rounded-full", isCashierOpen ? "bg-blue-500 animate-pulse" : "bg-slate-300")} />Caixa {isCashierOpen ? 'Aberto' : 'Fechado'}</div>
+                <div className="px-4 py-2 bg-white border-b border-slate-200 flex items-center justify-between gap-4 z-10">
+                    <div className="flex items-center gap-2">
+                        <button onClick={handleToggleStore} className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border-2 transition-all", isStoreOpen ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100")}>{isStoreOpen ? "LOJA ON" : "LOJA OFF"}</button>
+                        <div className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase border-2 flex items-center gap-1.5", isCashierOpen ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-50 text-slate-400 border-slate-100")}><div className={cn("w-1 h-1 rounded-full", isCashierOpen ? "bg-blue-500 animate-pulse" : "bg-slate-300")} />Caixa {isCashierOpen ? 'Aberto' : 'Fechado'}</div>
                     </div>
-                    <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1.5 w-full max-w-sm shadow-inner">
-                        <button onClick={() => setActiveTab('pos')} className={cn("flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'pos' ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-400")}>Catálogo</button>
-                        <button onClick={() => { setActiveTab('tables'); loadTableSummary(); }} className={cn("flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'tables' ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-400")}>Mesas</button>
+                    <div className="flex bg-slate-100 p-1 rounded-xl gap-1 w-full max-w-[280px] shadow-inner">
+                        <button onClick={() => setActiveTab('pos')} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all", activeTab === 'pos' ? "bg-white text-slate-900 shadow-sm scale-[1.02]" : "text-slate-400")}>Catálogo</button>
+                        <button onClick={() => { setActiveTab('tables'); loadTableSummary(); }} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all", activeTab === 'tables' ? "bg-white text-slate-900 shadow-sm scale-[1.02]" : "text-slate-400")}>Mesas</button>
                     </div>
                     <div className="flex gap-2">
-                        {!isCashierOpen ? <Button size="sm" className="rounded-xl px-6 bg-slate-900" onClick={() => setActiveModal('cashier_open')}>Abrir Caixa</Button> : <Button variant="danger" size="sm" className="rounded-xl px-6" onClick={() => navigate('/cashier')}>Fechar Caixa</Button>}
+                        {!isCashierOpen ? <Button size="sm" className="rounded-lg px-4 h-9 text-[9px] bg-slate-900" onClick={() => setActiveModal('cashier_open')}>Abrir Caixa</Button> : <Button variant="danger" size="sm" className="rounded-lg px-4 h-9 text-[9px]" onClick={() => navigate('/cashier')}>Fechar Caixa</Button>}
                     </div>
                 </div>
 
                 {activeTab === 'pos' ? (
                     <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="p-6 bg-white border-b border-slate-100 flex flex-col gap-6">
-                            <div className="relative group w-full max-w-3xl mx-auto">
-                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                <input ref={searchInputRef} type="text" className="w-full h-14 pl-14 pr-6 rounded-[2rem] bg-slate-50 border-2 border-slate-100 focus:border-orange-500 focus:bg-white outline-none font-bold text-sm transition-all shadow-inner" placeholder="Pesquisar produto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                        <div className="p-4 bg-white border-b border-slate-100 flex flex-col gap-4">
+                            <div className="relative group w-full max-w-2xl mx-auto">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
+                                <input ref={searchInputRef} type="text" className="w-full h-10 pl-12 pr-4 rounded-xl bg-slate-50 border-2 border-slate-100 focus:border-orange-500 focus:bg-white outline-none font-bold text-xs transition-all shadow-inner" placeholder="Pesquisar produto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                             </div>
-                            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-                                <button className={cn("px-6 h-10 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap", selectedCategory === 'all' ? "bg-slate-900 text-white shadow-lg" : "bg-slate-50 text-slate-400 border border-slate-100")} onClick={() => setSelectedCategory('all')}>Todos os Itens</button>
-                                {categories.map(cat => <button key={cat.id} className={cn("px-6 h-10 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-2", selectedCategory === cat.id ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-100" : "bg-white border-slate-50 text-slate-400 hover:border-slate-200")} onClick={() => setSelectedCategory(cat.id)}>{cat.name}</button>)}
+                            <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                                <button className={cn("px-4 h-8 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap", selectedCategory === 'all' ? "bg-slate-900 text-white shadow-md" : "bg-slate-50 text-slate-400 border border-slate-100")} onClick={() => setSelectedCategory('all')}>Todos</button>
+                                {categories.map(cat => <button key={cat.id} className={cn("px-4 h-8 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-2", selectedCategory === cat.id ? "bg-orange-500 border-orange-500 text-white shadow-md" : "bg-white border-slate-50 text-slate-400 hover:border-slate-200")} onClick={() => setSelectedCategory(cat.id)}>{cat.name}</button>)}
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
+                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
                                 {filteredProducts.map(p => (
-                                    <button key={p.id} className="group flex flex-col bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden hover:border-orange-500 hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 shadow-sm p-1" onClick={() => handleProductClick(p)}>
-                                        <div className="aspect-square bg-slate-50 rounded-[2.2rem] overflow-hidden border border-slate-50 shrink-0">
-                                            {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><ShoppingCart size={32} /></div>}
+                                    <button key={p.id} className="group flex flex-col bg-white border border-slate-100 rounded-2xl overflow-hidden hover:border-orange-500 hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm p-0.5" onClick={() => handleProductClick(p)}>
+                                        <div className="aspect-square bg-slate-50 rounded-[0.9rem] overflow-hidden border border-slate-50 shrink-0">
+                                            {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><ShoppingCart size={20} /></div>}
                                         </div>
-                                        <div className="p-4 flex flex-col flex-1 gap-1 text-center items-center justify-center min-h-[90px]">
-                                            <h3 className="font-black text-[11px] uppercase leading-tight text-slate-800 italic line-clamp-2">{p.name}</h3>
-                                            <div className="mt-2"><span className="font-black text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-lg shadow-sm">R$ {p.price.toFixed(2)}</span></div>
+                                        <div className="p-2 flex flex-col flex-1 gap-1 text-center items-center justify-center min-h-[60px]">
+                                            <h3 className="font-black text-[9px] uppercase leading-tight text-slate-800 italic line-clamp-2">{p.name}</h3>
+                                            <div className="mt-1"><span className="font-black text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md">R$ {p.price.toFixed(2)}</span></div>
                                         </div>
                                     </button>
                                 ))}
@@ -466,15 +466,15 @@ const PosPage: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                    <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
                             {tablesSummary.map(t => (
-                                <button key={t.id} onClick={() => handleTableClick(t)} className={cn("flex flex-col rounded-[2.5rem] border-4 p-6 transition-all hover:scale-105 active:scale-95 shadow-lg min-h-[180px] relative overflow-hidden group", t.status === 'free' ? "bg-white border-slate-50 hover:border-emerald-400" : "bg-rose-50 border-rose-100 hover:border-rose-400")}>
-                                    <div className={cn("absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-10 transition-transform group-hover:scale-150", t.status === 'free' ? "bg-emerald-500" : "bg-rose-500")} />
-                                    <span className={cn("text-4xl font-black italic tracking-tighter", t.status === 'free' ? "text-slate-200" : "text-rose-600")}>0{t.number}</span>
-                                    <div className="mt-auto flex flex-col items-start gap-1">
-                                        <span className={cn("text-[10px] font-black uppercase tracking-widest", t.status === 'free' ? "text-slate-300" : "text-rose-400")}>{t.status === 'free' ? 'Livre' : 'Ocupada'}</span>
-                                        {t.status !== 'free' && <span className="font-black text-xl text-rose-900 tracking-tighter italic leading-none">R$ {t.totalAmount.toFixed(2)}</span>}
+                                <button key={t.id} onClick={() => handleTableClick(t)} className={cn("flex flex-col rounded-2xl border-2 p-4 transition-all hover:scale-105 active:scale-95 shadow-md min-h-[120px] relative overflow-hidden group", t.status === 'free' ? "bg-white border-slate-50 hover:border-emerald-400" : "bg-rose-50 border-rose-100 hover:border-rose-400")}>
+                                    <div className={cn("absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-10 transition-transform group-hover:scale-150", t.status === 'free' ? "bg-emerald-500" : "bg-rose-500")} />
+                                    <span className={cn("text-2xl font-black italic tracking-tighter", t.status === 'free' ? "text-slate-200" : "text-rose-600")}>0{t.number}</span>
+                                    <div className="mt-auto flex flex-col items-start">
+                                        <span className={cn("text-[8px] font-black uppercase tracking-widest", t.status === 'free' ? "text-slate-300" : "text-rose-400")}>{t.status === 'free' ? 'Livre' : 'Ocupada'}</span>
+                                        {t.status !== 'free' && <span className="font-black text-sm text-rose-900 tracking-tighter italic leading-none">R$ {t.totalAmount.toFixed(2)}</span>}
                                     </div>
                                 </button>
                             ))}
