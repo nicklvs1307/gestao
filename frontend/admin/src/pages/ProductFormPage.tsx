@@ -527,18 +527,21 @@ function ProductFormPage() {
 function GlobalAddonSelector({ availableGroups, selectedGroupIds, onToggle }: { availableGroups: AddonGroup[], selectedGroupIds: string[], onToggle: (id: string) => void }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {availableGroups.map(group => {
+            {availableGroups.map((group, index) => {
                 const isSelected = selectedGroupIds.includes(group.id!);
                 return (
                     <Card 
                         key={group.id}
                         onClick={() => onToggle(group.id!)}
                         className={cn(
-                            "p-4 border-2 transition-all cursor-pointer flex items-center justify-between group",
+                            "p-4 border-2 transition-all cursor-pointer flex items-center justify-between group relative",
                             isSelected ? "border-orange-500 bg-orange-50/30 shadow-lg shadow-orange-900/5" : "border-slate-100 bg-white hover:border-slate-200"
                         )}
                         noPadding
                     >
+                        <div className="absolute -top-2 -left-2 w-6 h-6 bg-slate-900 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10">
+                            {index + 1}
+                        </div>
                         <div className="flex items-center gap-4 pl-4 py-4">
                             <div className={cn(
                                 "w-12 h-12 rounded-[1.25rem] flex items-center justify-center shadow-lg transition-all",

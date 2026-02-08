@@ -121,6 +121,54 @@ const SortableGroupCard = ({ group, onEdit, onDelete }: SortableGroupProps) => {
   );
 };
 
+interface SortableAddonRowProps {
+  addon: Addon;
+  index: number;
+  updateAddon: (index: number, field: keyof Addon, value: any) => void;
+  removeAddonRow: (index: number) => void;
+}
+
+const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow }: SortableAddonRowProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: `addon-${index}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 0,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn("relative", isDragging && "z-50")}>
+      <div className="bg-white border-2 border-slate-100 rounded-[2rem] p-6 hover:border-orange-500/20 transition-all shadow-sm group">
+        <div className="flex flex-col lg:flex-row gap-6 items-end lg:items-center">
+          <button 
+            type="button"
+            {...attributes} 
+            {...listeners}
+            className="p-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-orange-500 transition-colors bg-slate-50 rounded-xl shrink-0"
+          >
+            <GripVertical size={18} />
+          </button>
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+            <Input label="Nome do Item" placeholder="Ex: Bacon Extra" value={addon.name} onChange={(e) => updateAddon(index, 'name', e.target.value)} />
+            <Input label="Preço (R$)" type="number" step="0.01" value={addon.price} onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value))} />
+            <Input label="Cód. Integração" value={addon.saiposIntegrationCode} onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} />
+            <Input label="Qtd Máx" type="number" value={addon.maxQuantity} onChange={(e) => updateAddon(index, 'maxQuantity', parseInt(e.target.value))} />
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => removeAddonRow(index)} className="h-12 w-12 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all shrink-0"><Trash2 size={20} /></Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AddonManagement: React.FC = () => {
   const [groups, setGroups] = useState<AddonGroup[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -197,14 +245,6 @@ const AddonManagement: React.FC = () => {
       toast.success('Grupo removido.');
       fetchData();
     } catch (error) { toast.error('Erro ao excluir.'); }
-  };
-
-  const moveAddon = (index: number, direction: 'up' | 'down') => {
-    const newAddons = [...formData.addons];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newAddons.length) return;
-    [newAddons[index], newAddons[targetIndex]] = [newAddons[targetIndex], newAddons[index]];
-    setFormData({ ...formData, addons: newAddons.map((a, i) => ({ ...a, order: i })) });
   };
 
   const addAddonRow = () => {
@@ -364,32 +404,38 @@ const AddonManagement: React.FC = () => {
                         <Button variant="outline" size="sm" onClick={addAddonRow} className="rounded-xl border-orange-500 text-orange-600 hover:bg-orange-50 gap-2 font-black italic"><Plus size={14} /> ADICIONAR ITEM</Button>
                     </div>
 
-                    <div className="space-y-3">
-                        {formData.addons.map((addon, index) => (
-                            <div key={index} className="bg-white border-2 border-slate-100 rounded-[2rem] p-6 hover:border-orange-500/20 transition-all shadow-sm group">
-                                <div className="flex flex-col lg:flex-row gap-6 items-end lg:items-center">
-                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
-                                        <Input label="Nome do Item" placeholder="Ex: Bacon Extra" value={addon.name} onChange={(e) => updateAddon(index, 'name', e.target.value)} />
-                                        <Input label="Preço (R$)" type="number" step="0.01" value={addon.price} onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value))} />
-                                        <Input label="Cód. Integração" value={addon.saiposIntegrationCode} onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} />
-                                        <Input label="Qtd Máx" type="number" value={addon.maxQuantity} onChange={(e) => updateAddon(index, 'maxQuantity', parseInt(e.target.value))} />
+                    <DndContext 
+                        sensors={sensors} 
+                        collisionDetection={closestCenter} 
+                        onDragEnd={(event) => {
+                            const { active, over } = event;
+                            if (over && active.id !== over.id) {
+                                const oldIndex = parseInt(active.id.toString().split('-')[1]);
+                                const newIndex = parseInt(over.id.toString().split('-')[1]);
+                                const newAddons = arrayMove(formData.addons, oldIndex, newIndex);
+                                setFormData({ ...formData, addons: newAddons.map((a, i) => ({ ...a, order: i })) });
+                            }
+                        }}
+                    >
+                        <SortableContext items={formData.addons.map((_, i) => `addon-${i}`)} strategy={rectSortingStrategy}>
+                            <div className="space-y-3">
+                                {formData.addons.map((addon, index) => (
+                                    <SortableAddonRow 
+                                        key={`addon-${index}`}
+                                        addon={addon}
+                                        index={index}
+                                        updateAddon={updateAddon}
+                                        removeAddonRow={removeAddonRow}
+                                    />
+                                ))}
+                                {formData.addons.length === 0 && (
+                                    <div className="p-10 border-2 border-dashed border-slate-100 rounded-[2rem] text-center opacity-30">
+                                        <p className="text-[10px] font-black uppercase tracking-widest italic text-slate-400">Nenhum item adicionado a este grupo</p>
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <div className="flex flex-col gap-1">
-                                            <Button variant="ghost" size="icon" onClick={() => moveAddon(index, 'up')} disabled={index === 0} className="h-8 w-8 rounded-lg bg-slate-50 disabled:opacity-20"><ChevronUp size={16} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => moveAddon(index, 'down')} disabled={index === formData.addons.length - 1} className="h-8 w-8 rounded-lg bg-slate-50 disabled:opacity-20"><ChevronDown size={16} /></Button>
-                                        </div>
-                                        <Button variant="ghost" size="icon" onClick={() => removeAddonRow(index)} className="h-12 w-12 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={20} /></Button>
-                                    </div>
-                                </div>
+                                )}
                             </div>
-                        ))}
-                        {formData.addons.length === 0 && (
-                            <div className="p-10 border-2 border-dashed border-slate-100 rounded-[2rem] text-center opacity-30">
-                                <p className="text-[10px] font-black uppercase tracking-widest italic text-slate-400">Nenhum item adicionado a este grupo</p>
-                            </div>
-                        )}
-                    </div>
+                        </SortableContext>
+                    </DndContext>
                 </div>
             </div>
 

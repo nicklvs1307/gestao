@@ -10,10 +10,18 @@ class ProductController {
       where: { restaurantId: req.restaurantId },
       include: { 
         categories: {
-          include: { addonGroups: { include: { addons: true } } }
+          include: { 
+            addonGroups: { 
+              include: { addons: { orderBy: { order: 'asc' } } },
+              orderBy: { order: 'asc' }
+            } 
+          }
         }, 
-        sizes: { include: { globalSize: true } }, 
-        addonGroups: { include: { addons: true } },
+        sizes: { include: { globalSize: true }, orderBy: { order: 'asc' } }, 
+        addonGroups: { 
+          include: { addons: { orderBy: { order: 'asc' } } },
+          orderBy: { order: 'asc' }
+        },
         ingredients: { include: { ingredient: true } }
       },
       orderBy: { order: 'asc' },
@@ -28,8 +36,11 @@ class ProductController {
       where: { id },
       include: { 
         categories: true, 
-        sizes: { include: { globalSize: true } }, 
-        addonGroups: { include: { addons: true } },
+        sizes: { include: { globalSize: true }, orderBy: { order: 'asc' } }, 
+        addonGroups: { 
+          include: { addons: { orderBy: { order: 'asc' } } },
+          orderBy: { order: 'asc' }
+        },
         ingredients: { include: { ingredient: true } }
       },
     });
@@ -49,10 +60,18 @@ class ProductController {
       where: { restaurantId, isAvailable: true }, 
       include: { 
         categories: {
-          include: { addonGroups: { include: { addons: true } } }
+          include: { 
+            addonGroups: { 
+              include: { addons: { orderBy: { order: 'asc' } } },
+              orderBy: { order: 'asc' }
+            } 
+          }
         }, 
-        sizes: { include: { globalSize: true } }, 
-        addonGroups: { include: { addons: true } } 
+        sizes: { include: { globalSize: true }, orderBy: { order: 'asc' } }, 
+        addonGroups: { 
+          include: { addons: { orderBy: { order: 'asc' } } },
+          orderBy: { order: 'asc' }
+        } 
       }, 
       orderBy: { order: 'asc' } 
     });
