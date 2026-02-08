@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Product, SizeOption, AddonOption } from '../types';
+import { toast } from 'sonner';
 import { 
   X, 
   Minus, 
@@ -56,15 +57,23 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const loadFlavors = async (restaurantId: string, categoryId: string) => {
     setIsLoadingFlavors(true);
     try {
+      console.log(`Carregando sabores para categoria: ${categoryId}`);
       const allProducts = await getProducts(restaurantId);
+      console.log(`Total de produtos carregados: ${allProducts.length}`);
+
       // Correção: Verificar tanto o array categories quanto o campo legado categoryId
       const flavors = allProducts.filter(p => {
         const hasCategory = p.categories?.some(c => c.id === categoryId) || p.categoryId === categoryId;
         return hasCategory && p.isAvailable;
       });
+
+      console.log(`Sabores encontrados: ${flavors.length}`);
+      if (flavors.length === 0) console.warn("Nenhum sabor encontrado. Verifique se os produtos estão ativos e vinculados à categoria.");
+      
       setAvailableFlavors(flavors);
     } catch (error) {
       console.error("Erro ao carregar sabores:", error);
+      toast.error("Não foi possível carregar os sabores. Tente novamente.");
     } finally {
       setIsLoadingFlavors(false);
     }
@@ -93,7 +102,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             .reduce((sum, a) => sum + (a.quantity || 0), 0);
         
         if (currentGroupTotal + delta > group.maxQuantity) {
-            alert(`O limite total para "${group.name}" é de ${group.maxQuantity} itens.`);
+            toast.warning(`O limite total para "${group.name}" é de ${group.maxQuantity} itens.`);
             return;
         }
     }
@@ -159,7 +168,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const handleAddToCartClick = () => {
     if (isAdded || !product) return;
     if (product.pizzaConfig && selectedFlavors.length === 0) {
-      alert("Por favor, selecione pelo menos 1 sabor.");
+      toast.warning("Por favor, selecione pelo menos 1 sabor.");
       return;
     }
     const groups = product.addonGroups || [];
@@ -172,7 +181,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       if (group.isRequired || (group.minQuantity && group.minQuantity > 0)) {
         const min = group.minQuantity || 1;
         if (totalSelectedInGroup < min) {
-          alert(`Por favor, selecione pelo menos ${min} item(ns) em "${group.name}" (atualmente ${totalSelectedInGroup})`);
+          toast.warning(`Por favor, selecione pelo menos ${min} item(ns) em "${group.name}"`);
           return;
         }
       }
@@ -180,13 +189,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       // Validação de Máximo (Segurança extra no clique)
       if (group.maxQuantity && group.maxQuantity > 0) {
         if (totalSelectedInGroup > group.maxQuantity) {
-          alert(`Você selecionou itens demais em "${group.name}". O limite é ${group.maxQuantity}.`);
+          toast.warning(`Você selecionou itens demais em "${group.name}". O limite é ${group.maxQuantity}.`);
           return;
         }
       }
     }
     onAddToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
     setIsAdded(true);
+    toast.success("Adicionado ao pedido!");
     setTimeout(onClose, 800);
   };
 

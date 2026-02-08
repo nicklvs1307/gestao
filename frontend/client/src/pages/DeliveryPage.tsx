@@ -17,6 +17,7 @@ import { Search, Heart, Clock, ShoppingBag, Palette } from 'lucide-react';
 import { applyTheme } from '../utils/theme';
 import { Button } from '../components/ui/Button';
 import { isCategoryAvailable } from '../utils/availability';
+import RestaurantMeta from '../components/RestaurantMeta';
 
 interface DeliveryPageProps {
   restaurantSlug?: string;
@@ -181,6 +182,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
   return (
     <RestaurantProvider settings={restaurant.settings || null}>
+    <RestaurantMeta restaurant={restaurant} />
     <div className="bg-background min-h-screen pb-24 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
         
         {/* Banner Loja Fechada */}
