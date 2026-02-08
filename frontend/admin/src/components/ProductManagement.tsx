@@ -145,7 +145,9 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                                     </div>
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{product.name}</span>
+                                            <span className="font-black text-xs text-slate-900 uppercase italic tracking-tight">
+                                                {product.name || <span className="text-rose-400">Nome não definido</span>}
+                                            </span>
                                             {product.isFeatured && <div className="p-1 bg-orange-500 text-white rounded-md shadow-lg shadow-orange-500/20"><Star size={8} fill="currentColor"/></div>}
                                         </div>
                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Ref: {product.id.slice(-6).toUpperCase()}</span>

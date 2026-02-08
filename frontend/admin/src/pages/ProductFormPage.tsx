@@ -88,7 +88,7 @@ function ProductFormPage() {
             try {
                 setIsLoading(true);
                 const [cats, ings, library, gSizes] = await Promise.all([ 
-                    getCategories(true), // Usar flat=true para facilitar a busca
+                    getCategories(true),
                     getIngredients(), 
                     addonService.getAll(),
                     globalSizeService.getAll()
@@ -101,23 +101,35 @@ function ProductFormPage() {
                 if (id) {
                     const products = await getProducts();
                     const product = products.find((p: any) => p.id === id);
+                    
                     if (product) {
+                        console.log("Produto carregado para edição:", product);
+                        
                         const initialCategoryIds = product.categories?.map((c: any) => c.id) || (product.categoryId ? [product.categoryId] : []);
                         
-                        // Atualiza o estado da pizza se houver config
                         if (product.pizzaConfig) { 
                             setIsPizza(true); 
                             setPizzaConfig((prev: any) => ({ ...prev, ...product.pizzaConfig })); 
                         }
 
-                        // Reseta o formulário com os dados do produto
-                        reset({ 
-                            ...product, 
+                        // Garante que o nome e outros campos básicos não sejam perdidos
+                        const formData = {
+                            ...product,
+                            name: product.name || '',
+                            description: product.description || '',
+                            imageUrl: product.imageUrl || '',
                             categoryIds: initialCategoryIds, 
-                            ingredients: product.ingredients?.map((i: any) => ({ ingredientId: i.ingredientId, quantity: i.quantity })) || [],
+                            ingredients: product.ingredients?.map((i: any) => ({ 
+                                ingredientId: i.ingredientId, 
+                                quantity: i.quantity 
+                            })) || [],
                             productionArea: product.productionArea || 'Cozinha',
-                            measureUnit: product.measureUnit || 'UN'
-                        });
+                            measureUnit: product.measureUnit || 'UN',
+                            stock: product.stock ?? 0,
+                            price: product.price ?? 0
+                        };
+
+                        reset(formData);
                     } else {
                         toast.error("Produto não encontrado.");
                         navigate('/products');
