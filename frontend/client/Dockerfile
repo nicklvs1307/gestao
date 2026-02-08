@@ -15,7 +15,7 @@ COPY frontend/client ./frontend/client
 
 # Instala e Compila
 WORKDIR /app/frontend/client
-RUN npm ci
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # Stage 2: Serve com Nginx
