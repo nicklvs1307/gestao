@@ -128,20 +128,30 @@ function ProductFormPage() {
                             categoryIds: initialCategoryIds, 
                             ingredients: product.ingredients?.map((i: any) => ({ 
                                 ingredientId: i.ingredientId, 
-                                quantity: i.quantity 
+                                quantity: Number(i.quantity) || 0 
                             })) || [],
                             sizes: product.sizes?.map((s: any) => ({
                                 ...s,
+                                price: Number(s.price) || 0,
                                 globalSizeId: s.globalSizeId || ''
                             })) || [],
                             productionArea: product.productionArea || 'Cozinha',
                             measureUnit: product.measureUnit || 'UN',
                             stock: Number(product.stock) || 0,
-                            price: Number(product.price) || 0
+                            price: Number(product.price) || 0,
+                            ncm: product.ncm || '',
+                            cfop: product.cfop || '',
+                            saiposIntegrationCode: product.saiposIntegrationCode || ''
                         };
 
                         console.log("Resetando formulário com:", formData);
                         reset(formData);
+                        
+                        // Fallback: Se o reset não disparar o watch, forçamos o estado de carregamento a terminar
+                        // mas garantimos que os valores básicos existam
+                        if (product.name) {
+                            setValue('name', product.name);
+                        }
                     } else {
                         toast.error("Produto não encontrado.");
                         navigate('/products');
