@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getCategories } from '../services/api/categories';
-import { getProducts, createProduct, updateProduct, uploadProductImage } from '../services/api/products';
+import { getProductById, createProduct, updateProduct, uploadProductImage } from '../services/api/products';
 import { getIngredients } from '../services/api/stock';
 import { globalSizeService, GlobalSize } from '../services/api/globalSizes';
 import { addonService } from '../services/api/addonService';
@@ -80,6 +80,14 @@ function ProductFormPage() {
     const [isPizza, setIsPizza] = useState(false);
     const [pizzaConfig, setPizzaConfig] = useState<any>({ maxFlavors: 2, sliceCount: 8, priceRule: 'higher', flavorCategoryId: '', sizes: { 'Grande': { active: true, maxFlavors: 2 }, 'Média': { active: true, maxFlavors: 2 }, 'Pequena': { active: true, maxFlavors: 1 } } });
     
+    // Helper para formatar URL da imagem
+    const getImageUrl = (url: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        const baseUrl = import.meta.env.VITE_API_URL || (window.location.origin.replace('5173', '3001'));
+        return `${baseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     const { fields: sizeFields, append: appendSize, remove: removeSize } = useFieldArray({ control, name: "sizes" });
     const watchAllFields = watch();
 
@@ -99,8 +107,7 @@ function ProductFormPage() {
                 setGlobalSizes(gSizes);
                 
                 if (id) {
-                    const products = await getProducts();
-                    const product = products.find((p: any) => p.id === id);
+                    const product = await getProductById(id);
                     
                     if (product) {
                         console.log("Produto carregado para edição:", product);
@@ -122,6 +129,10 @@ function ProductFormPage() {
                             ingredients: product.ingredients?.map((i: any) => ({ 
                                 ingredientId: i.ingredientId, 
                                 quantity: i.quantity 
+                            })) || [],
+                            sizes: product.sizes?.map((s: any) => ({
+                                ...s,
+                                globalSizeId: s.globalSizeId || ''
                             })) || [],
                             productionArea: product.productionArea || 'Cozinha',
                             measureUnit: product.measureUnit || 'UN',
@@ -329,7 +340,7 @@ function ProductFormPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                                             <div className="space-y-4">
                                                 <div className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex items-center justify-center p-6 group hover:border-orange-500 transition-all cursor-pointer overflow-hidden relative" onClick={() => (document.getElementById('img-upload') as any).click()}>
-                                                    {watch('imageUrl') ? <img src={watch('imageUrl')} className="w-full h-full object-contain drop-shadow-xl" alt="" /> : <div className="text-center"><ImageIcon size={48} className="mx-auto text-slate-200 mb-2"/><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Enviar Foto</p></div>}
+                                                    {watch('imageUrl') ? <img src={getImageUrl(watch('imageUrl'))} className="w-full h-full object-contain drop-shadow-xl" alt="" /> : <div className="text-center"><ImageIcon size={48} className="mx-auto text-slate-200 mb-2"/><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Enviar Foto</p></div>}
                                                     {isUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-orange-500" size={32}/></div>}
                                                 </div>
                                                 <input type="file" id="img-upload" className="hidden" onChange={handleImageUpload} accept="image/*" />
@@ -483,7 +494,7 @@ function ProductFormPage() {
 
                 {/* Coluna de Preview Master */}
                 <div className="xl:col-span-4 h-full">
-                    <ProductMobilePreview watchFields={watchAllFields} isPizza={isPizza} pizzaConfig={pizzaConfig} />
+                    <ProductMobilePreview watchFields={watchAllFields} isPizza={isPizza} pizzaConfig={pizzaConfig} getImageUrl={getImageUrl} />
                 </div>
 
             </div>
@@ -604,7 +615,7 @@ function CompositionList({ control, register, availableIngredients }: { control:
 };
 
 // --- Componente de Preview Realista ---
-function ProductMobilePreview({ watchFields, isPizza, pizzaConfig }: { watchFields: any, isPizza: boolean, pizzaConfig: any }) {
+function ProductMobilePreview({ watchFields, isPizza, pizzaConfig, getImageUrl }: { watchFields: any, isPizza: boolean, pizzaConfig: any, getImageUrl: (url: string) => string }) {
     const { name, description, price, imageUrl, addonGroups, sizes } = watchFields;
     const [selectedSizePreview, setSelectedSizePreview] = useState<any>(null);
 
@@ -620,7 +631,7 @@ function ProductMobilePreview({ watchFields, isPizza, pizzaConfig }: { watchFiel
                     <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
                         {/* Imagem Cardápio */}
                         <div className="h-48 bg-slate-200 relative group overflow-hidden">
-                            {imageUrl ? <img src={imageUrl} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" /> : <div className="absolute inset-0 flex items-center justify-center text-slate-300"><ImageIcon size={48} strokeWidth={1} /></div>}
+                            {imageUrl ? <img src={getImageUrl(imageUrl)} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" /> : <div className="absolute inset-0 flex items-center justify-center text-slate-300"><ImageIcon size={48} strokeWidth={1} /></div>}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
                                 <h3 className="text-white font-black text-lg italic tracking-tighter uppercase leading-none mb-1">{name || 'Nome do Item'}</h3>
                                 <p className="text-white/60 text-[10px] font-medium leading-relaxed line-clamp-2">{description || 'Descrição detalhada aparecerá aqui para seus clientes...'}</p>

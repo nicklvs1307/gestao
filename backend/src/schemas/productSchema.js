@@ -29,6 +29,7 @@ const productBase = {
   sizes: z.array(z.object({
     name: z.string(),
     price: z.coerce.number(),
+    globalSizeId: z.string().optional().nullable(),
     order: z.coerce.number().optional(),
     saiposIntegrationCode: z.string().optional()
   })).default([]),

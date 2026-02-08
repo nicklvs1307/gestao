@@ -13,11 +13,33 @@ class ProductController {
           include: { addonGroups: { include: { addons: true } } }
         }, 
         sizes: { include: { globalSize: true } }, 
-        addonGroups: { include: { addons: true } } 
+        addonGroups: { include: { addons: true } },
+        ingredients: { include: { ingredient: true } }
       },
       orderBy: { order: 'asc' },
     });
     res.json(products);
+  });
+
+  // GET /api/products/:id
+  getProductById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { 
+        categories: true, 
+        sizes: { include: { globalSize: true } }, 
+        addonGroups: { include: { addons: true } },
+        ingredients: { include: { ingredient: true } }
+      },
+    });
+    
+    if (!product) {
+      res.status(404);
+      throw new Error('Produto não encontrado');
+    }
+    
+    res.json(product);
   });
 
   // GET /api/client/products/:restaurantId
@@ -57,6 +79,7 @@ class ProductController {
             name: s.name, 
             price: s.price, 
             order: s.order, 
+            globalSizeId: s.globalSizeId,
             saiposIntegrationCode: s.saiposIntegrationCode 
           })) 
         },
@@ -101,6 +124,7 @@ class ProductController {
             name: s.name, 
             price: s.price, 
             order: s.order || 0, 
+            globalSizeId: s.globalSizeId,
             saiposIntegrationCode: s.saiposIntegrationCode 
           })) || [] 
         },

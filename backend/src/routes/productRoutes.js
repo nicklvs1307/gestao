@@ -7,6 +7,7 @@ const upload = require('../config/multer');
 // Admin routes
 router.get('/', needsAuth, ProductController.getProducts);
 router.get('/pricing-analysis', needsAuth, checkPermission('products:manage'), ProductController.getPricingAnalysis);
+router.get('/:id', needsAuth, checkPermission('products:manage'), ProductController.getProductById);
 router.patch('/reorder', needsAuth, checkPermission('products:manage'), ProductController.reorderProducts);
 router.post('/', needsAuth, checkPermission('products:manage'), ProductController.createProduct);
 router.post('/upload', needsAuth, checkPermission('products:manage'), upload.single('image'), ProductController.uploadImage);

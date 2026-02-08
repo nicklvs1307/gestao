@@ -5,6 +5,11 @@ export const getProducts = async (): Promise<Product[]> => {
   return response.data;
 };
 
+export const getProductById = async (id: string): Promise<Product> => {
+  const response = await apiClient.get(`/products/${id}`);
+  return response.data;
+};
+
 export const getPricingAnalysis = async () => {
   const response = await apiClient.get('/products/pricing-analysis');
   return response.data;
