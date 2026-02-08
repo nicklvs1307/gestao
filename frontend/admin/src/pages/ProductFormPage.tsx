@@ -34,8 +34,8 @@ function ProductFormPage() {
     // Novo: Grupos herdados da categoria selecionada
     const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
     
-    // Estado para armazenar os dados carregados do produto (Controlado pelo RHF via 'values')
-    const [productData, setProductData] = useState<any>(null);
+    // State para armazenar os dados carregados do produto
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
 
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
         defaultValues: { 
@@ -52,8 +52,7 @@ function ProductFormPage() {
             ingredients: [], 
             productionArea: 'Cozinha',
             measureUnit: 'UN'
-        },
-        values: productData // Sincronização automática
+        }
     });
 
     const watchedCategoryIds = watch('categoryIds');
@@ -149,11 +148,14 @@ function ProductFormPage() {
                             saiposIntegrationCode: product.saiposIntegrationCode || ''
                         };
 
-                        setProductData(formData);
+                        reset(formData);
+                        setIsDataLoaded(true);
                     } else {
                         toast.error("Produto não encontrado.");
                         navigate('/products');
                     }
+                } else {
+                    setIsDataLoaded(true);
                 }
             } catch (error) { 
                 console.error("Erro ao carregar dados do produto:", error); 
@@ -207,7 +209,7 @@ function ProductFormPage() {
         }
     };
 
-    if (isLoading && !watchAllFields.name && id) return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
+    if (isLoading && !isDataLoaded) return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">

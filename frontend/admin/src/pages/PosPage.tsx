@@ -6,6 +6,7 @@ import {
     transferTable, transferItems, removeOrderItem, partialTablePayment,
     getPaymentMethods, partialValuePayment, markOrderAsPrinted
 } from '../services/api';
+import { CustomerSelectionModal } from '../components/CustomerSelectionModal';
 import { printOrder } from '../services/printing';
 import { 
     Search, ShoppingCart, Plus, Minus, X, Trash2, 
@@ -688,86 +689,19 @@ const PosPage: React.FC = () => {
                 )}
 
                 {/* Modal de Dados do Cliente Avançado */}
-                {activeModal === 'delivery_info' && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh]">
-                            <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white/10 rounded-xl"><User size={20} /></div>
-                                    <h3 className="text-lg font-black uppercase italic tracking-tighter leading-none">Identificar Cliente</h3>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="text-white hover:bg-white/10 rounded-full"><X size={20}/></Button>
-                            </div>
-                            
-                            <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-                                {/* Busca */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Buscar Cliente Cadastrado</label>
-                                    <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Nome, telefone ou endereço..." 
-                                            className="w-full h-12 pl-12 pr-4 rounded-xl bg-slate-50 border-2 border-slate-100 focus:border-orange-500 outline-none font-bold text-sm transition-all"
-                                            value={customerSearchTerm}
-                                            onChange={e => handleSearchCustomer(e.target.value)}
-                                        />
-                                        {isSearchingCustomer && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-500 animate-spin" size={18} />}
-                                    </div>
-                                    
-                                    {/* Resultados da Busca */}
-                                    {customerResults.length > 0 && (
-                                        <div className="bg-white border-2 border-slate-100 rounded-xl overflow-hidden shadow-lg max-h-48 overflow-y-auto">
-                                            {customerResults.map(c => (
-                                                <button key={c.id} onClick={() => handleSelectCustomer(c)} className="w-full text-left p-3 hover:bg-orange-50 hover:text-orange-900 border-b border-slate-50 last:border-0 transition-all flex justify-between items-center group">
-                                                    <div>
-                                                        <p className="font-bold text-sm text-slate-800 group-hover:text-orange-700">{c.name}</p>
-                                                        <p className="text-[10px] font-medium text-slate-400">{c.phone}</p>
-                                                    </div>
-                                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-orange-400" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="h-px bg-slate-100 w-full" />
-
-                                {/* Formulário Manual / Dados Preenchidos */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2"><Input label="Nome do Cliente" placeholder="Nome completo" value={deliveryInfo.name} onChange={e => setDeliveryInfo({...deliveryInfo, name: e.target.value})} /></div>
-                                    <Input label="Telefone" placeholder="(00) 00000-0000" value={deliveryInfo.phone} onChange={e => setDeliveryInfo({...deliveryInfo, phone: e.target.value})} />
-                                    <div className="col-span-2 space-y-2">
-                                        <Input label="Endereço de Entrega" placeholder="Rua, Número, Bairro..." value={deliveryInfo.address} onChange={e => setDeliveryInfo({...deliveryInfo, address: e.target.value})} />
-                                        
-                                        {/* Histórico de Endereços */}
-                                        {customerAddresses.length > 0 && (
-                                            <div className="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar">
-                                                {customerAddresses.map((addr, i) => (
-                                                    <button 
-                                                        key={i} 
-                                                        onClick={() => setDeliveryInfo({...deliveryInfo, address: addr})}
-                                                        className={cn(
-                                                            "px-3 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wide border transition-all whitespace-nowrap flex items-center gap-2",
-                                                            deliveryInfo.address === addr ? "bg-orange-500 text-white border-orange-500 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-orange-300"
-                                                        )}
-                                                    >
-                                                        <MapPin size={10} /> {addr.substring(0, 20)}...
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <Button fullWidth size="lg" className="h-14 rounded-2xl shadow-xl shadow-slate-200" onClick={() => setActiveModal('none')}>
-                                    Confirmar Dados <CheckCircle size={18} />
-                                </Button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
+                <CustomerSelectionModal 
+                    isOpen={activeModal === 'delivery_info'} 
+                    onClose={() => setActiveModal('none')}
+                    onSelectCustomer={(data) => {
+                        setDeliveryInfo({
+                            name: data.name,
+                            phone: data.phone,
+                            address: data.addressStr,
+                            deliveryType: data.deliveryType
+                        });
+                        setActiveModal('none');
+                    }}
+                />
             </AnimatePresence>
         </div>
     );
