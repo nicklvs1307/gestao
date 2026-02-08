@@ -241,10 +241,15 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 <h1 className="text-3xl font-black text-foreground tracking-tight mb-1 uppercase italic leading-none">{restaurant.name}</h1>
                 
                 {/* Endereço */}
-                {restaurant.settings?.address && (
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-8 line-clamp-1">
-                        📍 {restaurant.settings.address}
-                    </p>
+                {restaurant.address && (
+                    <a 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-8 line-clamp-1 hover:text-primary transition-colors flex items-center justify-center gap-1"
+                    >
+                        📍 {restaurant.address}
+                    </a>
                 )}
                 
                 <div className="flex flex-wrap justify-center items-center gap-3">
@@ -268,6 +273,18 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                         </span>
                     </div>
                 </div>
+
+                {/* Formas de Pagamento Aceitas */}
+                {restaurant.paymentMethods && restaurant.paymentMethods.length > 0 && (
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest w-full mb-1">Aceitamos:</span>
+                        {restaurant.paymentMethods.map(m => (
+                            <span key={m.id} className="bg-card border border-border px-2 py-1 rounded-md text-[9px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+                                {m.type === 'CASH' ? '💵' : m.type === 'PIX' ? '📱' : '💳'} {m.name}
+                            </span>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Barra de Busca Refinada */}

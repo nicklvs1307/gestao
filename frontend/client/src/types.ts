@@ -159,6 +159,7 @@ export interface Restaurant {
   openingHours?: string;
   settings?: RestaurantSettings;
   categories: Category[];
+  paymentMethods?: { id: string; name: string; type: string }[];
 }
 
 export interface RestaurantSettings {

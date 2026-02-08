@@ -190,6 +190,10 @@ const getRestaurantBySlug = async (req, res) => {
             where: { slug },
             include: { 
                 settings: true,
+                paymentMethods: {
+                    where: { isActive: true },
+                    select: { id: true, name: true, type: true }
+                },
                 categories: {
                     include: {
                         products: {
