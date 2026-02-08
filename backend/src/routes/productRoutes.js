@@ -4,7 +4,10 @@ const ProductController = require('../controllers/ProductController');
 const { needsAuth, checkPermission } = require('../middlewares/auth');
 const upload = require('../config/multer');
 
-// Admin routes
+// Client routes (Public - MUST come before admin routes with :id)
+router.get('/:restaurantId', ProductController.getClientProducts);
+
+// Admin routes (Protected)
 router.get('/', needsAuth, ProductController.getProducts);
 router.get('/pricing-analysis', needsAuth, checkPermission('products:manage'), ProductController.getPricingAnalysis);
 router.get('/:id', needsAuth, checkPermission('products:manage'), ProductController.getProductById);
@@ -13,8 +16,5 @@ router.post('/', needsAuth, checkPermission('products:manage'), ProductControlle
 router.post('/upload', needsAuth, checkPermission('products:manage'), upload.single('image'), ProductController.uploadImage);
 router.put('/:id', needsAuth, checkPermission('products:manage'), ProductController.updateProduct);
 router.delete('/:id', needsAuth, checkPermission('products:manage'), ProductController.deleteProduct);
-
-// Client routes
-router.get('/:restaurantId', ProductController.getClientProducts);
 
 module.exports = router;
