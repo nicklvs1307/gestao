@@ -2,12 +2,16 @@ const { z } = require('zod');
 
 // Schema para Itens do Pedido
 const orderItemSchema = z.object({
-  id: z.string().optional(), // Pode ser um produto existente ou item novo
   productId: z.string().min(1, 'Produto é obrigatório'),
   quantity: z.number().int().min(1, 'Quantidade mínima é 1'),
   observations: z.string().optional().nullable(),
   
-  // Detalhes opcionais
+  // IDs para Cálculo (PricingService)
+  sizeId: z.string().optional().nullable(),
+  addonsIds: z.array(z.string()).optional().default([]),
+  flavorIds: z.array(z.string()).optional().default([]),
+
+  // Detalhes para exibição (Opcionais)
   size: z.object({
     name: z.string(),
     price: z.number()
@@ -20,7 +24,7 @@ const orderItemSchema = z.object({
   })).optional().default([]),
   
   flavors: z.array(z.object({
-    id: z.string(), // ID do produto sabor
+    id: z.string(),
     name: z.string()
   })).optional().nullable()
 });

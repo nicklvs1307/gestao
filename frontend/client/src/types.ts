@@ -100,10 +100,12 @@ export interface LocalCartItem {
   productId: string;
   quantity: number;
   priceAtTime: number;
+  sizeId?: string | null;
+  addonsIds?: string[];
+  flavorIds?: string[];
   sizeJson: string | null;
   addonsJson: string | null;
   flavorsJson: string | null;
-  flavorIds?: string[]; // Adicionado aqui
 }
 
 export interface OrderItem {

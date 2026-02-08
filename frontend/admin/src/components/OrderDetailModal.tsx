@@ -7,7 +7,7 @@ import {
   X, Clock, MapPin, CheckCircle, 
   Circle, PlayCircle, XCircle, Printer, Phone, 
   ExternalLink, Package, CreditCard, Loader2,
-  ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck
+  ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck, List
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -35,6 +35,13 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const [selectedDriver, setSelectedDriver] = useState<string>(order?.deliveryOrder?.driverId || "");
   const [deliveryType, setDeliveryType] = useState<string>(order?.deliveryOrder?.deliveryType || "pickup");
   const [isPrinting, setIsPrinting] = useState(false);
+
+  useEffect(() => {
+    if (order) {
+      setSelectedDriver(order.deliveryOrder?.driverId || "");
+      setDeliveryType(order.deliveryOrder?.deliveryType || "pickup");
+    }
+  }, [order]);
 
   useEffect(() => {
     if (order?.orderType === 'DELIVERY') {

@@ -41,10 +41,12 @@ export const useLocalCart = () => {
       productId: product.id,
       quantity,
       priceAtTime,
+      sizeId: selectedSize ? selectedSize.id : null,
+      addonsIds: selectedAddons.map(a => a.id),
+      flavorIds: selectedFlavors?.map(f => f.id) || [],
       sizeJson: selectedSize ? JSON.stringify(selectedSize) : null,
       addonsJson: selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null,
       flavorsJson: selectedFlavors && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : null,
-      flavorIds: selectedFlavors?.map(f => f.id) || []
     };
 
     setLocalCartItems(prevItems => [...prevItems, newCartItem]);

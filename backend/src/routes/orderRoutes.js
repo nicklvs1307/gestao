@@ -29,7 +29,7 @@ router.get('/', needsAuth, checkPermission('orders:view'), async (req, res) => {
     }
 });
 
-router.patch('/:orderId/status', needsAuth, checkPermission('orders:manage'), OrderController.updateStatus);
+router.put('/:orderId/status', needsAuth, checkPermission('orders:manage'), OrderController.updateStatus);
 router.patch('/:orderId/payment-method', needsAuth, checkPermission('orders:manage'), OrderController.updatePaymentMethod);
 router.patch('/:orderId/delivery-type', needsAuth, checkPermission('orders:manage'), OrderController.updateDeliveryType);
 router.patch('/:orderId/printed', needsAuth, checkPermission('orders:manage'), OrderController.markAsPrinted);

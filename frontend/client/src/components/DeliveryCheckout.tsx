@@ -113,10 +113,22 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
           
           if (data && data.address) {
             const addr = data.address;
-            setStreet(addr.road || '');
-            setNeighborhood(addr.suburb || addr.neighbourhood || addr.city_district || '');
-            setCity(addr.city || addr.town || addr.village || '');
-            setState(addr.state_code || ''); // Alguns retornam código, outros nome
+            setStreet(addr.road || addr.street || addr.pedestrian || '');
+            setNeighborhood(addr.suburb || addr.neighbourhood || addr.city_district || addr.village || '');
+            
+            const detectedCity = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
+            setCity(detectedCity);
+
+            const detectedState = addr.state_code || addr['ISO3166-2-lvl4']?.split('-')[1] || addr.state || '';
+            
+            if (detectedState.length === 2) {
+                setState(detectedState.toUpperCase());
+            } else {
+                // Se retornou o nome completo, tentamos encontrar a sigla
+                const stateObj = statesList.find(s => s.nome.toLowerCase() === detectedState.toLowerCase());
+                if (stateObj) setState(stateObj.sigla);
+                else setState(detectedState);
+            }
             
             if (addr.postcode) {
               setCep(addr.postcode.replace(/\D/g, ''));

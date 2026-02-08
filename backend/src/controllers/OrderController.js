@@ -16,7 +16,7 @@ class OrderController {
     const order = await OrderService.createOrder({
       restaurantId,
       items: validatedData.items, 
-      orderType: validatedData.orderType === 'PICKUP' ? 'DELIVERY' : 'DELIVERY', // Normaliza enum do banco se necessário
+      orderType: ['DELIVERY', 'PICKUP'].includes(validatedData.orderType) ? 'DELIVERY' : 'TABLE',
       deliveryInfo: validatedData.deliveryInfo,
       paymentMethod,
       tableNumber: validatedData.tableNumber,
