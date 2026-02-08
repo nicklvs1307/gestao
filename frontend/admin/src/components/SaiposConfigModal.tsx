@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getSaiposSettings, updateSaiposSettings } from '../services/api';
-import { X, Save, Loader2, Info, ShieldCheck, Key, Lock, Store, CheckCircle } from 'lucide-react';
+import { X, Save, Loader2, Info, ShieldCheck, Key, Lock, Store, CheckCircle, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from './ui/Button';

@@ -1,210 +1,44 @@
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: cmle735la004mph017lbmu14d
-index-BN3Dg05W.js:8627 Resposta da API getProductById: {id: 'cmle735la004mph017lbmu14d', name: 'Quatro Queijos', description: 'Molho de tomate caseiro, mozarela gratinada, reque…es de alta qualidade, com sabor forte e marcante.', price: 0, imageUrl: 'https://cdn2.uairango.com/produtos/cf0809357726c86efacd2ec470b3dcf8.png', …}
-index-BN3Dg05W.js:8627 Dados formatados para reset: {id: 'cmle735la004mph017lbmu14d', name: 'Quatro Queijos', description: 'Molho de tomate caseiro, mozarela gratinada, reque…es de alta qualidade, com sabor forte e marcante.', price: 0, imageUrl: 'https://cdn2.uairango.com/produtos/cf0809357726c86efacd2ec470b3dcf8.png', …}
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-%2082,99:1  GET https://kicardapio.towersfy.com/api/%2082,99 404 (Not Found)
-Image
-qV @ index-BN3Dg05W.js:40
-BV @ index-BN3Dg05W.js:40
-Wte @ index-BN3Dg05W.js:40
-Kte @ index-BN3Dg05W.js:40
-yu @ index-BN3Dg05W.js:40
-WV @ index-BN3Dg05W.js:40
-B @ index-BN3Dg05W.js:38
-mu @ index-BN3Dg05W.js:40
-yt @ index-BN3Dg05W.js:37
-h @ index-BN3Dg05W.js:37
-dl @ index-BN3Dg05W.js:37
-kd @ index-BN3Dg05W.js:37
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: cmle7cqnf005bph018swukrv7
-index-BN3Dg05W.js:8627 Resposta da API getProductById: {id: 'cmle7cqnf005bph018swukrv7', name: 'Strogonoff de Frango', description: 'Molho de tomate caseiro, porção generosa de strogo…ão cremoso, champignon cobertos com batata palha.', price: 0, imageUrl: 'https://cdn2.uairango.com/produtos/7ab44a7cd18da372ee753e55d11eb542.png', …}
-index-BN3Dg05W.js:8627 Dados formatados para reset: {id: 'cmle7cqnf005bph018swukrv7', name: 'Strogonoff de Frango', description: 'Molho de tomate caseiro, porção generosa de strogo…ão cremoso, champignon cobertos com batata palha.', price: 0, imageUrl: 'https://cdn2.uairango.com/produtos/7ab44a7cd18da372ee753e55d11eb542.png', …}
-index-BN3Dg05W.js:25 [Violation] 'message' handler took 154ms
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-64,99:1  GET https://kicardapio.towersfy.com/api/64,99 404 (Not Found)
-Image
-qV @ index-BN3Dg05W.js:40
-BV @ index-BN3Dg05W.js:40
-Wte @ index-BN3Dg05W.js:40
-Kte @ index-BN3Dg05W.js:40
-yu @ index-BN3Dg05W.js:40
-WV @ index-BN3Dg05W.js:40
-B @ index-BN3Dg05W.js:38
-mu @ index-BN3Dg05W.js:40
-yt @ index-BN3Dg05W.js:37
-h @ index-BN3Dg05W.js:37
-dl @ index-BN3Dg05W.js:37
-kd @ index-BN3Dg05W.js:37
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: undefined
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: cml8q9e9f000wmy01a84nhpk9
-index-BN3Dg05W.js:8627 Resposta da API getProductById: {id: 'cml8q9e9f000wmy01a84nhpk9', name: 'Zuchinni', description: 'Para amantes de pizzas requintadas, leva molho de …ue vai salsinha, alho e nozes) e um toque de mel.', price: 64.99, imageUrl: '/uploads/image-1770548432229-326491619.jpeg', …}
-index-BN3Dg05W.js:8627 Dados formatados para reset: {id: 'cml8q9e9f000wmy01a84nhpk9', name: 'Zuchinni', description: 'Para amantes de pizzas requintadas, leva molho de …ue vai salsinha, alho e nozes) e um toque de mel.', price: 64.99, imageUrl: '/uploads/image-1770548432229-326491619.jpeg', …}
-[Violation] 'click' handler took 2002ms
-index-BN3Dg05W.js:8627 Iniciando carregamento de dados para ID: cml8q9e9f000wmy01a84nhpk9
-index-BN3Dg05W.js:8627 Resposta da API getProductById: {id: 'cml8q9e9f000wmy01a84nhpk9', name: 'Zuchinni', description: 'Para amantes de pizzas requintadas, leva molho de …ue vai salsinha, alho e nozes) e um toque de mel.', price: 64.99, imageUrl: '', …}
-index-BN3Dg05W.js:8627 Dados formatados para reset: {id: 'cml8q9e9f000wmy01a84nhpk9', name: 'Zuchinni', description: 'Para amantes de pizzas requintadas, leva molho de …ue vai salsinha, alho e nozes) e um toque de mel.', price: 64.99, imageUrl: '', …}
-index-BN3Dg05W.js:53  PUT https://kicardapio.towersfy.com/api/admin/orders/cmle89w9p005tph01q2y4y4mb/status 404 (Not Found)
-(anônimo) @ index-BN3Dg05W.js:53
-xhr @ index-BN3Dg05W.js:53
-zH @ index-BN3Dg05W.js:55
-Promise.then
-_request @ index-BN3Dg05W.js:56
-request @ index-BN3Dg05W.js:55
-(anônimo) @ index-BN3Dg05W.js:56
-(anônimo) @ index-BN3Dg05W.js:51
-YD @ index-BN3Dg05W.js:56
-onAccept @ index-BN3Dg05W.js:8605
-onClick @ index-BN3Dg05W.js:8605
-Sn @ index-BN3Dg05W.js:37
-Qs @ index-BN3Dg05W.js:37
-er @ index-BN3Dg05W.js:37
-Vc @ index-BN3Dg05W.js:37
-Hc @ index-BN3Dg05W.js:37
-(anônimo) @ index-BN3Dg05W.js:37
-SO @ index-BN3Dg05W.js:40
-yt @ index-BN3Dg05W.js:37
-h @ index-BN3Dg05W.js:37
-dl @ index-BN3Dg05W.js:37
-kd @ index-BN3Dg05W.js:37
-index-BN3Dg05W.js:53 Uncaught (in promise) AxiosError: Request failed with status code 404
-    at cX (index-BN3Dg05W.js:53:1092)
-    at XMLHttpRequest.C (index-BN3Dg05W.js:53:5867)
-    at N2.request (index-BN3Dg05W.js:55:2097)
-    at async YD (index-BN3Dg05W.js:56:7093)
-    at async onAccept (index-BN3Dg05W.js:8605:18316)
-cX @ index-BN3Dg05W.js:53
-C @ index-BN3Dg05W.js:53
-XMLHttpRequest.send
-(anônimo) @ index-BN3Dg05W.js:53
-xhr @ index-BN3Dg05W.js:53
-zH @ index-BN3Dg05W.js:55
-Promise.then
-_request @ index-BN3Dg05W.js:56
-request @ index-BN3Dg05W.js:55
-(anônimo) @ index-BN3Dg05W.js:56
-(anônimo) @ index-BN3Dg05W.js:51
-YD @ index-BN3Dg05W.js:56
-onAccept @ index-BN3Dg05W.js:8605
-onClick @ index-BN3Dg05W.js:8605
-Sn @ index-BN3Dg05W.js:37
-Qs @ index-BN3Dg05W.js:37
-er @ index-BN3Dg05W.js:37
-Vc @ index-BN3Dg05W.js:37
-Hc @ index-BN3Dg05W.js:37
-(anônimo) @ index-BN3Dg05W.js:37
-SO @ index-BN3Dg05W.js:40
-yt @ index-BN3Dg05W.js:37
-h @ index-BN3Dg05W.js:37
-dl @ index-BN3Dg05W.js:37
-kd @ index-BN3Dg05W.js:37
-index-BN3Dg05W.js:53  PUT https://kicardapio.towersfy.com/api/admin/orders/cmle89w9p005tph01q2y4y4mb/status 404 (Not Found)
-(anônimo) @ index-BN3Dg05W.js:53
-xhr @ index-BN3Dg05W.js:53
-zH @ index-BN3Dg05W.js:55
-Promise.then
-_request @ index-BN3Dg05W.js:56
-request @ index-BN3Dg05W.js:55
-(anônimo) @ index-BN3Dg05W.js:56
-(anônimo) @ index-BN3Dg05W.js:51
-YD @ index-BN3Dg05W.js:56
-onAccept @ index-BN3Dg05W.js:8605
-onClick @ index-BN3Dg05W.js:8605
-Sn @ index-BN3Dg05W.js:37
-Qs @ index-BN3Dg05W.js:37
-er @ index-BN3Dg05W.js:37
-Vc @ index-BN3Dg05W.js:37
-Hc @ index-BN3Dg05W.js:37
-(anônimo) @ index-BN3Dg05W.js:37
-SO @ index-BN3Dg05W.js:40
-yt @ index-BN3Dg05W.js:37
-h @ index-BN3Dg05W.js:37
-dl @ index-BN3Dg05W.js:37
-kd @ index-BN3Dg05W.js:37
-index-BN3Dg05W.js:53 Uncaught (in promise) AxiosError: Request failed with status code 404
-    at cX (index-BN3Dg05W.js:53:1092)
-    at XMLHttpRequest.C (index-BN3Dg05W.js:53:5867)
-    at N2.request (index-BN3Dg05W.js:55:2097)
-    at async YD (index-BN3Dg05W.js:56:7093)
-    at async onAccept (index-BN3Dg05W.js:8605:18316)
-cX @ index-BN3Dg05W.js:53
-C @ index-BN3Dg05W.js:53
-XMLHttpRequest.send
-(anônimo) @ index-BN3Dg05W.js:53
-xhr @ index-BN3Dg05W.js:53
-zH @ index-BN3Dg05W.js:55
-Promise.then
-_request @ index-BN3Dg05W.js:56
-request @ index-BN3Dg05W.js:55
-(anônimo) @ index-BN3Dg05W.js:56
-(anônimo) @ index-BN3Dg05W.js:51
-YD @ index-BN3Dg05W.js:56
-onAccept @ index-BN3Dg05W.js:8605
-onClick @ index-BN3Dg05W.js:8605
-Sn @ index-BN3Dg05W.js:37
-Qs @ index-BN3Dg05W.js:37
-er @ index-BN3Dg05W.js:37
-Vc @ index-BN3Dg05W.js:37
-Hc @ index-BN3Dg05W.js:37
-(anônimo) @ index-BN3Dg05W.js:37
-SO @ index-BN3Dg05W.js:40
-yt @ index-BN3Dg05W.js:37
-h @ index-BN3Dg05W.js:37
-dl @ index-BN3Dg05W.js:37
-kd @ index-BN3Dg05W.js:37
-index-BN3Dg05W.js:40 ReferenceError: List is not defined
-    at xte (index-BN3Dg05W.js:8631:93782)
-    at hu (index-BN3Dg05W.js:38:17891)
-    at QV (index-BN3Dg05W.js:40:45208)
-    at YV (index-BN3Dg05W.js:40:40756)
-    at Yte (index-BN3Dg05W.js:40:40683)
-    at Gy (index-BN3Dg05W.js:40:40534)
-    at LO (index-BN3Dg05W.js:40:36786)
-    at WV (index-BN3Dg05W.js:40:37599)
-    at B (index-BN3Dg05W.js:38:3267)
-    at index-BN3Dg05W.js:40:35087
-cO @ index-BN3Dg05W.js:40
-v.callback @ index-BN3Dg05W.js:40
-uo @ index-BN3Dg05W.js:38
-qV @ index-BN3Dg05W.js:40
-BV @ index-BN3Dg05W.js:40
-Wte @ index-BN3Dg05W.js:40
-Kte @ index-BN3Dg05W.js:40
-yu @ index-BN3Dg05W.js:40
-WV @ index-BN3Dg05W.js:40
-B @ index-BN3Dg05W.js:38
-(anônimo) @ index-BN3Dg05W.js:40
-index-BN3Dg05W.js:8631 Uncaught ReferenceError: List is not defined
-    at xte (index-BN3Dg05W.js:8631:93782)
-    at hu (index-BN3Dg05W.js:38:17891)
-    at QV (index-BN3Dg05W.js:40:45208)
-    at YV (index-BN3Dg05W.js:40:40756)
-    at Yte (index-BN3Dg05W.js:40:40683)
-    at Gy (index-BN3Dg05W.js:40:40534)
-    at LO (index-BN3Dg05W.js:40:36786)
-    at WV (index-BN3Dg05W.js:40:37599)
-    at B (index-BN3Dg05W.js:38:3267)
-    at index-BN3Dg05W.js:40:35087
-xte @ index-BN3Dg05W.js:8631
-hu @ index-BN3Dg05W.js:38
-QV @ index-BN3Dg05W.js:40
-YV @ index-BN3Dg05W.js:40
-Yte @ index-BN3Dg05W.js:40
-Gy @ index-BN3Dg05W.js:40
-LO @ index-BN3Dg05W.js:40
-WV @ index-BN3Dg05W.js:40
-B @ index-BN3Dg05W.js:38
-(anônimo) @ index-BN3Dg05W.js:40
+index-DNDUGQTG.js:40 ReferenceError: RefreshCw is not defined
+    at tUe (index-DNDUGQTG.js:8642:230663)
+    at hu (index-DNDUGQTG.js:38:17891)
+    at dO (index-DNDUGQTG.js:40:3167)
+    at QV (index-DNDUGQTG.js:40:45983)
+    at YV (index-DNDUGQTG.js:40:40756)
+    at Yte (index-DNDUGQTG.js:40:40683)
+    at Gy (index-DNDUGQTG.js:40:40534)
+    at LO (index-DNDUGQTG.js:40:36786)
+    at UV (index-DNDUGQTG.js:40:35726)
+    at $ (index-DNDUGQTG.js:25:1651)
+cO @ index-DNDUGQTG.js:40
+v.callback @ index-DNDUGQTG.js:40
+uo @ index-DNDUGQTG.js:38
+qV @ index-DNDUGQTG.js:40
+BV @ index-DNDUGQTG.js:40
+Wte @ index-DNDUGQTG.js:40
+Kte @ index-DNDUGQTG.js:40
+yu @ index-DNDUGQTG.js:40
+UV @ index-DNDUGQTG.js:40
+$ @ index-DNDUGQTG.js:25
+W @ index-DNDUGQTG.js:25
+index-DNDUGQTG.js:8642 Uncaught ReferenceError: RefreshCw is not defined
+    at tUe (index-DNDUGQTG.js:8642:230663)
+    at hu (index-DNDUGQTG.js:38:17891)
+    at dO (index-DNDUGQTG.js:40:3167)
+    at QV (index-DNDUGQTG.js:40:45983)
+    at YV (index-DNDUGQTG.js:40:40756)
+    at Yte (index-DNDUGQTG.js:40:40683)
+    at Gy (index-DNDUGQTG.js:40:40534)
+    at LO (index-DNDUGQTG.js:40:36786)
+    at UV (index-DNDUGQTG.js:40:35726)
+    at $ (index-DNDUGQTG.js:25:1651)
+tUe @ index-DNDUGQTG.js:8642
+hu @ index-DNDUGQTG.js:38
+dO @ index-DNDUGQTG.js:40
+QV @ index-DNDUGQTG.js:40
+YV @ index-DNDUGQTG.js:40
+Yte @ index-DNDUGQTG.js:40
+Gy @ index-DNDUGQTG.js:40
+LO @ index-DNDUGQTG.js:40
+UV @ index-DNDUGQTG.js:40
+$ @ index-DNDUGQTG.js:25
+W @ index-DNDUGQTG.js:25
