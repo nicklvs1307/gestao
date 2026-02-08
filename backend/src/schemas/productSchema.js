@@ -76,18 +76,18 @@ const UpdateProductSchema = z.object({
     name: z.string(),
     price: z.coerce.number(),
     globalSizeId: z.string().optional().nullable(),
-    order: z.coerce.number().optional(),
-    saiposIntegrationCode: z.string().optional()
-  })).optional(),
+    order: z.coerce.number().optional().nullable(),
+    saiposIntegrationCode: z.string().optional().nullable()
+  })).optional().nullable(),
   
   addonGroups: z.array(z.object({
     id: z.string()
-  })).optional(),
+  })).optional().nullable(),
   
   ingredients: z.array(z.object({
     ingredientId: z.string(),
     quantity: z.coerce.number()
-  })).optional(),
+  })).optional().nullable(),
 
   pizzaConfig: z.any().optional().nullable()
 });

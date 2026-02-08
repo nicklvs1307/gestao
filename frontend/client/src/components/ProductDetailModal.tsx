@@ -57,7 +57,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     setIsLoadingFlavors(true);
     try {
       const allProducts = await getProducts(restaurantId);
-      const flavors = allProducts.filter(p => p.categoryId === categoryId && p.isAvailable);
+      // Correção: Verificar tanto o array categories quanto o campo legado categoryId
+      const flavors = allProducts.filter(p => {
+        const hasCategory = p.categories?.some(c => c.id === categoryId) || p.categoryId === categoryId;
+        return hasCategory && p.isAvailable;
+      });
       setAvailableFlavors(flavors);
     } catch (error) {
       console.error("Erro ao carregar sabores:", error);
