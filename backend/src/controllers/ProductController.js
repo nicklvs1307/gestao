@@ -71,7 +71,10 @@ class ProductController {
         addonGroups: { 
           include: { addons: { orderBy: { order: 'asc' } } },
           orderBy: { order: 'asc' }
-        } 
+        },
+        promotions: {
+            where: { isActive: true }
+        }
       }, 
       orderBy: { order: 'asc' } 
     });

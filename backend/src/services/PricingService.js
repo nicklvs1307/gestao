@@ -8,7 +8,13 @@ class PricingService {
   async calculateItemPrice(productId, quantity, sizeId, addonsIds = [], flavorIds = []) {
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: { sizes: true, addonGroups: { include: { addons: true } } }
+      include: { 
+        sizes: true, 
+        addonGroups: { include: { addons: true } },
+        promotions: {
+            where: { isActive: true }
+        }
+      }
     });
 
     if (!product) throw new Error(`Produto não encontrado: ${productId}`);
@@ -34,11 +40,20 @@ class PricingService {
     }
 
     // 2. Lógica de Pizza (Multi-sabores)
-    // Extraímos a lógica complexa para métodos privados para clareza
     const { finalBasePrice, flavorsObjects } = await this._calculatePizzaPrice(product, unitPrice, sizeName, flavorIds);
     unitPrice = finalBasePrice;
 
-    // 3. Cálculo de Adicionais
+    // 3. Aplicação de Promoção
+    const activePromotion = product.promotions?.[0]; // Pega a primeira ativa
+    if (activePromotion) {
+        if (activePromotion.discountType === 'percentage') {
+            unitPrice = unitPrice * (1 - activePromotion.discountValue / 100);
+        } else if (activePromotion.discountType === 'fixed_amount') {
+            unitPrice = Math.max(0, unitPrice - activePromotion.discountValue);
+        }
+    }
+
+    // 4. Cálculo de Adicionais
     const { addonsTotal, addonsObjects } = this._calculateAddonsPrice(product, addonsIds);
     
     const finalUnitPrice = unitPrice + addonsTotal;

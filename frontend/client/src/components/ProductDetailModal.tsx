@@ -160,6 +160,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     } else if (selectedSize) {
       basePrice = selectedSize.price;
     }
+
+    // Aplicar Promoção se houver
+    const activePromotion = product.promotions?.find(p => p.isActive);
+    if (activePromotion) {
+        if (activePromotion.discountType === 'percentage') {
+            basePrice = basePrice * (1 - activePromotion.discountValue / 100);
+        } else if (activePromotion.discountType === 'fixed_amount') {
+            basePrice = Math.max(0, basePrice - activePromotion.discountValue);
+        }
+    }
+
     let total = basePrice;
     total += selectedAddons.reduce((acc, addon) => acc + (addon.price * (addon.quantity || 1)), 0);
     return total * quantity;

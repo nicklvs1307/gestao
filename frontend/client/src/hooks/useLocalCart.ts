@@ -32,6 +32,16 @@ export const useLocalCart = () => {
       }
     }
 
+    // Aplicar Promoção se houver
+    const activePromotion = product.promotions?.find(p => p.isActive);
+    if (activePromotion) {
+        if (activePromotion.discountType === 'percentage') {
+            basePrice = basePrice * (1 - activePromotion.discountValue / 100);
+        } else if (activePromotion.discountType === 'fixed_amount') {
+            basePrice = Math.max(0, basePrice - activePromotion.discountValue);
+        }
+    }
+
     const addonsPrice = selectedAddons.reduce((acc, addon) => acc + (addon.price * (addon.quantity || 1)), 0);
     const priceAtTime = basePrice + addonsPrice;
 

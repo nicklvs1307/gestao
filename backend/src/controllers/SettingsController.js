@@ -186,12 +186,15 @@ const toggleStatus = async (req, res) => {
 const getRestaurantBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
-        const restaurant = await prisma.restaurant.findUnique({
+        let restaurant = await prisma.restaurant.findUnique({
             where: { slug },
             include: { 
                 settings: true,
                 paymentMethods: {
-                    where: { isActive: true },
+                    where: { 
+                        isActive: true,
+                        allowDelivery: true
+                    },
                     select: { id: true, name: true, type: true }
                 },
                 categories: {
@@ -204,6 +207,9 @@ const getRestaurantBySlug = async (req, res) => {
                                     include: {
                                         addons: true
                                     }
+                                },
+                                promotions: {
+                                    where: { isActive: true }
                                 }
                             },
                             orderBy: { order: 'asc' }
@@ -216,6 +222,30 @@ const getRestaurantBySlug = async (req, res) => {
         
         if (!restaurant) {
             return res.status(404).json({ error: 'Restaurante não encontrado.' });
+        }
+
+        // Se não houver formas de pagamento, tenta criar as padrões (mesma lógica do PaymentMethodController)
+        if (restaurant.paymentMethods.length === 0) {
+            const defaults = [
+                { name: 'Dinheiro', type: 'CASH', allowDelivery: true, allowPos: true, allowTable: true },
+                { name: 'Pix', type: 'PIX', allowDelivery: true, allowPos: true, allowTable: true },
+                { name: 'Cartão de Crédito', type: 'CREDIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
+                { name: 'Cartão de Débito', type: 'DEBIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
+            ];
+
+            await prisma.paymentMethod.createMany({
+                data: defaults.map(d => ({ ...d, restaurantId: restaurant.id }))
+            });
+
+            // Recarrega apenas os pagamentos
+            restaurant.paymentMethods = await prisma.paymentMethod.findMany({
+                where: { 
+                    restaurantId: restaurant.id,
+                    isActive: true,
+                    allowDelivery: true
+                },
+                select: { id: true, name: true, type: true }
+            });
         }
         
         res.json(restaurant);
