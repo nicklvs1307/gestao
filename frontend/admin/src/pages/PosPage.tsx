@@ -300,17 +300,39 @@ const PosPage: React.FC = () => {
                 orderType: orderMode === 'table' ? 'TABLE' : 'DELIVERY',
                 tableNumber: orderMode === 'table' ? parseInt(selectedTable) : null,
                 paymentMethod: 'PENDING',
-                customerName: orderMode === 'table' ? customerName : deliveryInfo.name
+                customerName: orderMode === 'table' ? customerName : deliveryInfo.name,
+                deliveryInfo: orderMode === 'delivery' ? {
+                    name: deliveryInfo.name,
+                    phone: deliveryInfo.phone,
+                    address: deliveryInfo.address, // Enviamos a string formatada
+                    deliveryType: deliveryInfo.deliveryType,
+                    // Decompondo o endereço se necessário para o backend (OrderService espera street, number, etc)
+                    ...parseAddress(deliveryInfo.address)
+                } : null
             };
             await createOrder(orderPayload);
             toast.success("Pedido enviado!");
             setCart([]);
             setSelectedTable('');
             setCustomerName('');
+            setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' });
             loadTableSummary();
         } catch (e) {
             toast.error("Erro ao enviar pedido");
         }
+    };
+
+    // Função auxiliar para decompor endereço caso seja uma string única
+    const parseAddress = (addressStr: string) => {
+        if (!addressStr) return {};
+        // Tenta separar por vírgula e traço (padrão: Rua, Número - Bairro)
+        const parts = addressStr.split(',');
+        const street = parts[0]?.trim();
+        const rest = parts[1]?.split('-') || [];
+        const number = rest[0]?.trim();
+        const neighborhood = rest[1]?.trim();
+        
+        return { street, number, neighborhood };
     };
 
     const handleCheckout = async (paymentData: any) => {

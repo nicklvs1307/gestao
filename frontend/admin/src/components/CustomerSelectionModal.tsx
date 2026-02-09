@@ -72,8 +72,10 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         setIsLoading(true);
         try {
             const data = await searchCustomers(searchTerm);
-            // Mapear dados para garantir estrutura
-            const mapped = (data.customers || []).map((c: any) => ({
+            // Mapear dados para garantir estrutura - a API agora retorna o array direto
+            const customersArray = Array.isArray(data) ? data : (data.customers || []);
+            
+            const mapped = customersArray.map((c: any) => ({
                 ...c,
                 addresses: c.deliveryOrders?.map((o: any) => {
                      // Tentar extrair endereço estruturado se salvo, ou usar string

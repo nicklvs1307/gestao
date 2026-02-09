@@ -46,6 +46,7 @@ import CmvAnalysis from './pages/CmvAnalysis';
 import DreManagement from './components/DreManagement';
 import StaffPerformance from './components/StaffPerformance';
 import GlobalSizesPage from './pages/GlobalSizesPage';
+import ChecklistManagement from './pages/ChecklistManagement';
 import { Toaster } from 'sonner';
 
 import GlobalModals from './components/GlobalModals';
@@ -231,6 +232,9 @@ function AdminRoutes() {
       case '/fiscal':
         setPageTitle('Fiscal & Notas (NFC-e)');
         break;
+      case '/checklists':
+        setPageTitle('Checklists & Rotinas');
+        break;
       default:
         if (location.pathname.startsWith('/products/')) {
              setPageTitle('Editar Produto');
@@ -312,6 +316,7 @@ function AdminRoutes() {
         <Route path="/ingredients" element={<StockManagement />} />
         <Route path="/ingredients/*" element={<StockManagement />} />
         <Route path="/fiscal" element={<FiscalManagement />} />
+        <Route path="/checklists" element={<ChecklistManagement />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
 

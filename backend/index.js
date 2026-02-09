@@ -116,6 +116,8 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/delivery-areas', deliveryAreaRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
+app.use('/api/sectors', require('./src/routes/sectorRoutes'));
+app.use('/api/checklists', require('./src/routes/checklistRoutes'));
 
 // KDS Alias
 const { needsAuth } = require('./src/middlewares/auth');

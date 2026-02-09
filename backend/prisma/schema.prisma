@@ -43,6 +43,10 @@ model User {
   receivedTransactions FinancialTransaction[] @relation("TransactionRecipient") // Recebimentos (Salários/Acertos)
   stockLosses  StockLoss[]     // Perdas registradas por este usuário
 
+  // === RELAÇÕES DO MÓDULO DE CHECKLIST ===
+  sectors      Sector[]        @relation("UserSectors")
+  executions   ChecklistExecution[]
+
   @@index([restaurantId])
   @@index([franchiseId])
   @@index([roleId])
@@ -139,6 +143,11 @@ model Restaurant {
   productions         ProductionLog[]
   addonGroups         AddonGroup[]
   globalSizes         GlobalSize[]
+
+  // === RELAÇÕES DO MÓDULO DE CHECKLIST ===
+  sectors             Sector[]
+  checklists          Checklist[]
+  checklistExecutions ChecklistExecution[]
 }
 
 model PaymentMethod {
@@ -968,3 +977,103 @@ model ProductIngredient {
   @@index([ingredientId])
 }
 
+// === NOVO MÓDULO: OPERAÇÃO (CHECKLIST & ROTINAS) ===
+
+model Sector {
+  id           String   @id @default(cuid())
+  name         String   // Ex: "Cozinha", "Salão", "Bar", "Estoque"
+  description  String?
+  
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  checklists   Checklist[]
+  users        User[]      @relation("UserSectors") // Usuários vinculados ao setor
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([name, restaurantId])
+  @@index([restaurantId])
+}
+
+model Checklist {
+  id           String   @id @default(cuid())
+  title        String   // Ex: "Abertura de Cozinha", "Fechamento de Caixa"
+  description  String?
+  frequency    String   @default("DAILY") // "DAILY", "WEEKLY", "MONTHLY"
+  
+  isActive     Boolean  @default(true)
+
+  sectorId     String
+  sector       Sector   @relation(fields: [sectorId], references: [id])
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  tasks        ChecklistTask[]
+  executions   ChecklistExecution[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId])
+  @@index([sectorId])
+}
+
+model ChecklistTask {
+  id           String   @id @default(cuid())
+  content      String   // A tarefa em si
+  isRequired   Boolean  @default(true)
+  order        Int      @default(0)
+  type         String   @default("CHECKBOX") // "CHECKBOX", "PHOTO", "TEXT", "NUMBER"
+
+  checklistId  String
+  checklist    Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([checklistId])
+}
+
+model ChecklistExecution {
+  id           String   @id @default(cuid())
+  
+  checklistId  String
+  checklist    Checklist @relation(fields: [checklistId], references: [id])
+
+  userId       String   // Quem executou
+  user         User     @relation(fields: [userId], references: [id])
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  status       String   @default("COMPLETED") // "COMPLETED", "INCOMPLETE"
+  notes        String?
+  
+  responses    ChecklistResponse[]
+
+  startedAt    DateTime @default(now())
+  completedAt  DateTime @default(now())
+
+  @@index([checklistId])
+  @@index([userId])
+  @@index([restaurantId])
+}
+
+model ChecklistResponse {
+  id           String   @id @default(cuid())
+  
+  executionId  String
+  execution    ChecklistExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  taskId       String
+  
+  value        String   // Resposta: "true", "caminho/foto.jpg", "texto livre", "25.5"
+  isOk         Boolean  @default(true) // Se a tarefa foi cumprida conforme esperado
+
+  createdAt    DateTime @default(now())
+
+  @@index([executionId])
+}

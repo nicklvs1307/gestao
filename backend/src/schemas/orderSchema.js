@@ -36,11 +36,11 @@ const CreateDeliveryOrderSchema = z.object({
   
   items: z.array(orderItemSchema).min(1, 'O pedido deve ter pelo menos 1 item'),
   
-  orderType: z.enum(['DELIVERY', 'PICKUP']).default('DELIVERY'),
+  orderType: z.enum(['DELIVERY', 'PICKUP', 'TABLE']).default('TABLE'),
   
   deliveryInfo: z.object({
     name: z.string().min(1, 'Nome do cliente é obrigatório'),
-    phone: z.string().min(8, 'Telefone inválido'),
+    phone: z.string().min(8, 'Telefone inválido').optional().nullable(),
     
     // Endereço (Opcional, pode ser string ou objeto)
     address: z.union([
@@ -55,10 +55,10 @@ const CreateDeliveryOrderSchema = z.object({
       })
     ]).optional().nullable(),
 
-    deliveryType: z.enum(['delivery', 'pickup']),
-    paymentMethod: z.string().min(1, 'Forma de pagamento obrigatória'),
+    deliveryType: z.enum(['delivery', 'pickup']).optional().nullable(),
+    paymentMethod: z.string().optional().nullable(),
     changeFor: z.number().optional().nullable(),
-  }),
+  }).optional().nullable(),
 
   // Campos opcionais de compatibilidade
   paymentMethod: z.string().optional().nullable(), 

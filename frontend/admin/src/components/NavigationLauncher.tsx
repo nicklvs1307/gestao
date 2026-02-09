@@ -62,6 +62,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                 { label: "Monitor de Pedidos", path: "/orders", icon: ListOrdered },
                 { label: "PDV - Frente de Caixa", path: "/pos", icon: Calculator },
                 { label: "KDS - Monitor de Cozinha", path: "/kds", icon: ChefHat },
+                { label: "Checklists & Rotinas", path: "/checklists", icon: ClipboardList },
                 { label: "Terminal do Garçom", path: "/waiter", icon: Utensils },
             ]
         },
