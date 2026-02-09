@@ -98,6 +98,12 @@ app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/global-sizes', require('./src/routes/globalSizeRoutes'));
 app.use('/api/addons', require('./src/routes/addonRoutes'));
+app.use('/api/ingredients', require('./src/routes/ingredientRoutes'));
+app.use('/api/production', require('./src/routes/productionRoutes'));
+
+// === ROTAS DE OPERAÇÃO (CHECKLIST) ===
+app.use('/api/checklists', require('./src/routes/checklistRoutes'));
+app.use('/api/sectors', require('./src/routes/sectorRoutes'));
 app.use('/api/admin/orders', orderRoutes);
 app.use('/api/cashier', cashierRoutes);
 app.use('/api/financial', financialRoutes);
