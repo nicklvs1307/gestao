@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
     ClipboardCheck, Plus, Search, LayoutGrid, Trash2, 
     Edit, ChevronRight, CheckCircle2, AlertCircle, Clock,
-    Camera, Type, Hash, CheckSquare, Loader2, X
+    Camera, Type, Hash, CheckSquare, Loader2, X, QrCode, Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -22,6 +23,8 @@ const ChecklistManagement: React.FC = () => {
     const [sectors, setSectors] = useState<any[]>([]);
     
     const [isEditingChecklist, setIsEditingChecklist] = useState(false);
+    const [showQRCodeModal, setShowQRCodeModal] = useState(false);
+    const [selectedChecklist, setSelectedChecklist] = useState<any>(null);
     const [currentChecklist, setCurrentChecklist] = useState<any>({
         title: '',
         description: '',
@@ -36,6 +39,46 @@ const ChecklistManagement: React.FC = () => {
     useEffect(() => {
         loadData();
     }, []);
+
+    const handlePrintQR = () => {
+        const printContent = document.getElementById('qr-code-to-print');
+        const windowUrl = 'about:blank';
+        const uniqueName = new Date();
+        const windowName = 'Print' + uniqueName.getTime();
+        const printWindow = window.open(windowUrl, windowName, 'left=50000,top=50000,width=0,height=0');
+
+        if (printWindow && printContent) {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimir QR Code - ${selectedChecklist?.title}</title>
+                        <style>
+                            body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                            .container { border: 2px solid #000; padding: 40px; border-radius: 20px; text-align: center; }
+                            h1 { margin-top: 20px; font-size: 24px; text-transform: uppercase; }
+                            p { color: #666; margin-top: 5px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            ${printContent.innerHTML}
+                            <h1>${selectedChecklist?.title}</h1>
+                            <p>Setor: ${selectedChecklist?.sector?.name}</p>
+                            <p style="font-size: 10px; margin-top: 20px;">Escaneie para iniciar o checklist</p>
+                        </div>
+                        <script>
+                            setTimeout(() => {
+                                window.print();
+                                window.close();
+                            }, 500);
+                        </script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+        }
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -177,6 +220,7 @@ const ChecklistManagement: React.FC = () => {
                                         {checklist.sector?.name}
                                     </span>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => { setSelectedChecklist(checklist); setShowQRCodeModal(true); }} className="p-2 bg-slate-50 text-slate-400 hover:text-orange-500 rounded-lg transition-colors"><QrCode size={16}/></button>
                                         <button onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }} className="p-2 bg-slate-50 text-slate-400 hover:text-blue-500 rounded-lg transition-colors"><Edit size={16}/></button>
                                         <button onClick={() => { if(confirm("Excluir modelo?")) deleteChecklist(checklist.id).then(loadData); }} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"><Trash2 size={16}/></button>
                                     </div>
@@ -353,6 +397,44 @@ const ChecklistManagement: React.FC = () => {
                                 <Button variant="ghost" onClick={() => setIsEditingChecklist(false)} className="px-8 rounded-2xl italic">Cancelar</Button>
                                 <Button onClick={handleSaveChecklist} className="px-10 rounded-2xl italic uppercase text-[10px] font-black tracking-widest shadow-lg shadow-orange-100">Salvar Modelo</Button>
                             </footer>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showQRCodeModal && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowQRCodeModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden p-8 flex flex-col items-center text-center">
+                            <header className="w-full flex justify-between items-center mb-6">
+                                <div className="text-left">
+                                    <h3 className="text-xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">QR Code de Acesso</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Imprima para o setor</p>
+                                </div>
+                                <button onClick={() => setShowQRCodeModal(false)} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"><X size={20}/></button>
+                            </header>
+
+                            <div className="bg-slate-50 p-8 rounded-[2rem] mb-6" id="qr-code-to-print">
+                                <QRCodeSVG 
+                                    value={`${window.location.origin}/checklist/fill/${selectedChecklist?.id}`}
+                                    size={200}
+                                    level="H"
+                                    includeMargin={true}
+                                />
+                            </div>
+
+                            <div className="mb-8">
+                                <h4 className="text-lg font-black text-slate-800 uppercase italic tracking-tighter">{selectedChecklist?.title}</h4>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{selectedChecklist?.sector?.name}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 w-full">
+                                <Button variant="outline" onClick={() => setShowQRCodeModal(false)} className="rounded-2xl italic h-12">Fechar</Button>
+                                <Button onClick={handlePrintQR} className="rounded-2xl italic h-12 gap-2 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-orange-100">
+                                    <Printer size={16} /> Imprimir
+                                </Button>
+                            </div>
+                            
+                            <p className="text-[9px] text-slate-300 font-bold uppercase mt-6 tracking-tight">O link aponta para: {window.location.origin}/checklist/fill/{selectedChecklist?.id}</p>
                         </motion.div>
                     </div>
                 )}

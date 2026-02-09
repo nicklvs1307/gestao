@@ -90,3 +90,14 @@ export const sendTableRequest = async (restaurantId: string, tableNumber: string
   const response = await apiClient.post('/client/table-requests', { restaurantId, tableNumber, type });
   return response.data;
 };
+
+// CHECKLISTS
+export const getChecklistById = async (id: string) => {
+  const response = await apiClient.get(`/checklists/${id}`);
+  return response.data;
+};
+
+export const submitChecklistExecution = async (data: any) => {
+  const response = await apiClient.post('/checklists/submit', data);
+  return response.data;
+};

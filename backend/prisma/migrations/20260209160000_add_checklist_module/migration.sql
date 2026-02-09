@@ -43,7 +43,7 @@ CREATE TABLE "ChecklistTask" (
 CREATE TABLE "ChecklistExecution" (
     "id" TEXT NOT NULL,
     "checklistId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "userId" TEXT,
     "restaurantId" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'COMPLETED',
     "notes" TEXT,

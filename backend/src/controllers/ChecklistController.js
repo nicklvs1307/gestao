@@ -97,15 +97,15 @@ class ChecklistController {
   // Execuções e Respostas
   submitExecution = asyncHandler(async (req, res) => {
     const { restaurantId, user } = req;
-    const { checklistId, notes, responses } = req.body;
+    const { checklistId, notes, responses, userName } = req.body;
 
     const execution = await prisma.checklistExecution.create({
       data: {
         checklistId,
-        userId: user.id,
-        restaurantId,
-        notes,
-        status: 'COMPLETED', // Por enquanto fixo, mas poderia ser parcial
+        userId: user?.id, // Pode ser nulo se vier do QR Code público
+        restaurantId: restaurantId || (await prisma.checklist.findUnique({ where: { id: checklistId } })).restaurantId,
+        notes: userName ? `[Executado por: ${userName}] ${notes || ''}` : notes,
+        status: 'COMPLETED',
         responses: {
           create: responses.map(r => ({
             taskId: r.taskId,
