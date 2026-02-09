@@ -89,8 +89,11 @@ class SaiposService {
       const items = order.items.map(item => {
         const addons = item.addonsJson ? JSON.parse(item.addonsJson) : [];
         const size = item.sizeJson ? JSON.parse(item.sizeJson) : null;
+        const flavors = item.flavorsJson ? JSON.parse(item.flavorsJson) : [];
         
         const choiceItems = [];
+        
+        // Adiciona Tamanho
         if (size) {
           choiceItems.push({
             integration_code: size.saiposIntegrationCode || 'SIZE_DEFAULT',
@@ -101,12 +104,25 @@ class SaiposService {
           });
         }
 
+        // Adiciona Sabores (Pizzas)
+        flavors.forEach(f => {
+          choiceItems.push({
+            integration_code: f.saiposIntegrationCode || 'FLAVOR_DEFAULT',
+            desc_item_choice: `Sabor: ${f.name}`,
+            aditional_price: 0,
+            quantity: 1,
+            notes: ''
+          });
+        });
+
+        // Adiciona Complementos / Adicionais (Combos)
         addons.forEach(a => {
+          const qty = a.quantity || 1;
           choiceItems.push({
             integration_code: a.saiposIntegrationCode || 'ADDON_DEFAULT',
-            desc_item_choice: a.name,
+            desc_item_choice: qty > 1 ? `${qty}x ${a.name}` : a.name,
             aditional_price: parseFloat(a.price || 0),
-            quantity: a.quantity || 1,
+            quantity: qty,
             notes: ''
           });
         });
