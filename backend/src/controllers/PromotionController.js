@@ -18,7 +18,15 @@ const getActivePromotions = async (req, res) => {
                 startDate: { lte: now },             // Já começou
                 endDate: { gte: startOfTodayUTC }    // Termina hoje (UTC) ou no futuro
             },
-            include: { product: true },
+            include: { 
+                product: {
+                    include: {
+                        promotions: {
+                            where: { isActive: true }
+                        }
+                    }
+                } 
+            },
             orderBy: { createdAt: 'desc' }
         });
         

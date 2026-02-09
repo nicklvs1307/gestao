@@ -21,38 +21,80 @@ const optionalAuth = (req, res, next) => {
 router.get('/restaurant/:slug', async (req, res) => {
     const { slug } = req.params;
     try {
-      const restaurant = await prisma.restaurant.findFirst({
-        where: { 
-          slug: {
-            equals: slug,
-            mode: 'insensitive'
-          }
-        },
-        include: {
-          settings: true,
-          categories: {
-            orderBy: { order: 'asc' },
+        const now = new Date();
+        const startOfTodayUTC = new Date();
+        startOfTodayUTC.setUTCHours(0, 0, 0, 0);
+
+        let restaurant = await prisma.restaurant.findFirst({
+            where: { 
+                slug: {
+                    equals: slug,
+                    mode: 'insensitive'
+                }
+            },
             include: {
-              products: {
-                where: { isAvailable: true },
-                orderBy: { order: 'asc' },
-                include: {
-                  sizes: { orderBy: { order: 'asc' } },
-                  addonGroups: {
+                settings: true,
+                paymentMethods: {
+                    where: { 
+                        isActive: true,
+                        allowDelivery: true
+                    },
+                    select: { id: true, name: true, type: true }
+                },
+                categories: {
                     orderBy: { order: 'asc' },
                     include: {
-                      addons: { orderBy: { order: 'asc' } },
+                        products: {
+                            where: { isAvailable: true },
+                            orderBy: { order: 'asc' },
+                            include: {
+                                sizes: { orderBy: { order: 'asc' } },
+                                addonGroups: {
+                                    orderBy: { order: 'asc' },
+                                    include: {
+                                        addons: { orderBy: { order: 'asc' } },
+                                    },
+                                },
+                                promotions: {
+                                    where: { 
+                                        isActive: true,
+                                        startDate: { lte: now },
+                                        endDate: { gte: startOfTodayUTC }
+                                    }
+                                }
+                            },
+                        },
                     },
-                  },
                 },
-              },
             },
-          },
-        },
-      });
+        });
   
       if (!restaurant) {
         return res.status(404).json({ error: 'Restaurante não encontrado.' });
+      }
+
+      // Se não houver formas de pagamento, cria as padrões para não travar o cardápio
+      if (restaurant.paymentMethods.length === 0) {
+        const defaults = [
+            { name: 'Dinheiro', type: 'CASH', allowDelivery: true, allowPos: true, allowTable: true },
+            { name: 'Pix', type: 'PIX', allowDelivery: true, allowPos: true, allowTable: true },
+            { name: 'Cartão de Crédito', type: 'CREDIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
+            { name: 'Cartão de Débito', type: 'DEBIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
+        ];
+
+        await prisma.paymentMethod.createMany({
+            data: defaults.map(d => ({ ...d, restaurantId: restaurant.id }))
+        });
+
+        // Recarrega apenas os pagamentos
+        restaurant.paymentMethods = await prisma.paymentMethod.findMany({
+            where: { 
+                restaurantId: restaurant.id,
+                isActive: true,
+                allowDelivery: true
+            },
+            select: { id: true, name: true, type: true }
+        });
       }
   
       res.json(restaurant);

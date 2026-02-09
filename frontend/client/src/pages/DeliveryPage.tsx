@@ -18,6 +18,7 @@ import { applyTheme } from '../utils/theme';
 import { Button } from '../components/ui/Button';
 import { isCategoryAvailable } from '../utils/availability';
 import RestaurantMeta from '../components/RestaurantMeta';
+import { getImageUrl } from '../utils/image';
 
 interface DeliveryPageProps {
   restaurantSlug?: string;
