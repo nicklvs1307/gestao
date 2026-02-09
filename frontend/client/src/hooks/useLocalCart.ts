@@ -52,7 +52,7 @@ export const useLocalCart = () => {
       quantity,
       priceAtTime,
       sizeId: selectedSize ? selectedSize.id : null,
-      addonsIds: selectedAddons.map(a => a.id),
+      addonsIds: selectedAddons.flatMap(a => Array(a.quantity || 1).fill(a.id)),
       flavorIds: selectedFlavors?.map(f => f.id) || [],
       sizeJson: selectedSize ? JSON.stringify(selectedSize) : null,
       addonsJson: selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null,

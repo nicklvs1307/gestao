@@ -200,7 +200,9 @@ const KdsPage: React.FC = () => {
                                                                     {JSON.parse(item.addonsJson).map((a: any, idx: number) => (
                                                                         <div key={idx} className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-xl border border-white/5">
                                                                             <Plus size={10} className="text-orange-500" strokeWidth={4} />
-                                                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">{a.name}</span>
+                                                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">
+                                                                                {a.quantity > 1 ? `${a.quantity}x ` : ''}{a.name}
+                                                                            </span>
                                                                         </div>
                                                                     ))}
                                                                 </div>

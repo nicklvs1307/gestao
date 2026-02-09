@@ -108,7 +108,7 @@ const WaiterPos: React.FC = () => {
                 id: Date.now().toString(), cartItemId, productDbId: product.id, productId: product.id, name: itemName, price: finalPrice, quantity: 1, observation,
                 selectedSizeDbId: size?.id, selectedAddonDbIds: addons.map(a => a.id), selectedFlavorIds: flavors.map(f => f.id),
                 sizeJson: size ? JSON.stringify({ id: size.id, name: size.name, price: size.price }) : null,
-                addonsJson: JSON.stringify(addons.map(a => ({ id: a.id, name: a.name, price: a.price }))),
+                addonsJson: JSON.stringify(addons.map(a => ({ id: a.id, name: a.name, price: a.price, quantity: a.quantity || 1 }))),
                 flavorsJson: JSON.stringify(flavors.map(f => ({ id: f.id, name: f.name, price: f.price })))
             };
             setCart([...cart, newItem]);

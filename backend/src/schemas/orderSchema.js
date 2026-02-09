@@ -20,7 +20,8 @@ const orderItemSchema = z.object({
   addons: z.array(z.object({
     id: z.string().optional(),
     name: z.string(),
-    price: z.number()
+    price: z.number(),
+    quantity: z.number().optional()
   })).optional().default([]),
   
   flavors: z.array(z.object({
