@@ -47,6 +47,7 @@ import DreManagement from './components/DreManagement';
 import StaffPerformance from './components/StaffPerformance';
 import GlobalSizesPage from './pages/GlobalSizesPage';
 import ChecklistManagement from './pages/ChecklistManagement';
+import ChecklistFill from './pages/ChecklistFill';
 import { Toaster } from 'sonner';
 
 import GlobalModals from './components/GlobalModals';
@@ -357,6 +358,7 @@ function App() {
         <Toaster position="top-right" richColors closeButton />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
           <Route path="/driver/dashboard" element={
             <ProtectedRoute>
               <DriverDashboard />
