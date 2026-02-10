@@ -149,7 +149,10 @@ class OrderService {
             });
         }
 
-        return createdOrder;
+        return await tx.order.findUnique({
+            where: { id: createdOrder.id },
+            include: { deliveryOrder: true }
+        });
     });
 
     // 3. Integrações Pós-Commit (Fire & Forget)

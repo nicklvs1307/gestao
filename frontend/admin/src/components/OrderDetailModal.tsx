@@ -186,10 +186,12 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                 <span>Subtotal</span>
                                 <span className="text-slate-300">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                             </div>
-                            {isDelivery && deliveryType === 'delivery' && (
+                            {isDelivery && (
                                 <div className="flex justify-between items-center text-[9px] font-black text-slate-500 uppercase tracking-widest">
                                     <span>Taxa de Entrega</span>
-                                    <span className="text-blue-400">+ R$ {(order.deliveryOrder?.deliveryFee || 0).toFixed(2).replace('.', ',')}</span>
+                                    <span className={cn(order.deliveryOrder?.deliveryType === 'delivery' ? "text-blue-400" : "text-emerald-500")}>
+                                        {order.deliveryOrder?.deliveryType === 'delivery' ? `+ R$ ${(order.deliveryOrder?.deliveryFee || 0).toFixed(2).replace('.', ',')}` : 'Grátis'}
+                                    </span>
                                 </div>
                             )}
                             <div className="pt-4 border-t border-white/10 flex justify-between items-end">
@@ -200,7 +202,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                     </span>
                                 </div>
                                 <span className="text-3xl font-black text-emerald-400 tracking-tighter italic">
-                                    R$ {(order.total + (isDelivery && deliveryType === 'delivery' ? (order.deliveryOrder?.deliveryFee || 0) : 0)).toFixed(2).replace('.', ',')}
+                                    R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
                                 </span>
                             </div>
                         </div>

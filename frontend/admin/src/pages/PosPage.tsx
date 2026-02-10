@@ -36,6 +36,7 @@ const PosPage: React.FC = () => {
     
     // --- ESTADOS DE SISTEMA ---
     const [isStoreOpen, setIsStoreOpen] = useState(false);
+    const [deliveryFee, setDeliveryFee] = useState(0);
     const [isCashierOpen, setIsCashierOpen] = useState(false);
     const [cashierSession, setCashierSession] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -119,7 +120,10 @@ const PosPage: React.FC = () => {
             setTables(tablesData || []);
             setPaymentMethods(paymentMethodsData || []);
             
-            if (settingsData?.settings) setIsStoreOpen(settingsData.settings.isOpen);
+            if (settingsData?.settings) {
+                setIsStoreOpen(settingsData.settings.isOpen);
+                setDeliveryFee(settingsData.settings.deliveryFee || 0);
+            }
             if (cashierData) {
                 setIsCashierOpen(cashierData.isOpen);
                 setCashierSession(cashierData.session);
@@ -315,6 +319,7 @@ const PosPage: React.FC = () => {
                     phone: deliveryInfo.phone,
                     address: deliveryInfo.address, 
                     deliveryType: deliverySubType,
+                    deliveryFee: deliverySubType === 'delivery' ? deliveryFee : 0,
                     ...(structuredAddress || parseAddress(deliveryInfo.address))
                 } : null
             };

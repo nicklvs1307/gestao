@@ -192,6 +192,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
       state,
       address: deliveryType === 'delivery' ? `${street}, ${number} - ${neighborhood}, ${city}/${state}` : 'Retirada no Balcão',
       deliveryType, 
+      deliveryFee: deliveryType === 'delivery' ? deliveryFee : 0,
       paymentMethod,
       changeFor: paymentMethod.toLowerCase().includes('dinheiro') && changeFor ? parseFloat(changeFor.replace(/[^\d.,]/g, '').replace(',', '.')) : undefined,
     };

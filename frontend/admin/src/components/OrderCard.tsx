@@ -177,7 +177,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
                   </span>
                 </div>
                 <span className="font-black text-sm italic text-slate-900 tracking-tighter">
-                  R$ {order.total.toFixed(2).replace('.', ',')}
+                  R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
                 </span>
             </div>
         </div>
