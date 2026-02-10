@@ -8,7 +8,7 @@ import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
-import { searchCustomers } from '../services/api';
+import { searchCustomers, createCustomer } from '../services/api';
 import { toast } from 'sonner';
 
 interface Address {
@@ -76,48 +76,39 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             const customersArray = Array.isArray(data) ? data : (data.customers || []);
             
             const finalResults = customersArray.map((c: any) => {
-                const uniqueAddresses: Address[] = [];
-                const addedStrings = new Set<string>();
+                const addressList: { label: string, data?: any }[] = [];
+                const seen = new Set<string>();
 
-                const addIfUnique = (addr: Address) => {
-                    const str = `${addr.street?.toLowerCase()}${addr.number}${addr.neighborhood?.toLowerCase()}`;
-                    if (str && !addedStrings.has(str)) {
-                        uniqueAddresses.push(addr);
-                        addedStrings.add(str);
+                const add = (label: string, structured?: any) => {
+                    const clean = label.trim().toUpperCase();
+                    if (clean && clean !== 'RETIRADA NO BALCÃO' && !seen.has(clean)) {
+                        addressList.push({ label, data: structured });
+                        seen.add(clean);
                     }
                 };
 
-                // 1. Adicionar endereço principal do cadastro
+                // 1. Endereço Principal Estruturado
                 if (c.street) {
-                    addIfUnique({
+                    const full = `${c.street}, ${c.number || 'S/N'}${c.neighborhood ? ' - ' + c.neighborhood : ''}${c.city ? ', ' + c.city : ''}`;
+                    add(full, {
                         street: c.street,
-                        number: c.number || '',
-                        neighborhood: c.neighborhood || '',
-                        city: c.city || '',
-                        complement: c.complement,
-                        reference: c.reference,
-                        zipCode: c.zipCode
+                        number: c.number,
+                        neighborhood: c.neighborhood,
+                        city: c.city,
+                        zipCode: c.zipCode,
+                        complement: c.complement
                     });
                 }
 
-                // 2. Adicionar endereços do histórico de pedidos
+                // 2. Campo address genérico (se for diferente do estruturado)
+                if (c.address) add(c.address);
+
+                // 3. Histórico de Pedidos
                 c.deliveryOrders?.forEach((o: any) => {
-                    if (o.address && o.address !== 'Retirada no Balcão') {
-                        // Tenta converter string de endereço em objeto se possível, 
-                        // ou apenas usa a string formatada como street
-                        if (!addedStrings.has(o.address.toLowerCase())) {
-                            uniqueAddresses.push({
-                                street: o.address,
-                                number: '',
-                                neighborhood: '',
-                                city: '',
-                            });
-                            addedStrings.add(o.address.toLowerCase());
-                        }
-                    }
+                    if (o.address) add(o.address);
                 });
 
-                return { ...c, addresses: uniqueAddresses };
+                return { ...c, consolidatedAddresses: addressList };
             });
 
             setResults(finalResults);
@@ -128,13 +119,12 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         }
     };
 
-    const handleSelectAddress = (customer: Customer, addr: Address) => {
-        const fullAddress = `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}`;
+    const handleSelectAddress = (customer: Customer, addrObj: { label: string, data?: any }) => {
         onSelectCustomer({
             name: customer.name,
             phone: customer.phone,
-            addressStr: fullAddress,
-            addressStructured: addr,
+            addressStr: addrObj.label,
+            addressStructured: addrObj.data,
             deliveryType: 'delivery'
         });
         onClose();
@@ -144,40 +134,56 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         onSelectCustomer({
             name: customer?.name || 'Venda Balcão',
             phone: customer?.phone || '',
-            addressStr: '',
+            addressStr: 'Retirada no Balcão',
             deliveryType: 'pickup'
         });
         onClose();
     };
 
     const handleSaveNewAddress = (customerId: string) => {
-        // Aqui idealmente salvaria no backend, mas para o fluxo do PDV podemos apenas selecionar
         const customer = results.find(c => c.id === customerId);
         if (customer) {
-            handleSelectAddress(customer, newAddress);
+            const label = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}`;
+            handleSelectAddress(customer, { label, data: newAddress });
         }
     };
 
-    const handleCreateCustomerAndAddress = () => {
+    const handleCreateCustomerAndAddress = async () => {
         if (!newCustomer.name || !newCustomer.phone) {
             toast.error("Preencha nome e telefone");
             return;
         }
         
-        // Formata string para exibição
-        let addrStr = 'Retirada no Balcão';
-        if (newAddress.street) {
-            addrStr = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}`;
-        }
+        setIsLoading(true);
+        try {
+            // Formata string para exibição
+            let addrStr = 'Retirada no Balcão';
+            if (newAddress.street) {
+                addrStr = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}`;
+            }
 
-        onSelectCustomer({
-            name: newCustomer.name,
-            phone: newCustomer.phone,
-            addressStr: addrStr,
-            addressStructured: newAddress.street ? newAddress : undefined,
-            deliveryType: newAddress.street ? 'delivery' : 'pickup'
-        });
-        onClose();
+            // Salva no banco de dados
+            await createCustomer({
+                ...newCustomer,
+                ...newAddress,
+                address: addrStr
+            });
+
+            toast.success("Cliente cadastrado com sucesso!");
+
+            onSelectCustomer({
+                name: newCustomer.name,
+                phone: newCustomer.phone,
+                addressStr: addrStr,
+                addressStructured: newAddress.street ? newAddress : undefined,
+                deliveryType: newAddress.street ? 'delivery' : 'pickup'
+            });
+            onClose();
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || "Erro ao salvar cliente");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -294,17 +300,14 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                         )}
 
                                         {/* Lista de Endereços Existentes */}
-                                        {customer.addresses && customer.addresses.length > 0 ? (
-                                            customer.addresses.map((addr, idx) => (
+                                        {customer.consolidatedAddresses && customer.consolidatedAddresses.length > 0 ? (
+                                            customer.consolidatedAddresses.map((addr: any, idx: number) => (
                                                 <div key={idx} className="flex items-center justify-between bg-blue-500 hover:bg-blue-600 text-white p-3 rounded mx-2 cursor-pointer transition-colors group" onClick={() => handleSelectAddress(customer, addr)}>
                                                     <div className="flex items-center gap-3 overflow-hidden">
                                                         <MapPin size={16} className="shrink-0 text-blue-200" />
                                                         <span className="text-sm font-bold uppercase truncate">
-                                                            {addr.street}, {addr.number} {addr.complement ? `- ${addr.complement}` : ''} - {addr.neighborhood} - {addr.city}
+                                                            {addr.label}
                                                         </span>
-                                                    </div>
-                                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        {/* Botões de ação extras se necessário */}
                                                     </div>
                                                 </div>
                                             ))

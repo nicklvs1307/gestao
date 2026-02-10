@@ -3,44 +3,37 @@ const prisma = require('../lib/prisma');
 class CustomerController {
   // Listar todos os clientes com paginação e busca
   async index(req, res) {
+    // ... código existente ...
+  }
+
+  // Criar novo cliente
+  async store(req, res) {
     const { restaurantId } = req;
-    const { search, page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
-
+    const data = req.body;
     try {
-      const where = {
-        restaurantId,
-        OR: search ? [
-          { name: { contains: search, mode: 'insensitive' } },
-          { phone: { contains: search } },
-          { city: { contains: search, mode: 'insensitive' } }
-        ] : undefined
-      };
-
-      const [customers, total] = await Promise.all([
-        prisma.customer.findMany({
-          where,
-          skip: parseInt(skip),
-          take: parseInt(limit),
-          orderBy: { name: 'asc' },
-          include: {
-            _count: {
-              select: { deliveryOrders: true }
-            }
-          }
-        }),
-        prisma.customer.count({ where })
-      ]);
-
-      res.json({
-        customers,
-        total,
-        pages: Math.ceil(total / limit),
-        currentPage: parseInt(page)
+      const cleanPhone = data.phone.replace(/\D/g, '');
+      const customer = await prisma.customer.create({
+        data: {
+          name: data.name,
+          phone: cleanPhone,
+          zipCode: data.zipCode,
+          street: data.street,
+          number: data.number,
+          neighborhood: data.neighborhood,
+          city: data.city,
+          state: data.state,
+          complement: data.complement,
+          reference: data.reference,
+          address: data.address,
+          restaurantId
+        }
       });
+      res.status(201).json(customer);
     } catch (error) {
-      console.error('Erro ao listar clientes:', error);
-      res.status(500).json({ error: 'Erro ao listar clientes.' });
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'Já existe um cliente com este telefone.' });
+      }
+      res.status(500).json({ error: 'Erro ao criar cliente.' });
     }
   }
 

@@ -5,6 +5,7 @@ const { needsAuth } = require('../middlewares/auth');
 const prisma = require('../lib/prisma');
 
 router.get('/', needsAuth, CustomerController.index);
+router.post('/', needsAuth, CustomerController.store);
 router.get('/search', needsAuth, async (req, res) => {
     try {
         const { query } = req.query;
