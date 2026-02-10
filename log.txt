@@ -1,4 +1,4 @@
-SyntaxError: Missing initializer in const declaration
+SyntaxError: Unexpected token ':'
     at wrapSafe (node:internal/modules/cjs/loader:1464:18)
     at Module._compile (node:internal/modules/cjs/loader:1495:20)
     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)

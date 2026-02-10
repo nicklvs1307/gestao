@@ -200,7 +200,7 @@ const getAvailableRoles = async (req, res) => {
         const isUserSuperAdmin = user.isSuperAdmin || user.role === 'superadmin';
 
         // Busca roles do sistema (isSystem: true) ou da franquia do usuário
-        let whereClause: any = {
+        let whereClause = {
             OR: [
                 { isSystem: true },
                 { franchiseId: user.franchiseId }
