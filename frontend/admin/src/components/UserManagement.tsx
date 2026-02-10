@@ -19,8 +19,8 @@ const UserManagement: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await getUsers();
-      // Oculta entregadores desta lista, pois eles têm gestão própria
-      setUsers(data.filter((u: any) => u.role !== 'driver'));
+      // Oculta entregadores e SuperAdmins desta lista para usuários comuns
+      setUsers(data.filter((u: any) => u.role !== 'driver' && u.role !== 'superadmin' && !u.isSuperAdmin));
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
     } finally {

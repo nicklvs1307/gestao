@@ -108,14 +108,26 @@ const getUsers = async (req, res) => {
 const createUser = async (req, res) => {
     const { email, password, name, roleId } = req.body;
     try {
+        const isUserSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
+        const targetRestaurantId = isUserSuperAdmin ? (req.body.restaurantId || req.restaurantId) : req.restaurantId;
+
+        // Proteção Crítica: Validar se a Role sendo atribuída é protegida (SuperAdmin)
+        if (roleId) {
+            const roleToAssign = await prisma.role.findUnique({ where: { id: roleId } });
+            if (roleToAssign && roleToAssign.isSystem && roleToAssign.name.toLowerCase().includes('superadmin') && !isUserSuperAdmin) {
+                return res.status(403).json({ error: 'Acesso negado: Você não tem permissão para criar um SuperAdmin.' });
+            }
+        }
+
         const passwordHash = await bcrypt.hash(password, 10);
         res.status(201).json(await prisma.user.create({ 
             data: { 
                 email, 
                 passwordHash, 
                 name, 
-                restaurantId: req.restaurantId,
-                roleId: roleId || undefined
+                restaurantId: targetRestaurantId,
+                roleId: roleId || undefined,
+                isSuperAdmin: false // Nunca permite criar SuperAdmin via esta rota comum
             } 
         }));
     } catch (error) { 
@@ -124,16 +136,93 @@ const createUser = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+    const { id } = req.params;
+    const { email, name, password, roleId } = req.body;
+    try {
+        const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
+        
+        // 1. Busca o usuário que será editado
+        const userToUpdate = await prisma.user.findUnique({ 
+            where: { id },
+            include: { roleRef: true } 
+        });
+
+        if (!userToUpdate) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+        // 2. Proteção: Admin comum não pode editar SuperAdmin
+        if (userToUpdate.isSuperAdmin && !isRequesterSuperAdmin) {
+            return res.status(403).json({ error: 'Acesso negado: Você não pode editar um SuperAdmin.' });
+        }
+
+        // 3. Proteção: Admin comum só edita usuários do seu restaurante
+        if (!isRequesterSuperAdmin && userToUpdate.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Acesso negado: Este usuário pertence a outro restaurante.' });
+        }
+
+        // 4. Proteção: Impedir auto-rebaixamento ou auto-atribuição de role (opcional, mas recomendado)
+        // Se quiser impedir que o usuário mude o próprio cargo:
+        // if (id === req.user.id && roleId && roleId !== userToUpdate.roleId) {
+        //     return res.status(403).json({ error: 'Você não pode alterar seu próprio cargo.' });
+        // }
+
+        // 5. Proteção: Impedir atribuição de role SuperAdmin por não-SuperAdmin
+        if (roleId && !isRequesterSuperAdmin) {
+            const roleToAssign = await prisma.role.findUnique({ where: { id: roleId } });
+            if (roleToAssign && roleToAssign.isSystem && roleToAssign.name.toLowerCase().includes('superadmin')) {
+                return res.status(403).json({ error: 'Acesso negado: Você não pode atribuir este cargo.' });
+            }
+        }
+
+        const data: any = { email, name };
+        if (password) {
+            data.passwordHash = await bcrypt.hash(password, 10);
+        }
+        if (roleId) {
+            data.roleId = roleId;
+        }
+
+        const updated = await prisma.user.update({
+            where: { id },
+            data
+        });
+
+        res.json(updated);
+    } catch (error) {
+        console.error("Erro ao atualizar usuário:", error);
+        res.status(500).json({ error: 'Erro ao atualizar usuário.' });
+    }
+};
+
 const getAvailableRoles = async (req, res) => {
     try {
         const user = req.user;
+        const isUserSuperAdmin = user.isSuperAdmin || user.role === 'superadmin';
+
         // Busca roles do sistema (isSystem: true) ou da franquia do usuário
-        const whereClause = {
+        let whereClause: any = {
             OR: [
                 { isSystem: true },
                 { franchiseId: user.franchiseId }
             ]
         };
+
+        // Filtro Crítico: Se não for SuperAdmin, não pode ver roles de SuperAdmin
+        if (!isUserSuperAdmin) {
+            whereClause = {
+                AND: [
+                    whereClause,
+                    { 
+                        name: { 
+                            not: { 
+                                contains: 'superadmin', 
+                                mode: 'insensitive' 
+                            } 
+                        } 
+                    }
+                ]
+            };
+        }
 
         const roles = await prisma.role.findMany({
             where: whereClause,
@@ -151,5 +240,6 @@ module.exports = {
     login,
     getUsers,
     createUser,
+    updateUser,
     getAvailableRoles
 };

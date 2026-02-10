@@ -136,6 +136,9 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                 <div className="space-y-4 pt-4 border-t border-slate-100">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Cargo do Colaborador</label>
                     <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        {availableRoles.length === 0 && (
+                            <p className="text-[10px] font-bold text-slate-400 uppercase italic text-center py-4">Nenhum cargo disponível para atribuição.</p>
+                        )}
                         {availableRoles.map(r => (
                             <Card
                                 key={r.id}
