@@ -145,6 +145,15 @@ class ChecklistController {
 
     res.json(history);
   });
+
+  uploadFile = asyncHandler(async (req, res) => {
+    if (!req.file) {
+      res.status(400);
+      throw new Error("Nenhum arquivo enviado");
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl });
+  });
 }
 
 module.exports = new ChecklistController();

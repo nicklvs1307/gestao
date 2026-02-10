@@ -359,33 +359,59 @@ const ChecklistManagement: React.FC = () => {
 
                                     <div className="space-y-3">
                                         {currentChecklist.tasks.map((task: any, index: number) => (
-                                            <Card key={index} className="p-4 border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center animate-in slide-in-from-right-4">
-                                                <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-400 shrink-0">
-                                                    {index + 1}
-                                                </div>
-                                                <input 
-                                                    className="flex-1 bg-slate-50 h-10 px-4 rounded-xl border border-transparent focus:border-orange-300 focus:bg-white outline-none font-bold text-sm transition-all"
-                                                    placeholder="O que deve ser verificado?"
-                                                    value={task.content}
-                                                    onChange={e => handleTaskChange(index, 'content', e.target.value)}
-                                                />
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <select 
-                                                        className="h-10 px-3 rounded-xl bg-slate-50 border border-slate-100 text-[10px] font-black uppercase outline-none"
-                                                        value={task.type}
-                                                        onChange={e => handleTaskChange(index, 'type', e.target.value)}
-                                                    >
-                                                        <option value="CHECKBOX">Sim/Não</option>
-                                                        <option value="PHOTO">Foto</option>
-                                                        <option value="TEXT">Texto</option>
-                                                        <option value="NUMBER">Número</option>
-                                                    </select>
-                                                    <button 
-                                                        onClick={() => handleRemoveTask(index)}
-                                                        className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                            <Card key={index} className="p-4 border-slate-100 shadow-sm flex flex-col gap-3 animate-in slide-in-from-right-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-400 shrink-0 mt-1">
+                                                        {index + 1}
+                                                    </div>
+                                                    <div className="flex-1 space-y-3">
+                                                        <input 
+                                                            className="w-full bg-slate-50 h-10 px-4 rounded-xl border border-transparent focus:border-orange-300 focus:bg-white outline-none font-bold text-sm transition-all"
+                                                            placeholder="O que deve ser verificado?"
+                                                            value={task.content}
+                                                            onChange={e => handleTaskChange(index, 'content', e.target.value)}
+                                                        />
+                                                        
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {[
+                                                                { type: 'CHECKBOX', label: 'Sim/Não', icon: <CheckSquare size={14}/> },
+                                                                { type: 'TEXT', label: 'Texto', icon: <Type size={14}/> },
+                                                                { type: 'NUMBER', label: 'Número', icon: <Hash size={14}/> },
+                                                                { type: 'PHOTO', label: 'Foto', icon: <Camera size={14}/> }
+                                                            ].map(typeOpt => (
+                                                                <button
+                                                                    key={typeOpt.type}
+                                                                    onClick={() => handleTaskChange(index, 'type', typeOpt.type)}
+                                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide flex items-center gap-1.5 border transition-all ${
+                                                                        task.type === typeOpt.type 
+                                                                        ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-100' 
+                                                                        : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                                                                    }`}
+                                                                >
+                                                                    {typeOpt.icon} {typeOpt.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-2 shrink-0">
+                                                        <button 
+                                                            onClick={() => handleRemoveTask(index)}
+                                                            className="w-8 h-8 flex items-center justify-center bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors"
+                                                            title="Remover Tarefa"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleTaskChange(index, 'isRequired', !task.isRequired)}
+                                                            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                                                                task.isRequired ? 'bg-orange-100 text-orange-600' : 'bg-slate-50 text-slate-300'
+                                                            }`}
+                                                            title="Obrigatório?"
+                                                        >
+                                                            <AlertCircle size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </Card>
                                         ))}
