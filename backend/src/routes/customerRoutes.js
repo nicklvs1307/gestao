@@ -21,7 +21,18 @@ router.get('/search', needsAuth, async (req, res) => {
                     { address: { contains: query.toString(), mode: 'insensitive' } }
                 ]
             },
-            take: 10,
+            include: {
+                deliveryOrders: {
+                    select: {
+                        address: true,
+                        deliveryType: true,
+                        createdAt: true
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 20
+                }
+            },
+            take: 15,
             orderBy: { updatedAt: 'desc' }
         });
         res.json({ customers });

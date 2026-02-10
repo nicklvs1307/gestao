@@ -73,30 +73,51 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         setIsLoading(true);
         try {
             const data = await searchCustomers(searchTerm);
-            // Mapear dados para garantir estrutura - a API agora retorna o array direto
             const customersArray = Array.isArray(data) ? data : (data.customers || []);
             
-            const mapped = customersArray.map((c: any) => ({
-                ...c,
-                addresses: c.deliveryOrders?.map((o: any) => {
-                     // Tentar extrair endereço estruturado se salvo, ou usar string
-                     return { street: o.address, number: 'S/N', neighborhood: '', city: '' }; // Fallback simples
-                }).filter((v: any, i: any, a: any) => a.findIndex((t: any) => t.street === v.street) === i) || [] // Dedup simples
-            }));
-            
-            // Adicionar o endereço atual do cadastro se existir
-            const finalResults = mapped.map((c: any) => {
-                 if (c.street) {
-                     c.addresses.unshift({
-                         street: c.street,
-                         number: c.number || '',
-                         neighborhood: c.neighborhood || '',
-                         city: c.city || '',
-                         complement: c.complement,
-                         reference: c.reference
-                     });
-                 }
-                 return c;
+            const finalResults = customersArray.map((c: any) => {
+                const uniqueAddresses: Address[] = [];
+                const addedStrings = new Set<string>();
+
+                const addIfUnique = (addr: Address) => {
+                    const str = `${addr.street?.toLowerCase()}${addr.number}${addr.neighborhood?.toLowerCase()}`;
+                    if (str && !addedStrings.has(str)) {
+                        uniqueAddresses.push(addr);
+                        addedStrings.add(str);
+                    }
+                };
+
+                // 1. Adicionar endereço principal do cadastro
+                if (c.street) {
+                    addIfUnique({
+                        street: c.street,
+                        number: c.number || '',
+                        neighborhood: c.neighborhood || '',
+                        city: c.city || '',
+                        complement: c.complement,
+                        reference: c.reference,
+                        zipCode: c.zipCode
+                    });
+                }
+
+                // 2. Adicionar endereços do histórico de pedidos
+                c.deliveryOrders?.forEach((o: any) => {
+                    if (o.address && o.address !== 'Retirada no Balcão') {
+                        // Tenta converter string de endereço em objeto se possível, 
+                        // ou apenas usa a string formatada como street
+                        if (!addedStrings.has(o.address.toLowerCase())) {
+                            uniqueAddresses.push({
+                                street: o.address,
+                                number: '',
+                                neighborhood: '',
+                                city: '',
+                            });
+                            addedStrings.add(o.address.toLowerCase());
+                        }
+                    }
+                });
+
+                return { ...c, addresses: uniqueAddresses };
             });
 
             setResults(finalResults);
@@ -142,14 +163,19 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             toast.error("Preencha nome e telefone");
             return;
         }
-        // Seleciona direto (backend cria ao fechar pedido ou podemos criar aqui se necessário)
-        const addrStr = newAddress.street ? `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}` : '';
+        
+        // Formata string para exibição
+        let addrStr = 'Retirada no Balcão';
+        if (newAddress.street) {
+            addrStr = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}`;
+        }
+
         onSelectCustomer({
             name: newCustomer.name,
             phone: newCustomer.phone,
             addressStr: addrStr,
             addressStructured: newAddress.street ? newAddress : undefined,
-            deliveryType: addrStr ? 'delivery' : 'pickup'
+            deliveryType: newAddress.street ? 'delivery' : 'pickup'
         });
         onClose();
     };
