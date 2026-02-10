@@ -111,6 +111,20 @@ const SettingsManagement: React.FC = () => {
       }
   };
 
+  const addCashierPrinter = () => {
+      setPrinterConfig(prev => ({
+          ...prev,
+          cashierPrinters: [...prev.cashierPrinters, '']
+      }));
+  };
+
+  const removeCashierPrinter = (index: number) => {
+      setPrinterConfig(prev => ({
+          ...prev,
+          cashierPrinters: prev.cashierPrinters.filter((_, i) => i !== index)
+      }));
+  };
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
