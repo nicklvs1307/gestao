@@ -88,7 +88,10 @@ const PosPage: React.FC = () => {
     useEffect(() => {
         if (selectedProductForAdd?.pizzaConfig?.flavorCategoryId) {
             const categoryId = selectedProductForAdd.pizzaConfig.flavorCategoryId;
-            const flavors = products.filter(p => p.categoryId === categoryId && p.isAvailable);
+            const flavors = products.filter(p => 
+                (p.categoryId === categoryId || p.categories?.some(c => c.id === categoryId)) && 
+                p.isAvailable
+            );
             setAvailableFlavors(flavors);
         } else {
             setAvailableFlavors([]);

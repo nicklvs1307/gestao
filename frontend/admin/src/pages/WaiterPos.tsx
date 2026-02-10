@@ -78,7 +78,10 @@ const WaiterPos: React.FC = () => {
             setObs('');
             
             if (product.pizzaConfig?.flavorCategoryId) {
-                const flavors = products.filter(p => p.categoryId === product.pizzaConfig?.flavorCategoryId && p.isAvailable);
+                const flavors = products.filter(p => 
+                    (p.categoryId === product.pizzaConfig?.flavorCategoryId || p.categories?.some(c => c.id === product.pizzaConfig?.flavorCategoryId)) && 
+                    p.isAvailable
+                );
                 setAvailableFlavors(flavors);
             } else {
                 setAvailableFlavors([]);
