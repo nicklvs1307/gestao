@@ -124,8 +124,32 @@ const createUser = async (req, res) => {
     }
 };
 
+const getAvailableRoles = async (req, res) => {
+    try {
+        const user = req.user;
+        // Busca roles do sistema (isSystem: true) ou da franquia do usuário
+        const whereClause = {
+            OR: [
+                { isSystem: true },
+                { franchiseId: user.franchiseId }
+            ]
+        };
+
+        const roles = await prisma.role.findMany({
+            where: whereClause,
+            orderBy: { name: 'asc' }
+        });
+        
+        res.json(roles);
+    } catch (error) {
+        console.error("Erro ao buscar cargos disponíveis:", error);
+        res.status(500).json({ error: 'Erro ao buscar cargos.' });
+    }
+};
+
 module.exports = {
     login,
     getUsers,
-    createUser
+    createUser,
+    getAvailableRoles
 };

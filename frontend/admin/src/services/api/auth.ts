@@ -32,3 +32,8 @@ export const getDrivers = async () => {
     const response = await apiClient.get('/auth/drivers');
     return response.data;
 };
+
+export const getRoles = async () => {
+    const response = await apiClient.get('/auth/roles');
+    return response.data;
+};

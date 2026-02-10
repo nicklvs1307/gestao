@@ -1,6 +1,6 @@
 import apiClient from './client';
 
-export const getRoles = async () => {
+export const getSystemRoles = async () => {
     const response = await apiClient.get('/super-admin/roles');
     return response.data;
 };

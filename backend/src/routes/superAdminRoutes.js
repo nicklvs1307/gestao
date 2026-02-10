@@ -1,14 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const SuperAdminController = require('../controllers/SuperAdminController');
-const { authenticateToken, checkPermission, checkAdmin } = require('../middlewares/auth');
-
+// Todas as rotas aqui exigem pelo menos ser SuperAdmin ou ter a permissão all:manage
 router.use(authenticateToken);
-
-// Rota acessível por Administradores de Loja também
-router.get('/roles', SuperAdminController.getRoles);
-
-// Todas as outras rotas exigem permissão de SuperAdmin (all:manage)
 router.use(checkPermission('all:manage'));
 
 // Franquias
@@ -25,6 +18,7 @@ router.post('/users', SuperAdminController.createGlobalUser);
 
 // Permissões e Roles
 router.get('/permissions', SuperAdminController.getPermissions);
+router.get('/roles', SuperAdminController.getRoles);
 router.post('/roles', SuperAdminController.createRole);
 
 module.exports = router;

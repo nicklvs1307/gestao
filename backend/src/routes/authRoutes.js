@@ -6,6 +6,7 @@ const { needsAdmin, needsAuth } = require('../middlewares/auth');
 router.post('/login', AuthController.login);
 router.get('/users', needsAdmin, AuthController.getUsers);
 router.post('/users', needsAdmin, AuthController.createUser);
+router.get('/roles', needsAdmin, AuthController.getAvailableRoles); // Nova rota segura
 
 router.get('/drivers', needsAuth, async (req, res) => {
     try {
