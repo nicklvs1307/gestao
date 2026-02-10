@@ -12,7 +12,7 @@ import {
     Search, ShoppingCart, Plus, Minus, X, Trash2, 
     Store, User, Truck, Utensils, List,
     Wallet, Banknote, CheckCircle, Printer, Loader2, ChevronRight,
-    Pizza as PizzaIcon, Bike, Info, ArrowRightLeft, MoveRight, Receipt, Phone, MapPin
+    Pizza as PizzaIcon, Bike, Info, ArrowRightLeft, MoveRight, Receipt, Phone, MapPin, ShoppingBag
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,6 +46,7 @@ const PosPage: React.FC = () => {
     // --- ESTADOS DE VENDA ATUAL ---
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderMode, setOrderMode] = useState<'table' | 'delivery'>('table');
+    const [deliverySubType, setDeliverySubType] = useState<'delivery' | 'pickup'>('delivery');
     const [selectedTable, setSelectedTable] = useState('');
     const [customerName, setCustomerName] = useState('');
     const [deliveryInfo, setDeliveryInfo] = useState({
@@ -304,8 +305,8 @@ const PosPage: React.FC = () => {
                 deliveryInfo: orderMode === 'delivery' ? {
                     name: deliveryInfo.name,
                     phone: deliveryInfo.phone,
-                    address: deliveryInfo.address, // Enviamos a string formatada
-                    deliveryType: deliveryInfo.deliveryType,
+                    address: deliveryInfo.address, 
+                    deliveryType: deliverySubType,
                     // Decompondo o endereço se necessário para o backend (OrderService espera street, number, etc)
                     ...parseAddress(deliveryInfo.address)
                 } : null
@@ -429,24 +430,38 @@ const PosPage: React.FC = () => {
                             />
                         </div>
                     ) : (
-                        <div className="flex gap-2">
-                            <button 
-                                onClick={() => setActiveModal('delivery_info')} 
-                                className="flex-1 h-10 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-between px-3 hover:border-orange-500 hover:bg-orange-50/30 transition-all text-left"
-                            >
-                                <div className="min-w-0 flex flex-col">
-                                    <span className="text-[8px] font-black text-orange-600 uppercase tracking-widest leading-none">Cliente</span>
-                                    <span className="text-xs font-bold text-slate-700 truncate">{deliveryInfo.name || 'Selecionar...'}</span>
-                                </div>
-                                <User size={16} className="text-orange-400" />
-                            </button>
-                            {deliveryInfo.name && (
-                                <button 
-                                    onClick={() => { setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' }); setCustomerAddresses([]); }}
-                                    className="w-10 h-10 rounded-lg border-2 border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all"
-                                >
-                                    <X size={16} />
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => setDeliverySubType('delivery')} className={cn("flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-1", deliverySubType === 'delivery' ? "bg-orange-50 border-orange-500 text-orange-700 shadow-sm" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200")}>
+                                    <Bike size={20} />
+                                    <span className="text-[9px] font-black uppercase tracking-widest">Entrega</span>
                                 </button>
+                                <button onClick={() => { setDeliverySubType('pickup'); setDeliveryInfo(prev => ({ ...prev, address: '' })); }} className={cn("flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-1", deliverySubType === 'pickup' ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200")}>
+                                    <ShoppingBag size={20} />
+                                    <span className="text-[9px] font-black uppercase tracking-widest">Retirada</span>
+                                </button>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button onClick={() => setActiveModal('delivery_info')} className="flex-1 h-12 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-between px-4 hover:border-orange-500 hover:bg-orange-50/30 transition-all text-left bg-white">
+                                    <div className="min-w-0 flex flex-col">
+                                        <span className="text-[8px] font-black text-orange-600 uppercase tracking-widest leading-none mb-0.5">{deliverySubType === 'delivery' ? 'Cliente & Endereço' : 'Cliente (Opcional)'}</span>
+                                        <span className="text-xs font-bold text-slate-700 truncate">{deliveryInfo.name || 'Selecionar...'}</span>
+                                    </div>
+                                    <User size={18} className="text-orange-400" />
+                                </button>
+                                {deliveryInfo.name && (
+                                    <button onClick={() => { setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'delivery' }); setCustomerAddresses([]); }} className="w-12 h-12 rounded-xl border-2 border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all bg-white">
+                                        <X size={18} />
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {deliverySubType === 'delivery' && deliveryInfo.address && (
+                                <div className="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 flex gap-2 animate-in fade-in slide-in-from-top-1">
+                                    <MapPin size={12} className="shrink-0 mt-0.5 text-orange-500"/>
+                                    <span className="line-clamp-2 font-medium leading-tight">{deliveryInfo.address}</span>
+                                </div>
                             )}
                         </div>
                     )}

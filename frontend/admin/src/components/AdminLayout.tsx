@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import TopbarAdmin from './TopbarAdmin';
 import NavigationLauncher from './NavigationLauncher';
 import GlobalOrderMonitor from './GlobalOrderMonitor';
@@ -11,10 +12,14 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     const [isMenuOpen, setMenuOpen] = useState(false);
+    const location = useLocation();
     
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
     const isWaiter = user?.role === 'waiter';
+
+    // Rota Fullscreen (como KDS)
+    const isFullscreenPage = location.pathname === '/kds';
 
     if (isWaiter) {
         return (
@@ -23,6 +28,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
                 <main className="flex-1 overflow-hidden">
                     {children}
                 </main>
+            </div>
+        );
+    }
+
+    if (isFullscreenPage) {
+        return (
+            <div className="h-screen w-screen overflow-hidden bg-background text-foreground font-sans">
+                {children}
             </div>
         );
     }

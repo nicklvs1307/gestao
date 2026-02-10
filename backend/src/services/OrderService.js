@@ -432,7 +432,27 @@ class OrderService {
   }
 
   async getKdsItems(restaurantId, area) {
-    const items = await prisma.orderItem.findMany({ where: { order: { restaurantId, status: { in: ['PENDING', 'PREPARING'] } }, product: { productionArea: area || undefined }, isReady: false }, include: { product: { include: { categories: true } }, order: { select: { id: true, dailyOrderNumber: true, tableNumber: true, orderType: true, createdAt: true, customerName: true } } }, orderBy: { order: { createdAt: 'asc' } } });
+    const items = await prisma.orderItem.findMany({ 
+        where: { 
+            order: { 
+                restaurantId, 
+                status: { in: ['PENDING', 'PREPARING'] } 
+            }, 
+            product: { productionArea: area || undefined }, 
+            isReady: false 
+        }, 
+        include: { 
+            product: { include: { categories: true } }, 
+            order: { 
+                include: {
+                    deliveryOrder: {
+                        select: { deliveryType: true }
+                    }
+                }
+            } 
+        }, 
+        orderBy: { order: { createdAt: 'asc' } } 
+    });
     const groupedOrders = items.reduce((acc, item) => {
         const orderId = item.orderId; if (!acc[orderId]) acc[orderId] = { ...item.order, items: [] };
         const { order, ...itemData } = item; acc[orderId].items.push(itemData); return acc;

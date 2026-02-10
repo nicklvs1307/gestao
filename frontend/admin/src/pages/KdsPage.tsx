@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { 
     ChefHat, Clock, CheckCircle, RefreshCw, 
-    List, AlertCircle, Timer, Beer, Pizza as PizzaIcon, Plus, Loader2
+    List, AlertCircle, Timer, Beer, Pizza as PizzaIcon, Plus, Loader2, LogOut, ChevronRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 
 const KdsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     
-    // Pega a área da URL (ex: /kds?area=Bar). Se não tiver, usa 'Cozinha'
     const area = searchParams.get('area') || 'Cozinha';
 
     const loadKds = async () => {
@@ -31,7 +30,7 @@ const KdsPage: React.FC = () => {
 
     useEffect(() => {
         loadKds();
-        const interval = setInterval(loadKds, 15000);
+        const interval = setInterval(loadKds, 10000); // Mais rápido para KDS
         return () => clearInterval(interval);
     }, [area]);
 
@@ -40,21 +39,20 @@ const KdsPage: React.FC = () => {
     };
 
     const getWaitTime = (createdAt: string) => {
-        const diff = Math.floor((new Date().getTime() - new Date(createdAt).getTime()) / 60000);
-        return diff;
+        return Math.floor((new Date().getTime() - new Date(createdAt).getTime()) / 60000);
     };
 
     const handleFinishItem = async (itemId: string) => {
         try {
             await api.put(`/admin/orders/kds/items/${itemId}/finish`);
-            toast.success('Item finalizado!');
+            toast.success('Item pronto!');
             
+            // Remove localmente para resposta instantânea
             setItems(prev => {
-                const newOrders = prev.map(order => ({
+                return prev.map(order => ({
                     ...order,
                     items: order.items.filter((item: any) => item.id !== itemId)
                 })).filter(order => order.items.length > 0);
-                return newOrders;
             });
         } catch (error) {
             toast.error('Erro ao finalizar item.');
@@ -62,206 +60,209 @@ const KdsPage: React.FC = () => {
     };
 
     return (
-        <div className="h-screen bg-[#0a0a0a] text-white flex flex-col overflow-hidden -m-8">
-            {/* Header KDS - Design de Alto Contraste */}
-            <div className="h-20 bg-[#111] border-b border-white/5 flex items-center justify-between px-10 shrink-0 z-20 shadow-2xl">
-                <div className="flex items-center gap-5">
-                    <div className="p-3.5 bg-orange-500 rounded-2xl shadow-xl shadow-orange-500/20">
-                        <ChefHat size={32} className="text-white" />
+        <div className="h-screen w-screen bg-[#050505] text-white flex flex-col overflow-hidden font-sans select-none">
+            {/* Header Superior - Ultra Moderno */}
+            <div className="h-16 bg-[#0a0a0a] border-b border-white/[0.05] flex items-center justify-between px-6 shrink-0 z-30">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-900/20">
+                        <ChefHat size={20} className="text-white" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black uppercase tracking-tighter italic leading-none text-white">Monitor de Produção</h2>
-                        <div className="flex items-center gap-2 mt-1.5">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sistema Operacional Online</span>
+                        <h2 className="text-lg font-black uppercase tracking-tight italic leading-none text-white">KDS Central</h2>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Live Monitoring</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                    <div className="flex bg-[#1a1a1a] p-1.5 rounded-2xl gap-1 shadow-inner border border-white/5">
+                <div className="flex items-center gap-4">
+                    <nav className="flex bg-white/[0.03] p-1 rounded-xl gap-1 border border-white/[0.05]">
                         {[
                             { id: 'Cozinha', icon: ChefHat, label: 'Cozinha' },
-                            { id: 'Bar', icon: Beer, label: 'Bar / Copa' },
-                            { id: 'Pizzaria', icon: PizzaIcon, label: 'Pizzaria' },
-                            { id: 'Geral', icon: List, label: 'Todos' }
+                            { id: 'Bar', icon: Beer, label: 'Copa' },
+                            { id: 'Pizzaria', icon: PizzaIcon, label: 'Pizza' },
+                            { id: 'Geral', icon: List, label: 'Geral' }
                         ].map(a => (
                             <button 
                                 key={a.id}
                                 onClick={() => changeArea(a.id)}
                                 className={cn(
-                                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                                    area === a.id ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20 scale-[1.02]" : "text-slate-500 hover:text-slate-300"
+                                    "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                                    area === a.id ? "bg-orange-600 text-white shadow-md shadow-orange-900/20" : "text-slate-500 hover:text-slate-300"
                                 )}
                             >
-                                <a.icon size={14} />
+                                <a.icon size={12} />
                                 {a.id}
                             </button>
                         ))}
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={loadKds} className="rounded-xl bg-white/5 hover:bg-white/10 text-slate-400">
-                        <RefreshCw size={20} />
-                    </Button>
+                    </nav>
+                    
+                    <div className="w-px h-6 bg-white/10 mx-2" />
+                    
+                    <button onClick={() => navigate('/dashboard')} className="p-2.5 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                        <LogOut size={20} />
+                    </button>
                 </div>
             </div>
 
-            {/* Conteúdo KDS - Grid de Tickets */}
-            <main className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-[#050505]">
+            {/* Grid Principal de Pedidos */}
+            <main className="flex-1 overflow-x-auto p-6 flex gap-6 custom-scrollbar items-start bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-slate-900/20 via-black to-black">
                 {loading && items.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-30">
-                        <Loader2 size={48} className="animate-spin text-orange-500" />
-                        <span className="text-xs font-black uppercase tracking-widest">Carregando Pedidos...</span>
+                    <div className="w-full flex flex-col items-center justify-center opacity-30 gap-4">
+                        <Loader2 size={40} className="animate-spin text-orange-600" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Conectando à Cozinha...</span>
                     </div>
                 ) : items.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10 items-start">
-                        {items.map((order) => {
-                            const waitTime = getWaitTime(order.createdAt);
-                            const isUrgent = waitTime > 20;
-                            const isWarning = waitTime > 10;
-                            
-                            return (
-                                <div key={order.id} className="animate-in fade-in zoom-in-95 duration-500">
-                                    <Card className={cn(
-                                        "bg-[#111] border-2 rounded-[2.5rem] overflow-hidden flex flex-col h-fit relative shadow-2xl",
-                                        isUrgent ? "border-rose-600 shadow-rose-900/20" : 
-                                        isWarning ? "border-orange-500 shadow-orange-900/20" : 
-                                        "border-emerald-500/20 shadow-black"
-                                    )} noPadding>
-                                        
-                                        {/* Barra de Progresso de Tempo no Topo */}
-                                        <div className="absolute top-0 left-0 h-2 w-full bg-white/5">
-                                            <div 
-                                                className={cn(
-                                                    "h-full transition-all duration-1000",
-                                                    isUrgent ? "bg-rose-600" : isWarning ? "bg-orange-500" : "bg-emerald-500"
-                                                )} 
-                                                style={{ width: `${Math.min((waitTime / 30) * 100, 100)}%` }} 
-                                            />
+                    items.map((order) => {
+                        const waitTime = getWaitTime(order.createdAt);
+                        const isUrgent = waitTime > 15;
+                        const isCritical = waitTime > 25;
+                        
+                        return (
+                            <div key={order.id} className="w-[320px] shrink-0 flex flex-col animate-in slide-in-from-right-10 duration-500">
+                                <div className={cn(
+                                    "rounded-[2rem] overflow-hidden flex flex-col border-2 transition-all duration-500 shadow-2xl",
+                                    isCritical ? "border-rose-600 bg-rose-950/10 shadow-rose-900/20" : 
+                                    isUrgent ? "border-orange-500 bg-orange-950/10 shadow-orange-900/10" : 
+                                    "border-emerald-500/20 bg-[#0c0c0c]"
+                                )}>
+                                    
+                                    {/* Header do Ticket */}
+                                    <div className={cn(
+                                        "p-5 border-b flex justify-between items-start relative",
+                                        isCritical ? "border-rose-900/50" : isUrgent ? "border-orange-900/50" : "border-white/5"
+                                    )}>
+                                        <div className="z-10">
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                                <div className={cn(
+                                                    "w-2 h-2 rounded-full",
+                                                    isCritical ? "bg-rose-500 animate-pulse" : isUrgent ? "bg-orange-500" : "bg-emerald-500"
+                                                )} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                                    {order.orderType === 'DELIVERY' ? (
+                                                        order.deliveryOrder?.deliveryType === 'pickup' ? (
+                                                            <><ShoppingBag size={10} className="text-blue-400" /> RETIRADA</>
+                                                        ) : (
+                                                            <><Bike size={10} className="text-orange-400" /> ENTREGA</>
+                                                        )
+                                                    ) : (
+                                                        <><Utensils size={10} /> MESA ${order.tableNumber}</>
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <h4 className="text-2xl font-black italic uppercase tracking-tighter leading-none text-white">
+                                                #{order.dailyOrderNumber} <span className="text-white/10 mx-0.5">•</span> <span className="text-orange-500">{order.customerName?.split(' ')[0] || 'BOX'}</span>
+                                            </h4>
                                         </div>
-
-                                        {/* Header do Ticket */}
                                         <div className={cn(
-                                            "p-6 flex justify-between items-start shrink-0 pt-10",
-                                            isUrgent ? "bg-rose-600/10" : isWarning ? "bg-orange-500/10" : "bg-emerald-500/5"
+                                            "px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-2 shadow-inner",
+                                            isCritical ? "bg-rose-600 text-white" : isUrgent ? "bg-orange-500 text-white" : "bg-white/5 text-emerald-400"
                                         )}>
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <div className={cn(
-                                                        "w-2 h-2 rounded-full",
-                                                        isUrgent ? "bg-rose-600 animate-pulse shadow-[0_0_10px_red]" : isWarning ? "bg-orange-500" : "bg-emerald-500"
-                                                    )} />
-                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                                                        {order.orderType === 'DELIVERY' ? 'Entrega Flash' : `Mesa 0${order.tableNumber}`}
-                                                    </p>
-                                                </div>
-                                                <h4 className="text-3xl font-black italic uppercase tracking-tighter leading-none text-white">
-                                                    #{order.dailyOrderNumber} <span className="text-slate-700 mx-1">•</span> {order.customerName?.split(' ')[0] || 'CLIENTE'}
-                                                </h4>
-                                            </div>
-                                            <div className={cn(
-                                                "flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-black uppercase shadow-lg",
-                                                isUrgent ? "bg-rose-600 text-white" : 
-                                                isWarning ? "bg-orange-500 text-white" : 
-                                                "bg-slate-800 text-emerald-400 border border-emerald-500/20"
-                                            )}>
-                                                <Timer size={18} /> {waitTime}m
-                                            </div>
+                                            <Timer size={14} /> {waitTime}M
                                         </div>
+                                    </div>
 
-                                        {/* Itens do Ticket */}
-                                        <div className="flex-1 divide-y divide-white/5 bg-[#111]">
-                                            {order.items.map((item: any) => (
-                                                <div key={item.id} className="p-6 group hover:bg-white/[0.03] transition-colors">
-                                                    <div className="flex items-start gap-6">
-                                                        <div className="h-16 w-16 rounded-3xl bg-[#0a0a0a] border-2 border-white/5 flex items-center justify-center shrink-0 shadow-inner group-hover:border-orange-500/30 transition-all">
-                                                            <span className="text-2xl font-black text-orange-500 tracking-tighter italic">{item.quantity}</span>
-                                                        </div>
+                                    {/* Lista de Itens */}
+                                    <div className="p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-350px)] custom-scrollbar">
+                                        {order.items.map((item: any) => (
+                                            <div key={item.id} className="bg-white/[0.02] p-4 rounded-2xl border border-white/[0.03] group hover:bg-white/[0.05] transition-all relative overflow-hidden">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-12 h-12 rounded-xl bg-black border border-white/10 flex items-center justify-center shrink-0">
+                                                        <span className="text-xl font-black text-white">{item.quantity}</span>
+                                                    </div>
+                                                    
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-base font-black uppercase leading-tight tracking-tight text-white group-hover:text-orange-500 transition-colors">
+                                                            {item.product.name}
+                                                        </p>
                                                         
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-xl font-black uppercase leading-tight mb-2 tracking-tight text-white group-hover:text-orange-400 transition-colors italic">
-                                                                {item.product.name}
-                                                            </p>
-                                                            
-                                                            <div className="flex flex-wrap gap-2 mb-3">
-                                                                {item.sizeJson && (
-                                                                    <span className="px-2 py-1 bg-slate-800 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest border border-white/5">
-                                                                        {JSON.parse(item.sizeJson).name}
-                                                                    </span>
-                                                                )}
-                                                                {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, idx: number) => (
-                                                                    <span key={idx} className="px-2 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-black text-emerald-400 uppercase tracking-widest border border-emerald-500/20">
-                                                                        {f.name}
-                                                                    </span>
+                                                        {/* Opções e Tamanhos */}
+                                                        <div className="flex flex-wrap gap-1.5 mt-2">
+                                                            {item.sizeJson && (
+                                                                <span className="text-[8px] font-black bg-white/10 text-slate-400 px-2 py-0.5 rounded-md uppercase tracking-wider">{JSON.parse(item.sizeJson).name}</span>
+                                                            )}
+                                                            {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, idx: number) => (
+                                                                <span key={idx} className="text-[8px] font-black bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md uppercase">{f.name}</span>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Adicionais - Agora mais compactos */}
+                                                        {item.addonsJson && (
+                                                            <div className="mt-3 flex flex-wrap gap-1">
+                                                                {JSON.parse(item.addonsJson).map((a: any, idx: number) => (
+                                                                    <div key={idx} className="bg-emerald-500/10 text-emerald-500 text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 border border-emerald-500/20">
+                                                                        <Plus size={8} /> {a.quantity > 1 ? `${a.quantity}x ` : ''}{a.name}
+                                                                    </div>
                                                                 ))}
                                                             </div>
+                                                        )}
 
-                                                            {item.addonsJson && (
-                                                                <div className="flex flex-wrap gap-1.5 mb-3 opacity-80 group-hover:opacity-100 transition-opacity">
-                                                                    {JSON.parse(item.addonsJson).map((a: any, idx: number) => (
-                                                                        <div key={idx} className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-xl border border-white/5">
-                                                                            <Plus size={10} className="text-orange-500" strokeWidth={4} />
-                                                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">
-                                                                                {a.quantity > 1 ? `${a.quantity}x ` : ''}{a.name}
-                                                                            </span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-
-                                                            {item.observations && (
-                                                                <div className="mt-4 p-4 bg-orange-500/10 rounded-3xl border-l-4 border-orange-500 animate-pulse-subtle">
-                                                                    <p className="text-xs font-black text-orange-200 italic leading-relaxed flex gap-2">
-                                                                        <AlertCircle size={14} className="shrink-0 text-orange-500" />
-                                                                        "{item.observations}"
-                                                                    </p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <Button 
-                                                            variant="primary"
-                                                            size="icon"
-                                                            onClick={() => handleFinishItem(item.id)}
-                                                            className="h-16 w-16 rounded-[2rem] bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-900/20 hover:scale-110 active:scale-90 transition-all border-none"
-                                                        >
-                                                            <CheckCircle size={32} strokeWidth={3} />
-                                                        </Button>
+                                                        {/* Observações com destaque */}
+                                                        {item.observations && (
+                                                            <div className="mt-4 p-3 bg-orange-500/10 border-l-2 border-orange-500 rounded-lg">
+                                                                <p className="text-[10px] font-bold text-orange-200 leading-tight flex gap-2 italic">
+                                                                    <AlertCircle size={12} className="shrink-0 text-orange-500" />
+                                                                    {item.observations}
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </Card>
+                                                
+                                                {/* Botão de Finalizar Item - Estilo Overlay Moderno */}
+                                                <button 
+                                                    onClick={() => handleFinishItem(item.id)}
+                                                    className="mt-3 w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20 transition-all active:scale-95"
+                                                >
+                                                    <CheckCircle size={16} /> Marcar como Pronto
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    {/* Tempo Total de Pedido (Criado em) */}
+                                    <div className="p-4 bg-white/[0.01] border-t border-white/5 flex justify-center">
+                                        <span className="text-[8px] font-black text-slate-700 uppercase tracking-[0.4em]">Criado às {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        );
+                    })
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-800 gap-8">
-                        <div className="p-16 bg-[#111] rounded-[4rem] border-2 border-dashed border-white/5 flex items-center justify-center">
-                            <ChefHat size={120} className="opacity-10" />
+                    <div className="w-full flex flex-col items-center justify-center text-slate-800 gap-8 h-full">
+                        <div className="w-24 h-24 bg-white/[0.02] rounded-[2rem] flex items-center justify-center border border-white/5">
+                            <ChefHat size={48} className="text-slate-900" />
                         </div>
                         <div className="text-center">
-                            <h3 className="text-3xl font-black uppercase italic tracking-tighter text-slate-700">Praça de {area} Limpa</h3>
-                            <p className="text-slate-800 font-bold uppercase text-[10px] tracking-[0.3em] mt-3">Aguardando novos pedidos...</p>
+                            <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800">Cozinha Limpa</h3>
+                            <p className="text-slate-900 font-bold uppercase text-[9px] tracking-[0.3em] mt-2">Nenhum pedido em produção para {area}</p>
                         </div>
                     </div>
                 )}
             </main>
 
-            {/* Footer KDS */}
-            <div className="h-16 bg-[#111] border-t border-white/5 flex items-center justify-between px-10 shrink-0 z-20">
-                <div className="flex gap-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
-                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Total na Fila: {items.length}</span>
+            {/* Barra Inferior - Stats */}
+            <footer className="h-14 bg-[#0a0a0a] border-t border-white/[0.05] flex items-center justify-between px-6 shrink-0 z-30">
+                <div className="flex gap-8">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-orange-600" />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total: {items.length}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse shadow-[0_0_8px_red]" />
-                        <span className="text-[11px] font-black text-rose-600 uppercase tracking-widest">Críticos (+20m): {items.filter(order => getWaitTime(order.createdAt) > 20).length}</span>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-rose-600 animate-pulse shadow-[0_0_8px_red]" />
+                        <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Atrasados: {items.filter(order => getWaitTime(order.createdAt) > 20).length}</span>
                     </div>
                 </div>
-                <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] italic">KDS MASTER • KICARDAPIO SYSTEM</p>
-            </div>
+                
+                <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-black text-slate-800 uppercase tracking-[0.4em] italic">KDS MASTER • V3.0</span>
+                    <div className="w-px h-4 bg-white/5" />
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date().toLocaleTimeString()}</span>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 };
