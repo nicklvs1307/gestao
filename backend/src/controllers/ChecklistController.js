@@ -102,7 +102,7 @@ class ChecklistController {
     const execution = await prisma.checklistExecution.create({
       data: {
         checklistId,
-        userId: user?.id, // Pode ser nulo se vier do QR Code público
+        userId: user?.id || undefined, // Evita erro de constraint se o banco ainda estiver como NOT NULL
         restaurantId: restaurantId || (await prisma.checklist.findUnique({ where: { id: checklistId } })).restaurantId,
         notes: userName ? `[Executado por: ${userName}] ${notes || ''}` : notes,
         status: 'COMPLETED',
