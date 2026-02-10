@@ -53,7 +53,6 @@ class OrderService {
             where: {
                 restaurantId: realRestaurantId,
                 tableNumber: parseInt(tableNumber),
-                customerName: customerName || null,
                 status: { notIn: ['COMPLETED', 'CANCELED'] }
             }
         });

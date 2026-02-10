@@ -20,7 +20,7 @@ class OrderController {
       deliveryInfo: validatedData.deliveryInfo,
       paymentMethod,
       tableNumber: validatedData.tableNumber,
-      customerName: validatedData.deliveryInfo.name,
+      customerName: req.body.customerName || validatedData.deliveryInfo?.name,
       userId: validatedData.userId || req.user?.id
     });
 

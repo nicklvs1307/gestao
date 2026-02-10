@@ -1,29 +1,84 @@
-api/auth/drivers:1  Failed to load resource: the server responded with a status of 500 ()
-AxiosError: Request failed with status code 500
-    at dX (index-j4QizKsW.js:53:1092)
-    at XMLHttpRequest.C (index-j4QizKsW.js:53:5867)
-    at j2.request (index-j4QizKsW.js:55:2097)
-    at async bse (index-j4QizKsW.js:56:6260)
-index-j4QizKsW.js:40 ReferenceError: cn is not defined
-    at index-j4QizKsW.js:8642:282942
-    at Array.map (<anonymous>)
-    at gUe (index-j4QizKsW.js:8642:282133)
-    at mu (index-j4QizKsW.js:38:17891)
-    at dO (index-j4QizKsW.js:40:3167)
-    at QV (index-j4QizKsW.js:40:45983)
-    at YV (index-j4QizKsW.js:40:40756)
-    at Kte (index-j4QizKsW.js:40:40683)
-    at Qy (index-j4QizKsW.js:40:40534)
-    at LO (index-j4QizKsW.js:40:36786)
-cO @ index-j4QizKsW.js:40
-index-j4QizKsW.js:40 Uncaught ReferenceError: cn is not defined
-    at index-j4QizKsW.js:8642:282942
-    at Array.map (<anonymous>)
-    at gUe (index-j4QizKsW.js:8642:282133)
-    at mu (index-j4QizKsW.js:38:17891)
-    at dO (index-j4QizKsW.js:40:3167)
-    at QV (index-j4QizKsW.js:40:45983)
-    at YV (index-j4QizKsW.js:40:40756)
-    at Kte (index-j4QizKsW.js:40:40683)
-    at Qy (index-j4QizKsW.js:40:40534)
-    at LO (index-j4QizKsW.js:40:36786)
+root@servergestao:~/gestao# docker logs 262a24378ebe
+Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+31 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+Executando Seed de Permissões...
+Aviso: Seed já executado ou falhou silenciosamente.
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+[SAIPOS] Enviando Pedido #5 para Loja 123...
+[SAIPOS DEBUG] PAYLOAD COMPLETO: {
+  "order_id": "cmlgmmyfk0003nz01j6s46s58",
+  "display_id": "5",
+  "cod_store": "123",
+  "created_at": "2026-02-10T13:18:40.592Z",
+  "notes": "",
+  "total_increase": 0,
+  "total_discount": 0,
+  "total_amount": 82.99,
+  "customer": {
+    "id": "cmle89w9x005zph016y4hza2v",
+    "name": "LUCAS NIQUELE",
+    "phone": "35998374007"
+  },
+  "order_method": {
+    "mode": "DELIVERY",
+    "scheduled": false,
+    "delivery_date_time": "2026-02-10T13:18:40.621Z",
+    "delivery_by": "RESTAURANT",
+    "delivery_fee": 0
+  },
+  "items": [
+    {
+      "integration_code": "cmlbofutd000nrs01wzrstdux",
+      "desc_item": "A Moda da Casa",
+      "quantity": 1,
+      "unit_price": 82.99,
+      "notes": "",
+      "choice_items": [
+        {
+          "integration_code": "SIZE_DEFAULT",
+          "desc_item_choice": "GRANDE",
+          "aditional_price": 0,
+          "quantity": 1,
+          "notes": ""
+        }
+      ]
+    }
+  ],
+  "payment_types": [
+    {
+      "code": "DIN",
+      "type": "OFFLINE",
+      "amount": 82.99,
+      "change_for": 0
+    }
+  ],
+  "delivery_address": {
+    "country": "BR",
+    "state": "SP",
+    "city": "São Paulo",
+    "district": "Bairro",
+    "street_name": "aa, 123 - Centro",
+    "street_number": "S/N",
+    "postal_code": "00000000",
+    "reference": "",
+    "complement": "",
+    "coordinates": {
+      "latitude": 0,
+      "longitude": 0
+    }
+  }
+}
+[SAIPOS] Sucesso! Pedido #5 integrado.
+{"level":"error","message":"500 - Cannot read properties of null (reading 'name') - /api/admin/orders - POST - IP: 10.0.1.202"}
+{"level":"error","message":"TypeError: Cannot read properties of null (reading 'name')\n    at /app/src/controllers/OrderController.js:23:48\n    at /app/src/middlewares/asyncHandler.js:2:19\n    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)\n    at next (/app/node_modules/router/lib/route.js:157:13)\n    at /app/src/middlewares/auth.js:27:14\n    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)\n    at next (/app/node_modules/router/lib/route.js:157:13)\n    at setRestaurantId (/app/src/middlewares/auth.js:52:5)\n    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)\n    at next (/app/node_modules/router/lib/route.js:157:13)"}
+{"level":"error","message":"500 - Cannot read properties of null (reading 'name') - /api/admin/orders - POST - IP: 10.0.1.202"}
+{"level":"error","message":"TypeError: Cannot read properties of null (reading 'name')\n    at /app/src/controllers/OrderController.js:23:48\n    at /app/src/middlewares/asyncHandler.js:2:19\n    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)\n    at next (/app/node_modules/router/lib/route.js:157:13)\n    at /app/src/middlewares/auth.js:27:14\n    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)\n    at next (/app/node_modules/router/lib/route.js:157:13)\n    at setRestaurantId (/app/src/middlewares/auth.js:52:5)\n    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)\n    at next (/app/node_modules/router/lib/route.js:157:13)"}

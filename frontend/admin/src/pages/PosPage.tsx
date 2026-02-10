@@ -286,6 +286,10 @@ const PosPage: React.FC = () => {
     };
 
     const submitOrder = async () => {
+        if (orderMode === 'table' && !selectedTable) {
+            return toast.error("Por favor, selecione uma mesa");
+        }
+        
         try {
             const orderPayload = {
                 items: cart.map(item => ({
