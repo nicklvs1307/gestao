@@ -96,14 +96,28 @@ class ChecklistController {
 
   // Execuções e Respostas
   submitExecution = asyncHandler(async (req, res) => {
-    const { restaurantId, user } = req;
+    const { user } = req;
     const { checklistId, notes, responses, userName } = req.body;
+
+    // Busca o restaurantId do checklist se não estiver no req (acesso público)
+    let restaurantId = req.restaurantId;
+    if (!restaurantId) {
+      const checklist = await prisma.checklist.findUnique({ 
+        where: { id: checklistId },
+        select: { restaurantId: true }
+      });
+      if (!checklist) {
+        res.status(404);
+        throw new Error("Checklist não encontrado");
+      }
+      restaurantId = checklist.restaurantId;
+    }
 
     const execution = await prisma.checklistExecution.create({
       data: {
         checklistId,
-        userId: user?.id || undefined, // Evita erro de constraint se o banco ainda estiver como NOT NULL
-        restaurantId: restaurantId || (await prisma.checklist.findUnique({ where: { id: checklistId } })).restaurantId,
+        userId: user?.id || null, 
+        restaurantId: restaurantId,
         notes: userName ? `[Executado por: ${userName}] ${notes || ''}` : notes,
         status: 'COMPLETED',
         responses: {
