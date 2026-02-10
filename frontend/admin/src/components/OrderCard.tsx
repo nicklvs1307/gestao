@@ -91,6 +91,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
 
   const isDelivery = order.orderType === 'DELIVERY';
   const deliveryData = order.deliveryOrder;
+  const isPickup = deliveryData?.deliveryType === 'pickup' || deliveryData?.deliveryType === 'retirada';
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -116,7 +117,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
                   {isSelected && <CheckCircle size={12} strokeWidth={4} />}
                 </button>
                 <div>
-                  <span className="block font-black text-xs italic text-slate-900 leading-none uppercase">
+                  <span className="block font-black text-[11px] italic text-slate-900 leading-none uppercase">
                     #{order.dailyOrderNumber || '0'} - {deliveryData?.name || order.customerName || 'Consumidor'}
                   </span>
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
@@ -138,26 +139,32 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing px-4 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded-lg border", isDelivery ? "text-rose-500 bg-rose-50 border-rose-100" : "text-blue-500 bg-blue-50 border-blue-100")}>
-                    {isDelivery ? <Truck size={14} /> : <Utensils size={14} />}
+                <div className={cn("p-1.5 rounded-lg border", isDelivery ? (isPickup ? "text-blue-500 bg-blue-50 border-blue-100" : "text-rose-500 bg-rose-50 border-rose-100") : "text-emerald-500 bg-emerald-50 border-emerald-100")}>
+                    {!isDelivery ? <Utensils size={14} /> : (isPickup ? <ShoppingBag size={14} /> : <Truck size={14} />)}
                 </div>
-                <span className="text-[10px] font-black text-slate-600 uppercase italic">
-                  {isDelivery ? 'Delivery' : `Mesa ${order.tableNumber}`}
+                <span className="text-[9px] font-black text-slate-600 uppercase italic">
+                  {!isDelivery ? `Mesa ${order.tableNumber}` : (isPickup ? 'Retirada Balcão' : 'Entrega')}
                 </span>
               </div>
               {deliveryData?.phone && (
-                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
                   <Phone size={10} /> {deliveryData.phone}
                 </div>
               )}
             </div>
             
-            {isDelivery && deliveryData?.address && (
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100/50">
-                  <div className="flex items-start gap-2 text-[10px] font-medium text-slate-500 leading-tight">
-                      <MapPin size={12} className="text-slate-300 shrink-0" />
+            {isDelivery && !isPickup && deliveryData?.address && (
+                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100/50">
+                  <div className="flex items-start gap-2 text-[9px] font-bold text-slate-500 leading-tight">
+                      <MapPin size={12} className="text-orange-500 shrink-0" />
                       <span className="line-clamp-2 uppercase italic">{deliveryData.address}</span>
                   </div>
+                </div>
+            )}
+
+            {isDelivery && isPickup && (
+                <div className="p-2 bg-blue-50/50 rounded-xl border border-blue-100/50 text-center">
+                    <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Aguardando Retirada</span>
                 </div>
             )}
 

@@ -101,74 +101,76 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
 
   return (
     <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="ui-modal-content w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
         
         {/* HEADER PREMIUM COMPACTO */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border-b bg-white gap-4 shrink-0">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border-b bg-white gap-4 shrink-0">
           <div className="flex items-center gap-4">
-            <div className={cn("p-3 rounded-2xl border-2 shadow-lg", currentStatus.bg, currentStatus.border, currentStatus.color)}>
-                <currentStatus.icon size={24} />
+            <div className={cn("p-2.5 rounded-2xl border-2 shadow-lg", currentStatus.bg, currentStatus.border, currentStatus.color)}>
+                <currentStatus.icon size={20} />
             </div>
             <div>
                 <div className="flex items-center gap-3">
-                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</h2>
-                    <span className={cn("px-2 py-0.5 rounded-lg text-[9px] font-black border uppercase tracking-widest shadow-sm", currentStatus.bg, currentStatus.color, currentStatus.border)}>
+                    <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</h2>
+                    <span className={cn("px-2 py-0.5 rounded-lg text-[8px] font-black border uppercase tracking-widest shadow-sm", currentStatus.bg, currentStatus.color, currentStatus.border)}>
                         {currentStatus.label}
                     </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 mt-2 text-slate-400 text-[9px] font-black uppercase tracking-[0.15em]">
+                <div className="flex flex-wrap items-center gap-3 mt-1.5 text-slate-400 text-[8px] font-black uppercase tracking-[0.15em]">
                     <span className="flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 text-slate-500">ID: {order.id.slice(-8).toUpperCase()}</span>
-                    <span className="flex items-center gap-1"><Clock size={12} className="text-orange-500"/> {format(new Date(order.createdAt), "HH:mm")}</span>
-                    <span className="flex items-center gap-1"><Utensils size={12} className="text-orange-500"/> {isDelivery ? 'Delivery' : `Mesa 0${order.tableNumber}`}</span>
+                    <span className="flex items-center gap-1"><Clock size={10} className="text-orange-500"/> {format(new Date(order.createdAt), "HH:mm")}</span>
+                    <span className="flex items-center gap-1"><Utensils size={10} className="text-orange-500"/> {isDelivery ? (order.deliveryOrder?.deliveryType === 'delivery' ? 'Entrega' : 'Retirada') : `Mesa 0${order.tableNumber}`}</span>
                 </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <Button onClick={handlePrint} disabled={isPrinting} className="flex-1 md:flex-none bg-slate-900 shadow-lg shadow-slate-200 h-11 px-6 rounded-xl italic font-black text-[10px]">
-                {isPrinting ? <Loader2 className="animate-spin" size={16} /> : <Printer size={16} />}
+            <Button onClick={handlePrint} disabled={isPrinting} className="flex-1 md:flex-none bg-slate-900 shadow-lg shadow-slate-200 h-10 px-5 rounded-xl italic font-black text-[9px]">
+                {isPrinting ? <Loader2 className="animate-spin" size={14} /> : <Printer size={14} />}
                 IMPRIMIR
             </Button>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50 h-11 w-11"><X size={24} /></Button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50 h-10 w-10"><X size={20} /></Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 custom-scrollbar bg-slate-50/30">
+        <div className="flex-1 overflow-y-auto p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 custom-scrollbar bg-slate-50/30">
             {/* COLUNA LOGÍSTICA E CLIENTE */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-5 space-y-5">
                 <section>
-                    <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] mb-3 ml-1 flex items-center gap-2 italic"><User size={12} className="text-orange-500"/> Destinatário</h3>
-                    <Card className="p-5 border-slate-100 shadow-md bg-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-slate-500/5 -mr-8 -mt-8 rounded-full" />
+                    <h3 className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em] mb-2.5 ml-1 flex items-center gap-2 italic"><User size={10} className="text-orange-500"/> Destinatário</h3>
+                    <Card className="p-4 border-slate-100 shadow-md bg-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-slate-500/5 -mr-6 -mt-6 rounded-full" />
                         {isDelivery ? (
-                            <div className="space-y-4 relative z-10">
+                            <div className="space-y-3 relative z-10">
                                 <div>
-                                    <p className="text-lg font-black text-slate-900 uppercase italic tracking-tight leading-none">{order.deliveryOrder?.name || 'Cliente Final'}</p>
-                                    <div className="flex items-center justify-between mt-3">
-                                        <p className="text-[11px] text-slate-500 flex items-center gap-2 font-black italic">
-                                            <Phone size={14} className="text-emerald-500" /> {order.deliveryOrder?.phone || '(00) 00000-0000'}
+                                    <p className="text-base font-black text-slate-900 uppercase italic tracking-tight leading-none">{order.deliveryOrder?.name || 'Cliente Final'}</p>
+                                    <div className="flex items-center justify-between mt-2.5">
+                                        <p className="text-[10px] text-slate-500 flex items-center gap-2 font-black italic">
+                                            <Phone size={12} className="text-emerald-500" /> {order.deliveryOrder?.phone || '(00) 00000-0000'}
                                         </p>
-                                        <a href={`tel:${order.deliveryOrder?.phone}`} className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100"><Phone size={12}/></a>
+                                        <a href={`tel:${order.deliveryOrder?.phone}`} className="p-1 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100"><Phone size={10}/></a>
                                     </div>
                                 </div>
-                                <div className="pt-4 border-t border-slate-50 space-y-2">
-                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={10}/> Endereço</p>
-                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-[11px] font-black text-slate-700 relative group uppercase italic leading-relaxed shadow-inner">
-                                        {order.deliveryOrder?.address}
-                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryOrder?.address || '')}`} target="_blank" className="absolute -right-2 -top-2 bg-blue-600 text-white p-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
-                                            <ExternalLink size={14} />
-                                        </a>
+                                <div className="pt-3 border-t border-slate-50 space-y-1.5">
+                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={8}/> Endereço</p>
+                                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[10px] font-black text-slate-700 relative group uppercase italic leading-relaxed shadow-inner">
+                                        {order.deliveryOrder?.address && order.deliveryOrder.address !== 'Retirada no Balcão' ? order.deliveryOrder.address : 'RETIRADA NO ESTABELECIMENTO'}
+                                        {order.deliveryOrder?.address && order.deliveryOrder.address !== 'Retirada no Balcão' && (
+                                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryOrder?.address || '')}`} target="_blank" className="absolute -right-2 -top-2 bg-blue-600 text-white p-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
+                                                <ExternalLink size={12} />
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-4 relative z-10">
-                                <div className="bg-orange-500 text-white p-4 rounded-2xl shadow-lg shadow-orange-500/20">
-                                    <Utensils size={24} />
+                            <div className="flex items-center gap-3 relative z-10">
+                                <div className="bg-orange-500 text-white p-3 rounded-xl shadow-lg shadow-orange-500/20">
+                                    <Utensils size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Unidade</p>
-                                    <p className="text-3xl font-black text-slate-900 italic tracking-tighter">MESA 0{order.tableNumber}</p>
+                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Unidade</p>
+                                    <p className="text-2xl font-black text-slate-900 italic tracking-tighter">MESA 0{order.tableNumber}</p>
                                 </div>
                             </div>
                         )}

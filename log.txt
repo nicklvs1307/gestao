@@ -1,13 +1,33 @@
-ReferenceError: authenticateToken is not defined
-    at Object.<anonymous> (/app/src/routes/superAdminRoutes.js:4:12)
-    at Module._compile (node:internal/modules/cjs/loader:1521:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-    at Module.load (node:internal/modules/cjs/loader:1266:32)
-    at Module._load (node:internal/modules/cjs/loader:1091:12)
-    at Module.require (node:internal/modules/cjs/loader:1289:19)
-    at require (node:internal/modules/helpers:182:18)
-    at Object.<anonymous> (/app/index.js:91:26)
-    at Module._compile (node:internal/modules/cjs/loader:1521:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-
-Node.js v20.20.0
+api/auth/drivers:1  Failed to load resource: the server responded with a status of 500 ()
+AxiosError: Request failed with status code 500
+    at dX (index-C6Wngq60.js:53:1092)
+    at XMLHttpRequest.C (index-C6Wngq60.js:53:5867)
+    at L2.request (index-C6Wngq60.js:55:2097)
+    at async bse (index-C6Wngq60.js:56:6260)
+index-C6Wngq60.js:8605 Enviando para impressora: Pedido #1
+index-C6Wngq60.js:8605 Debug Impressão: Item="A Moda da Casa" | Categoria="Geral" | Destino="k1"
+index-C6Wngq60.js:8605 Enviando 1 itens para Cozinha: Cozinha 1 (ELGIN i9(USB))
+index-C6Wngq60.js:8605 Pedido #cmlghlmq10001ma01td7l4797 marcado como impresso no servidor.
+index-C6Wngq60.js:40 ReferenceError: Bike is not defined
+    at index-C6Wngq60.js:8642:408332
+    at Array.map (<anonymous>)
+    at _Ue (index-C6Wngq60.js:8642:407172)
+    at fu (index-C6Wngq60.js:38:17891)
+    at dO (index-C6Wngq60.js:40:3167)
+    at QV (index-C6Wngq60.js:40:45983)
+    at YV (index-C6Wngq60.js:40:40756)
+    at Kte (index-C6Wngq60.js:40:40683)
+    at Qy (index-C6Wngq60.js:40:40534)
+    at LO (index-C6Wngq60.js:40:36786)
+cO @ index-C6Wngq60.js:40
+index-C6Wngq60.js:40 Uncaught ReferenceError: Bike is not defined
+    at index-C6Wngq60.js:8642:408332
+    at Array.map (<anonymous>)
+    at _Ue (index-C6Wngq60.js:8642:407172)
+    at fu (index-C6Wngq60.js:38:17891)
+    at dO (index-C6Wngq60.js:40:3167)
+    at QV (index-C6Wngq60.js:40:45983)
+    at YV (index-C6Wngq60.js:40:40756)
+    at Kte (index-C6Wngq60.js:40:40683)
+    at Qy (index-C6Wngq60.js:40:40534)
+    at LO (index-C6Wngq60.js:40:36786)

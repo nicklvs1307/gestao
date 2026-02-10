@@ -61,6 +61,7 @@ const PosPage: React.FC = () => {
     const [customerResults, setCustomerResults] = useState<any[]>([]);
     const [customerAddresses, setCustomerAddresses] = useState<string[]>([]);
     const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+    const [structuredAddress, setStructuredAddress] = useState<any>(null); // Novo estado
 
     // --- ESTADOS DE MODAIS E INTERAÇÃO ---
     const [activeModal, setActiveModal] = useState<'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items'>('none');
@@ -307,8 +308,7 @@ const PosPage: React.FC = () => {
                     phone: deliveryInfo.phone,
                     address: deliveryInfo.address, 
                     deliveryType: deliverySubType,
-                    // Decompondo o endereço se necessário para o backend (OrderService espera street, number, etc)
-                    ...parseAddress(deliveryInfo.address)
+                    ...(structuredAddress || parseAddress(deliveryInfo.address))
                 } : null
             };
             await createOrder(orderPayload);
@@ -736,6 +736,7 @@ const PosPage: React.FC = () => {
                             address: data.addressStr,
                             deliveryType: data.deliveryType
                         });
+                        setStructuredAddress(data.addressStructured);
                         setActiveModal('none');
                     }}
                 />

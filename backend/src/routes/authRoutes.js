@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const AuthController = require('../controllers/AuthController');
 const { needsAdmin, needsAuth } = require('../middlewares/auth');
+const prisma = require('../lib/prisma');
 
 router.post('/login', AuthController.login);
 router.get('/users', needsAdmin, AuthController.getUsers);
