@@ -597,12 +597,15 @@ const PosPage: React.FC = () => {
                                 <div className="space-y-6">
                                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><List size={14} /> Itens Consumidos</h4>
                                     <div className="space-y-2">
-                                        {viewingTable.activeOrder?.items.map((item: any) => (
+                                        {viewingTable.items?.map((item: any) => (
                                             <Card key={item.id} className="p-4 flex justify-between items-center border-slate-50">
                                                 <div className="flex flex-col"><span className="text-xs font-black text-slate-800 uppercase italic">0{item.quantity}x {item.product.name}</span><span className="text-[9px] font-bold text-slate-400 uppercase">{item.sizeJson ? JSON.parse(item.sizeJson).name : 'Individual'}</span></div>
                                                 <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * item.priceAtTime).toFixed(2)}</span>
                                             </Card>
                                         ))}
+                                        {(!viewingTable.items || viewingTable.items.length === 0) && (
+                                            <p className="text-center py-10 text-slate-300 font-black uppercase text-[10px] italic">Nenhum item pendente</p>
+                                        )}
                                     </div>
                                     <div className="p-6 bg-slate-900 text-white rounded-[2rem] shadow-xl relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
