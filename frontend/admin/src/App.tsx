@@ -301,7 +301,6 @@ function AdminRoutes() {
         <Route path="/settings/delivery-zones" element={<DeliveryAreaManagement />} />
         <Route path="/integrations" element={<IntegrationManagement />} />
         <Route path="/users" element={<UserManagement />} />
-        <Route path="/waiter" element={<WaiterPos />} />
         <Route path="/pos" element={<PosPage />} />
         <Route path="/cashier" element={<CashierManagement />} />
         <Route path="/kds" element={<KdsPage />} />
@@ -358,6 +357,11 @@ function App() {
         <Toaster position="top-right" richColors closeButton />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/waiter" element={
+            <ProtectedRoute>
+              <WaiterPos />
+            </ProtectedRoute>
+          } />
           <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
           <Route path="/driver/dashboard" element={
             <ProtectedRoute>

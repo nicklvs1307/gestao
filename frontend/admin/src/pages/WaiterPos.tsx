@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     getProducts, getCategories, createOrder, getPosTableSummary, sendTableRequest,
-    transferTable, transferItems, removeOrderItem 
+    getSettings, getPaymentMethods
 } from '../services/api';
 import { 
     Search, ShoppingCart, Plus, Minus, X, Trash2, 
@@ -33,16 +33,13 @@ const WaiterPos: React.FC = () => {
     const [customerName, setCustomerName] = useState(''); 
     const [cart, setCart] = useState<CartItem[]>([]);
 
-    const [isViewingDetails, setIsViewingDetails] = useState(false);
-    const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
-    const [targetTableNumber, setTargetTableNumber] = useState('');
-    const [showTransferModal, setShowTransferModal] = useState<'none' | 'table' | 'items'>('none');
-
+    // Estados de Personalização (Sincronizados com PDV)
     const [productWithOptions, setProductWithOptions] = useState<Product | null>(null);
-    const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
-    const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
-    const [selectedFlavors, setSelectedFlavors] = useState<Product[]>([]);
+    const [selectedSizeId, setSelectedSizeId] = useState<string>('');
+    const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+    const [selectedFlavorIds, setSelectedFlavorIds] = useState<string[]>([]);
     const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
+    const [tempQty, setTempQty] = useState(1);
     const [obs, setObs] = useState('');
 
     useEffect(() => {
@@ -55,9 +52,9 @@ const WaiterPos: React.FC = () => {
         try {
             setLoading(true);
             const [prods, cats, summary] = await Promise.all([ getProducts(), getCategories(true), getPosTableSummary() ]);
-            setProducts(prods);
-            setCategories(cats);
-            setTables(summary);
+            setProducts(prods || []);
+            setCategories(cats || []);
+            setTables(summary || []);
         } catch (error) { console.error(error); }
         finally { setLoading(false); }
     };
@@ -71,48 +68,120 @@ const WaiterPos: React.FC = () => {
 
     const handleProductClick = (product: Product) => {
         const hasOptions = (product.sizes && product.sizes.length > 0) || (product.addonGroups && product.addonGroups.length > 0) || (product.pizzaConfig);
+        
         if (hasOptions) {
             setProductWithOptions(product);
-            setSelectedSize(product.sizes?.[0] || null);
-            setSelectedAddons([]);
-            setSelectedFlavors([]);
+            setSelectedSizeId(product.sizes?.[0]?.id || '');
+            setSelectedAddonIds([]);
+            setSelectedFlavorIds([]);
+            setTempQty(1);
             setObs('');
+            
             if (product.pizzaConfig?.flavorCategoryId) {
                 const flavors = products.filter(p => p.categoryId === product.pizzaConfig?.flavorCategoryId && p.isAvailable);
                 setAvailableFlavors(flavors);
+            } else {
+                setAvailableFlavors([]);
             }
-        } else { addToCart(product, null, [], []); }
+        } else {
+            addToCartDirect(product);
+        }
     };
 
-    const addToCart = (product: Product, size: SizeOption | null, addons: AddonOption[], flavors: Product[], observation: string = '') => {
-        const cartItemId = `${product.id}-${size?.id || 'none'}-${addons.map(a => a.id).sort().join(',')}-${flavors.map(f => f.id).sort().join(',')}`;
-        const existing = cart.find(item => item.cartItemId === cartItemId);
+    const handleFlavorToggle = (flavorId: string) => {
+        if (!productWithOptions?.pizzaConfig) return;
+        
+        const size = productWithOptions.sizes.find(s => s.id === selectedSizeId);
+        const max = productWithOptions.pizzaConfig.sizes?.[size?.name || '']?.maxFlavors || productWithOptions.pizzaConfig.maxFlavors || 1;
 
-        if (existing) {
-            setCart(cart.map(item => item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item ));
+        if (selectedFlavorIds.includes(flavorId)) {
+            setSelectedFlavorIds(prev => prev.filter(id => id !== flavorId));
         } else {
-            let basePrice = size?.price || product.price;
-            if (product.pizzaConfig && flavors.length > 0) {
-                const flavorPrices = flavors.map(f => {
-                    if (size) { return (f.sizes || []).find(sz => sz.name === size.name)?.price || f.price; }
-                    return f.price;
-                });
-                basePrice = product.pizzaConfig.priceRule === 'higher' ? Math.max(...flavorPrices) : flavorPrices.reduce((a, b) => a + b, 0) / flavors.length;
+            if (selectedFlavorIds.length < max) {
+                setSelectedFlavorIds(prev => [...prev, flavorId]);
+            } else if (max === 1) {
+                setSelectedFlavorIds([flavorId]);
+            } else {
+                toast.warning(`Limite de ${max} sabores atingido.`);
             }
-            const finalPrice = basePrice + addons.reduce((acc, a) => acc + a.price, 0);
-            let itemName = product.name;
-            if (size) itemName += ` (${size.name})`;
-            if (flavors.length > 0) itemName += ` [${flavors.map(f => f.name).join('/')}]`;
-
-            const newItem: CartItem = {
-                id: Date.now().toString(), cartItemId, productDbId: product.id, productId: product.id, name: itemName, price: finalPrice, quantity: 1, observation,
-                selectedSizeDbId: size?.id, selectedAddonDbIds: addons.map(a => a.id), selectedFlavorIds: flavors.map(f => f.id),
-                sizeJson: size ? JSON.stringify({ id: size.id, name: size.name, price: size.price }) : null,
-                addonsJson: JSON.stringify(addons.map(a => ({ id: a.id, name: a.name, price: a.price, quantity: a.quantity || 1 }))),
-                flavorsJson: JSON.stringify(flavors.map(f => ({ id: f.id, name: f.name, price: f.price })))
-            };
-            setCart([...cart, newItem]);
         }
+    };
+
+    const calculateCurrentPrice = () => {
+        if (!productWithOptions) return 0;
+        const product = productWithOptions;
+        const size = product.sizes?.find(s => s.id === selectedSizeId);
+        let basePrice = size?.price || product.price;
+
+        if (product.pizzaConfig && selectedFlavorIds.length > 0) {
+            const rule = product.pizzaConfig.priceRule || 'higher';
+            const flavors = availableFlavors.filter(f => selectedFlavorIds.includes(f.id));
+            const flavorPrices = flavors.map(f => {
+                const s = f.sizes?.find(sz => sz.name === size?.name);
+                return s ? s.price : f.price;
+            });
+            basePrice = rule === 'higher' ? Math.max(...flavorPrices) : flavorPrices.reduce((a, b) => a + b, 0) / flavorPrices.length;
+        }
+
+        const addonsPrice = product.addonGroups?.reduce((total, group) => {
+            return total + group.addons.reduce((sum, addon) => {
+                return selectedAddonIds.includes(addon.id) ? sum + addon.price : sum;
+            }, 0);
+        }, 0) || 0;
+
+        return (basePrice + addonsPrice) * tempQty;
+    };
+
+    const addToCartDirect = (product: Product) => {
+        const newItem: CartItem = {
+            id: Date.now().toString(),
+            cartItemId: `direct-${product.id}-${Date.now()}`,
+            productDbId: product.id,
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            observation: '',
+            selectedSizeDbId: null,
+            selectedAddonDbIds: [],
+            selectedFlavorIds: [],
+            sizeJson: null,
+            addonsJson: JSON.stringify([]),
+            flavorsJson: JSON.stringify([])
+        };
+        setCart([...cart, newItem]);
+        toast.success("Item adicionado!");
+    };
+
+    const confirmAddToCart = () => {
+        if (!productWithOptions) return;
+        const product = productWithOptions;
+        const size = product.sizes?.find(s => s.id === selectedSizeId);
+        const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => selectedAddonIds.includes(a.id)) || [];
+        const flavors = availableFlavors.filter(f => selectedFlavorIds.includes(f.id));
+
+        let itemName = product.name;
+        if (size) itemName += ` (${size.name})`;
+        if (flavors.length > 0) itemName += ` [${flavors.map(f => f.name).join('/')}]`;
+
+        const newItem: CartItem = {
+            id: Date.now().toString(),
+            cartItemId: `opt-${Date.now()}`,
+            productDbId: product.id,
+            productId: product.id,
+            name: itemName,
+            price: calculateCurrentPrice() / tempQty,
+            quantity: tempQty,
+            observation: obs.trim(),
+            selectedSizeDbId: selectedSizeId,
+            selectedAddonDbIds: selectedAddonIds,
+            selectedFlavorIds: selectedFlavorIds,
+            sizeJson: size ? JSON.stringify(size) : null,
+            addonsJson: JSON.stringify(selectedAddons),
+            flavorsJson: JSON.stringify(flavors.map(f => ({ id: f.id, name: f.name, price: f.price })))
+        };
+        
+        setCart([...cart, newItem]);
         setProductWithOptions(null);
         toast.success("Item na sacola!");
     };
@@ -124,8 +193,21 @@ const WaiterPos: React.FC = () => {
             const userStr = localStorage.getItem('user');
             const user = userStr ? JSON.parse(userStr) : null;
             await createOrder({
-                items: cart.map(i => ({ productId: i.productDbId, quantity: i.quantity, observations: i.observation, sizeId: i.selectedSizeDbId, addonsIds: i.selectedAddonDbIds, flavorIds: i.selectedFlavorIds, sizeJson: i.sizeJson, addonsJson: i.addonsJson, flavorsJson: i.flavorsJson })),
-                orderType: 'TABLE', tableNumber: selectedTable.number, customerName: customerName || null, userId: user?.id
+                items: cart.map(i => ({ 
+                    productId: i.productDbId, 
+                    quantity: i.quantity, 
+                    observations: i.observation, 
+                    sizeId: i.selectedSizeDbId, 
+                    addonsIds: i.selectedAddonDbIds, 
+                    flavorIds: i.selectedFlavorIds, 
+                    sizeJson: i.sizeJson, 
+                    addonsJson: i.addonsJson, 
+                    flavorsJson: i.flavorsJson 
+                })),
+                orderType: 'TABLE', 
+                tableNumber: selectedTable.number, 
+                customerName: customerName || null, 
+                userId: user?.id
             });
             toast.success(`Mesa ${selectedTable.number}: Pedido enviado!`);
             setCart([]); setSelectedTable(null); setCustomerName(''); setActiveTab('tables'); loadTables();
@@ -134,14 +216,14 @@ const WaiterPos: React.FC = () => {
     };
 
     const filteredProducts = useMemo(() => {
-        return products.filter(p => (selectedCategory === 'all' || p.categoryId === selectedCategory) && p.name.toLowerCase().includes(searchTerm.toLowerCase()) && p.isAvailable);
+        return products.filter(p => (selectedCategory === 'all' || p.categoryId === selectedCategory || p.categories?.some(c => c.id === selectedCategory)) && p.name.toLowerCase().includes(searchTerm.toLowerCase()) && p.isAvailable);
     }, [products, selectedCategory, searchTerm]);
 
-    if (loading) return <div className="flex h-screen items-center justify-center bg-slate-900"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
+    if (loading) return <div className="flex h-screen w-screen items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
 
     return (
-        <div className="flex flex-col h-screen bg-slate-950 text-white overflow-hidden -m-8">
-            {/* Header Mobile Otimizado */}
+        <div className="flex flex-col h-screen w-screen bg-slate-950 text-white overflow-hidden">
+            {/* Header Mobile - Removido margens e integrado como App FullScreen */}
             <header className="h-20 bg-slate-900 border-b border-white/5 px-6 flex items-center justify-between shrink-0 z-30 shadow-2xl">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-orange-500 rounded-2xl shadow-xl shadow-orange-500/20"><Utensils size={24} /></div>
@@ -163,7 +245,7 @@ const WaiterPos: React.FC = () => {
             {selectedTable && (
                 <div className="flex bg-slate-900 border-b border-white/5 shrink-0 z-20">
                     {[
-                        { id: 'menu', label: 'Lançar Itens', icon: List },
+                        { id: 'menu', label: 'Cardápio', icon: List },
                         { id: 'cart', label: `Sacola (${cart.length})`, icon: ShoppingCart },
                         { id: 'tables', label: 'Consumo Mesa', icon: Receipt }
                     ].map(tab => (
@@ -291,13 +373,13 @@ const WaiterPos: React.FC = () => {
                 )}
             </main>
 
-            {/* MODAL DE OPÇÕES (TOUCH FRIENDLY) */}
+            {/* MODAL DE OPÇÕES (TOUCH FRIENDLY - ATUALIZADO COM LÓGICA PDV) */}
             <AnimatePresence>
                 {productWithOptions && (
                     <div className="fixed inset-0 z-[200] flex items-end justify-center bg-slate-950/90 backdrop-blur-md">
-                        <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="w-full max-w-xl bg-slate-900 rounded-t-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border-t border-white/10">
+                        <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="w-full max-w-xl bg-slate-900 rounded-t-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border-t border-white/10">
                             <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
-                                <div><h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">{productWithOptions.name}</h3><p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-2">Personalize o pedido</p></div>
+                                <div><h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">{productWithOptions.name}</h3><p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-2">Personalizar Pedido</p></div>
                                 <Button variant="ghost" size="icon" onClick={() => setProductWithOptions(null)} className="rounded-full bg-white/5 h-12 w-12"><X size={24} /></Button>
                             </div>
                             
@@ -305,14 +387,14 @@ const WaiterPos: React.FC = () => {
                                 {/* Tamanhos */}
                                 {productWithOptions.sizes && productWithOptions.sizes.length > 0 && (
                                     <div className="space-y-4">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Escolha o Tamanho</h4>
+                                        <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> 1. Escolha o Tamanho</h4>
                                         <div className="grid grid-cols-1 gap-3">
                                             {productWithOptions.sizes.map(size => (
-                                                <button key={size.id} onClick={() => setSelectedSize(size)} className={cn("p-5 rounded-3xl border-2 flex justify-between items-center transition-all", selectedSize?.id === size.id ? "border-orange-500 bg-orange-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
+                                                <button key={size.id} onClick={() => { setSelectedSizeId(size.id); setSelectedFlavorIds([]); }} className={cn("p-5 rounded-3xl border-2 flex justify-between items-center transition-all", selectedSizeId === size.id ? "border-orange-500 bg-orange-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
                                                     <span className="font-black text-sm uppercase italic tracking-tight">{size.name}</span>
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-black text-xs italic tracking-tighter">R$ {size.price.toFixed(2)}</span>
-                                                        <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center", selectedSize?.id === size.id ? "bg-orange-500 border-orange-500" : "border-white/10")}>{selectedSize?.id === size.id && <Check size={14} strokeWidth={4} />}</div>
+                                                        <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center", selectedSizeId === size.id ? "bg-orange-500 border-orange-500" : "border-white/10")}>{selectedSizeId === size.id && <Check size={14} strokeWidth={4} />}</div>
                                                     </div>
                                                 </button>
                                             ))}
@@ -320,15 +402,42 @@ const WaiterPos: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Adicionais */}
+                                {/* Sabores de Pizza (Lógica PDV) */}
+                                {productWithOptions.pizzaConfig && availableFlavors.length > 0 && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><PizzaIcon size={14} className="text-orange-500" /> 2. Selecione os Sabores</h4>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {availableFlavors.map(flavor => {
+                                                const isSelected = selectedFlavorIds.includes(flavor.id);
+                                                return (
+                                                    <button key={flavor.id} onClick={() => handleFlavorToggle(flavor.id)} className={cn("p-4 rounded-2xl border-2 text-left transition-all", isSelected ? "border-orange-500 bg-orange-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
+                                                        <span className="font-black text-[10px] uppercase italic leading-tight block truncate">{flavor.name}</span>
+                                                        {isSelected && <CheckCircle size={12} className="text-orange-500 mt-1" />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Adicionais / Complementos */}
                                 {productWithOptions.addonGroups?.map(group => (
                                     <div key={group.id} className="space-y-4">
                                         <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><div className="w-1.5 h-1.5 rounded-full bg-purple-500" /> {group.name}</h4>
                                         <div className="grid grid-cols-1 gap-3">
                                             {group.addons.map(addon => {
-                                                const isSelected = selectedAddons.some(a => a.id === addon.id);
+                                                const isSelected = selectedAddonIds.includes(addon.id);
                                                 return (
-                                                    <button key={addon.id} onClick={() => isSelected ? setSelectedAddons(selectedAddons.filter(a => a.id !== addon.id)) : setSelectedAddons([...selectedAddons, addon])} className={cn("p-5 rounded-3xl border-2 flex justify-between items-center transition-all", isSelected ? "border-purple-500 bg-purple-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
+                                                    <button key={addon.id} onClick={() => {
+                                                        if (group.type === 'single') {
+                                                            const othersInGroup = group.addons.map(a => a.id);
+                                                            const newIds = selectedAddonIds.filter(id => !othersInGroup.includes(id));
+                                                            setSelectedAddonIds([...newIds, addon.id]);
+                                                        } else {
+                                                            if (isSelected) setSelectedAddonIds(prev => prev.filter(id => id !== addon.id));
+                                                            else setSelectedAddonIds(prev => [...prev, addon.id]);
+                                                        }
+                                                    }} className={cn("p-5 rounded-3xl border-2 flex justify-between items-center transition-all", isSelected ? "border-purple-500 bg-purple-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
                                                         <span className="font-black text-sm uppercase italic tracking-tight">{addon.name}</span>
                                                         <div className="flex items-center gap-3">
                                                             <span className="font-black text-xs italic text-emerald-500">+ R$ {addon.price.toFixed(2)}</span>
@@ -348,8 +457,17 @@ const WaiterPos: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="p-8 bg-slate-900 border-t border-white/5">
-                                <Button fullWidth size="lg" onClick={() => addToCart(productWithOptions, selectedSize, selectedAddons, selectedFlavors, obs)} className="h-16 rounded-[2rem] font-black uppercase tracking-[0.3em] shadow-2xl shadow-orange-500/20 italic">CONFIRMAR ITEM</Button>
+                            <div className="p-8 bg-slate-900 border-t border-white/5 flex items-center gap-6">
+                                <div className="flex items-center bg-slate-950 border border-white/5 rounded-2xl p-1 shrink-0">
+                                    <button onClick={() => setTempQty(Math.max(1, tempQty - 1))} className="w-10 h-10 flex items-center justify-center text-slate-500"><Minus size={16} strokeWidth={4}/></button>
+                                    <span className="w-8 text-center font-black text-white text-sm italic">{tempQty}</span>
+                                    <button onClick={() => setTempQty(tempQty + 1)} className="w-10 h-10 flex items-center justify-center text-orange-500"><Plus size={16} strokeWidth={4}/></button>
+                                </div>
+                                <div className="flex-1 text-right flex flex-col justify-center">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase italic leading-none mb-1">Total do Item</span>
+                                    <span className="text-2xl font-black text-white italic tracking-tighter leading-none">R$ {calculateCurrentPrice().toFixed(2).replace('.', ',')}</span>
+                                </div>
+                                <Button size="lg" onClick={confirmAddToCart} className="h-16 px-8 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-orange-500/20 italic shrink-0">LANÇAR <Check size={16} className="ml-2"/></Button>
                             </div>
                         </motion.div>
                     </div>
