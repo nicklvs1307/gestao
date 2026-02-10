@@ -1,24 +1,13 @@
-login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) null
-index-DtQSXBf9.js:40 ReferenceError: AnimatePresence is not defined
-    at kUe (index-DtQSXBf9.js:8642:388035)
-    at pu (index-DtQSXBf9.js:38:17891)
-    at QV (index-DtQSXBf9.js:40:45208)
-    at YV (index-DtQSXBf9.js:40:40756)
-    at Kte (index-DtQSXBf9.js:40:40683)
-    at Qy (index-DtQSXBf9.js:40:40534)
-    at LO (index-DtQSXBf9.js:40:36786)
-    at UV (index-DtQSXBf9.js:40:35726)
-    at $ (index-DtQSXBf9.js:25:1651)
-    at MessagePort.B (index-DtQSXBf9.js:25:2025)
-cO @ index-DtQSXBf9.js:40
-index-DtQSXBf9.js:40 Uncaught ReferenceError: AnimatePresence is not defined
-    at kUe (index-DtQSXBf9.js:8642:388035)
-    at pu (index-DtQSXBf9.js:38:17891)
-    at QV (index-DtQSXBf9.js:40:45208)
-    at YV (index-DtQSXBf9.js:40:40756)
-    at Kte (index-DtQSXBf9.js:40:40683)
-    at Qy (index-DtQSXBf9.js:40:40534)
-    at LO (index-DtQSXBf9.js:40:36786)
-    at UV (index-DtQSXBf9.js:40:35726)
-    at $ (index-DtQSXBf9.js:25:1651)
-    at MessagePort.B (index-DtQSXBf9.js:25:2025)
+ReferenceError: authenticateToken is not defined
+    at Object.<anonymous> (/app/src/routes/superAdminRoutes.js:4:12)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/app/index.js:91:26)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+
+Node.js v20.20.0

@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const SuperAdminController = require('../controllers/SuperAdminController');
+const { authenticateToken, checkPermission } = require('../middlewares/auth');
+
 // Todas as rotas aqui exigem pelo menos ser SuperAdmin ou ter a permissão all:manage
 router.use(authenticateToken);
 router.use(checkPermission('all:manage'));
