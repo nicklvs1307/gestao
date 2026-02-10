@@ -174,7 +174,7 @@ const updateUser = async (req, res) => {
             }
         }
 
-        const data: any = { email, name };
+        const data = { email, name };
         if (password) {
             data.passwordHash = await bcrypt.hash(password, 10);
         }
