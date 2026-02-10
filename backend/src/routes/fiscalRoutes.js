@@ -9,5 +9,6 @@ router.post('/config', needsAuth, FiscalController.saveFiscalConfig);
 router.post('/config/certificate', needsAuth, multer().single('certificate'), FiscalController.uploadCertificate);
 router.get('/invoices', needsAuth, FiscalController.getInvoices);
 router.post('/emit', needsAuth, FiscalController.emitInvoice);
+router.get('/export-monthly', needsAuth, FiscalController.exportMonthlyXmls);
 
 module.exports = router;

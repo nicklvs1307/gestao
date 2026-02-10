@@ -275,6 +275,7 @@ model Invoice {
   series        Int?
   accessKey     String?  // Chave de Acesso (44 dígitos)
   protocol      String?  // Protocolo de Autorização
+  xml           String?  // Conteúdo do XML assinado
   xmlUrl        String?  // URL para baixar o XML
   pdfUrl        String?  // URL para o DANFE/Cupom
   errorMessage  String?  // Retorno de erro da SEFAZ
@@ -579,8 +580,8 @@ model AddonGroup {
   products  Product[]
   categories Category[] // Vínculo com categorias para herança automática (Estilo Uai Rango)
 
-  restaurantId String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
 
   // Relações
   addons    Addon[]

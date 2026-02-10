@@ -3,6 +3,7 @@ const { SignedXml } = require('xml-crypto');
 const axios = require('axios');
 const https = require('https');
 const { XMLParser, XMLBuilder } = require('fast-xml-parser');
+const sha1 = require('sha1');
 
 class FiscalService {
     constructor() {
@@ -11,23 +12,30 @@ class FiscalService {
         
         // Endereços SEFAZ Minas Gerais (NFC-e 4.00)
         this.endpoints = {
-            homologation: {
-                autorizacao: 'https://hnfce.fazenda.mg.gov.br/nfce/services/NFeAutorizacao4',
-                retAutorizacao: 'https://hnfce.fazenda.mg.gov.br/nfce/services/NFeRetAutorizacao4',
-                statusServico: 'https://hnfce.fazenda.mg.gov.br/nfce/services/NFeStatusServico4'
+            'MG': {
+                homologation: 'https://hnfce.fazenda.mg.gov.br/nfce/services/NFeAutorizacao4',
+                production: 'https://nfce.fazenda.mg.gov.br/nfce/services/NFeAutorizacao4',
+                qrCode: {
+                    homologation: 'https://hnfce.fazenda.mg.gov.br/portalfiscalnfce/view/consulta/consulta.xhtml',
+                    production: 'https://nfce.fazenda.mg.gov.br/portalfiscalnfce/view/consulta/consulta.xhtml'
+                }
             },
-            production: {
-                autorizacao: 'https://nfce.fazenda.mg.gov.br/nfce/services/NFeAutorizacao4',
-                retAutorizacao: 'https://nfce.fazenda.mg.gov.br/nfce/services/NFeRetAutorizacao4',
-                statusServico: 'https://nfce.fazenda.mg.gov.br/nfce/services/NFeStatusServico4'
-            }
+            'SP': {
+                homologation: 'https://homologacao.nfce.fazenda.sp.gov.br/ws/nfceautorizacao4.asmx',
+                production: 'https://nfce.fazenda.sp.gov.br/ws/nfceautorizacao4.asmx',
+                qrCode: {
+                    homologation: 'https://www.homologacao.nfce.fazenda.sp.gov.br/consulta',
+                    production: 'https://www.nfce.fazenda.sp.gov.br/consulta'
+                }
+            },
+            // Adicionar outros conforme necessário ou usar SVRS (Sefaz Virtual Rio Grande do Sul)
         };
     }
 
     /**
      * Motor principal: Gera, Assina e Envia
      */
-    async autorizarNfce(order, config, items) {
+    async autorizarNfce(order, config, items, nNF, serie) {
         try {
             if (!config.certificate || !config.certPassword) {
                 throw new Error('Certificado A1 não configurado ou sem senha.');
@@ -37,13 +45,21 @@ class FiscalService {
             const certData = this._extractCertData(config.certificate, config.certPassword);
 
             // 2. Gera XML base
-            const rawXml = this.generateNfceXml(order, config, items);
+            const { xml: rawXml, accessKey } = this.generateNfceXml(order, config, items, nNF, serie);
 
             // 3. Assina o XML
             const signedXml = this.signXml(rawXml, 'infNFe', certData);
 
             // 4. Envia para a SEFAZ usando mTLS
-            return await this.sendToSefaz(signedXml, config, certData);
+            const result = await this.sendToSefaz(signedXml, config, certData);
+            
+            return { 
+                ...result, 
+                accessKey, 
+                nNF, 
+                serie,
+                xml: signedXml 
+            };
         } catch (error) {
             console.error('Falha na autorização NFC-e:', error);
             return { success: false, error: error.message };
@@ -59,12 +75,10 @@ class FiscalService {
             const pfxAsn1 = forge.asn1.fromDer(pfxDer);
             const pfx = forge.pkcs12.pkcs12FromAsn1(pfxAsn1, password);
             
-            // Busca a chave privada
             const keyBags = pfx.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
             const keyBag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag][0];
             const privateKey = keyBag.key;
 
-            // Busca o certificado
             const certBags = pfx.getBags({ bagType: forge.pki.oids.certBag });
             const certBag = certBags[forge.pki.oids.certBag][0];
             const certificate = certBag.cert;
@@ -92,7 +106,7 @@ class FiscalService {
         sig.signingKey = certData.privateKeyPem;
         sig.keyInfoProvider = {
             getKeyInfo: () => `<X509Data><X509Certificate>${certData.certificatePem.replace(/---.*---|
-|/g, '')}</X509Certificate></X509Data>`
+|/g, '')}</X509Certificate></X509Data>`
         };
 
         sig.computeSignature(xml, {
@@ -103,40 +117,93 @@ class FiscalService {
     }
 
     /**
-     * Gera o XML da NFC-e (Simplificado para Minas Gerais)
+     * Gera a Chave de Acesso da NFe/NFCe (44 dígitos)
      */
-    generateNfceXml(order, config, items) {
-        const now = new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"});
-        const [date, time] = now.split(', ');
-        const [d, m, y] = date.split('/');
-        const dhEmi = `${y}-${m}-${d}T${time}-03:00`; // TODO: Parametrizar Timezone se sair do BR
+    generateAccessKey(cUF, date, cnpj, mod, serie, nNF, tpEmis, cNF) {
+        const part = [
+            cUF.toString().padStart(2, '0'),
+            date.slice(2, 4) + date.slice(5, 7), // YYMM
+            cnpj.replace(/\D/g, '').padStart(14, '0'),
+            mod.toString().padStart(2, '0'),
+            serie.toString().padStart(3, '0'),
+            nNF.toString().padStart(9, '0'),
+            tpEmis.toString(),
+            cNF.toString().padStart(8, '0')
+        ].join('');
+
+        // Cálculo do dígito verificador (Módulo 11)
+        let sum = 0;
+        let weight = 2;
+        for (let i = part.length - 1; i >= 0; i--) {
+            sum += parseInt(part[i]) * weight;
+            weight = weight === 9 ? 2 : weight + 1;
+        }
+        const rem = sum % 11;
+        const dv = (rem === 0 || rem === 1) ? 0 : 11 - rem;
+
+        return part + dv;
+    }
+
+    /**
+     * Gera o link do QR-Code da NFC-e
+     */
+    generateQrCode(accessKey, config, dhEmi, vNF, vICMS, digVal) {
+        const stateConfig = this.endpoints[config.state] || this.endpoints['MG'];
+        const baseUrl = config.environment === 'production' ? stateConfig.qrCode.production : stateConfig.qrCode.homologation;
         
-        const cuId = order.id.replace(/\D/g, '').slice(0, 8);
+        const tpAmb = config.environment === 'production' ? 1 : 2;
+        const cIdToken = config.cscId || "000001";
+        const csc = config.cscToken || "";
+
+        // Monta string para o hash
+        // p=CHAVE|VERSAO|TPAMB|[IDTOKEN]|HASH
+        const qrParam = [
+            accessKey,
+            2, // Versão QR Code
+            tpAmb,
+            parseInt(cIdToken).toString().padStart(6, '0')
+        ].join('|');
+
+        const hashString = qrParam + csc;
+        const cHashQRCode = sha1(hashString).toUpperCase();
+
+        return `${baseUrl}?p=${qrParam}|${cHashQRCode}`;
+    }
+
+    /**
+     * Gera o XML da NFC-e
+     */
+    generateNfceXml(order, config, items, nNF, serie) {
+        const now = new Date();
+        const dhEmi = now.toISOString().split('.')[0] + "-03:00";
+        const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
         
-        // Mapeamento UF -> Código IBGE
         const ufCodes = { 'RO': 11, 'AC': 12, 'AM': 13, 'RR': 14, 'PA': 15, 'AP': 16, 'TO': 17, 'MA': 21, 'PI': 22, 'CE': 23, 'RN': 24, 'PB': 25, 'PE': 26, 'AL': 27, 'SE': 28, 'BA': 29, 'MG': 31, 'ES': 32, 'RJ': 33, 'SP': 35, 'PR': 41, 'SC': 42, 'RS': 43, 'MS': 50, 'MT': 51, 'GO': 52, 'DF': 53 };
-        const cUF = ufCodes[config.state] || 35; // Default SP se não achar
+        const cUF = ufCodes[config.state] || 31;
+        const cNF = Math.floor(Math.random() * 99999999).toString().padStart(8, '0');
         
+        const accessKey = this.generateAccessKey(cUF, dateStr, config.cnpj, 65, serie, nNF, 1, cNF);
+
         const nfce = {
             NFe: {
                 "@_xmlns": "http://www.portalfiscal.inf.br/nfe",
                 infNFe: {
-                    "@_Id": `NFe${cUF}${y.slice(2)}${config.cnpj}650010000000011${cuId}1`, 
+                    "@_Id": `NFe${accessKey}`,
                     "@_versao": "4.00",
                     ide: {
                         cUF: cUF,
-                        cNF: cuId,
+                        cNF: cNF,
                         natOp: "VENDA",
                         mod: 65,
-                        serie: 1,
-                        nNF: 1,
+                        serie: serie,
+                        nNF: nNF,
                         dhEmi: dhEmi,
                         tpNF: 1,
                         idDest: 1,
-                        cMunFG: config.ibgeCode || 3106200,
+                        cMunFG: config.ibgeCode,
                         tpImp: 4,
                         tpEmis: 1,
-                        cDV: 1,
+                        cDV: accessKey.slice(-1),
                         tpAmb: config.environment === 'production' ? 1 : 2,
                         finNFe: 1,
                         indFinal: 1,
@@ -145,7 +212,7 @@ class FiscalService {
                         verProc: "1.0"
                     },
                     emit: {
-                        CNPJ: config.cnpj,
+                        CNPJ: config.cnpj.replace(/\D/g, ''),
                         xNome: config.companyName,
                         enderEmit: {
                             xLgr: config.street,
@@ -153,21 +220,21 @@ class FiscalService {
                             xBairro: config.neighborhood,
                             cMun: config.ibgeCode,
                             xMun: config.city,
-                            UF: config.state || "SP",
-                            CEP: config.zipCode,
+                            UF: config.state,
+                            CEP: config.zipCode.replace(/\D/g, ''),
                             cPais: 1058,
                             xPais: "BRASIL"
                         },
-                        IE: config.ie,
+                        IE: config.ie.replace(/\D/g, ''),
                         CRT: config.taxRegime || "1"
                     },
-                    dest: {
+                    dest: config.environment === 'production' ? undefined : {
                         xNome: "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL"
                     },
                     det: items.map((item, index) => ({
                         "@_nItem": index + 1,
                         prod: {
-                            cProd: item.product.id.slice(0, 8),
+                            cProd: item.product.id.slice(0, 10),
                             cEAN: "SEM GTIN",
                             xProd: item.product.name,
                             NCM: item.product.ncm || "00000000",
@@ -184,8 +251,8 @@ class FiscalService {
                         },
                         imposto: {
                             ICMS: { ICMSSN102: { orig: item.product.origin || 0, CSOSN: "102" } },
-                            PIS: { PISAliq: { CST: "01", vBC: "0.00", pPIS: "0.00", vPIS: "0.00" } },
-                            COFINS: { COFINSAliq: { CST: "01", vBC: "0.00", pCOFINS: "0.00", vCOFINS: "0.00" } }
+                            PIS: { PISOutr: { CST: "99", vBC: "0.00", pPIS: "0.00", vPIS: "0.00" } },
+                            COFINS: { COFINSOutr: { CST: "99", vBC: "0.00", pCOFINS: "0.00", vCOFINS: "0.00" } }
                         }
                     })),
                     total: {
@@ -205,20 +272,33 @@ class FiscalService {
                             vPag: order.total.toFixed(2)
                         }
                     }
+                },
+                infNFeSupl: {
+                    qrCode: this.generateQrCode(accessKey, config, dhEmi, order.total.toFixed(2), "0.00", "DIGVAL_PLACEHOLDER"),
+                    urlChave: config.environment === 'production' 
+                        ? (this.endpoints[config.state]?.qrCode.production || "") 
+                        : (this.endpoints[config.state]?.qrCode.homologation || "")
                 }
             }
         };
 
-        return this.builder.build(nfce);
+        // Nota: O digVal real só é conhecido após a assinatura do XML. 
+        // Em NFCe 2.0, o digVal no QR Code é opcional se enviado para SEFAZ, 
+        // mas alguns estados exigem. Idealmente, assina-se sem infNFeSupl, pega digVal, e gera QR Code.
+        
+        return { 
+            xml: this.builder.build(nfce),
+            accessKey 
+        };
     }
 
     /**
-     * Envia para a SEFAZ usando Agente HTTPS com Certificado A1
+     * Envia para a SEFAZ
      */
     async sendToSefaz(signedXml, config, certData) {
-        const url = config.environment === 'production' ? this.endpoints.production.autorizacao : this.endpoints.homologation.autorizacao;
+        const stateConfig = this.endpoints[config.state] || this.endpoints['MG'];
+        const url = config.environment === 'production' ? stateConfig.production : stateConfig.homologation;
         
-        // Cria o agente HTTPS com o certificado A1 (mTLS)
         const httpsAgent = new https.Agent({
             cert: certData.certificatePem,
             key: certData.privateKeyPem,
@@ -237,18 +317,24 @@ class FiscalService {
         try {
             const response = await axios.post(url, soapEnvelope, {
                 headers: { 'Content-Type': 'application/soap+xml; charset=utf-8' },
-                httpsAgent
+                httpsAgent,
+                timeout: 30000
             });
 
             const resObj = this.parser.parse(response.data);
+            
+            // Tentar extrair o protocolo e status do retorno SEFAZ
+            const body = resObj['soap:Envelope']?.['soap:Body'] || resObj['Envelope']?.['Body'];
+            const ret = body?.['nfeResultMsg']?.['retEnviNFe'] || body?.['retEnviNFe'];
+
             return { 
                 success: true, 
-                data: resObj,
+                data: ret || resObj,
                 raw: response.data 
             };
         } catch (err) {
-            console.error('Erro na comunicação SEFAZ-MG:', err.response?.data || err.message);
-            throw new Error('Falha na comunicação com SEFAZ-MG: ' + (err.response?.data || err.message));
+            console.error('Erro na comunicação SEFAZ:', err.response?.data || err.message);
+            throw new Error('Falha na comunicação com SEFAZ: ' + (err.response?.data || err.message));
         }
     }
 }

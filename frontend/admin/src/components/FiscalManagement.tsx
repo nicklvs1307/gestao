@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { 
     Upload, FileCheck, ShieldCheck, AlertCircle, CheckCircle, 
-    RefreshCw, History, Settings, FileText, Download, Lock, Loader2, Building2
+    RefreshCw, History, Settings, FileText, Download, Lock, Loader2, Building2,
+    Calendar, FileArchive
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -17,6 +18,11 @@ const FiscalManagement: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'config' | 'invoices'>('config');
     const [certFile, setCertFile] = useState<File | null>(null);
     const [certPassword, setCertPassword] = useState('');
+    
+    // Estados para exportação mensal
+    const [exportMonth, setExportMonth] = useState(new Date().getMonth() + 1);
+    const [exportYear, setExportYear] = useState(new Date().getFullYear());
+    const [exporting, setExporting] = useState(false);
 
     useEffect(() => { loadData(); }, [activeTab]);
 
@@ -57,6 +63,27 @@ const FiscalManagement: React.FC = () => {
         finally { setLoading(false); }
     };
 
+    const handleExportXmls = async () => {
+        setExporting(true);
+        try {
+            const response = await api.get(`/fiscal/export-monthly?month=${exportMonth}&year=${exportYear}`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `XMLs_${exportMonth}_${exportYear}.zip`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success('Exportação concluída!');
+        } catch (error) {
+            toast.error('Erro ao exportar XMLs. Verifique se existem notas no período.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
             {/* Header Premium */}
@@ -64,7 +91,7 @@ const FiscalManagement: React.FC = () => {
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Módulo Fiscal</h1>
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                        <Building2 size={14} className="text-orange-500" /> Gestão de NFC-e e SEFAZ-MG
+                        <Building2 size={14} className="text-orange-500" /> Gestão de NFC-e e SEFAZ
                     </p>
                 </div>
                 <div className="flex bg-slate-200/50 p-1.5 rounded-2xl gap-1 shadow-inner">
@@ -94,19 +121,29 @@ const FiscalManagement: React.FC = () => {
                                 <Input label="Razão Social" value={config.companyName || ''} onChange={e => setConfig({...config, companyName: e.target.value})} placeholder="Nome Completo da Empresa" required />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <Input label="CNPJ" value={config.cnpj || ''} onChange={e => setConfig({...config, cnpj: e.target.value})} placeholder="00.000.000/0000-00" required />
-                                    <Input label="Inscrição Estadual" value={config.ie || ''} onChange={e => setConfig({...config, ie: e.target.value})} placeholder="IE MG" required />
+                                    <Input label="Inscrição Estadual" value={config.ie || ''} onChange={e => setConfig({...config, ie: e.target.value})} placeholder="Inscrição Estadual" required />
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Regime Tributário</label><select className="ui-input w-full h-12" value={config.taxRegime || '1'} onChange={e => setConfig({...config, taxRegime: e.target.value})}><option value="1">Simples Nacional</option><option value="3">Regime Normal</option></select></div>
                                     <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Ambiente SEFAZ</label><select className="ui-input w-full h-12" value={config.environment || 'homologation'} onChange={e => setConfig({...config, environment: e.target.value})}><option value="homologation">Homologação (Testes)</option><option value="production">Produção (Real)</option></select></div>
+                                    <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">UF do Emitente</label><select className="ui-input w-full h-12" value={config.state || 'SP'} onChange={e => setConfig({...config, state: e.target.value})}><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div>
+                                </div>
+
+                                <div className="space-y-6 pt-6 border-t border-slate-50">
+                                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Configurações NFC-e (QR-Code)</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <Input label="ID do Token (CSC)" value={config.cscId || ''} onChange={e => setConfig({...config, cscId: e.target.value})} placeholder="Ex: 000001" />
+                                        <Input label="Código do Token (CSC)" value={config.cscToken || ''} onChange={e => setConfig({...config, cscToken: e.target.value})} placeholder="Ex: AAAA-BBBB-CCCC-DDDD" />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-6 pt-6 border-t border-slate-50">
                                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Endereço Fiscal</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                         <div className="md:col-span-2"><Input label="Logradouro" value={config.street || ''} onChange={e => setConfig({...config, street: e.target.value})} /></div>
                                         <Input label="Nº" value={config.number || ''} onChange={e => setConfig({...config, number: e.target.value})} />
-                                        <Input label="Cidade" value={config.city || ''} onChange={e => setConfig({...config, city: e.target.value})} />
+                                        <Input label="Bairro" value={config.neighborhood || ''} onChange={e => setConfig({...config, neighborhood: e.target.value})} />
+                                        <div className="md:col-span-2"><Input label="Cidade" value={config.city || ''} onChange={e => setConfig({...config, city: e.target.value})} /></div>
                                         <Input label="Cód. IBGE" value={config.ibgeCode || ''} onChange={e => setConfig({...config, ibgeCode: e.target.value})} />
                                         <Input label="CEP" value={config.zipCode || ''} onChange={e => setConfig({...config, zipCode: e.target.value})} />
                                     </div>
@@ -154,20 +191,27 @@ const FiscalManagement: React.FC = () => {
                             </div>
                         </Card>
 
-                        {/* Box Fluxo de Emissão */}
+                        {/* Box Fechamento Mensal */}
                         <Card className="p-8 border-slate-200 shadow-xl bg-white space-y-6">
-                            <h3 className="text-sm font-black uppercase text-slate-900 italic flex items-center gap-3 border-b border-slate-50 pb-4">Modo de Operação</h3>
-                            <div className="grid grid-cols-1 gap-3">
-                                {[
-                                    { id: 'MANUAL', label: 'Manual', desc: 'Emissão um a um' },
-                                    { id: 'AUTOMATIC', label: 'Automático', desc: 'Emite no pagamento' }
-                                ].map(mode => (
-                                    <button key={mode.id} onClick={() => setConfig({...config, emissionMode: mode.id})} className={cn("p-4 rounded-2xl border-2 text-left transition-all", config.emissionMode === mode.id ? "border-orange-500 bg-orange-50/30 shadow-md" : "border-slate-100 hover:border-slate-200")}>
-                                        <p className={cn("text-xs font-black uppercase", config.emissionMode === mode.id ? "text-orange-600" : "text-slate-900")}>{mode.label}</p>
-                                        <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">{mode.desc}</p>
-                                    </button>
-                                ))}
+                            <h3 className="text-sm font-black uppercase text-slate-900 italic flex items-center gap-3 border-b border-slate-50 pb-4">
+                                <div className="p-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-100"><FileArchive size={18} /></div>
+                                Fechamento Mensal
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Mês</label>
+                                    <select className="ui-input w-full" value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))}>
+                                        {Array.from({length: 12}).map((_, i) => <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Ano</label>
+                                    <select className="ui-input w-full" value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))}>
+                                        {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
+                                </div>
                             </div>
+                            <Button fullWidth onClick={handleExportXmls} isLoading={exporting} className="h-14 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] italic bg-slate-900 hover:bg-slate-800 shadow-xl">EXPORTAR XMLS (ZIP)</Button>
                         </Card>
                     </div>
                 </div>
