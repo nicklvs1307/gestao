@@ -110,7 +110,8 @@ class ChecklistController {
           create: responses.map(r => ({
             taskId: r.taskId,
             value: String(r.value),
-            isOk: r.isOk ?? true
+            isOk: r.isOk ?? true,
+            notes: r.notes
           }))
         }
       },

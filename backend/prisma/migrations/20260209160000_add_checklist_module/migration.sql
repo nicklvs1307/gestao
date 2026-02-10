@@ -60,6 +60,7 @@ CREATE TABLE "ChecklistResponse" (
     "taskId" TEXT NOT NULL,
     "value" TEXT NOT NULL,
     "isOk" BOOLEAN NOT NULL DEFAULT true,
+    "notes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ChecklistResponse_pkey" PRIMARY KEY ("id")

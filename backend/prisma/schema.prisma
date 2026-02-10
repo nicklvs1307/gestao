@@ -1072,6 +1072,7 @@ model ChecklistResponse {
   
   value        String   // Resposta: "true", "caminho/foto.jpg", "texto livre", "25.5"
   isOk         Boolean  @default(true) // Se a tarefa foi cumprida conforme esperado
+  notes        String?  // Observação específica deste item
 
   createdAt    DateTime @default(now())
 
