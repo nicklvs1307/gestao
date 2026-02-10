@@ -112,6 +112,11 @@ const ReportController = {
         try {
             const { restaurantId } = req;
             const { startDate, endDate } = req.query;
+
+            if (!startDate || !endDate) {
+                return res.status(400).json({ error: 'Datas são obrigatórias' });
+            }
+
             const start = startOfDay(new Date(startDate));
             const end = endOfDay(new Date(endDate));
 
@@ -136,14 +141,15 @@ const ReportController = {
                     userId: s.userId,
                     name: user?.name || 'Desconhecido',
                     role: user?.role,
-                    totalRevenue: s._sum.total,
-                    ordersCount: s._count.id,
-                    averageTicket: s._sum.total / s._count.id
+                    totalRevenue: s._sum.total || 0,
+                    ordersCount: s._count.id || 0,
+                    averageTicket: (s._sum.total || 0) / (s._count.id || 1)
                 };
             }));
 
             res.json(staffDetails.sort((a, b) => b.totalRevenue - a.totalRevenue));
         } catch (error) {
+            console.error('Erro ao buscar desempenho de equipe:', error);
             res.status(500).json({ error: 'Erro ao buscar desempenho de equipe.' });
         }
     },
@@ -468,8 +474,10 @@ const ReportController = {
 
             const areaMap = {};
             stats.forEach((s) => {
-                const parts = s.address?.split('-') || [];
-                const neighborhood = parts.length > 1 ? parts[parts.length - 1].trim() : 'Centro/Geral';
+                if (!s.address) return;
+                
+                const parts = s.address.split('-') || [];
+                const neighborhood = parts.length > 1 ? parts[parts.length - 1].trim() : (parts[0]?.trim() || 'Centro/Geral');
                 
                 if (!areaMap[neighborhood]) {
                     areaMap[neighborhood] = { name: neighborhood, count: 0, totalFees: 0 };
@@ -480,6 +488,7 @@ const ReportController = {
 
             res.json(Object.values(areaMap).sort((a, b) => b.count - a.count));
         } catch (error) {
+            console.error('Erro ao buscar estatísticas de entrega:', error);
             res.status(500).json({ error: 'Erro ao buscar estatísticas de entrega.' });
         }
     },

@@ -5,6 +5,7 @@ import {
     X, CheckCircle, Filter, DollarSign, Wallet, Loader2, RefreshCw
 } from 'lucide-react';
 import { api } from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';

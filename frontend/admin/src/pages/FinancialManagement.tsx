@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Wallet, User, Disc, Building2, Plus, Trash2, Receipt, CreditCard, X, CheckCircle, QrCode, ArrowUpCircle, TrendingUp, TrendingDown, DollarSign, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
