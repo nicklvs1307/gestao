@@ -105,8 +105,7 @@ class FiscalService {
         
         sig.signingKey = certData.privateKeyPem;
         sig.keyInfoProvider = {
-            getKeyInfo: () => `<X509Data><X509Certificate>${certData.certificatePem.replace(/---.*---|
-|/g, '')}</X509Certificate></X509Data>`
+            getKeyInfo: () => `<X509Data><X509Certificate>${certData.certificatePem.replace(/---.*---|[\r\n]/g, '')}</X509Certificate></X509Data>`
         };
 
         sig.computeSignature(xml, {
