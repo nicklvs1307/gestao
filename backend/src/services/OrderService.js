@@ -99,13 +99,16 @@ class OrderService {
         // Processar Delivery Info
         if (orderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
-             let fullAddress = 'Retirada no Balcão';
+             let fullAddress = deliveryInfo.address || 'Retirada no Balcão';
              
+             // Se for entrega e tivermos campos estruturados, montamos a string bonitinha
              if (isDelivery && deliveryInfo.street) {
                  fullAddress = `${deliveryInfo.street}${deliveryInfo.number ? ', ' + deliveryInfo.number : ''}${deliveryInfo.neighborhood ? ' - ' + deliveryInfo.neighborhood : ''}`;
+             } else if (!isDelivery) {
+                 fullAddress = 'Retirada no Balcão';
              }
              
-             const cleanPhone = deliveryInfo.phone.replace(/\D/g, '');
+             const cleanPhone = deliveryInfo.phone ? deliveryInfo.phone.replace(/\D/g, '') : '';
              
              const customer = await tx.customer.upsert({
                  where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
