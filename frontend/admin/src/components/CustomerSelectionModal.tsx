@@ -4,6 +4,7 @@ import {
     ChevronRight, ChevronDown, Edit, Loader2 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';

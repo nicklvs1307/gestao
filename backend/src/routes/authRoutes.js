@@ -12,11 +12,20 @@ router.get('/roles', needsAdmin, AuthController.getAvailableRoles); // Nova rota
 router.get('/drivers', needsAuth, async (req, res) => {
     try {
         const drivers = await prisma.user.findMany({
-            where: { restaurantId: req.restaurantId, role: 'driver' },
+            where: { 
+                restaurantId: req.restaurantId,
+                roleRef: {
+                    name: {
+                        equals: 'driver',
+                        mode: 'insensitive'
+                    }
+                }
+            },
             select: { id: true, name: true }
         });
         res.json(drivers);
     } catch (e) { 
+        console.error('Erro ao buscar entregadores:', e);
         res.status(500).json({ error: 'Erro ao buscar entregadores.' }); 
     }
 });
