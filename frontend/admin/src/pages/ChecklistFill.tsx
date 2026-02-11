@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { cn } from '../lib/utils';
 
 const ChecklistFill: React.FC = () => {
     const { id } = useParams<{ id: string }>();

@@ -4,7 +4,8 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  // Support for Bearer token in header or token in query string (for SSE)
+  const token = (authHeader && authHeader.split(' ')[1]) || req.query.token;
 
   if (token == null) return res.sendStatus(401);
 

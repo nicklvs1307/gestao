@@ -231,10 +231,7 @@ const getAvailableRoles = async (req, res) => {
                     whereClause,
                     { 
                         name: { 
-                            not: { 
-                                contains: 'superadmin', 
-                                mode: 'insensitive' 
-                            } 
+                            not: "Super Admin" 
                         } 
                     }
                 ]
