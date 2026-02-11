@@ -227,7 +227,7 @@ const ChecklistManagement: React.FC = () => {
                                             }} 
                                             className="p-2 bg-slate-50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                                         >
-                                            <Edit size={16}/)
+                                            <Edit size={16}/>
                                         </button>
                                         <button 
                                             onClick={(e) => { 
