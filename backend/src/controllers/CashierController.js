@@ -101,6 +101,34 @@ class CashierController {
     });
     res.json(sessions);
   });
+
+  // GET /api/cashier/orders
+  getSessionOrders = asyncHandler(async (req, res) => {
+    const session = await prisma.cashierSession.findFirst({
+      where: { restaurantId: req.restaurantId, status: 'OPEN' }
+    });
+
+    if (!session) {
+      res.status(404);
+      throw new Error("Nenhum caixa aberto.");
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { 
+        restaurantId: req.restaurantId,
+        createdAt: { gte: session.openedAt }
+      },
+      include: {
+        items: { include: { product: true } },
+        deliveryOrder: true,
+        payments: true,
+        user: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(orders);
+  });
 }
 
 module.exports = new CashierController();

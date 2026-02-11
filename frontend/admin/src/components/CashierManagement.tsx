@@ -25,8 +25,11 @@ const CashierManagement: React.FC = () => {
     const [cashierData, setCashierData] = useState<any>(null);
     const [summary, setSummary] = useState<any>(null);
     const [history, setHistory] = useState<any[]>([]);
+    const [sessionOrders, setSessionOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     
+    const [activeTab, setActiveTab] = useState<'summary' | 'orders' | 'history'>('summary');
+
     const [initialAmount, setInitialAmount] = useState('');
     const [notes, setNotes] = useState('');
     const [closingValues, setClosingValues] = useState<Record<string, string>>({
@@ -41,7 +44,6 @@ const CashierManagement: React.FC = () => {
     const [transAmount, setTransAmount] = useState('');
     const [transDesc, setTransDesc] = useState('');
 
-    const [showConference, setShowConference] = useState(false);
     const [editingOrder, setEditingOrder] = useState<string | null>(null);
 
     const paymentMethods = [
@@ -55,14 +57,16 @@ const CashierManagement: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [statusData, summaryData, historyData] = await Promise.all([
+            const [statusData, summaryData, historyData, ordersData] = await Promise.all([
                 getCashierStatus(),
                 getCashierSummary().catch(() => null),
-                getCashierHistory().catch(() => [])
+                getCashierHistory().catch(() => []),
+                apiClient.get('/cashier/orders').then(r => r.data).catch(() => [])
             ]);
             setCashierData(statusData);
             setSummary(summaryData);
             setHistory(historyData);
+            setSessionOrders(ordersData);
         } catch (error) { console.error(error); }
         finally { setLoading(false); }
     };
@@ -232,114 +236,160 @@ const CashierManagement: React.FC = () => {
                 <div className="lg:col-span-8 space-y-8">
                     {isOpen ? (
                         <>
-                            {/* Dashboard de Turno Atual */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <Card className="p-6 border-slate-100 bg-white group hover:border-orange-500/20 transition-all">
-                                    <div className="flex justify-between items-start mb-6"><div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center shadow-inner group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors"><Unlock size={24} /></div><span className="text-[8px] font-black uppercase bg-slate-100 px-2 py-1 rounded italic tracking-widest">Abertura</span></div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fundo de Caixa</p>
-                                    <h4 className="text-3xl font-black text-slate-900 italic tracking-tighter">R$ {session.initialAmount.toFixed(2).replace('.', ',')}</h4>
-                                </Card>
-                                <Card className="p-6 border-emerald-100 bg-emerald-50/20 group hover:bg-white transition-all">
-                                    <div className="flex justify-between items-start mb-6"><div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100 group-hover:scale-110 transition-transform"><ArrowUpCircle size={24} /></div><span className="text-[8px] font-black uppercase bg-emerald-100 text-emerald-600 px-2 py-1 rounded italic tracking-widest">Vendas</span></div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total de Entradas</p>
-                                    <h4 className="text-3xl font-black text-emerald-600 italic tracking-tighter">R$ {summary?.totalSales?.toFixed(2).replace('.', ',') || '0,00'}</h4>
-                                </Card>
-                                <Card className="p-6 border-orange-100 bg-orange-50/20 group hover:bg-white transition-all">
-                                    <div className="flex justify-between items-start mb-6"><div className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-100 group-hover:scale-110 transition-transform"><CheckCircle size={24} /></div><span className="text-[8px] font-black uppercase bg-orange-100 text-orange-600 px-2 py-1 rounded italic tracking-widest">Saldo</span></div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Estimado</p>
-                                    <h4 className="text-3xl font-black text-orange-600 italic tracking-tighter">R$ {(session.initialAmount + (summary?.totalSales || 0)).toFixed(2).replace('.', ',')}</h4>
-                                </Card>
+                            {/* Navegação por Abas */}
+                            <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-slate-100 gap-1">
+                                <button onClick={() => setActiveTab('summary')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'summary' ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50")}>Resumo Financeiro</button>
+                                <button onClick={() => setActiveTab('orders')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'orders' ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50")}>Comandas da Sessão</button>
+                                <button onClick={() => setActiveTab('history')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'history' ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50")}>Histórico de Turnos</button>
                             </div>
 
-                            {/* Ações Rápidas de Operação */}
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <Button fullWidth onClick={() => setShowTransactionModal('INCOME')} className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-900/10 italic gap-2"><Plus size={18} strokeWidth={3} /> Reforço</Button>
-                                <Button fullWidth onClick={() => setShowTransactionModal('EXPENSE')} className="h-12 rounded-2xl bg-orange-600 hover:bg-orange-500 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-orange-900/10 italic gap-2"><Minus size={18} strokeWidth={3} /> Sangria</Button>
-                                <Button fullWidth onClick={() => setShowConference(!showConference)} variant={showConference ? 'primary' : 'outline'} className={cn("h-12 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg italic gap-2 transition-all", showConference ? "bg-slate-900 text-white border-none" : "bg-white border-slate-200 text-slate-400")}><Receipt size={18} /> {showConference ? 'Fechar Auditoria' : 'Auditoria'}</Button>
-                            </div>
-
-                            {/* Alerta de Motoboys Pendentes */}
-                            {session.pendingDriverSettlementsCount > 0 && (
-                                <Card className="p-4 border-orange-200 bg-orange-50/50 flex items-center justify-between group cursor-pointer hover:bg-orange-50 transition-all shadow-sm" onClick={() => window.location.href='/drivers/settlement'}>
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-2.5 bg-white text-orange-500 rounded-xl shadow-sm"><AlertCircle size={20} /></div>
-                                        <div>
-                                            <h4 className="text-[10px] font-black text-slate-900 uppercase italic">Atenção: Acertos Pendentes</h4>
-                                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Existem {session.pendingDriverSettlementsCount} motoboy(s) aguardando prestação de contas.</p>
-                                        </div>
+                            {activeTab === 'summary' && (
+                                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                                    {/* Dashboard de Turno Atual */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <Card className="p-6 border-slate-100 bg-white">
+                                            <div className="flex justify-between items-start mb-6"><div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center shadow-inner"><Unlock size={24} /></div><span className="text-[8px] font-black uppercase bg-slate-100 px-2 py-1 rounded italic tracking-widest">Abertura</span></div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fundo de Caixa</p>
+                                            <h4 className="text-3xl font-black text-slate-900 italic tracking-tighter">R$ {session.initialAmount.toFixed(2).replace('.', ',')}</h4>
+                                        </Card>
+                                        <Card className="p-6 border-emerald-100 bg-emerald-50/20">
+                                            <div className="flex justify-between items-start mb-6"><div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100"><ArrowUpCircle size={24} /></div><span className="text-[8px] font-black uppercase bg-emerald-100 text-emerald-600 px-2 py-1 rounded italic tracking-widest">Vendas</span></div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total de Entradas</p>
+                                            <h4 className="text-3xl font-black text-emerald-600 italic tracking-tighter">R$ {summary?.totalSales?.toFixed(2).replace('.', ',') || '0,00'}</h4>
+                                        </Card>
+                                        <Card className="p-6 border-orange-100 bg-orange-50/20">
+                                            <div className="flex justify-between items-start mb-6"><div className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-100"><CheckCircle size={24} /></div><span className="text-[8px] font-black uppercase bg-orange-100 text-orange-600 px-2 py-1 rounded italic tracking-widest">Saldo</span></div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Estimado</p>
+                                            <h4 className="text-3xl font-black text-orange-600 italic tracking-tighter">R$ {(session.initialAmount + (summary?.totalSales || 0)).toFixed(2).replace('.', ',')}</h4>
+                                        </Card>
                                     </div>
-                                    <ArrowUpRight size={20} className="text-slate-300 group-hover:text-orange-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-                                </Card>
+
+                                    {/* Ações Rápidas de Operação */}
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <Button fullWidth onClick={() => setShowTransactionModal('INCOME')} className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-900/10 italic gap-2"><Plus size={18} strokeWidth={3} /> Reforço</Button>
+                                        <Button fullWidth onClick={() => setShowTransactionModal('EXPENSE')} className="h-12 rounded-2xl bg-orange-600 hover:bg-orange-500 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-orange-900/10 italic gap-2"><Minus size={18} strokeWidth={3} /> Sangria</Button>
+                                    </div>
+
+                                    {/* Alerta de Motoboys Pendentes */}
+                                    {session.pendingDriverSettlementsCount > 0 && (
+                                        <Card className="p-4 border-orange-200 bg-orange-50/50 flex items-center justify-between group cursor-pointer hover:bg-orange-50 transition-all shadow-sm" onClick={() => window.location.href='/drivers/settlement'}>
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-2.5 bg-white text-orange-500 rounded-xl shadow-sm"><AlertCircle size={20} /></div>
+                                                <div>
+                                                    <h4 className="text-[10px] font-black text-slate-900 uppercase italic">Atenção: Acertos Pendentes</h4>
+                                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Existem {session.pendingDriverSettlementsCount} motoboy(s) aguardando prestação de contas.</p>
+                                                </div>
+                                            </div>
+                                            <ArrowUpRight size={20} className="text-slate-300 group-hover:text-orange-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+                                        </Card>
+                                    )}
+
+                                    {/* Faturamento por Modalidade */}
+                                    <Card className="p-8 border-slate-100 bg-white shadow-xl space-y-8">
+                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3 italic"><Receipt size={14} className="text-orange-500" /> Faturamento por Modalidade</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                                            {paymentMethods.map(m => (
+                                                <div key={m.id} className="space-y-2 group cursor-default">
+                                                    <div className="flex items-center gap-2"><m.icon size={12} className="text-slate-300 group-hover:text-orange-500 transition-colors"/><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{m.label}</p></div>
+                                                    <p className="text-xl font-black text-slate-900 italic tracking-tighter">R$ {(summary?.salesByMethod?.[m.id] || 0).toFixed(2)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                </div>
                             )}
 
-                            {/* Auditoria Detalhada Premium */}
-                            <AnimatePresence>
-                                {showConference && (
-                                    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}>
-                                        <Card className="p-0 overflow-hidden border-2 border-orange-500/30 shadow-2xl bg-white" noPadding>
-                                            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                                                <div><h3 className="font-black text-slate-900 uppercase italic text-sm tracking-widest flex items-center gap-3"><Receipt size={20} className="text-orange-500" /> Auditoria de Lançamentos</h3><p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Conferência ponto-a-ponto do faturamento</p></div>
-                                            </div>
-                                            <div className="p-8 space-y-12">
-                                                {paymentMethods.map(method => {
-                                                    const ordersInMethod = summary?.transactions?.filter((t: any) => t.paymentMethod === method.id) || [];
-                                                    const total = ordersInMethod.reduce((acc: number, t: any) => acc + t.amount, 0);
-                                                    return (
-                                                        <div key={method.id} className="space-y-4">
-                                                            <div className="flex items-center justify-between border-b-2 border-slate-50 pb-3"><div className="flex items-center gap-3"><div className="p-2 bg-slate-100 rounded-lg text-slate-400"><method.icon size={16}/></div><h4 className="font-black text-slate-900 uppercase text-xs italic tracking-tight">{method.label}</h4></div><span className="font-black text-slate-900 text-lg italic tracking-tighter">R$ {total.toFixed(2)}</span></div>
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {ordersInMethod.map((t: any) => (
-                                                                    <div key={t.id} className="p-4 bg-slate-50 rounded-[1.5rem] border-2 border-transparent hover:border-orange-500/20 hover:bg-white transition-all flex items-center justify-between group">
-                                                                        <div className="space-y-1"><p className="text-[10px] font-black text-slate-900 uppercase italic leading-none">{t.description}</p><p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(t.createdAt), 'HH:mm')}</p></div>
-                                                                        <div className="flex items-center gap-4">
-                                                                            <span className="font-black text-slate-900 text-xs italic tracking-tighter">R$ {t.amount.toFixed(2)}</span>
-                                                                            <div className="relative">{editingOrder === t.id ? (
-                                                                                <div className="absolute right-0 top-0 mt-10 bg-white shadow-2xl rounded-2xl border border-slate-100 p-2 z-20 w-56 animate-in zoom-in-95 duration-200">
-                                                                                    {paymentMethods.map(m => (
-                                                                                        <button key={m.id} onClick={() => handleUpdatePayment(t.orderId, m.id)} className="w-full text-left p-3 hover:bg-orange-50 rounded-xl text-[9px] font-black uppercase flex items-center justify-between transition-colors">{m.label}{t.paymentMethod === m.id && <Check size={14} className="text-emerald-500" />}</button>
-                                                                                    ))}
-                                                                                    <Button fullWidth size="sm" variant="ghost" onClick={() => setEditingOrder(null)} className="mt-2 text-[8px] font-black uppercase text-slate-400">Cancelar</Button>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <Button variant="ghost" size="icon" onClick={() => setEditingOrder(t.id)} className="h-8 w-8 rounded-lg bg-white shadow-sm opacity-0 group-hover:opacity-100"><Edit2 size={14}/></Button>
-                                                                            )}</div>
+                            {activeTab === 'orders' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+                                    <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white" noPadding>
+                                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3 italic"><Receipt size={14} className="text-orange-500" /> Comandas da Sessão</h3>
+                                            <Button variant="ghost" size="sm" className="text-[9px] font-black uppercase text-orange-600" onClick={fetchData}><RefreshCw size={12} className="mr-1"/> Atualizar</Button>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="bg-slate-50/50">
+                                                        <th className="px-6 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Pedido</th>
+                                                        <th className="px-6 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Cliente / Mesa</th>
+                                                        <th className="px-6 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Método</th>
+                                                        <th className="px-6 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Valor</th>
+                                                        <th className="px-6 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {sessionOrders.length > 0 ? sessionOrders.map((order: any) => (
+                                                        <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                            <td className="px-6 py-4">
+                                                                <p className="font-black text-slate-900 text-xs uppercase italic">#{order.dailyOrderNumber || order.id.slice(-4)}</p>
+                                                                <p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(order.createdAt), 'HH:mm')}</p>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <p className="font-black text-slate-700 text-xs uppercase">{order.tableNumber ? `Mesa ${order.tableNumber}` : order.deliveryOrder?.name || 'Balcão'}</p>
+                                                                <p className="text-[8px] font-bold text-slate-400 uppercase">{order.orderType}</p>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="relative">
+                                                                    {editingOrder === order.id ? (
+                                                                        <div className="absolute left-0 top-0 mt-8 bg-white shadow-2xl rounded-2xl border border-slate-100 p-2 z-20 w-48">
+                                                                            {paymentMethods.map(m => (
+                                                                                <button key={m.id} onClick={() => handleUpdatePayment(order.id, m.id)} className="w-full text-left p-2.5 hover:bg-orange-50 rounded-xl text-[9px] font-black uppercase flex items-center justify-between transition-colors">
+                                                                                    {m.label}
+                                                                                    {(order.payments?.[0]?.method === m.id || order.deliveryOrder?.paymentMethod === m.id) && <Check size={14} className="text-emerald-500" />}
+                                                                                </button>
+                                                                            ))}
+                                                                            <button onClick={() => setEditingOrder(null)} className="w-full mt-2 py-2 text-[8px] font-black uppercase text-rose-500 hover:bg-rose-50 rounded-xl">Cancelar</button>
                                                                         </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </Card>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                                                                    ) : (
+                                                                        <button onClick={() => setEditingOrder(order.id)} className="flex items-center gap-2 group/btn">
+                                                                            <span className="text-[9px] font-black text-slate-500 uppercase bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 italic group-hover/btn:border-orange-300 transition-colors">
+                                                                                {paymentMethods.find(m => m.id === (order.payments?.[0]?.method || order.deliveryOrder?.paymentMethod))?.label || 'PENDENTE'}
+                                                                            </span>
+                                                                            <Edit2 size={10} className="text-slate-300 group-hover/btn:text-orange-500 opacity-0 group-hover:opacity-100 transition-all"/>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right font-black text-sm italic tracking-tighter text-slate-900">
+                                                                R$ {order.total.toFixed(2).replace('.', ',')}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center">
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" title="Ver Detalhes"><Info size={16} className="text-slate-300 hover:text-orange-500"/></Button>
+                                                            </td>
+                                                        </tr>
+                                                    )) : (
+                                                        <tr><td colSpan={5} className="px-6 py-20 text-center opacity-20"><div className="flex flex-col items-center"><History size={48} strokeWidth={1} className="mb-3"/><p className="text-[10px] font-black uppercase tracking-widest">Nenhuma comanda nesta sessão</p></div></td></tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </Card>
+                                </div>
+                            )}
 
-                            {/* Métodos de Recebimento Mini-Cards */}
-                            {!showConference && (
-                                <Card className="p-8 border-slate-100 bg-white shadow-xl space-y-8">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3 italic"><Receipt size={14} className="text-orange-500" /> Faturamento por Modalidade</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                                        {paymentMethods.map(m => (
-                                            <div key={m.id} className="space-y-2 group cursor-default">
-                                                <div className="flex items-center gap-2"><m.icon size={12} className="text-slate-300 group-hover:text-orange-500 transition-colors"/><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{m.label}</p></div>
-                                                <p className="text-xl font-black text-slate-900 italic tracking-tighter">R$ {(summary?.salesByMethod?.[m.id] || 0).toFixed(2)}</p>
-                                            </div>
+                            {activeTab === 'history' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-left-2">
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {history.map((h: any) => (
+                                            <Card key={h.id} className="p-5 flex items-center justify-between border-slate-100 hover:shadow-md transition-all cursor-default">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", h.status === 'OPEN' ? "bg-emerald-50 text-emerald-500" : "bg-slate-50 text-slate-400")}>
+                                                        {h.status === 'OPEN' ? <Unlock size={20}/> : <Lock size={20}/>}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-slate-900 uppercase italic leading-none mb-1">{format(new Date(h.openedAt), 'dd/MMM/yyyy • HH:mm')}</p>
+                                                        <p className="text-[8px] font-bold text-slate-400 uppercase">Operador: {h.user?.name || 'Sistema'}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo de Fechamento</p>
+                                                    <span className="text-sm font-black text-slate-900 italic">{h.status === 'OPEN' ? 'EM ABERTO' : `R$ ${h.finalAmount?.toFixed(2)}`}</span>
+                                                </div>
+                                            </Card>
                                         ))}
                                     </div>
-                                </Card>
+                                </div>
                             )}
-
-                            {/* Tabela de Histórico Diário */}
-                            <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white" noPadding>
-                                <div className="p-6 border-b border-slate-100 flex items-center justify-between"><h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3 italic"><History size={14} className="text-orange-500" /> Movimentações Recentes</h3><Button variant="ghost" size="sm" className="text-[9px] font-black uppercase text-orange-600" onClick={fetchData}><RefreshCw size={12} className="mr-1"/> Sincronizar</Button></div>
-                                <div className="overflow-x-auto"><table className="w-full text-left border-collapse"><thead><tr className="bg-slate-50/50"><th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Horário</th><th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Descrição / Evento</th><th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Método</th><th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Valor Líquido</th></tr></thead>
-                                    <tbody className="divide-y divide-slate-50">{summary?.transactions?.length > 0 ? summary.transactions.slice(0, 10).map((t: any) => (
-                                        <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group"><td className="px-8 py-5 text-xs font-black text-slate-300 italic tracking-tighter group-hover:text-slate-900 transition-colors">{format(new Date(t.createdAt), 'HH:mm')}</td><td className="px-8 py-5"><div><p className="font-black text-slate-900 text-xs uppercase italic leading-none mb-1">{t.description}</p><p className="text-[8px] font-bold text-slate-400 uppercase">{t.type === 'INCOME' ? 'Reforço / Entrada' : 'Sangria / Saída'}</p></div></td><td className="px-8 py-5"><span className="text-[9px] font-black text-slate-500 uppercase bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 italic">{paymentMethods.find(m => m.id === t.paymentMethod)?.label || t.paymentMethod}</span></td><td className={cn("px-8 py-5 text-right font-black text-sm italic tracking-tighter", t.type === 'INCOME' ? "text-emerald-600" : "text-rose-600")}>{t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toFixed(2).replace('.', ',')}</td></tr>
-                                    )) : <tr><td colSpan={4} className="px-8 py-20 text-center opacity-20"><div className="flex flex-col items-center"><History size={48} strokeWidth={1} className="mb-3"/><p className="text-[10px] font-black uppercase tracking-widest">Sem lançamentos registrados</p></div></td></tr>}</tbody>
-                                </table></div>
-                            </Card>
                         </>
                     ) : (
                         <div className="h-full min-h-[500px] flex flex-col items-center justify-center p-12 bg-slate-50/50 border-4 border-dashed border-slate-200 rounded-[4rem] text-center animate-in fade-in duration-700">

@@ -606,9 +606,37 @@ const PosPage: React.FC = () => {
                                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><List size={14} /> Itens Consumidos</h4>
                                     <div className="space-y-2">
                                         {viewingTable.items?.map((item: any) => (
-                                            <Card key={item.id} className="p-4 flex justify-between items-center border-slate-50">
-                                                <div className="flex flex-col"><span className="text-xs font-black text-slate-800 uppercase italic">0{item.quantity}x {item.product.name}</span><span className="text-[9px] font-bold text-slate-400 uppercase">{item.sizeJson ? JSON.parse(item.sizeJson).name : 'Individual'}</span></div>
-                                                <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * item.priceAtTime).toFixed(2)}</span>
+                                            <Card key={item.id} className="p-4 border-slate-50 group hover:border-orange-200 transition-all">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-black text-slate-800 uppercase italic">0{item.quantity}x {item.product.name}</span>
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {item.sizeJson && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{JSON.parse(item.sizeJson).name}</span>}
+                                                            {item.flavorsJson && JSON.parse(item.flavorsJson).map((f:any) => <span key={f.id} className="text-[8px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-bold uppercase">{f.name}</span>)}
+                                                            {item.addonsJson && JSON.parse(item.addonsJson).map((a:any) => <span key={a.id} className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">+{a.name}</span>)}
+                                                        </div>
+                                                        {item.observations && <p className="text-[8px] text-amber-600 font-bold mt-1 uppercase italic">Obs: {item.observations}</p>}
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * item.priceAtTime).toFixed(2)}</span>
+                                                        <button 
+                                                            onClick={async () => {
+                                                                if(confirm('Remover este item do pedido?')) {
+                                                                    await removeOrderItem(viewingTable.id, item.id);
+                                                                    toast.success('Item removido');
+                                                                    loadTableSummary();
+                                                                    // Atualiza o estado viewingTable
+                                                                    const updated = await getPosTableSummary();
+                                                                    const table = updated.find((t:any) => t.id === viewingTable.id);
+                                                                    if(table) setViewingTable(table);
+                                                                }
+                                                            }}
+                                                            className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </Card>
                                         ))}
                                         {(!viewingTable.items || viewingTable.items.length === 0) && (
@@ -623,6 +651,13 @@ const PosPage: React.FC = () => {
                                 <div className="space-y-6">
                                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><ArrowRightLeft size={14} /> Ações da Mesa</h4>
                                     <div className="grid grid-cols-1 gap-3">
+                                        <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={async () => {
+                                            try {
+                                                const config = JSON.parse(localStorage.getItem('printer_config') || '{}');
+                                                await printOrder(viewingTable as any, config);
+                                                toast.success('Pré-conta enviada!');
+                                            } catch (e) { toast.error('Erro ao imprimir'); }
+                                        }}><div className="flex items-center gap-3"><Printer size={18} className="text-blue-500" /><span>Imprimir Pré-Conta</span></div><ChevronRight size={16} /></Button>
                                         <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('transfer_table')}><div className="flex items-center gap-3"><MoveRight size={18} className="text-orange-500" /><span>Transferir Mesa</span></div><ChevronRight size={16} /></Button>
                                         <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('payment_method')}><div className="flex items-center gap-3"><Receipt size={18} className="text-emerald-500" /><span>Encerrar e Pagar</span></div><ChevronRight size={16} /></Button>
                                     </div>
