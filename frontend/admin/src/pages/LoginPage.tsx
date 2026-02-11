@@ -25,9 +25,11 @@ const LoginPage: React.FC = () => {
       
       toast.success(`Bem-vindo de volta, ${user.name.split(' ')[0]}!`);
       
-      if (user.role === 'waiter') {
+      const normalizedRole = user.role?.toLowerCase() || '';
+
+      if (normalizedRole.includes('waiter')) {
           navigate('/waiter');
-      } else if (user.role === 'driver') {
+      } else if (normalizedRole.includes('driver')) {
           navigate('/driver/dashboard');
       } else {
           navigate('/dashboard');

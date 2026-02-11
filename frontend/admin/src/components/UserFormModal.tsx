@@ -167,40 +167,40 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         </div>
 
                         <div className="grid grid-cols-1 gap-3">
-                            {availableRoles.length === 0 && (
+                            {(!availableRoles || availableRoles.length === 0) ? (
                                 <div className="p-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-center">
-                                    <Loader2 className="animate-spin mx-auto text-slate-300 mb-2" size={24} />
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase italic">Buscando cargos disponíveis...</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase italic">Nenhum cargo disponível ou carregando...</p>
                                 </div>
+                            ) : (
+                                availableRoles.map(r => (
+                                    <div
+                                        key={r.id}
+                                        onClick={() => setRoleId(r.id)}
+                                        className={cn(
+                                            "flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group",
+                                            roleId === r.id 
+                                                ? "bg-slate-900 border-slate-900 shadow-xl" 
+                                                : "bg-white border-slate-100 hover:border-orange-500/20 shadow-sm"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "w-10 h-10 rounded-xl flex items-center justify-center transition-colors", 
+                                            roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500"
+                                        )}>
+                                            <Award size={20} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className={cn("text-xs font-black uppercase italic tracking-tight", roleId === r.id ? "text-white" : "text-slate-800")}>{r.name}</p>
+                                            {r.description && <p className={cn("text-[9px] font-bold leading-tight mt-0.5", roleId === r.id ? "text-slate-400" : "text-slate-400")}>{r.description}</p>}
+                                        </div>
+                                        {roleId === r.id && (
+                                          <div className="text-emerald-400">
+                                            <CheckCircle size={20} />
+                                          </div>
+                                        )}
+                                    </div>
+                                ))
                             )}
-                            {availableRoles.map(r => (
-                                <div
-                                    key={r.id}
-                                    onClick={() => setRoleId(r.id)}
-                                    className={cn(
-                                        "flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group",
-                                        roleId === r.id 
-                                            ? "bg-slate-900 border-slate-900 shadow-xl" 
-                                            : "bg-white border-slate-100 hover:border-orange-500/20 shadow-sm"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-colors", 
-                                        roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500"
-                                    )}>
-                                        <Award size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className={cn("text-xs font-black uppercase italic tracking-tight", roleId === r.id ? "text-white" : "text-slate-800")}>{r.name}</p>
-                                        {r.description && <p className={cn("text-[9px] font-bold leading-tight mt-0.5", roleId === r.id ? "text-slate-400" : "text-slate-400")}>{r.description}</p>}
-                                    </div>
-                                    {roleId === r.id && (
-                                      <div className="text-emerald-400">
-                                        <CheckCircle size={20} />
-                                      </div>
-                                    )}
-                                </div>
-                            ))}
                         </div>
                     </motion.div>
                 )}

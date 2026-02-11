@@ -4,6 +4,21 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+const normalizeRole = (dbRoleName, isSuperAdmin) => {
+    if (isSuperAdmin) return 'superadmin';
+    if (!dbRoleName) return 'staff';
+
+    let normalized = dbRoleName.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, '');
+
+    if (normalized.includes('garcom') || normalized.includes('waiter')) return 'waiter';
+    if (normalized.includes('entregador') || normalized.includes('driver')) return 'driver';
+    if (normalized.includes('administrador') || normalized.includes('admin')) return 'admin';
+    
+    return normalized;
+};
+
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -21,24 +36,13 @@ const login = async (req, res) => {
             return res.status(400).json({ error: 'Credenciais inválidas.' });
         }
         
-        let permissions = user.roleRef?.permissions.map(p => p.name) || [];
-        const dbRoleName = user.roleRef?.name || (user.isSuperAdmin ? 'superadmin' : 'staff');
+        const permissions = user.roleRef?.permissions.map(p => p.name) || [];
+        const normalizedRole = normalizeRole(user.roleRef?.name, user.isSuperAdmin);
         
-        // Normaliza o nome do cargo para o frontend (waiter, driver, admin, staff)
-        let normalizedRole = dbRoleName.toLowerCase()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos (Garçom -> garcom)
-            .replace(/[^a-z0-9]/g, ''); // Remove caracteres especiais
-
-        // Mapeamentos específicos para compatibilidade com o frontend
-        if (normalizedRole.includes('garcom') || normalizedRole.includes('waiter')) normalizedRole = 'waiter';
-        if (normalizedRole.includes('entregador') || normalizedRole.includes('driver')) normalizedRole = 'driver';
-        if (normalizedRole.includes('administrador') || normalizedRole.includes('admin')) normalizedRole = 'admin';
-        
-        if (user.isSuperAdmin) normalizedRole = 'superadmin';
-        
-        // Compatibilidade: Se não tem permissões explícitas mas é admin (via RoleRef ou SuperAdmin)
+        // Compatibilidade: Se não tem permissões explícitas mas é admin
+        let finalPermissions = permissions;
         if (permissions.length === 0 && (normalizedRole === 'admin' || user.isSuperAdmin)) {
-            permissions = ['orders:view', 'orders:manage', 'products:manage', 'stock:manage', 'reports:view', 'financial:view', 'settings:manage'];
+            finalPermissions = ['orders:view', 'orders:manage', 'products:manage', 'stock:manage', 'reports:view', 'financial:view', 'settings:manage'];
         }
         
         const tokenData = { 
@@ -48,7 +52,7 @@ const login = async (req, res) => {
             restaurantId: user.restaurantId,
             isSuperAdmin: user.isSuperAdmin,
             franchiseId: user.franchiseId,
-            permissions
+            permissions: finalPermissions
         };
 
         const token = jwt.sign(tokenData, JWT_SECRET, { expiresIn: '8h' });
@@ -63,7 +67,7 @@ const login = async (req, res) => {
                 isSuperAdmin: user.isSuperAdmin,
                 restaurantId: user.restaurantId,
                 franchiseId: user.franchiseId,
-                permissions,
+                permissions: finalPermissions,
                 logoUrl: user.restaurant?.logoUrl,
                 menuUrl: user.restaurant?.settings?.menuUrl 
             } 
@@ -78,7 +82,6 @@ const getUsers = async (req, res) => {
     try {
         const whereClause = req.restaurantId ? { restaurantId: req.restaurantId } : {};
         
-        // Se não for SuperAdmin e não tiver restaurantId, bloqueamos por segurança
         const isUserSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
         if (!isUserSuperAdmin && !req.restaurantId) {
             return res.status(403).json({ error: 'Acesso negado.' });
@@ -104,24 +107,10 @@ const getUsers = async (req, res) => {
             } 
         });
 
-        // Mapeia para manter o formato esperado pelo frontend (adicionando campo 'role' virtual)
-        const mappedUsers = users.map(u => {
-            const dbRoleName = u.roleRef?.name || (u.isSuperAdmin ? 'superadmin' : 'staff');
-            let normalizedRole = dbRoleName.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/[^a-z0-9]/g, '');
-
-            if (normalizedRole.includes('garcom') || normalizedRole.includes('waiter')) normalizedRole = 'waiter';
-            if (normalizedRole.includes('entregador') || normalizedRole.includes('driver')) normalizedRole = 'driver';
-            if (normalizedRole.includes('administrador') || normalizedRole.includes('admin')) normalizedRole = 'admin';
-            
-            if (u.isSuperAdmin) normalizedRole = 'superadmin';
-
-            return {
-                ...u,
-                role: normalizedRole
-            };
-        });
+        const mappedUsers = users.map(u => ({
+            ...u,
+            role: normalizeRole(u.roleRef?.name, u.isSuperAdmin)
+        }));
 
         res.json(mappedUsers); 
     } catch (error) { 
@@ -225,11 +214,14 @@ const getAvailableRoles = async (req, res) => {
         const isUserSuperAdmin = user.isSuperAdmin || user.role === 'superadmin';
 
         // Busca roles do sistema (isSystem: true) ou da franquia do usuário
+        const orConditions = [{ isSystem: true }];
+        
+        if (user.franchiseId) {
+            orConditions.push({ franchiseId: user.franchiseId });
+        }
+
         let whereClause = {
-            OR: [
-                { isSystem: true },
-                { franchiseId: user.franchiseId }
-            ]
+            OR: orConditions
         };
 
         // Filtro Crítico: Se não for SuperAdmin, não pode ver roles de SuperAdmin
