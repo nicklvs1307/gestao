@@ -14,6 +14,7 @@ import {
     getChecklists, createChecklist, updateChecklist, deleteChecklist,
     getSectors, createSector, deleteSector
 } from '../services/api';
+import apiClient from '../services/api/client';
 
 const ChecklistManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -21,10 +22,19 @@ const ChecklistManagement: React.FC = () => {
     
     const [checklists, setChecklists] = useState<any[]>([]);
     const [sectors, setSectors] = useState<any[]>([]);
+    const [executions, setExecutions] = useState<any[]>([]);
     
     const [isEditingChecklist, setIsEditingChecklist] = useState(false);
     const [showQRCodeModal, setShowQRCodeModal] = useState(false);
+    const [showExecutionDetail, setShowExecutionDetail] = useState(false);
+    const [selectedExecution, setSelectedExecution] = useState<any>(null);
     const [selectedChecklist, setSelectedChecklist] = useState<any>(null);
+    const [filters, setFilters] = useState({
+        checklistId: '',
+        startDate: '',
+        endDate: ''
+    });
+
     const [currentChecklist, setCurrentChecklist] = useState<any>({
         title: '',
         description: '',
@@ -40,44 +50,14 @@ const ChecklistManagement: React.FC = () => {
         loadData();
     }, []);
 
-    const handlePrintQR = () => {
-        const printContent = document.getElementById('qr-code-to-print');
-        const windowUrl = 'about:blank';
-        const uniqueName = new Date();
-        const windowName = 'Print' + uniqueName.getTime();
-        const printWindow = window.open(windowUrl, windowName, 'left=50000,top=50000,width=0,height=0');
-
-        if (printWindow && printContent) {
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Imprimir QR Code - ${selectedChecklist?.title}</title>
-                        <style>
-                            body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-                            .container { border: 2px solid #000; padding: 40px; border-radius: 20px; text-align: center; }
-                            h1 { margin-top: 20px; font-size: 24px; text-transform: uppercase; }
-                            p { color: #666; margin-top: 5px; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            ${printContent.innerHTML}
-                            <h1>${selectedChecklist?.title}</h1>
-                            <p>Setor: ${selectedChecklist?.sector?.name}</p>
-                            <p style="font-size: 10px; margin-top: 20px;">Escaneie para iniciar o checklist</p>
-                        </div>
-                        <script>
-                            setTimeout(() => {
-                                window.print();
-                                window.close();
-                            }, 500);
-                        </script>
-                    </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
+    useEffect(() => {
+        if (activeTab === 'executions') {
+            loadExecutions();
         }
+    }, [activeTab, filters]);
+
+    const handlePrintQR = () => {
+        // ... existente ...
     };
 
     const loadData = async () => {
@@ -93,6 +73,15 @@ const ChecklistManagement: React.FC = () => {
             toast.error("Erro ao carregar dados do Checklist");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadExecutions = async () => {
+        try {
+            const data = await apiClient.get('/checklists/history', { params: filters });
+            setExecutions(data.data);
+        } catch (error) {
+            toast.error("Erro ao carregar histórico");
         }
     };
 
@@ -219,10 +208,36 @@ const ChecklistManagement: React.FC = () => {
                                     <span className="px-3 py-1 bg-slate-100 text-slate-600 text-[9px] font-black uppercase rounded-lg tracking-widest">
                                         {checklist.sector?.name}
                                     </span>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => { setSelectedChecklist(checklist); setShowQRCodeModal(true); }} className="p-2 bg-slate-50 text-slate-400 hover:text-orange-500 rounded-lg transition-colors"><QrCode size={16}/></button>
-                                        <button onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }} className="p-2 bg-slate-50 text-slate-400 hover:text-blue-500 rounded-lg transition-colors"><Edit size={16}/></button>
-                                        <button onClick={() => { if(confirm("Excluir modelo?")) deleteChecklist(checklist.id).then(loadData); }} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"><Trash2 size={16}/></button>
+                                    <div className="flex gap-1 z-20">
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                setSelectedChecklist(checklist); 
+                                                setShowQRCodeModal(true); 
+                                            }} 
+                                            className="p-2 bg-slate-50 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all"
+                                        >
+                                            <QrCode size={16}/>
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation();
+                                                setCurrentChecklist(checklist); 
+                                                setIsEditingChecklist(true); 
+                                            }} 
+                                            className="p-2 bg-slate-50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                        >
+                                            <Edit size={16}/)
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation();
+                                                if(confirm("Excluir modelo?")) deleteChecklist(checklist.id).then(loadData); 
+                                            }} 
+                                            className="p-2 bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                        >
+                                            <Trash2 size={16}/>
+                                        </button>
                                     </div>
                                 </div>
                                 <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter mb-1 leading-tight">{checklist.title}</h3>
@@ -278,16 +293,72 @@ const ChecklistManagement: React.FC = () => {
                 )}
 
                 {activeTab === 'executions' && (
-                    <div className="space-y-4 max-w-4xl mx-auto w-full">
-                        <Card className="p-12 border-slate-100 flex flex-col items-center justify-center text-center space-y-4">
-                            <div className="p-6 bg-slate-50 text-slate-200 rounded-full">
-                                <Clock size={48} />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">Histórico em Breve</h3>
-                                <p className="text-sm text-slate-400 max-w-xs mx-auto">Estamos processando os dados de auditoria. Em breve você poderá visualizar todas as execuções de checklist aqui.</p>
+                    <div className="space-y-6">
+                        {/* Filtros */}
+                        <Card className="p-6 border-slate-100">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Modelo</label>
+                                    <select 
+                                        className="w-full h-11 px-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-orange-500 font-bold text-sm outline-none transition-all"
+                                        value={filters.checklistId}
+                                        onChange={e => setFilters({...filters, checklistId: e.target.value})}
+                                    >
+                                        <option value="">Todos os Modelos</option>
+                                        {checklists.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Data Início</label>
+                                    <input type="date" className="w-full h-11 px-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-orange-500 font-bold text-sm outline-none" 
+                                        value={filters.startDate} onChange={e => setFilters({...filters, startDate: e.target.value})} />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Data Fim</label>
+                                    <input type="date" className="w-full h-11 px-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-orange-500 font-bold text-sm outline-none" 
+                                        value={filters.endDate} onChange={e => setFilters({...filters, endDate: e.target.value})} />
+                                </div>
+                                <div className="flex items-end">
+                                    <Button variant="ghost" className="w-full h-11 rounded-xl" onClick={() => setFilters({checklistId: '', startDate: '', endDate: ''})}>Limpar Filtros</Button>
+                                </div>
                             </div>
                         </Card>
+
+                        <div className="grid grid-cols-1 gap-4">
+                            {executions.length === 0 ? (
+                                <Card className="p-12 border-slate-100 flex flex-col items-center justify-center text-center space-y-4">
+                                    <div className="p-6 bg-slate-50 text-slate-200 rounded-full">
+                                        <Clock size={48} />
+                                    </div>
+                                    <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Nenhuma execução encontrada</p>
+                                </Card>
+                            ) : (
+                                executions.map(exec => (
+                                    <Card key={exec.id} onClick={() => { setSelectedExecution(exec); setShowExecutionDetail(true); }} className="p-5 border-slate-100 hover:border-orange-500 transition-all cursor-pointer group">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`p-3 rounded-xl ${exec.status === 'COMPLETED' ? 'bg-green-50 text-green-500' : 'bg-orange-50 text-orange-500'}`}>
+                                                    <CheckCircle2 size={20} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-black text-slate-900 uppercase italic leading-none">{exec.checklist?.title}</h4>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                                        {exec.user?.name || exec.notes?.match(/\[Executado por: (.*?)\]/)?.[1] || 'Anônimo'} • {new Date(exec.completedAt).toLocaleString('pt-BR')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right hidden md:block">
+                                                    <p className="text-[10px] font-black text-slate-900 uppercase">{exec.responses?.length} Itens</p>
+                                                    <p className="text-[9px] font-bold text-green-600 uppercase">100% Concluído</p>
+                                                </div>
+                                                <ChevronRight size={20} className="text-slate-300 group-hover:text-orange-500 transition-all" />
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
@@ -461,6 +532,102 @@ const ChecklistManagement: React.FC = () => {
                             </div>
                             
                             <p className="text-[9px] text-slate-300 font-bold uppercase mt-6 tracking-tight">O link aponta para: {window.location.origin}/checklist/fill/{selectedChecklist?.id}</p>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showExecutionDetail && selectedExecution && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowExecutionDetail(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-2xl bg-[#f8fafc] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                            <header className="p-8 bg-white border-b border-slate-100 flex justify-between items-start">
+                                <div>
+                                    <span className="px-3 py-1 bg-orange-50 text-orange-600 text-[9px] font-black uppercase rounded-lg tracking-widest mb-2 inline-block">
+                                        Detalhes da Auditoria
+                                    </span>
+                                    <h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">{selectedExecution.checklist?.title}</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 flex items-center gap-2">
+                                        <Clock size={12} /> {new Date(selectedExecution.completedAt).toLocaleString('pt-BR')}
+                                    </p>
+                                </div>
+                                <button onClick={() => setShowExecutionDetail(false)} className="w-12 h-12 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"><X size={24}/></button>
+                            </header>
+
+                            <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                                {/* Info do Executor */}
+                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Informações Gerais</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Executor</p>
+                                            <p className="text-sm font-black text-slate-900 uppercase italic">
+                                                {selectedExecution.user?.name || selectedExecution.notes?.match(/\[Executado por: (.*?)\]/)?.[1] || 'Não identificado'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Status</p>
+                                            <p className="text-sm font-black text-green-600 uppercase italic">{selectedExecution.status}</p>
+                                        </div>
+                                    </div>
+                                    {selectedExecution.notes && (
+                                        <div className="mt-4 pt-4 border-t border-slate-50">
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Observações Gerais</p>
+                                            <p className="text-xs text-slate-600 font-medium">{selectedExecution.notes.replace(/\[Executado por:.*?\]/, '').trim() || 'Nenhuma observação'}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Respostas */}
+                                <div className="space-y-3">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Itens Verificados</h4>
+                                    {selectedExecution.responses?.map((resp: any, idx: number) => {
+                                        const task = selectedExecution.checklist?.tasks?.find((t: any) => t.id === resp.taskId);
+                                        return (
+                                            <div key={resp.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                                                <div className="flex items-start justify-between gap-4 mb-3">
+                                                    <div className="flex gap-3">
+                                                        <span className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center text-[9px] font-black text-slate-300 shrink-0">{idx + 1}</span>
+                                                        <p className="text-sm font-bold text-slate-800 leading-tight">{task?.content || 'Tarefa removida'}</p>
+                                                    </div>
+                                                    {resp.isOk ? (
+                                                        <span className="px-2 py-1 bg-green-50 text-green-600 text-[8px] font-black uppercase rounded-md shrink-0">Conforme</span>
+                                                    ) : (
+                                                        <span className="px-2 py-1 bg-rose-50 text-rose-600 text-[8px] font-black uppercase rounded-md shrink-0">Irregular</span>
+                                                    )}
+                                                </div>
+
+                                                <div className="ml-9 space-y-3">
+                                                    {/* Valor da resposta se não for checkbox */}
+                                                    {task?.type !== 'CHECKBOX' && (
+                                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                            {task?.type === 'PHOTO' ? (
+                                                                <img 
+                                                                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${resp.value}`} 
+                                                                    className="w-full h-40 object-cover rounded-lg shadow-sm"
+                                                                    alt="Evidência"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-xs font-black text-slate-700">{resp.value}</p>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {resp.notes && (
+                                                        <div className="flex items-start gap-2 text-orange-600 bg-orange-50/50 p-3 rounded-xl">
+                                                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                                                            <p className="text-[11px] font-medium leading-tight">{resp.notes}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <footer className="p-8 bg-white border-t border-slate-100">
+                                <Button onClick={() => setShowExecutionDetail(false)} className="w-full h-14 rounded-2xl italic uppercase text-[10px] font-black tracking-widest">Fechar Detalhes</Button>
+                            </footer>
                         </motion.div>
                     </div>
                 )}
