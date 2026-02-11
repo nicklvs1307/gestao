@@ -116,7 +116,7 @@ class ChecklistController {
     const execution = await prisma.checklistExecution.create({
       data: {
         checklistId,
-        userId: user?.id || null, 
+        userId: user?.id || undefined, 
         restaurantId: restaurantId,
         notes: userName ? `[Executado por: ${userName}] ${notes || ''}` : notes,
         status: 'COMPLETED',
