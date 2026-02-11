@@ -57,7 +57,51 @@ const ChecklistManagement: React.FC = () => {
     }, [activeTab, filters]);
 
     const handlePrintQR = () => {
-        // ... existente ...
+        const printContent = document.getElementById('qr-code-to-print');
+        if (!printContent) return;
+
+        const windowPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
+        if (!windowPrint) return;
+
+        windowPrint.document.write(`
+            <html>
+                <head>
+                    <title>Imprimir QR Code - ${selectedChecklist?.title}</title>
+                    <style>
+                        body { 
+                            font-family: sans-serif; 
+                            display: flex; 
+                            flex-direction: column; 
+                            align-items: center; 
+                            justify-content: center; 
+                            height: 100vh; 
+                            margin: 0;
+                            text-align: center;
+                        }
+                        .container { border: 2px solid #eee; padding: 40px; border-radius: 40px; }
+                        h1 { margin-top: 20px; font-size: 24px; text-transform: uppercase; }
+                        p { color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+                        .footer { margin-top: 30px; font-size: 10px; color: #ccc; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        ${printContent.innerHTML}
+                        <h1>${selectedChecklist?.title}</h1>
+                        <p>${selectedChecklist?.sector?.name}</p>
+                        <div class="footer">Acesse pelo QR Code para preencher o checklist</div>
+                    </div>
+                    <script>
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 500);
+                    </script>
+                </body>
+            </html>
+        `);
+        windowPrint.document.close();
+        windowPrint.focus();
     };
 
     const loadData = async () => {
@@ -294,6 +338,29 @@ const ChecklistManagement: React.FC = () => {
 
                 {activeTab === 'executions' && (
                     <div className="space-y-6">
+                        {/* Stats Summary */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card className="p-6 border-slate-100 bg-white">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total de Auditorias</p>
+                                <p className="text-3xl font-black text-slate-900 italic tracking-tighter">{executions.length}</p>
+                            </Card>
+                            <Card className="p-6 border-slate-100 bg-white">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Conformidade Média</p>
+                                <p className="text-3xl font-black text-emerald-600 italic tracking-tighter">
+                                    {executions.length > 0 
+                                        ? Math.round((executions.reduce((acc, exec) => acc + (exec.responses?.filter((r:any) => r.isOk).length || 0), 0) / 
+                                          executions.reduce((acc, exec) => acc + (exec.responses?.length || 0), 0)) * 100) 
+                                        : 0}%
+                                </p>
+                            </Card>
+                            <Card className="p-6 border-slate-100 bg-white">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Irregularidades</p>
+                                <p className="text-3xl font-black text-rose-600 italic tracking-tighter">
+                                    {executions.reduce((acc, exec) => acc + (exec.responses?.filter((r:any) => !r.isOk).length || 0), 0)}
+                                </p>
+                            </Card>
+                        </div>
+
                         {/* Filtros */}
                         <Card className="p-6 border-slate-100">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -602,7 +669,7 @@ const ChecklistManagement: React.FC = () => {
                                                         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                                                             {task?.type === 'PHOTO' ? (
                                                                 <img 
-                                                                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${resp.value}`} 
+                                                                    src={`${window.location.origin}${resp.value}`} 
                                                                     className="w-full h-40 object-cover rounded-lg shadow-sm"
                                                                     alt="Evidência"
                                                                 />

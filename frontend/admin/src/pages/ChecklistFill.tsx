@@ -18,7 +18,7 @@ const ChecklistFill: React.FC = () => {
     const [responses, setResponses] = useState<any[]>([]);
     const [notes, setNotes] = useState('');
     const [userName, setUserName] = useState('');
-    const [step, setStep] = useState<'info' | 'tasks' | 'success'>('info');
+    const [step, setStep] = useState<'info' | 'tasks' | 'notes' | 'success'>('info');
     const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
     const [uploadingTask, setUploadingTask] = useState<string | null>(null);
 
@@ -83,6 +83,12 @@ const ChecklistFill: React.FC = () => {
             toast.error("Selecione se o item está Conforme ou Irregular");
             return false;
         }
+        
+        if (resp.isOk === false && !resp.itemNotes) {
+            toast.error("Por favor, descreva o motivo da irregularidade");
+            return false;
+        }
+
         if (task.isRequired && !resp.value && task.type !== 'CHECKBOX') {
             toast.error("Este item é obrigatório");
             return false;
@@ -94,6 +100,8 @@ const ChecklistFill: React.FC = () => {
         if (validateCurrentTask()) {
             if (currentTaskIndex < checklist.tasks.length - 1) {
                 setCurrentTaskIndex(prev => prev + 1);
+            } else {
+                setStep('notes');
             }
         }
     };
@@ -164,12 +172,12 @@ const ChecklistFill: React.FC = () => {
                     </div>
                 </div>
                 <div className="text-[10px] font-black text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full tracking-tighter">
-                    {currentTaskIndex + 1} / {checklist?.tasks.length}
+                    {step === 'notes' ? 'FINALIZAÇÃO' : `${currentTaskIndex + 1} / ${checklist?.tasks.length}`}
                 </div>
             </header>
 
             <div className="h-1 bg-slate-100 w-full">
-                <motion.div className="h-full bg-orange-500" initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
+                <motion.div className="h-full bg-orange-500" initial={{ width: 0 }} animate={{ width: `${step === 'notes' ? 100 : progress}%` }} />
             </div>
 
             <main className="p-4 flex-1 max-w-lg mx-auto w-full flex flex-col">
@@ -196,6 +204,34 @@ const ChecklistFill: React.FC = () => {
                             >
                                 Começar Agora <ChevronRight size={24} />
                             </button>
+                        </motion.div>
+                    ) : step === 'notes' ? (
+                        <motion.div key="notes" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 pt-6 flex-1 flex flex-col">
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex-1">
+                                <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6">
+                                    <MessageSquare size={32} />
+                                </div>
+                                <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-2 leading-none">Observações</h2>
+                                <p className="text-xs text-slate-400 font-bold uppercase mb-8 tracking-widest">Algum comentário geral sobre esta rotina?</p>
+                                <textarea 
+                                    placeholder="Escreva aqui (Opcional)..."
+                                    className="w-full h-40 p-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-orange-500 outline-none font-bold text-lg transition-all resize-none"
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-4 pb-10">
+                                <button onClick={() => setStep('tasks')} className="w-18 h-18 bg-white border-2 border-slate-100 text-slate-400 rounded-2xl flex items-center justify-center shadow-sm">
+                                    <ChevronLeft size={32} />
+                                </button>
+                                <button 
+                                    onClick={handleSubmit}
+                                    disabled={submitting}
+                                    className="flex-1 h-18 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic flex items-center justify-center gap-3 shadow-xl"
+                                >
+                                    {submitting ? <Loader2 className="animate-spin" /> : <><Send size={20} /> Finalizar</>}
+                                </button>
+                            </div>
                         </motion.div>
                     ) : (
                         <motion.div key={currentTask?.id} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="pt-6 space-y-6 flex-1 flex flex-col">
@@ -268,7 +304,7 @@ const ChecklistFill: React.FC = () => {
                                                 onChange={(e) => e.target.files?.[0] && handleFileUpload(currentTask.id, e.target.files[0])} />
                                             {currentResponse.value ? (
                                                 <div className="relative rounded-2xl overflow-hidden shadow-lg group">
-                                                    <img src={`${API_URL.replace('/api', '')}${currentResponse.value}`} className="w-full h-56 object-cover" />
+                                                    <img src={`${window.location.origin}${currentResponse.value}`} className="w-full h-56 object-cover" />
                                                     <button onClick={() => handleUpdateResponse(currentTask.id, 'value', '')} className="absolute top-4 right-4 p-3 bg-rose-500 text-white rounded-full shadow-xl">
                                                         <XCircle size={20} />
                                                     </button>
@@ -285,11 +321,14 @@ const ChecklistFill: React.FC = () => {
                                     <div className="mt-8 pt-6 border-t border-slate-50">
                                         <div className="flex items-center gap-2 text-slate-400 mb-3 px-1">
                                             <MessageSquare size={16} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Observação do Item (Opcional)</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Observação do Item {currentResponse.isOk === false ? '(Obrigatório)' : '(Opcional)'}</span>
                                         </div>
                                         <textarea 
-                                            placeholder="Algum detalhe específico sobre este item?"
-                                            className="w-full p-4 rounded-xl bg-slate-50 border-none outline-none font-medium text-sm h-24"
+                                            placeholder={currentResponse.isOk === false ? "Descreva o motivo da irregularidade..." : "Algum detalhe específico sobre este item?"}
+                                            className={cn(
+                                                "w-full p-4 rounded-xl border-none outline-none font-medium text-sm h-24 transition-all",
+                                                currentResponse.isOk === false ? "bg-rose-50 text-rose-700 placeholder:text-rose-300" : "bg-slate-50 text-slate-700"
+                                            )}
                                             value={currentResponse.itemNotes}
                                             onChange={(e) => handleUpdateResponse(currentTask.id, 'itemNotes', e.target.value)}
                                         />
@@ -302,15 +341,9 @@ const ChecklistFill: React.FC = () => {
                                     <ChevronLeft size={32} />
                                 </button>
                                 
-                                {currentTaskIndex === checklist.tasks.length - 1 ? (
-                                    <button onClick={handleSubmit} disabled={submitting} className="flex-1 h-18 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic flex items-center justify-center gap-3 shadow-xl">
-                                        {submitting ? <Loader2 className="animate-spin" /> : <><Send size={20} /> Finalizar</>}
-                                    </button>
-                                ) : (
-                                    <button onClick={nextTask} className="flex-1 h-18 bg-orange-500 text-white rounded-2xl font-black uppercase tracking-widest italic flex items-center justify-center gap-3 shadow-lg shadow-orange-100">
-                                        Próximo <ChevronRight size={20} />
-                                    </button>
-                                )}
+                                <button onClick={nextTask} className="flex-1 h-18 bg-orange-500 text-white rounded-2xl font-black uppercase tracking-widest italic flex items-center justify-center gap-3 shadow-lg shadow-orange-100">
+                                    Próximo <ChevronRight size={20} />
+                                </button>
                             </div>
                         </motion.div>
                     )}
