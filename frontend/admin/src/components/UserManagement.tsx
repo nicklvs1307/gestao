@@ -58,17 +58,25 @@ const UserManagement: React.FC = () => {
   };
 
   const getRoleBadge = (role: string) => {
-      switch(role) {
-          case 'admin': 
-          case 'superadmin':
-              return { label: 'Administrador', icon: ShieldCheck, color: 'text-orange-600 bg-orange-50 border-orange-100' };
-          case 'staff': 
-              return { label: 'Atendente', icon: ShoppingBag, color: 'text-blue-600 bg-blue-50 border-blue-100' };
-          case 'waiter': 
-              return { label: 'Garçom', icon: Utensils, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
-          default: 
-              return { label: role, icon: User, color: 'text-slate-600 bg-slate-50 border-slate-100' };
+      const normalized = role?.toLowerCase() || '';
+      
+      if (normalized.includes('admin')) {
+          return { label: 'Administrador', icon: ShieldCheck, color: 'text-orange-600 bg-orange-50 border-orange-100' };
       }
+      
+      if (normalized.includes('staff') || normalized.includes('atendente')) {
+          return { label: 'Atendente', icon: ShoppingBag, color: 'text-blue-600 bg-blue-50 border-blue-100' };
+      }
+
+      if (normalized.includes('waiter') || normalized.includes('garcom')) {
+          return { label: 'Garçom', icon: Utensils, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
+      }
+
+      if (normalized.includes('driver') || normalized.includes('entregador')) {
+          return { label: 'Entregador', icon: Truck, color: 'text-purple-600 bg-purple-50 border-purple-100' };
+      }
+
+      return { label: role || 'Colaborador', icon: User, color: 'text-slate-600 bg-slate-50 border-slate-100' };
   };
 
   return (

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { createUser, updateUser, getRoles } from '../services/api';
-import { X, User, Mail, Lock, CheckCircle, Loader2, Award } from 'lucide-react';
+import { X, User, Mail, Lock, CheckCircle, Loader2, Award, ChevronRight, ChevronLeft, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type UserType = any;
 
@@ -17,11 +18,10 @@ interface UserFormModalProps {
 }
 
 const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, userToEdit }) => {
+  const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [role, setRole] = useState('staff');
   const [roleId, setRoleId] = useState<string | null>(null);
   const [availableRoles, setAvailableRoles] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,24 +43,23 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
     if (isEditing && userToEdit) {
       setName(userToEdit.name || '');
       setEmail(userToEdit.email);
-      setRole(userToEdit.role);
       setRoleId(userToEdit.roleId || null);
       setPassword(''); 
+      setStep(1);
     } else {
       setName('');
       setEmail('');
       setPassword('');
-      setRole('staff');
       setRoleId(null);
+      setStep(1);
     }
   }, [userToEdit, isEditing, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!roleId) return toast.error("Selecione um cargo para o usuário");
     
     setIsSaving(true);
-    const userData = { email, name, role, roleId, password: password || undefined };
+    const userData = { email, name, roleId, password: password || undefined };
 
     try {
       if (isEditing) {
@@ -81,121 +80,179 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   if (!isOpen) return null;
 
   return (
-    <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-lg overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
+      
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }}
+        className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      >
         
         {/* Header Master */}
-        <div className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+        <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-4">
-                <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl shadow-slate-200">
-                    <User size={24} />
+                <div className="bg-slate-900 text-white p-2.5 rounded-xl">
+                    <ShieldCheck size={20} />
                 </div>
                 <div>
-                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
-                        {isEditing ? 'Editar Integrante' : 'Novo Integrante'}
+                    <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter leading-none">
+                        {isEditing ? 'Configurar Membro' : 'Novo Integrante'}
                     </h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Acesso e Permissões</p>
-                </div>
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50">
-                <X size={24} />
-            </Button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
-            <form onSubmit={handleSubmit} id="user-form" className="p-10 space-y-8">
-                <div className="space-y-4">
-                    <Input 
-                        label="Nome Completo"
-                        required
-                        placeholder="Ex: João Silva"
-                        value={name} 
-                        onChange={e => setName(e.target.value)} 
-                    />
-
-                    <Input 
-                        label="E-mail Corporativo"
-                        type="email" 
-                        required
-                        placeholder="joao@restaurante.com"
-                        value={email} 
-                        onChange={e => setEmail(e.target.value)} 
-                    />
-
-                    <Input 
-                        label={isEditing ? "Senha (Deixe em branco para manter)" : "Senha de Acesso"}
-                        type="password" 
-                        required={!isEditing}
-                        placeholder="••••••••"
-                        value={password} 
-                        onChange={e => setPassword(e.target.value)} 
-                    />
-                </div>
-
-                {/* Seleção de Cargo Premium */}
-                <div className="space-y-4 pt-4 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Cargo do Colaborador</label>
-                    <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                        {availableRoles.length === 0 && (
-                            <p className="text-[10px] font-bold text-slate-400 uppercase italic text-center py-4">Nenhum cargo disponível para atribuição.</p>
-                        )}
-                        {availableRoles.map(r => (
-                            <Card
-                                key={r.id}
-                                onClick={() => {
-                                    setRoleId(r.id);
-                                    setRole(r.name.toLowerCase()); 
-                                }}
-                                className={cn(
-                                    "flex items-center gap-4 p-4 border-2 transition-all text-left cursor-pointer",
-                                    roleId === r.id 
-                                        ? "bg-slate-900 text-white border-slate-900 shadow-xl scale-[1.02]" 
-                                        : "bg-white text-slate-500 border-slate-100 hover:border-orange-500/30"
-                                )}
-                                noPadding
-                            >
-                                <div className="pl-4">
-                                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors", roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400")}>
-                                      <Award size={20} />
-                                  </div>
-                                </div>
-                                <div className="py-4 pr-4">
-                                    <p className={cn("text-sm font-black uppercase italic tracking-tight", roleId === r.id ? "text-white" : "text-slate-800")}>{r.name}</p>
-                                    {r.description && <p className={cn("text-[10px] font-medium leading-tight mt-0.5", roleId === r.id ? "text-slate-400" : "text-slate-400")}>{r.description}</p>}
-                                </div>
-                                {roleId === r.id && (
-                                  <div className="ml-auto pr-6 text-emerald-400">
-                                    <CheckCircle size={20} />
-                                  </div>
-                                )}
-                            </Card>
-                        ))}
+                    <div className="flex items-center gap-2 mt-1.5">
+                        <div className={cn("h-1 w-8 rounded-full", step === 1 ? "bg-orange-500" : "bg-slate-100")} />
+                        <div className={cn("h-1 w-8 rounded-full", step === 2 ? "bg-orange-500" : "bg-slate-100")} />
                     </div>
                 </div>
-            </form>
+            </div>
+            <button onClick={onClose} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+                <X size={20} />
+            </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <AnimatePresence mode="wait">
+                {step === 1 ? (
+                    <motion.div 
+                        key="step1"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="p-8 space-y-6"
+                    >
+                        <div className="space-y-1">
+                            <h4 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Dados de Acesso</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Identifique o colaborador no sistema</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <Input 
+                                label="Nome Completo"
+                                icon={User}
+                                placeholder="Ex: João Silva"
+                                value={name} 
+                                onChange={e => setName(e.target.value)} 
+                            />
+
+                            <Input 
+                                label="E-mail de Login"
+                                type="email" 
+                                icon={Mail}
+                                placeholder="joao@restaurante.com"
+                                value={email} 
+                                onChange={e => setEmail(e.target.value)} 
+                            />
+
+                            <Input 
+                                label={isEditing ? "Nova Senha (Opcional)" : "Senha Provisória"}
+                                type="password" 
+                                icon={Lock}
+                                placeholder="••••••••"
+                                value={password} 
+                                onChange={e => setPassword(e.target.value)} 
+                            />
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div 
+                        key="step2"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="p-8 space-y-6"
+                    >
+                        <div className="space-y-1">
+                            <h4 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Atribuição de Cargo</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Defina o nível de acesso e funções</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                            {availableRoles.length === 0 && (
+                                <div className="p-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-center">
+                                    <Loader2 className="animate-spin mx-auto text-slate-300 mb-2" size={24} />
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase italic">Buscando cargos disponíveis...</p>
+                                </div>
+                            )}
+                            {availableRoles.map(r => (
+                                <div
+                                    key={r.id}
+                                    onClick={() => setRoleId(r.id)}
+                                    className={cn(
+                                        "flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group",
+                                        roleId === r.id 
+                                            ? "bg-slate-900 border-slate-900 shadow-xl" 
+                                            : "bg-white border-slate-100 hover:border-orange-500/20 shadow-sm"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-colors", 
+                                        roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500"
+                                    )}>
+                                        <Award size={20} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className={cn("text-xs font-black uppercase italic tracking-tight", roleId === r.id ? "text-white" : "text-slate-800")}>{r.name}</p>
+                                        {r.description && <p className={cn("text-[9px] font-bold leading-tight mt-0.5", roleId === r.id ? "text-slate-400" : "text-slate-400")}>{r.description}</p>}
+                                    </div>
+                                    {roleId === r.id && (
+                                      <div className="text-emerald-400">
+                                        <CheckCircle size={20} />
+                                      </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
 
         {/* Rodapé Fixo */}
-        <div className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
-            <Button 
-                type="button"
-                variant="ghost"
-                onClick={onClose}
-                className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400"
-            >
-                Cancelar
-            </Button>
-            <Button 
-                type="submit"
-                form="user-form"
-                disabled={isSaving}
-                isLoading={isSaving}
-                className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black"
-            >
-                {isEditing ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR MEMBRO'}
-            </Button>
+        <div className="px-8 py-6 bg-white border-t border-slate-50 flex gap-3 shrink-0">
+            {step === 1 ? (
+                <>
+                    <Button 
+                        type="button"
+                        variant="ghost"
+                        onClick={onClose}
+                        className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button 
+                        type="button"
+                        onClick={() => {
+                            if (!name || !email || (!isEditing && !password)) return toast.error("Preencha todos os campos");
+                            setStep(2);
+                        }}
+                        className="flex-[2] h-12 rounded-xl shadow-lg uppercase tracking-widest italic font-black gap-2"
+                    >
+                        PRÓXIMO PASSO <ChevronRight size={16} />
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <Button 
+                        type="button"
+                        variant="ghost"
+                        onClick={() => setStep(1)}
+                        className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400 gap-2"
+                    >
+                        <ChevronLeft size={16} /> VOLTAR
+                    </Button>
+                    <Button 
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSaving || !roleId}
+                        isLoading={isSaving}
+                        className="flex-[2] h-12 rounded-xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black"
+                    >
+                        {isEditing ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR CADASTRO'}
+                    </Button>
+                </>
+            )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

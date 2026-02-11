@@ -22,17 +22,29 @@ const login = async (req, res) => {
         }
         
         let permissions = user.roleRef?.permissions.map(p => p.name) || [];
-        const roleName = user.roleRef?.name || (user.isSuperAdmin ? 'superadmin' : 'staff');
+        const dbRoleName = user.roleRef?.name || (user.isSuperAdmin ? 'superadmin' : 'staff');
+        
+        // Normaliza o nome do cargo para o frontend (waiter, driver, admin, staff)
+        let normalizedRole = dbRoleName.toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos (Garçom -> garcom)
+            .replace(/[^a-z0-9]/g, ''); // Remove caracteres especiais
+
+        // Mapeamentos específicos para compatibilidade com o frontend
+        if (normalizedRole.includes('garcom') || normalizedRole.includes('waiter')) normalizedRole = 'waiter';
+        if (normalizedRole.includes('entregador') || normalizedRole.includes('driver')) normalizedRole = 'driver';
+        if (normalizedRole.includes('administrador') || normalizedRole.includes('admin')) normalizedRole = 'admin';
+        
+        if (user.isSuperAdmin) normalizedRole = 'superadmin';
         
         // Compatibilidade: Se não tem permissões explícitas mas é admin (via RoleRef ou SuperAdmin)
-        if (permissions.length === 0 && (roleName === 'admin' || user.isSuperAdmin)) {
+        if (permissions.length === 0 && (normalizedRole === 'admin' || user.isSuperAdmin)) {
             permissions = ['orders:view', 'orders:manage', 'products:manage', 'stock:manage', 'reports:view', 'financial:view', 'settings:manage'];
         }
         
         const tokenData = { 
             id: user.id, 
             email: user.email, 
-            role: roleName, 
+            role: normalizedRole, 
             restaurantId: user.restaurantId,
             isSuperAdmin: user.isSuperAdmin,
             franchiseId: user.franchiseId,
@@ -47,7 +59,7 @@ const login = async (req, res) => {
                 id: user.id, 
                 email: user.email, 
                 name: user.name, 
-                role: roleName, 
+                role: normalizedRole, 
                 isSuperAdmin: user.isSuperAdmin,
                 restaurantId: user.restaurantId,
                 franchiseId: user.franchiseId,
@@ -93,10 +105,23 @@ const getUsers = async (req, res) => {
         });
 
         // Mapeia para manter o formato esperado pelo frontend (adicionando campo 'role' virtual)
-        const mappedUsers = users.map(u => ({
-            ...u,
-            role: u.roleRef?.name || (u.isSuperAdmin ? 'superadmin' : 'staff')
-        }));
+        const mappedUsers = users.map(u => {
+            const dbRoleName = u.roleRef?.name || (u.isSuperAdmin ? 'superadmin' : 'staff');
+            let normalizedRole = dbRoleName.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, '');
+
+            if (normalizedRole.includes('garcom') || normalizedRole.includes('waiter')) normalizedRole = 'waiter';
+            if (normalizedRole.includes('entregador') || normalizedRole.includes('driver')) normalizedRole = 'driver';
+            if (normalizedRole.includes('administrador') || normalizedRole.includes('admin')) normalizedRole = 'admin';
+            
+            if (u.isSuperAdmin) normalizedRole = 'superadmin';
+
+            return {
+                ...u,
+                role: normalizedRole
+            };
+        });
 
         res.json(mappedUsers); 
     } catch (error) { 

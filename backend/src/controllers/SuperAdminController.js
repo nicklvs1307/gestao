@@ -62,7 +62,6 @@ const createRestaurant = async (req, res) => {
                     email: adminEmail,
                     name: adminName,
                     passwordHash,
-                    role: 'admin',
                     restaurantId: restaurant.id,
                     roleId: adminRole?.id
                 }
