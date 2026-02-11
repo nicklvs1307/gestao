@@ -12,14 +12,26 @@ interface NewOrderAlertProps {
 }
 
 const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onReject, onClose }) => {
+  
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   if (!Array.isArray(orders) || orders.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-xl flex flex-col gap-3">
+    <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden">
+      {/* Fixed Backdrop */}
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative w-full max-w-xl flex flex-col gap-3 h-full max-h-[90vh]">
         
-        {/* Header de Alerta Compacto */}
-        <div className="bg-orange-600 text-white p-4 rounded-[1.5rem] shadow-xl flex items-center justify-between border-2 border-white/10">
+        {/* Header de Alerta Compacto - Fixed at top of modal area */}
+        <div className="bg-orange-600 text-white p-4 rounded-[1.5rem] shadow-xl flex items-center justify-between border-2 border-white/10 shrink-0">
             <div className="flex items-center gap-3">
                 <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
                     <Bell className="animate-ring text-white" size={24} strokeWidth={2.5} />

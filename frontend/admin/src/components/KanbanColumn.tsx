@@ -10,6 +10,7 @@ interface KanbanColumnProps {
   title: string;
   orders: Order[];
   onOpenDetails: (order: Order) => void;
+  onStatusChange: (orderId: string, newStatus: string) => void;
   selectedOrderIds: string[];
   toggleSelectOrder: (id: string) => void;
 }
@@ -19,6 +20,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     title, 
     orders, 
     onOpenDetails,
+    onStatusChange,
     selectedOrderIds,
     toggleSelectOrder
 }) => {
@@ -77,6 +79,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     key={order.id} 
                     order={order} 
                     onOpenDetails={onOpenDetails} 
+                    onStatusChange={onStatusChange}
                     isSelected={selectedOrderIds.includes(order.id)}
                     onSelect={() => toggleSelectOrder(order.id)}
                 />

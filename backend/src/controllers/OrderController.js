@@ -1,8 +1,37 @@
 const OrderService = require('../services/OrderService');
 const asyncHandler = require('../middlewares/asyncHandler');
 const { CreateDeliveryOrderSchema, AddItemsSchema, UpdateStatusSchema } = require('../schemas/orderSchema');
+const eventEmitter = require('../lib/eventEmitter');
 
 class OrderController {
+
+  streamOrderEvents = (req, res) => {
+    const restaurantId = req.restaurantId;
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+
+    // Send a comment to establish and keep the connection alive
+    res.write('data: {"type":"CONNECTION_ESTABLISHED"}\n\n');
+
+    const orderEventHandler = (data) => {
+      // Only send events for the client's specific restaurant
+      if (data.restaurantId === restaurantId) {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      }
+    };
+    
+    eventEmitter.on('order_update', orderEventHandler);
+
+    req.on('close', () => {
+      eventEmitter.removeListener('order_update', orderEventHandler);
+      res.end();
+    });
+  };
+
   // POST /api/delivery/restaurants/:restaurantId/delivery-orders
   createDeliveryOrder = asyncHandler(async (req, res) => {
     const restaurantId = req.params.restaurantId || req.restaurantId || req.user?.restaurantId;

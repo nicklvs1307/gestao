@@ -25,6 +25,7 @@ const OrderManagement: React.FC = () => {
 
   const fetchOrders = async () => {
     try {
+      setIsLoading(true);
       const data = await getAdminOrders();
       const sortedOrders = data.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setAllOrders(sortedOrders);
@@ -38,20 +39,47 @@ const OrderManagement: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 15000); 
-    return () => clearInterval(interval);
+
+    // SSE for real-time updates in this view
+    const eventSource = new EventSource(`${window.location.origin}/api/admin/orders/events`);
+
+    eventSource.onmessage = (event) => {
+      const eventData = JSON.parse(event.data);
+      if (eventData.type === 'CONNECTION_ESTABLISHED') return;
+
+      const updatedOrder = eventData.payload as Order;
+      
+      setAllOrders(prevOrders => {
+        const newOrders = [...prevOrders];
+        const index = newOrders.findIndex(o => o.id === updatedOrder.id);
+        if (index > -1) {
+          newOrders[index] = updatedOrder;
+        } else {
+          newOrders.unshift(updatedOrder);
+        }
+        return newOrders;
+      });
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
+      // Optimistic update
       setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       if (selectedOrder && selectedOrder.id === orderId) {
           setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
+      
       await updateOrderStatus(orderId, newStatus);
+      // No need to fetchOrders(), SSE will handle the confirmation from server
       toast.success(`Pedido #${orderId.slice(-4).toUpperCase()} atualizado!`);
     } catch (error) { 
-      fetchOrders(); 
+      toast.error("Erro ao atualizar status");
+      fetchOrders(); // Revert on error
     }
   };
 

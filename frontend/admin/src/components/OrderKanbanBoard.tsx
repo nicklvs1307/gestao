@@ -88,6 +88,7 @@ const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({
                   title={statusValue}
                   orders={columnOrders}
                   onOpenDetails={onOpenDetails}
+                  onStatusChange={onStatusChange}
                   selectedOrderIds={selectedOrderIds}
                   toggleSelectOrder={toggleSelectOrder}
                 />

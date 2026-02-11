@@ -1,19 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printing';
-import type { Order } from '../types'; 
+import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
-import TableRequestAlert from './TableRequestAlert'; 
+import TableRequestAlert from './TableRequestAlert';
 import { Bell, UserCheck } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+
+// Helper to get the base URL for the API
+const getApiBaseUrl = () => {
+  // In a real app, this would come from an environment variable
+  // For dev, assume Vite proxy is handled or it's the same origin.
+  // For prod, it's same origin.
+  return window.location.origin;
+};
 
 const GlobalOrderMonitor: React.FC = () => {
   const location = useLocation();
   const isKdsPage = location.pathname === '/kds';
 
-  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isAutoAccept, setIsAutoAccept] = useState(false);
   
@@ -21,146 +28,184 @@ const GlobalOrderMonitor: React.FC = () => {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   
   const lastOrderIdsRef = useRef<Set<string>>(new Set());
-  const lastRequestIdsRef = useRef<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const fetchData = async () => {
-    if (isKdsPage) return; // Não monitora nada se estiver no KDS
+  const playNotificationSound = () => {
+    try {
+      if (!audioRef.current) {
+        audioRef.current = new Audio('/notification.mp3');
+      }
+      audioRef.current.play().catch(() => {});
+    } catch (e) {}
+  };
 
+  const hasUser = () => {
     const userStr = localStorage.getItem('user');
     const selectedRestaurantId = localStorage.getItem('selectedRestaurantId');
-    if (!userStr) return;
-
+    if (!userStr) return false;
     const user = JSON.parse(userStr);
-    
-    // Se for SuperAdmin e não tiver loja selecionada, abortamos o monitoramento de loja
-    if (user?.isSuperAdmin && !selectedRestaurantId) return;
-    // Se for usuário comum sem restaurante vinculado (caso raro), abortamos
-    if (!user?.restaurantId && !selectedRestaurantId) return;
+    if (user?.isSuperAdmin && !selectedRestaurantId) return false;
+    if (!user?.restaurantId && !selectedRestaurantId) return false;
+    return true;
+  }
 
-    try {
-      // 1. Chamados de Mesa
-      try {
-          const requestsData = await getTableRequests();
-          if (Array.isArray(requestsData)) {
-              setPendingRequests(requestsData);
-              const currentReqIds = new Set(requestsData.map((r: any) => r.id));
-              const hasNewRequest = [...currentReqIds].some(id => !lastRequestIdsRef.current.has(id));
-              if (hasNewRequest) {
-                  playNotificationSound();
-                  setIsRequestModalOpen(true);
-              }
-              lastRequestIdsRef.current = currentReqIds;
-          }
-      } catch (e) { console.warn("Monitor: Falha ao carregar chamados", e); }
-
-      // 2. Trava de Usuário para Pedidos e Configurações
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return; 
-
-      const user = JSON.parse(userStr);
-      const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
-
-      // 3. Settings
-      let currentAutoAccept = false;
-      try {
-          const settingsData = await getSettings();
-          currentAutoAccept = settingsData?.settings?.autoAcceptOrders || false;
-          setIsAutoAccept(currentAutoAccept);
-      } catch (e) { console.warn("Monitor: Falha ao carregar settings", e); }
-
-      // 4. Pedidos (Apenas Admin/Staff)
-      if (isAdminOrStaff) {
-          try {
-              const ordersData = await getAdminOrders();
-              if (Array.isArray(ordersData)) {
-                  // Identificar NOVOS pedidos (para som de alerta e modal)
-                  const newOrders = ordersData.filter(o => !lastOrderIdsRef.current.has(o.id));
-                  if (newOrders.length > 0) {
-                      playNotificationSound();
-                      if (!currentAutoAccept) {
-                          const hasPending = newOrders.some(o => o.status === 'PENDING');
-                          if (hasPending) setIsOrderModalOpen(true);
-                      }
-                  }
-
-                  // LÓGICA DE IMPRESSÃO DE PRODUÇÃO (PREPARING e ainda não impresso)
-                  const toPrintProduction = ordersData.filter(o => o.status === 'PREPARING' && !o.isPrinted);
-                  
-                  // LÓGICA DE IMPRESSÃO DE FECHAMENTO (Apenas Delivery e ainda não impresso)
-                  const toPrintFinal = ordersData.filter(o => o.status === 'COMPLETED' && o.orderType === 'DELIVERY' && !o.isPrinted);
-
-                  const allToPrint = [...toPrintProduction, ...toPrintFinal];
-                  
-                  for (const order of allToPrint) {
-                      console.log(`Enviando para impressora: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
-                      try {
-                          const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                          const receiptSettings = JSON.parse(localStorage.getItem('receipt_settings') || '{}');
-                          const settingsData = await getSettings();
-                          const restaurantInfo = {
-                              name: settingsData.name,
-                              address: settingsData.address,
-                              phone: settingsData.phone,
-                              cnpj: settingsData.fiscalConfig?.cnpj,
-                              logoUrl: settingsData.logoUrl
-                          };
-                          
-                          await printOrder(order, printerConfig, receiptSettings, restaurantInfo);
-                          
-                          // MARCA COMO IMPRESSO NO BANCO DE DADOS (Persistência definitiva)
-                          await markOrderAsPrinted(order.id);
-                          console.log(`Pedido #${order.id} marcado como impresso no servidor.`);
-                      } catch (printErr) {
-                          console.error("Falha na impressão:", printErr);
-                      }
-                  }
-
-                  // Atualiza estados e referências
-                  setPendingOrders(ordersData.filter((o: Order) => o.status === 'PENDING'));
-                  lastOrderIdsRef.current = new Set(ordersData.map((o: Order) => o.id));
-              }
-          } catch (e) { console.warn("Monitor: Falha ao carregar pedidos", e); }
-      }
-
-    } catch (error) {
-      console.error('Erro crítico no monitor global:', error);
-    }
-  };
-
-  const playNotificationSound = () => {
-      try {
-          if (!audioRef.current) {
-              audioRef.current = new Audio('/notification.mp3');
-          }
-          audioRef.current.play().catch(() => {});
-      } catch (e) {}
-  };
-
+  // Effect for fetching initial data and settings
   useEffect(() => {
-    if (isKdsPage) return; // Não faz nada se for KDS
-    
-    fetchData();
-    const interval = setInterval(fetchData, 15000); 
-    return () => clearInterval(interval);
+    if (isKdsPage || !hasUser()) return;
+
+    const loadInitialData = async () => {
+      try {
+        const settingsData = await getSettings();
+        setIsAutoAccept(settingsData?.settings?.autoAcceptOrders || false);
+
+        const userStr = localStorage.getItem('user');
+        const user = JSON.parse(userStr!);
+        const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
+
+        if (isAdminOrStaff) {
+          const ordersData = await getAdminOrders();
+          if (Array.isArray(ordersData)) {
+            setAllOrders(ordersData);
+            lastOrderIdsRef.current = new Set(ordersData.map((o: Order) => o.id));
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados iniciais:', error);
+      }
+    };
+
+    loadInitialData();
   }, [isKdsPage]);
 
-  const handleResolveRequest = async (id: string) => {
-      try {
-          await resolveTableRequest(id);
-          setPendingRequests(prev => {
-              const updated = prev.filter(r => r.id !== id);
-              // Se não houver mais chamados, fecha o modal automaticamente
-              if (updated.length === 0) {
-                  setIsRequestModalOpen(false);
-              }
-              return updated;
-          });
-          toast.success("Chamado atendido!");
-      } catch (e) {
-          console.error(e);
-          toast.error("Erro ao resolver chamado.");
+  // Effect for polling table requests (can be refactored to SSE later)
+  useEffect(() => {
+    if (isKdsPage || !hasUser()) return;
+
+    const fetchRequests = async () => {
+        try {
+            const requestsData = await getTableRequests();
+            if (Array.isArray(requestsData)) {
+                if (requestsData.length > pendingRequests.length) {
+                    playNotificationSound();
+                    setIsRequestModalOpen(true);
+                }
+                setPendingRequests(requestsData);
+            }
+        } catch (e) { console.warn("Monitor: Falha ao carregar chamados", e); }
+    };
+    
+    fetchRequests();
+    const requestInterval = setInterval(fetchRequests, 20000); // Polls less frequently
+    return () => clearInterval(requestInterval);
+
+  }, [isKdsPage, pendingRequests.length]);
+
+
+  // SSE Effect for real-time order updates
+  useEffect(() => {
+    if (isKdsPage || !hasUser()) return;
+
+    const userStr = localStorage.getItem('user');
+    const user = JSON.parse(userStr!);
+    const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
+
+    if (!isAdminOrStaff) return;
+
+    const eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events`);
+
+    eventSource.onmessage = (event) => {
+      const eventData = JSON.parse(event.data);
+
+      if (eventData.type === 'CONNECTION_ESTABLISHED') {
+        console.log('[SSE] Conexão estabelecida com o servidor.');
+        return;
       }
+
+      const updatedOrder = eventData.payload as Order;
+      
+      setAllOrders(prevOrders => {
+        const newOrders = [...prevOrders];
+        const existingOrderIndex = newOrders.findIndex(o => o.id === updatedOrder.id);
+        
+        if (existingOrderIndex > -1) {
+          // Update existing order
+          newOrders[existingOrderIndex] = updatedOrder;
+        } else {
+          // Add new order
+          newOrders.unshift(updatedOrder);
+          lastOrderIdsRef.current.add(updatedOrder.id);
+          playNotificationSound();
+           if (!isAutoAccept && updatedOrder.status === 'PENDING') {
+              setIsOrderModalOpen(true);
+           }
+        }
+        return newOrders;
+      });
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('SSE Error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [isKdsPage, isAutoAccept]);
+
+
+  // --- DERIVED STATE AND MEMOIZED VALUES ---
+  const pendingOrders = useMemo(() => allOrders.filter(o => o.status === 'PENDING'), [allOrders]);
+
+  // --- PRINTING LOGIC ---
+  useEffect(() => {
+    const processPrinting = async () => {
+      const toPrintProduction = allOrders.filter(o => o.status === 'PREPARING' && !o.isPrinted);
+      const toPrintFinal = allOrders.filter(o => o.status === 'COMPLETED' && o.orderType === 'DELIVERY' && !o.isPrinted);
+      const allToPrint = [...toPrintProduction, ...toPrintFinal];
+
+      if (allToPrint.length === 0) return;
+
+      for (const order of allToPrint) {
+        console.log(`Enviando para impressora: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
+        try {
+          const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+          const receiptSettings = JSON.parse(localStorage.getItem('receipt_settings') || '{}');
+          const settingsData = await getSettings();
+          const restaurantInfo = {
+              name: settingsData.name, address: settingsData.address, phone: settingsData.phone,
+              cnpj: settingsData.fiscalConfig?.cnpj, logoUrl: settingsData.logoUrl
+          };
+          
+          await printOrder(order, printerConfig, receiptSettings, restaurantInfo);
+          await markOrderAsPrinted(order.id);
+          
+          // Update local state to reflect print status immediately
+          setAllOrders(prev => prev.map(o => o.id === order.id ? {...o, isPrinted: true} : o));
+
+        } catch (printErr) {
+          console.error("Falha na impressão:", printErr);
+          toast.error(`Falha ao imprimir pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
+        }
+      }
+    };
+    processPrinting();
+  }, [allOrders]);
+
+
+  const handleResolveRequest = async (id: string) => {
+    try {
+        await resolveTableRequest(id);
+        setPendingRequests(prev => {
+            const updated = prev.filter(r => r.id !== id);
+            if (updated.length === 0) setIsRequestModalOpen(false);
+            return updated;
+        });
+        toast.success("Chamado atendido!");
+    } catch (e) {
+        console.error(e);
+        toast.error("Erro ao resolver chamado.");
+    }
   };
 
   const hasAlerts = (pendingOrders.length > 0 || pendingRequests.length > 0) && !isKdsPage;
@@ -200,12 +245,12 @@ const GlobalOrderMonitor: React.FC = () => {
             orders={pendingOrders}
             onAccept={async (id) => {
                 await updateOrderStatus(id, 'PREPARING');
-                setPendingOrders(prev => prev.filter(o => o.id !== id));
+                // State will update via SSE
                 if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
             }}
             onReject={async (id) => {
                 await updateOrderStatus(id, 'CANCELED');
-                setPendingOrders(prev => prev.filter(o => o.id !== id));
+                // State will update via SSE
                 if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
             }}
             onClose={() => setIsOrderModalOpen(false)}

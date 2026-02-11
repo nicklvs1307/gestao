@@ -29,6 +29,10 @@ router.get('/', needsAuth, checkPermission('orders:view'), async (req, res) => {
     }
 });
 
+// SSE endpoint for real-time order updates
+router.get('/events', needsAuth, checkPermission('orders:view'), OrderController.streamOrderEvents);
+
+
 router.put('/:orderId/status', needsAuth, checkPermission('orders:manage'), OrderController.updateStatus);
 router.patch('/:orderId/payment-method', needsAuth, checkPermission('orders:manage'), OrderController.updatePaymentMethod);
 router.patch('/:orderId/delivery-type', needsAuth, checkPermission('orders:manage'), OrderController.updateDeliveryType);

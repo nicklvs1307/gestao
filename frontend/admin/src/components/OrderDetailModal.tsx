@@ -29,6 +29,15 @@ const STATUS_OPTIONS = [
 ];
 
 const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onStatusChange }) => {
+  
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   if (!order) return null;
 
   const [drivers, setDrivers] = useState<{id: string, name: string}[]>([]);
@@ -100,8 +109,11 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const isDelivery = order.orderType === 'DELIVERY';
 
   return (
-    <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden">
+      {/* Fixed Backdrop */}
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         
         {/* HEADER PREMIUM COMPACTO */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border-b bg-white gap-4 shrink-0">
