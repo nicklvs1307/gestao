@@ -15,7 +15,7 @@ class CashierService {
     // Busca todas as transações da sessão
     const transactions = await prisma.financialTransaction.findMany({
       where: { cashierId: session.id, status: 'PAID' },
-      select: { amount: true, type: true, paymentMethod: true }
+      select: { amount: true, type: true, paymentMethod: true, description: true }
     });
 
     // Calcula saldo em dinheiro (Dinheiro em mãos)
