@@ -179,6 +179,26 @@ const createRole = async (req, res) => {
     }
 };
 
+const updateRolePermissions = async (req, res) => {
+    const { id } = req.params;
+    const { permissionIds } = req.body;
+    try {
+        const role = await prisma.role.update({
+            where: { id },
+            data: {
+                permissions: {
+                    set: permissionIds.map(id => ({ id }))
+                }
+            },
+            include: { permissions: true }
+        });
+        res.json(role);
+    } catch (error) {
+        console.error("Erro ao atualizar permissões do cargo:", error);
+        res.status(500).json({ error: 'Erro ao atualizar permissões do cargo.' });
+    }
+};
+
 module.exports = {
     createFranchise,
     getFranchises,
@@ -188,5 +208,6 @@ module.exports = {
     createGlobalUser,
     getPermissions,
     getRoles,
-    createRole
+    createRole,
+    updateRolePermissions
 };

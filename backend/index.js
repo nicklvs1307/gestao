@@ -91,6 +91,14 @@ const paymentMethodRoutes = require('./src/routes/paymentMethodRoutes');
 const superAdminRoutes = require('./src/routes/superAdminRoutes');
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 
+// SuperAdmin / Admin Role Management Alias
+const SuperAdminController = require('./src/controllers/SuperAdminController');
+const { needsAuth, checkPermission } = require('./src/middlewares/auth');
+
+app.get('/api/admin/permissions', needsAuth, checkPermission('users:manage'), SuperAdminController.getPermissions);
+app.get('/api/admin/roles', needsAuth, checkPermission('users:manage'), SuperAdminController.getRoles);
+app.put('/api/admin/roles/:id/permissions', needsAuth, checkPermission('users:manage'), SuperAdminController.updateRolePermissions);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/franchise', franchiseRoutes);

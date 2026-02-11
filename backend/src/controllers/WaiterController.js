@@ -29,12 +29,17 @@ class WaiterController {
 
       const serviceRate = (restaurant.serviceTaxPercentage || 0) / 100;
 
-      // 3. Buscar usuários do tipo STAFF que tiveram pedidos no período
-      // Vamos buscar todos os Staff e seus pedidos
+      // 3. Buscar usuários que tenham a permissão de garçom e tiveram pedidos no período
       const waiters = await prisma.user.findMany({
         where: {
           restaurantId,
-          role: 'staff', // Assumindo que garçons são 'staff'
+          roleRef: {
+            permissions: {
+              some: {
+                name: 'waiter:pos'
+              }
+            }
+          }
         },
         include: {
           createdOrders: {

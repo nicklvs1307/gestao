@@ -24,7 +24,7 @@ import SettingsManagement from './pages/SettingsManagement';
 import AddonManagement from './pages/AddonManagement';
 import DeliveryAreaManagement from './components/DeliveryAreaManagement';
 import IntegrationManagement from './components/IntegrationManagement';
-import UserManagement from './components/UserManagement';
+import UserAndPermissions from './components/UserAndPermissions';
 import DriverManagement from './components/DriverManagement';
 import WaiterManagement from './pages/WaiterManagement';
 import WaiterPos from './pages/WaiterPos'; 
@@ -259,64 +259,192 @@ function AdminRoutes() {
         <Route path="/franchise/reports" element={<SuperAdminDashboard />} />
         <Route path="/dashboard/*" element={<Dashboard />} />
         <Route path="/waiters/settlement" element={<WaiterSettlement />} />
-        <Route path="/products" element={<ProductManagement 
-          onAddProductClick={() => {}} // Will be handled by internal navigation in ProductManagement
-          onEditProductClick={() => {}} // Will be handled by internal navigation
-          refetchTrigger={0}
-        />} />
-        <Route path="/addons" element={<AddonManagement />} />
-        <Route path="/ingredients" element={<StockManagement />} />
-        <Route path="/products/new" element={<ProductFormPage />} />
-        <Route path="/products/:id" element={<ProductFormPage />} />
-        <Route path="/categories" element={<CategoryManagement 
-          onAddCategoryClick={() => setCategoryModalOpen(true)}
-          onEditCategoryClick={handleEditCategoryClick}
-          refetchTrigger={refetchCategories}
-        />} />
-        <Route path="/global-sizes" element={<GlobalSizesPage />} />
-        <Route path="/promotions" element={<PromotionManagement 
-          onAddPromotionClick={() => setPromotionModalOpen(true)}
-          onEditPromotionClick={handleEditPromotionClick}
-          refetchTrigger={refetchPromotions}
-        />} />
-        <Route path="/coupons" element={<PromotionManagement 
-          onAddPromotionClick={() => setPromotionModalOpen(true)}
-          onEditPromotionClick={handleEditPromotionClick}
-          refetchTrigger={refetchPromotions}
-        />} />
-        <Route path="/customers" element={<CustomerManagement />} />
-        <Route path="/orders" element={<OrderManagement />} />
-        <Route path="/tables" element={<TableManagement 
-          onAddTableClick={() => setTableModalOpen(true)} 
-          onEditTableClick={handleEditTableClick}
-          refetchTrigger={refetchTables}
-        />} />
-        <Route path="/drivers" element={<DriverManagement />} />
-        <Route path="/drivers/settlement" element={<DriverSettlement />} />
-        <Route path="/auth/waiters" element={<WaiterManagement />} />
-        <Route path="/reports" element={<ReportManagement />} />
-        <Route path="/reports/*" element={<ReportManagement />} /> 
-        <Route path="/settings" element={<SettingsManagement />} />
-        <Route path="/settings/*" element={<SettingsManagement />} />
-        <Route path="/settings/delivery-zones" element={<DeliveryAreaManagement />} />
-        <Route path="/integrations" element={<IntegrationManagement />} />
-        <Route path="/users" element={<UserManagement />} />
-        <Route path="/pos" element={<PosPage />} />
-        <Route path="/cashier" element={<CashierManagement />} />
-        <Route path="/kds" element={<KdsPage />} />
-        <Route path="/financial" element={<FinancialManagement />} />
-        <Route path="/financial/*" element={<FinancialManagement />} />
-        <Route path="/payment-methods" element={<PaymentMethodManagement 
-          onAddClick={() => setPaymentMethodModalOpen(true)}
-          onEditClick={handleEditPaymentMethodClick}
-          refetchTrigger={refetchPaymentMethods}
-        />} />
-        <Route path="/stock" element={<StockManagement />} />
-        <Route path="/stock/*" element={<StockManagement />} />
+        <Route path="/products" element={
+          <ProtectedRoute permission="products:view">
+            <ProductManagement 
+              onAddProductClick={() => {}} 
+              onEditProductClick={() => {}} 
+              refetchTrigger={0}
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="/addons" element={
+          <ProtectedRoute permission="products:manage">
+            <AddonManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/ingredients" element={
+          <ProtectedRoute permission="stock:manage">
+            <StockManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/products/new" element={
+          <ProtectedRoute permission="products:manage">
+            <ProductFormPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/products/:id" element={
+          <ProtectedRoute permission="products:manage">
+            <ProductFormPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/categories" element={
+          <ProtectedRoute permission="categories:manage">
+            <CategoryManagement 
+              onAddCategoryClick={() => setCategoryModalOpen(true)}
+              onEditCategoryClick={handleEditCategoryClick}
+              refetchTrigger={refetchCategories}
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="/global-sizes" element={
+          <ProtectedRoute permission="products:manage">
+            <GlobalSizesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/promotions" element={
+          <ProtectedRoute permission="products:manage">
+            <PromotionManagement 
+              onAddPromotionClick={() => setPromotionModalOpen(true)}
+              onEditPromotionClick={handleEditPromotionClick}
+              refetchTrigger={refetchPromotions}
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="/coupons" element={
+          <ProtectedRoute permission="products:manage">
+            <PromotionManagement 
+              onAddPromotionClick={() => setPromotionModalOpen(true)}
+              onEditPromotionClick={handleEditPromotionClick}
+              refetchTrigger={refetchPromotions}
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="/customers" element={
+          <ProtectedRoute permission="orders:view">
+            <CustomerManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/orders" element={
+          <ProtectedRoute permission="orders:view">
+            <OrderManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/tables" element={
+          <ProtectedRoute permission="table:manage">
+            <TableManagement 
+              onAddTableClick={() => setTableModalOpen(true)} 
+              onEditTableClick={handleEditTableClick}
+              refetchTrigger={refetchTables}
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="/drivers" element={
+          <ProtectedRoute permission="driver_settlement:manage">
+            <DriverManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/drivers/settlement" element={
+          <ProtectedRoute permission="driver_settlement:manage">
+            <DriverSettlement />
+          </ProtectedRoute>
+        } />
+        <Route path="/auth/waiters" element={
+          <ProtectedRoute permission="waiter_settlement:manage">
+            <WaiterManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/reports" element={
+          <ProtectedRoute permission="reports:view">
+            <ReportManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/reports/*" element={
+          <ProtectedRoute permission="reports:view">
+            <ReportManagement />
+          </ProtectedRoute>
+        } /> 
+        <Route path="/settings" element={
+          <ProtectedRoute permission="settings:view">
+            <SettingsManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/settings/*" element={
+          <ProtectedRoute permission="settings:view">
+            <SettingsManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/settings/delivery-zones" element={
+          <ProtectedRoute permission="settings:manage">
+            <DeliveryAreaManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/integrations" element={
+          <ProtectedRoute permission="integrations:manage">
+            <IntegrationManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/users" element={
+          <ProtectedRoute permission="users:manage">
+            <UserAndPermissions />
+          </ProtectedRoute>
+        } />
+        <Route path="/pos" element={
+          <ProtectedRoute permission="pos:access">
+            <PosPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/cashier" element={
+          <ProtectedRoute permission="cashier:manage">
+            <CashierManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/kds" element={
+          <ProtectedRoute permission="kds:view">
+            <KdsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/financial" element={
+          <ProtectedRoute permission="financial:view">
+            <FinancialManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/financial/*" element={
+          <ProtectedRoute permission="financial:view">
+            <FinancialManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/payment-methods" element={
+          <ProtectedRoute permission="financial:manage">
+            <PaymentMethodManagement 
+              onAddClick={() => setPaymentMethodModalOpen(true)}
+              onEditClick={handleEditPaymentMethodClick}
+              refetchTrigger={refetchPaymentMethods}
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="/stock" element={
+          <ProtectedRoute permission="stock:view">
+            <StockManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/stock/*" element={
+          <ProtectedRoute permission="stock:view">
+            <StockManagement />
+          </ProtectedRoute>
+        } />
         <Route path="/ingredients" element={<StockManagement />} />
         <Route path="/ingredients/*" element={<StockManagement />} />
-        <Route path="/fiscal" element={<FiscalManagement />} />
-        <Route path="/checklists" element={<ChecklistManagement />} />
+        <Route path="/fiscal" element={
+          <ProtectedRoute permission="settings:manage">
+            <FiscalManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/checklists" element={
+          <ProtectedRoute permission="orders:view">
+            <ChecklistManagement />
+          </ProtectedRoute>
+        } />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
 

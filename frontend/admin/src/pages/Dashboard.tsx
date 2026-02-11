@@ -63,22 +63,28 @@ const Dashboard: React.FC = () => {
         getAdminOrders(),
         getSalesHistory(),
         getPaymentMethodsReport(),
-        api.get('/categories/flat'),
+        api.get('/categories/flat').catch(() => ({ data: [] })),
       ]);
       
+      const safeOrders = Array.isArray(ordersData) ? ordersData : [];
+      const safeHistory = Array.isArray(historyData) ? historyData : [];
+      const safePayments = Array.isArray(paymentsData) ? paymentsData : [];
+      const safeCategories = Array.isArray(categoriesData?.data) ? categoriesData.data : [];
+      const safeSummary = summaryData || { totalRevenue: 0, totalOrders: 0, activeProducts: 0 };
+
       setStats({
-        ordersToday: ordersData.filter((order: any) => order.createdAt.startsWith(new Date().toISOString().split('T')[0])).length,
-        revenueToday: summaryData.totalRevenue,
-        activeProducts: summaryData.activeProducts,
-        totalOrders: summaryData.totalOrders,
-        ticketMedio: summaryData.totalOrders > 0 ? summaryData.totalRevenue / summaryData.totalOrders : 0,
-        preparing: ordersData.filter((o: any) => o.status === 'PREPARING').length,
-        hasCategories: categoriesData.data.length > 0,
-        hasProducts: summaryData.activeProducts > 0,
-        hasPayments: paymentsData.length > 0
+        ordersToday: safeOrders.filter((order: any) => order.createdAt?.startsWith(new Date().toISOString().split('T')[0])).length,
+        revenueToday: safeSummary.totalRevenue || 0,
+        activeProducts: safeSummary.activeProducts || 0,
+        totalOrders: safeSummary.totalOrders || 0,
+        ticketMedio: (safeSummary.totalOrders || 0) > 0 ? (safeSummary.totalRevenue || 0) / safeSummary.totalOrders : 0,
+        preparing: safeOrders.filter((o: any) => o.status === 'PREPARING').length,
+        hasCategories: safeCategories.length > 0,
+        hasProducts: (safeSummary.activeProducts || 0) > 0,
+        hasPayments: safePayments.length > 0
       });
-      setRecentOrders(ordersData.slice(0, 6));
-      setSalesHistory(historyData.slice(-7));
+      setRecentOrders(safeOrders.slice(0, 6));
+      setSalesHistory(safeHistory.slice(-7));
       setError(null);
     } catch (err) {
       setError('Falha ao carregar os dados do dashboard.');

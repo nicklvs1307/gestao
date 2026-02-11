@@ -18,25 +18,27 @@ const authenticateToken = (req, res, next) => {
 
 const checkPermission = (permission) => {
   return (req, res, next) => {
-    if (!req.user) return res.sendStatus(401);
+    if (!req.user) return res.status(401).json({ error: 'Autenticação necessária.' });
     
     // SuperAdmin tem acesso total
-    if (req.user.isSuperAdmin) return next();
+    if (req.user.isSuperAdmin || (req.user.permissions && req.user.permissions.includes('all:manage'))) {
+        return next();
+    }
     
     // Verifica se a permissão está na lista do usuário
-    if (req.user.permissions && (req.user.permissions.includes(permission) || req.user.permissions.includes('all:manage'))) {
+    if (req.user.permissions && req.user.permissions.includes(permission)) {
       return next();
     }
     
-    res.status(403).json({ error: `Acesso negado. Permissão necessária: ${permission}` });
+    res.status(403).json({ error: `Acesso negado. Você não tem a permissão necessária: ${permission}` });
   };
 };
 
 const checkAdmin = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user.isSuperAdmin || req.user.role === 'superadmin')) {
+  if (req.user && (req.user.isSuperAdmin || (req.user.permissions && req.user.permissions.includes('all:manage')) || req.user.role === 'admin')) {
     next();
   } else {
-    res.status(403).json({ error: 'Acesso negado. Somente administradores podem realizar esta ação.' });
+    res.status(403).json({ error: 'Acesso negado. Esta ação requer privilégios de administrador.' });
   }
 };
 

@@ -17,8 +17,15 @@ const PartialPaymentSchema = z.object({
   paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória')
 });
 
+const TableRequestSchema = z.object({
+  restaurantId: z.string().min(1, 'ID do restaurante é obrigatório'),
+  tableNumber: z.coerce.number().int().positive('Número da mesa inválido'),
+  type: z.enum(['WAITER', 'BILL'], { errorMap: () => ({ message: "Tipo de pedido inválido. Use 'WAITER' ou 'BILL'." }) })
+});
+
 module.exports = {
   CreateTableSchema,
   TableCheckoutSchema,
-  PartialPaymentSchema
+  PartialPaymentSchema,
+  TableRequestSchema
 };

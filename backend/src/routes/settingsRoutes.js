@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const SettingsController = require('../controllers/SettingsController');
-const { needsAuth } = require('../middlewares/auth');
+const { needsAuth, checkPermission } = require('../middlewares/auth');
 const upload = require('../config/multer');
 
 // Admin
-router.get('/', needsAuth, SettingsController.getSettings);
-router.get('/check-slug', needsAuth, SettingsController.checkSlugAvailability);
-router.put('/', needsAuth, SettingsController.updateSettings);
-router.put('/status', needsAuth, SettingsController.toggleStatus);
-router.post('/logo', needsAuth, upload.single('logo'), SettingsController.updateLogo);
+router.get('/', needsAuth, checkPermission('settings:view'), SettingsController.getSettings);
+router.get('/check-slug', needsAuth, checkPermission('settings:view'), SettingsController.checkSlugAvailability);
+router.put('/', needsAuth, checkPermission('settings:manage'), SettingsController.updateSettings);
+router.put('/status', needsAuth, checkPermission('settings:manage'), SettingsController.toggleStatus);
+router.post('/logo', needsAuth, checkPermission('settings:manage'), upload.single('logo'), SettingsController.updateLogo);
 
 // Client
 router.get('/slug/:slug', SettingsController.getRestaurantBySlug);

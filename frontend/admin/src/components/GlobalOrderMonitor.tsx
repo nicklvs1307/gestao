@@ -59,18 +59,23 @@ const GlobalOrderMonitor: React.FC = () => {
         setIsAutoAccept(settingsData?.settings?.autoAcceptOrders || false);
 
         const userStr = localStorage.getItem('user');
-        const user = JSON.parse(userStr!);
-        const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
 
-        if (isAdminOrStaff) {
-          const ordersData = await getAdminOrders();
-          if (Array.isArray(ordersData)) {
-            setAllOrders(ordersData);
-            lastOrderIdsRef.current = new Set(ordersData.map((o: Order) => o.id));
+          if (isAdminOrStaff) {
+            const ordersData = await getAdminOrders();
+            if (Array.isArray(ordersData)) {
+              setAllOrders(ordersData);
+              lastOrderIdsRef.current = new Set(ordersData.map((o: Order) => o.id));
+            } else {
+              setAllOrders([]);
+            }
           }
         }
       } catch (error) {
         console.error('Erro ao carregar dados iniciais:', error);
+        setAllOrders([]);
       }
     };
 
@@ -85,13 +90,18 @@ const GlobalOrderMonitor: React.FC = () => {
         try {
             const requestsData = await getTableRequests();
             if (Array.isArray(requestsData)) {
-                if (requestsData.length > pendingRequests.length) {
+                if (requestsData.length > (pendingRequests?.length || 0)) {
                     playNotificationSound();
                     setIsRequestModalOpen(true);
                 }
                 setPendingRequests(requestsData);
+            } else {
+                setPendingRequests([]);
             }
-        } catch (e) { console.warn("Monitor: Falha ao carregar chamados", e); }
+        } catch (e) { 
+            console.warn("Monitor: Falha ao carregar chamados", e); 
+            setPendingRequests([]);
+        }
     };
     
     fetchRequests();
@@ -117,33 +127,39 @@ const GlobalOrderMonitor: React.FC = () => {
     const eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
 
     eventSource.onmessage = (event) => {
-      const eventData = JSON.parse(event.data);
+      try {
+        const eventData = JSON.parse(event.data);
 
-      if (eventData.type === 'CONNECTION_ESTABLISHED') {
-        console.log('[SSE] Conexão estabelecida com o servidor.');
-        return;
-      }
-
-      const updatedOrder = eventData.payload as Order;
-      
-      setAllOrders(prevOrders => {
-        const newOrders = [...prevOrders];
-        const existingOrderIndex = newOrders.findIndex(o => o.id === updatedOrder.id);
-        
-        if (existingOrderIndex > -1) {
-          // Update existing order
-          newOrders[existingOrderIndex] = updatedOrder;
-        } else {
-          // Add new order
-          newOrders.unshift(updatedOrder);
-          lastOrderIdsRef.current.add(updatedOrder.id);
-          playNotificationSound();
-           if (!isAutoAccept && updatedOrder.status === 'PENDING') {
-              setIsOrderModalOpen(true);
-           }
+        if (eventData.type === 'CONNECTION_ESTABLISHED') {
+          console.log('[SSE] Conexão estabelecida com o servidor.');
+          return;
         }
-        return newOrders;
-      });
+
+        const updatedOrder = eventData.payload as Order;
+        if (!updatedOrder || !updatedOrder.id) return;
+        
+        setAllOrders(prevOrders => {
+          const currentOrders = Array.isArray(prevOrders) ? prevOrders : [];
+          const newOrders = [...currentOrders];
+          const existingOrderIndex = newOrders.findIndex(o => o.id === updatedOrder.id);
+          
+          if (existingOrderIndex > -1) {
+            // Update existing order
+            newOrders[existingOrderIndex] = updatedOrder;
+          } else {
+            // Add new order
+            newOrders.unshift(updatedOrder);
+            lastOrderIdsRef.current.add(updatedOrder.id);
+            playNotificationSound();
+             if (!isAutoAccept && updatedOrder.status === 'PENDING') {
+                setIsOrderModalOpen(true);
+             }
+          }
+          return newOrders;
+        });
+      } catch (err) {
+        console.error('Erro ao processar mensagem SSE:', err);
+      }
     };
 
     eventSource.onerror = (error) => {

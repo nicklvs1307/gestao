@@ -6,26 +6,50 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('--- INICIANDO SEED DE PERMISSÕES E SUPERADMIN ---');
 
-  // 1. Criar Permissões Base
+  // 1. Criar Permissões Base (Categorizadas conforme imagem)
   const permissionsList = [
-    { name: 'all:manage', description: 'Acesso total ao sistema' },
-    { name: 'orders:view', description: 'Visualizar pedidos' },
-    { name: 'orders:manage', description: 'Criar e editar pedidos' },
-    { name: 'pos:access', description: 'Acessar frente de caixa (PDV)' },
-    { name: 'cashier:manage', description: 'Abrir e fechar caixa' },
-    { name: 'financial:view', description: 'Ver fluxo de caixa' },
-    { name: 'financial:manage', description: 'Lançar contas e movimentações' },
-    { name: 'products:manage', description: 'Gerenciar cardápio e produtos' },
-    { name: 'stock:manage', description: 'Gerenciar estoque e insumos' },
-    { name: 'reports:view', description: 'Ver relatórios da loja' },
-    { name: 'delivery:manage', description: 'Gerenciar entregas e motoboys' },
+    { name: 'all:manage', description: 'Acesso total ao sistema (SuperAdmin)' },
+    
+    // VENDAS / PEDIDOS
+    { name: 'orders:view', description: 'Visualizar pedidos e mesas' },
+    { name: 'orders:manage', description: 'Criar novos pedidos' },
+    { name: 'orders:edit_items', description: 'Editar itens de pedidos em aberto' },
+    { name: 'orders:cancel', description: 'Cancelamento de pedidos e itens' },
+    { name: 'orders:transfer', description: 'Transferência de mesas e itens' },
+    { name: 'orders:payment_change', description: 'Alterar forma de pagamento' },
+    { name: 'orders:discount', description: 'Aplicar descontos em pedidos' },
     { name: 'waiter:pos', description: 'Acesso ao terminal do garçom' },
-    { name: 'settings:manage', description: 'Gerenciar configurações da loja' },
-    // Permissões de Franquia
-    { name: 'restaurants:manage', description: 'Gerenciar restaurantes da franquia' },
-    { name: 'users:manage', description: 'Gerenciar usuários da franquia' },
-    { name: 'reports:view_all', description: 'Ver relatórios globais' },
-    { name: 'products:global_manage', description: 'Gerenciar cardápio global' },
+    { name: 'kds:view', description: 'Acesso ao monitor da cozinha (KDS)' },
+    { name: 'table:manage', description: 'Gerenciar layout de mesas' },
+
+    // FINANCEIRO
+    { name: 'financial:view', description: 'Visualizar fluxo de caixa' },
+    { name: 'financial:manage', description: 'Lançamentos de receitas e despesas' },
+    { name: 'cashier:manage', description: 'Abertura e fechamento de caixa' },
+    { name: 'bank_accounts:manage', description: 'Gerenciar contas bancárias e conciliação' },
+    { name: 'financial_categories:manage', description: 'Gerenciar categorias financeiras' },
+    { name: 'waiter_settlement:manage', description: 'Acerto de contas de garçons' },
+    { name: 'driver_settlement:manage', description: 'Acerto de contas de entregadores' },
+
+    // ESTOQUE / PRODUTOS
+    { name: 'products:view', description: 'Visualizar cardápio' },
+    { name: 'products:manage', description: 'Gerenciar produtos e preços' },
+    { name: 'categories:manage', description: 'Gerenciar categorias do cardápio' },
+    { name: 'stock:view', description: 'Visualizar posição de estoque' },
+    { name: 'stock:manage', description: 'Entradas, saídas e ficha técnica' },
+    { name: 'suppliers:manage', description: 'Gerenciar fornecedores' },
+
+    // RELATÓRIOS
+    { name: 'reports:view', description: 'Acesso a relatórios básicos' },
+    { name: 'reports:financial', description: 'Ver DRE e relatórios financeiros' },
+    { name: 'reports:performance', description: 'Ver desempenho de atendentes/garçons' },
+    { name: 'reports:abc', description: 'Ver Curva ABC de produtos' },
+
+    // CONFIGURAÇÕES DA LOJA
+    { name: 'settings:view', description: 'Ver dados da loja' },
+    { name: 'settings:manage', description: 'Alterar configurações e dados fiscais' },
+    { name: 'users:manage', description: 'Gerenciar equipe e permissões' },
+    { name: 'integrations:manage', description: 'Configurar iFood / Saipos / Impressão' },
   ];
 
   console.log('Criando permissões...');

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import UserFormModal from './UserFormModal';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { toast } from 'sonner';
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -21,8 +22,9 @@ const UserManagement: React.FC = () => {
       const data = await getUsers();
       // Oculta entregadores e SuperAdmins desta lista para usuários comuns
       setUsers(data.filter((u: any) => u.role !== 'driver' && u.role !== 'superadmin' && !u.isSuperAdmin));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);
+      toast.error(error.message || 'Erro ao carregar lista de equipe.');
     } finally {
       setIsLoading(false);
     }
@@ -51,9 +53,10 @@ const UserManagement: React.FC = () => {
     if (!window.confirm('Tem certeza que deseja remover este usuário?')) return;
     try {
       await deleteUser(userId);
+      toast.success('Membro removido da equipe.');
       fetchUsers();
-    } catch (error) {
-      alert('Erro ao excluir usuário.');
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao excluir usuário.');
     }
   };
 

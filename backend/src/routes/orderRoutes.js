@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 router.post('/', needsAuth, checkPermission('orders:manage'), OrderController.createDeliveryOrder);
 router.post('/transfer-table', needsAuth, checkPermission('orders:manage'), OrderController.transferTable);
 router.post('/transfer-items', needsAuth, checkPermission('orders:manage'), OrderController.transferItems);
-router.delete('/:orderId/items/:itemId', needsAuth, checkPermission('orders:manage'), OrderController.removeItem);
+router.delete('/:orderId/items/:itemId', needsAuth, checkPermission('orders:cancel'), OrderController.removeItem);
 
 router.get('/', needsAuth, checkPermission('orders:view'), async (req, res) => {
      try { 

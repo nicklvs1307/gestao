@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 const TableService = require('../services/TableService');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { CreateTableSchema, TableCheckoutSchema, PartialPaymentSchema } = require('../schemas/tableSchema');
+const { CreateTableSchema, TableCheckoutSchema, PartialPaymentSchema, TableRequestSchema } = require('../schemas/tableSchema');
 
 class TableController {
 
@@ -162,12 +162,13 @@ class TableController {
 
   // POST /api/client/table-requests
   createClientTableRequest = asyncHandler(async (req, res) => {
-    const { restaurantId, tableNumber, type } = req.body;
+    const validatedData = TableRequestSchema.parse(req.body);
+    
     const newRequest = await prisma.tableRequest.create({ 
         data: { 
-            restaurantId,
-            tableNumber: parseInt(tableNumber),
-            type,
+            restaurantId: validatedData.restaurantId,
+            tableNumber: validatedData.tableNumber,
+            type: validatedData.type,
             status: 'PENDING'
         } 
     });
