@@ -41,7 +41,11 @@ const OrderManagement: React.FC = () => {
     fetchOrders();
 
     // SSE for real-time updates in this view
-    const eventSource = new EventSource(`${window.location.origin}/api/admin/orders/events`);
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
+    
+    const eventSource = new EventSource(`${window.location.origin}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
 
     eventSource.onmessage = (event) => {
       const eventData = JSON.parse(event.data);

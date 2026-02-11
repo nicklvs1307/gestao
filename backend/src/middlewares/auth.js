@@ -52,8 +52,8 @@ const setRestaurantId = (req, res, next) => {
     next();
   } else if (req.user && (req.user.isSuperAdmin || req.user.role === 'superadmin')) {
     // Se for uma rota que EXIGE restaurante (como /api/products) e não foi passado ID, bloqueamos
-    const storeSpecificPaths = ['/api/products', '/api/categories', '/api/admin/orders', '/api/stock', '/api/financial'];
-    const isStoreRoute = storeSpecificPaths.some(path => req.originalUrl.startsWith(path));
+    const storeSpecificPaths = ['/api/products', '/api/categories', '/api/admin/orders', '/api/stock', '/api/financial', '/api/admin/orders/events'];
+    const isStoreRoute = storeSpecificPaths.some(path => req.originalUrl.split('?')[0].startsWith(path));
 
     if (isStoreRoute) {
       return res.status(400).json({ error: 'Contexto de loja não selecionado. Selecione uma loja para gerenciar.' });

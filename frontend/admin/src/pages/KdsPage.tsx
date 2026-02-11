@@ -19,10 +19,12 @@ const KdsPage: React.FC = () => {
 
     const loadKds = async () => {
         try {
+            setLoading(true);
             const res = await api.get(`/kds/items?area=${area === 'Geral' ? '' : area}`);
-            setItems(res.data);
+            setItems(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error(error);
+            setItems([]);
         } finally {
             setLoading(false);
         }
@@ -30,8 +32,25 @@ const KdsPage: React.FC = () => {
 
     useEffect(() => {
         loadKds();
-        const interval = setInterval(loadKds, 10000); // Mais rápido para KDS
-        return () => clearInterval(interval);
+
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
+
+        const eventSource = new EventSource(`${window.location.origin}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
+
+        eventSource.onmessage = (event) => {
+            const eventData = JSON.parse(event.data);
+            if (eventData.type === 'CONNECTION_ESTABLISHED') return;
+
+            // No KDS, recarregamos a lista ou aplicamos a lógica de merge
+            // Para garantir consistência com as áreas de produção, um reload aqui é seguro e rápido com SSE
+            loadKds();
+        };
+
+        return () => {
+            eventSource.close();
+        };
     }, [area]);
 
     const changeArea = (newArea: string) => {
@@ -49,9 +68,10 @@ const KdsPage: React.FC = () => {
             
             // Remove localmente para resposta instantânea
             setItems(prev => {
+                if (!Array.isArray(prev)) return [];
                 return prev.map(order => ({
                     ...order,
-                    items: order.items.filter((item: any) => item.id !== itemId)
+                    items: order.items?.filter((item: any) => item.id !== itemId) || []
                 })).filter(order => order.items.length > 0);
             });
         } catch (error) {

@@ -111,7 +111,10 @@ const GlobalOrderMonitor: React.FC = () => {
 
     if (!isAdminOrStaff) return;
 
-    const eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events`);
+    const token = localStorage.getItem('token');
+    const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
+    
+    const eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
 
     eventSource.onmessage = (event) => {
       const eventData = JSON.parse(event.data);
