@@ -28,8 +28,14 @@ const CashierManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     
     const [initialAmount, setInitialAmount] = useState('');
-    const [finalAmount, setFinalAmount] = useState('');
     const [notes, setNotes] = useState('');
+    const [closingValues, setClosingValues] = useState<Record<string, string>>({
+        cash: '',
+        pix: '',
+        credit_card: '',
+        debit_card: '',
+        other: ''
+    });
 
     const [showTransactionModal, setShowTransactionModal] = useState<'none' | 'INCOME' | 'EXPENSE'>('none');
     const [transAmount, setTransAmount] = useState('');
@@ -74,12 +80,18 @@ const CashierManagement: React.FC = () => {
 
     const handleClose = async (e: React.FormEvent) => {
         e.preventDefault();
-        if(!confirm('Encerrar turno agora?')) return;
+        if(!confirm('Deseja encerrar o turno com os valores informados?')) return;
+        
         try {
-            await closeCashier(parseFloat(finalAmount), notes);
+            // Calcula o total informado somando todos os campos
+            const totalInformed = Object.values(closingValues).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
+            
+            await closeCashier(totalInformed, notes, closingValues);
             toast.success('Caixa fechado com sucesso!');
-            setFinalAmount(''); setNotes(''); fetchData();
-        } catch (error) { toast.error('Erro ao fechar.'); }
+            setClosingValues({ cash: '', pix: '', credit_card: '', debit_card: '', other: '' }); 
+            setNotes(''); 
+            fetchData();
+        } catch (error) { toast.error('Erro ao fechar o caixa.'); }
     };
 
     const handleTransaction = async (e: React.FormEvent) => {
@@ -138,30 +150,61 @@ const CashierManagement: React.FC = () => {
                     <AnimatePresence mode="wait">
                         {!isOpen ? (
                             <motion.div key="open" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
-                                <Card className="p-8 space-y-8 border-slate-200 shadow-2xl bg-white relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl -mr-16 -mt-16 rounded-full" />
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="p-4 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-100"><Unlock size={28} /></div>
-                                        <div><h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Iniciar Turno</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Provisionar saldo de troco</p></div>
+                                <Card className="p-6 space-y-6 border-slate-100 shadow-xl bg-white relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-3xl -mr-12 -mt-12 rounded-full" />
+                                    <div className="flex items-center gap-3 relative z-10">
+                                        <div className="p-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-100"><Unlock size={20} /></div>
+                                        <div><h3 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none">Iniciar Turno</h3><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Provisionar saldo de troco</p></div>
                                     </div>
-                                    <form onSubmit={handleOpen} className="space-y-6 relative z-10">
-                                        <Input label="Valor em Fundo de Caixa (R$)" type="number" step="0.01" value={initialAmount} onChange={e => setInitialAmount(e.target.value)} required placeholder="0.00" icon={DollarSign} />
-                                        <Button fullWidth size="lg" className="h-16 rounded-[2rem] font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 bg-blue-600 hover:bg-blue-500">ABRIR CAIXA AGORA</Button>
+                                    <form onSubmit={handleOpen} className="space-y-4 relative z-10">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Fundo de Caixa (R$)</label>
+                                            <div className="relative">
+                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <input type="number" step="0.01" value={initialAmount} onChange={e => setInitialAmount(e.target.value)} required placeholder="0.00" className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-4 text-sm font-bold focus:border-blue-500 outline-none transition-all" />
+                                            </div>
+                                        </div>
+                                        <Button fullWidth className="h-11 rounded-xl font-black uppercase tracking-widest italic bg-blue-600 hover:bg-blue-500 text-[10px]">ABRIR CAIXA</Button>
                                     </form>
                                 </Card>
                             </motion.div>
                         ) : (
                             <motion.div key="close" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
-                                <Card className="p-8 space-y-8 border-rose-200 shadow-2xl bg-slate-900 text-white relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-3xl -mr-16 -mt-16 rounded-full" />
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl shadow-rose-900/40"><Lock size={28} /></div>
-                                        <div><h3 className="text-xl font-black uppercase italic tracking-tighter leading-none">Encerrar Caixa</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Conferência final de valores</p></div>
+                                <Card className="p-6 space-y-6 border-rose-100 shadow-xl bg-slate-900 text-white relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/10 blur-3xl -mr-12 -mt-12 rounded-full" />
+                                    <div className="flex items-center gap-3 relative z-10">
+                                        <div className="p-3 bg-rose-600 text-white rounded-xl shadow-lg shadow-rose-900/40"><Lock size={20} /></div>
+                                        <div><h3 className="text-sm font-black uppercase italic tracking-tighter leading-none">Fechar Caixa</h3><p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Conferência ponto-a-ponto</p></div>
                                     </div>
-                                    <form onSubmit={handleClose} className="space-y-6 relative z-10">
-                                        <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Total em Espécie (Dinheiro)</label><div className="relative"><span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-600 text-lg italic">R$</span><input type="number" step="0.01" required className="w-full h-16 bg-white/5 border-2 border-white/10 rounded-2xl pl-14 pr-6 text-xl font-black italic focus:border-rose-500 outline-none transition-all text-white" value={finalAmount} onChange={e => setFinalAmount(e.target.value)} /></div></div>
-                                        <textarea className="w-full bg-white/5 border-2 border-white/10 rounded-[2rem] p-6 text-sm font-black text-white uppercase italic tracking-tight focus:border-rose-500 outline-none transition-all h-28" placeholder="NOTAS DE FECHAMENTO..." value={notes} onChange={e => setNotes(e.target.value)} />
-                                        <Button fullWidth size="lg" className="h-16 rounded-[2rem] font-black uppercase tracking-widest italic bg-rose-600 hover:bg-rose-500 border-none shadow-2xl shadow-rose-900/40">FINALIZAR EXPEDIENTE</Button>
+                                    <form onSubmit={handleClose} className="space-y-4 relative z-10">
+                                        <div className="space-y-3">
+                                            {paymentMethods.map(m => (
+                                                <div key={m.id} className="space-y-1">
+                                                    <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest ml-1 flex items-center gap-1">
+                                                        <m.icon size={10} /> {m.label}
+                                                    </label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-600 text-[10px] italic">R$</span>
+                                                        <input 
+                                                            type="number" 
+                                                            step="0.01" 
+                                                            required 
+                                                            className="w-full h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-black italic focus:border-rose-500 outline-none transition-all text-white" 
+                                                            value={closingValues[m.id]} 
+                                                            onChange={e => setClosingValues(prev => ({ ...prev, [m.id]: e.target.value }))}
+                                                            placeholder="0,00"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Observações</label>
+                                            <textarea className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] font-bold text-white uppercase italic tracking-tight focus:border-rose-500 outline-none transition-all h-20" placeholder="NOTAS DE FECHAMENTO..." value={notes} onChange={e => setNotes(e.target.value)} />
+                                        </div>
+
+                                        <Button fullWidth className="h-11 rounded-xl font-black uppercase tracking-widest italic bg-rose-600 hover:bg-rose-500 border-none text-[10px] shadow-lg shadow-rose-900/40">FINALIZAR TURNO</Button>
                                     </form>
                                 </Card>
                             </motion.div>
@@ -209,11 +252,25 @@ const CashierManagement: React.FC = () => {
                             </div>
 
                             {/* Ações Rápidas de Operação */}
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <Button fullWidth size="lg" onClick={() => setShowTransactionModal('INCOME')} className="h-20 rounded-[2.5rem] bg-emerald-600 hover:bg-emerald-500 text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-emerald-900/10 italic gap-3"><Plus size={24} strokeWidth={3} /> Reforço de Caixa</Button>
-                                <Button fullWidth size="lg" onClick={() => setShowTransactionModal('EXPENSE')} className="h-20 rounded-[2.5rem] bg-orange-600 hover:bg-orange-500 text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-orange-900/10 italic gap-3"><Minus size={24} strokeWidth={3} /> Sangria de Caixa</Button>
-                                <Button fullWidth size="lg" onClick={() => setShowConference(!showConference)} variant={showConference ? 'primary' : 'outline'} className={cn("h-20 rounded-[2.5rem] text-[10px] font-black uppercase tracking-[0.3em] shadow-xl italic gap-3 transition-all", showConference ? "bg-slate-900 text-white border-none" : "bg-white border-slate-200 text-slate-400")}><Receipt size={24} /> {showConference ? 'Ocultar Auditoria' : 'Auditoria Detalhada'}</Button>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <Button fullWidth onClick={() => setShowTransactionModal('INCOME')} className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-900/10 italic gap-2"><Plus size={18} strokeWidth={3} /> Reforço</Button>
+                                <Button fullWidth onClick={() => setShowTransactionModal('EXPENSE')} className="h-12 rounded-2xl bg-orange-600 hover:bg-orange-500 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-orange-900/10 italic gap-2"><Minus size={18} strokeWidth={3} /> Sangria</Button>
+                                <Button fullWidth onClick={() => setShowConference(!showConference)} variant={showConference ? 'primary' : 'outline'} className={cn("h-12 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg italic gap-2 transition-all", showConference ? "bg-slate-900 text-white border-none" : "bg-white border-slate-200 text-slate-400")}><Receipt size={18} /> {showConference ? 'Fechar Auditoria' : 'Auditoria'}</Button>
                             </div>
+
+                            {/* Alerta de Motoboys Pendentes */}
+                            {session.pendingDriverSettlementsCount > 0 && (
+                                <Card className="p-4 border-orange-200 bg-orange-50/50 flex items-center justify-between group cursor-pointer hover:bg-orange-50 transition-all shadow-sm" onClick={() => window.location.href='/drivers/settlement'}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-2.5 bg-white text-orange-500 rounded-xl shadow-sm"><AlertCircle size={20} /></div>
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-slate-900 uppercase italic">Atenção: Acertos Pendentes</h4>
+                                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Existem {session.pendingDriverSettlementsCount} motoboy(s) aguardando prestação de contas.</p>
+                                        </div>
+                                    </div>
+                                    <ArrowUpRight size={20} className="text-slate-300 group-hover:text-orange-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+                                </Card>
+                            )}
 
                             {/* Auditoria Detalhada Premium */}
                             <AnimatePresence>
