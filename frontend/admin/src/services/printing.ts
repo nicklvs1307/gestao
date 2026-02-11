@@ -123,7 +123,11 @@ const generateReceiptPdf = (order: Order, itemsToPrint: OrderItem[], title: stri
       if (restaurantInfo.address) {
           const addrLines = doc.splitTextToSize(restaurantInfo.address, 65);
           doc.text(addrLines, leftMargin, y);
-          y += (addrLines.length * lineHeight);
+          if (addrLines && addrLines.length) {
+              y += (addrLines.length * lineHeight);
+          } else {
+              y += lineHeight;
+          }
       }
       if (restaurantInfo.phone) {
           doc.text(`TEL: ${restaurantInfo.phone}`, leftMargin, y);
@@ -190,7 +194,11 @@ const generateReceiptPdf = (order: Order, itemsToPrint: OrderItem[], title: stri
                 doc.setFont('helvetica', 'bold');
                 const addrLines = doc.splitTextToSize(`ENDEREÇO: ${addr.toUpperCase()}`, 65);
                 doc.text(addrLines, leftMargin, y);
-                y += (addrLines.length * lineHeight);
+                if (addrLines && addrLines.length) {
+                    y += (addrLines.length * lineHeight);
+                } else {
+                    y += lineHeight;
+                }
             }
         }
       }
@@ -214,23 +222,28 @@ const generateReceiptPdf = (order: Order, itemsToPrint: OrderItem[], title: stri
   y += lineHeight;
 
   let totalQty = 0;
-  itemsToPrint.forEach(item => {
-    totalQty += item.quantity;
+  (itemsToPrint || []).forEach(item => {
+    totalQty += item.quantity || 0;
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(baseSize + 2); // Fonte MAIOR para itens
     
-    const productText = `${item.quantity}x ${item.product.name.toUpperCase()}`;
+    const productName = item.product?.name || "Produto";
+    const productText = `${item.quantity}x ${productName.toUpperCase()}`;
     const productLines = doc.splitTextToSize(productText, maxContentWidth + (isProduction ? 15 : 0)); // Produção tem mais espaço pois nao tem preço
     
     doc.text(productLines, leftMargin, y);
     
     if (!isProduction) {
-        const totalItem = (item.priceAtTime * item.quantity).toFixed(2);
+        const totalItem = ((item.priceAtTime || 0) * (item.quantity || 0)).toFixed(2);
         doc.text(totalItem, rightMargin, y, { align: 'right' });
     }
     
-    y += (productLines.length * lineHeight);
+    if (productLines && productLines.length) {
+        y += (productLines.length * lineHeight);
+    } else {
+        y += lineHeight;
+    }
 
     // DETALHES (SABORES, TAMANHO, ADICIONAIS) - Com recuo maior à direita
     doc.setFontSize(baseSize); 
@@ -240,30 +253,35 @@ const generateReceiptPdf = (order: Order, itemsToPrint: OrderItem[], title: stri
     if (item.flavorsJson) {
         try {
             const flavors = JSON.parse(item.flavorsJson);
-            flavors.forEach((f: any) => {
-                doc.setFont('helvetica', 'bold');
-                const line = `> SABOR: ${f.name.toUpperCase()}`;
-                const lines = doc.splitTextToSize(line, detailWidth);
-                doc.text(lines, detailMargin, y);
-                y += (lines.length * lineHeight);
-            });
+            if (Array.isArray(flavors)) {
+                flavors.forEach((f: any) => {
+                    doc.setFont('helvetica', 'bold');
+                    const line = `> SABOR: ${f.name?.toUpperCase() || ''}`;
+                    const lines = doc.splitTextToSize(line, detailWidth);
+                    doc.text(lines, detailMargin, y);
+                    y += (lines.length * lineHeight);
+                });
+            }
         } catch {}
     }
     if (item.sizeJson) {
         try { 
+            const size = JSON.parse(item.sizeJson);
             doc.setFont('helvetica', 'normal');
-            doc.text(`> TAM: ${JSON.parse(item.sizeJson).name.toUpperCase()}`, detailMargin, y); 
+            doc.text(`> TAM: ${size.name?.toUpperCase() || ''}`, detailMargin, y); 
             y += lineHeight; 
         } catch {}
     }
     if (item.addonsJson) {
         try { 
             const addons = JSON.parse(item.addonsJson);
-            addons.forEach((a:any) => {
-                doc.setFont('helvetica', 'bold');
-                doc.text(`[+] ${a.name.toUpperCase()}`, detailMargin, y);
-                y += lineHeight;
-            });
+            if (Array.isArray(addons)) {
+                addons.forEach((a:any) => {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`[+] ${a.name?.toUpperCase() || ''}`, detailMargin, y);
+                    y += lineHeight;
+                });
+            }
         } catch {}
     }
     if (item.observations) {
@@ -476,11 +494,16 @@ const generateTableClosurePdf = (tableNumber: number, items: any[], payments: an
         subtotal += itemTotal;
 
         doc.setFont('helvetica', 'bold');
-        const productText = `${item.quantity}x ${item.product.name.toUpperCase()}`;
+        const productName = item.product?.name || "Produto";
+        const productText = `${item.quantity}x ${productName.toUpperCase()}`;
         const productLines = doc.splitTextToSize(productText, 45);
         doc.text(productLines, leftMargin, y);
         doc.text(itemTotal.toFixed(2), rightMargin, y, { align: 'right' });
-        y += (productLines.length * lineHeight);
+        if (productLines && productLines.length) {
+            y += (productLines.length * lineHeight);
+        } else {
+            y += lineHeight;
+        }
 
         // Detalhes (Sabores/Tamanhos)
         doc.setFontSize(7);
@@ -591,6 +614,14 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
   const status = await checkAgentStatus();
   if (!status) return alert("ERRO: Agente de impressão não encontrado!");
 
+  // Garantir que config tenha todas as propriedades necessárias
+  const finalConfig: PrinterConfig = {
+      cashierPrinters: config?.cashierPrinters || [],
+      kitchenPrinters: config?.kitchenPrinters || [],
+      barPrinters: config?.barPrinters || [],
+      categoryMapping: config?.categoryMapping || {}
+  };
+
   const finalSettings = receiptSettings || JSON.parse(localStorage.getItem('receipt_settings') || '{}');
   const finalRestaurant = restaurantInfo || { name: localStorage.getItem('restaurant_name') };
 
@@ -617,9 +648,9 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
   
   const shouldPrintCashier = !isTable || (isTable && isCompleted);
 
-  if (shouldPrintCashier && config.cashierPrinters && config.cashierPrinters.length > 0) {
+  if (shouldPrintCashier && finalConfig.cashierPrinters && finalConfig.cashierPrinters.length > 0) {
       const pdf = generateReceiptPdf(order, order.items, isTable ? "EXTRATO DE CONTA" : "VIA CAIXA", finalSettings, finalRestaurant, logoBase64, false);
-      for (const p of config.cashierPrinters) {
+      for (const p of finalConfig.cashierPrinters) {
           await sendToAgent(p, pdf);
       }
   }
@@ -631,14 +662,25 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
   if (shouldPrintProduction) {
       const productionGroups: Record<string, OrderItem[]> = {};
 
-      order.items.forEach(item => {
-          // Busca categoria tentando várias fontes (direta, via produto ou fallback Geral)
-          const category = item.product?.category || (item as any).category;
-          const categoryName = category?.name || "Geral";
+      (order.items || []).forEach(item => {
+          // Busca categoria tentando várias fontes
+          // 1. item.product.categories (lista)
+          // 2. item.product.category (legado)
+          // 3. item.category (fallback)
+          const product = item.product;
+          let categoryName = "Geral";
+
+          if (product?.categories && Array.isArray(product.categories) && product.categories.length > 0) {
+              categoryName = product.categories[0].name;
+          } else if (product?.category?.name) {
+              categoryName = product.category.name;
+          } else if ((item as any).category?.name) {
+              categoryName = (item as any).category.name;
+          }
           
-          const destinationId = config.categoryMapping[categoryName] || config.categoryMapping[categoryName.trim()] || 'k1';
+          const destinationId = finalConfig.categoryMapping[categoryName] || finalConfig.categoryMapping[categoryName.trim()] || 'k1';
           
-          console.log(`Debug Impressão: Item="${item.product?.name || item.productId}" | Categoria="${categoryName}" | Destino="${destinationId}"`);
+          console.log(`Debug Impressão: Item="${product?.name || item.productId}" | Categoria="${categoryName}" | Destino="${destinationId}"`);
           
           if (destinationId === 'none') return;
 
@@ -648,7 +690,7 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
 
       // 3. DISPARAR IMPRESSÕES DE PRODUÇÃO
       // Cozinhas (IDs geralmente começam com 'k')
-      for (const k of config.kitchenPrinters) {
+      for (const k of finalConfig.kitchenPrinters) {
           const items = productionGroups[k.id];
           if (items && items.length > 0) {
               console.log(`Enviando ${items.length} itens para Cozinha: ${k.name} (${k.printer})`);
@@ -658,7 +700,7 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
       }
 
       // Bares (IDs geralmente começam com 'b')
-      for (const b of config.barPrinters) {
+      for (const b of finalConfig.barPrinters) {
           const items = productionGroups[b.id];
           if (items && items.length > 0) {
               console.log(`Enviando ${items.length} itens para Bar: ${b.name} (${b.printer})`);
