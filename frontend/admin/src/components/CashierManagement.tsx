@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import apiClient from '../services/api/client';
 import { 
     getCashierStatus, 
     getCashierSummary, 

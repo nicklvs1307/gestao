@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Category } from '@/types/index';
 import { getCategories, createCategory, updateCategory } from '../services/api/categories';
-import { addonService, AddonGroup } from '../services/api/addonService';
+import { addonService } from '../services/api/addonService';
+import type { AddonGroup } from '../services/api/addonService';
 import { X, Layers, Save, Loader2, ChevronDown, Clock, Calendar, Pizza, Info, Plus, Trash2, List } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';

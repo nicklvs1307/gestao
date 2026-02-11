@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { globalSizeService, GlobalSize } from '../services/api/globalSizes';
+import { globalSizeService } from '../services/api/globalSizes';
+import type { GlobalSize } from '../services/api/globalSizes';
 import { 
   Plus, 
   Trash2, 
