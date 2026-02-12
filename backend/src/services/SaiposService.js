@@ -1,10 +1,16 @@
 const axios = require('axios');
 const prisma = require('../lib/prisma');
 
-// URL base da API de Pedidos (Ajustar para produção se necessário: https://order-api.saipos.com)
-const SAIPOS_API_URL = 'https://homolog-order-api.saipos.com'; 
-
 class SaiposService {
+  /**
+   * Retorna a URL base conforme o ambiente (Produção ou Homologação)
+   */
+  getBaseUrl(env) {
+    return env === 'production' 
+      ? 'https://order-api.saipos.com' 
+      : 'https://homolog-order-api.saipos.com';
+  }
+
   /**
    * Obtém ou renova o token de acesso da Saipos
    * Endpoint: POST /auth
@@ -16,8 +22,9 @@ class SaiposService {
 
     try {
       console.log(`[SAIPOS] Solicitando novo token para restaurante ${restaurantId}...`);
+      const baseUrl = this.getBaseUrl(settings.saiposEnv);
       
-      const response = await axios.post(`${SAIPOS_API_URL}/auth`, {
+      const response = await axios.post(`${baseUrl}/auth`, {
         idPartner: settings.saiposPartnerId,
         secret: settings.saiposSecret
       });
@@ -71,6 +78,7 @@ class SaiposService {
 
       const settings = order.restaurant.integrationSettings;
       const fiscalConfig = order.restaurant.fiscalConfig;
+      const baseUrl = this.getBaseUrl(settings.saiposEnv);
 
       if (!settings.saiposCodStore) {
         console.error('[SAIPOS] Erro: Código da Loja (cod_store) não configurado.');
@@ -138,8 +146,11 @@ class SaiposService {
       });
 
       // 2. Definição do Método e Endereço
+      // Correção: Garantir que se houver dados de entrega, o modo seja DELIVERY
+      const isDelivery = order.orderType === 'DELIVERY' || order.deliveryOrder !== null;
+      
       let orderMethod = {
-          mode: order.orderType === 'DELIVERY' ? 'DELIVERY' : (order.tableNumber ? 'TABLE' : 'TAKEOUT'),
+          mode: isDelivery ? 'DELIVERY' : (order.tableNumber ? 'TABLE' : 'TAKEOUT'),
           scheduled: false,
           delivery_date_time: new Date().toISOString()
       };
@@ -180,7 +191,7 @@ class SaiposService {
       // 4. Montagem do Payload Final
       const rawPayload = {
         order_id: order.id,
-        display_id: order.dailyOrderNumber.toString(),
+        display_id: order.dailyOrderNumber ? order.dailyOrderNumber.toString() : order.id.slice(-4),
         cod_store: settings.saiposCodStore,
         created_at: order.createdAt.toISOString(),
         notes: order.deliveryOrder?.notes || '',
@@ -189,7 +200,7 @@ class SaiposService {
         total_amount: parseFloat(order.total) + parseFloat(order.deliveryOrder?.deliveryFee || 0),
         customer: {
           id: order.deliveryOrder?.customer?.id || 'GUEST',
-          name: order.deliveryOrder?.name || order.customerName || `Mesa ${order.tableNumber}`,
+          name: order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcão'),
           phone: order.deliveryOrder?.phone?.replace(/\D/g, '') || ''
         },
         order_method: orderMethod,
@@ -198,17 +209,18 @@ class SaiposService {
       };
 
       if (deliveryAddress) rawPayload.delivery_address = deliveryAddress;
-      if (orderMethod.mode === 'TABLE') rawPayload.table = { desc_table: order.tableNumber.toString() };
+      if (orderMethod.mode === 'TABLE' && order.tableNumber) {
+          rawPayload.table = { desc_table: order.tableNumber.toString() };
+      }
 
-      // Limpeza de campos null/undefined (conforme automação funcional)
+      // Limpeza de campos null/undefined
       const payload = JSON.parse(JSON.stringify(rawPayload, (key, value) => {
           return value === null || value === undefined ? '' : value;
       }));
 
-      console.log(`[SAIPOS] Enviando Pedido #${order.dailyOrderNumber} para Loja ${settings.saiposCodStore}...`);
-      console.log('[SAIPOS DEBUG] PAYLOAD COMPLETO:', JSON.stringify(payload, null, 2));
+      console.log(`[SAIPOS] Enviando Pedido #${order.dailyOrderNumber} (Modo: ${orderMethod.mode}) para Loja ${settings.saiposCodStore}...`);
       
-      const response = await axios.post(`${SAIPOS_API_URL}/order`, payload, {
+      const response = await axios.post(`${baseUrl}/order`, payload, {
         headers: {
           'Authorization': token,
           'Content-Type': 'application/json'
@@ -218,9 +230,9 @@ class SaiposService {
       if (response.data) {
         await prisma.order.update({
           where: { id: orderId },
-          data: { saiposOrderId: 'SYNCED_V2' }
+          data: { saiposOrderId: 'SYNCED_V3' }
         });
-        console.log(`[SAIPOS] Sucesso! Pedido #${order.dailyOrderNumber} integrado.`);
+        console.log(`[SAIPOS] Sucesso! Pedido integrado.`);
       }
 
     } catch (error) {

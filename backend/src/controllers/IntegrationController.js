@@ -20,7 +20,7 @@ const getSaiposSettings = async (req, res) => {
 };
 
 const updateSaiposSettings = async (req, res) => {
-    const { saiposPartnerId, saiposSecret, saiposCodStore, saiposIntegrationActive } = req.body;
+    const { saiposPartnerId, saiposSecret, saiposCodStore, saiposIntegrationActive, saiposEnv } = req.body;
 
     try {
         const settings = await prisma.integrationSettings.upsert({
@@ -29,14 +29,16 @@ const updateSaiposSettings = async (req, res) => {
                 saiposPartnerId,
                 saiposSecret,
                 saiposCodStore,
-                saiposIntegrationActive
+                saiposIntegrationActive,
+                saiposEnv
             },
             create: {
                 restaurantId: req.restaurantId,
                 saiposPartnerId,
                 saiposSecret,
                 saiposCodStore,
-                saiposIntegrationActive
+                saiposIntegrationActive,
+                saiposEnv
             }
         });
 

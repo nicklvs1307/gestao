@@ -437,6 +437,7 @@ model IntegrationSettings {
   saiposPartnerId         String?   // Novo campo para o ID do Parceiro
   saiposCodStore          String?
   saiposIntegrationActive Boolean   @default(false)
+  saiposEnv               String    @default("homologation") // "production" ou "homologation"
   saiposToken             String?   // Token de autenticação da Saipos
   saiposTokenExpiresAt    DateTime? // Data de expiração do token
   createdAt               DateTime  @default(now())
