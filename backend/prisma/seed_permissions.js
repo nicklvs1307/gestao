@@ -4,9 +4,9 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('--- INICIANDO SEED DE PERMISSÕES E SUPERADMIN ---');
+  console.log('--- INICIANDO SEED DE PERMISSÕES E CONSOLIDAÇÃO ---');
 
-  // 1. Criar Permissões Base (Categorizadas conforme imagem)
+  // 1. Criar/Atualizar Permissões Base
   const permissionsList = [
     { name: 'all:manage', description: 'Acesso total ao sistema (SuperAdmin)' },
     
@@ -19,8 +19,12 @@ async function main() {
     { name: 'orders:payment_change', description: 'Alterar forma de pagamento' },
     { name: 'orders:discount', description: 'Aplicar descontos em pedidos' },
     { name: 'waiter:pos', description: 'Acesso ao terminal do garçom' },
+    { name: 'pos:access', description: 'Acesso ao Frente de Caixa (PDV)' },
     { name: 'kds:view', description: 'Acesso ao monitor da cozinha (KDS)' },
     { name: 'table:manage', description: 'Gerenciar layout de mesas' },
+
+    // LOGÍSTICA / ENTREGA
+    { name: 'delivery:manage', description: 'Gestão de Entregas e Tela do Entregador' },
 
     // FINANCEIRO
     { name: 'financial:view', description: 'Visualizar fluxo de caixa' },
@@ -44,6 +48,7 @@ async function main() {
     { name: 'reports:financial', description: 'Ver DRE e relatórios financeiros' },
     { name: 'reports:performance', description: 'Ver desempenho de atendentes/garçons' },
     { name: 'reports:abc', description: 'Ver Curva ABC de produtos' },
+    { name: 'reports:view_all', description: 'Ver relatórios de todas as lojas (Franquia)' },
 
     // CONFIGURAÇÕES DA LOJA
     { name: 'settings:view', description: 'Ver dados da loja' },
@@ -52,7 +57,7 @@ async function main() {
     { name: 'integrations:manage', description: 'Configurar iFood / Saipos / Impressão' },
   ];
 
-  console.log('Criando permissões...');
+  console.log('Sincronizando permissões...');
   for (const p of permissionsList) {
     await prisma.permission.upsert({
       where: { name: p.name },
@@ -61,53 +66,27 @@ async function main() {
     });
   }
 
-  // ... (Super Admin e Franqueador mantidos) ...
-
-  // 5. Criar Roles padrão de Operação
-  const rolesToCreate = [
-    {
-      name: 'Garçom',
-      permissions: ['orders:view', 'orders:manage', 'waiter:pos']
-    },
-    {
-      name: 'Atendente',
-      permissions: ['orders:view', 'orders:manage', 'pos:access']
-    },
-    {
-      name: 'Caixa',
-      permissions: ['orders:view', 'orders:manage', 'pos:access', 'cashier:manage']
-    },
-    {
-      name: 'Cozinha',
-      permissions: ['orders:view']
-    },
-    {
-      name: 'Entregador',
-      permissions: ['orders:view', 'delivery:manage']
-    },
-    {
-      name: 'Administrador',
-      permissions: permissionsList.filter(p => p.name !== 'all:manage').map(p => p.name)
-    }
-  ];
-
-  for (const r of rolesToCreate) {
-    let role = await prisma.role.findFirst({ where: { name: r.name, franchiseId: null } });
-    if (!role) {
-      await prisma.role.create({
-        data: {
-          name: r.name,
-          isSystem: true,
-          permissions: {
-            connect: r.permissions.map(p => ({ name: p }))
-          }
-        }
+  // 2. Resolver Redundância: "admin" -> "Administrador"
+  console.log('Resolvendo redundâncias de cargos...');
+  const legacyAdminRole = await prisma.role.findFirst({ where: { name: 'admin', franchiseId: null } });
+  if (legacyAdminRole) {
+      console.log('Migrando cargo "admin" para "Administrador"...');
+      await prisma.role.update({
+          where: { id: legacyAdminRole.id },
+          data: { name: 'Administrador' }
       });
-    }
   }
 
-  // 2. Criar Role de Super Admin
-  console.log('Criando role de Super Admin...');
+  const legacyStaffRole = await prisma.role.findFirst({ where: { name: 'staff', franchiseId: null } });
+  if (legacyStaffRole) {
+      console.log('Migrando cargo "staff" para "Atendente"...');
+      await prisma.role.update({
+          where: { id: legacyStaffRole.id },
+          data: { name: 'Atendente' }
+      });
+  }
+
+  // 3. Criar/Atualizar Role de Super Admin
   let superAdminRole = await prisma.role.findFirst({
     where: { name: 'Super Admin', franchiseId: null }
   });
@@ -118,22 +97,79 @@ async function main() {
         name: 'Super Admin',
         description: 'Administrador global do sistema',
         isSystem: true,
-        permissions: {
-          connect: permissionsList.map(p => ({ name: p.name })),
-        },
+        permissions: { connect: permissionsList.map(p => ({ name: p.name })) },
       },
     });
+  } else {
+      await prisma.role.update({
+          where: { id: superAdminRole.id },
+          data: { permissions: { set: permissionsList.map(p => ({ name: p.name })) } }
+      });
   }
 
-  // 3. Criar Usuário SuperAdmin
-  console.log('Criando usuário SuperAdmin...');
+  // 4. Configuração dos Cargos do Sistema
+  const rolesToCreate = [
+    {
+      name: 'Administrador',
+      description: 'Gestão completa da loja',
+      permissions: permissionsList.filter(p => p.name !== 'all:manage' && p.name !== 'reports:view_all').map(p => p.name)
+    },
+    {
+      name: 'Garçom',
+      description: 'Atendimento de mesas e pedidos',
+      permissions: ['orders:view', 'orders:manage', 'waiter:pos']
+    },
+    {
+      name: 'Atendente',
+      description: 'Vendas no balcão e pedidos',
+      permissions: ['orders:view', 'orders:manage', 'pos:access']
+    },
+    {
+      name: 'Caixa',
+      description: 'Operação de caixa e recebimentos',
+      permissions: ['orders:view', 'orders:manage', 'pos:access', 'cashier:manage']
+    },
+    {
+      name: 'Cozinha',
+      description: 'Monitor de produção',
+      permissions: ['orders:view', 'kds:view']
+    },
+    {
+      name: 'Entregador',
+      description: 'Logística de entregas',
+      permissions: ['orders:view', 'delivery:manage']
+    }
+  ];
+
+  console.log('Sincronizando cargos operacionais...');
+  for (const r of rolesToCreate) {
+    let role = await prisma.role.findFirst({ where: { name: r.name, franchiseId: null } });
+    
+    if (!role) {
+      await prisma.role.create({
+        data: {
+          name: r.name,
+          description: r.description,
+          isSystem: true,
+          permissions: { connect: r.permissions.map(p => ({ name: p })) }
+        }
+      });
+    } else {
+        await prisma.role.update({
+            where: { id: role.id },
+            data: {
+                description: r.description,
+                permissions: { set: r.permissions.map(p => ({ name: p })) }
+            }
+        });
+    }
+  }
+
+  // 5. Garantir SuperAdmin
   const adminPasswordHash = await bcrypt.hash('superadmin123', 10);
   await prisma.user.upsert({
     where: { email: 'super@admin.com' },
-    update: {
-      isSuperAdmin: true,
-      roleId: superAdminRole.id,
-    },
+    update: { isSuperAdmin: true, roleId: superAdminRole.id },
     create: {
       email: 'super@admin.com',
       name: 'Super Admin Global',
@@ -143,32 +179,7 @@ async function main() {
     },
   });
 
-  // 4. Criar Roles padrão para Franquias (Exemplo)
-  console.log('Criando roles padrão de franquia...');
-  let franchisorRole = await prisma.role.findFirst({
-    where: { name: 'Franqueador Admin', franchiseId: null }
-  });
-
-  if (!franchisorRole) {
-    franchisorRole = await prisma.role.create({
-      data: {
-        name: 'Franqueador Admin',
-        description: 'Gestor da Franquia',
-        isSystem: true,
-        permissions: {
-          connect: [
-            { name: 'restaurants:manage' },
-            { name: 'users:manage' },
-            { name: 'reports:view_all' },
-            { name: 'products:global_manage' },
-          ]
-        }
-      }
-    });
-  }
-
-  console.log('--- SEED DE PERMISSÕES FINALIZADO ---');
-  console.log('Login: super@admin.com / Senha: superadmin123');
+  console.log('--- SEED FINALIZADO COM SUCESSO ---');
 }
 
 main()
