@@ -134,7 +134,6 @@ app.use('/api/sectors', require('./src/routes/sectorRoutes'));
 app.use('/api/checklists', require('./src/routes/checklistRoutes'));
 
 // KDS Alias
-const { needsAuth } = require('./src/middlewares/auth');
 const OrderController = require('./src/controllers/OrderController');
 app.get('/api/kds/items', needsAuth, OrderController.getKdsItems);
 
