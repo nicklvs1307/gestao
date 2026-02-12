@@ -189,11 +189,43 @@ const KdsPage: React.FC = () => {
                                                         <span className="text-lg font-black text-white">{item.quantity}</span>
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-black uppercase leading-tight text-white">{item.product.name}</p>
+                                                        <p className="text-sm font-black uppercase leading-tight text-white group-hover:text-orange-500 transition-colors">
+                                                            {item.product.name}
+                                                        </p>
+                                                        
+                                                        {/* Opções e Tamanhos */}
+                                                        <div className="flex flex-wrap gap-1.5 mt-2">
+                                                            {item.sizeJson && (
+                                                                <span className="text-[8px] font-black bg-white/10 text-slate-400 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                                                    TAM: {JSON.parse(item.sizeJson).name}
+                                                                </span>
+                                                            )}
+                                                            {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, idx: number) => (
+                                                                <span key={idx} className="text-[8px] font-black bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md uppercase tracking-widest">
+                                                                    Sabor: {f.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Adicionais / Complementos */}
+                                                        {item.addonsJson && (
+                                                            <div className="mt-3 flex flex-wrap gap-1">
+                                                                {JSON.parse(item.addonsJson).map((a: any, idx: number) => (
+                                                                    <div key={idx} className="bg-emerald-500/10 text-emerald-500 text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 border border-emerald-500/20">
+                                                                        <Plus size={8} /> {a.quantity > 1 ? `${a.quantity}x ` : ''}{a.name}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Observações com Destaque */}
                                                         {item.observations && (
-                                                            <p className="mt-2 p-2 bg-orange-500/10 border-l-2 border-orange-500 text-[10px] font-bold text-orange-200 italic">
-                                                                {item.observations}
-                                                            </p>
+                                                            <div className="mt-4 p-3 bg-orange-500/10 border-l-2 border-orange-500 rounded-lg">
+                                                                <p className="text-[10px] font-bold text-orange-200 leading-tight flex gap-2 italic">
+                                                                    <AlertCircle size={12} className="shrink-0 text-orange-500" />
+                                                                    {item.observations}
+                                                                </p>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
