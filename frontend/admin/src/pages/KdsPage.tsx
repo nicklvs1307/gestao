@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { 
     ChefHat, Clock, CheckCircle, RefreshCw, 
-    List, AlertCircle, Timer, Beer, Pizza as PizzaIcon, Plus, Loader2, LogOut, ChevronRight, Bike, ShoppingBag
+    List, AlertCircle, Timer, Beer, Pizza as PizzaIcon, Plus, Loader2, LogOut, ChevronRight, Bike, ShoppingBag, Utensils
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
