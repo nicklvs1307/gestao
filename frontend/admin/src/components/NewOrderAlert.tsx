@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { Order } from '../types';
 import { format } from 'date-fns';
 import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag } from 'lucide-react';
