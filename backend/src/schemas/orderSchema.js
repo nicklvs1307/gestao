@@ -58,6 +58,7 @@ const CreateDeliveryOrderSchema = z.object({
     deliveryType: z.enum(['delivery', 'pickup']).optional().nullable(),
     paymentMethod: z.string().optional().nullable(),
     changeFor: z.number().optional().nullable(),
+    deliveryFee: z.number().optional().default(0),
   }).optional().nullable(),
 
   // Campos opcionais de compatibilidade

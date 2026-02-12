@@ -172,14 +172,23 @@ class OrderService {
                      status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
                  }
              });
+
+             // Atualiza o TOTAL do pedido incluindo a taxa de entrega
+             if (isDelivery && deliveryInfo.deliveryFee > 0) {
+                 await tx.order.update({
+                     where: { id: createdOrder.id },
+                     data: { total: { increment: deliveryInfo.deliveryFee } }
+                 });
+             }
         }
 
         // Registrar Pagamento Inicial (se houver)
         if (paymentMethod) {
+            const finalFee = (orderType === 'DELIVERY' && deliveryInfo?.deliveryFee) ? deliveryInfo.deliveryFee : 0;
             await tx.payment.create({
                 data: {
                     orderId: createdOrder.id,
-                    amount: orderTotal + (deliveryInfo?.deliveryFee || 0),
+                    amount: orderTotal + finalFee,
                     method: paymentMethod
                 }
             });
