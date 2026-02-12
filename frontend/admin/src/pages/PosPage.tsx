@@ -12,7 +12,7 @@ import {
     Search, ShoppingCart, Plus, Minus, X, Trash2, 
     Store, User, Truck, Utensils, List,
     Wallet, Banknote, CheckCircle, Printer, Loader2, ChevronRight,
-    Pizza as PizzaIcon, Bike, Info, ArrowRightLeft, MoveRight, Receipt, Phone, MapPin, ShoppingBag, Percent
+    Pizza as PizzaIcon, Bike, Info, ArrowRightLeft, MoveRight, Receipt, Phone, MapPin, ShoppingBag, Percent, Calculator
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
