@@ -7,7 +7,7 @@ import {
   Save, Copy, ExternalLink, Palette, Store, 
   Clock, MapPin, Phone, Link as LinkIcon, Image as ImageIcon,
   CheckCircle, Loader2, Printer as PrinterIcon, RefreshCw, AlertTriangle, LayoutTemplate, Plus, Trash2,
-  XCircle, Smartphone, MousePointer2, CreditCard, DollarSign
+  XCircle, Smartphone, MousePointer2, CreditCard, DollarSign, ChefHat, Beer, Settings
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -88,8 +88,8 @@ const SettingsManagement: React.FC = () => {
   
   const [printerConfig, setPrinterConfig] = useState<PrinterConfig>({
       cashierPrinters: [''],
-      kitchenPrinters: [{ id: 'k1', name: 'Cozinha 1', printer: '' }],
-      barPrinters: [{ id: 'b1', name: 'Bar 1', printer: '' }],
+      kitchenPrinters: [{ id: 'k1', name: 'Cozinha Principal', printer: '' }],
+      barPrinters: [{ id: 'b1', name: 'Bar / Bebidas', printer: '' }],
       categoryMapping: {} 
   });
   
@@ -109,20 +109,6 @@ const SettingsManagement: React.FC = () => {
           const printers = await getPrinters();
           setAvailablePrinters(printers);
       }
-  };
-
-  const addCashierPrinter = () => {
-      setPrinterConfig(prev => ({
-          ...prev,
-          cashierPrinters: [...prev.cashierPrinters, '']
-      }));
-  };
-
-  const removeCashierPrinter = (index: number) => {
-      setPrinterConfig(prev => ({
-          ...prev,
-          cashierPrinters: prev.cashierPrinters.filter((_, i) => i !== index)
-      }));
   };
 
   useEffect(() => {
@@ -167,7 +153,6 @@ const SettingsManagement: React.FC = () => {
     fetchSettings();
   }, []);
 
-  // Debounce para slug
   useEffect(() => {
     if (!slug || slug === originalSlug) { setIsSlugAvailable(null); return; }
     const timer = setTimeout(async () => {
@@ -224,37 +209,50 @@ const SettingsManagement: React.FC = () => {
     finally { setIsSaving(false); }
   };
 
-  if (isLoading) return <div className="flex flex-col items-center justify-center h-[60vh] opacity-30"><Loader2 className="animate-spin text-orange-500 mb-4" size={40}/><span className="text-[10px] font-black uppercase tracking-widest">Carregando Configurações...</span></div>;
+  const addKitchenPrinter = () => setPrinterConfig(prev => ({ ...prev, kitchenPrinters: [...prev.kitchenPrinters, { id: 'k' + (prev.kitchenPrinters.length + 1), name: 'Nova Cozinha', printer: '' }] }));
+  const addBarPrinter = () => setPrinterConfig(prev => ({ ...prev, barPrinters: [...prev.barPrinters, { id: 'b' + (prev.barPrinters.length + 1), name: 'Novo Bar', printer: '' }] }));
+  const addCashierPrinter = () => setPrinterConfig(prev => ({ ...prev, cashierPrinters: [...prev.cashierPrinters, ''] }));
+
+  const removePrinter = (listName: 'kitchenPrinters' | 'barPrinters' | 'cashierPrinters', index: number) => {
+      setPrinterConfig(prev => ({
+          ...prev,
+          [listName]: prev[listName].filter((_, i) => i !== index)
+      }));
+  };
+
+  if (isLoading) return <div className="flex flex-col items-center justify-center h-[60vh] opacity-30"><Loader2 className="animate-spin text-orange-500 mb-4" size={32}/><span className="text-[10px] font-black uppercase tracking-widest">Sincronizando Loja...</span></div>;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      {/* Header Fixo */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-30 py-4 border-b border-slate-200">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Configurações</h1>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Personalize sua loja e periféricos</p>
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      {/* Header Compacto */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-3 border-b border-slate-200">
+        <div className="flex items-center gap-4">
+            <div className="p-2.5 bg-slate-900 text-white rounded-2xl shadow-lg"><Settings size={20}/></div>
+            <div>
+                <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Configurações</h1>
+                <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-1">Personalização e Periféricos</p>
+            </div>
         </div>
-        <Button onClick={handleSaveChanges} disabled={isSaving} isLoading={isSaving} className="px-10 h-14 rounded-2xl shadow-xl shadow-slate-200 italic font-black">
-            SALVAR TUDO
+        <Button onClick={handleSaveChanges} disabled={isSaving} isLoading={isSaving} className="px-8 h-11 rounded-xl shadow-lg italic font-black text-[11px] uppercase tracking-widest">
+            <Save size={18} className="mr-2" /> SALVAR TUDO
         </Button>
       </div>
 
-      {/* Tabs Premium */}
-      <div className="flex bg-slate-200/50 p-1.5 rounded-2xl gap-1 shadow-inner max-w-2xl">
+      {/* Tabs Compactas */}
+      <div className="flex bg-slate-200/50 p-1 rounded-2xl gap-1 shadow-inner w-full max-w-xl">
           {['general', 'appearance', 'printing', 'links'].map((tab) => (
-              <button key={tab} onClick={() => handleTabChange(tab)} className={cn("flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeTab === tab ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-500 hover:text-slate-700")}>
-                  {tab === 'general' ? 'Dados Gerais' : tab === 'appearance' ? 'Visual' : tab === 'printing' ? 'Impressoras' : 'Endereços'}
+              <button key={tab} onClick={() => handleTabChange(tab)} className={cn("flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", activeTab === tab ? "bg-white text-slate-900 shadow-sm scale-[1.02]" : "text-slate-500 hover:text-slate-700")}>
+                  {tab === 'general' ? 'Dados' : tab === 'appearance' ? 'Visual' : tab === 'printing' ? 'Impressão' : 'Links'}
               </button>
           ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-6">
         {activeTab === 'general' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="p-8 space-y-6">
-                    <h3 className="text-sm font-black uppercase text-slate-900 italic flex items-center gap-3 border-b border-slate-50 pb-4">
-                        <div className="p-2 bg-slate-100 rounded-lg text-slate-600"><Store size={18}/></div>
-                        Perfil da Empresa
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="p-6 space-y-6">
+                    <h3 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-3">
+                        <Store size={16} className="text-orange-500"/> Dados da Empresa
                     </h3>
                     <div className="space-y-4">
                         <Input label="Nome Fantasia" value={restaurantName} onChange={e => setRestaurantName(e.target.value)} />
@@ -263,123 +261,160 @@ const SettingsManagement: React.FC = () => {
                     </div>
                 </Card>
 
-                <Card className="p-8 space-y-6">
-                    <h3 className="text-sm font-black uppercase text-slate-900 italic flex items-center gap-3 border-b border-slate-50 pb-4">
-                        <div className="p-2 bg-orange-100 rounded-lg text-orange-600"><Clock size={18}/> Operação e Delivery</div>
+                <Card className="p-6 space-y-6">
+                    <h3 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-3">
+                        <Clock size={16} className="text-orange-500"/> Operação e Delivery
                     </h3>
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between p-5 bg-slate-50 border-2 border-slate-100 rounded-[2rem] transition-all">
-                            <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Status da Loja</p><p className={cn("text-base font-black italic", isStoreOpen ? "text-emerald-600" : "text-rose-600")}>{isStoreOpen ? 'ABERTA AGORA' : 'FECHADA NO MOMENTO'}</p></div>
-                            <button onClick={() => setIsStoreOpen(!isStoreOpen)} className={cn("w-14 h-7 rounded-full relative transition-all shadow-inner", isStoreOpen ? "bg-emerald-500" : "bg-slate-300")}><div className={cn("absolute w-5 h-5 bg-white rounded-full top-1 transition-all shadow-md", isStoreOpen ? "left-8" : "left-1")} /></button>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl">
+                            <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Status da Loja</p><p className={cn("text-sm font-black italic", isStoreOpen ? "text-emerald-600" : "text-rose-600")}>{isStoreOpen ? 'ABERTA' : 'FECHADA'}</p></div>
+                            <button onClick={() => setIsStoreOpen(!isStoreOpen)} className={cn("w-10 h-5 rounded-full relative transition-all shadow-inner", isStoreOpen ? "bg-emerald-500" : "bg-slate-300")}><div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", isStoreOpen ? "left-6" : "left-1")} /></button>
                         </div>
-                        <div className="grid grid-cols-2 gap-6">
-                            <Input label="Taxa de Serviço (%)" type="number" value={serviceTaxPercentage} onChange={e => setServiceTaxPercentage(parseFloat(e.target.value))} />
-                            <Input label="Taxa de Entrega (R$)" type="number" value={deliveryFee} onChange={e => setDeliveryFee(parseFloat(e.target.value))} />
+                        
+                        <div className="flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-100 rounded-2xl">
+                            <div><p className="text-[9px] font-black text-orange-600 uppercase tracking-widest mb-0.5">Aceite Automático</p><p className="text-xs font-bold text-orange-900">{autoAcceptOrders ? 'ATIVADO' : 'MANUAL'}</p></div>
+                            <button onClick={() => setAutoAcceptOrders(!autoAcceptOrders)} className={cn("w-10 h-5 rounded-full relative transition-all shadow-inner", autoAcceptOrders ? "bg-orange-500" : "bg-orange-200")}><div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", autoAcceptOrders ? "left-6" : "left-1")} /></button>
                         </div>
-                        <Input label="Horário de Funcionamento (Texto)" value={openingHours} onChange={e => setOpeningHours(e.target.value)} placeholder="Ex: Seg a Sex das 18h às 23h" />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Taxa Serviço (%)" type="number" value={serviceTaxPercentage} onChange={e => setServiceTaxPercentage(parseFloat(e.target.value))} />
+                            <Input label="Taxa Entrega (R$)" type="number" value={deliveryFee} onChange={e => setDeliveryFee(parseFloat(e.target.value))} />
+                        </div>
+                        <Input label="Funcionamento" value={openingHours} onChange={e => setOpeningHours(e.target.value)} placeholder="Seg a Sex 18h-23h" />
                     </div>
                 </Card>
 
-                <Card className="lg:col-span-2 p-8 space-y-6 border-emerald-100 bg-emerald-50/10">
-                    <h3 className="text-sm font-black uppercase text-emerald-900 italic flex items-center gap-3 border-b border-emerald-100/50 pb-4">
-                        <div className="p-2 bg-emerald-500 rounded-lg text-white shadow-lg shadow-emerald-100"><CheckCircle size={18}/></div>
-                        Fidelidade e Cashback
+                <Card className="lg:col-span-2 p-6 space-y-6 border-emerald-100 bg-emerald-50/10">
+                    <h3 className="text-xs font-black uppercase text-emerald-900 italic flex items-center gap-2 border-b border-emerald-100/50 pb-3">
+                        <CheckCircle size={16} className="text-emerald-500"/> Fidelidade e Cashback
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="flex items-center justify-between p-5 bg-white border-2 border-emerald-100 rounded-[2rem]">
-                            <div><p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Programa de Pontos</p><p className="text-xs font-bold text-emerald-900">{loyaltyEnabled ? 'ATIVO' : 'INATIVO'}</p></div>
-                            <button onClick={() => setLoyaltyEnabled(!loyaltyEnabled)} className={cn("w-14 h-7 rounded-full relative transition-all shadow-inner", loyaltyEnabled ? "bg-emerald-500" : "bg-slate-200")}><div className={cn("absolute w-5 h-5 bg-white rounded-full top-1 transition-all shadow-md", loyaltyEnabled ? "left-8" : "left-1")} /></button>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-center justify-between p-4 bg-white border-2 border-emerald-100 rounded-2xl">
+                            <div><p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Programa Pontos</p><p className="text-xs font-bold text-emerald-900">{loyaltyEnabled ? 'ATIVO' : 'INATIVO'}</p></div>
+                            <button onClick={() => setLoyaltyEnabled(!loyaltyEnabled)} className={cn("w-10 h-5 rounded-full relative transition-all shadow-inner", loyaltyEnabled ? "bg-emerald-500" : "bg-slate-200")}><div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", loyaltyEnabled ? "left-6" : "left-1")} /></button>
                         </div>
-                        <div className={cn("transition-all", !loyaltyEnabled && "opacity-30 grayscale pointer-events-none")}><Input label="Pontos por Real (R$ 1 = X pts)" type="number" value={pointsPerReal} onChange={e => setPointsPerReal(parseInt(e.target.value))} /></div>
-                        <div className={cn("transition-all", !loyaltyEnabled && "opacity-30 grayscale pointer-events-none")}><Input label="% de Cashback" type="number" value={cashbackPercentage} onChange={e => setCashbackPercentage(parseFloat(e.target.value))} /></div>
+                        <div className={cn(!loyaltyEnabled && "opacity-30 pointer-events-none")}><Input label="R$ 1 = X Pontos" type="number" value={pointsPerReal} onChange={e => setPointsPerReal(parseInt(e.target.value))} /></div>
+                        <div className={cn(!loyaltyEnabled && "opacity-30 pointer-events-none")}><Input label="% de Cashback" type="number" value={cashbackPercentage} onChange={e => setCashbackPercentage(parseFloat(e.target.value))} /></div>
                     </div>
                 </Card>
             </div>
         )}
 
         {activeTab === 'appearance' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <Card className="lg:col-span-1 p-8 space-y-8">
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><ImageIcon size={14}/> Logotipo Principal</h3>
-                        <div className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex items-center justify-center p-6 group hover:border-orange-500 transition-all cursor-pointer overflow-hidden relative" onClick={() => logoInputRef.current?.click()}>
-                            <img src={logoUrl} className="w-full h-full object-contain drop-shadow-xl group-hover:scale-105 transition-transform" alt="Logo" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black text-[10px] uppercase tracking-widest italic">Trocar Logo</div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-1 p-6 space-y-6">
+                    <div className="space-y-3">
+                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic"><ImageIcon size={12}/> Logo Principal</h3>
+                        <div className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex items-center justify-center p-4 group hover:border-orange-500 transition-all cursor-pointer overflow-hidden relative" onClick={() => logoInputRef.current?.click()}>
+                            <img src={logoUrl} className="w-full h-full object-contain drop-shadow-lg group-hover:scale-105 transition-transform" alt="Logo" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black text-[9px] uppercase tracking-widest italic">Trocar</div>
                         </div>
                         <input type="file" ref={logoInputRef} className="hidden" onChange={handleLogoChange} accept="image/*" />
                     </div>
 
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><ImageIcon size={14}/> Imagem de Capa (Mobile)</h3>
-                        <div className="aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex items-center justify-center overflow-hidden group hover:border-orange-500 transition-all cursor-pointer relative" onClick={() => coverInputRef.current?.click()}>
+                    <div className="space-y-3 pt-4 border-t border-slate-50">
+                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic"><ImageIcon size={12}/> Capa do Cardápio</h3>
+                        <div className="aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden group hover:border-orange-500 transition-all cursor-pointer relative" onClick={() => coverInputRef.current?.click()}>
                             <img src={backgroundImageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="Capa" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black text-[10px] uppercase tracking-widest italic">Trocar Capa</div>
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black text-[9px] uppercase tracking-widest italic">Trocar Capa</div>
                         </div>
                         <input type="file" ref={coverInputRef} className="hidden" onChange={handleCoverChange} accept="image/*" />
                     </div>
                 </Card>
 
-                <Card className="lg:col-span-2 p-8 space-y-8">
-                    <div>
-                        <h3 className="text-sm font-black uppercase text-slate-900 italic flex items-center gap-3 border-b border-slate-50 pb-4"><Palette size={18} className="text-orange-500"/> Personalização Visual</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4">Defina as cores que seus clientes verão no Cardápio Digital.</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="lg:col-span-2 p-6 space-y-6">
+                    <h3 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-3"><Palette size={16} className="text-orange-500"/> Identidade Visual</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
-                            { label: 'Cor de Destaque', desc: 'Botões e ícones principais', value: primaryColor, setter: setPrimaryColor },
-                            { label: 'Cor de Texto / Títulos', desc: 'Textos e elementos de destaque', value: secondaryColor, setter: setSecondaryColor },
-                            { label: 'Cor de Fundo', desc: 'Fundo geral do aplicativo', value: backgroundColor, setter: setBackgroundColor },
+                            { label: 'Destaque', val: primaryColor, set: setPrimaryColor },
+                            { label: 'Títulos', val: secondaryColor, set: setSecondaryColor },
+                            { label: 'Fundo', val: backgroundColor, set: setBackgroundColor },
                         ].map((color, i) => (
-                            <div key={i} className="flex items-center justify-between p-5 bg-slate-50 border-2 border-slate-100 rounded-[2rem] hover:border-orange-200 transition-all">
-                                <div><p className="text-xs font-black text-slate-900 uppercase italic tracking-tighter leading-none mb-1">{color.label}</p><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">{color.desc}</p></div>
-                                <div className="relative group"><input type="color" className="w-12 h-12 rounded-xl cursor-pointer border-4 border-white shadow-lg shadow-black/5" value={color.value} onChange={e => color.setter(e.target.value)} /></div>
+                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl">
+                                <div><p className="text-xs font-black text-slate-900 uppercase italic leading-none">{color.label}</p></div>
+                                <input type="color" className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white shadow-md" value={color.val} onChange={e => color.set(e.target.value)} />
                             </div>
                         ))}
                     </div>
-
-                    <div className="p-8 bg-slate-900 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col items-center text-center gap-4">
-                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-500/10 to-transparent opacity-50" />
-                        <Smartphone className="text-orange-500 relative z-10" size={40} />
-                        <h4 className="text-white font-black uppercase italic tracking-tighter relative z-10 text-xl">Preview em tempo real</h4>
-                        <p className="text-slate-400 text-xs font-medium max-w-xs relative z-10 leading-relaxed uppercase tracking-widest text-[9px]">O seu cardápio se ajustará automaticamente com estas definições.</p>
+                    <div className="p-6 bg-slate-900 rounded-3xl text-center space-y-3 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-orange-500/5" />
+                        <Smartphone className="text-orange-500 mx-auto" size={32} />
+                        <h4 className="text-white font-black uppercase italic text-sm relative z-10">Preview Responsivo</h4>
+                        <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest max-w-xs mx-auto relative z-10">As cores e imagens aplicadas aqui refletem imediatamente na experiência do seu cliente final.</p>
                     </div>
                 </Card>
             </div>
         )}
 
         {activeTab === 'printing' && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-                <Card className={cn("p-6 flex items-center justify-between border-2 transition-all", agentStatus === 'online' ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100")}>
-                    <div className="flex items-center gap-5">
-                        <div className={cn("p-4 rounded-[1.5rem] shadow-lg transition-transform hover:scale-110", agentStatus === 'online' ? "bg-emerald-500 text-white shadow-emerald-200" : "bg-rose-500 text-white shadow-rose-200")}><PrinterIcon size={28}/></div>
-                        <div><h3 className={cn("text-xl font-black uppercase italic tracking-tighter leading-none", agentStatus === 'online' ? "text-emerald-900" : "text-rose-900")}>Agente Multi-Impressão</h3><p className={cn("text-[10px] font-black uppercase tracking-[0.2em] mt-1.5", agentStatus === 'online' ? "text-emerald-600" : "text-rose-600")}>{agentStatus === 'online' ? '● CONECTADO E PRONTO' : '○ NÃO DETECTADO NO SISTEMA'}</p></div>
+            <div className="space-y-6">
+                <Card className={cn("p-4 flex items-center justify-between border-2 transition-all", agentStatus === 'online' ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100")}>
+                    <div className="flex items-center gap-4">
+                        <div className={cn("p-3 rounded-xl shadow-md", agentStatus === 'online' ? "bg-emerald-500 text-white" : "bg-rose-500 text-white")}><PrinterIcon size={24}/></div>
+                        <div><h3 className="text-sm font-black uppercase italic text-slate-900 leading-none">Agente de Impressão</h3><p className={cn("text-[8px] font-black uppercase mt-1", agentStatus === 'online' ? "text-emerald-600" : "text-rose-600")}>{agentStatus === 'online' ? '● CONECTADO' : '○ OFFLINE'}</p></div>
                     </div>
-                    <Button variant="outline" size="sm" className="bg-white rounded-xl gap-2 font-black italic" onClick={loadPrinters}>
-                        <RefreshCw size={16} className={cn(agentStatus === 'checking' && 'animate-spin')}/> ATUALIZAR
+                    <Button variant="outline" size="sm" className="h-8 rounded-lg text-[9px] font-black" onClick={loadPrinters}>
+                        <RefreshCw size={14} className={cn(agentStatus === 'checking' && 'animate-spin', "mr-1")}/> ATUALIZAR
                     </Button>
                 </Card>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="p-8 space-y-6">
-                        <div className="flex items-center justify-between border-b border-slate-50 pb-4"><h3 className="text-sm font-black uppercase text-slate-900 italic flex items-center gap-3"><div className="p-2 bg-slate-100 rounded-lg text-slate-600"><CreditCard size={18}/></div> Conferência / Caixa</h3><Button variant="ghost" size="icon" className="text-orange-600 bg-orange-50 rounded-xl" onClick={addCashierPrinter}><Plus size={18}/></Button></div>
-                        <div className="space-y-4">{printerConfig.cashierPrinters.map((printer, idx) => (
-                            <div key={idx} className="flex gap-3 items-end animate-in slide-in-from-left-2">
-                                <div className="flex-1 space-y-1.5"><label className="text-[9px] uppercase font-black text-slate-400 tracking-widest ml-1">Impressora #{idx + 1}</label><select className="ui-input w-full h-12" value={printer} onChange={(e) => { const newP = [...printerConfig.cashierPrinters]; newP[idx] = e.target.value; setPrinterConfig({...printerConfig, cashierPrinters: newP}); }}><option value="">-- Selecione --</option>{availablePrinters.map((p, pIdx) => <option key={pIdx} value={p}>{p}</option>)}</select></div>
-                                {idx > 0 && <Button variant="ghost" size="icon" className="h-12 w-12 bg-rose-50 text-rose-500 rounded-xl" onClick={() => removeCashierPrinter(idx)}><Trash2 size={18}/></Button>}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-6">
+                        <Card className="p-6 space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                                <h3 className="text-xs font-black uppercase italic flex items-center gap-2"><CreditCard size={14} className="text-blue-500"/> Impressoras do Caixa</h3>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 bg-blue-50 rounded-lg" onClick={addCashierPrinter}><Plus size={16}/></Button>
                             </div>
-                        ))}</div>
-                    </Card>
+                            <div className="space-y-3">{printerConfig.cashierPrinters.map((p, i) => (
+                                <div key={i} className="flex gap-2">
+                                    <select className="ui-input flex-1 h-10 text-[10px] font-black italic" value={p} onChange={e => { const n = [...printerConfig.cashierPrinters]; n[i] = e.target.value; setPrinterConfig({...printerConfig, cashierPrinters: n}); }}><option value="">-- Selecione --</option>{availablePrinters.map((pr, idx) => <option key={idx} value={pr}>{pr}</option>)}</select>
+                                    {i > 0 && <Button variant="ghost" size="icon" className="h-10 w-10 text-rose-500 bg-rose-50 rounded-lg" onClick={() => removePrinter('cashierPrinters', i)}><Trash2 size={14}/></Button>}
+                                </div>
+                            ))}</div>
+                        </Card>
 
-                    <Card className="p-8 space-y-6">
-                        <h3 className="text-sm font-black uppercase text-slate-900 italic flex items-center gap-3 border-b border-slate-50 pb-4"><div className="p-2 bg-slate-100 rounded-lg text-slate-600"><MousePointer2 size={18}/></div> Roteamento de Itens</h3>
-                        <div className="overflow-hidden border border-slate-100 rounded-[2rem] bg-slate-50/30">
-                            <table className="w-full text-left border-collapse"><thead className="bg-slate-100/50"><tr><th className="px-6 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Categoria</th><th className="px-6 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Destino da Produção</th></tr></thead>
+                        <Card className="p-6 space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                                <h3 className="text-xs font-black uppercase italic flex items-center gap-2"><ChefHat size={14} className="text-orange-500"/> Pontos de Cozinha</h3>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-600 bg-orange-50 rounded-lg" onClick={addKitchenPrinter}><Plus size={16}/></Button>
+                            </div>
+                            <div className="space-y-4">{printerConfig.kitchenPrinters.map((kp, i) => (
+                                <div key={kp.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                                    <div className="flex gap-2">
+                                        <input type="text" className="ui-input flex-1 h-9 text-[10px] font-black uppercase" value={kp.name} onChange={e => { const n = [...printerConfig.kitchenPrinters]; n[i].name = e.target.value; setPrinterConfig({...printerConfig, kitchenPrinters: n}); }} placeholder="Nome do Setor" />
+                                        {i > 0 && <Button variant="ghost" size="icon" className="h-9 w-9 text-rose-500" onClick={() => removePrinter('kitchenPrinters', i)}><Trash2 size={14}/></Button>}
+                                    </div>
+                                    <select className="ui-input w-full h-9 text-[10px]" value={kp.printer} onChange={e => { const n = [...printerConfig.kitchenPrinters]; n[i].printer = e.target.value; setPrinterConfig({...printerConfig, kitchenPrinters: n}); }}><option value="">-- Selecione Impressora --</option>{availablePrinters.map((pr, idx) => <option key={idx} value={pr}>{pr}</option>)}</select>
+                                </div>
+                            ))}</div>
+                        </Card>
+
+                        <Card className="p-6 space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                                <h3 className="text-xs font-black uppercase italic flex items-center gap-2"><Beer size={14} className="text-indigo-500"/> Pontos de Bar</h3>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 bg-indigo-50 rounded-lg" onClick={addBarPrinter}><Plus size={16}/></Button>
+                            </div>
+                            <div className="space-y-4">{printerConfig.barPrinters.map((bp, i) => (
+                                <div key={bp.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                                    <div className="flex gap-2">
+                                        <input type="text" className="ui-input flex-1 h-9 text-[10px] font-black uppercase" value={bp.name} onChange={e => { const n = [...printerConfig.barPrinters]; n[i].name = e.target.value; setPrinterConfig({...printerConfig, barPrinters: n}); }} placeholder="Nome do Setor" />
+                                        {i > 0 && <Button variant="ghost" size="icon" className="h-9 w-9 text-rose-500" onClick={() => removePrinter('barPrinters', i)}><Trash2 size={14}/></Button>}
+                                    </div>
+                                    <select className="ui-input w-full h-9 text-[10px]" value={bp.printer} onChange={e => { const n = [...printerConfig.barPrinters]; n[i].printer = e.target.value; setPrinterConfig({...printerConfig, barPrinters: n}); }}><option value="">-- Selecione Impressora --</option>{availablePrinters.map((pr, idx) => <option key={idx} value={pr}>{pr}</option>)}</select>
+                                </div>
+                            ))}</div>
+                        </Card>
+                    </div>
+
+                    <Card className="p-6 space-y-4">
+                        <h3 className="text-xs font-black uppercase italic flex items-center gap-2 border-b border-slate-50 pb-3"><MousePointer2 size={14} className="text-orange-500"/> Roteamento</h3>
+                        <div className="overflow-hidden border border-slate-100 rounded-2xl">
+                            <table className="w-full text-left"><thead className="bg-slate-50"><tr><th className="px-4 py-2 text-[8px] font-black uppercase text-slate-400">Categoria</th><th className="px-4 py-2 text-right text-[8px] font-black uppercase text-slate-400">Destino</th></tr></thead>
                                 <tbody className="divide-y divide-slate-50">{categories.map(cat => (
-                                    <tr key={cat.id} className="hover:bg-white transition-colors group"><td className="px-6 py-4 font-black text-xs text-slate-700 uppercase italic">{cat.name}</td><td className="px-6 py-4 text-right"><select className="text-[10px] font-black uppercase tracking-widest border-2 border-slate-100 rounded-lg p-1.5 w-full max-w-[180px] bg-white italic outline-none focus:border-orange-500 transition-all" value={printerConfig.categoryMapping[cat.name] || 'k1'} onChange={(e) => setPrinterConfig({...printerConfig, categoryMapping: {...printerConfig.categoryMapping, [cat.name]: e.target.value}})}>
+                                    <tr key={cat.id} className="hover:bg-slate-50"><td className="px-4 py-3 font-black text-[10px] text-slate-700 uppercase italic">{cat.name}</td><td className="px-4 py-3 text-right"><select className="text-[9px] font-black uppercase border-2 border-slate-100 rounded-lg p-1.5 w-full max-w-[140px] bg-white outline-none focus:border-orange-500" value={printerConfig.categoryMapping[cat.name] || ''} onChange={(e) => setPrinterConfig({...printerConfig, categoryMapping: {...printerConfig.categoryMapping, [cat.name]: e.target.value}})}>
+                                        <option value="">NÃO IMPRIMIR</option>
                                         <optgroup label="Cozinhas">{printerConfig.kitchenPrinters.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}</optgroup>
-                                        <optgroup label="Bares">{printerConfig.barPrinters.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</optgroup>
-                                        <option value="none">NÃO IMPRIMIR</option></select></td>
+                                        <optgroup label="Bares">{printerConfig.barPrinters.map(b => <option key={b.id} value={b.id}>{bp.name}</option>)}</optgroup></select></td>
                                     </tr>
                                 ))}</tbody>
                             </table>
@@ -390,39 +425,26 @@ const SettingsManagement: React.FC = () => {
         )}
 
         {activeTab === 'links' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="p-8 space-y-8 bg-slate-900 text-white relative overflow-hidden shadow-2xl">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] -translate-y-1/2 translate-x-1/2" />
-                    <div className="space-y-2 relative z-10">
-                        <h3 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><div className="p-2 bg-orange-500 rounded-xl shadow-lg shadow-orange-500/20"><LinkIcon size={20}/></div> Endereço do Cardápio</h3>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest ml-12 leading-tight">Escolha sua "Slug" personalizada para acesso rápido.</p>
-                    </div>
-                    
-                    <div className="space-y-6 relative z-10">
-                        <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 space-y-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Identificador da Loja (Subdomínio)</label>
-                            <div className="flex gap-3">
-                                <div className="relative flex-1">
-                                    <input type="text" className={cn("w-full h-14 pl-6 pr-12 rounded-2xl bg-white/5 border-2 border-white/10 font-black text-lg italic tracking-tighter transition-all outline-none uppercase", isSlugAvailable === true && "border-emerald-500 text-emerald-400", isSlugAvailable === false && "border-rose-500 text-rose-400")} value={slug} onChange={e => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, ''))} placeholder="ex: romapizzaria" />
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">{isCheckingSlug && <Loader2 size={18} className="animate-spin text-slate-500" />}{isSlugAvailable === true && <CheckCircle size={20} className="text-emerald-500" />}{isSlugAvailable === false && <XCircle size={20} className="text-rose-500" />}</div>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-14 w-14 bg-white/5 border border-white/10 text-white rounded-2xl hover:bg-white/10" onClick={() => {navigator.clipboard.writeText(slug); toast.success('Copiado!');}}><Copy size={20}/></Button>
+            <Card className="p-8 bg-slate-900 text-white relative overflow-hidden shadow-2xl max-w-3xl mx-auto">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] -translate-y-1/2 translate-x-1/2" />
+                <div className="space-y-6 relative z-10">
+                    <div className="flex items-center gap-4"><div className="p-3 bg-orange-500 rounded-2xl shadow-xl shadow-orange-500/20"><LinkIcon size={24}/></div><div><h3 className="text-xl font-black italic uppercase tracking-tighter leading-none">Endereço do Cardápio</h3><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Configuração de Slug e Link Direto</p></div></div>
+                    <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Identificador da Loja</label>
+                        <div className="flex gap-3">
+                            <div className="relative flex-1">
+                                <input type="text" className={cn("w-full h-12 pl-5 pr-12 rounded-xl bg-white/5 border-2 border-white/10 font-black text-base italic tracking-tighter outline-none uppercase transition-all", isSlugAvailable === true && "border-emerald-500 text-emerald-400", isSlugAvailable === false && "border-rose-500 text-rose-400")} value={slug} onChange={e => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))} />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">{isCheckingSlug ? <Loader2 size={16} className="animate-spin text-slate-500" /> : isSlugAvailable === true ? <CheckCircle size={18} className="text-emerald-500" /> : isSlugAvailable === false ? <XCircle size={18} className="text-rose-500" /> : null}</div>
                             </div>
-                            {isSlugAvailable === false && <p className="text-[10px] text-rose-400 font-bold uppercase italic flex items-center gap-2 ml-1"><AlertTriangle size={14}/> Este endereço já está em uso.</p>}
-                            {isSlugAvailable === true && <p className="text-[10px] text-emerald-400 font-bold uppercase italic flex items-center gap-2 ml-1"><CheckCircle size={14}/> Endereço disponível para uso!</p>}
-                        </div>
-
-                        <div className="space-y-4 pt-4">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Seu Link Direto:</h4>
-                            <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-xl">
-                                <span className="flex-1 font-black text-slate-900 italic text-sm truncate uppercase tracking-tighter">{window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`}</span>
-                                <Button variant="ghost" size="icon" className="bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl" onClick={() => { navigator.clipboard.writeText(window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`); toast.success('Link copiado!'); }}><Copy size={18}/></Button>
-                                <a href={window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`} target="_blank" rel="noreferrer" className="p-3 bg-slate-900 text-white rounded-xl shadow-lg hover:scale-105 transition-all"><ExternalLink size={18}/></a>
-                            </div>
+                            <Button variant="ghost" size="icon" className="h-12 w-12 bg-white/5 border border-white/10 text-white" onClick={() => {navigator.clipboard.writeText(slug); toast.success('Copiado!');}}><Copy size={18}/></Button>
                         </div>
                     </div>
-                </Card>
-            </div>
+                    <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-xl">
+                        <span className="flex-1 font-black text-slate-900 italic text-xs truncate uppercase tracking-tighter">{window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`}</span>
+                        <a href={window.location.hostname.includes('towersfy.com') ? `https://${slug}.towersfy.com` : `${clientUrl}/${slug}`} target="_blank" rel="noreferrer" className="p-2.5 bg-slate-900 text-white rounded-xl shadow-lg hover:scale-105 transition-all"><ExternalLink size={16}/></a>
+                    </div>
+                </div>
+            </Card>
         )}
       </div>
     </div>

@@ -169,6 +169,24 @@ const updateLogo = async (req, res) => {
     }
 };
 
+const updateCover = async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+        
+        const coverUrl = `/uploads/${req.file.filename}`;
+        
+        await prisma.restaurantSettings.update({
+            where: { restaurantId: req.restaurantId },
+            data: { backgroundImageUrl: coverUrl }
+        });
+        
+        res.json({ coverUrl });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao fazer upload da capa.' });
+    }
+};
+
 const toggleStatus = async (req, res) => {
     const { isOpen } = req.body;
     try {
@@ -260,6 +278,7 @@ module.exports = {
     updateSettings,
     getClientSettings,
     updateLogo,
+    updateCover,
     toggleStatus,
     getRestaurantBySlug,
     checkSlugAvailability
