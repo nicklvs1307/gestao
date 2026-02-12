@@ -295,7 +295,7 @@ const CashierManagement: React.FC = () => {
                             <div className="p-5 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
-                                        {paymentMethods.find(m => m.id === selectedMethod)?.icon({ size: 20 })}
+                                        {React.createElement(paymentMethods.find(m => m.id === selectedMethod)?.icon || HelpCircle, { size: 20 })}
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-black text-slate-900 uppercase italic">Vendas em {paymentMethods.find(m => m.id === selectedMethod)?.label}</h3>
