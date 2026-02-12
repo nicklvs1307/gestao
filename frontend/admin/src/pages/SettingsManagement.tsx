@@ -414,7 +414,7 @@ const SettingsManagement: React.FC = () => {
                                     <tr key={cat.id} className="hover:bg-slate-50"><td className="px-4 py-3 font-black text-[10px] text-slate-700 uppercase italic">{cat.name}</td><td className="px-4 py-3 text-right"><select className="text-[9px] font-black uppercase border-2 border-slate-100 rounded-lg p-1.5 w-full max-w-[140px] bg-white outline-none focus:border-orange-500" value={printerConfig.categoryMapping[cat.name] || ''} onChange={(e) => setPrinterConfig({...printerConfig, categoryMapping: {...printerConfig.categoryMapping, [cat.name]: e.target.value}})}>
                                         <option value="">NÃO IMPRIMIR</option>
                                         <optgroup label="Cozinhas">{printerConfig.kitchenPrinters.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}</optgroup>
-                                        <optgroup label="Bares">{printerConfig.barPrinters.map(b => <option key={b.id} value={b.id}>{bp.name}</option>)}</optgroup></select></td>
+                                        <optgroup label="Bares">{printerConfig.barPrinters.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</optgroup></select></td>
                                     </tr>
                                 ))}</tbody>
                             </table>
