@@ -168,8 +168,21 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
                 </div>
             )}
 
+            {/* Listagem de Itens Compacta */}
+            <div className="px-4 space-y-1">
+                {Array.isArray(order.items) && order.items.slice(0, 3).map((item, idx) => (
+                    <div key={idx} className="flex justify-between text-[9px] font-bold text-slate-500">
+                        <span className="truncate pr-4"><b className="text-orange-500">{item.quantity}x</b> {item.product?.name}</span>
+                        <span className="shrink-0 text-slate-400 italic">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
+                    </div>
+                ))}
+                {Array.isArray(order.items) && order.items.length > 3 && (
+                    <p className="text-[8px] font-black text-slate-300 uppercase italic">+ {order.items.length - 3} outros itens...</p>
+                )}
+            </div>
+
             {/* Financeiro */}
-            <div className="flex justify-between items-center py-1">
+            <div className="flex justify-between items-center py-1 px-4">
                 <div className="flex items-center gap-2">
                   <CreditCard size={12} className="text-slate-300" />
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
