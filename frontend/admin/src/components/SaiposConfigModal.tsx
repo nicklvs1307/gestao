@@ -62,70 +62,74 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
 
   return (
     <div className="ui-modal-overlay">
-      <div className="ui-modal-content w-full max-w-lg overflow-hidden flex flex-col">
-        {/* Header Compacto */}
-        <div className="px-8 py-6 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
-            <div className="flex items-center gap-4">
-                <div className="bg-slate-900 text-white p-2.5 rounded-xl shadow-lg">
-                    <ShieldCheck size={20} />
+      <div className="ui-modal-content w-full max-w-2xl overflow-hidden flex flex-col">
+        {/* Header Compacto e Largo */}
+        <div className="px-6 py-4 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-3">
+                <div className="bg-slate-900 text-white p-2 rounded-xl shadow-lg">
+                    <ShieldCheck size={18} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">Configurar Saipos</h3>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Integração Externa</p>
+                    <h3 className="text-base font-black text-slate-900 italic uppercase tracking-tighter leading-none">Configurar Saipos</h3>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sincronização de Pedidos</p>
                 </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-slate-50 h-10 w-10"><X size={20} /></Button>
+            <button onClick={onClose} className="w-8 h-8 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+                <X size={18} />
+            </button>
         </div>
         
         {isLoading ? (
-          <div className="p-20 flex flex-col items-center justify-center gap-3 opacity-30">
+          <div className="p-16 flex flex-col items-center justify-center gap-3 opacity-30">
             <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
             <span className="text-[9px] font-black uppercase tracking-widest">Sincronizando...</span>
           </div>
         ) : (
           <>
-            <form onSubmit={handleSubmit} id="saipos-form" className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-6">
-                <Card className="p-4 border-orange-100 bg-orange-50/30 flex gap-3 items-start">
+            <form onSubmit={handleSubmit} id="saipos-form" className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-6">
+                <div className="flex gap-4 items-start bg-orange-50/50 p-4 rounded-xl border border-orange-100">
                     <Info size={16} className="text-orange-500 shrink-0 mt-0.5" />
-                    <p className="text-[10px] font-bold text-orange-900 leading-tight uppercase italic">
-                        Insira as chaves de acesso fornecidas pela Saipos. O ambiente de teste usa a URL de homologação.
+                    <p className="text-[9px] font-bold text-orange-900 leading-tight uppercase italic">
+                        Insira as chaves fornecidas pela Saipos. O ambiente de teste usa a URL de homologação.
                     </p>
-                </Card>
+                </div>
 
-                {/* Seletor de Ambiente */}
-                <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Servidor de Destino</label>
-                    <div className="flex p-1 bg-white border border-slate-200 rounded-xl gap-1">
-                        <button 
-                            type="button" 
-                            onClick={() => setEnv('homologation')}
-                            className={cn(
-                                "flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase transition-all flex items-center justify-center gap-2",
-                                env === 'homologation' ? "bg-amber-500 text-white shadow-md" : "text-slate-400 hover:bg-slate-50"
-                            )}
-                        >
-                            <TestTube size={14} /> Servidor Teste (Homolog)
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={() => setEnv('production')}
-                            className={cn(
-                                "flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase transition-all flex items-center justify-center gap-2",
-                                env === 'production' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:bg-slate-50"
-                            )}
-                        >
-                            <Globe size={14} /> Produção (Real)
-                        </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Linha 1: Partner e Secret */}
+                    <Input label="Partner ID" value={partnerId} onChange={e => setPartnerId(e.target.value)} placeholder="partner_..." required />
+                    <Input label="API Secret Key" type="password" value={secret} onChange={e => setSecret(e.target.value)} placeholder="••••••••" required />
+                    
+                    {/* Linha 2: Código da Loja e Ambiente */}
+                    <Input label="Cód. Loja (Saipos)" value={codStore} onChange={e => setCodStore(e.target.value)} placeholder="Ex: store_99" required />
+                    
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Ambiente</label>
+                        <div className="flex p-1 bg-white border border-slate-200 rounded-xl gap-1 h-11">
+                            <button 
+                                type="button" 
+                                onClick={() => setEnv('homologation')}
+                                className={cn(
+                                    "flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all flex items-center justify-center gap-1.5",
+                                    env === 'homologation' ? "bg-amber-500 text-white shadow-md" : "text-slate-400 hover:bg-slate-50"
+                                )}
+                            >
+                                <TestTube size={12} /> Teste
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={() => setEnv('production')}
+                                className={cn(
+                                    "flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all flex items-center justify-center gap-1.5",
+                                    env === 'production' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:bg-slate-50"
+                                )}
+                            >
+                                <Globe size={12} /> Real
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                    <Input label="Partner ID" value={partnerId} onChange={e => setPartnerId(e.target.value)} placeholder="partner_..." required />
-                    <Input label="API Secret Key" type="password" value={secret} onChange={e => setSecret(e.target.value)} placeholder="••••••••" required />
-                    <Input label="Cód. Loja (Saipos)" value={codStore} onChange={e => setCodStore(e.target.value)} placeholder="Ex: store_99" required />
-                </div>
-
-                {/* Toggle Ativação Compacto */}
+                {/* Status Ativação Compacto */}
                 <Card 
                     className={cn(
                         "p-4 border-2 transition-all cursor-pointer flex items-center justify-between", 
@@ -134,11 +138,11 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                     onClick={() => setIsActive(!isActive)}
                 >
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-md", isActive ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400")}>
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-sm", isActive ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400")}>
                             <RefreshCw size={16} className={isActive ? "animate-spin-slow" : ""} />
                         </div>
                         <div>
-                            <p className="text-xs font-black text-slate-900 uppercase italic leading-none mb-1">Integração</p>
+                            <p className="text-xs font-black text-slate-900 uppercase italic leading-none mb-1">Status da Integração</p>
                             <span className={cn("text-[8px] font-black uppercase tracking-widest", isActive ? "text-emerald-600" : "text-slate-400")}>{isActive ? 'TRANSMISSÃO ATIVA' : 'SINCRO PAUSADO'}</span>
                         </div>
                     </div>
@@ -148,10 +152,10 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                 </Card>
             </form>
 
-            <footer className="px-8 py-5 bg-white border-t border-slate-100 flex gap-3 shrink-0">
-                <Button variant="ghost" onClick={onClose} className="flex-1 rounded-xl font-black uppercase text-[9px] tracking-widest text-slate-400" disabled={isSaving}>CANCELAR</Button>
-                <Button type="submit" form="saipos-form" isLoading={isSaving} className="flex-[2] h-12 rounded-xl shadow-lg uppercase tracking-widest italic font-black text-[10px]">
-                    <Save size={16} className="mr-2" /> SALVAR CONFIGURAÇÃO
+            <footer className="px-6 py-4 bg-white border-t border-slate-100 flex gap-3 shrink-0">
+                <Button variant="ghost" onClick={onClose} className="flex-1 h-10 rounded-lg font-black uppercase text-[9px] tracking-widest text-slate-400" disabled={isSaving}>DESCARTAR</Button>
+                <Button type="submit" form="saipos-form" isLoading={isSaving} className="flex-[2] h-10 rounded-lg shadow-md uppercase tracking-widest italic font-black text-[10px]">
+                    SALVAR CREDENCIAIS
                 </Button>
             </footer>
           </>
