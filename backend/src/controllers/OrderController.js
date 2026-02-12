@@ -39,13 +39,16 @@ class OrderController {
     // Validação e Transformação com Zod
     const validatedData = CreateDeliveryOrderSchema.parse(req.body);
     
+    const type = (validatedData.orderType || 'TABLE').toUpperCase();
+    const isDelivery = ['DELIVERY', 'PICKUP'].includes(type);
+
     // Sobrescreve paymentMethod se vier no corpo principal
     const paymentMethod = validatedData.paymentMethod || validatedData.deliveryInfo?.paymentMethod;
 
     const order = await OrderService.createOrder({
       restaurantId,
       items: validatedData.items, 
-      orderType: ['DELIVERY', 'PICKUP'].includes(validatedData.orderType) ? 'DELIVERY' : 'TABLE',
+      orderType: isDelivery ? 'DELIVERY' : 'TABLE',
       deliveryInfo: validatedData.deliveryInfo,
       paymentMethod,
       tableNumber: validatedData.tableNumber,

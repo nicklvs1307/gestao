@@ -5,7 +5,7 @@ import type { Order } from '@/types/index.ts';
 import { getSettings, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printing';
 import { format, differenceInMinutes, differenceInDays, differenceInHours } from 'date-fns';
-import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard } from 'lucide-react';
+import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from './ui/Button';

@@ -418,21 +418,96 @@ class OrderService {
     return result;
   }
 
-  // --- Funções que não modificam o pedido principal não precisam de emit ---
-  async _triggerAutomaticInvoice(order) {
-    // ... (código original)
+  async getKdsItems(restaurantId, area) {
+    const where = {
+        order: {
+            restaurantId,
+            status: { in: ['PENDING', 'PREPARING'] }
+        },
+        isReady: false
+    };
+
+    if (area && area !== 'all') {
+        where.product = { productionArea: area };
+    }
+
+    return await prisma.orderItem.findMany({
+        where,
+        include: {
+            product: true,
+            order: {
+                select: {
+                    id: true,
+                    dailyOrderNumber: true,
+                    tableNumber: true,
+                    orderType: true,
+                    createdAt: true,
+                    customerName: true,
+                    deliveryOrder: { select: { name: true } }
+                }
+            }
+        },
+        orderBy: { order: { createdAt: 'asc' } }
+    });
   }
 
   async getDriverSettlement(restaurantId, date) {
-    // ... (código original)
+    const startOfDay = date ? new Date(date) : new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const drivers = await prisma.user.findMany({
+        where: { restaurantId, roleRef: { name: { equals: 'Entregador', mode: 'insensitive' } } },
+        include: {
+            deliveries: {
+                where: {
+                    status: 'DELIVERED',
+                    updatedAt: { gte: startOfDay, lte: endOfDay }
+                },
+                include: { order: true }
+            }
+        }
+    });
+
+    return drivers.map(d => {
+        const totalDeliveries = d.deliveries.length;
+        const baseRate = d.baseRate || 0;
+        const totalCommission = d.deliveries.reduce((acc, curr) => acc + (d.bonusPerDelivery || 0), 0);
+        const totalToPay = baseRate + totalCommission;
+
+        return {
+            driverId: d.id,
+            driverName: d.name,
+            totalDeliveries,
+            baseRate,
+            totalCommission,
+            totalToPay,
+            deliveries: d.deliveries
+        };
+    });
   }
 
   async payDriverSettlement(restaurantId, driverName, amount, date, driverId = null) {
-     // ... (código original)
+      return await prisma.financialTransaction.create({
+          data: {
+              restaurantId,
+              description: `FECHAMENTO MOTOBOY: ${driverName}`,
+              amount,
+              type: 'EXPENSE',
+              status: 'PAID',
+              dueDate: new Date(),
+              paymentDate: new Date(),
+              paymentMethod: 'cash',
+              recipientUserId: driverId,
+              categoryId: 'driver_pay' // Slug padrão
+          }
+      });
   }
 
-  async getKdsItems(restaurantId, area) {
-    // ... (código original)
+  async _triggerAutomaticInvoice(order) {
+      // Implementação futura ou via hook
+      console.log(`[FISCAL] Analisando pedido #${order.id} para emissão automática...`);
   }
 }
 
