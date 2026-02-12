@@ -137,7 +137,7 @@ async function main() {
     {
       name: 'Entregador',
       description: 'Logística de entregas',
-      permissions: ['orders:view', 'delivery:manage']
+      permissions: ['delivery:manage']
     }
   ];
 
