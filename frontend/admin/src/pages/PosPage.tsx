@@ -65,7 +65,7 @@ const PosPage: React.FC = () => {
     const [structuredAddress, setStructuredAddress] = useState<any>(null); // Novo estado
 
     // --- ESTADOS DE MODAIS E INTERAÇÃO ---
-    const [activeModal, setActiveModal] = useState<'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items'>('none');
+    const [activeModal, setActiveModal] = useState<'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items' | 'pos_checkout'>('none');
     const [showProductDrawer, setShowProductDrawer] = useState(false);
     const [viewingTable, setViewingTable] = useState<TableSummary | null>(null);
     const [selectedProductForAdd, setSelectedProductForAdd] = useState<Product | null>(null);
@@ -75,6 +75,14 @@ const PosPage: React.FC = () => {
     const [discount, setDiscount] = useState('0');
     const [useServiceTax, setUseServiceTax] = useState(true);
     const [isPartialPayment, setIsPartialPayment] = useState(false);
+
+    // --- NOVOS ESTADOS PARA CHECKOUT PDV (BALCÃO/ENTREGA) ---
+    const [posDeliveryFee, setPosDeliveryFee] = useState('0');
+    const [posExtraCharge, setPosExtraCharge] = useState('0');
+    const [posDiscountValue, setPosDiscountValue] = useState('0');
+    const [posDiscountPercentage, setPosDiscountPercentage] = useState('0');
+    const [posPaymentMethodId, setPosPaymentMethodId] = useState<string>('');
+    const [posObservations, setPosObservations] = useState('');
     
     // --- ESTADOS DE PERSONALIZAÇÃO ---
     const [tempQty, setTempQty] = useState(1);
@@ -302,8 +310,16 @@ const PosPage: React.FC = () => {
         if (orderMode === 'table' && !selectedTable) {
             return toast.error("Por favor, selecione uma mesa");
         }
+
+        if (!posPaymentMethodId) {
+            return toast.error("Selecione uma forma de pagamento");
+        }
         
         try {
+            const finalDiscount = parseFloat(posDiscountValue || '0');
+            const finalExtra = parseFloat(posExtraCharge || '0');
+            const finalDelivery = parseFloat(posDeliveryFee || '0');
+
             const orderPayload = {
                 items: cart.map(item => ({
                     productId: item.productId,
@@ -318,16 +334,20 @@ const PosPage: React.FC = () => {
                 })),
                 orderType: orderMode === 'table' ? 'TABLE' : 'DELIVERY',
                 tableNumber: orderMode === 'table' ? parseInt(selectedTable) : null,
-                paymentMethod: 'PENDING',
+                paymentMethod: posPaymentMethodId,
                 customerName: orderMode === 'table' ? customerName : deliveryInfo.name,
                 deliveryInfo: orderMode === 'delivery' ? {
                     name: deliveryInfo.name,
                     phone: deliveryInfo.phone,
                     address: deliveryInfo.address, 
                     deliveryType: deliverySubType,
-                    deliveryFee: deliverySubType === 'delivery' ? deliveryFee : 0,
+                    deliveryFee: finalDelivery,
+                    observations: posObservations,
                     ...(structuredAddress || parseAddress(deliveryInfo.address))
-                } : null
+                } : null,
+                discount: finalDiscount,
+                extraCharge: finalExtra,
+                totalAmount: cartTotal + finalExtra + finalDelivery - finalDiscount
             };
             await createOrder(orderPayload);
             toast.success("Pedido enviado!");
@@ -335,6 +355,7 @@ const PosPage: React.FC = () => {
             setSelectedTable('');
             setCustomerName('');
             setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' });
+            setActiveModal('none');
             loadTableSummary();
         } catch (e) {
             toast.error("Erro ao enviar pedido");
@@ -394,6 +415,20 @@ const PosPage: React.FC = () => {
         setIsCashierOpen(true);
         setActiveModal('none');
         loadInitialData();
+    };
+
+    const handleOpenCheckout = () => {
+        if (cart.length === 0) return toast.error("Carrinho vazio!");
+        
+        // Resetar valores do checkout
+        setPosDeliveryFee(orderMode === 'delivery' && deliverySubType === 'delivery' ? deliveryFee.toString() : '0');
+        setPosExtraCharge('0');
+        setPosDiscountValue('0');
+        setPosDiscountPercentage('0');
+        setPosPaymentMethodId('');
+        setPosObservations('');
+        
+        setActiveModal('pos_checkout');
     };
 
     const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -524,7 +559,7 @@ const PosPage: React.FC = () => {
                         </div>
                         <div className="text-2xl font-black italic text-slate-900 tracking-tighter leading-none">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
                     </div>
-                    <Button onClick={() => cart.length > 0 && submitOrder()} disabled={cart.length === 0} fullWidth size="lg" className="h-12 rounded-xl text-[10px] uppercase tracking-widest font-black italic gap-2 shadow-lg">
+                    <Button onClick={handleOpenCheckout} disabled={cart.length === 0} fullWidth size="lg" className="h-12 rounded-xl text-[10px] uppercase tracking-widest font-black italic gap-2 shadow-lg">
                         Finalizar Pedido <CheckCircle size={16} strokeWidth={3} />
                     </Button>
                 </div>
@@ -1064,6 +1099,186 @@ const PosPage: React.FC = () => {
                                     </div>
 
                                 )}
+
+                {/* Modal de Checkout PDV (Balcão / Entrega) - NOVO */}
+                {activeModal === 'pos_checkout' && (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-0">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+                        <motion.div 
+                            initial={{ x: '100%' }} 
+                            animate={{ x: 0 }} 
+                            exit={{ x: '100%' }} 
+                            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                            className="relative w-full h-full bg-slate-50 flex flex-col overflow-hidden"
+                        >
+                            <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-orange-500 text-white rounded-2xl shadow-lg shadow-orange-100">
+                                        <ShoppingBag size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Pagamento e Entrega</h3>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Finalização de Venda</p>
+                                    </div>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="bg-slate-100 rounded-full h-12 w-12 hover:bg-rose-50 hover:text-rose-500 transition-all">
+                                    <X size={28} />
+                                </Button>
+                            </header>
+
+                            <div className="flex-1 flex overflow-hidden">
+                                {/* Coluna Esquerda: Resumo e Ajustes */}
+                                <div className="w-[450px] bg-white border-r border-slate-200 p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8 shadow-xl z-10">
+                                    <div className="space-y-6">
+                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
+                                            <Calculator size={14} className="text-orange-500" /> Resumo do Pedido
+                                        </h4>
+                                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
+                                            <div className="space-y-4 relative z-10">
+                                                <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                                    <span>Quantidade de itens:</span>
+                                                    <span className="text-white">{cart.reduce((a, b) => a + b.quantity, 0).toFixed(3).replace('.', ',')}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                                    <span>Total itens:</span>
+                                                    <span className="text-white text-sm">R$ {cartTotal.toFixed(2).replace('.', ',')}</span>
+                                                </div>
+                                                <div className="pt-4 border-t border-white/10 space-y-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Entrega:</span>
+                                                        <span className="text-blue-400 font-black italic">R$ {parseFloat(posDeliveryFee || '0').toFixed(2).replace('.', ',')}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Acréscimo:</span>
+                                                        <span className="text-rose-400 font-black italic">R$ {parseFloat(posExtraCharge || '0').toFixed(2).replace('.', ',')}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Desconto:</span>
+                                                        <span className="text-emerald-400 font-black italic">- R$ {parseFloat(posDiscountValue || '0').toFixed(2).replace('.', ',')}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="pt-6 border-t border-white/20">
+                                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">VALOR TOTAL</span>
+                                                    <span className="text-5xl font-black italic text-white tracking-tighter">
+                                                        R$ {(cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')).toFixed(2).replace('.', ',')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Entrega (R$)</label>
+                                                <input 
+                                                    type="number" step="0.01" value={posDeliveryFee} onChange={e => setPosDeliveryFee(e.target.value)}
+                                                    className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-blue-600 focus:border-blue-500 outline-none transition-all"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Acréscimo (R$)</label>
+                                                <input 
+                                                    type="number" step="0.01" value={posExtraCharge} onChange={e => setPosExtraCharge(e.target.value)}
+                                                    className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-rose-600 focus:border-rose-500 outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Desconto</label>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">R$</span>
+                                                    <input 
+                                                        type="number" step="0.01" value={posDiscountValue} 
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            setPosDiscountValue(val);
+                                                            const perc = ((parseFloat(val) / cartTotal) * 100).toFixed(2);
+                                                            setPosDiscountPercentage(perc === 'Infinity' ? '0' : perc);
+                                                        }}
+                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl pl-8 pr-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
+                                                    />
+                                                </div>
+                                                <div className="relative w-28">
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">%</span>
+                                                    <input 
+                                                        type="number" step="0.01" value={posDiscountPercentage}
+                                                        onChange={e => {
+                                                            const perc = e.target.value;
+                                                            setPosDiscountPercentage(perc);
+                                                            const val = ((parseFloat(perc) / 100) * cartTotal).toFixed(2);
+                                                            setPosDiscountValue(val);
+                                                        }}
+                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 mt-auto">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Observações para entrega</label>
+                                        <textarea 
+                                            value={posObservations} onChange={e => setPosObservations(e.target.value)}
+                                            className="w-full h-24 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] p-4 font-bold text-xs outline-none focus:border-orange-500 transition-all resize-none shadow-inner"
+                                            placeholder="Ex: Portão azul, interfone 201..."
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Coluna Direita: Meios de Pagamento */}
+                                <div className="flex-1 p-10 flex flex-col gap-10">
+                                    <div className="flex-1 space-y-8">
+                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
+                                            <Wallet size={14} className="text-orange-500" /> Formas de pagamento
+                                        </h4>
+                                        
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                            {paymentMethods.map(m => (
+                                                <button 
+                                                    key={m.id} 
+                                                    onClick={() => setPosPaymentMethodId(m.id)}
+                                                    className={cn(
+                                                        "h-20 flex flex-col items-center justify-center gap-1 rounded-[1.5rem] border-2 transition-all shadow-sm group",
+                                                        posPaymentMethodId === m.id 
+                                                            ? "bg-blue-500 border-blue-500 text-white shadow-blue-200 shadow-xl scale-[1.02]" 
+                                                            : "bg-white border-slate-100 text-slate-600 hover:border-blue-400"
+                                                    )}
+                                                >
+                                                    <span className={cn("text-[10px] font-black uppercase tracking-widest", posPaymentMethodId === m.id ? "text-white/80" : "text-slate-400 group-hover:text-blue-500")}>{m.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-orange-500 rounded-[2.5rem] p-8 text-white shadow-2xl flex items-center justify-between">
+                                        <div>
+                                            <span className="text-[12px] font-black uppercase tracking-widest text-orange-200 block mb-1">Valor Restante:</span>
+                                            <span className="text-4xl font-black italic tracking-tighter">
+                                                R$ {(!posPaymentMethodId ? (cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')) : 0).toFixed(2).replace('.', ',')}
+                                            </span>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <Button variant="ghost" onClick={() => setActiveModal('none')} className="h-16 px-8 rounded-2xl bg-white/10 hover:bg-white/20 text-white uppercase font-black italic tracking-widest text-[11px]">
+                                                VOLTAR
+                                            </Button>
+                                            <Button 
+                                                onClick={submitOrder} 
+                                                disabled={!posPaymentMethodId}
+                                                className="h-16 px-12 rounded-2xl bg-white text-orange-600 hover:bg-slate-50 font-black italic tracking-widest text-[11px] shadow-xl disabled:opacity-50"
+                                            >
+                                                FECHAR PEDIDO
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
 
                 {/* Modal de Transferência */}
                 {activeModal === 'transfer_table' && viewingTable && (
