@@ -20,7 +20,7 @@ const checkPermission = (permission) => {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: 'Autenticação necessária.' });
     
-    // SuperAdmin tem acesso total
+    // SuperAdmin ou Permissão Mestra tem acesso total
     if (req.user.isSuperAdmin || (req.user.permissions && req.user.permissions.includes('all:manage'))) {
         return next();
     }
@@ -35,7 +35,7 @@ const checkPermission = (permission) => {
 };
 
 const checkAdmin = (req, res, next) => {
-  if (req.user && (req.user.isSuperAdmin || (req.user.permissions && req.user.permissions.includes('all:manage')) || req.user.role === 'admin')) {
+  if (req.user && (req.user.isSuperAdmin || (req.user.permissions && req.user.permissions.includes('all:manage')) || req.user.role === 'admin' || req.user.role === 'superadmin')) {
     next();
   } else {
     res.status(403).json({ error: 'Acesso negado. Esta ação requer privilégios de administrador.' });

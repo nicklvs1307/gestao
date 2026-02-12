@@ -42,7 +42,15 @@ const login = async (req, res) => {
         // Compatibilidade: Se não tem permissões explícitas mas é admin
         let finalPermissions = permissions;
         if (permissions.length === 0 && (normalizedRole === 'admin' || user.isSuperAdmin)) {
-            finalPermissions = ['orders:view', 'orders:manage', 'products:manage', 'stock:manage', 'reports:view', 'financial:view', 'settings:manage'];
+            finalPermissions = [
+                'all:manage', 'orders:view', 'orders:manage', 'orders:edit_items', 'orders:cancel', 
+                'orders:transfer', 'orders:payment_change', 'orders:discount', 'waiter:pos', 'kds:view', 
+                'table:manage', 'financial:view', 'financial:manage', 'cashier:manage', 'bank_accounts:manage', 
+                'financial_categories:manage', 'waiter_settlement:manage', 'driver_settlement:manage', 
+                'products:view', 'products:manage', 'categories:manage', 'stock:view', 'stock:manage', 
+                'suppliers:manage', 'reports:view', 'reports:financial', 'reports:performance', 
+                'reports:abc', 'settings:view', 'settings:manage', 'users:manage', 'integrations:manage'
+            ];
         }
         
         const tokenData = { 
