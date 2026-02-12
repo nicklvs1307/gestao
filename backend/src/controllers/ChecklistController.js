@@ -13,6 +13,7 @@ class ChecklistController {
       },
       include: { 
         sector: true,
+        tasks: { orderBy: { order: 'asc' } },
         _count: { select: { tasks: true } }
       },
       orderBy: { title: 'asc' }

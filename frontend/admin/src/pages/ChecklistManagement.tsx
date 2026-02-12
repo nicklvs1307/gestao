@@ -179,7 +179,8 @@ const ChecklistManagement: React.FC = () => {
         if (!currentChecklist.title || !currentChecklist.sectorId) {
             return toast.error("Preencha o título e selecione um setor");
         }
-        if (currentChecklist.tasks.length === 0) {
+        const tasks = currentChecklist.tasks || [];
+        if (tasks.length === 0) {
             return toast.error("Adicione pelo menos uma tarefa");
         }
 
@@ -266,7 +267,11 @@ const ChecklistManagement: React.FC = () => {
                                         <button 
                                             onClick={(e) => { 
                                                 e.stopPropagation();
-                                                setCurrentChecklist(checklist); 
+                                                const editing = {
+                                                    ...checklist,
+                                                    tasks: checklist.tasks || []
+                                                };
+                                                setCurrentChecklist(editing); 
                                                 setIsEditingChecklist(true); 
                                             }} 
                                             className="p-2 bg-slate-50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
