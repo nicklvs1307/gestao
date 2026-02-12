@@ -289,8 +289,24 @@ class OrderService {
             const openSession = await tx.cashierSession.findFirst({ 
                 where: { restaurantId: order.restaurantId, status: 'OPEN' } 
             });
+
             if (openSession) {
-                // ... (lógica financeira)
+                // Cria a transação financeira vinculada ao caixa
+                const method = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
+                await tx.financialTransaction.create({
+                    data: {
+                        restaurantId: order.restaurantId,
+                        cashierId: openSession.id,
+                        orderId: order.id,
+                        description: `VENDA #${order.dailyOrderNumber || order.id.slice(-4)}`,
+                        amount: order.total,
+                        type: 'INCOME',
+                        status: 'PAID',
+                        dueDate: new Date(),
+                        paymentDate: new Date(),
+                        paymentMethod: method
+                    }
+                });
             }
             await InventoryService.processOrderStockDeduction(orderId, tx);
         }
