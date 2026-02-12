@@ -132,12 +132,15 @@ class OrderService {
         // Processar Delivery Info
         if (orderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
-             let fullAddress = deliveryInfo.address || 'Retirada no Balcão';
+             let fullAddress = 'Retirada no Balcão';
              
-             if (isDelivery && deliveryInfo.street) {
-                 fullAddress = `${deliveryInfo.street}${deliveryInfo.number ? ', ' + deliveryInfo.number : ''}${deliveryInfo.neighborhood ? ' - ' + deliveryInfo.neighborhood : ''}`;
-             } else if (!isDelivery) {
-                 fullAddress = 'Retirada no Balcão';
+             if (isDelivery) {
+                 if (typeof deliveryInfo.address === 'object') {
+                     const addr = deliveryInfo.address;
+                     fullAddress = `${addr.street || ''}, ${addr.number || 'S/N'}${addr.complement ? ' (' + addr.complement + ')' : ''} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
+                 } else {
+                     fullAddress = deliveryInfo.address || 'Endereço não informado';
+                 }
              }
              
              const cleanPhone = deliveryInfo.phone ? deliveryInfo.phone.replace(/\D/g, '') : '';

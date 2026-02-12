@@ -184,17 +184,19 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
     const deliveryInfo: DeliveryInfo = {
       name, 
       phone,
-      cep,
-      street,
-      number,
-      neighborhood,
-      city,
-      state,
-      address: deliveryType === 'delivery' ? `${street}, ${number} - ${neighborhood}, ${city}/${state}` : 'Retirada no Balcão',
       deliveryType, 
-      deliveryFee: deliveryType === 'delivery' ? deliveryFee : 0,
       paymentMethod,
       changeFor: paymentMethod.toLowerCase().includes('dinheiro') && changeFor ? parseFloat(changeFor.replace(/[^\d.,]/g, '').replace(',', '.')) : undefined,
+      address: deliveryType === 'delivery' ? {
+        street,
+        number,
+        neighborhood,
+        city,
+        state,
+        zipCode: cep,
+        complement: savedData.complement || ''
+      } : 'Retirada no Balcão',
+      deliveryFee: deliveryType === 'delivery' ? deliveryFee : 0,
     };
 
     // SALVA OS DADOS PARA A PRÓXIMA COMPRA

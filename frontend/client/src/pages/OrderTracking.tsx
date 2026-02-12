@@ -125,11 +125,17 @@ const OrderTracking: React.FC = () => {
                           <span className="text-xs font-medium opacity-50">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
                       </div>
                   ))}
+                  {order.deliveryOrder && (
+                      <div className="flex justify-between items-center pt-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                          <span>Taxa de Entrega</span>
+                          <span>R$ {order.deliveryOrder.deliveryFee.toFixed(2)}</span>
+                      </div>
+                  )}
               </div>
               <div className="pt-6 border-t border-white/10 flex justify-between items-end">
                   <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Total Pago</p>
-                      <p className="text-3xl font-black italic tracking-tighter text-emerald-400">R$ {order.total.toFixed(2)}</p>
+                      <p className="text-3xl font-black italic tracking-tighter text-emerald-400">R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2)}</p>
                   </div>
                   <div className="text-right">
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Método</p>
