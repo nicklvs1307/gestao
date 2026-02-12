@@ -122,7 +122,7 @@ class OrderService {
 
         const createdOrder = await tx.order.create({ data: orderData });
 
-        if (orderType === 'TABLE' && tableNumber) {
+        if (finalOrderType === 'TABLE' && tableNumber) {
             await tx.table.updateMany({
                 where: { number: parseInt(tableNumber), restaurantId: realRestaurantId },
                 data: { status: 'occupied' }
@@ -130,7 +130,7 @@ class OrderService {
         }
 
         // Processar Delivery Info
-        if (orderType === 'DELIVERY' && deliveryInfo) {
+        if (finalOrderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
              let fullAddress = 'Retirada no Balcão';
              

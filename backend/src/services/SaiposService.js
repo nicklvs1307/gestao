@@ -155,19 +155,22 @@ class SaiposService {
           delivery_date_time: new Date().toISOString()
       };
 
-      let deliveryAddress = null;
-      if (orderMethod.mode === 'DELIVERY' && order.deliveryOrder) {
-        const c = order.deliveryOrder.customer;
-        
-        orderMethod.delivery_by = 'RESTAURANT';
-        orderMethod.delivery_fee = parseFloat(order.deliveryOrder.deliveryFee || 0);
+      // Sempre envia delivery_by e delivery_fee se for DELIVERY (Exigência Saipos erro 902)
+      if (orderMethod.mode === 'DELIVERY') {
+          orderMethod.delivery_by = 'RESTAURANT';
+          orderMethod.delivery_fee = parseFloat(order.deliveryOrder?.deliveryFee || 0);
+      }
 
+      let deliveryAddress = null;
+      if (orderMethod.mode === 'DELIVERY') {
+        const c = order.deliveryOrder?.customer;
+        
         deliveryAddress = {
           country: 'BR',
           state: c?.state || fiscalConfig?.state || 'SP',
           city: c?.city || fiscalConfig?.city || 'São Paulo',
           district: c?.neighborhood || 'Bairro',
-          street_name: c?.street || order.deliveryOrder.address || '',
+          street_name: c?.street || order.deliveryOrder?.address || 'Retirada no Balcão',
           street_number: c?.number || 'S/N',
           postal_code: c?.zipCode?.replace(/\D/g, '') || '00000000',
           reference: c?.reference || '',
