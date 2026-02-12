@@ -347,10 +347,11 @@ const ChecklistManagement: React.FC = () => {
                             <Card className="p-6 border-slate-100 bg-white">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Conformidade Média</p>
                                 <p className="text-3xl font-black text-emerald-600 italic tracking-tighter">
-                                    {executions.length > 0 
-                                        ? Math.round((executions.reduce((acc, exec) => acc + (exec.responses?.filter((r:any) => r.isOk).length || 0), 0) / 
-                                          executions.reduce((acc, exec) => acc + (exec.responses?.length || 0), 0)) * 100) 
-                                        : 0}%
+                                    {(() => {
+                                        const totalResponses = executions.reduce((acc, exec) => acc + (exec.responses?.length || 0), 0);
+                                        const totalOk = executions.reduce((acc, exec) => acc + (exec.responses?.filter((r: any) => r.isOk).length || 0), 0);
+                                        return totalResponses > 0 ? Math.round((totalOk / totalResponses) * 100) : 0;
+                                    })()}%
                                 </p>
                             </Card>
                             <Card className="p-6 border-slate-100 bg-white">
@@ -488,7 +489,7 @@ const ChecklistManagement: React.FC = () => {
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-xs font-black text-slate-900 uppercase italic tracking-tighter flex items-center gap-2">
-                                            <CheckSquare size={16} className="text-orange-500" /> Itens do Checklist ({currentChecklist.tasks.length})
+                                            <CheckSquare size={16} className="text-orange-500" /> Itens do Checklist ({currentChecklist?.tasks?.length || 0})
                                         </h4>
                                         <Button onClick={handleAddTask} variant="outline" size="sm" className="h-9 rounded-xl gap-2 border-orange-200 text-orange-600 hover:bg-orange-50">
                                             <Plus size={14} /> Adicionar Item
@@ -496,7 +497,7 @@ const ChecklistManagement: React.FC = () => {
                                     </div>
 
                                     <div className="space-y-3">
-                                        {currentChecklist.tasks.map((task: any, index: number) => (
+                                        {(currentChecklist?.tasks || []).map((task: any, index: number) => (
                                             <Card key={index} className="p-4 border-slate-100 shadow-sm flex flex-col gap-3 animate-in slide-in-from-right-4">
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-400 shrink-0 mt-1">
