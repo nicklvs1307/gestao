@@ -37,11 +37,10 @@ class OrderService {
    * Cria um pedido completo de forma transacional.
    */
   async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName }) {
-    // ... (toda a lógica de createOrder existente)
     let orderTotal = 0;
     const processedItems = [];
 
-    // 1. Preparação dos Itens (Cálculo de Preço via PricingService)
+    // 1. Preparação dos Itens
     for (const item of items) {
       const calculation = await PricingService.calculateItemPrice(
         item.productId, 
@@ -75,8 +74,11 @@ class OrderService {
     const isAutoAccept = restaurant.settings?.autoAcceptOrders || false;
     const initialStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
 
+    // Determinar OrderType Real: Se tem deliveryInfo, É DELIVERY obrigatoriamente
+    const finalOrderType = (deliveryInfo || orderType === 'DELIVERY' || orderType === 'PICKUP') ? 'DELIVERY' : 'TABLE';
+
     // Lógica para adicionar itens em pedido existente de mesa
-    if (orderType === 'TABLE' && tableNumber) {
+    if (finalOrderType === 'TABLE' && tableNumber) {
         const existingOrder = await prisma.order.findFirst({
             where: {
                 restaurantId: realRestaurantId,
@@ -93,14 +95,18 @@ class OrderService {
     const orderData = {
       restaurantId: realRestaurantId,
       total: orderTotal,
-      orderType: orderType || 'TABLE',
+      orderType: finalOrderType,
       status: initialStatus,
       userId: userId || null, 
       customerName: customerName || null,
       items: { create: processedItems }
     };
 
-    if (tableNumber) orderData.tableNumber = parseInt(tableNumber);
+    if (finalOrderType === 'TABLE' && tableNumber) {
+        orderData.tableNumber = parseInt(tableNumber);
+    } else {
+        orderData.tableNumber = null; 
+    }
 
     // 2. Transação de Criação
     const newOrder = await prisma.$transaction(async (tx) => {

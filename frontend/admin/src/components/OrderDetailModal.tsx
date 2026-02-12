@@ -106,7 +106,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   };
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
-  const isDelivery = order.orderType === 'DELIVERY';
+  const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
 
   return (
     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden">

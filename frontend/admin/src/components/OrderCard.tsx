@@ -89,8 +89,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
     zIndex: isDragging ? 100 : 'auto',
   };
 
-  const isDelivery = order.orderType === 'DELIVERY';
   const deliveryData = order.deliveryOrder;
+  const isDelivery = order.orderType === 'DELIVERY' || !!deliveryData;
   const isPickup = deliveryData?.deliveryType === 'pickup' || deliveryData?.deliveryType === 'retirada';
 
   return (
@@ -98,7 +98,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
       <Card 
         className={cn(
           "group relative p-4 flex flex-col gap-3 transition-all",
-          isDragging ? "shadow-2xl ring-2 ring-orange-500 scale-105 border-orange-500" : "hover:border-orange-500/30",
+          isDragging ? "shadow-2xl ring-2 ring-orange-50" : "hover:border-orange-500/30",
           isSelected ? "border-orange-500 bg-orange-50/30" : "bg-white",
           order.status === 'PENDING' && !isSelected && "border-rose-100 bg-rose-50/30"
         )}
@@ -143,7 +143,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onOpenDetails, isSelected,
                     {!isDelivery ? <Utensils size={14} /> : (isPickup ? <ShoppingBag size={14} /> : <Truck size={14} />)}
                 </div>
                 <span className="text-[9px] font-black text-slate-600 uppercase italic">
-                  {!isDelivery ? `Mesa ${order.tableNumber}` : (isPickup ? 'Retirada Balcão' : 'Entrega')}
+                  {!isDelivery ? `Mesa ${order.tableNumber || '?'}` : (isPickup ? 'Retirada Balcão' : 'Entrega')}
                 </span>
               </div>
               {deliveryData?.phone && (
