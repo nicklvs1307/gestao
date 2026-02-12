@@ -138,7 +138,6 @@ async function main() {
       email: 'super@admin.com',
       name: 'Super Admin Global',
       passwordHash: adminPasswordHash,
-      role: 'superadmin',
       isSuperAdmin: true,
       roleId: superAdminRole.id,
     },
