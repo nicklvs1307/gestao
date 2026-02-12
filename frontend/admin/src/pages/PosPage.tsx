@@ -314,6 +314,8 @@ const PosPage: React.FC = () => {
         if (!posPaymentMethodId) {
             return toast.error("Selecione uma forma de pagamento");
         }
+
+        const method = paymentMethods.find(m => m.id === posPaymentMethodId);
         
         try {
             const finalDiscount = parseFloat(posDiscountValue || '0');
@@ -334,7 +336,7 @@ const PosPage: React.FC = () => {
                 })),
                 orderType: orderMode === 'table' ? 'TABLE' : 'DELIVERY',
                 tableNumber: orderMode === 'table' ? parseInt(selectedTable) : null,
-                paymentMethod: posPaymentMethodId,
+                paymentMethod: method?.name || 'OUTRO',
                 customerName: orderMode === 'table' ? customerName : deliveryInfo.name,
                 deliveryInfo: orderMode === 'delivery' ? {
                     name: deliveryInfo.name,
@@ -347,7 +349,7 @@ const PosPage: React.FC = () => {
                 } : null,
                 discount: finalDiscount,
                 extraCharge: finalExtra,
-                totalAmount: cartTotal + finalExtra + finalDelivery - finalDiscount
+                totalAmount: Number((cartTotal + finalExtra + finalDelivery - finalDiscount).toFixed(2))
             };
             await createOrder(orderPayload);
             toast.success("Pedido enviado!");
@@ -618,7 +620,7 @@ const PosPage: React.FC = () => {
                                     <span className={cn("text-2xl font-black italic tracking-tighter", t.status === 'free' ? "text-slate-200" : "text-rose-600")}>0{t.number}</span>
                                     <div className="mt-auto flex flex-col items-start">
                                         <span className={cn("text-[8px] font-black uppercase tracking-widest", t.status === 'free' ? "text-slate-300" : "text-rose-400")}>{t.status === 'free' ? 'Livre' : 'Ocupada'}</span>
-                                        {t.status !== 'free' && <span className="font-black text-sm text-rose-900 tracking-tighter italic leading-none">R$ {t.totalAmount.toFixed(2)}</span>}
+                                        {t.status !== 'free' && <span className="font-black text-sm text-rose-900 tracking-tighter italic leading-none">R$ {(t.totalAmount || 0).toFixed(2)}</span>}
                                     </div>
                                 </button>
                             ))}
@@ -659,7 +661,7 @@ const PosPage: React.FC = () => {
                                                         {item.observations && <p className="text-[8px] text-amber-600 font-bold mt-1 uppercase italic">Obs: {item.observations}</p>}
                                                     </div>
                                                     <div className="flex items-center gap-4">
-                                                        <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * item.priceAtTime).toFixed(2)}</span>
+                                                        <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * (item.priceAtTime || 0)).toFixed(2)}</span>
                                                         <button 
                                                             onClick={async () => {
                                                                 if(confirm('Remover este item do pedido?')) {
@@ -686,7 +688,7 @@ const PosPage: React.FC = () => {
                                     </div>
                                     <div className="p-6 bg-slate-900 text-white rounded-[2rem] shadow-xl relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
-                                        <div className="flex justify-between items-center relative z-10"><span className="text-xs font-black uppercase text-slate-400 tracking-widest">Total Acumulado</span><span className="text-3xl font-black italic text-emerald-400 tracking-tighter">R$ {viewingTable.totalAmount.toFixed(2).replace('.', ',')}</span></div>
+                                        <div className="flex justify-between items-center relative z-10"><span className="text-xs font-black uppercase text-slate-400 tracking-widest">Total Acumulado</span><span className="text-3xl font-black italic text-emerald-400 tracking-tighter">R$ {(viewingTable.totalAmount || 0).toFixed(2).replace('.', ',')}</span></div>
                                     </div>
                                 </div>
                                 <div className="space-y-6">
@@ -1196,8 +1198,9 @@ const PosPage: React.FC = () => {
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             setPosDiscountValue(val);
-                                                            const perc = ((parseFloat(val) / cartTotal) * 100).toFixed(2);
-                                                            setPosDiscountPercentage(perc === 'Infinity' ? '0' : perc);
+                                                            const numVal = parseFloat(val) || 0;
+                                                            const perc = cartTotal > 0 ? ((numVal / cartTotal) * 100).toFixed(2) : '0';
+                                                            setPosDiscountPercentage(perc === 'Infinity' || perc === 'NaN' ? '0' : perc);
                                                         }}
                                                         className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl pl-8 pr-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
                                                     />
@@ -1209,7 +1212,8 @@ const PosPage: React.FC = () => {
                                                         onChange={e => {
                                                             const perc = e.target.value;
                                                             setPosDiscountPercentage(perc);
-                                                            const val = ((parseFloat(perc) / 100) * cartTotal).toFixed(2);
+                                                            const numPerc = parseFloat(perc) || 0;
+                                                            const val = ((numPerc / 100) * cartTotal).toFixed(2);
                                                             setPosDiscountValue(val);
                                                         }}
                                                         className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
