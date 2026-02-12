@@ -248,6 +248,7 @@ const getAvailableRoles = async (req, res) => {
 
         const roles = await prisma.role.findMany({
             where: whereClause,
+            include: { permissions: true },
             orderBy: { name: 'asc' }
         });
         

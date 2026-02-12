@@ -84,6 +84,10 @@ async function main() {
     {
       name: 'Entregador',
       permissions: ['orders:view', 'delivery:manage']
+    },
+    {
+      name: 'Administrador',
+      permissions: permissionsList.filter(p => p.name !== 'all:manage').map(p => p.name)
     }
   ];
 
