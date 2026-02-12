@@ -102,9 +102,61 @@ const validateCoupon = async (req, res) => {
     }
 };
 
+const updatePromotion = async (req, res) => {
+    const { id } = req.params;
+    const { name, discountType, discountValue, startDate, endDate, isActive, productId, code, minOrderValue, usageLimit } = req.body;
+    try {
+        // Garantir que endDate capture o dia inteiro
+        let end = new Date(endDate);
+        if (end.getHours() === 0 && end.getMinutes() === 0) {
+            end.setHours(23, 59, 59, 999);
+        }
+
+        const data = { 
+            name, 
+            discountType, 
+            discountValue, 
+            startDate: new Date(startDate), 
+            endDate: end, 
+            isActive,
+            code: code ? code.toUpperCase() : null,
+            minOrderValue: parseFloat(minOrderValue || 0),
+            usageLimit: usageLimit ? parseInt(usageLimit) : null
+        };
+
+        if (productId) {
+            data.product = { connect: { id: productId } };
+        } else {
+            data.product = { disconnect: true };
+        }
+
+        const updated = await prisma.promotion.update({
+            where: { id },
+            data,
+            include: { product: true }
+        });
+        res.json(updated);
+    } catch (error) {
+        console.error("Erro ao atualizar promoção:", error);
+        res.status(500).json({ error: 'Erro ao atualizar promoção.' });
+    }
+};
+
+const deletePromotion = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.promotion.delete({ where: { id } });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir promoção.' });
+    }
+};
+
 module.exports = {
     getActivePromotions,
     getAllPromotions,
     createPromotion,
-    validateCoupon
+    validateCoupon,
+    updatePromotion,
+    deletePromotion
 };

@@ -6,6 +6,8 @@ const { needsAuth } = require('../middlewares/auth');
 // Admin
 router.get('/', needsAuth, PromotionController.getAllPromotions);
 router.post('/', needsAuth, PromotionController.createPromotion);
+router.put('/:id', needsAuth, PromotionController.updatePromotion);
+router.delete('/:id', needsAuth, PromotionController.deletePromotion);
 
 // Client
 router.get('/active/:restaurantId', PromotionController.getActivePromotions);
