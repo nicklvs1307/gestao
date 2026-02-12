@@ -153,7 +153,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                 { label: "Comandas", path: "/tables", icon: LayoutDashboard, permission: 'table:manage' },
                 { label: "Configurações", path: "/settings/general", icon: Settings, permission: 'settings:manage' },
                 { label: "Dados da Loja", path: "/settings", icon: Database, permission: 'settings:view' },
-                { label: "Dados Fiscais", path: "/fiscal", icon: settings:manage },
+                { label: "Dados Fiscais", path: "/fiscal", icon: ShieldCheck, permission: 'settings:manage' },
                 { label: "Entregadores", path: "/drivers", icon: Truck, permission: 'driver_settlement:manage' },
                 { label: "Garçons", path: "/auth/waiters", icon: Users2, permission: 'waiter_settlement:manage' },
                 { label: "Mesas", path: "/tables", icon: LayoutDashboard, permission: 'table:manage' },
