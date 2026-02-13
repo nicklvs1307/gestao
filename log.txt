@@ -1,7 +1,19 @@
 URL da solicitação
+https://kicardapio.towersfy.com/api/settings
+Método da solicitação
+GET
+Código de status
+500 Internal Server Erro
+{"error":"Erro ao buscar configurações."}
+
+
+URL da solicitação
 https://kicardapio.towersfy.com/api/super-admin/restaurants
 Método da solicitação
 GET
 Código de status
 500 Internal Server Erro
-{"error":"Erro ao buscar restaurantes."}
+{
+    "error": "Erro ao buscar restaurantes.",
+    "details": "\nInvalid `prisma.restaurant.findMany()` invocation:\n\n\nThe column `Restaurant.latitude` does not exist in the current database."
+}
