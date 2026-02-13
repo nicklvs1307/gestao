@@ -50,6 +50,9 @@ async function main() {
     { name: 'reports:abc', description: 'Ver Curva ABC de produtos' },
     { name: 'reports:view_all', description: 'Ver relatórios de todas as lojas (Franquia)' },
 
+    // GESTÃO DE FRANQUIA
+    { name: 'franchise:manage', description: 'Gerenciar lojas e usuários da própria franquia' },
+
     // CONFIGURAÇÕES DA LOJA
     { name: 'settings:view', description: 'Ver dados da loja' },
     { name: 'settings:manage', description: 'Alterar configurações e dados fiscais' },
@@ -112,7 +115,12 @@ async function main() {
     {
       name: 'Administrador',
       description: 'Gestão completa da loja',
-      permissions: permissionsList.filter(p => p.name !== 'all:manage' && p.name !== 'reports:view_all').map(p => p.name)
+      permissions: permissionsList.filter(p => p.name !== 'all:manage' && p.name !== 'reports:view_all' && p.name !== 'franchise:manage').map(p => p.name)
+    },
+    {
+      name: 'Franqueador',
+      description: 'Gestão de todas as lojas da franquia',
+      permissions: ['franchise:manage', 'reports:view_all', 'users:manage', 'settings:view', 'products:view']
     },
     {
       name: 'Garçom',

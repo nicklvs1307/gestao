@@ -198,13 +198,37 @@ class OrderService {
         // Registrar Pagamento Inicial (se houver)
         if (paymentMethod) {
             const finalFee = (orderType === 'DELIVERY' && deliveryInfo?.deliveryFee) ? deliveryInfo.deliveryFee : 0;
+            const totalToPay = orderTotal + finalFee;
+
             await tx.payment.create({
                 data: {
                     orderId: createdOrder.id,
-                    amount: orderTotal + finalFee,
+                    amount: totalToPay,
                     method: paymentMethod
                 }
             });
+
+            // Se o pedido já nasce aceito/preparando (balcão/auto-accept), já vincula ao financeiro/caixa
+            const openSession = await tx.cashierSession.findFirst({
+                where: { restaurantId: realRestaurantId, status: 'OPEN' }
+            });
+
+            if (openSession) {
+                await tx.financialTransaction.create({
+                    data: {
+                        restaurantId: realRestaurantId,
+                        cashierId: openSession.id,
+                        orderId: createdOrder.id,
+                        description: `VENDA #${orderData.dailyOrderNumber || createdOrder.id.slice(-4)}`,
+                        amount: totalToPay,
+                        type: 'INCOME',
+                        status: 'PAID',
+                        dueDate: new Date(),
+                        paymentDate: new Date(),
+                        paymentMethod: paymentMethod
+                    }
+                });
+            }
         }
 
         return await tx.order.findUnique({

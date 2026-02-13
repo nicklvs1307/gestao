@@ -15,6 +15,7 @@ const normalizeRole = (dbRoleName, isSuperAdmin) => {
     if (normalized.includes('garcom') || normalized.includes('waiter')) return 'waiter';
     if (normalized.includes('entregador') || normalized.includes('driver')) return 'driver';
     if (normalized.includes('administrador') || normalized.includes('admin')) return 'admin';
+    if (normalized.includes('franqueador') || normalized.includes('franchisor')) return 'franchisor';
     
     return normalized;
 };
@@ -259,10 +260,42 @@ const getAvailableRoles = async (req, res) => {
     }
 };
 
+const deleteUser = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
+        
+        const userToDelete = await prisma.user.findUnique({ where: { id } });
+        if (!userToDelete) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+        // Proteção: Não deletar a si mesmo
+        if (userToDelete.id === req.user.id) {
+            return res.status(400).json({ error: 'Você não pode excluir sua própria conta.' });
+        }
+
+        // Proteção: Admin comum não deleta SuperAdmin
+        if (userToDelete.isSuperAdmin && !isRequesterSuperAdmin) {
+            return res.status(403).json({ error: 'Acesso negado: Você não pode excluir um SuperAdmin.' });
+        }
+
+        // Proteção: Admin comum só deleta do seu restaurante
+        if (!isRequesterSuperAdmin && userToDelete.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Acesso negado.' });
+        }
+
+        await prisma.user.delete({ where: { id } });
+        res.json({ message: 'Usuário removido com sucesso.' });
+    } catch (error) {
+        console.error("Erro ao deletar usuário:", error);
+        res.status(500).json({ error: 'Erro ao deletar usuário.' });
+    }
+};
+
 module.exports = {
     login,
     getUsers,
     createUser,
     updateUser,
+    deleteUser,
     getAvailableRoles
 };

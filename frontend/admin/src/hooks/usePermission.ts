@@ -11,7 +11,7 @@ export const usePermission = () => {
     if (!user) return false;
 
     // SuperAdmin tem acesso total
-    if (user.isSuperAdmin || user.permissions.includes('all:manage')) {
+    if (user.isSuperAdmin || user.permissions?.includes('all:manage')) {
       return true;
     }
 
@@ -23,5 +23,8 @@ export const usePermission = () => {
       : permissionsToCheck.every(p => userPermissions.includes(p));
   };
 
-  return { hasPermission };
+  const isSuperAdmin = user?.isSuperAdmin || user?.permissions?.includes('all:manage');
+  const isFranchisor = user?.role === 'franchisor' || (!!user?.franchiseId && user?.permissions?.includes('franchise:manage'));
+
+  return { hasPermission, isSuperAdmin, isFranchisor };
 };

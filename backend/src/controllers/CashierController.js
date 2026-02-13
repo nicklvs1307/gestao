@@ -131,10 +131,15 @@ class CashierController {
       throw new Error("Nenhum caixa aberto.");
     }
 
+    // Busca pedidos que possuem transações financeiras vinculadas a este caixa
+    // OU pedidos criados durante esta sessão (para garantir que pedidos novos apareçam)
     const orders = await prisma.order.findMany({
       where: { 
         restaurantId: req.restaurantId,
-        createdAt: { gte: session.openedAt }
+        OR: [
+            { financialTransaction: { some: { cashierId: session.id } } },
+            { createdAt: { gte: session.openedAt } }
+        ]
       },
       include: {
         items: { include: { product: true } },

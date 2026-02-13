@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const prisma = require('../lib/prisma');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -42,14 +43,34 @@ const checkAdmin = (req, res, next) => {
   }
 };
 
-const setRestaurantId = (req, res, next) => {
+const setRestaurantId = async (req, res, next) => {
   const requestedRestaurantId = req.headers['x-restaurant-id'] || req.query.restaurantId;
 
+  // 1. SuperAdmin tem acesso irrestrito
   if (req.user && (req.user.isSuperAdmin || req.user.role === 'superadmin') && requestedRestaurantId) {
     req.restaurantId = requestedRestaurantId;
     return next();
   }
 
+  // 2. Franqueador pode acessar qualquer loja da sua franquia (VALIDADO)
+  if (req.user && req.user.franchiseId && (req.user.permissions?.includes('franchise:manage') || req.user.role === 'franchisor') && requestedRestaurantId) {
+      try {
+          const restaurant = await prisma.restaurant.findFirst({
+              where: { id: requestedRestaurantId, franchiseId: req.user.franchiseId }
+          });
+          
+          if (!restaurant) {
+              return res.status(403).json({ error: 'Acesso negado: Esta loja não pertence à sua franquia.' });
+          }
+          
+          req.restaurantId = requestedRestaurantId;
+          return next();
+      } catch (error) {
+          return res.status(500).json({ error: 'Erro ao validar contexto de franquia.' });
+      }
+  }
+
+  // 3. Usuário comum de restaurante
   if (req.user && req.user.restaurantId) {
     req.restaurantId = req.user.restaurantId;
     next();
