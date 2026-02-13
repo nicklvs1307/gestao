@@ -36,7 +36,7 @@ const login = async (req, res) => {
             return res.status(400).json({ error: 'Credenciais inválidas.' });
         }
         
-        const permissions = user.roleRef?.permissions.map(p => p.name) || [];
+        const permissions = user.roleRef?.permissions?.map(p => p.name) || [];
         const normalizedRole = normalizeRole(user.roleRef?.name, user.isSuperAdmin);
         
         // Compatibilidade: Se não tem permissões explícitas mas é admin

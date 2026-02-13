@@ -49,10 +49,13 @@ const createRestaurant = async (req, res) => {
                 }
             });
 
-            // 2. Buscar ou Criar a Role de Admin para este restaurante
-            // (Usaremos o nome padrão 'Administrador')
+            // 2. Buscar a Role de Admin para este restaurante
+            // Padronizado para 'admin' conforme migração e seed
             let adminRole = await tx.role.findFirst({
-                where: { name: 'Administrador', franchiseId: null }
+                where: { 
+                    name: { equals: 'admin', mode: 'insensitive' },
+                    franchiseId: null 
+                }
             });
 
             // 3. Criar o Usuário Administrador da Loja
