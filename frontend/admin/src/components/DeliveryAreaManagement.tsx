@@ -13,7 +13,7 @@ import 'leaflet-draw';
 import { 
     MapPin, Plus, Trash2, Save, 
     Layers, MousePointer2, Circle as CircleIcon, 
-    Hexagon, DollarSign, Loader2, AlertCircle, RefreshCw, ChevronRight, CheckCircle
+    Hexagon, DollarSign, Loader2, AlertCircle, RefreshCw, ChevronRight, CheckCircle, Info
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
