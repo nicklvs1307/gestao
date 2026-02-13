@@ -11,7 +11,8 @@ import {
     Download,
     Maximize2,
     Layers,
-    Target
+    Target,
+    CheckCircle
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -143,11 +144,12 @@ const SalesMap: React.FC = () => {
                     fillOpacity: 0.8
                 });
 
+                const weight = typeof p.weight === 'number' ? p.weight : 0;
                 const popupContent = `
                     <div class="p-2 min-w-[200px]">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-[10px] font-black bg-slate-100 px-2 py-1 rounded">#${p.orderNumber || 'N/A'}</span>
-                            <span class="text-[10px] font-bold text-orange-600">R$ ${p.weight?.toFixed(2)}</span>
+                            <span class="text-[10px] font-bold text-orange-600">R$ ${weight.toFixed(2)}</span>
                         </div>
                         <p class="text-[11px] font-bold text-slate-900 mb-1">${p.customer || 'Cliente'}</p>
                         <p class="text-[10px] text-slate-500 leading-tight">${p.address || 'Endereço não informado'}</p>
