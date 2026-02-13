@@ -38,7 +38,7 @@ const login = async (req, res) => {
         }
         
         const permissions = user.roleRef?.permissions?.map(p => p.name) || [];
-        const normalizedRole = normalizeRole(user.roleRef?.name, user.isSuperAdmin);
+        const normalizedRole = normalizeRole(user.roleRef?.name || null, user.isSuperAdmin);
         
         // Compatibilidade: Se não tem permissões explícitas mas é admin
         let finalPermissions = permissions;
@@ -118,7 +118,7 @@ const getUsers = async (req, res) => {
 
         const mappedUsers = users.map(u => ({
             ...u,
-            role: normalizeRole(u.roleRef?.name, u.isSuperAdmin)
+            role: normalizeRole(u.roleRef?.name || null, u.isSuperAdmin)
         }));
 
         res.json(mappedUsers); 

@@ -65,6 +65,53 @@ const SuperAdminDashboard: React.FC = () => {
         }));
     };
 
+    const handleCreateFranchise = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.post('/super-admin/franchises', {
+                name: formData.franchiseName,
+                slug: formData.franchiseSlug
+            });
+            toast.success("Franquia criada com sucesso!");
+            setIsFranchiseModalOpen(false);
+            fetchData();
+        } catch (error) { toast.error("Erro ao criar franquia."); }
+    };
+
+    const handleCreateRestaurant = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.post('/super-admin/restaurants', {
+                name: formData.restaurantName,
+                slug: formData.restaurantSlug,
+                franchiseId: formData.restaurantFranchiseId || null,
+                plan: formData.restaurantPlan,
+                expiresAt: formData.restaurantExpiresAt || null,
+                adminName: formData.adminName,
+                adminEmail: formData.adminEmail,
+                adminPassword: formData.adminPassword
+            });
+            toast.success("Unidade provisionada com sucesso!");
+            setIsRestaurantModalOpen(false);
+            fetchData();
+        } catch (error) { toast.error("Erro no onboarding da unidade."); }
+    };
+
+    const handleUpdateSubscription = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedStore) return;
+        try {
+            await api.patch(`/super-admin/restaurants/${selectedStore.id}/subscription`, {
+                plan: formData.editPlan,
+                status: formData.editStatus,
+                expiresAt: formData.editExpiresAt || null
+            });
+            toast.success("Assinatura atualizada!");
+            setIsPlanModalOpen(false);
+            fetchData();
+        } catch (error) { toast.error("Erro ao atualizar assinatura."); }
+    };
+
     if (loading && franchises.length === 0) return (
         <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
@@ -292,6 +339,24 @@ const SuperAdminDashboard: React.FC = () => {
                                 </div>
                             </form>
                             <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0"><Button variant="ghost" onClick={() => setIsRestaurantModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button><Button type="submit" onClick={handleCreateRestaurant} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black bg-blue-600 hover:bg-blue-500">FINALIZAR E CRIAR LOJA</Button></footer>
+                        </motion.div>
+                    </div>
+                )}
+
+                {/* Modal Assinatura (Plano) */}
+                {isPlanModalOpen && (
+                    <div className="ui-modal-overlay">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
+                            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><DollarSign size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Plano</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{selectedStore?.name}</p></div></div>
+                                <Button variant="ghost" size="icon" onClick={() => setIsPlanModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleUpdateSubscription} className="p-10 space-y-6 bg-slate-50/30">
+                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Plano Ativo</label><select className="ui-input w-full h-12" value={formData.editPlan} onChange={e => setFormData({...formData, editPlan: e.target.value})}><option value="FREE">FREE</option><option value="SILVER">SILVER</option><option value="GOLD">GOLD</option><option value="DIAMOND">DIAMOND</option></select></div>
+                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Status do Contrato</label><select className="ui-input w-full h-12" value={formData.editStatus} onChange={e => setFormData({...formData, editStatus: e.target.value})}><option value="ACTIVE">ATIVO</option><option value="SUSPENDED">SUSPENSO</option><option value="TRIAL">TESTE (TRIAL)</option></select></div>
+                                <Input label="Nova Validade" type="date" value={formData.editExpiresAt} onChange={e => setFormData({...formData, editExpiresAt: e.target.value})}/>
+                                <div className="pt-6"><Button fullWidth size="lg" className="h-14 rounded-2xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 bg-emerald-600 hover:bg-emerald-500">SALVAR ALTERAÇÕES</Button></div>
+                            </form>
                         </motion.div>
                     </div>
                 )}

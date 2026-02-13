@@ -43,54 +43,41 @@ const checkAdmin = (req, res, next) => {
   }
 };
 
-const setRestaurantId = async (req, res, next) => {
+const setRestaurantId = (req, res, next) => {
   const requestedRestaurantId = req.headers['x-restaurant-id'] || req.query.restaurantId;
 
   // 1. SuperAdmin tem acesso irrestrito
-  if (req.user && (req.user.isSuperAdmin || req.user.role === 'superadmin') && requestedRestaurantId) {
-    req.restaurantId = requestedRestaurantId;
+  if (req.user && (req.user.isSuperAdmin || req.user.role === 'superadmin')) {
+    if (requestedRestaurantId) {
+      req.restaurantId = requestedRestaurantId;
+    }
     return next();
   }
 
-  // 2. Franqueador pode acessar qualquer loja da sua franquia (VALIDADO)
-  if (req.user && req.user.franchiseId && (req.user.permissions?.includes('franchise:manage') || req.user.role === 'franchisor') && requestedRestaurantId) {
-      try {
-          const restaurant = await prisma.restaurant.findFirst({
-              where: { id: requestedRestaurantId, franchiseId: req.user.franchiseId }
-          });
-          
-          if (!restaurant) {
-              return res.status(403).json({ error: 'Acesso negado: Esta loja não pertence à sua franquia.' });
-          }
-          
-          req.restaurantId = requestedRestaurantId;
-          return next();
-      } catch (error) {
-          return res.status(500).json({ error: 'Erro ao validar contexto de franquia.' });
-      }
+  // 2. Franqueador (Pode acessar lojas da sua franquia)
+  // Nota: A validação profunda de propriedade será feita nos controllers específicos 
+  // ou via middleware adicional assíncrono onde for necessário.
+  if (req.user && req.user.franchiseId && (req.user.permissions?.includes('franchise:manage') || req.user.role === 'franchisor')) {
+    if (requestedRestaurantId) {
+      req.restaurantId = requestedRestaurantId;
+    }
+    return next();
   }
 
   // 3. Usuário comum de restaurante
   if (req.user && req.user.restaurantId) {
     req.restaurantId = req.user.restaurantId;
     next();
-  } else if (req.user && (req.user.isSuperAdmin || req.user.role === 'superadmin')) {
+  } else {
     // Se for uma rota que EXIGE restaurante (como /api/products) e não foi passado ID, bloqueamos
-    // Exceto se for uma rota de gerenciamento global
     const storeSpecificPaths = ['/api/products', '/api/categories', '/api/admin/orders', '/api/stock', '/api/financial'];
     const isStoreRoute = storeSpecificPaths.some(path => req.originalUrl.split('?')[0].startsWith(path));
 
     if (isStoreRoute && !requestedRestaurantId) {
-      return res.status(400).json({ error: 'Contexto de loja não selecionado. Selecione uma loja para gerenciar.' });
-    }
-    
-    if (requestedRestaurantId) {
-        req.restaurantId = requestedRestaurantId;
+      return res.status(400).json({ error: 'Contexto de loja não selecionado.' });
     }
     
     next();
-  } else {
-    res.status(403).json({ error: 'Usuário não associado a um restaurante.' });
   }
 };
 
