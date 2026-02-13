@@ -63,19 +63,21 @@ const SalesMap: React.FC = () => {
     const initMap = () => {
         if (mapRef.current) return updateHeatmap();
 
-        // Centraliza no primeiro ponto ou em uma posição padrão
-        const center: [number, number] = heatmapData.length > 0 
-            ? [heatmapData[0].lat, heatmapData[0].lng] 
-            : [-23.5505, -46.6333]; // SP
+        // Centraliza em uma posição padrão (Brasil Central ou última conhecida)
+        const center: [number, number] = [-15.7801, -47.9292]; // Brasília como default
 
-        const map = L.map('sales-map-container').setView(center, 13);
+        const map = L.map('sales-map-container', {
+            zoomControl: false
+        }).setView(center, 4);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         mapRef.current = map;
-        updateHeatmap();
+        if (heatmapData.length > 0) {
+            updateHeatmap();
+        }
     };
 
     const updateHeatmap = () => {
@@ -85,22 +87,27 @@ const SalesMap: React.FC = () => {
             mapRef.current.removeLayer(heatLayerRef.current);
         }
 
+        if (heatmapData.length === 0) return;
+
         const points = heatmapData.map(p => [p.lat, p.lng, p.weight || 1]);
         
         // @ts-ignore
-        const heat = L.heatLayer(points, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 17,
-            gradient: { 0.4: 'blue', 0.65: 'lime', 1: 'red' }
-        }).addTo(mapRef.current);
-
-        heatLayerRef.current = heat;
+        if (L.heatLayer) {
+            // @ts-ignore
+            const heat = L.heatLayer(points, {
+                radius: 25,
+                blur: 15,
+                maxZoom: 17,
+                gradient: { 0.4: 'blue', 0.65: 'lime', 1: 'red' }
+            }).addTo(mapRef.current);
+            heatLayerRef.current = heat;
+        }
 
         // Ajusta o zoom para caber todos os pontos
-        if (points.length > 0) {
-            const bounds = L.latLngBounds(points.map(p => [p[0], p[1]] as any));
-            mapRef.current.fitBounds(bounds);
+        const validPoints = points.filter(p => p[0] && p[1]);
+        if (validPoints.length > 0) {
+            const bounds = L.latLngBounds(validPoints.map(p => [p[0], p[1]] as any));
+            mapRef.current.fitBounds(bounds, { padding: [50, 50] });
         }
     };
 

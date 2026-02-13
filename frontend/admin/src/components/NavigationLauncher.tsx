@@ -115,35 +115,37 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                 { label: "Tempo de Produção", path: "/reports/production", icon: Clock, permission: 'reports:view' },
                 { label: "Tempo por Status", path: "/reports/status-time", icon: Clock, permission: 'reports:view' },
                 { label: "Vendas por Área de Entrega", path: "/reports/delivery-areas", icon: MapPin, permission: 'reports:view' },
-                { label: "Vendas por Forma de Pagamento", path: "/reports/payments", icon: CreditCard, permission: 'reports:view' },
-                { label: "Vendas por Período", path: "/reports/period", icon: BarChart3, permission: 'reports:view' },
-            ].filter(item => hasPermission(item.permission))
-        },
-        {
-            title: "Estoque",
-            icon: Warehouse,
-            items: [
-                { label: "Análise e Simulação de CMV", path: "/stock/cmv", icon: Calculator, permission: 'reports:abc' },
-                { label: "Ficha Técnica", path: "/products", icon: FileText, permission: 'products:manage' },
-                { label: "Grupos de Ingrediente", path: "/ingredients/groups", icon: Layers, permission: 'stock:manage' },
-                { label: "Histórico de Posição de Estoque", path: "/stock/history", icon: History, permission: 'stock:view' },
-                { label: "Ingredientes e Insumos", path: "/ingredients", icon: Package, permission: 'stock:manage' },
-                { label: "Lista de Compras", path: "/stock/shopping-list", icon: ShoppingCart, permission: 'stock:manage' },
-                { label: "Movimentações de Estoque", path: "/stock/moves", icon: MoveHorizontal, permission: 'stock:manage' },
-                { label: "Notas de Entrada", path: "/stock/invoices", icon: Receipt, permission: 'stock:manage' },
-                { label: "Ordem de Compra", path: "/stock/purchase-orders", icon: ClipboardList, permission: 'stock:manage' },
-            ].filter(item => hasPermission(item.permission))
-        },
-        {
-            title: "Dashboards",
-            icon: LayoutDashboard,
-            items: [
-                { label: "Acompanhamento de Vendas", path: "/dashboard", icon: BarChart3, permission: 'reports:view' },
-                { label: "Canais", path: "/dashboard/channels", icon: Share2, permission: 'reports:view' },
-                { label: "Faturamento", path: "/dashboard/billing", icon: DollarSign, permission: 'reports:view' },
-                { label: "Vendas por Data / Hora", path: "/dashboard/hourly", icon: Clock, permission: 'reports:view' },
-            ].filter(item => hasPermission(item.permission))
-        },
+                                {label: "Vendas por Forma de Pagamento", path: "/reports/payments", icon: CreditCard, permission: 'reports:view' },
+                                { label: "Vendas por Período", path: "/reports/period", icon: BarChart3, permission: 'reports:view' },
+                                { label: "Mapa Geográfico de Vendas", path: "/reports/sales-map", icon: MapPin, permission: 'reports:view' },
+                            ].filter(item => hasPermission(item.permission))
+                        },
+                        {
+                            title: "Estoque",
+                            icon: Warehouse,
+                            items: [
+                                { label: "Análise e Simulação de CMV", path: "/stock/cmv", icon: Calculator, permission: 'reports:abc' },
+                                { label: "Ficha Técnica", path: "/products", icon: FileText, permission: 'products:manage' },
+                                { label: "Grupos de Ingrediente", path: "/ingredients/groups", icon: Layers, permission: 'stock:manage' },
+                                { label: "Histórico de Posição de Estoque", path: "/stock/history", icon: History, permission: 'stock:view' },
+                                { label: "Ingredientes e Insumos", path: "/ingredients", icon: Package, permission: 'stock:manage' },
+                                { label: "Lista de Compras", path: "/stock/shopping-list", icon: ShoppingCart, permission: 'stock:manage' },
+                                { label: "Movimentações de Estoque", path: "/stock/moves", icon: MoveHorizontal, permission: 'stock:manage' },
+                                { label: "Notas de Entrada", path: "/stock/invoices", icon: Receipt, permission: 'stock:manage' },
+                                { label: "Ordem de Compra", path: "/stock/purchase-orders", icon: ClipboardList, permission: 'stock:manage' },
+                            ].filter(item => hasPermission(item.permission))
+                        },
+                        {
+                            title: "Dashboards",
+                            icon: LayoutDashboard,
+                            items: [
+                                { label: "Acompanhamento de Vendas", path: "/dashboard", icon: BarChart3, permission: 'reports:view' },
+                                { label: "Canais", path: "/dashboard/channels", icon: Share2, permission: 'reports:view' },
+                                { label: "Faturamento", path: "/dashboard/billing", icon: DollarSign, permission: 'reports:view' },
+                                { label: "Vendas por Data / Hora", path: "/dashboard/hourly", icon: Clock, permission: 'reports:view' },
+                                { label: "Mapa Geográfico", path: "/reports/sales-map", icon: MapPin, permission: 'reports:view' },
+                            ].filter(item => hasPermission(item.permission))
+                        },
         {
             title: "Opções da Loja",
             icon: Settings,
