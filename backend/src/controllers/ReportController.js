@@ -557,6 +557,13 @@ const ReportController = {
     async getSalesHeatmap(req, res) {
         try {
             const { restaurantId } = req;
+            
+            // Busca dados da loja para centralizar o mapa
+            const restaurant = await prisma.restaurant.findUnique({
+                where: { id: restaurantId },
+                select: { latitude: true, longitude: true }
+            });
+
             const orders = await prisma.deliveryOrder.findMany({
                 where: {
                     order: {
@@ -578,10 +585,16 @@ const ReportController = {
             const points = orders.map(o => ({
                 lat: o.latitude,
                 lng: o.longitude,
-                weight: o.order.total // O peso pode ser o valor do pedido ou apenas 1 por pedido
+                weight: o.order.total
             }));
 
-            res.json(points);
+            res.json({
+                restaurant: {
+                    lat: restaurant?.latitude,
+                    lng: restaurant?.longitude
+                },
+                points
+            });
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar dados do mapa de calor.' });
         }

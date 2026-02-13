@@ -30,6 +30,7 @@ const loadHeatmapPlugin = () => {
 
 const SalesMap: React.FC = () => {
     const [heatmapData, setHeatmapData] = useState<any[]>([]);
+    const [restaurantLoc, setRestaurantLoc] = useState<{lat: number, lng: number} | null>(null);
     const [loading, setLoading] = useState(true);
     const mapRef = useRef<L.Map | null>(null);
     const heatLayerRef = useRef<any>(null);
@@ -46,7 +47,8 @@ const SalesMap: React.FC = () => {
         try {
             setLoading(true);
             const res = await api.get('/admin/reports/sales-heatmap');
-            setHeatmapData(res.data);
+            setHeatmapData(res.data.points || []);
+            setRestaurantLoc(res.data.restaurant);
         } catch (error) {
             toast.error("Erro ao carregar dados do mapa.");
         } finally {
@@ -55,29 +57,48 @@ const SalesMap: React.FC = () => {
     };
 
     useEffect(() => {
-        if (!loading && heatmapData.length > 0) {
+        if (!loading) {
             initMap();
         }
-    }, [loading, heatmapData]);
+    }, [loading, heatmapData, restaurantLoc]);
 
     const initMap = () => {
         if (mapRef.current) return updateHeatmap();
 
-        // Centraliza em uma posição padrão (Brasil Central ou última conhecida)
-        const center: [number, number] = [-15.7801, -47.9292]; // Brasília como default
+        // Ordem de prioridade para o centro:
+        // 1. Localização cadastrada da loja
+        // 2. Média dos pontos de venda
+        // 3. São Paulo (Fallback seguro Brasil)
+        let center: [number, number] = [-23.5505, -46.6333]; 
+
+        if (restaurantLoc?.lat && restaurantLoc?.lng) {
+            center = [restaurantLoc.lat, restaurantLoc.lng];
+        } else if (heatmapData.length > 0) {
+            center = [heatmapData[0].lat, heatmapData[0].lng];
+        }
 
         const map = L.map('sales-map-container', {
             zoomControl: false
-        }).setView(center, 4);
+        }).setView(center, 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        mapRef.current = map;
-        if (heatmapData.length > 0) {
-            updateHeatmap();
+        // Adiciona um marcador para a Loja se ela tiver localização
+        if (restaurantLoc?.lat && restaurantLoc?.lng) {
+            L.marker([restaurantLoc.lat, restaurantLoc.lng], {
+                icon: L.divIcon({
+                    html: `<div class="bg-slate-900 p-2 rounded-full border-2 border-white shadow-lg"><svg viewBox="0 0 24 24" width="16" height="16" stroke="white" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>`,
+                    className: '',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32]
+                })
+            }).addTo(map).bindPopup("<b>Sua Loja</b>");
         }
+
+        mapRef.current = map;
+        updateHeatmap();
     };
 
     const updateHeatmap = () => {
