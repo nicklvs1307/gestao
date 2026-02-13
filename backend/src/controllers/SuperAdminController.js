@@ -90,13 +90,19 @@ const getAllRestaurants = async (req, res) => {
     try {
         const restaurants = await prisma.restaurant.findMany({
             include: { 
-                franchise: true,
-                _count: { select: { orders: true, users: true } }
-            }
+                franchise: {
+                    select: { id: true, name: true, slug: true }
+                },
+                _count: { 
+                    select: { orders: true, users: true } 
+                }
+            },
+            orderBy: { createdAt: 'desc' }
         });
         res.json(restaurants);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao buscar restaurantes.' });
+        console.error("ERRO [getAllRestaurants]:", error);
+        res.status(500).json({ error: 'Erro ao buscar restaurantes.', details: error.message });
     }
 };
 

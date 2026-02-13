@@ -11,13 +11,18 @@ const getMyRestaurants = async (req, res) => {
             include: { 
                 _count: { select: { orders: true, users: true } },
                 users: {
-                    where: { roleRef: { name: 'admin' } },
+                    where: { 
+                        roleRef: { 
+                            name: { in: ['admin', 'Administrador'], mode: 'insensitive' } 
+                        } 
+                    },
                     select: { email: true, name: true }
                 }
             }
         });
         res.json(restaurants);
     } catch (error) {
+        console.error("ERRO [getMyRestaurants]:", error);
         res.status(500).json({ error: 'Erro ao buscar restaurantes da franquia.' });
     }
 };
