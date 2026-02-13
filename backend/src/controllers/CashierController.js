@@ -74,10 +74,28 @@ class CashierController {
       throw new Error("Nenhum caixa aberto para esta operação.");
     }
 
+    // Busca ou cria categoria para ajustes de caixa
+    const categoryName = validatedData.type === 'INCOME' ? 'Reforço de Caixa' : 'Sangria de Caixa';
+    let category = await prisma.transactionCategory.findFirst({
+        where: { restaurantId: req.restaurantId, name: categoryName }
+    });
+
+    if (!category) {
+        category = await prisma.transactionCategory.create({
+            data: {
+                name: categoryName,
+                type: validatedData.type,
+                isSystem: true,
+                restaurantId: req.restaurantId
+            }
+        });
+    }
+
     const transaction = await prisma.financialTransaction.create({
       data: {
         restaurantId: req.restaurantId,
         cashierId: session.id,
+        categoryId: category.id,
         description: validatedData.type === 'INCOME' ? `[REFORÇO] ${validatedData.description}` : `[SANGRIA] ${validatedData.description}`,
         amount: validatedData.amount,
         type: validatedData.type,

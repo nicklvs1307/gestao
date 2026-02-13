@@ -310,61 +310,60 @@ const ReportManagement: React.FC = () => {
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-700">
       {/* Header Central de Inteligência */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-slate-900 text-white rounded-3xl shadow-xl shadow-slate-200"><BarChart3 size={32} /></div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200"><BarChart3 size={24} /></div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Central de Inteligência</h2>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">Dados e performance do seu negócio em tempo real</p>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Central de Inteligência</h2>
+            <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-1">Dados e performance do seu negócio em tempo real</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <Calendar size={16} className="text-orange-500" />
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Últimos 30 Dias</span>
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                <Calendar size={14} className="text-orange-500" />
+                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Últimos 30 Dias</span>
             </div>
-            <Button variant="outline" size="icon" className="rounded-xl bg-white border-slate-200 text-slate-400"><Download size={18}/></Button>
+            <Button variant="outline" size="icon" className="w-10 h-10 rounded-xl bg-white border-slate-200 text-slate-400"><Download size={16}/></Button>
         </div>
       </div>
 
       {/* KPIs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-8 border-slate-100 bg-white group hover:border-orange-500/20 transition-all">
-          <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg"><ShoppingBag size={24} /></div>
-            <div className="text-emerald-500 flex items-center gap-1 text-xs font-black italic tracking-tighter uppercase"><ArrowUpRight size={14}/> +15%</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-6 border-slate-100 bg-white group hover:border-orange-500/20 transition-all">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg"><ShoppingBag size={20} /></div>
+            <div className="text-emerald-500 flex items-center gap-1 text-[10px] font-black italic tracking-tighter uppercase"><ArrowUpRight size={12}/> +15%</div>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Volume de Pedidos</p>
-          <h3 className="text-4xl font-black italic tracking-tighter text-slate-900">{summary?.totalOrders || 0}</h3>
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Volume de Pedidos</p>
+          <h3 className="text-3xl font-black italic tracking-tighter text-slate-900">{summary?.totalOrders || 0}</h3>
         </Card>
 
-        <Card className="p-8 border-slate-100 bg-white group hover:border-emerald-500/20 transition-all">
-          <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100"><DollarSign size={24} /></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 italic">Meta Diária: R$ 5k</span>
+        <Card className="p-6 border-slate-100 bg-white group hover:border-emerald-500/20 transition-all">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100"><DollarSign size={20} /></div>
+            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 italic">Meta Diária: R$ 5k</span>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Faturamento Bruto</p>
-          <h3 className="text-4xl font-black italic tracking-tighter text-slate-900">R$ {(summary?.totalRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Faturamento Bruto</p>
+          <h3 className="text-3xl font-black italic tracking-tighter text-slate-900">R$ {(summary?.totalRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
         </Card>
 
-        <Card className="p-8 border-orange-100 bg-orange-50/20 group hover:bg-white transition-all">
-          <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-100"><TrendingUp size={24} /></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">Ticket Médio</span>
+        <Card className="p-6 border-orange-100 bg-orange-50/20 group hover:bg-white transition-all">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-100"><TrendingUp size={20} /></div>
+            <span className="text-[9px] font-black uppercase tracking-widest text-orange-600">Ticket Médio</span>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">Média por Cliente</p>
-          <h3 className="text-4xl font-black italic tracking-tighter text-orange-900">R$ {(summary?.totalRevenue / (summary?.totalOrders || 1)).toFixed(2).replace('.', ',')}</h3>
+          <p className="text-[9px] font-black uppercase tracking-widest text-orange-400 mb-0.5">Média por Cliente</p>
+          <h3 className="text-3xl font-black italic tracking-tighter text-orange-900">R$ {(summary?.totalRevenue / (summary?.totalOrders || 1)).toFixed(2).replace('.', ',')}</h3>
         </Card>
       </div>
 
       {/* Gráficos em Cards Master */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <Card className="lg:col-span-8 p-10 bg-white border-slate-100 shadow-xl">
-          <div className="flex justify-between items-center mb-10">
-            <div className="flex items-center gap-3"><div className="w-1.5 h-5 bg-orange-500 rounded-full shadow-lg shadow-orange-500/30"/><h4 className="text-sm font-black uppercase italic tracking-tighter text-slate-900">Histórico de Performance</h4></div>
-            <div className="flex gap-2"><button onClick={() => navigate('/reports/billing')} className="text-[10px] font-black uppercase text-orange-600 hover:underline">Ver Tabela Detalhada</button></div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <Card className="lg:col-span-8 p-8 bg-white border-slate-100 shadow-lg">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2"><div className="w-1 h-4 bg-orange-500 rounded-full shadow-lg shadow-orange-500/30"/><h4 className="text-xs font-black uppercase italic tracking-tighter text-slate-900">Histórico de Performance</h4></div>
           </div>
-          <div className="h-[350px] w-full">
+          <div className="h-[300px] w-full">
             <Line 
                 data={{
                     labels: salesHistory.map(d => new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })),

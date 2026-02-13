@@ -40,95 +40,95 @@ const DreManagement: React.FC = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
             {/* Header Premium */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                <div className="flex items-center gap-5">
-                    <div className="p-4 bg-slate-900 text-white rounded-3xl shadow-xl shadow-slate-200"><PieChart size={32} /></div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200"><PieChart size={24} /></div>
                     <div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">DRE Gerencial</h2>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">Demonstrativo de Resultados do Exercício</p>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">DRE Gerencial</h2>
+                        <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-1">Demonstrativo de Resultados do Exercício</p>
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-                        <Calendar size={16} className="text-orange-500" />
-                        <input type="date" className="bg-transparent border-none font-black text-[10px] uppercase outline-none text-slate-600" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                        <ChevronRight size={14} className="text-slate-300" />
-                        <input type="date" className="bg-transparent border-none font-black text-[10px] uppercase outline-none text-slate-600" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                        <Calendar size={14} className="text-orange-500" />
+                        <input type="date" className="bg-transparent border-none font-black text-[9px] uppercase outline-none text-slate-600" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                        <ChevronRight size={12} className="text-slate-300" />
+                        <input type="date" className="bg-transparent border-none font-black text-[9px] uppercase outline-none text-slate-600" value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
-                    <Button onClick={fetchData} size="sm" className="rounded-xl h-11 px-6 italic">FILTRAR</Button>
-                    <Button variant="outline" size="icon" className="rounded-xl h-11 w-11 bg-white"><Download size={18} className="text-slate-400"/></Button>
+                    <Button onClick={fetchData} size="sm" className="rounded-xl h-10 px-5 italic text-[10px]">FILTRAR</Button>
+                    <Button variant="outline" size="icon" className="rounded-xl h-10 w-10 bg-white"><Download size={16} className="text-slate-400"/></Button>
                 </div>
             </div>
 
             {dreData && (
                 <>
                     {/* KPIs Mestres do DRE */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <Card className="p-8 border-slate-100 bg-white hover:border-orange-500/20 transition-all group">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ArrowUpCircle size={24} /></div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Venda Bruta</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="p-6 border-slate-100 bg-white hover:border-orange-500/20 transition-all group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ArrowUpCircle size={20} /></div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic">Venda Bruta</span>
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Recebido</p>
-                            <h4 className="text-3xl font-black text-slate-900 italic tracking-tighter">R$ {dreData.grossRevenue.toFixed(2).replace('.', ',')}</h4>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Total Recebido</p>
+                            <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">R$ {dreData.grossRevenue.toFixed(2).replace('.', ',')}</h4>
                         </Card>
 
-                        <Card className="p-8 border-slate-100 bg-white hover:border-orange-500/20 transition-all group">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-100 group-hover:scale-110 transition-transform"><ArrowDownCircle size={24} /></div>
+                        <Card className="p-6 border-slate-100 bg-white hover:border-orange-500/20 transition-all group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-100 group-hover:scale-110 transition-transform"><ArrowDownCircle size={20} /></div>
                                 <div className="text-orange-600 flex flex-col items-end">
-                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none italic">CMV Total</span>
-                                    <span className="text-[9px] font-bold">{dreData.cmvPercentage.toFixed(1)}% do FAT.</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest leading-none italic">CMV Total</span>
+                                    <span className="text-[8px] font-bold">{dreData.cmvPercentage.toFixed(1)}% do FAT.</span>
                                 </div>
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Custo Insumos</p>
-                            <h4 className="text-3xl font-black text-slate-900 italic tracking-tighter">R$ {dreData.totalCmv.toFixed(2).replace('.', ',')}</h4>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Custo Insumos</p>
+                            <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">R$ {dreData.totalCmv.toFixed(2).replace('.', ',')}</h4>
                         </Card>
 
-                        <Card className="p-8 border-slate-100 bg-white hover:border-emerald-500/20 transition-all group">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100 group-hover:scale-110 transition-transform"><DollarSign size={24} /></div>
+                        <Card className="p-6 border-slate-100 bg-white hover:border-emerald-500/20 transition-all group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 group-hover:scale-110 transition-transform"><DollarSign size={20} /></div>
                                 <div className="text-emerald-600 flex flex-col items-end">
-                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none italic">Margem Bruta</span>
-                                    <span className="text-[9px] font-bold">{(dreData.grossMargin * 100).toFixed(1)}% eficiência</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest leading-none italic">Margem Bruta</span>
+                                    <span className="text-[8px] font-bold">{(dreData.grossMargin * 100).toFixed(1)}% eficiência</span>
                                 </div>
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lucro Operacional</p>
-                            <h4 className="text-3xl font-black text-slate-900 italic tracking-tighter">R$ {dreData.grossProfit.toFixed(2).replace('.', ',')}</h4>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Lucro Operacional</p>
+                            <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">R$ {dreData.grossProfit.toFixed(2).replace('.', ',')}</h4>
                         </Card>
 
-                        <Card className={cn("p-8 border-2 transition-all relative overflow-hidden group shadow-2xl", dreData.netProfit >= 0 ? "bg-slate-900 border-emerald-500/30" : "bg-rose-600 border-rose-400")}>
-                            <div className="flex justify-between items-start mb-6 relative z-10">
-                                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg", dreData.netProfit >= 0 ? "bg-white text-slate-900" : "bg-white text-rose-600")}><TrendingUp size={24} /></div>
-                                <span className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border", dreData.netProfit >= 0 ? "text-emerald-400 border-emerald-500/20 bg-emerald-500/10" : "text-white border-white/20 bg-white/10")}>{(dreData.netMargin * 100).toFixed(1)}% Margem</span>
+                        <Card className={cn("p-6 border-2 transition-all relative overflow-hidden group shadow-xl", dreData.netProfit >= 0 ? "bg-slate-900 border-emerald-500/30" : "bg-rose-600 border-rose-400")}>
+                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-lg", dreData.netProfit >= 0 ? "bg-white text-slate-900" : "bg-white text-rose-600")}><TrendingUp size={20} /></div>
+                                <span className={cn("text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border", dreData.netProfit >= 0 ? "text-emerald-400 border-emerald-500/20 bg-emerald-500/10" : "text-white border-white/20 bg-white/10")}>{(dreData.netMargin * 100).toFixed(1)}% Margem</span>
                             </div>
-                            <p className={cn("text-[10px] font-black uppercase tracking-widest mb-1 relative z-10", dreData.netProfit >= 0 ? "text-slate-400" : "text-rose-100")}>Resultado Líquido</p>
-                            <h4 className={cn("text-4xl font-black italic tracking-tighter relative z-10", dreData.netProfit >= 0 ? "text-emerald-400" : "text-white")}>R$ {dreData.netProfit.toFixed(2).replace('.', ',')}</h4>
-                            <div className="absolute -right-4 -bottom-4 text-white opacity-[0.03] group-hover:scale-110 transition-transform"><DollarSign size={120} /></div>
+                            <p className={cn("text-[9px] font-black uppercase tracking-widest mb-0.5 relative z-10", dreData.netProfit >= 0 ? "text-slate-400" : "text-rose-100")}>Resultado Líquido</p>
+                            <h4 className="text-3xl font-black italic tracking-tighter relative z-10 text-white">R$ {dreData.netProfit.toFixed(2).replace('.', ',')}</h4>
+                            <div className="absolute -right-3 -bottom-3 text-white opacity-[0.03] group-hover:scale-110 transition-transform"><DollarSign size={100} /></div>
                         </Card>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         {/* Coluna de Custos e Despesas */}
-                        <Card className="lg:col-span-7 p-0 overflow-hidden border-slate-200 shadow-xl bg-white" noPadding>
-                            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                                <h3 className="font-black text-slate-900 uppercase italic text-sm tracking-widest flex items-center gap-3"><div className="p-2 bg-rose-100 text-rose-600 rounded-lg"><ArrowDownCircle size={18} /></div> Despesas Operacionais</h3>
-                                <span className="font-black text-rose-600 text-base italic tracking-tighter">- R$ {dreData.operatingExpenses.total.toFixed(2).replace('.', ',')}</span>
+                        <Card className="lg:col-span-7 p-0 overflow-hidden border-slate-200 shadow-lg bg-white" noPadding>
+                            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                <h3 className="font-black text-slate-900 uppercase italic text-xs tracking-widest flex items-center gap-2"><div className="p-1.5 bg-rose-100 text-rose-600 rounded-lg"><ArrowDownCircle size={16} /></div> Despesas Operacionais</h3>
+                                <span className="font-black text-rose-600 text-sm italic tracking-tighter">- R$ {dreData.operatingExpenses.total.toFixed(2).replace('.', ',')}</span>
                             </div>
-                            <div className="p-8 space-y-8">
+                            <div className="p-6 space-y-6">
                                 {Object.entries(dreData.operatingExpenses.breakdown).map(([category, amount]: any) => {
                                     const impact = (amount / dreData.grossRevenue) * 100;
                                     return (
                                         <div key={category} className="group cursor-default">
-                                            <div className="flex justify-between items-center mb-3">
+                                            <div className="flex justify-between items-center mb-2">
                                                 <div className="flex flex-col">
                                                     <span className="text-[10px] font-black text-slate-900 uppercase italic tracking-tighter group-hover:text-orange-600 transition-colors">{category}</span>
                                                     <span className="text-[8px] font-bold text-slate-400 uppercase">Impacto: {impact.toFixed(1)}% do total</span>
                                                 </div>
-                                                <span className="text-sm font-black text-slate-700 italic">R$ {amount.toFixed(2).replace('.', ',')}</span>
+                                                <span className="text-xs font-black text-slate-700 italic">R$ {amount.toFixed(2).replace('.', ',')}</span>
                                             </div>
-                                            <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner">
+                                            <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner">
                                                 <div className="h-full bg-rose-400 rounded-full transition-all duration-1000 group-hover:bg-rose-500" style={{ width: `${impact}%` }} />
                                             </div>
                                         </div>

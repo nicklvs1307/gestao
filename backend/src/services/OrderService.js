@@ -523,6 +523,22 @@ class OrderService {
   }
 
   async payDriverSettlement(restaurantId, driverName, amount, date, driverId = null) {
+      // Busca ou cria a categoria para pagamento de entregadores
+      let category = await prisma.transactionCategory.findFirst({
+          where: { restaurantId, name: 'Pagamento de Entregador' }
+      });
+
+      if (!category) {
+          category = await prisma.transactionCategory.create({
+              data: {
+                  name: 'Pagamento de Entregador',
+                  type: 'EXPENSE',
+                  isSystem: true,
+                  restaurantId
+              }
+          });
+      }
+
       return await prisma.financialTransaction.create({
           data: {
               restaurantId,
@@ -534,7 +550,7 @@ class OrderService {
               paymentDate: new Date(),
               paymentMethod: 'cash',
               recipientUserId: driverId,
-              categoryId: 'driver_pay' // Slug padrão
+              categoryId: category.id
           }
       });
   }
