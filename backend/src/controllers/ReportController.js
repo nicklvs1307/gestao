@@ -576,8 +576,13 @@ const ReportController = {
                 select: {
                     latitude: true,
                     longitude: true,
+                    address: true,
                     order: {
-                        select: { total: true }
+                        select: { 
+                            total: true,
+                            dailyOrderNumber: true,
+                            customerName: true
+                        }
                     }
                 }
             });
@@ -585,7 +590,10 @@ const ReportController = {
             const points = orders.map(o => ({
                 lat: o.latitude,
                 lng: o.longitude,
-                weight: o.order.total
+                weight: o.order.total,
+                address: o.address,
+                orderNumber: o.order.dailyOrderNumber,
+                customer: o.order.customerName
             }));
 
             res.json({

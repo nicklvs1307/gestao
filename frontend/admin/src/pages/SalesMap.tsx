@@ -101,11 +101,17 @@ const SalesMap: React.FC = () => {
         updateHeatmap();
     };
 
+    const markersRef = useRef<L.LayerGroup | null>(null);
+
     const updateHeatmap = () => {
         if (!mapRef.current) return;
 
         if (heatLayerRef.current) {
             mapRef.current.removeLayer(heatLayerRef.current);
+        }
+
+        if (markersRef.current) {
+            mapRef.current.removeLayer(markersRef.current);
         }
 
         if (heatmapData.length === 0) return;
@@ -123,6 +129,37 @@ const SalesMap: React.FC = () => {
             }).addTo(mapRef.current);
             heatLayerRef.current = heat;
         }
+
+        // Adiciona marcadores individuais para cada pedido
+        const markers = L.layerGroup();
+        heatmapData.forEach(p => {
+            if (p.lat && p.lng) {
+                const marker = L.circleMarker([p.lat, p.lng], {
+                    radius: 5,
+                    fillColor: "#0f172a",
+                    color: "#fff",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+
+                const popupContent = `
+                    <div class="p-2 min-w-[200px]">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black bg-slate-100 px-2 py-1 rounded">#${p.orderNumber || 'N/A'}</span>
+                            <span class="text-[10px] font-bold text-orange-600">R$ ${p.weight?.toFixed(2)}</span>
+                        </div>
+                        <p class="text-[11px] font-bold text-slate-900 mb-1">${p.customer || 'Cliente'}</p>
+                        <p class="text-[10px] text-slate-500 leading-tight">${p.address || 'Endereço não informado'}</p>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                markers.addLayer(marker);
+            }
+        });
+        markers.addTo(mapRef.current);
+        markersRef.current = markers;
 
         // Ajusta o zoom para caber todos os pontos
         const validPoints = points.filter(p => p[0] && p[1]);
