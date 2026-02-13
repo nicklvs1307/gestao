@@ -57,6 +57,8 @@ const SettingsManagement: React.FC = () => {
   const [restaurantName, setRestaurantName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [slug, setSlug] = useState('');
   const [originalSlug, setOriginalSlug] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
@@ -118,6 +120,8 @@ const SettingsManagement: React.FC = () => {
         setRestaurantName(settingsData.name || '');
         setAddress(settingsData.address || '');
         setPhone(settingsData.phone || '');
+        setLatitude(settingsData.latitude?.toString() || '');
+        setLongitude(settingsData.longitude?.toString() || '');
         setSlug(settingsData.slug || '');
         setOriginalSlug(settingsData.slug || '');
         setServiceTaxPercentage(settingsData.serviceTaxPercentage || 10);
@@ -196,7 +200,7 @@ const SettingsManagement: React.FC = () => {
     try {
       await updateSettings({
         name: restaurantName, slug, address, phone, serviceTaxPercentage,
-        openingHours, primaryColor, secondaryColor, backgroundColor,
+        openingHours, latitude, longitude, primaryColor, secondaryColor, backgroundColor,
         backgroundImageUrl, isOpen: isStoreOpen, deliveryFee, deliveryTime,
         autoAcceptOrders, loyaltyEnabled, pointsPerReal, cashbackPercentage
       });
@@ -258,6 +262,10 @@ const SettingsManagement: React.FC = () => {
                         <Input label="Nome Fantasia" value={restaurantName} onChange={e => setRestaurantName(e.target.value)} />
                         <Input label="Endereço Físico" value={address} onChange={e => setAddress(e.target.value)} />
                         <Input label="WhatsApp / Telefone" value={phone} onChange={e => setPhone(e.target.value)} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Latitude" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="-23.5505" />
+                            <Input label="Longitude" value={longitude} onChange={e => setLongitude(e.target.value)} placeholder="-46.6333" />
+                        </div>
                     </div>
                 </Card>
 

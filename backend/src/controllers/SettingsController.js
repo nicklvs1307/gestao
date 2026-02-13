@@ -41,6 +41,7 @@ const getSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
     const { 
         name, slug, address, phone, serviceTaxPercentage, openingHours,
+        latitude, longitude,
         primaryColor, secondaryColor, backgroundColor, backgroundType, 
         backgroundImageUrl, isOpen, deliveryFee, deliveryTime, autoAcceptOrders,
         welcomeMessage, menuUrl, allowTakeaway
@@ -79,6 +80,8 @@ const updateSettings = async (req, res) => {
                     phone, 
                     serviceTaxPercentage: serviceTaxPercentage !== undefined ? parseFloat(serviceTaxPercentage) : undefined,
                     openingHours,
+                    latitude: latitude !== undefined ? parseFloat(latitude) : undefined,
+                    longitude: longitude !== undefined ? parseFloat(longitude) : undefined,
                     slug: finalSlug 
                 } 
             }),

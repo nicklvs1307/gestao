@@ -103,6 +103,8 @@ model Restaurant {
   phone     String?  // Telefone
   serviceTaxPercentage Float? @default(0) // Taxa de serviço
   openingHours String? // Horário de funcionamento
+  latitude     Float?
+  longitude    Float?
   
   // === Gestão de Assinatura ===
   plan      String   @default("FREE") // FREE, SILVER, GOLD, DIAMOND
