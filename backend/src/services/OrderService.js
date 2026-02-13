@@ -169,9 +169,22 @@ class OrderService {
                      address: fullAddress, deliveryType: deliveryInfo.deliveryType, paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
                      changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
                      deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
+                     latitude: deliveryInfo.latitude ? parseFloat(deliveryInfo.latitude) : null,
+                     longitude: deliveryInfo.longitude ? parseFloat(deliveryInfo.longitude) : null,
                      status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
                  }
              });
+
+             // Opcional: Atualizar a localização padrão do cliente
+             if (deliveryInfo.latitude && deliveryInfo.longitude) {
+                 await tx.customer.update({
+                     where: { id: customer.id },
+                     data: { 
+                         latitude: parseFloat(deliveryInfo.latitude),
+                         longitude: parseFloat(deliveryInfo.longitude)
+                     }
+                 });
+             }
 
              // Atualiza o TOTAL do pedido incluindo a taxa de entrega
              if (isDelivery && deliveryInfo.deliveryFee > 0) {

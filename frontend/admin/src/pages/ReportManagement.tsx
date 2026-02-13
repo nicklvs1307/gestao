@@ -9,6 +9,7 @@ import {
 } from '../services/api';
 import StaffPerformance from '../components/StaffPerformance';
 import DreManagement from '../components/DreManagement';
+import SalesMap from './SalesMap';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -281,6 +282,7 @@ const ReportManagement: React.FC = () => {
   // --- Roteador Interno ---
   if (location.pathname.includes('/reports/staff')) return <StaffPerformance />;
   if (location.pathname.includes('/reports/dre')) return <DreManagement />;
+  if (location.pathname.includes('/reports/sales-map')) return <SalesMap />;
   if (location.pathname.includes('/reports/items')) return <AbcAnalysisView />;
   if (location.pathname.includes('/reports/delivery-areas')) return <DeliveryAreaReportView />;
   
@@ -412,6 +414,7 @@ const ReportManagement: React.FC = () => {
                     <div className="flex flex-wrap gap-3">
                         {[
                             { label: 'DRE Gerencial', path: '/reports/dre', icon: Calculator },
+                            { label: 'Mapa Geográfico', path: '/reports/sales-map', icon: MapPin },
                             { label: 'Mapa de Calor', path: '/reports/delivery-areas', icon: MapPin },
                             { label: 'Equipe & Comissão', path: '/reports/staff', icon: User },
                             { label: 'Consumo Detalhado', path: '/reports/consumed-items', icon: History }

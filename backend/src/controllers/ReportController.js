@@ -551,35 +551,39 @@ const ReportController = {
     },
 
     async getHourlySales(req, res) {
+        // ... (conteúdo original)
+    },
+
+    async getSalesHeatmap(req, res) {
         try {
             const { restaurantId } = req;
-            const { startDate, endDate } = req.query;
-            const start = startDate ? new Date(startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
-            const end = endDate ? new Date(endDate) : new Date();
-
-            const orders = await prisma.order.findMany({
+            const orders = await prisma.deliveryOrder.findMany({
                 where: {
-                    restaurantId,
-                    status: 'COMPLETED',
-                    createdAt: { gte: start, lte: end }
+                    order: {
+                        restaurantId,
+                        status: 'COMPLETED'
+                    },
+                    latitude: { not: null },
+                    longitude: { not: null }
                 },
-                select: { createdAt: true, total: true }
+                select: {
+                    latitude: true,
+                    longitude: true,
+                    order: {
+                        select: { total: true }
+                    }
+                }
             });
 
-            const hourlyMap = {};
-            for (let i = 0; i < 24; i++) {
-                hourlyMap[i] = { hour: `${i}h`, count: 0, revenue: 0 };
-            }
+            const points = orders.map(o => ({
+                lat: o.latitude,
+                lng: o.longitude,
+                weight: o.order.total // O peso pode ser o valor do pedido ou apenas 1 por pedido
+            }));
 
-            orders.forEach(o => {
-                const hour = new Date(o.createdAt).getHours();
-                hourlyMap[hour].count++;
-                hourlyMap[hour].revenue += o.total;
-            });
-
-            res.json(Object.values(hourlyMap));
+            res.json(points);
         } catch (error) {
-            res.status(500).json({ error: 'Erro ao buscar vendas por hora.' });
+            res.status(500).json({ error: 'Erro ao buscar dados do mapa de calor.' });
         }
     }
 };

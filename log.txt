@@ -1,0 +1,169 @@
+index-DpbikDFy.js:53  GET https://kicardapio.towersfy.com/api/financial/transactions 400 (Bad Request)
+(anônimo) @ index-DpbikDFy.js:53
+xhr @ index-DpbikDFy.js:53
+zH @ index-DpbikDFy.js:55
+Promise.then
+_request @ index-DpbikDFy.js:56
+request @ index-DpbikDFy.js:55
+j2.<computed> @ index-DpbikDFy.js:56
+(anônimo) @ index-DpbikDFy.js:51
+$ @ index-DpbikDFy.js:8642
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:8642 Erro ao carregar dados Error: Erro de banco de dados.
+    at index-DpbikDFy.js:56:6098
+    at async j2.request (index-DpbikDFy.js:55:2001)
+    at async $ (index-DpbikDFy.js:8642:347155)
+    at j2.request (index-DpbikDFy.js:55:2097)
+    at async $ (index-DpbikDFy.js:8642:347155)
+$ @ index-DpbikDFy.js:8642
+await in $
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-DpbikDFy.js:53  GET https://kicardapio.towersfy.com/api/financial/transactions 400 (Bad Request)
+(anônimo) @ index-DpbikDFy.js:53
+xhr @ index-DpbikDFy.js:53
+zH @ index-DpbikDFy.js:55
+Promise.then
+_request @ index-DpbikDFy.js:56
+request @ index-DpbikDFy.js:55
+j2.<computed> @ index-DpbikDFy.js:56
+(anônimo) @ index-DpbikDFy.js:51
+$ @ index-DpbikDFy.js:8642
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:8642 Erro ao carregar dados Error: Erro de banco de dados.
+    at index-DpbikDFy.js:56:6098
+    at async j2.request (index-DpbikDFy.js:55:2001)
+    at async $ (index-DpbikDFy.js:8642:347155)
+    at j2.request (index-DpbikDFy.js:55:2097)
+    at async $ (index-DpbikDFy.js:8642:347155)
+$ @ index-DpbikDFy.js:8642
+await in $
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:53  GET https://kicardapio.towersfy.com/api/admin/waiters/settlement?date=2026-02-12 500 (Internal Server Error)
+(anônimo) @ index-DpbikDFy.js:53
+xhr @ index-DpbikDFy.js:53
+zH @ index-DpbikDFy.js:55
+Promise.then
+_request @ index-DpbikDFy.js:56
+request @ index-DpbikDFy.js:55
+j2.<computed> @ index-DpbikDFy.js:56
+(anônimo) @ index-DpbikDFy.js:51
+o @ index-DpbikDFy.js:8642
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:8642 Error: Erro ao buscar acerto de garçons
+    at index-DpbikDFy.js:56:6098
+    at async j2.request (index-DpbikDFy.js:55:2001)
+    at async o (index-DpbikDFy.js:8642:459539)
+    at j2.request (index-DpbikDFy.js:55:2097)
+    at async o (index-DpbikDFy.js:8642:459539)
+o @ index-DpbikDFy.js:8642
+await in o
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:53  GET https://kicardapio.towersfy.com/api/financial/transactions 400 (Bad Request)
+(anônimo) @ index-DpbikDFy.js:53
+xhr @ index-DpbikDFy.js:53
+zH @ index-DpbikDFy.js:55
+Promise.then
+_request @ index-DpbikDFy.js:56
+request @ index-DpbikDFy.js:55
+j2.<computed> @ index-DpbikDFy.js:56
+(anônimo) @ index-DpbikDFy.js:51
+$ @ index-DpbikDFy.js:8642
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:8642 Erro ao carregar dados Error: Erro de banco de dados.
+    at index-DpbikDFy.js:56:6098
+    at async j2.request (index-DpbikDFy.js:55:2001)
+    at async $ (index-DpbikDFy.js:8642:347155)
+    at j2.request (index-DpbikDFy.js:55:2097)
+    at async $ (index-DpbikDFy.js:8642:347155)
+$ @ index-DpbikDFy.js:8642
+await in $
+(anônimo) @ index-DpbikDFy.js:8642
+Ky @ index-DpbikDFy.js:40
+bf @ index-DpbikDFy.js:40
+(anônimo) @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:25 [Violation] 'message' handler took 202ms
+index-DpbikDFy.js:25 [Violation] 'message' handler took 380ms
+index-DpbikDFy.js:8605 SSE Error: Event {isTrusted: true, type: 'error', target: EventSource, currentTarget: EventSource, eventPhase: 2, …}
+V.onerror @ index-DpbikDFy.js:8605
+/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic3RvY2s6bWFuYWdlIiwic3VwcGxpZXJzOm1hbmFnZSIsInJlcG9ydHM6dmlldyIsInJlcG9ydHM6ZmluYW5jaWFsIiwib3JkZXJzOnZpZXciLCJyZXBvcnRzOnBlcmZvcm1hbmNlIiwicmVwb3J0czphYmMiLCJzZXR0aW5nczp2aWV3Iiwib3JkZXJzOm1hbmFnZSIsIm9yZGVyczplZGl0X2l0ZW1zIiwib3JkZXJzOmNhbmNlbCIsInNldHRpbmdzOm1hbmFnZSIsIm9yZGVyczp0cmFuc2ZlciIsIm9yZGVyczpwYXltZW50X2NoYW5nZSIsInVzZXJzOm1hbmFnZSIsIm9yZGVyczpkaXNjb3VudCIsIndhaXRlcjpwb3MiLCJwb3M6YWNjZXNzIiwiaW50ZWdyYXRpb25zOm1hbmFnZSIsImtkczp2aWV3IiwidGFibGU6bWFuYWdlIiwiZGVsaXZlcnk6bWFuYWdlIiwiZmluYW5jaWFsOnZpZXciLCJmaW5hbmNpYWw6bWFuYWdlIiwiY2FzaGllcjptYW5hZ2UiLCJiYW5rX2FjY291bnRzOm1hbmFnZSIsImZpbmFuY2lhbF9jYXRlZ29yaWVzOm1hbmFnZSIsIndhaXRlcl9zZXR0bGVtZW50Om1hbmFnZSIsImRyaXZlcl9zZXR0bGVtZW50Om1hbmFnZSIsInByb2R1Y3RzOnZpZXciLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciXSwiaWF0IjoxNzcwOTI5MjYzLCJleHAiOjE3NzA5NTgwNjN9.bXr28Edok_YApwuJlFkP3f3xocSBNhZ0QSKFfLu99TA&restaurantId=cml8p6bpl0001my01h5rgpsgo:1  GET https://kicardapio.towersfy.com/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic3RvY2s6bWFuYWdlIiwic3VwcGxpZXJzOm1hbmFnZSIsInJlcG9ydHM6dmlldyIsInJlcG9ydHM6ZmluYW5jaWFsIiwib3JkZXJzOnZpZXciLCJyZXBvcnRzOnBlcmZvcm1hbmNlIiwicmVwb3J0czphYmMiLCJzZXR0aW5nczp2aWV3Iiwib3JkZXJzOm1hbmFnZSIsIm9yZGVyczplZGl0X2l0ZW1zIiwib3JkZXJzOmNhbmNlbCIsInNldHRpbmdzOm1hbmFnZSIsIm9yZGVyczp0cmFuc2ZlciIsIm9yZGVyczpwYXltZW50X2NoYW5nZSIsInVzZXJzOm1hbmFnZSIsIm9yZGVyczpkaXNjb3VudCIsIndhaXRlcjpwb3MiLCJwb3M6YWNjZXNzIiwiaW50ZWdyYXRpb25zOm1hbmFnZSIsImtkczp2aWV3IiwidGFibGU6bWFuYWdlIiwiZGVsaXZlcnk6bWFuYWdlIiwiZmluYW5jaWFsOnZpZXciLCJmaW5hbmNpYWw6bWFuYWdlIiwiY2FzaGllcjptYW5hZ2UiLCJiYW5rX2FjY291bnRzOm1hbmFnZSIsImZpbmFuY2lhbF9jYXRlZ29yaWVzOm1hbmFnZSIsIndhaXRlcl9zZXR0bGVtZW50Om1hbmFnZSIsImRyaXZlcl9zZXR0bGVtZW50Om1hbmFnZSIsInByb2R1Y3RzOnZpZXciLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciXSwiaWF0IjoxNzcwOTI5MjYzLCJleHAiOjE3NzA5NTgwNjN9.bXr28Edok_YApwuJlFkP3f3xocSBNhZ0QSKFfLu99TA&restaurantId=cml8p6bpl0001my01h5rgpsgo net::ERR_QUIC_PROTOCOL_ERROR 200 (OK)
+index-DpbikDFy.js:40 ReferenceError: Info is not defined
+    at lUe (index-DpbikDFy.js:8642:227196)
+    at fu (index-DpbikDFy.js:38:17898)
+    at KV (index-DpbikDFy.js:40:45208)
+    at GV (index-DpbikDFy.js:40:40756)
+    at Xte (index-DpbikDFy.js:40:40683)
+    at ix (index-DpbikDFy.js:40:40534)
+    at SO (index-DpbikDFy.js:40:36786)
+    at VV (index-DpbikDFy.js:40:35726)
+    at $ (index-DpbikDFy.js:25:1667)
+    at MessagePort.W (index-DpbikDFy.js:25:2039)
+hO @ index-DpbikDFy.js:40
+v.callback @ index-DpbikDFy.js:40
+ko @ index-DpbikDFy.js:38
+$V @ index-DpbikDFy.js:40
+FV @ index-DpbikDFy.js:40
+Gte @ index-DpbikDFy.js:40
+Jte @ index-DpbikDFy.js:40
+ku @ index-DpbikDFy.js:40
+VV @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25
+index-DpbikDFy.js:8642 Uncaught ReferenceError: Info is not defined
+    at lUe (index-DpbikDFy.js:8642:227196)
+    at fu (index-DpbikDFy.js:38:17898)
+    at KV (index-DpbikDFy.js:40:45208)
+    at GV (index-DpbikDFy.js:40:40756)
+    at Xte (index-DpbikDFy.js:40:40683)
+    at ix (index-DpbikDFy.js:40:40534)
+    at SO (index-DpbikDFy.js:40:36786)
+    at VV (index-DpbikDFy.js:40:35726)
+    at $ (index-DpbikDFy.js:25:1667)
+    at MessagePort.W (index-DpbikDFy.js:25:2039)
+lUe @ index-DpbikDFy.js:8642
+fu @ index-DpbikDFy.js:38
+KV @ index-DpbikDFy.js:40
+GV @ index-DpbikDFy.js:40
+Xte @ index-DpbikDFy.js:40
+ix @ index-DpbikDFy.js:40
+SO @ index-DpbikDFy.js:40
+VV @ index-DpbikDFy.js:40
+$ @ index-DpbikDFy.js:25
+W @ index-DpbikDFy.js:25

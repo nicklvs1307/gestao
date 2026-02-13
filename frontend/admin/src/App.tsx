@@ -188,6 +188,9 @@ function AdminRoutes() {
       case '/reports/dre':
         setPageTitle('DRE Gerencial');
         break;
+      case '/reports/sales-map':
+        setPageTitle('Mapa Geográfico de Vendas');
+        break;
       case '/reports/staff':
         setPageTitle('Desempenho da Equipe');
         break;

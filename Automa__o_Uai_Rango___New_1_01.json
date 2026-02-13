@@ -1,0 +1,3703 @@
+{
+  "name": "Automação Uai Rango - New 1.01",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "60efecce-7b9b-4e31-947b-3721d653bc28",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -2020,
+        3300
+      ],
+      "id": "7503b800-4114-457d-9c49-5f063afd97d7",
+      "name": "Webhook2",
+      "webhookId": "6ca405b2-1491-42f2-9e57-689bd9cc32b0"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.id_estabelecimento }}",
+                    "rightValue": 12895,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "076ce289-f575-4475-98a3-797c46a928e8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Don Fonseca"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "595a6713-b8b5-408b-a4cc-537fe8358207",
+                    "leftValue": "={{ $json.body.id_estabelecimento }}",
+                    "rightValue": 4659,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Roma"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a150bdd4-45b3-45d7-82fb-be4ed5a06264",
+                    "leftValue": "={{ $json.body.id_estabelecimento }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1800,
+        3300
+      ],
+      "id": "21f801c7-190c-49b6-9375-ab951db8e7f4",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id_uairango",
+              "keyValue": "={{ $json.body.id_estabelecimento }}"
+            }
+          ]
+        }
+      },
+      "id": "b457bce6-011c-4fdd-8ab1-abd1ae681d59",
+      "name": "CONSULTA TOKEN",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3640,
+        3200
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('CONSULTA TOKEN').item.json.TOKEN_AT_SAIPOS }}"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "07912cbd-d7b0-40fc-b758-20551ac1d32a",
+      "name": "CRIA PEDIDO NA SAIPOS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4720,
+        2860
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://uairango.com/api2/auth/pedido/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fc0c2688-ae28-4c80-b3fa-7ab98fca220d",
+      "name": "VERIFICA PEDIDO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3820,
+        3200
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.uairango.com/api2/login",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "a2c298b3b4fd70657b3e1b1bccc7c9db"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4280,
+        3500
+      ],
+      "id": "5b471b6e-3781-43c9-a985-53fbf70173e2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "token_uairango",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4500,
+        3500
+      ],
+      "id": "9e9546e9-a735-4fdf-a7bf-3a0a01acb310",
+      "name": "Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd05551c-a539-405d-8a5c-9dd20245a62d",
+              "name": "body",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3440,
+        3200
+      ],
+      "id": "d4e7b021-b75c-4faf-a57e-fb3221fef157",
+      "name": "Pega Dados"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento);\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// **FUNÇÕES AUXILIARES**  \n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Pagamentos Online (PARTNER_PAYMENT)\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      type: \"ONLINE\",\n      complement: formaPagamento.includes(\"pix\") ? \"pix\" : \"\",\n      change_for: 0\n    };\n  }\n\n  // Mapeamento para pagamentos offline\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      type: \"OFFLINE\",\n      complement: \"\",\n      change_for: troco || 0\n    },\n    \"cartão de crédito\": {\n      code: \"CRE\",\n      type: \"OFFLINE\",\n      complement: \"\",\n      change_for: 0\n    },\n    \"cartão de débito\": {\n      code: \"DEB\",\n      type: \"OFFLINE\",\n      complement: \"\",\n      change_for: 0\n    },\n    \"cartão\": {\n      code: \"CARD\",\n      type: \"OFFLINE\",\n      complement: \"\",\n      change_for: 0\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      type: \"OFFLINE\",\n      complement: \"\",\n      change_for: 0\n    },\n    \"pix\": {\n      code: \"PARTNER_PAYMENT\",\n      type: \"ONLINE\",\n      complement: \"pix\",\n      change_for: 0\n    }\n  };\n\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      type: \"OFFLINE\",\n      complement: \"\",\n      change_for: 0\n    };\n};\n\nconst calculateDiscount = (cupom) => {\n  if (!cupom) return 0;\n  return Math.abs(parseFloat(cupom.desconto_valor)) || 0;\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs)\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(Boolean)\n    .join(' | ');\n};\n\n// ==============================================\n// **PROCESSAMENTO PRINCIPAL**  \n// ==============================================\n\n// 1. Calcula desconto\nconst totalDiscount = calculateDiscount(inputUaiRango.cupom);\n\n// 2. Cálculo do valor total COM desconto aplicado\nconst deliveryFee = isDelivery ? (inputUaiRango.taxa_entrega || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = (subtotal - totalDiscount) + deliveryFee;\n\n// 3. Formatação dos itens (igual ao exemplo Saipos)\nconst items = inputUaiRango.produtos.map(item => ({\n  integration_code: item.codigo || String(item.id_produto),\n  desc_item: item.produto.trim(),\n  quantity: item.quantidade,\n  unit_price: item.valor || 0,\n  notes: item.obs || \"\",\n  choice_items: [\n    ...(item.opcao && item.opcao !== \"Único\" ? [{\n      integration_code: `opt_${item.opcao.toLowerCase().replace(/\\s+/g, '_')}`,\n      desc_item_choice: item.opcao,\n      aditional_price: 0,\n      quantity: 1,\n      notes: \"\"\n    }] : []),\n    ...(item.adicionais || []).map(adicional => ({\n      integration_code: adicional.codigo || String(adicional.id_adicional),\n      desc_item_choice: adicional.nome,\n      aditional_price: adicional.valor || 0,\n      quantity: adicional.quantidade || 1,\n      notes: \"\"\n    }))\n  ]\n}));\n\n// 4. Formatação do pagamento (com tratamento específico para cada tipo)\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco\n);\npaymentInfo.amount = totalAmount;\n\n// Remove campos não obrigatórios para a Saipos\nconst simplifiedPaymentInfo = {\n  code: paymentInfo.code,\n  amount: paymentInfo.amount,\n  change_for: paymentInfo.change_for,\n  ...(paymentInfo.complement && { complement: paymentInfo.complement })\n};\n\nconst payment_types = [simplifiedPaymentInfo];\n\n// 5. Estrutura final\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao, inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome,\n    phone: inputUaiRango.usuario.tel1\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee\n    }),\n    scheduled: false,\n    delivery_date_time: new Date(inputUaiRango.data).toISOString()\n  },\n  ...(isDelivery && inputUaiRango.endereco && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: inputUaiRango.endereco.bairro || \"\",\n      street_name: inputUaiRango.endereco.rua || \"\",\n      street_number: inputUaiRango.endereco.num || \"\",\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4560,
+        2860
+      ],
+      "id": "4097669a-82cb-464d-b33c-8e46a92b58d9",
+      "name": "Trata Resposta "
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('CONSULTA TOKEN').item.json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d65775b6-7592-4050-8854-235147aebb1e",
+      "name": "CONFIRMA ORDEM ( PEDIDO )",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5180,
+        2700
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7b9e9c1c-688a-4fe2-9e96-317e76d4aae7",
+              "leftValue": "={{ $json.sale_number }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4880,
+        2860
+      ],
+      "id": "566616ce-ab84-448a-b405-f0a87ca9f6ae",
+      "name": "If",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/auth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "idPartner",
+              "value": "={{ $('CONSULTA TOKEN').item.json.ID_PARTNER_SAIPOS }}"
+            },
+            {
+              "name": "secret",
+              "value": "={{ $('CONSULTA TOKEN').item.json.ID_SECRET_SAIPOS }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5160,
+        3000
+      ],
+      "id": "96a2ed84-50d4-4c2b-b1ea-9d81f0de4cb6",
+      "name": "Atualiza Token"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "TOKEN_AT_SAIPOS",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5360,
+        3000
+      ],
+      "id": "9e94fc60-d5ff-4881-9361-96abcfa0a17d",
+      "name": "salva Token",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Atualiza Token').item.json.token }}"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "8d81dc7e-97be-4bc0-9649-4d1d14a98edb",
+      "name": "CRIA PEDIDO NA SAIPOS8",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5940,
+        3000
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "={{ $('CONSULTA TOKEN').item.json.cod_store }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5560,
+        3000
+      ],
+      "id": "cea87e9f-25e1-452f-a0d8-779c8e55fa8a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento);\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// FUNÇÕES AUXILIARES\n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  // Suporte para objeto status ou string direta\n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Tratamento especial para pagamentos online\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      type: \"ONLINE\",\n      complement: \"Pagamento Online\",\n      change_for: 0\n    };\n  }\n\n  // Mapeamento detalhado\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      type: \"OFFLINE\",\n      complement: \"Dinheiro\",\n      change_for: troco || 0\n    },\n    \"visa crédito\": {\n      code: \"CRE\",\n      type: \"OFFLINE\",\n      complement: \"Visa Crédito\",\n      change_for: 0\n    },\n    \"mastercard crédito\": {\n      code: \"CRE\",\n      type: \"OFFLINE\",\n      complement: \"Mastercard Crédito\",\n      change_for: 0\n    },\n    \"visa débito\": {\n      code: \"DEB\",\n      type: \"OFFLINE\",\n      complement: \"Visa Débito\",\n      change_for: 0\n    },\n    \"mastercard débito\": {\n      code: \"DEB\",\n      type: \"OFFLINE\",\n      complement: \"Mastercard Débito\",\n      change_for: 0\n    },\n    \"elo débito\": {\n      code: \"DEB\",\n      type: \"OFFLINE\",\n      complement: \"Elo Débito\",\n      change_for: 0\n    },\n    \"pix\": {\n      code: \"PIX\",\n      type: \"ONLINE\",\n      complement: \"PIX\",\n      change_for: 0\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      type: \"OFFLINE\",\n      complement: \"Vale Refeição\",\n      change_for: 0\n    }\n  };\n\n  // Encontra o método de pagamento mais adequado\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      type: \"OFFLINE\",\n      complement: formaPagamento,\n      change_for: 0\n    };\n};\n\nconst formatCouponData = (cupom) => {\n  if (!cupom) return null;\n  \n  return {\n    code: cupom.codigo || \"\",\n    type: cupom.tipo === \"Porcentagem\" ? \"PERCENTAGE\" : \"FIXED\",\n    value: parseFloat(cupom.valor) || 0,\n    discount_value: Math.abs(parseFloat(cupom.desconto_valor)) || 0,\n    max_discount: parseFloat(cupom.desconto_maximo) || 0\n  };\n};\n\nconst formatProductOption = (opcao) => {\n  if (!opcao || opcao === \"Único\") return null;\n  \n  // Defina valores adicionais para opções específicas se necessário\n  const optionPrices = {\n    \"Contra Filé\": 0,      // Exemplo: pode adicionar valor se quiser cobrar mais\n    \"Sobrecoxa\": 0,        // por determinadas opções\n    \"Bem passado\": 0\n  };\n  \n  return {\n    integration_code: `opt_${opcao.toLowerCase().replace(/\\s+/g, '_')}`,\n    desc_item_choice: opcao,\n    aditional_price: optionPrices[opcao] || 0,\n    quantity: 1,\n    notes: \"\"\n  };\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs)\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(Boolean)\n    .join(' | ');\n};\n\n// ==============================================\n// PROCESSAMENTO PRINCIPAL\n// ==============================================\n\n// 1. Tratamento de cupom e descontos\nconst couponData = formatCouponData(inputUaiRango.cupom);\nconst totalDiscount = couponData ? couponData.discount_value : 0;\n\n// 2. Cálculo do valor total com tratamento correto da taxa de entrega\nconst deliveryFee = isDelivery ? (inputUaiRango.taxa_entrega || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = subtotal + deliveryFee;\n\n// 3. Formatação dos itens com tratamento de opções como adicionais\nconst items = inputUaiRango.produtos.map(item => {\n  // Trata a opção do produto (quando não for \"Único\")\n  const productOption = formatProductOption(item.opcao);\n  \n  // Adicionais normais do produto\n  const additionalItems = (item.adicionais || []).map(adicional => ({\n    integration_code: adicional.codigo || String(adicional.id_adicional),\n    desc_item_choice: adicional.nome,\n    aditional_price: adicional.valor,\n    quantity: adicional.quantidade || 1,\n    notes: \"\"\n  }));\n\n  // Combina os adicionais normais com a opção do produto (se existir)\n  const allChoiceItems = [\n    ...(productOption ? [productOption] : []),\n    ...additionalItems\n  ];\n\n  return {\n    integration_code: item.codigo || String(item.id_produto),\n    desc_item: item.produto.trim(), // Nome do produto sem a opção\n    quantity: item.quantidade,\n    unit_price: item.valor,\n    notes: item.obs || \"\",\n    category: item.categoria || \"\",\n    metadata: {\n      product_id: item.id_produto,\n      product_category: item.categoria,\n      original_option: item.opcao || \"\" // Mantemos a opção original nos metadados\n    },\n    choice_items: allChoiceItems\n  };\n});\n\n// 4. Formatação do pagamento\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco\n);\npaymentInfo.amount = totalAmount;\npaymentInfo.category = inputUaiRango.categoria_pagamento || \"\";\n\nconst payment_types = [paymentInfo];\n\n// 5. Estrutura principal completa\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao, inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  ...(couponData && { coupon: couponData }),\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome,\n    phone: inputUaiRango.usuario.tel1,\n    ...(inputUaiRango.usuario.tel2 && { phone2: inputUaiRango.usuario.tel2 })\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee,\n      delivery_fee_name: inputUaiRango.nome_taxa_entrega || \"Entrega\"\n    }),\n    scheduled: false,\n    estimated_min_time: inputUaiRango.prazo_min || (isDelivery ? 30 : 20),\n    estimated_max_time: inputUaiRango.prazo_max || (isDelivery ? 50 : 40),\n    delivery_date_time: new Date(inputUaiRango.data).toISOString()\n  },\n  ...(isDelivery && inputUaiRango.endereco && Object.keys(inputUaiRango.endereco).length > 0 && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: inputUaiRango.endereco.bairro || \"\",\n      street_name: inputUaiRango.endereco.rua || \"\",\n      street_number: inputUaiRango.endereco.num || \"\",\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5760,
+        3000
+      ],
+      "id": "e7e48a6c-f50b-4e6d-9ed7-e4f2d03a2023",
+      "name": "Trata Resposta 9"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('CONSULTA TOKEN').item.json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c6fe5b90-6f19-4598-b19a-f2e6cfb7225b",
+      "name": "CONFIRMA ORDEM ( PEDIDO )6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6140,
+        3000
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "Confirmado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c3d31515-c18e-4ebc-8705-1b320d3b9e68"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CONFIRMADO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6faa4ff0-0568-4324-af0e-053214640b64",
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PENDENTE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "55936be7-926b-4ea0-ac89-7951b8ed46df",
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "=",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ERRO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        4000,
+        3200
+      ],
+      "id": "55a11f55-f81e-4ee8-a86a-60eb1b9b8eab",
+      "name": "Switch2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "={{ $('CONSULTA TOKEN').item.json.cod_store }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4380,
+        2860
+      ],
+      "id": "9ab2c111-a7e6-4a78-86f1-44cb64c4a9c5",
+      "name": "tratamento dos dados "
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        6140,
+        3200
+      ],
+      "id": "a37817dc-9ab7-4c7a-8684-d4ad1fa197e3",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "empresa",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id_uairango",
+              "keyValue": "={{ $json.body.id_estabelecimento }}"
+            }
+          ]
+        }
+      },
+      "id": "f719a4e9-4c10-4b3a-b460-968ce1ad29aa",
+      "name": "CONSULTA TOKEN4",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        2140
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('CONSULTA TOKEN4').item.json.TOKEN_AT_SAIPOS }}"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "1164e1e3-ede6-427b-b8e8-388fb0be6a24",
+      "name": "CRIA PEDIDO NA SAIPOS3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        340,
+        2140
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://uairango.com/api2/auth/pedido/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8db77f86-7e27-4b78-bad7-a3dc3f21d2df",
+      "name": "VERIFICA PEDIDO4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -880,
+        2140
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.uairango.com/api2/login",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "a2c298b3b4fd70657b3e1b1bccc7c9db"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        20,
+        2440
+      ],
+      "id": "dbd6c079-35ca-4461-8aa3-1d544595aca1",
+      "name": "HTTP Request4"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN4').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "token_uairango",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        240,
+        2440
+      ],
+      "id": "191ec971-dc87-487b-9d3c-586d26ceefdb",
+      "name": "Supabase4",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd05551c-a539-405d-8a5c-9dd20245a62d",
+              "name": "body",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1260,
+        2140
+      ],
+      "id": "5f4241e2-79c9-46b2-b9b7-698075e79075",
+      "name": "Pega Dados4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento).padStart(4, '0');\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// **FUNÇÕES AUXILIARES**  \n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Pagamentos Online (PARTNER_PAYMENT)\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"ONLINE\"\n    };\n  }\n\n  // Mapeamento para pagamentos offline\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      amount: 0,\n      change_for: troco || 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão\": {\n      code: \"CARD\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"pix\": {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"pix\",\n      type: \"ONLINE\"\n    },\n    \"visa crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    },\n    \"visa débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    }\n  };\n\n  // Busca pelo método de pagamento mais específico primeiro\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.toLowerCase().includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    };\n};\n\nconst calculateDiscount = (cupom) => {\n  if (!cupom) return 0;\n  return Math.abs(parseFloat(cupom.desconto_valor)) || 0;\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs)\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(Boolean)\n    .join(' | ');\n};\n\n// ==============================================\n// **PROCESSAMENTO PRINCIPAL**  \n// ==============================================\n\n// 1. Calcula desconto\nconst totalDiscount = calculateDiscount(inputUaiRango.cupom);\n\n// 2. Cálculo do valor total COM desconto aplicado\nconst deliveryFee = isDelivery ? (parseFloat(inputUaiRango.taxa_entrega) || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = (subtotal - totalDiscount) + deliveryFee;\n\n// 3. Formatação dos itens (com tratamento de opções e adicionais)\nconst items = inputUaiRango.produtos.map(item => {\n  const itemObj = {\n    integration_code: item.codigo || String(item.id_produto),\n    desc_item: item.produto.trim(),\n    quantity: item.quantidade,\n    unit_price: parseFloat(item.valor) || 0,\n    notes: item.obs || \"\",\n    choice_items: []\n  };\n\n  // Adiciona opção se não for \"Único\"\n  if (item.opcao && item.opcao !== \"Único\") {\n    itemObj.choice_items.push({\n      integration_code: `opt_${item.id_opcao || '0'}`,\n      desc_item_choice: item.opcao,\n      aditional_price: 0,\n      quantity: 1,\n      notes: \"\"\n    });\n  }\n\n  // Adiciona adicionais\n  if (item.adicionais && item.adicionais.length > 0) {\n    itemObj.choice_items.push(...item.adicionais.map(adicional => ({\n      integration_code: adicional.codigo || String(adicional.id_adicional),\n      desc_item_choice: adicional.nome,\n      aditional_price: parseFloat(adicional.valor) || 0,\n      quantity: adicional.quantidade || 1,\n      notes: \"\"\n    })));\n  }\n\n  return itemObj;\n});\n\n// 4. Formatação do pagamento\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco\n);\n\n// Atualiza o valor do pagamento com o totalAmount (já com desconto aplicado)\npaymentInfo.amount = totalAmount;\n\nconst payment_types = [paymentInfo];\n\n// 5. Estrutura final\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao, inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome.trim(),\n    phone: inputUaiRango.usuario.tel1\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee\n    }),\n    scheduled: false,\n    delivery_date_time: new Date(inputUaiRango.data).toISOString()\n  },\n  ...(isDelivery && inputUaiRango.endereco && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: inputUaiRango.endereco.bairro || \"\",\n      street_name: inputUaiRango.endereco.rua || \"\",\n      street_number: inputUaiRango.endereco.num || \"\",\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        2140
+      ],
+      "id": "c96ca7d4-2f6d-4b69-9076-b976c0e10f7b",
+      "name": "Trata Resposta 3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('CONSULTA TOKEN4').item.json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e1170c2e-5b92-41bd-9c4d-4650f65c85d7",
+      "name": "CONFIRMA ORDEM ( PEDIDO )3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        1980
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7b9e9c1c-688a-4fe2-9e96-317e76d4aae7",
+              "leftValue": "={{ $json.sale_number }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        600,
+        2140
+      ],
+      "id": "9ee647d7-d7a2-412b-a577-be65e7d42c15",
+      "name": "If3",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/auth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "idPartner",
+              "value": "={{ $('CONSULTA TOKEN4').item.json.ID_PARTNER_SAIPOS }}"
+            },
+            {
+              "name": "secret",
+              "value": "={{ $('CONSULTA TOKEN4').item.json.ID_SECRET_SAIPOS }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1020,
+        2280
+      ],
+      "id": "10e316da-b087-4ddd-b85c-08a1a7709024",
+      "name": "Atualiza Token4"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "empresa",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN4').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "TOKEN_AT_SAIPOS",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        2280
+      ],
+      "id": "f88349d4-3220-4077-beed-8844ce5fffa1",
+      "name": "salva Token4",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Atualiza Token4').item.json.token }}"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "bdd2e5fb-25ac-4ac9-9a25-1acb365b8c7c",
+      "name": "CRIA PEDIDO NA SAIPOS11",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        2280
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados4').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "={{ $('CONSULTA TOKEN4').item.json.cod_store }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1420,
+        2280
+      ],
+      "id": "dba511b5-ba43-4dc8-bda1-05c1dcca0cff",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento).padStart(4, '0');\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// **FUNÇÕES AUXILIARES**  \n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Pagamentos Online (PARTNER_PAYMENT)\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"ONLINE\"\n    };\n  }\n\n  // Mapeamento para pagamentos offline\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      amount: 0,\n      change_for: troco || 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão\": {\n      code: \"CARD\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"pix\": {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"pix\",\n      type: \"ONLINE\"\n    },\n    \"visa crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    },\n    \"visa débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    }\n  };\n\n  // Busca pelo método de pagamento mais específico primeiro\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.toLowerCase().includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    };\n};\n\nconst calculateDiscount = (cupom) => {\n  if (!cupom) return 0;\n  return Math.abs(parseFloat(cupom.desconto_valor)) || 0;\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs)\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(Boolean)\n    .join(' | ');\n};\n\n// ==============================================\n// **PROCESSAMENTO PRINCIPAL**  \n// ==============================================\n\n// 1. Calcula desconto\nconst totalDiscount = calculateDiscount(inputUaiRango.cupom);\n\n// 2. Cálculo do valor total COM desconto aplicado\nconst deliveryFee = isDelivery ? (parseFloat(inputUaiRango.taxa_entrega) || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = (subtotal - totalDiscount) + deliveryFee;\n\n// 3. Formatação dos itens (com tratamento de opções e adicionais)\nconst items = inputUaiRango.produtos.map(item => {\n  const itemObj = {\n    integration_code: item.codigo || String(item.id_produto),\n    desc_item: item.produto.trim(),\n    quantity: item.quantidade,\n    unit_price: parseFloat(item.valor) || 0,\n    notes: item.obs || \"\",\n    choice_items: []\n  };\n\n  // Adiciona opção se não for \"Único\"\n  if (item.opcao && item.opcao !== \"Único\") {\n    itemObj.choice_items.push({\n      integration_code: `opt_${item.id_opcao || '0'}`,\n      desc_item_choice: item.opcao,\n      aditional_price: 0,\n      quantity: 1,\n      notes: \"\"\n    });\n  }\n\n  // Adiciona adicionais\n  if (item.adicionais && item.adicionais.length > 0) {\n    itemObj.choice_items.push(...item.adicionais.map(adicional => ({\n      integration_code: adicional.codigo || String(adicional.id_adicional),\n      desc_item_choice: adicional.nome,\n      aditional_price: parseFloat(adicional.valor) || 0,\n      quantity: adicional.quantidade || 1,\n      notes: \"\"\n    })));\n  }\n\n  return itemObj;\n});\n\n// 4. Formatação do pagamento\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco\n);\n\n// Atualiza o valor do pagamento com o totalAmount (já com desconto aplicado)\npaymentInfo.amount = totalAmount;\n\nconst payment_types = [paymentInfo];\n\n// 5. Estrutura final\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao, inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome.trim(),\n    phone: inputUaiRango.usuario.tel1\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee\n    }),\n    scheduled: false,\n    delivery_date_time: new Date(inputUaiRango.data).toISOString()\n  },\n  ...(isDelivery && inputUaiRango.endereco && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: inputUaiRango.endereco.bairro || \"\",\n      street_name: inputUaiRango.endereco.rua || \"\",\n      street_number: inputUaiRango.endereco.num || \"\",\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        2280
+      ],
+      "id": "e3d02e18-f462-42e4-ae1e-1fb7ae4b361d",
+      "name": "Trata Resposta 12"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('CONSULTA TOKEN4').item.json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d3c32d52-68f5-4406-8863-15be3c14fb4e",
+      "name": "CONFIRMA ORDEM ( PEDIDO )9",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        2280
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "Confirmado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c3d31515-c18e-4ebc-8705-1b320d3b9e68"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CONFIRMADO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6faa4ff0-0568-4324-af0e-053214640b64",
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "Pendente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PENDENTE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "55936be7-926b-4ea0-ac89-7951b8ed46df",
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "=",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ERRO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -700,
+        2140
+      ],
+      "id": "1a5941da-2f44-4571-8bba-7d519c1ff7a4",
+      "name": "Switch5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados4').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "={{ $('CONSULTA TOKEN4').item.json.cod_store }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -200,
+        2140
+      ],
+      "id": "1ece8d3c-f0bd-4c19-ad83-854b7fbc96b9",
+      "name": "tratamento dos dados 4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        1820
+      ],
+      "id": "5fc5e3e9-7055-42a6-be7d-4aac0d08490c",
+      "name": "No Operation, do nothing4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00d937bc-1461-4e8b-8a93-0aeb28612fbf",
+              "name": "Erro",
+              "value": "Deu erro, tente novamente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -180,
+        2440
+      ],
+      "id": "cb5f4e3a-5ab0-4d94-a7a9-95bc08568ba3",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://homolog-order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZFBhcnRuZXIiOiI4NWNkZmU2MmQxZWUwMGUyZWE4ZDc2ZDJkMGZjOTdlZiIsImNyZWF0ZWQiOjE3NDUzMzUwMjk2OTIsImlhdCI6MTc0NTMzNTAyOSwiZXhwIjoxNzQ1NTA3ODI5fQ.e-MMo02euJPC3NCPsFg2VA1elyVNB38UNqdUZm_pSmI"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n    \"order_id\": \"1745346607445\",\n    \"display_id\": \"761A01CF9\",\n    \"cod_store\": \"123\",\n    \"created_at\": \"2025-04-18T20:07:59.000Z\",\n    \"notes\": \"\",\n    \"status\": \"PENDING\",\n    \"total_discount\": 0,\n    \"total_amount\": 77.8,\n    \"customer\": {\n      \"id\": \"281840\",\n      \"name\": \"Crislaine Vicente\",\n      \"phone\": \"35991675042\"\n    },\n    \"order_method\": {\n      \"mode\": \"DELIVERY\",\n      \"delivery_by\": \"RESTAURANT\",\n      \"delivery_fee\": 3,\n      \"scheduled\": false,\n      \"delivery_date_time\": \"2025-04-18T20:07:59.000Z\"\n    },\n    \"delivery_address\": {\n      \"country\": \"BR\",\n      \"state\": \"MG\",\n      \"city\": \"Andradas\",\n      \"district\": \"Jardim Itália \",\n      \"street_name\": \"Rua Rondonia \",\n      \"street_number\": \"320\",\n      \"postal_code\": \"00000000\",\n      \"reference\": \"Condomínio. Interfone 10 na portaria.\",\n      \"complement\": \"Interfone 10 \",\n      \"coordinates\": {\n        \"latitude\": 0,\n        \"longitude\": 0\n      }\n    },\n    \"items\": [\n      {\n        \"integration_code\": \"1668849\",\n        \"desc_item\": \"Don Salad Turbo\",\n        \"quantity\": 1,\n        \"unit_price\": 41.9,\n        \"notes\": \"\",\n        \"choice_items\": [\n          {\n            \"integration_code\": \"1217029\",\n            \"desc_item_choice\": \"Bem passado\",\n            \"aditional_price\": 0,\n            \"quantity\": 1,\n            \"notes\": \"\"\n          }\n        ]\n      },\n      {\n        \"integration_code\": \"1971345\",\n        \"desc_item\": \"Smash Cheese Bacon\",\n        \"quantity\": 1,\n        \"unit_price\": 28.9,\n        \"notes\": \"\",\n        \"choice_items\": [\n          {\n            \"integration_code\": \"2226943\",\n            \"desc_item_choice\": \"+ Ovo\",\n            \"aditional_price\": 4,\n            \"quantity\": 1,\n            \"notes\": \"\"\n          }\n        ]\n      }\n    ],\n    \"payment_types\": [\n      {\n        \"code\": \"CRE\",\n        \"amount\": 77.8,\n        \"change_for\": 0,\n        \"complement\": \"visa\",\n        \"type\": \"OFFLINE\"\n      }\n    ]\n  }\n",
+        "options": {}
+      },
+      "id": "15e20026-8180-4332-a973-a1bccb038f37",
+      "name": "CRIA PEDIDO NA SAIPOS4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2620,
+        3380
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://homolog-order-api.saipos.com/auth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "idPartner",
+              "value": "=85cdfe62d1ee00e2ea8d76d2d0fc97ef"
+            },
+            {
+              "name": "secret",
+              "value": "=eaa818f55f7cea9eb43c9aa356e7e486"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4200,
+        3780
+      ],
+      "id": "09b70ef1-99bc-4c34-8ae6-2158bb5572bc",
+      "name": "Atualiza Token5"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "empresa",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id_uairango",
+              "keyValue": "={{ $json.body.id_estabelecimento }}"
+            }
+          ]
+        }
+      },
+      "id": "3fe42c3c-a5f9-4bb0-9184-a236949606d7",
+      "name": "CONSULTA TOKEN5",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        3040
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Redis2').item.json.TokenSaipos }}"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "31f1817e-64cc-47bc-a6a6-c65b9cb963c6",
+      "name": "CRIA PEDIDO NA SAIPOS5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        3300
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://uairango.com/api2/auth/pedido/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.TokenUaiRango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dfa990e9-c8d4-43d2-9f00-a179d5f5dd89",
+      "name": "VERIFICA PEDIDO5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1080,
+        3300
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.uairango.com/api2/login",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "a2c298b3b4fd70657b3e1b1bccc7c9db"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        3640
+      ],
+      "id": "9c969b9c-cbe6-483a-b938-52c1e5d111ac",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN5').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "token_uairango",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        300,
+        3640
+      ],
+      "id": "2869ae57-7fe4-46ea-969a-3d2049481a30",
+      "name": "Supabase5",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd05551c-a539-405d-8a5c-9dd20245a62d",
+              "name": "body",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1540,
+        3300
+      ],
+      "id": "289f12c4-4eb7-4668-a20b-098c6475b9bc",
+      "name": "Pega Dados5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento).padStart(4, '0');\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// **FUNÇÕES AUXILIARES**  \n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Pagamentos Online (PARTNER_PAYMENT)\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"ONLINE\"\n    };\n  }\n\n  // Mapeamento para pagamentos offline\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      amount: 0,\n      change_for: troco || 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão\": {\n      code: \"CARD\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"pix\": {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"pix\",\n      type: \"ONLINE\"\n    },\n    \"visa crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    },\n    \"visa débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    }\n  };\n\n  // Busca pelo método de pagamento mais específico primeiro\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.toLowerCase().includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    };\n};\n\nconst calculateDiscount = (cupom) => {\n  if (!cupom) return 0;\n  return Math.abs(parseFloat(cupom.desconto_valor)) || 0;\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs && p.obs.trim() !== \"\")\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(note => note && note.trim() !== \"\")\n    .join(' | ');\n};\n\n// Função para formatar sabores de pizza com numeração (1/2, 1/3, etc.)\nconst formatPizzaFlavors = (item) => {\n  const flavors = [];\n  if (item.produto && item.produto.trim() !== \"\") {\n    flavors.push(item.produto.trim());\n  }\n  if (item.produto_2 && item.produto_2.trim() !== \"\") {\n    flavors.push(item.produto_2.trim());\n  }\n  \n  // Verifica se é uma pizza (pela categoria)\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  \n  if (isPizza && flavors.length > 1) {\n    return flavors.map((flavor, index) => \n      `${index + 1}/${flavors.length} ${flavor}`\n    );\n  }\n  \n  return flavors;\n};\n\n// ==============================================\n// **PROCESSAMENTO PRINCIPAL**  \n// ==============================================\n\n// 1. Calcula desconto\nconst totalDiscount = calculateDiscount(inputUaiRango.cupom);\n\n// 2. Cálculo do valor total COM desconto aplicado\nconst deliveryFee = isDelivery ? (parseFloat(inputUaiRango.taxa_entrega) || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = (subtotal - totalDiscount) + deliveryFee;\n\n// 3. Formatação dos itens (com categoria como item principal e sabores como adicionais)\nconst items = inputUaiRango.produtos.map(item => {\n  // Cria o item principal baseado na categoria\n  const itemPrincipal = {\n    integration_code: item.codigo_categoria || String(item.id_categoria),\n    desc_item: `${item.categoria}${item.opcao && item.opcao !== \"Único\" ? ` - ${item.opcao}` : ''}`,\n    quantity: item.quantidade,\n    unit_price: parseFloat(item.valor) || 0,\n    notes: item.obs || \"\",\n    choice_items: []\n  };\n\n  // Verifica se é pizza e formata os sabores\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  const flavors = isPizza ? formatPizzaFlavors(item) : [];\n  \n  if (flavors.length > 0) {\n    // Para pizzas com múltiplos sabores\n    itemPrincipal.choice_items.push(...flavors.map((flavor, index) => ({\n      integration_code: index === 0 ? \n        (item.codigo || String(item.id_produto)) : \n        (item.codigo_2 || String(item.id_produto_2 || '0')),\n      desc_item_choice: flavor,\n      aditional_price: 0,\n      quantity: 1,\n      notes: \"\"\n    })));\n  } else {\n    // Para itens que não são pizza ou pizzas de um sabor\n    if (item.produto && item.produto.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo || String(item.id_produto),\n        desc_item_choice: item.produto.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n\n    if (item.produto_2 && item.produto_2.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo_2 || String(item.id_produto_2 || '0'),\n        desc_item_choice: item.produto_2.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n  }\n\n  // Adiciona adicionais tradicionais (extras)\n  if (item.adicionais && item.adicionais.length > 0) {\n    itemPrincipal.choice_items.push(...item.adicionais.map(adicional => ({\n      integration_code: adicional.codigo || String(adicional.id_adicional),\n      desc_item_choice: adicional.nome,\n      aditional_price: parseFloat(adicional.valor) || 0,\n      quantity: adicional.quantidade || 1,\n      notes: \"\"\n    })));\n  }\n\n  return itemPrincipal;\n});\n\n// 4. Formatação do pagamento\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco || 0\n);\n\n// Atualiza o valor do pagamento com o totalAmount (já com desconto aplicado)\npaymentInfo.amount = totalAmount;\n\nconst payment_types = [paymentInfo];\n\n// 5. Estrutura final\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao || \"\", inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome.trim(),\n    phone: inputUaiRango.usuario.tel1\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee,\n      delivery_zone: inputUaiRango.nome_taxa_entrega || \"\"\n    }),\n    scheduled: false,\n    delivery_date_time: \"\"\n  },\n  ...(isDelivery && inputUaiRango.endereco && Object.keys(inputUaiRango.endereco).length > 0 && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: (inputUaiRango.endereco.bairro || \"\").trim(),\n      street_name: (inputUaiRango.endereco.rua || \"\").trim(),\n      street_number: (inputUaiRango.endereco.num || \"\").trim(),\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        3300
+      ],
+      "id": "69497b11-935d-4d8d-9242-c4e132f64761",
+      "name": "Trata Resposta 4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Redis').item.json.TokenUaiRango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aad4a749-1b28-47e0-812f-8c93ad3ea769",
+      "name": "CONFIRMA ORDEM ( PEDIDO )4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        3140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7b9e9c1c-688a-4fe2-9e96-317e76d4aae7",
+              "leftValue": "={{ $json.sale_number }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1500,
+        3300
+      ],
+      "id": "a3c0b56b-ae42-404c-b399-e2e4d43d906f",
+      "name": "If4",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/auth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "idPartner",
+              "value": "=43b2334bcba7beec30757cc20c729d0b"
+            },
+            {
+              "name": "secret",
+              "value": "=112f6eae338ca981f5727470ec5aa675"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        3440
+      ],
+      "id": "0cd69aec-436d-4af4-8522-af8a9550990c",
+      "name": "Atualiza Token6"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "empresa",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN5').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "TOKEN_AT_SAIPOS",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        3640
+      ],
+      "id": "c5a6cc93-edca-4f8c-b53f-7920465874e2",
+      "name": "salva Token5",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Atualiza Token6').item.json.token }}"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "c6c7e23a-5485-4a8d-99bd-4baf3b098e6a",
+      "name": "CRIA PEDIDO NA SAIPOS12",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2700,
+        3440
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados5').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "=0002",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2320,
+        3440
+      ],
+      "id": "6481961a-5886-4bd8-9ba4-27133c2d77f2",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento).padStart(4, '0');\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// **FUNÇÕES AUXILIARES**  \n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Pagamentos Online (PARTNER_PAYMENT)\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"ONLINE\"\n    };\n  }\n\n  // Mapeamento para pagamentos offline\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      amount: 0,\n      change_for: troco || 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão\": {\n      code: \"CARD\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"pix\": {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"pix\",\n      type: \"ONLINE\"\n    },\n    \"visa crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    },\n    \"visa débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    }\n  };\n\n  // Busca pelo método de pagamento mais específico primeiro\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.toLowerCase().includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    };\n};\n\nconst calculateDiscount = (cupom) => {\n  if (!cupom) return 0;\n  return Math.abs(parseFloat(cupom.desconto_valor)) || 0;\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs && p.obs.trim() !== \"\")\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(note => note && note.trim() !== \"\")\n    .join(' | ');\n};\n\n// Função para formatar sabores de pizza com numeração (1/2, 1/3, etc.)\nconst formatPizzaFlavors = (item) => {\n  const flavors = [];\n  if (item.produto && item.produto.trim() !== \"\") {\n    flavors.push(item.produto.trim());\n  }\n  if (item.produto_2 && item.produto_2.trim() !== \"\") {\n    flavors.push(item.produto_2.trim());\n  }\n  \n  // Verifica se é uma pizza (pela categoria)\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  \n  if (isPizza && flavors.length > 1) {\n    return flavors.map((flavor, index) => \n      `${index + 1}/${flavors.length} ${flavor}`\n    );\n  }\n  \n  return flavors;\n};\n\n// ==============================================\n// **PROCESSAMENTO PRINCIPAL**  \n// ==============================================\n\n// 1. Calcula desconto\nconst totalDiscount = calculateDiscount(inputUaiRango.cupom);\n\n// 2. Cálculo do valor total COM desconto aplicado\nconst deliveryFee = isDelivery ? (parseFloat(inputUaiRango.taxa_entrega) || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = (subtotal - totalDiscount) + deliveryFee;\n\n// 3. Formatação dos itens (com categoria como item principal e sabores como adicionais)\nconst items = inputUaiRango.produtos.map(item => {\n  // Cria o item principal baseado na categoria\n  const itemPrincipal = {\n    integration_code: item.codigo_categoria || String(item.id_categoria),\n    desc_item: `${item.categoria}${item.opcao && item.opcao !== \"Único\" ? ` - ${item.opcao}` : ''}`,\n    quantity: item.quantidade,\n    unit_price: parseFloat(item.valor) || 0,\n    notes: item.obs || \"\",\n    choice_items: []\n  };\n\n  // Verifica se é pizza e formata os sabores\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  const flavors = isPizza ? formatPizzaFlavors(item) : [];\n  \n  if (flavors.length > 0) {\n    // Para pizzas com múltiplos sabores\n    itemPrincipal.choice_items.push(...flavors.map((flavor, index) => ({\n      integration_code: index === 0 ? \n        (item.codigo || String(item.id_produto)) : \n        (item.codigo_2 || String(item.id_produto_2 || '0')),\n      desc_item_choice: flavor,\n      aditional_price: 0,\n      quantity: 1,\n      notes: \"\"\n    })));\n  } else {\n    // Para itens que não são pizza ou pizzas de um sabor\n    if (item.produto && item.produto.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo || String(item.id_produto),\n        desc_item_choice: item.produto.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n\n    if (item.produto_2 && item.produto_2.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo_2 || String(item.id_produto_2 || '0'),\n        desc_item_choice: item.produto_2.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n  }\n\n  // Adiciona adicionais tradicionais (extras)\n  if (item.adicionais && item.adicionais.length > 0) {\n    itemPrincipal.choice_items.push(...item.adicionais.map(adicional => ({\n      integration_code: adicional.codigo || String(adicional.id_adicional),\n      desc_item_choice: adicional.nome,\n      aditional_price: parseFloat(adicional.valor) || 0,\n      quantity: adicional.quantidade || 1,\n      notes: \"\"\n    })));\n  }\n\n  return itemPrincipal;\n});\n\n// 4. Formatação do pagamento\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco || 0\n);\n\n// Atualiza o valor do pagamento com o totalAmount (já com desconto aplicado)\npaymentInfo.amount = totalAmount;\n\nconst payment_types = [paymentInfo];\n\n// 5. Estrutura final\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao || \"\", inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome.trim(),\n    phone: inputUaiRango.usuario.tel1\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee,\n      delivery_zone: inputUaiRango.nome_taxa_entrega || \"\"\n    }),\n    scheduled: false,\n    delivery_date_time: \"\"\n  },\n  ...(isDelivery && inputUaiRango.endereco && Object.keys(inputUaiRango.endereco).length > 0 && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: (inputUaiRango.endereco.bairro || \"\").trim(),\n      street_name: (inputUaiRango.endereco.rua || \"\").trim(),\n      street_number: (inputUaiRango.endereco.num || \"\").trim(),\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2520,
+        3440
+      ],
+      "id": "cafb8418-91f9-4f74-9dbb-d476238394fa",
+      "name": "Trata Resposta 13"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Redis').item.json.TokenUaiRango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c307fb31-bfa4-4881-b60a-25f9bf0eca56",
+      "name": "CONFIRMA ORDEM ( PEDIDO )10",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2900,
+        3440
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "Confirmado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c3d31515-c18e-4ebc-8705-1b320d3b9e68"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CONFIRMADO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6faa4ff0-0568-4324-af0e-053214640b64",
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "Pendente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PENDENTE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "55936be7-926b-4ea0-ac89-7951b8ed46df",
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "=",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ERRO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -20,
+        3300
+      ],
+      "id": "3997cec6-34a5-413a-9e09-ea740ba8d6ef",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados5').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "=0002",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        700,
+        3300
+      ],
+      "id": "77fbb160-65a6-41f5-b04e-567b6e3e88f7",
+      "name": "tratamento dos dados 5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        700,
+        2980
+      ],
+      "id": "bfdf5ec6-22de-4d75-931a-733b7d64d2d1",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00d937bc-1461-4e8b-8a93-0aeb28612fbf",
+              "name": "Erro",
+              "value": "Deu erro, tente novamente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        3600
+      ],
+      "id": "e8f8cacc-62b2-47bf-a3bf-e1ecbe4e4ab1",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "content": "## Don Fonseca",
+        "height": 820,
+        "width": 3620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1360,
+        1800
+      ],
+      "typeVersion": 1,
+      "id": "c8178919-fb69-43be-a568-80512597724e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Roma Pizzaria",
+        "height": 860,
+        "width": 3620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1600,
+        2980
+      ],
+      "typeVersion": 1,
+      "id": "45b962a4-7a54-434e-a02d-18586ce11b5f",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "cod_store",
+              "keyValue": "=123"
+            }
+          ]
+        }
+      },
+      "id": "0bc692db-a9d0-455d-9ae1-1e8384aff600",
+      "name": "CONSULTA TOKEN6",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        4420
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://homolog-order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZFBhcnRuZXIiOiI4NWNkZmU2MmQxZWUwMGUyZWE4ZDc2ZDJkMGZjOTdlZiIsImNyZWF0ZWQiOjE3NDU3NjczNDQxMTYsImlhdCI6MTc0NTc2NzM0NCwiZXhwIjoxNzQ1OTQwMTQ0fQ.iErzsrbQ2ABXdirIyCrALWg-yYlwKe7ly1gEGUpS6Hs"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "dced6ced-189e-4284-b3f4-1b7f16329559",
+      "name": "CRIA PEDIDO NA SAIPOS6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        4420
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://uairango.com/api2/auth/pedido/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "69b9f957-0ac8-4db5-a43e-e5bb9abd6c7e",
+      "name": "VERIFICA PEDIDO6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -860,
+        4420
+      ],
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.uairango.com/api2/login",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "a2c298b3b4fd70657b3e1b1bccc7c9db"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        4760
+      ],
+      "id": "84e106e0-94cf-4d23-af10-16d3553a2acd",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN6').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "token_uairango",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        300,
+        4760
+      ],
+      "id": "2d2f0f7f-b743-40e7-8363-531edc31f9b0",
+      "name": "Supabase6",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd05551c-a539-405d-8a5c-9dd20245a62d",
+              "name": "body",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1240,
+        4420
+      ],
+      "id": "8fedcf92-cc05-4505-bbb7-e5b87a1b1b4c",
+      "name": "Pega Dados6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento).padStart(4, '0');\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// **FUNÇÕES AUXILIARES**  \n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Pagamentos Online (PARTNER_PAYMENT)\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"ONLINE\"\n    };\n  }\n\n  // Mapeamento para pagamentos offline\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      amount: 0,\n      change_for: troco || 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão\": {\n      code: \"CARD\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"pix\": {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"pix\",\n      type: \"ONLINE\"\n    },\n    \"visa crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    },\n    \"visa débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    }\n  };\n\n  // Busca pelo método de pagamento mais específico primeiro\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.toLowerCase().includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    };\n};\n\nconst calculateDiscount = (cupom) => {\n  if (!cupom) return 0;\n  return Math.abs(parseFloat(cupom.desconto_valor)) || 0;\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs && p.obs.trim() !== \"\")\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(note => note && note.trim() !== \"\")\n    .join(' | ');\n};\n\n// Função para formatar sabores de pizza com numeração (1/2, 1/3, etc.)\nconst formatPizzaFlavors = (item) => {\n  const flavors = [];\n  if (item.produto && item.produto.trim() !== \"\") {\n    flavors.push(item.produto.trim());\n  }\n  if (item.produto_2 && item.produto_2.trim() !== \"\") {\n    flavors.push(item.produto_2.trim());\n  }\n  \n  // Verifica se é uma pizza (pela categoria)\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  \n  if (isPizza && flavors.length > 1) {\n    return flavors.map((flavor, index) => \n      `${index + 1}/${flavors.length} ${flavor}`\n    );\n  }\n  \n  return flavors;\n};\n\n// ==============================================\n// **PROCESSAMENTO PRINCIPAL**  \n// ==============================================\n\n// 1. Calcula desconto\nconst totalDiscount = calculateDiscount(inputUaiRango.cupom);\n\n// 2. Cálculo do valor total COM desconto aplicado\nconst deliveryFee = isDelivery ? (parseFloat(inputUaiRango.taxa_entrega) || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = (subtotal - totalDiscount) + deliveryFee;\n\n// 3. Formatação dos itens (com categoria como item principal e sabores como adicionais)\nconst items = inputUaiRango.produtos.map(item => {\n  // Cria o item principal baseado na categoria\n  const itemPrincipal = {\n    integration_code: item.codigo_categoria || String(item.id_categoria),\n    desc_item: `${item.categoria}${item.opcao && item.opcao !== \"Único\" ? ` - ${item.opcao}` : ''}`,\n    quantity: item.quantidade,\n    unit_price: parseFloat(item.valor) || 0,\n    notes: item.obs || \"\",\n    choice_items: []\n  };\n\n  // Verifica se é pizza e formata os sabores\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  const flavors = isPizza ? formatPizzaFlavors(item) : [];\n  \n  if (flavors.length > 0) {\n    // Para pizzas com múltiplos sabores\n    itemPrincipal.choice_items.push(...flavors.map((flavor, index) => ({\n      integration_code: index === 0 ? \n        (item.codigo || String(item.id_produto)) : \n        (item.codigo_2 || String(item.id_produto_2 || '0')),\n      desc_item_choice: flavor,\n      aditional_price: 0,\n      quantity: 1,\n      notes: \"\"\n    })));\n  } else {\n    // Para itens que não são pizza ou pizzas de um sabor\n    if (item.produto && item.produto.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo || String(item.id_produto),\n        desc_item_choice: item.produto.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n\n    if (item.produto_2 && item.produto_2.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo_2 || String(item.id_produto_2 || '0'),\n        desc_item_choice: item.produto_2.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n  }\n\n  // Adiciona adicionais tradicionais (extras)\n  if (item.adicionais && item.adicionais.length > 0) {\n    itemPrincipal.choice_items.push(...item.adicionais.map(adicional => ({\n      integration_code: adicional.codigo || String(adicional.id_adicional),\n      desc_item_choice: adicional.nome,\n      aditional_price: parseFloat(adicional.valor) || 0,\n      quantity: adicional.quantidade || 1,\n      notes: \"\"\n    })));\n  }\n\n  return itemPrincipal;\n});\n\n// 4. Formatação do pagamento\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco || 0\n);\n\n// Atualiza o valor do pagamento com o totalAmount (já com desconto aplicado)\npaymentInfo.amount = totalAmount;\n\nconst payment_types = [paymentInfo];\n\n// 5. Estrutura final\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao || \"\", inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome.trim(),\n    phone: inputUaiRango.usuario.tel1\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee,\n      delivery_zone: inputUaiRango.nome_taxa_entrega || \"\"\n    }),\n    scheduled: false,\n    delivery_date_time: \"\"\n  },\n  ...(isDelivery && inputUaiRango.endereco && Object.keys(inputUaiRango.endereco).length > 0 && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: (inputUaiRango.endereco.bairro || \"\").trim(),\n      street_name: (inputUaiRango.endereco.rua || \"\").trim(),\n      street_number: (inputUaiRango.endereco.num || \"\").trim(),\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        4420
+      ],
+      "id": "a297b480-c8b7-4c36-9f08-b8512b426c4f",
+      "name": "Trata Resposta 5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('CONSULTA TOKEN6').item.json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f564b2b2-4d8f-43b1-8c6d-31ee9cc1afb4",
+      "name": "CONFIRMA ORDEM ( PEDIDO )5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1020,
+        4260
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7b9e9c1c-688a-4fe2-9e96-317e76d4aae7",
+              "leftValue": "={{ $json.sale_number }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        620,
+        4420
+      ],
+      "id": "3a2c990f-508e-43f3-8daf-1996c801c55c",
+      "name": "If5",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://homolog-order-api.saipos.com/auth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "idPartner",
+              "value": "=85cdfe62d1ee00e2ea8d76d2d0fc97ef"
+            },
+            {
+              "name": "secret",
+              "value": "=eaa818f55f7cea9eb43c9aa356e7e486"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        4560
+      ],
+      "id": "bcee3bbd-9706-4ea4-a54c-362143995742",
+      "name": "Atualiza Token7"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Empresas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('CONSULTA TOKEN6').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "TOKEN_AT_SAIPOS",
+              "fieldValue": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        4560
+      ],
+      "id": "4c4c44cc-3860-4997-b029-a3a355b82bc2",
+      "name": "salva Token6",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SL6krvWuRhVj0d0c",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://homolog-order-api.saipos.com/order",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Atualiza Token7').item.json.token }}"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "4c1b1016-cceb-4cc1-acc7-399e2c0c25f5",
+      "name": "CRIA PEDIDO NA SAIPOS13",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        4560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados6').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "=123",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        4560
+      ],
+      "id": "81c3f7f6-ee36-4e18-b1f6-1c996b966bb4",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputUaiRango = $input.all()[0].json.body;\nconst codStore = $input.all()[0].json.cod_store || String(inputUaiRango.id_estabelecimento).padStart(4, '0');\nconst isDelivery = inputUaiRango.tipo_entrega === \"Delivery\";\n\n// ==============================================\n// **FUNÇÕES AUXILIARES**  \n// ==============================================\n\nconst generateOrderId = () => {\n  return Date.now().toString();\n};\n\nconst mapStatus = (statusUaiRango) => {\n  const statusMap = {\n    0: \"PENDING\",       // Pendente\n    1: \"CONFIRMED\",     // Confirmado\n    2: \"PREPARING\",     // Em preparação\n    3: \"READY\",         // Pronto\n    4: \"DELIVERED\",     // Entregue\n    5: \"CANCELED\"       // Cancelado\n  };\n  \n  const statusId = typeof statusUaiRango === 'object' ? \n                  statusUaiRango.id : \n                  (typeof statusUaiRango === 'number' ? statusUaiRango : 0);\n  \n  return statusMap[statusId] || \"PENDING\";\n};\n\nconst mapPaymentMethod = (formaPagamento, categoriaPagamento, troco = 0) => {\n  formaPagamento = (formaPagamento || '').toLowerCase().trim();\n  categoriaPagamento = (categoriaPagamento || '').toLowerCase().trim();\n\n  // Pagamentos Online (PARTNER_PAYMENT)\n  if (categoriaPagamento.includes(\"online\")) {\n    return {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"ONLINE\"\n    };\n  }\n\n  // Mapeamento para pagamentos offline\n  const paymentMap = {\n    \"dinheiro\": {\n      code: \"DIN\",\n      amount: 0,\n      change_for: troco || 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão de débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"cartão\": {\n      code: \"CARD\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"vale refeição\": {\n      code: \"VALE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    },\n    \"pix\": {\n      code: \"PARTNER_PAYMENT\",\n      amount: 0,\n      change_for: 0,\n      complement: \"pix\",\n      type: \"ONLINE\"\n    },\n    \"visa crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo crédito\": {\n      code: \"CRE\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    },\n    \"visa débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"visa\",\n      type: \"OFFLINE\"\n    },\n    \"mastercard débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"mastercard\",\n      type: \"OFFLINE\"\n    },\n    \"elo débito\": {\n      code: \"DEB\",\n      amount: 0,\n      change_for: 0,\n      complement: \"elo\",\n      type: \"OFFLINE\"\n    }\n  };\n\n  // Busca pelo método de pagamento mais específico primeiro\n  const matchedPayment = Object.entries(paymentMap).find(([key]) => \n    formaPagamento.toLowerCase().includes(key)\n  );\n\n  return matchedPayment ? \n    matchedPayment[1] : \n    {\n      code: \"OTHER\",\n      amount: 0,\n      change_for: 0,\n      complement: \"\",\n      type: \"OFFLINE\"\n    };\n};\n\nconst calculateDiscount = (cupom) => {\n  if (!cupom) return 0;\n  return Math.abs(parseFloat(cupom.desconto_valor)) || 0;\n};\n\nconst combineOrderNotes = (observacao, produtos) => {\n  const productNotes = produtos\n    .filter(p => p.obs && p.obs.trim() !== \"\")\n    .map(p => `${p.produto}: ${p.obs}`)\n    .join(' | ');\n  \n  return [observacao, productNotes]\n    .filter(note => note && note.trim() !== \"\")\n    .join(' | ');\n};\n\n// Função para formatar sabores de pizza com numeração (1/2, 1/3, etc.)\nconst formatPizzaFlavors = (item) => {\n  const flavors = [];\n  if (item.produto && item.produto.trim() !== \"\") {\n    flavors.push(item.produto.trim());\n  }\n  if (item.produto_2 && item.produto_2.trim() !== \"\") {\n    flavors.push(item.produto_2.trim());\n  }\n  \n  // Verifica se é uma pizza (pela categoria)\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  \n  if (isPizza && flavors.length > 1) {\n    return flavors.map((flavor, index) => \n      `${index + 1}/${flavors.length} ${flavor}`\n    );\n  }\n  \n  return flavors;\n};\n\n// ==============================================\n// **PROCESSAMENTO PRINCIPAL**  \n// ==============================================\n\n// 1. Calcula desconto\nconst totalDiscount = calculateDiscount(inputUaiRango.cupom);\n\n// 2. Cálculo do valor total COM desconto aplicado\nconst deliveryFee = isDelivery ? (parseFloat(inputUaiRango.taxa_entrega) || 0) : 0;\nconst subtotal = parseFloat(inputUaiRango.valor_total) || 0;\nconst totalAmount = (subtotal - totalDiscount) + deliveryFee;\n\n// 3. Formatação dos itens (com categoria como item principal e sabores como adicionais)\nconst items = inputUaiRango.produtos.map(item => {\n  // Cria o item principal baseado na categoria\n  const itemPrincipal = {\n    integration_code: item.codigo_categoria || String(item.id_categoria),\n    desc_item: `${item.categoria}${item.opcao && item.opcao !== \"Único\" ? ` - ${item.opcao}` : ''}`,\n    quantity: item.quantidade,\n    unit_price: parseFloat(item.valor) || 0,\n    notes: item.obs || \"\",\n    choice_items: []\n  };\n\n  // Verifica se é pizza e formata os sabores\n  const isPizza = item.categoria && item.categoria.toLowerCase().includes(\"pizza\");\n  const flavors = isPizza ? formatPizzaFlavors(item) : [];\n  \n  if (flavors.length > 0) {\n    // Para pizzas com múltiplos sabores\n    itemPrincipal.choice_items.push(...flavors.map((flavor, index) => ({\n      integration_code: index === 0 ? \n        (item.codigo || String(item.id_produto)) : \n        (item.codigo_2 || String(item.id_produto_2 || '0')),\n      desc_item_choice: flavor,\n      aditional_price: 0,\n      quantity: 1,\n      notes: \"\"\n    })));\n  } else {\n    // Para itens que não são pizza ou pizzas de um sabor\n    if (item.produto && item.produto.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo || String(item.id_produto),\n        desc_item_choice: item.produto.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n\n    if (item.produto_2 && item.produto_2.trim() !== \"\") {\n      itemPrincipal.choice_items.push({\n        integration_code: item.codigo_2 || String(item.id_produto_2 || '0'),\n        desc_item_choice: item.produto_2.trim(),\n        aditional_price: 0,\n        quantity: 1,\n        notes: \"\"\n      });\n    }\n  }\n\n  // Adiciona adicionais tradicionais (extras)\n  if (item.adicionais && item.adicionais.length > 0) {\n    itemPrincipal.choice_items.push(...item.adicionais.map(adicional => ({\n      integration_code: adicional.codigo || String(adicional.id_adicional),\n      desc_item_choice: adicional.nome,\n      aditional_price: parseFloat(adicional.valor) || 0,\n      quantity: adicional.quantidade || 1,\n      notes: \"\"\n    })));\n  }\n\n  return itemPrincipal;\n});\n\n// 4. Formatação do pagamento\nconst paymentInfo = mapPaymentMethod(\n  inputUaiRango.forma_pagamento, \n  inputUaiRango.categoria_pagamento,\n  inputUaiRango.troco || 0\n);\n\n// Atualiza o valor do pagamento com o totalAmount (já com desconto aplicado)\npaymentInfo.amount = totalAmount;\n\nconst payment_types = [paymentInfo];\n\n// 5. Estrutura final\nconst outputSaipos = {\n  order_id: generateOrderId(),\n  display_id: inputUaiRango.cod_pedido,\n  cod_store: codStore,\n  created_at: new Date(inputUaiRango.data).toISOString(),\n  notes: combineOrderNotes(inputUaiRango.observacao || \"\", inputUaiRango.produtos),\n  status: mapStatus(inputUaiRango.status),\n  total_discount: totalDiscount,\n  total_amount: totalAmount,\n  customer: {\n    id: String(inputUaiRango.usuario.id),\n    name: inputUaiRango.usuario.nome.trim(),\n    phone: inputUaiRango.usuario.tel1\n  },\n  order_method: {\n    mode: isDelivery ? \"DELIVERY\" : \"TAKEOUT\",\n    ...(isDelivery && { \n      delivery_by: \"RESTAURANT\",\n      delivery_fee: deliveryFee,\n      delivery_zone: inputUaiRango.nome_taxa_entrega || \"\"\n    }),\n    scheduled: false,\n    delivery_date_time: \"\"\n  },\n  ...(isDelivery && inputUaiRango.endereco && Object.keys(inputUaiRango.endereco).length > 0 && {\n    delivery_address: {\n      country: \"BR\",\n      state: inputUaiRango.endereco.uf || \"\",\n      city: inputUaiRango.endereco.cidade || \"\",\n      district: (inputUaiRango.endereco.bairro || \"\").trim(),\n      street_name: (inputUaiRango.endereco.rua || \"\").trim(),\n      street_number: (inputUaiRango.endereco.num || \"\").trim(),\n      postal_code: inputUaiRango.endereco.cep || \"00000000\",\n      reference: inputUaiRango.endereco.ponto_referencia || \"\",\n      complement: inputUaiRango.endereco.complemento || \"\",\n      coordinates: {\n        latitude: 0,\n        longitude: 0\n      }\n    }\n  }),\n  items,\n  payment_types\n};\n\n// Remove campos undefined/null e retorna o resultado\nreturn JSON.parse(JSON.stringify(outputSaipos, (key, value) => {\n  return value === null || value === undefined ? '' : value;\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        4560
+      ],
+      "id": "7d5e9854-5ceb-4227-9157-0c7c66f0dfa4",
+      "name": "Trata Resposta 14"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.uairango.com/api2/auth/pedido/confirma/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('CONSULTA TOKEN6').item.json.token_uairango }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "58cdb7cb-abef-4c12-8e8c-a9993602ee3a",
+      "name": "CONFIRMA ORDEM ( PEDIDO )11",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2020,
+        4560
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "Confirmado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c3d31515-c18e-4ebc-8705-1b320d3b9e68"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CONFIRMADO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6faa4ff0-0568-4324-af0e-053214640b64",
+                    "leftValue": "={{ $json.status.status }}",
+                    "rightValue": "Pendente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PENDENTE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "55936be7-926b-4ea0-ac89-7951b8ed46df",
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "=",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ERRO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -680,
+        4420
+      ],
+      "id": "435d6cba-7f72-4ee6-9b43-fef6548aa73f",
+      "name": "Switch3",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5dbfc13b-6875-48ca-95f8-a5810968c94a",
+              "name": "body",
+              "value": "={{ $('Pega Dados6').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "c527c9d3-0aba-4657-bc66-caa30410f20b",
+              "name": "cod_store",
+              "value": "={{ $('CONSULTA TOKEN6').item.json.cod_store }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -180,
+        4420
+      ],
+      "id": "05008bf2-e91a-4f88-86d4-0a359315cd32",
+      "name": "tratamento dos dados 6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        4100
+      ],
+      "id": "2bd5d808-22f9-4ca4-bd1b-35084dbda7bf",
+      "name": "No Operation, do nothing2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00d937bc-1461-4e8b-8a93-0aeb28612fbf",
+              "name": "Erro",
+              "value": "Deu erro, tente novamente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        4720
+      ],
+      "id": "4ea30c16-5b6a-4261-aac9-53f9165cb472",
+      "name": "Edit Fields6"
+    },
+    {
+      "parameters": {
+        "height": 860,
+        "width": 3620,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1380,
+        4080
+      ],
+      "typeVersion": 1,
+      "id": "3f420497-0b45-458a-9b9d-9357d3df634b",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.uairango.com/api2/login",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "970b54a5a2ed16319338dc0a6f026a6d"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3860,
+        1640
+      ],
+      "id": "ba324bf1-dff8-4e13-8aad-70f812e7059d",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://order-api.saipos.com/auth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "idPartner",
+              "value": "=43b2334bcba7beec30757cc20c729d0b"
+            },
+            {
+              "name": "secret",
+              "value": "=112f6eae338ca981f5727470ec5aa675"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        3940
+      ],
+      "id": "0a57bf10-a745-4ae4-ae4d-bdedf0dded45",
+      "name": "Atualiza Token1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "TokenUaiRango",
+        "key": "tokenuairango",
+        "keyType": "string",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1320,
+        3300
+      ],
+      "id": "81305a2b-1fb5-42da-8ecb-6674faa9d277",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "HdxXmRpNZoA3twxH",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "tokenuairango",
+        "value": "={{ $json.token }}",
+        "keyType": "string"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1080,
+        3560
+      ],
+      "id": "2a73ffa8-b31b-49c6-a4bf-e3eb30e5b265",
+      "name": "Redis1",
+      "credentials": {
+        "redis": {
+          "id": "HdxXmRpNZoA3twxH",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.uairango.com/api2/login",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "970b54a5a2ed16319338dc0a6f026a6d"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1300,
+        3560
+      ],
+      "id": "c4b02fb7-f514-4a29-9750-4516d1a856c7",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b69f8b50-47a6-4214-a853-798ed6904f73",
+              "leftValue": "={{ $json.error.status }}",
+              "rightValue": 401,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -860,
+        3300
+      ],
+      "id": "edb8cc04-5139-4225-afbc-b11befaa4a8a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "=https://uairango.com/api2/auth/pedido/{{ $('Webhook2').item.json.body.cod_pedido }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-env",
+              "value": "development"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ffcdfd62-3ac5-4789-baa9-67ea67832ca3",
+      "name": "VERIFICA PEDIDO7",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -840,
+        3560
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "TokenSaipos",
+        "key": "tokenSaipos",
+        "keyType": "string",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        400,
+        3300
+      ],
+      "id": "8bab57d3-1969-4d1e-951f-ddba57b400ba",
+      "name": "Redis2",
+      "credentials": {
+        "redis": {
+          "id": "HdxXmRpNZoA3twxH",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "tokenSaipos",
+        "value": "={{ $json.token }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2120,
+        3440
+      ],
+      "id": "7a579d66-0bfd-4267-81e9-ff5c4d775e43",
+      "name": "Redis3",
+      "credentials": {
+        "redis": {
+          "id": "HdxXmRpNZoA3twxH",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Atualiza Token5": [
+      {
+        "json": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZFBhcnRuZXIiOiI4NWNkZmU2MmQxZWUwMGUyZWE4ZDc2ZDJkMGZjOTdlZiIsImNyZWF0ZWQiOjE3NDUzMzUwMjk2OTIsImlhdCI6MTc0NTMzNTAyOSwiZXhwIjoxNzQ1NTA3ODI5fQ.e-MMo02euJPC3NCPsFg2VA1elyVNB38UNqdUZm_pSmI"
+        }
+      }
+    ],
+    "Webhook2": [
+      {
+        "json": {
+          "headers": {
+            "host": "webhook.towersfy.com",
+            "user-agent": "axios/1.4.0",
+            "content-length": "1501",
+            "accept": "application/json",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "191.243.199.187",
+            "x-forwarded-host": "webhook.towersfy.com",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "85cf4a43145b",
+            "x-real-ip": "191.243.199.187",
+            "x-uairango-key": "uairango"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id_estabelecimento": 4659,
+            "cod_pedido": "BBAC7BDE3",
+            "data": "2025-09-28 19:02:15",
+            "pedido_pronto": 0,
+            "data_pedido_pronto": null,
+            "cupom": null,
+            "tipo_entrega": "Delivery",
+            "prazo": null,
+            "prazo_min": 30,
+            "prazo_max": 50,
+            "categoria_pagamento": "Pagamento Online",
+            "forma_pagamento": "Pagamento Online",
+            "valor_total": 43,
+            "observacao": "",
+            "taxa_entrega": 3,
+            "nome_taxa_entrega": "Bairros",
+            "status": {
+              "id": 0,
+              "status": "Pendente"
+            },
+            "produtos": [
+              {
+                "id_categoria": 31375,
+                "codigo_categoria": "",
+                "categoria": "Esfihas Abertas Salgadas",
+                "id_opcao": 61487,
+                "opcao": "Único",
+                "id_produto": 244620,
+                "codigo": "",
+                "produto": "Strogonoff de Carne",
+                "id_produto_2": null,
+                "codigo_2": "",
+                "produto_2": null,
+                "obs": "Sem champignon",
+                "valor": 11,
+                "quantidade": 2,
+                "adicionais": []
+              },
+              {
+                "id_categoria": 31377,
+                "codigo_categoria": "",
+                "categoria": "Esfihas Doces",
+                "id_opcao": 61489,
+                "opcao": "Único",
+                "id_produto": 244633,
+                "codigo": "",
+                "produto": "Nutella",
+                "id_produto_2": null,
+                "codigo_2": "",
+                "produto_2": null,
+                "obs": "",
+                "valor": 10.5,
+                "quantidade": 1,
+                "adicionais": []
+              },
+              {
+                "id_categoria": 31377,
+                "codigo_categoria": "",
+                "categoria": "Esfihas Doces",
+                "id_opcao": 61489,
+                "opcao": "Único",
+                "id_produto": 1022757,
+                "codigo": "",
+                "produto": "Nutella com Morangos",
+                "id_produto_2": null,
+                "codigo_2": "",
+                "produto_2": null,
+                "obs": "",
+                "valor": 10.5,
+                "quantidade": 1,
+                "adicionais": []
+              }
+            ],
+            "usuario": {
+              "id": 1285721,
+              "nome": "Jhonny Emerenciano",
+              "tel1": "35997644759"
+            },
+            "endereco": {
+              "id": 3057889,
+              "uf": "MG",
+              "cidade": "Andradas",
+              "bairro": "Jardim ipê ",
+              "rua": "Rua dos manzoli ",
+              "num": "109",
+              "complemento": null,
+              "ponto_referencia": "Portão branco "
+            }
+          },
+          "webhookUrl": "https://webhook.towersfy.com/webhook/60efecce-7b9b-4e31-947b-3721d653bc28",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook2": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Pega Dados5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "CONSULTA TOKEN": {
+      "main": [
+        [
+          {
+            "node": "VERIFICA PEDIDO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICA PEDIDO": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pega Dados": {
+      "main": [
+        [
+          {
+            "node": "CONSULTA TOKEN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta ": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Atualiza Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Token": {
+      "main": [
+        [
+          {
+            "node": "salva Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salva Token": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS8": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta 9": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch2": {
+      "main": [
+        [
+          {
+            "node": "tratamento dos dados ",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tratamento dos dados ": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CONSULTA TOKEN4": {
+      "main": [
+        [
+          {
+            "node": "VERIFICA PEDIDO4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS3": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICA PEDIDO4": {
+      "main": [
+        [
+          {
+            "node": "Switch5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Supabase4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pega Dados4": {
+      "main": [
+        [
+          {
+            "node": "CONSULTA TOKEN4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta 3": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Atualiza Token4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Token4": {
+      "main": [
+        [
+          {
+            "node": "salva Token4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salva Token4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS11": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta 12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta 12": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch5": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "tratamento dos dados 4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tratamento dos dados 4": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Token5": {
+      "main": [
+        []
+      ]
+    },
+    "CONSULTA TOKEN5": {
+      "main": [
+        []
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS5": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICA PEDIDO5": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Supabase5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pega Dados5": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta 4": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Atualiza Token6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Token6": {
+      "main": [
+        [
+          {
+            "node": "Redis3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salva Token5": {
+      "main": [
+        []
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS12": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta 13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta 13": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tratamento dos dados 5": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CONSULTA TOKEN6": {
+      "main": [
+        [
+          {
+            "node": "VERIFICA PEDIDO6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS6": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICA PEDIDO6": {
+      "main": [
+        [
+          {
+            "node": "Switch3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "Supabase6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pega Dados6": {
+      "main": [
+        [
+          {
+            "node": "CONSULTA TOKEN6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta 5": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Atualiza Token7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Token7": {
+      "main": [
+        [
+          {
+            "node": "salva Token6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salva Token6": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRIA PEDIDO NA SAIPOS13": {
+      "main": [
+        [
+          {
+            "node": "CONFIRMA ORDEM ( PEDIDO )11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta 14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Resposta 14": {
+      "main": [
+        [
+          {
+            "node": "CRIA PEDIDO NA SAIPOS13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch3": {
+      "main": [
+        [
+          {
+            "node": "tratamento dos dados 6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "tratamento dos dados 6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tratamento dos dados 6": {
+      "main": [
+        [
+          {
+            "node": "Trata Resposta 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "VERIFICA PEDIDO5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "VERIFICA PEDIDO7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICA PEDIDO7": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis2": {
+      "main": [
+        [
+          {
+            "node": "tratamento dos dados 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f1405868-d62e-46a1-9014-806d1137225e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "449cbcea2808803e9cfb25e96d6a67b3bf02fdf2ca434e33fb23a85de435da14"
+  },
+  "id": "x8i07sZnxBsx5XNG",
+  "tags": [
+    {
+      "createdAt": "2025-04-10T12:13:23.979Z",
+      "updatedAt": "2025-04-10T12:13:23.979Z",
+      "id": "K6ygfVzuZJt9dP1A",
+      "name": "Uai Rango"
+    },
+    {
+      "createdAt": "2025-03-30T16:32:00.743Z",
+      "updatedAt": "2025-03-30T16:32:00.743Z",
+      "id": "9YdhjZFKltQ9vzJr",
+      "name": "FUNCIONAL"
+    }
+  ]
+}
