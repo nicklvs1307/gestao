@@ -97,7 +97,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         <button 
                             onClick={() => setCashierDropdownOpen(!isCashierDropdownOpen)}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm",
+                                "flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all text-xs font-black uppercase tracking-widest shadow-sm",
                                 cashierStatus?.isOpen ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-rose-50 border-rose-100 text-rose-700"
                             )}
                         >
@@ -110,20 +110,20 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                                 <div className="fixed inset-0 z-10" onClick={() => setCashierDropdownOpen(false)} />
                                 <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
                                     <div className="p-5 border-b border-slate-50 bg-slate-50/50">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{getCashierTimeStr() || 'Turno Encerrado'}</p>
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{getCashierTimeStr() || 'Turno Encerrado'}</p>
                                         {cashierStatus?.isOpen && (
                                             <p className="text-base font-black text-slate-900 italic">R$ {cashierStatus.session.cashBalance?.toFixed(2) || '0.00'}</p>
                                         )}
                                     </div>
                                     <div className="p-2">
-                                        <button onClick={() => { setCashierAction({ open: true, type: 'EXPENSE' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 flex items-center gap-3 uppercase transition-all">
+                                        <button onClick={() => { setCashierAction({ open: true, type: 'EXPENSE' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 flex items-center gap-3 uppercase transition-all">
                                             <ArrowRight size={16} className="rotate-180" /> Retirada / Sangria
                                         </button>
-                                        <button onClick={() => { setCashierAction({ open: true, type: 'INCOME' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 flex items-center gap-3 uppercase transition-all">
+                                        <button onClick={() => { setCashierAction({ open: true, type: 'INCOME' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 flex items-center gap-3 uppercase transition-all">
                                             <Plus size={16} /> Reforço / Suprimento
                                         </button>
                                         <div className="h-[1px] bg-slate-100 my-2 mx-2" />
-                                        <button onClick={() => { navigate('/cashier'); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-black text-slate-900 bg-slate-100 hover:bg-slate-200 flex items-center gap-3 uppercase transition-all">
+                                        <button onClick={() => { navigate('/cashier'); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-black text-slate-900 bg-slate-100 hover:bg-slate-200 flex items-center gap-3 uppercase transition-all">
                                             <CheckCircle size={16} /> Ir para Fechamento
                                         </button>
                                     </div>
@@ -145,7 +145,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                     >
                         <Bell size={20} />
                         {notifCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce">
                                 {notifCount}
                             </span>
                         )}
@@ -159,8 +159,8 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-slate-50 transition-all border-2 border-transparent hover:border-slate-100"
                     >
                         <div className="text-right hidden lg:block">
-                            <p className="text-xs font-black text-slate-900 leading-none italic uppercase tracking-tighter">{user?.name || 'Usuário'}</p>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-widest opacity-70">{displayName}</p>
+                            <p className="text-sm font-black text-slate-900 leading-none italic uppercase tracking-tighter">{user?.name || 'Usuário'}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase mt-1 tracking-widest opacity-70">{displayName}</p>
                         </div>
                         <div className="h-10 w-10 rounded-xl bg-white border-2 border-slate-200 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
                             {displayLogo ? (

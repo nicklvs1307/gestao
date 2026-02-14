@@ -42,12 +42,24 @@ class CashierController {
       orderBy: { createdAt: 'desc' }
     });
 
-    const salesByMethod = transactions.reduce((acc, curr) => {
+    // Filtra apenas vendas (vendas não têm [REFORÇO] ou [SANGRIA] no começo da descrição, geralmente começam com VENDA)
+    // Ou melhor: vendas são INCOME e NÃO contêm [REFORÇO]
+    const salesTransactions = transactions.filter(t => 
+      t.type === 'INCOME' && !t.description.includes('[REFORÇO]') && !t.description.includes('[SANGRIA]')
+    );
+
+    const salesByMethod = salesTransactions.reduce((acc, curr) => {
       const method = curr.paymentMethod || 'outros';
       if (!acc[method]) acc[method] = 0;
       acc[method] += curr.amount;
       return acc;
     }, {});
+
+    const adjustments = transactions.reduce((acc, t) => {
+      if (t.description.includes('[SANGRIA]')) acc.sangria += t.amount;
+      if (t.description.includes('[REFORÇO]')) acc.reforco += t.amount;
+      return acc;
+    }, { sangria: 0, reforco: 0 });
 
     const totalSales = Object.values(salesByMethod).reduce((a, b) => a + b, 0);
 
@@ -57,6 +69,7 @@ class CashierController {
       initialAmount: session.initialAmount,
       totalSales,
       salesByMethod,
+      adjustments,
       transactions
     });
   });
