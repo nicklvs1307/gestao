@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createUser, updateUser, getRoles, getPermissions } from '../services/api';
+import { createUser, updateUser, getRoles, getAvailablePermissions } from '../services/api';
 import { 
     X, User, Mail, Lock, CheckCircle, Loader2, Award, 
     ChevronRight, ChevronLeft, ShieldCheck, CheckSquare, Square,
@@ -49,7 +49,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
     const fetchData = async () => {
       setIsLoadingData(true);
       try {
-        const [roles, perms] = await Promise.all([getRoles(), getPermissions()]);
+        const [roles, perms] = await Promise.all([getRoles(), getAvailablePermissions()]);
         setAvailableRoles(roles);
         setAvailablePermissions(perms);
       } catch (error) {
