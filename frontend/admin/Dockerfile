@@ -4,6 +4,9 @@ FROM node:20-alpine as builder
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
+ARG VITE_OPENROUTE_KEY
+ENV VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY
+
 WORKDIR /app
 
 # Copia arquivos compartilhados (Necessário pois o vite.config.ts referencia eles)
