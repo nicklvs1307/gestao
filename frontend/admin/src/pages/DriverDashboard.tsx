@@ -7,7 +7,9 @@ import {
     Clock, Phone, ChevronRight, Package, 
     ArrowLeft, ExternalLink, Timer, AlertCircle, LogOut, Loader2, Smartphone, Map as MapIcon, ChevronLeft,
     ShoppingCart,
-    Map
+    Map,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -26,54 +28,76 @@ L.Icon.Default.mergeOptions({
 });
 
 const DeliveryMap: React.FC<{
-    orderId: string; customerCoords: [number, number]; restaurantCoords: [number, number]; customerName: string; route: [number, number][];
-}> = ({ orderId, customerCoords, restaurantCoords, customerName, route }) => {
+    orderId: string; 
+    customerCoords: [number, number]; 
+    restaurantCoords: [number, number]; 
+    currentLocation: [number, number] | null;
+    route: [number, number][];
+}> = ({ orderId, customerCoords, restaurantCoords, currentLocation, route }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const leafletInstance = useRef<L.Map | null>(null);
+    const polylineRef = useRef<L.Polyline | null>(null);
 
     useEffect(() => {
         if (!mapRef.current || !customerCoords || !restaurantCoords) return;
         
-        // Evita reinicialização se já existir
-        if (leafletInstance.current) return;
-
-        leafletInstance.current = L.map(mapRef.current, {
-            zoomControl: false,
-            attributionControl: false
-        }).setView(customerCoords, 15);
-        
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19
-        }).addTo(leafletInstance.current);
+        if (!leafletInstance.current) {
+            leafletInstance.current = L.map(mapRef.current, {
+                zoomControl: false,
+                attributionControl: false
+            }).setView(currentLocation || restaurantCoords, 15);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19
+            }).addTo(leafletInstance.current);
+        }
 
         const restaurantIcon = L.divIcon({
             html: `<div class="bg-slate-900 p-2 rounded-full border-2 border-white shadow-lg text-white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>`,
-            className: '',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
+            className: '', iconSize: [32, 32], iconAnchor: [16, 16]
         });
 
         const customerIcon = L.divIcon({
             html: `<div class="bg-orange-500 p-2 rounded-full border-2 border-white shadow-lg text-white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
-            className: '',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
+            className: '', iconSize: [32, 32], iconAnchor: [16, 16]
+        });
+
+        const driverIcon = L.divIcon({
+            html: `<div class="bg-blue-600 p-2 rounded-full border-2 border-white shadow-lg text-white animate-pulse"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>`,
+            className: '', iconSize: [32, 32], iconAnchor: [16, 16]
+        });
+
+        // Limpar marcadores antigos
+        leafletInstance.current.eachLayer((layer) => {
+            if (layer instanceof L.Marker) leafletInstance.current?.removeLayer(layer);
         });
 
         L.marker(restaurantCoords, { icon: restaurantIcon }).addTo(leafletInstance.current);
         L.marker(customerCoords, { icon: customerIcon }).addTo(leafletInstance.current);
+        if (currentLocation) {
+            L.marker(currentLocation, { icon: driverIcon }).addTo(leafletInstance.current);
+        }
         
-        if (route && route.length > 0) L.polyline(route, { color: '#f97316', weight: 4, opacity: 0.8 }).addTo(leafletInstance.current);
+        // Desenhar Rota
+        if (polylineRef.current) leafletInstance.current.removeLayer(polylineRef.current);
         
-        // Força o mapa a recalcular o tamanho após um pequeno delay para evitar áreas cinzas
-        setTimeout(() => {
-            leafletInstance.current?.invalidateSize();
-        }, 100);
+        if (route && route.length > 0) {
+            polylineRef.current = L.polyline(route, { color: '#f97316', weight: 6, opacity: 0.8, lineJoin: 'round' }).addTo(leafletInstance.current);
+            leafletInstance.current.fitBounds(polylineRef.current.getBounds(), { padding: [50, 50] });
+        } else {
+            const bounds = L.latLngBounds([restaurantCoords, customerCoords]);
+            if (currentLocation) bounds.extend(currentLocation);
+            leafletInstance.current.fitBounds(bounds, { padding: [50, 50] });
+        }
+        
+        setTimeout(() => { leafletInstance.current?.invalidateSize(); }, 100);
 
-        return () => { if (leafletInstance.current) { leafletInstance.current.remove(); leafletInstance.current = null; } };
-    }, [orderId, route, customerCoords, restaurantCoords]);
+        return () => { 
+            // Não removemos o mapa no cleanup do route para evitar flicker
+        };
+    }, [orderId, route, customerCoords, restaurantCoords, currentLocation]);
 
-    return <div ref={mapRef} className="w-full h-full z-0 rounded-2xl overflow-hidden" />;
+    return <div ref={mapRef} className="w-full h-full z-0" />;
 };
 
 const DriverDashboard: React.FC = () => {
@@ -84,40 +108,61 @@ const DriverDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [route, setRoute] = useState<[number, number][]>([]);
     const [view, setView] = useState<'list' | 'detail'>('list');
+    const [isMapExpanded, setIsMapExpanded] = useState(false);
+    
     const [customerCoords, setCustomerCoords] = useState<[number, number] | null>(null);
     const [restaurantCoords, setRestaurantCoords] = useState<[number, number]>([-23.5505, -46.6333]);
+    const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
+    
     const [restaurantCity, setRestaurantCity] = useState('');
     const [isGeocoding, setIsGeocoding] = useState(false);
+    const [isRouting, setIsRouting] = useState(false);
+
+    // Monitorar localização em tempo real
+    useEffect(() => {
+        if (!navigator.geolocation) return;
+        const watchId = navigator.geolocation.watchPosition(
+            (pos) => setCurrentLocation([pos.coords.latitude, pos.coords.longitude]),
+            (err) => console.error("Erro GPS:", err),
+            { enableHighAccuracy: true }
+        );
+        return () => navigator.geolocation.clearWatch(watchId);
+    }, []);
 
     const geocodeAddress = async (address: string, isRestaurant = false): Promise<[number, number] | null> => {
         const apiKey = import.meta.env.VITE_OPENROUTE_KEY;
-        if (!apiKey) {
-            console.error("ERRO: VITE_OPENROUTE_KEY não configurada no .env");
-            return null;
-        }
-        if (!address) return null;
-        
+        if (!apiKey || !address) return null;
         try {
             const searchQuery = isRestaurant ? address : `${address}, ${restaurantCity}`;
             const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(searchQuery)}&boundary.country=BR&size=1`;
             const res = await fetch(url);
-            
-            if (!res.ok) {
-                console.error(`Erro na API de Geocodificação: ${res.status}`);
-                return null;
-            }
-
             const data = await res.json();
             if (data.features && data.features.length > 0) { 
                 const [lon, lat] = data.features[0].geometry.coordinates; 
                 return [lat, lon]; 
-            } else {
-                console.warn(`Endereço não encontrado: ${searchQuery}`);
             }
-        } catch (e) { 
-            console.error("Erro ao geocodificar endereço:", e); 
-        }
+        } catch (e) { console.error("Erro geocode:", e); }
         return null;
+    };
+
+    const fetchRoute = async (start: [number, number], end: [number, number]) => {
+        const apiKey = import.meta.env.VITE_OPENROUTE_KEY;
+        if (!apiKey) return;
+        setIsRouting(true);
+        try {
+            const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.features && data.features.length > 0) {
+                const coords = data.features[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+                setRoute(coords);
+                setIsMapExpanded(true);
+            }
+        } catch (e) {
+            toast.error("Erro ao calcular rota.");
+        } finally {
+            setIsRouting(false);
+        }
     };
 
     const loadOrders = async () => {
@@ -140,7 +185,7 @@ const DriverDashboard: React.FC = () => {
 
     useEffect(() => {
         if (selectedOrder && selectedOrder.deliveryOrder?.address) {
-            setIsGeocoding(true); setCustomerCoords(null); setRoute([]);
+            setIsGeocoding(true); setCustomerCoords(null); setRoute([]); setIsMapExpanded(false);
             geocodeAddress(selectedOrder.deliveryOrder.address).then(coords => {
                 if (coords) setCustomerCoords(coords);
                 setIsGeocoding(false);
@@ -162,17 +207,17 @@ const DriverDashboard: React.FC = () => {
         return (
             <div className="flex flex-col min-h-screen bg-[#f8fafc] overflow-hidden">
                 {/* Custom Navigation Bar */}
-                <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-50">
+                <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-[60]">
                     <div className="flex items-center gap-4">
                         <button 
-                            onClick={() => { setView('list'); setRoute([]); }}
+                            onClick={() => { setView('list'); setRoute([]); setIsMapExpanded(false); }}
                             className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 active:scale-90 transition-transform"
                         >
                             <ChevronLeft size={24} />
                         </button>
                         <div>
                             <h2 className="font-black text-slate-900 uppercase italic tracking-tighter leading-none">Pedido #{selectedOrder.dailyOrderNumber}</h2>
-                            <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mt-1">EM DETALHES</p>
+                            <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mt-1">Navegação</p>
                         </div>
                     </div>
                     <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
@@ -180,9 +225,12 @@ const DriverDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 relative flex flex-col">
                     {/* Mapa Section */}
-                    <Card className="p-0 h-[35vh] overflow-hidden border-slate-200 shadow-lg relative bg-white">
+                    <Card className={cn(
+                        "p-0 overflow-hidden border-slate-200 shadow-lg relative bg-white transition-all duration-500",
+                        isMapExpanded ? "fixed inset-0 z-50 rounded-none h-full" : "h-[35vh] shrink-0"
+                    )}>
                         {isGeocoding ? (
                             <div className="h-full flex flex-col items-center justify-center gap-3 opacity-30">
                                 <Loader2 className="animate-spin text-orange-500" size={32} />
@@ -190,101 +238,134 @@ const DriverDashboard: React.FC = () => {
                             </div>
                         ) : customerCoords ? (
                             <div className="w-full h-full relative">
-                                <DeliveryMap orderId={selectedOrder.id} customerCoords={customerCoords} restaurantCoords={restaurantCoords} customerName={dOrder.name} route={route} />
-                                <div className="absolute bottom-4 left-4 right-4 z-[1000]">
-                                    <Button 
-                                        onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&origin=${restaurantCoords[0]},${restaurantCoords[1]}&destination=${customerCoords[0]},${customerCoords[1]}&travelmode=driving`, '_blank')}
-                                        className="w-full h-12 rounded-xl shadow-2xl bg-slate-900 hover:bg-slate-800 uppercase italic font-black text-[10px] tracking-widest"
+                                <DeliveryMap 
+                                    orderId={selectedOrder.id} 
+                                    customerCoords={customerCoords} 
+                                    restaurantCoords={restaurantCoords} 
+                                    currentLocation={currentLocation}
+                                    route={route} 
+                                />
+                                
+                                {/* Controles do Mapa */}
+                                <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+                                    <button 
+                                        onClick={() => setIsMapExpanded(!isMapExpanded)}
+                                        className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-900 border border-slate-100"
                                     >
-                                        <Navigation size={16} className="mr-2" /> ABRIR GPS GOOGLE
+                                        {isMapExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                                    </button>
+                                </div>
+
+                                {isMapExpanded && (
+                                    <div className="absolute bottom-6 left-6 right-6 z-[1000] space-y-3">
+                                         <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-slate-100 mb-4 animate-in slide-in-from-bottom-4">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Destino Final</p>
+                                            <p className="text-xs font-black text-slate-900 uppercase italic leading-tight">{dOrder.address}</p>
+                                         </div>
+                                         <div className="flex gap-2">
+                                            <Button 
+                                                onClick={() => setIsMapExpanded(false)}
+                                                variant="secondary"
+                                                className="flex-1 h-14 rounded-2xl shadow-xl bg-white uppercase italic font-black text-[10px]"
+                                            >
+                                                FECHAR
+                                            </Button>
+                                            <Button 
+                                                onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&origin=${currentLocation ? `${currentLocation[0]},${currentLocation[1]}` : `${restaurantCoords[0]},${restaurantCoords[1]}`}&destination=${customerCoords[0]},${customerCoords[1]}&travelmode=driving`, '_blank')}
+                                                className="flex-[2] h-14 rounded-2xl shadow-xl bg-slate-900 uppercase italic font-black text-[10px]"
+                                            >
+                                                <Navigation size={18} className="mr-2" /> ABRIR GPS EXTERNO
+                                            </Button>
+                                         </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+                    </Card>
+
+                    {!isMapExpanded && (
+                        <>
+                            {/* Cliente Info */}
+                            <Card className="p-6 border-slate-200 shadow-sm space-y-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0">
+                                        <MapPin size={24} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Endereço de Entrega</h3>
+                                        <p className="text-sm font-black text-slate-900 uppercase italic leading-tight">{dOrder.address || 'Não informado'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 pt-6 border-t border-slate-100">
+                                    <Button 
+                                        onClick={() => {
+                                            const start = currentLocation || restaurantCoords;
+                                            if (customerCoords) fetchRoute(start, customerCoords);
+                                        }}
+                                        isLoading={isRouting}
+                                        disabled={!customerCoords}
+                                        className="flex-1 h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-[10px] font-black uppercase italic tracking-widest gap-2"
+                                    >
+                                        <Map size={18} /> VER ROTA INTERNA
                                     </Button>
+                                    {dOrder.phone && (
+                                        <a 
+                                            href={`tel:${dOrder.phone.replace(/\D/g, '')}`} 
+                                            className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center active:scale-90 transition-transform"
+                                        >
+                                            <Phone size={20} />
+                                        </a>
+                                    )}
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center p-8 text-center gap-3 opacity-30 bg-slate-50">
-                                <AlertCircle size={32} className="text-slate-400" />
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Localização não disponível no mapa</p>
-                            </div>
-                        )}
-                    </Card>
+                            </Card>
 
-                    {/* Cliente Info */}
-                    <Card className="p-6 border-slate-200 shadow-sm space-y-6">
-                        <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0">
-                                <MapPin size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Endereço de Entrega</h3>
-                                <p className="text-sm font-black text-slate-900 uppercase italic leading-tight">{dOrder.address || 'Não informado'}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center shrink-0">
-                                    <Phone size={24} />
+                            {/* Financeiro */}
+                            <Card className="p-6 border-slate-200 shadow-sm">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <ShoppingCart size={16} className="text-orange-500" />
+                                    <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Valores do Pedido</h3>
                                 </div>
-                                <div>
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">{dOrder.name || 'Cliente'}</h3>
-                                    <p className="text-base font-black text-slate-900 italic">{dOrder.phone || 'N/A'}</p>
+                                
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                        <span className="text-slate-400">Produtos</span>
+                                        <span className="text-slate-900">R$ {selectedOrder.total.toFixed(2).replace('.', ',')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                        <span className="text-orange-500">Taxa de Entrega</span>
+                                        <span className="text-orange-500">+ R$ {(dOrder.deliveryFee || 0).toFixed(2).replace('.', ',')}</span>
+                                    </div>
+                                    <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+                                        <span className="text-xs font-black text-slate-900 uppercase italic tracking-widest">Receber</span>
+                                        <span className="text-3xl font-black text-orange-500 italic tracking-tighter">R$ {(selectedOrder.total + (dOrder.deliveryFee || 0)).toFixed(2).replace('.', ',')}</span>
+                                    </div>
                                 </div>
-                            </div>
-                            {dOrder.phone && (
-                                <a 
-                                    href={`tel:${dOrder.phone.replace(/\D/g, '')}`} 
-                                    className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 active:scale-90 transition-transform"
-                                >
-                                    <Phone size={20} />
-                                </a>
-                            )}
-                        </div>
-                    </Card>
+                            </Card>
 
-                    {/* Financeiro */}
-                    <Card className="p-6 border-slate-200 shadow-sm">
-                        <div className="flex items-center gap-2 mb-6">
-                            <ShoppingCart size={16} className="text-orange-500" />
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Valores do Pedido</h3>
-                        </div>
-                        
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                <span className="text-slate-400">Produtos</span>
-                                <span className="text-slate-900">R$ {selectedOrder.total.toFixed(2).replace('.', ',')}</span>
+                            {/* Ação Principal */}
+                            <div className="pt-4 mt-auto">
+                                {selectedOrder.status === 'READY' ? (
+                                    <Button 
+                                        fullWidth 
+                                        size="lg" 
+                                        onClick={() => handleUpdateStatus(selectedOrder.id, 'SHIPPED')} 
+                                        className="h-16 rounded-2xl bg-slate-900 hover:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl italic"
+                                    >
+                                        <Bike size={20} className="mr-3" /> INICIAR ENTREGA
+                                    </Button>
+                                ) : (
+                                    <Button 
+                                        fullWidth 
+                                        size="lg" 
+                                        onClick={() => handleUpdateStatus(selectedOrder.id, 'COMPLETED')} 
+                                        className="h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl italic"
+                                    >
+                                        <CheckCircle size={20} className="mr-3" /> FINALIZAR ENTREGA
+                                    </Button>
+                                )}
                             </div>
-                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                <span className="text-orange-500">Taxa de Entrega</span>
-                                <span className="text-orange-500">+ R$ {(dOrder.deliveryFee || 0).toFixed(2).replace('.', ',')}</span>
-                            </div>
-                            <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                                <span className="text-xs font-black text-slate-900 uppercase italic tracking-widest">Receber</span>
-                                <span className="text-3xl font-black text-orange-500 italic tracking-tighter">R$ {(selectedOrder.total + (dOrder.deliveryFee || 0)).toFixed(2).replace('.', ',')}</span>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-
-                {/* Ação Principal */}
-                <div className="p-4 bg-white border-t border-slate-200">
-                    {selectedOrder.status === 'READY' ? (
-                        <Button 
-                            fullWidth 
-                            size="lg" 
-                            onClick={() => handleUpdateStatus(selectedOrder.id, 'SHIPPED')} 
-                            className="h-16 rounded-2xl bg-slate-900 hover:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl italic"
-                        >
-                            <Bike size={20} className="mr-3" /> INICIAR ENTREGA
-                        </Button>
-                    ) : (
-                        <Button 
-                            fullWidth 
-                            size="lg" 
-                            onClick={() => handleUpdateStatus(selectedOrder.id, 'COMPLETED')} 
-                            className="h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl italic"
-                        >
-                            <CheckCircle size={20} className="mr-3" /> FINALIZAR ENTREGA
-                        </Button>
+                        </>
                     )}
                 </div>
             </div>
