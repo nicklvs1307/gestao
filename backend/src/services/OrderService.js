@@ -523,38 +523,86 @@ class OrderService {
   }
 
   async getDriverSettlement(restaurantId, date) {
-    const startOfDay = date ? new Date(date) : new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setHours(23, 59, 59, 999);
+    const queryDate = date ? new Date(date) : new Date();
+    const start = new Date(queryDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(queryDate);
+    end.setHours(23, 59, 59, 999);
 
     const drivers = await prisma.user.findMany({
-        where: { restaurantId, roleRef: { name: { equals: 'Entregador', mode: 'insensitive' } } },
+        where: { 
+            restaurantId, 
+            roleRef: { 
+                permissions: { 
+                    some: { name: 'delivery:manage' } 
+                } 
+            } 
+        },
         include: {
             deliveries: {
                 where: {
                     status: 'DELIVERED',
-                    updatedAt: { gte: startOfDay, lte: endOfDay }
+                    updatedAt: { gte: start, lte: end }
                 },
-                include: { order: true }
+                include: { 
+                    order: {
+                        include: { payments: true }
+                    } 
+                }
             }
         }
     });
 
     return drivers.map(d => {
+        let cash = 0;
+        let card = 0;
+        let pix = 0;
+        let deliveryFees = 0;
+        let totalOrdersValue = 0;
+
+        d.deliveries.forEach(del => {
+            const order = del.order;
+            if (!order) return;
+
+            deliveryFees += del.deliveryFee || 0;
+            totalOrdersValue += order.total;
+
+            const method = del.paymentMethod?.toLowerCase() || '';
+            if (method.includes('dinheiro') || method.includes('cash')) {
+                cash += order.total;
+            } else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) {
+                card += order.total;
+            } else if (method.includes('pix')) {
+                pix += order.total;
+            } else {
+                // Fallback para outros métodos ou se não identificado
+                cash += order.total; 
+            }
+        });
+
         const totalDeliveries = d.deliveries.length;
         const baseRate = d.baseRate || 0;
         const totalCommission = d.deliveries.reduce((acc, curr) => acc + (d.bonusPerDelivery || 0), 0);
+        
+        // O que a loja deve ao entregador
         const totalToPay = baseRate + totalCommission;
+
+        // Saldo líquido da loja para esse entregador: 
+        // (Total de Vendas) - (O que pagou ao entregador)
+        const storeNet = totalOrdersValue - totalToPay;
 
         return {
             driverId: d.id,
-            driverName: d.name,
-            totalDeliveries,
-            baseRate,
-            totalCommission,
+            driverName: d.name || d.email,
+            totalOrders: totalDeliveries,
+            cash,
+            card,
+            pix,
+            deliveryFees,
             totalToPay,
-            deliveries: d.deliveries
+            storeNet,
+            baseRate,
+            totalCommission
         };
     });
   }

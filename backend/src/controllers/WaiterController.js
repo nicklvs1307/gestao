@@ -47,7 +47,7 @@ class WaiterController {
         createdOrders: {
           where: {
             createdAt: { gte: start, lte: end },
-            status: { in: ['COMPLETED', 'DELIVERED', 'PAID'] }, // Apenas pedidos finalizados/pagos
+            status: { in: ['COMPLETED', 'DELIVERED'] }, // Apenas pedidos finalizados/entregues
             orderType: 'TABLE' // Apenas pedidos de mesa contam para comissão (regra comum)
           },
           select: {
@@ -87,8 +87,13 @@ class WaiterController {
 
   // POST /admin/waiters/settlement/pay
   paySettlement = asyncHandler(async (req, res) => {
-    const { restaurantId } = req.user;
+    const restaurantId = req.restaurantId;
     const { waiterId, amount, date } = req.body;
+
+    if (!restaurantId) {
+        res.status(400);
+        throw new Error('Contexto de loja não selecionado.');
+    }
 
     const waiter = await prisma.user.findUnique({ where: { id: waiterId } });
     
