@@ -42,7 +42,7 @@ const DeliveryMap: React.FC<{
             attributionControl: false
         }).setView(customerCoords, 15);
         
-        L.tileLayer('https://{s}.tile.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19
         }).addTo(leafletInstance.current);
 
