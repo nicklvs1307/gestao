@@ -165,6 +165,112 @@ const DriverDashboard: React.FC = () => {
         }
     };
 
+    const [optimizedOrderIds, setOptimizedOrderIds] = useState<string[]>([]);
+    const [isOptimizing, setIsOptimizing] = useState(false);
+
+    // Função de Otimização Inteligente (Heurística Vizinho Mais Próximo + Urgência Temporal)
+    const optimizeRoute = async () => {
+        const pendingOrders = orders.filter(o => o.status === 'READY' || o.status === 'SHIPPED');
+        if (pendingOrders.length < 2) {
+            toast.info("Necessário pelo menos 2 pedidos para otimizar.");
+            return;
+        }
+
+        setIsOptimizing(true);
+        const apiKey = import.meta.env.VITE_OPENROUTE_KEY;
+        if (!apiKey) return;
+
+        try {
+            // 1. Obter coordenadas de todos os destinos
+            const destinations = await Promise.all(pendingOrders.map(async (order) => {
+                const addr = order.deliveryOrder?.address;
+                if (!addr) return null;
+                const coords = await geocodeAddress(addr);
+                return coords ? { id: order.id, coords, created: new Date(order.createdAt).getTime() } : null;
+            }));
+
+            const validDestinations = destinations.filter(d => d !== null) as { id: string, coords: [number, number], created: number }[];
+            
+            if (validDestinations.length === 0) {
+                toast.error("Não foi possível localizar os endereços.");
+                setIsOptimizing(false);
+                return;
+            }
+
+            // 2. Ponto de Partida (Motoboy ou Loja)
+            let currentPoint = currentLocation || restaurantCoords;
+            const sortedIds: string[] = [];
+            const routeCoords: [number, number][] = [currentPoint];
+            let remaining = [...validDestinations];
+
+            // 3. Algoritmo Guloso (Greedy) com Peso de Tempo
+            while (remaining.length > 0) {
+                let bestNextIndex = -1;
+                let bestScore = Infinity;
+
+                // Para cada ponto restante, calcula o "Custo"
+                // Custo = Distância (km) - (Tempo de Espera (min) * 0.1)
+                // Isso faz com que pedidos muito antigos "puxem" a rota mesmo sendo um pouco mais longe
+                for (let i = 0; i < remaining.length; i++) {
+                    const candidate = remaining[i];
+                    
+                    // Distância Euclidiana simples para performance (ou Haversine se quiser precisão)
+                    const dist = Math.sqrt(
+                        Math.pow(candidate.coords[0] - currentPoint[0], 2) + 
+                        Math.pow(candidate.coords[1] - currentPoint[1], 2)
+                    );
+                    
+                    const waitTimeMinutes = (Date.now() - candidate.created) / 60000;
+                    const score = dist - (waitTimeMinutes * 0.0001); // Ajuste fino do peso do tempo
+
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestNextIndex = i;
+                    }
+                }
+
+                if (bestNextIndex !== -1) {
+                    const bestNode = remaining[bestNextIndex];
+                    sortedIds.push(bestNode.id);
+                    routeCoords.push(bestNode.coords);
+                    currentPoint = bestNode.coords; // Avança para o próximo ponto
+                    remaining.splice(bestNextIndex, 1);
+                }
+            }
+
+            // 4. Desenha a rota completa no mapa (Chamada única para Directions API com Waypoints)
+            if (sortedIds.length > 0) {
+                // Monta a URL com waypoints
+                const waypoints = routeCoords.map(c => `${c[1]},${c[0]}`).join('|');
+                const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${routeCoords[0][1]},${routeCoords[0][0]}&end=${routeCoords[routeCoords.length-1][1]},${routeCoords[routeCoords.length-1][0]}`;
+                
+                // Nota: A API gratuita tem limites de waypoints, então para muitos pontos, fazemos ponto a ponto ou usamos Vroom.
+                // Aqui vamos simplificar chamando a rota do primeiro para o último, passando pelos intermediários se a API suportar via POST, 
+                // mas para MVP vamos focar na ORDENAÇÃO da lista.
+                
+                setOptimizedOrderIds(sortedIds);
+                toast.success("Rota otimizada com sucesso!");
+                
+                // Reordena a visualização
+                const sortedOrders = [...orders].sort((a, b) => {
+                    const idxA = sortedIds.indexOf(a.id);
+                    const idxB = sortedIds.indexOf(b.id);
+                    // Se não está na rota otimizada (sem endereço), vai pro fim
+                    if (idxA === -1) return 1;
+                    if (idxB === -1) return -1;
+                    return idxA - idxB;
+                });
+                setOrders(sortedOrders);
+            }
+
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao calcular inteligência de rota.");
+        } finally {
+            setIsOptimizing(false);
+        }
+    };
+
     const loadOrders = async () => {
         try {
             const res = await api.get('/driver/orders');
@@ -405,12 +511,32 @@ const DriverDashboard: React.FC = () => {
                         <span className="text-[10px] font-black text-orange-500 uppercase italic">Fila</span>
                     </div>
                 </Card>
-                <Card className="p-6 bg-white border-slate-200 shadow-sm relative overflow-hidden">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-2 italic">Em Trânsito</p>
-                    <div className="flex items-baseline gap-2">
-                        <h3 className="text-4xl font-black italic text-slate-900 tracking-tighter">{orders.filter(o => o.status === 'SHIPPED').length}</h3>
-                        <span className="text-[10px] font-black text-slate-300 uppercase italic">Agora</span>
-                    </div>
+                <Card 
+                    onClick={orders.length > 1 ? optimizeRoute : undefined}
+                    className={cn(
+                        "p-6 border-slate-200 shadow-sm relative overflow-hidden transition-all",
+                        isOptimizing ? "bg-orange-50 border-orange-200" : "bg-white hover:border-orange-500/30 cursor-pointer"
+                    )}
+                >
+                    {isOptimizing ? (
+                        <div className="flex flex-col items-center justify-center h-full">
+                            <Loader2 className="animate-spin text-orange-500 mb-2" />
+                            <p className="text-[8px] font-black uppercase tracking-widest text-orange-500">Calculando...</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-start mb-2">
+                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 italic">Roteirização IA</p>
+                                <Map size={14} className="text-orange-500" />
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                                <h3 className="text-xl font-black italic text-slate-900 tracking-tighter">Otimizar</h3>
+                            </div>
+                            <p className="text-[9px] text-slate-400 font-medium leading-tight mt-2">
+                                Reordenar por menor tempo de entrega
+                            </p>
+                        </>
+                    )}
                 </Card>
             </div>
 
