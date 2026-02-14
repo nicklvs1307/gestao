@@ -120,11 +120,12 @@ const CashierManagement: React.FC = () => {
 
     // Cálculo de Dinheiro Esperado (Abertura + Vendas + Reforços - Sangrias)
     const getExpectedCash = () => {
-        if (!summary) return 0;
+        if (!summary || !session) return 0;
         const sales = summary.salesByMethod?.cash || 0;
         const reinforcements = summary.adjustments?.reforco || 0;
         const withdraws = summary.adjustments?.sangria || 0;
-        return session.initialAmount + sales + reinforcements - withdraws;
+        const initial = session.initialAmount || 0;
+        return initial + sales + reinforcements - withdraws;
     };
 
     return (
@@ -136,7 +137,7 @@ const CashierManagement: React.FC = () => {
                     <div>
                         <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Fechamento de Frente de Caixa</h2>
                         <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                            {isOpen ? `Aberto em: ${format(new Date(session.openedAt), 'dd/MM/yyyy HH:mm')}` : 'Caixa Encerrado'}
+                            {isOpen ? `Aberto em: ${session?.openedAt ? format(new Date(session.openedAt), 'dd/MM/yyyy HH:mm') : '---'}` : 'Caixa Encerrado'}
                         </p>
                     </div>
                 </div>
@@ -214,7 +215,7 @@ const CashierManagement: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <p className="text-lg font-black text-slate-900 uppercase italic tracking-tight">{m.label}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Esperado: R$ {expected.toFixed(2)}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Esperado: R$ {(expected || 0).toFixed(2)}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
@@ -222,7 +223,7 @@ const CashierManagement: React.FC = () => {
                                                         "text-sm font-black italic",
                                                         diff === 0 ? "text-emerald-500" : Math.abs(diff) < 0.01 ? "text-emerald-500" : diff < 0 ? "text-rose-500" : "text-blue-500"
                                                     )}>
-                                                        {Math.abs(diff) < 0.01 ? 'CONFERIDO' : `DIF: R$ ${diff.toFixed(2)}`}
+                                                        {Math.abs(diff) < 0.01 ? 'CONFERIDO' : `DIF: R$ ${(diff || 0).toFixed(2)}`}
                                                     </p>
                                                 </div>
                                             </div>
@@ -252,7 +253,7 @@ const CashierManagement: React.FC = () => {
                                                 <div className="mt-6 grid grid-cols-2 gap-3">
                                                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                                         <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Abertura (+)</p>
-                                                        <p className="text-sm font-bold text-emerald-600 italic">R$ {session.initialAmount.toFixed(2)}</p>
+                                                        <p className="text-sm font-bold text-emerald-600 italic">R$ {(session?.initialAmount || 0).toFixed(2)}</p>
                                                     </div>
                                                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                                         <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Vendas (+)</p>
@@ -276,7 +277,7 @@ const CashierManagement: React.FC = () => {
                             <div className="p-8 bg-slate-900 space-y-6">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Informado</span>
-                                    <span className="text-4xl font-black text-white italic">R$ {Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0).toFixed(2)}</span>
+                                    <span className="text-4xl font-black text-white italic">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toFixed(2)}</span>
                                 </div>
                                 <textarea 
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm font-bold text-white uppercase italic tracking-tight focus:border-orange-500 outline-none h-24" 
@@ -322,7 +323,7 @@ const CashierManagement: React.FC = () => {
                                                     <div>
                                                         <h4 className="text-lg font-black text-slate-900 uppercase italic tracking-tight">{order.tableNumber ? `MESA ${order.tableNumber}` : order.deliveryOrder?.name || 'BALCÃO'}</h4>
                                                         <div className="flex items-center gap-4 mt-2">
-                                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase"><Clock size={14}/> {format(new Date(order.createdAt), 'HH:mm')}</div>
+                                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase"><Clock size={14}/> {order.createdAt ? format(new Date(order.createdAt), 'HH:mm') : '--:--'}</div>
                                                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase"><User size={14}/> {order.user?.name || 'SISTEMA'}</div>
                                                         </div>
                                                     </div>
@@ -331,7 +332,7 @@ const CashierManagement: React.FC = () => {
                                                 <div className="flex flex-col md:flex-row items-center gap-6">
                                                     <div className="text-right">
                                                         <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Valor do Pedido</p>
-                                                        <p className="text-xl font-black text-slate-900 italic">R$ {order.total.toFixed(2)}</p>
+                                                        <p className="text-xl font-black text-slate-900 italic">R$ {(order.total || 0).toFixed(2)}</p>
                                                     </div>
                                                     
                                                     <div className="h-px md:h-12 w-full md:w-px bg-slate-100 mx-2" />

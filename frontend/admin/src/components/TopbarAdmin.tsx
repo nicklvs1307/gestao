@@ -112,7 +112,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                                     <div className="p-5 border-b border-slate-50 bg-slate-50/50">
                                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{getCashierTimeStr() || 'Turno Encerrado'}</p>
                                         {cashierStatus?.isOpen && (
-                                            <p className="text-base font-black text-slate-900 italic">R$ {cashierStatus.session.cashBalance?.toFixed(2) || '0.00'}</p>
+                                            <p className="text-base font-black text-slate-900 italic">R$ {(cashierStatus.session?.cashBalance || 0).toFixed(2)}</p>
                                         )}
                                     </div>
                                     <div className="p-2">

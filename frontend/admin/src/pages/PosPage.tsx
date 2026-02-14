@@ -618,672 +618,671 @@ const PosPage: React.FC = () => {
                                 <button key={t.id} onClick={() => handleTableClick(t)} className={cn("flex flex-col rounded-2xl border-2 p-4 transition-all hover:scale-105 active:scale-95 shadow-md min-h-[120px] relative overflow-hidden group", t.status === 'free' ? "bg-white border-slate-50 hover:border-emerald-400" : "bg-rose-50 border-rose-100 hover:border-rose-400")}>
                                     <div className={cn("absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-10 transition-transform group-hover:scale-150", t.status === 'free' ? "bg-emerald-500" : "bg-rose-500")} />
                                     <span className={cn("text-2xl font-black italic tracking-tighter", t.status === 'free' ? "text-slate-200" : "text-rose-600")}>0{t.number}</span>
-                                    <div className="mt-auto flex flex-col items-start">
-                                        <span className={cn("text-[8px] font-black uppercase tracking-widest", t.status === 'free' ? "text-slate-300" : "text-rose-400")}>{t.status === 'free' ? 'Livre' : 'Ocupada'}</span>
-                                        {t.status !== 'free' && <span className="font-black text-sm text-rose-900 tracking-tighter italic leading-none">R$ {(t.totalAmount || 0).toFixed(2)}</span>}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </main>
-
-            {/* --- MODAIS DE NEGÓCIO --- */}
-            <AnimatePresence>
-                {/* Detalhes da Mesa (Checkout / Transferência) */}
-                {activeModal === 'table_details' && viewingTable && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                            <header className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-4 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-100"><Utensils size={24} /></div>
-                                    <div><h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Mesa 0{viewingTable.number}</h3><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Gestão de Consumo</p></div>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="bg-white rounded-full"><X size={24} /></Button>
-                            </header>
-                            
-                            <div className="flex-1 overflow-y-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-10 custom-scrollbar">
-                                <div className="space-y-6">
-                                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><List size={14} /> Itens Consumidos</h4>
-                                    <div className="space-y-2">
-                                        {viewingTable.items?.map((item: any) => (
-                                            <Card key={item.id} className="p-4 border-slate-50 group hover:border-orange-200 transition-all">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-black text-slate-800 uppercase italic">0{item.quantity}x {item.product.name}</span>
-                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                            {item.sizeJson && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{JSON.parse(item.sizeJson).name}</span>}
-                                                            {item.flavorsJson && JSON.parse(item.flavorsJson).map((f:any) => <span key={f.id} className="text-[8px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-bold uppercase">{f.name}</span>)}
-                                                            {item.addonsJson && JSON.parse(item.addonsJson).map((a:any) => <span key={a.id} className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">+{a.name}</span>)}
-                                                        </div>
-                                                        {item.observations && <p className="text-[8px] text-amber-600 font-bold mt-1 uppercase italic">Obs: {item.observations}</p>}
-                                                    </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * (item.priceAtTime || 0)).toFixed(2)}</span>
-                                                        <button 
-                                                            onClick={async () => {
-                                                                if(confirm('Remover este item do pedido?')) {
-                                                                    await removeOrderItem(viewingTable.id, item.id);
-                                                                    toast.success('Item removido');
-                                                                    loadTableSummary();
-                                                                    // Atualiza o estado viewingTable
-                                                                    const updated = await getPosTableSummary();
-                                                                    const table = updated.find((t:any) => t.id === viewingTable.id);
-                                                                    if(table) setViewingTable(table);
-                                                                }
-                                                            }}
-                                                            className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </Card>
-                                        ))}
-                                        {(!viewingTable.items || viewingTable.items.length === 0) && (
-                                            <p className="text-center py-10 text-slate-300 font-black uppercase text-[10px] italic">Nenhum item pendente</p>
-                                        )}
-                                    </div>
-                                    <div className="p-6 bg-slate-900 text-white rounded-[2rem] shadow-xl relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
-                                        <div className="flex justify-between items-center relative z-10"><span className="text-xs font-black uppercase text-slate-400 tracking-widest">Total Acumulado</span><span className="text-3xl font-black italic text-emerald-400 tracking-tighter">R$ {(viewingTable.totalAmount || 0).toFixed(2).replace('.', ',')}</span></div>
-                                    </div>
-                                </div>
-                                <div className="space-y-6">
-                                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><ArrowRightLeft size={14} /> Ações da Mesa</h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={async () => {
-                                            try {
-                                                const config = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                                                await printOrder(viewingTable as any, config);
-                                                toast.success('Pré-conta enviada!');
-                                            } catch (e) { toast.error('Erro ao imprimir'); }
-                                        }}><div className="flex items-center gap-3"><Printer size={18} className="text-blue-500" /><span>Imprimir Pré-Conta</span></div><ChevronRight size={16} /></Button>
-                                        <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('transfer_table')}><div className="flex items-center gap-3"><MoveRight size={18} className="text-orange-500" /><span>Transferir Mesa</span></div><ChevronRight size={16} /></Button>
-                                        <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('payment_method')}><div className="flex items-center gap-3"><Receipt size={18} className="text-emerald-500" /><span>Encerrar e Pagar</span></div><ChevronRight size={16} /></Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-
-                                {/* Modal de Pagamento (Checkout) */}
-
-                                {activeModal === 'payment_method' && viewingTable && (
-
-                                    <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
-
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('table_details')} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
-
-                                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col">
-
-                                            <header className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-
-                                                <div className="flex items-center gap-3">
-
-                                                    <div className="p-2.5 bg-emerald-500 text-white rounded-xl shadow-lg"><Receipt size={20} /></div>
-
-                                                    <h3 className="text-xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Finalizar Mesa 0{viewingTable.number}</h3>
-
-                                                </div>
-
-                                                <Button variant="ghost" size="icon" onClick={() => setActiveModal('table_details')} className="bg-white rounded-full"><X size={20}/></Button>
-
-                                            </header>
-
-                
-
-                                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-
-                                                <div className="space-y-6">
-
-                                                    <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
-
-                                                        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 blur-2xl -mr-12 -mt-12 rounded-full" />
-
-                                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 relative z-10">Total Consumido</p>
-
-                                                        <h4 className="text-3xl font-black italic text-white tracking-tighter relative z-10">R$ {viewingTable.totalAmount.toFixed(2).replace('.', ',')}</h4>
-
-                                                        
-
-                                                        <div className="mt-6 pt-4 border-t border-white/10 space-y-2 relative z-10">
-
-                                                            <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-
-                                                                <span>Subtotal</span>
-
-                                                                <span>R$ {viewingTable.totalAmount.toFixed(2)}</span>
-
+                                                                            <div className="mt-auto flex flex-col items-start">
+                                                                            <span className={cn("text-[8px] font-black uppercase tracking-widest", t.status === 'free' ? "text-slate-300" : "text-rose-400")}>{t.status === 'free' ? 'Livre' : 'Ocupada'}</span>
+                                                                            {t.status !== 'free' && <span className="font-black text-sm text-rose-900 tracking-tighter italic leading-none">R$ {(t.totalAmount || 0).toFixed(2)}</span>}
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
                                                             </div>
-
-                                                            <div className="flex justify-between items-center text-[10px] font-bold text-orange-400 uppercase">
-
-                                                                <span>Desconto</span>
-
-                                                                <span>- R$ {parseFloat(discount || '0').toFixed(2)}</span>
-
-                                                            </div>
-
-                                                            <div className="flex justify-between items-center text-[10px] font-bold text-emerald-400 uppercase border-t border-white/5 pt-2">
-
-                                                                <span className="font-black">Total à Pagar</span>
-
-                                                                <span className="text-sm font-black">R$ {(viewingTable.totalAmount - parseFloat(discount || '0')).toFixed(2)}</span>
-
-                                                            </div>
-
                                                         </div>
-
-                                                    </div>
-
-                
-
-                                                    <div className="space-y-4">
-
-                                                        <Input 
-
-                                                            label="Aplicar Desconto (R$)" 
-
-                                                            type="number" 
-
-                                                            placeholder="0,00" 
-
-                                                            value={discount} 
-
-                                                            onChange={e => setDiscount(e.target.value)} 
-
-                                                            className="font-black text-rose-500"
-
-                                                        />
-
-                                                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-
-                                                            <div className="flex items-center gap-3">
-
-                                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm text-slate-400">
-
-                                                                    <Percent size={14} />
-
-                                                                </div>
-
-                                                                <div>
-
-                                                                    <p className="text-[10px] font-black text-slate-900 uppercase italic">Taxa de Serviço (10%)</p>
-
-                                                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Incluir no fechamento?</p>
-
-                                                                </div>
-
-                                                            </div>
-
-                                                            <button 
-
-                                                                onClick={() => setUseServiceTax(!useServiceTax)}
-
-                                                                className={cn(
-
-                                                                    "w-12 h-6 rounded-full transition-all relative",
-
-                                                                    useServiceTax ? "bg-emerald-500" : "bg-slate-200"
-
-                                                                )}
-
-                                                            >
-
-                                                                <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm", useServiceTax ? "right-1" : "left-1")} />
-
-                                                            </button>
-
-                                                        </div>
-
-                                                    </div>
-
-                                                </div>
-
-                
-
-                                                                                <div className="space-y-6">
-
-                
-
-                                                                                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic">Selecione o Método</h4>
-
-                
-
-                                                                                    
-
-                
-
-                                                                                    <div className="space-y-4">
-
-                
-
-                                                                                        <div className="flex items-center justify-between px-2">
-
-                
-
-                                                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor a Receber</p>
-
-                
-
-                                                                                            <button 
-
-                
-
-                                                                                                onClick={() => {
-
-                
-
-                                                                                                    setIsPartialPayment(!isPartialPayment);
-
-                
-
-                                                                                                    setPaymentAmount(isPartialPayment ? '' : (viewingTable.totalAmount - parseFloat(discount || '0')).toFixed(2));
-
-                
-
-                                                                                                }}
-
-                
-
-                                                                                                className={cn(
-
-                
-
-                                                                                                    "text-[9px] font-black uppercase px-2 py-1 rounded-md transition-all",
-
-                
-
-                                                                                                    isPartialPayment ? "bg-orange-500 text-white shadow-md" : "bg-slate-100 text-slate-400"
-
-                
-
-                                                                                                )}
-
-                
-
-                                                                                            >
-
-                
-
-                                                                                                {isPartialPayment ? 'Pagamento Parcial ATIVO' : 'Dividir Conta?'}
-
-                
-
-                                                                                            </button>
-
-                
-
-                                                                                        </div>
-
-                
-
-                                                                                        
-
-                
-
-                                                                                        <AnimatePresence>
-
-                
-
-                                                                                            {isPartialPayment && (
-
-                
-
-                                                                                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-
-                
-
-                                                                                                    <div className="relative">
-
-                
-
-                                                                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg italic">R$</span>
-
-                
-
-                                                                                                        <input 
-
-                
-
-                                                                                                            type="number" 
-
-                
-
-                                                                                                            step="0.01" 
-
-                
-
-                                                                                                            autoFocus
-
-                
-
-                                                                                                            className="w-full h-14 bg-orange-50 border-2 border-orange-200 rounded-2xl pl-12 pr-4 text-xl font-black italic focus:border-orange-500 outline-none transition-all text-orange-900" 
-
-                
-
-                                                                                                            value={paymentAmount}
-
-                
-
-                                                                                                            onChange={e => setPaymentAmount(e.target.value)}
-
-                
-
-                                                                                                            placeholder="0,00"
-
-                
-
-                                                                                                        />
-
-                
-
-                                                                                                    </div>
-
-                
-
-                                                                                                </motion.div>
-
-                
-
-                                                                                            )}
-
-                
-
-                                                                                        </AnimatePresence>
-
-                
-
-                                                                                    </div>
-
-                
-
-                                                
-
-                
-
-                                                                                    <div className="grid grid-cols-2 gap-3">
-
-                
-
-                                                                                        {paymentMethods.map(m => (
-
-                
-
-                                                                                            <button 
-
-                
-
-                                                                                                key={m.id} 
-
-                
-
-                                                                                                onClick={() => handleCheckout({ 
-
-                
-
-                                                                                                    paymentMethod: m.id,
-
-                
-
-                                                                                                    discount: parseFloat(discount || '0'),
-
-                
-
-                                                                                                    useServiceTax,
-
-                
-
-                                                                                                    amount: isPartialPayment ? parseFloat(paymentAmount) : (viewingTable.totalAmount - parseFloat(discount || '0'))
-
-                
-
-                                                                                                })} 
-
-                
-
-                                                                                                className="p-4 flex flex-col items-center gap-2 bg-white border-2 border-slate-100 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50/30 transition-all group"
-
-                
-
-                                                                                            >
-
-                                                                <div className="text-2xl grayscale group-hover:grayscale-0 transition-all">
-
-                                                                    {m.type === 'CASH' ? '💵' : m.type === 'PIX' ? '📱' : '💳'}
-
-                                                                </div>
-
-                                                                <span className="text-[9px] font-black uppercase text-slate-500 group-hover:text-emerald-700 text-center">{m.name}</span>
-
-                                                            </button>
-
-                                                        ))}
-
-                                                    </div>
-
-                                                    
-
-                                                    <Card className="p-4 bg-orange-50 border-orange-100 border-2 border-dashed">
-
-                                                        <div className="flex items-center gap-3">
-
-                                                            <div className="p-2 bg-white rounded-xl text-orange-500 shadow-sm"><Info size={16}/></div>
-
-                                                            <p className="text-[9px] font-bold text-orange-700 leading-tight uppercase">
-
-                                                                Para <span className="font-black">Pagamento Parcial</span> ou <span className="font-black">Divisão de Conta</span>, utilize a ferramenta de correção na aba de comandas.
-
-                                                            </p>
-
-                                                        </div>
-
-                                                    </Card>
-
-                                                </div>
-
-                                            </div>
-
-                
-
-                                            <footer className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-
-                                                <Button variant="ghost" onClick={() => setActiveModal('table_details')} className="uppercase text-[10px] font-black text-slate-400 italic">Voltar para Detalhes</Button>
-
-                                            </footer>
-
-                                        </motion.div>
-
-                                    </div>
-
-                                )}
-
-                {/* Modal de Checkout PDV (Balcão / Entrega) - NOVO */}
-                {activeModal === 'pos_checkout' && (
-                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-0">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
-                        <motion.div 
-                            initial={{ x: '100%' }} 
-                            animate={{ x: 0 }} 
-                            exit={{ x: '100%' }} 
-                            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                            className="relative w-full h-full bg-slate-50 flex flex-col overflow-hidden"
-                        >
-                            <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 shadow-sm">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-orange-500 text-white rounded-2xl shadow-lg shadow-orange-100">
-                                        <ShoppingBag size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Pagamento e Entrega</h3>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Finalização de Venda</p>
-                                    </div>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="bg-slate-100 rounded-full h-12 w-12 hover:bg-rose-50 hover:text-rose-500 transition-all">
-                                    <X size={28} />
-                                </Button>
-                            </header>
-
-                            <div className="flex-1 flex overflow-hidden">
-                                {/* Coluna Esquerda: Resumo e Ajustes */}
-                                <div className="w-[450px] bg-white border-r border-slate-200 p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8 shadow-xl z-10">
-                                    <div className="space-y-6">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
-                                            <Calculator size={14} className="text-orange-500" /> Resumo do Pedido
-                                        </h4>
-                                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
-                                            <div className="space-y-4 relative z-10">
-                                                <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                                    <span>Quantidade de itens:</span>
-                                                    <span className="text-white">{cart.reduce((a, b) => a + b.quantity, 0).toFixed(3).replace('.', ',')}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                                    <span>Total itens:</span>
-                                                    <span className="text-white text-sm">R$ {cartTotal.toFixed(2).replace('.', ',')}</span>
-                                                </div>
-                                                <div className="pt-4 border-t border-white/10 space-y-3">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Entrega:</span>
-                                                        <span className="text-blue-400 font-black italic">R$ {parseFloat(posDeliveryFee || '0').toFixed(2).replace('.', ',')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Acréscimo:</span>
-                                                        <span className="text-rose-400 font-black italic">R$ {parseFloat(posExtraCharge || '0').toFixed(2).replace('.', ',')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Desconto:</span>
-                                                        <span className="text-emerald-400 font-black italic">- R$ {parseFloat(posDiscountValue || '0').toFixed(2).replace('.', ',')}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="pt-6 border-t border-white/20">
-                                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">VALOR TOTAL</span>
-                                                    <span className="text-5xl font-black italic text-white tracking-tighter">
-                                                        R$ {(cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')).toFixed(2).replace('.', ',')}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Entrega (R$)</label>
-                                                <input 
-                                                    type="number" step="0.01" value={posDeliveryFee} onChange={e => setPosDeliveryFee(e.target.value)}
-                                                    className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-blue-600 focus:border-blue-500 outline-none transition-all"
-                                                />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Acréscimo (R$)</label>
-                                                <input 
-                                                    type="number" step="0.01" value={posExtraCharge} onChange={e => setPosExtraCharge(e.target.value)}
-                                                    className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-rose-600 focus:border-rose-500 outline-none transition-all"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Desconto</label>
-                                            <div className="flex gap-2">
-                                                <div className="relative flex-1">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">R$</span>
-                                                    <input 
-                                                        type="number" step="0.01" value={posDiscountValue} 
-                                                        onChange={e => {
-                                                            const val = e.target.value;
-                                                            setPosDiscountValue(val);
-                                                            const numVal = parseFloat(val) || 0;
-                                                            const perc = cartTotal > 0 ? ((numVal / cartTotal) * 100).toFixed(2) : '0';
-                                                            setPosDiscountPercentage(perc === 'Infinity' || perc === 'NaN' ? '0' : perc);
-                                                        }}
-                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl pl-8 pr-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
-                                                    />
-                                                </div>
-                                                <div className="relative w-28">
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">%</span>
-                                                    <input 
-                                                        type="number" step="0.01" value={posDiscountPercentage}
-                                                        onChange={e => {
-                                                            const perc = e.target.value;
-                                                            setPosDiscountPercentage(perc);
-                                                            const numPerc = parseFloat(perc) || 0;
-                                                            const val = ((numPerc / 100) * cartTotal).toFixed(2);
-                                                            setPosDiscountValue(val);
-                                                        }}
-                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1.5 mt-auto">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Observações para entrega</label>
-                                        <textarea 
-                                            value={posObservations} onChange={e => setPosObservations(e.target.value)}
-                                            className="w-full h-24 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] p-4 font-bold text-xs outline-none focus:border-orange-500 transition-all resize-none shadow-inner"
-                                            placeholder="Ex: Portão azul, interfone 201..."
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Coluna Direita: Meios de Pagamento */}
-                                <div className="flex-1 p-10 flex flex-col gap-10">
-                                    <div className="flex-1 space-y-8">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
-                                            <Wallet size={14} className="text-orange-500" /> Formas de pagamento
-                                        </h4>
-                                        
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                            {paymentMethods.map(m => (
-                                                <button 
-                                                    key={m.id} 
-                                                    onClick={() => setPosPaymentMethodId(m.id)}
-                                                    className={cn(
-                                                        "h-20 flex flex-col items-center justify-center gap-1 rounded-[1.5rem] border-2 transition-all shadow-sm group",
-                                                        posPaymentMethodId === m.id 
-                                                            ? "bg-blue-500 border-blue-500 text-white shadow-blue-200 shadow-xl scale-[1.02]" 
-                                                            : "bg-white border-slate-100 text-slate-600 hover:border-blue-400"
                                                     )}
-                                                >
-                                                    <span className={cn("text-[10px] font-black uppercase tracking-widest", posPaymentMethodId === m.id ? "text-white/80" : "text-slate-400 group-hover:text-blue-500")}>{m.name}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-orange-500 rounded-[2.5rem] p-8 text-white shadow-2xl flex items-center justify-between">
-                                        <div>
-                                            <span className="text-[12px] font-black uppercase tracking-widest text-orange-200 block mb-1">Valor Restante:</span>
-                                            <span className="text-4xl font-black italic tracking-tighter">
-                                                R$ {(!posPaymentMethodId ? (cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')) : 0).toFixed(2).replace('.', ',')}
-                                            </span>
-                                        </div>
-                                        <div className="flex gap-4">
-                                            <Button variant="ghost" onClick={() => setActiveModal('none')} className="h-16 px-8 rounded-2xl bg-white/10 hover:bg-white/20 text-white uppercase font-black italic tracking-widest text-[11px]">
-                                                VOLTAR
-                                            </Button>
-                                            <Button 
-                                                onClick={submitOrder} 
-                                                disabled={!posPaymentMethodId}
-                                                className="h-16 px-12 rounded-2xl bg-white text-orange-600 hover:bg-slate-50 font-black italic tracking-widest text-[11px] shadow-xl disabled:opacity-50"
-                                            >
-                                                FECHAR PEDIDO
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-
+                                                </main>
+                                    
+                                                {/* --- MODAIS DE NEGÓCIO --- */}
+                                                <AnimatePresence>
+                                                    {/* Detalhes da Mesa (Checkout / Transferência) */}
+                                                    {activeModal === 'table_details' && viewingTable && (
+                                                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                                                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                                                            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                                                                <header className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="p-4 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-100"><Utensils size={24} /></div>
+                                                                        <div><h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Mesa 0{viewingTable.number}</h3><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Gestão de Consumo</p></div>
+                                                                    </div>
+                                                                    <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="bg-white rounded-full"><X size={24} /></Button>
+                                                                </header>
+                                                                
+                                                                <div className="flex-1 overflow-y-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-10 custom-scrollbar">
+                                                                    <div className="space-y-6">
+                                                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><List size={14} /> Itens Consumidos</h4>
+                                                                        <div className="space-y-2">
+                                                                            {viewingTable.items?.map((item: any) => (
+                                                                                <Card key={item.id} className="p-4 border-slate-50 group hover:border-orange-200 transition-all">
+                                                                                    <div className="flex justify-between items-start">
+                                                                                        <div className="flex flex-col">
+                                                                                            <span className="text-xs font-black text-slate-800 uppercase italic">0{item.quantity}x {item.product.name}</span>
+                                                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                                                {item.sizeJson && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{JSON.parse(item.sizeJson).name}</span>}
+                                                                                                {item.flavorsJson && JSON.parse(item.flavorsJson).map((f:any) => <span key={f.id} className="text-[8px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-bold uppercase">{f.name}</span>)}
+                                                                                                {item.addonsJson && JSON.parse(item.addonsJson).map((a:any) => <span key={a.id} className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">+{a.name}</span>)}
+                                                                                            </div>
+                                                                                            {item.observations && <p className="text-[8px] text-amber-600 font-bold mt-1 uppercase italic">Obs: {item.observations}</p>}
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-4">
+                                                                                            <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * (item.priceAtTime || 0)).toFixed(2)}</span>
+                                                                                            <button 
+                                                                                                onClick={async () => {
+                                                                                                    if(confirm('Remover este item do pedido?')) {
+                                                                                                        await removeOrderItem(viewingTable.id, item.id);
+                                                                                                        toast.success('Item removido');
+                                                                                                        loadTableSummary();
+                                                                                                        // Atualiza o estado viewingTable
+                                                                                                        const updated = await getPosTableSummary();
+                                                                                                        const table = updated.find((t:any) => t.id === viewingTable.id);
+                                                                                                        if(table) setViewingTable(table);
+                                                                                                    }
+                                                                                                }}
+                                                                                                className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                                                            >
+                                                                                                <Trash2 size={14} />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </Card>
+                                                                            ))}
+                                                                            {(!viewingTable.items || viewingTable.items.length === 0) && (
+                                                                                <p className="text-center py-10 text-slate-300 font-black uppercase text-[10px] italic">Nenhum item pendente</p>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="p-6 bg-slate-900 text-white rounded-[2rem] shadow-xl relative overflow-hidden">
+                                                                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
+                                                                            <div className="flex justify-between items-center relative z-10"><span className="text-xs font-black uppercase text-slate-400 tracking-widest">Total Acumulado</span><span className="text-3xl font-black italic text-emerald-400 tracking-tighter">R$ {(viewingTable.totalAmount || 0).toFixed(2).replace('.', ',')}</span></div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="space-y-6">
+                                                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><ArrowRightLeft size={14} /> Ações da Mesa</h4>
+                                                                        <div className="grid grid-cols-1 gap-3">
+                                                                            <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={async () => {
+                                                                                try {
+                                                                                    const config = JSON.parse(localStorage.getItem('printer_config') || '{}');
+                                                                                    await printOrder(viewingTable as any, config);
+                                                                                    toast.success('Pré-conta enviada!');
+                                                                                } catch (e) { toast.error('Erro ao imprimir'); }
+                                                                            }}><div className="flex items-center gap-3"><Printer size={18} className="text-blue-500" /><span>Imprimir Pré-Conta</span></div><ChevronRight size={16} /></Button>
+                                                                            <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('transfer_table')}><div className="flex items-center gap-3"><MoveRight size={18} className="text-orange-500" /><span>Transferir Mesa</span></div><ChevronRight size={16} /></Button>
+                                                                            <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('payment_method')}><div className="flex items-center gap-3"><Receipt size={18} className="text-emerald-500" /><span>Encerrar e Pagar</span></div><ChevronRight size={16} /></Button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </motion.div>
+                                                        </div>
+                                                    )}
+                                    
+                                                                    {/* Modal de Pagamento (Checkout) */}
+                                    
+                                                                    {activeModal === 'payment_method' && viewingTable && (
+                                    
+                                                                        <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
+                                    
+                                                                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('table_details')} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+                                    
+                                                                            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col">
+                                    
+                                                                                <header className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                    
+                                                                                    <div className="flex items-center gap-3">
+                                    
+                                                                                        <div className="p-2.5 bg-emerald-500 text-white rounded-xl shadow-lg"><Receipt size={20} /></div>
+                                    
+                                                                                        <h3 className="text-xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Finalizar Mesa 0{viewingTable.number}</h3>
+                                    
+                                                                                    </div>
+                                    
+                                                                                    <Button variant="ghost" size="icon" onClick={() => setActiveModal('table_details')} className="bg-white rounded-full"><X size={20}/></Button>
+                                    
+                                                                                </header>
+                                    
+                                                    
+                                    
+                                                                                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    
+                                                                                    <div className="space-y-6">
+                                    
+                                                                                        <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                                    
+                                                                                            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 blur-2xl -mr-12 -mt-12 rounded-full" />
+                                    
+                                                                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 relative z-10">Total Consumido</p>
+                                    
+                                                                                            <h4 className="text-3xl font-black italic text-white tracking-tighter relative z-10">R$ {(viewingTable.totalAmount || 0).toFixed(2).replace('.', ',')}</h4>
+                                    
+                                                                                            
+                                    
+                                                                                            <div className="mt-6 pt-4 border-t border-white/10 space-y-2 relative z-10">
+                                    
+                                                                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                                    
+                                                                                                    <span>Subtotal</span>
+                                    
+                                                                                                    <span>R$ {(viewingTable.totalAmount || 0).toFixed(2)}</span>
+                                    
+                                                                                                </div>
+                                    
+                                                                                                <div className="flex justify-between items-center text-[10px] font-bold text-orange-400 uppercase">
+                                    
+                                                                                                    <span>Desconto</span>
+                                    
+                                                                                                    <span>- R$ {parseFloat(discount || '0').toFixed(2)}</span>
+                                    
+                                                                                                </div>
+                                    
+                                                                                                <div className="flex justify-between items-center text-[10px] font-bold text-emerald-400 uppercase border-t border-white/5 pt-2">
+                                    
+                                                                                                    <span className="font-black">Total à Pagar</span>
+                                    
+                                                                                                    <span className="text-sm font-black">R$ {(viewingTable.totalAmount - parseFloat(discount || '0')).toFixed(2)}</span>
+                                    
+                                                                                                </div>
+                                    
+                                                                                            </div>
+                                    
+                                                                                        </div>
+                                    
+                                                    
+                                    
+                                                                                        <div className="space-y-4">
+                                    
+                                                                                            <Input 
+                                    
+                                                                                                label="Aplicar Desconto (R$)" 
+                                    
+                                                                                                type="number" 
+                                    
+                                                                                                placeholder="0,00" 
+                                    
+                                                                                                value={discount} 
+                                    
+                                                                                                onChange={e => setDiscount(e.target.value)} 
+                                    
+                                                                                                className="font-black text-rose-500"
+                                    
+                                                                                            />
+                                    
+                                                                                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    
+                                                                                                <div className="flex items-center gap-3">
+                                    
+                                                                                                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm text-slate-400">
+                                    
+                                                                                                        <Percent size={14} />
+                                    
+                                                                                                    </div>
+                                    
+                                                                                                    <div>
+                                    
+                                                                                                        <p className="text-[10px] font-black text-slate-900 uppercase italic">Taxa de Serviço (10%)</p>
+                                    
+                                                                                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Incluir no fechamento?</p>
+                                    
+                                                                                                    </div>
+                                    
+                                                                                                </div>
+                                    
+                                                                                                <button 
+                                    
+                                                                                                    onClick={() => setUseServiceTax(!useServiceTax)}
+                                    
+                                                                                                    className={cn(
+                                    
+                                                                                                        "w-12 h-6 rounded-full transition-all relative",
+                                    
+                                                                                                        useServiceTax ? "bg-emerald-500" : "bg-slate-200"
+                                    
+                                                                                                    )}
+                                    
+                                                                                                >
+                                    
+                                                                                                    <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm", useServiceTax ? "right-1" : "left-1")} />
+                                    
+                                                                                                </button>
+                                    
+                                                                                            </div>
+                                    
+                                                                                        </div>
+                                    
+                                                                                    </div>
+                                    
+                                                    
+                                    
+                                                                                                                    <div className="space-y-6">
+                                    
+                                                    
+                                    
+                                                                                                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic">Selecione o Método</h4>
+                                    
+                                                    
+                                    
+                                                                                                                        
+                                    
+                                                    
+                                    
+                                                                                                                        <div className="space-y-4">
+                                    
+                                                    
+                                    
+                                                                                                                            <div className="flex items-center justify-between px-2">
+                                    
+                                                    
+                                    
+                                                                                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor a Receber</p>
+                                    
+                                                    
+                                    
+                                                                                                                                <button 
+                                    
+                                                    
+                                    
+                                                                                                                                    onClick={() => {
+                                    
+                                                    
+                                    
+                                                                                                                                        setIsPartialPayment(!isPartialPayment);
+                                    
+                                                    
+                                    
+                                                                                                                                        setPaymentAmount(isPartialPayment ? '' : (viewingTable.totalAmount - parseFloat(discount || '0')).toFixed(2));
+                                    
+                                                    
+                                    
+                                                                                                                                    }}
+                                    
+                                                    
+                                    
+                                                                                                                                    className={cn(
+                                    
+                                                    
+                                    
+                                                                                                                                        "text-[9px] font-black uppercase px-2 py-1 rounded-md transition-all",
+                                    
+                                                    
+                                    
+                                                                                                                                        isPartialPayment ? "bg-orange-500 text-white shadow-md" : "bg-slate-100 text-slate-400"
+                                    
+                                                    
+                                    
+                                                                                                                                    )}
+                                    
+                                                    
+                                    
+                                                                                                                                >
+                                    
+                                                    
+                                    
+                                                                                                                                    {isPartialPayment ? 'Pagamento Parcial ATIVO' : 'Dividir Conta?'}
+                                    
+                                                    
+                                    
+                                                                                                                                </button>
+                                    
+                                                    
+                                    
+                                                                                                                            </div>
+                                    
+                                                    
+                                    
+                                                                                                                            
+                                    
+                                                    
+                                    
+                                                                                                                            <AnimatePresence>
+                                    
+                                                    
+                                    
+                                                                                                                                {isPartialPayment && (
+                                    
+                                                    
+                                    
+                                                                                                                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                                    
+                                                    
+                                    
+                                                                                                                                        <div className="relative">
+                                    
+                                                    
+                                    
+                                                                                                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg italic">R$</span>
+                                    
+                                                    
+                                    
+                                                                                                                                            <input 
+                                    
+                                                    
+                                    
+                                                                                                                                                type="number" 
+                                    
+                                                    
+                                    
+                                                                                                                                                step="0.01" 
+                                    
+                                                    
+                                    
+                                                                                                                                                autoFocus
+                                    
+                                                    
+                                    
+                                                                                                                                                className="w-full h-14 bg-orange-50 border-2 border-orange-200 rounded-2xl pl-12 pr-4 text-xl font-black italic focus:border-orange-500 outline-none transition-all text-orange-900" 
+                                    
+                                                    
+                                    
+                                                                                                                                                value={paymentAmount}
+                                    
+                                                    
+                                    
+                                                                                                                                                onChange={e => setPaymentAmount(e.target.value)}
+                                    
+                                                    
+                                    
+                                                                                                                                                placeholder="0,00"
+                                    
+                                                    
+                                    
+                                                                                                                                            />
+                                    
+                                                    
+                                    
+                                                                                                                                        </div>
+                                    
+                                                    
+                                    
+                                                                                                                                    </motion.div>
+                                    
+                                                    
+                                    
+                                                                                                                                )}
+                                    
+                                                    
+                                    
+                                                                                                                            </AnimatePresence>
+                                    
+                                                    
+                                    
+                                                                                                                        </div>
+                                    
+                                                    
+                                    
+                                                                                    
+                                    
+                                                    
+                                    
+                                                                                                                        <div className="grid grid-cols-2 gap-3">
+                                    
+                                                    
+                                    
+                                                                                                                            {paymentMethods.map(m => (
+                                    
+                                                    
+                                    
+                                                                                                                                <button 
+                                    
+                                                    
+                                    
+                                                                                                                                    key={m.id} 
+                                    
+                                                    
+                                    
+                                                                                                                                    onClick={() => handleCheckout({ 
+                                    
+                                                    
+                                    
+                                                                                                                                        paymentMethod: m.id,
+                                    
+                                                    
+                                    
+                                                                                                                                        discount: parseFloat(discount || '0'),
+                                    
+                                                    
+                                    
+                                                                                                                                        useServiceTax,
+                                    
+                                                    
+                                    
+                                                                                                                                        amount: isPartialPayment ? parseFloat(paymentAmount) : (viewingTable.totalAmount - parseFloat(discount || '0'))
+                                    
+                                                    
+                                    
+                                                                                                                                    })} 
+                                    
+                                                    
+                                    
+                                                                                                                                    className="p-4 flex flex-col items-center gap-2 bg-white border-2 border-slate-100 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50/30 transition-all group"
+                                    
+                                                    
+                                    
+                                                                                                                                >
+                                    
+                                                                                                    <div className="text-2xl grayscale group-hover:grayscale-0 transition-all">
+                                    
+                                                                                                        {m.type === 'CASH' ? '💵' : m.type === 'PIX' ? '📱' : '💳'}
+                                    
+                                                                                                    </div>
+                                    
+                                                                                                    <span className="text-[9px] font-black uppercase text-slate-500 group-hover:text-emerald-700 text-center">{m.name}</span>
+                                    
+                                                                                                </button>
+                                    
+                                                                                            ))}
+                                    
+                                                                                        </div>
+                                    
+                                                                                        
+                                    
+                                                                                        <Card className="p-4 bg-orange-50 border-orange-100 border-2 border-dashed">
+                                    
+                                                                                            <div className="flex items-center gap-3">
+                                    
+                                                                                                <div className="p-2 bg-white rounded-xl text-orange-500 shadow-sm"><Info size={16}/></div>
+                                    
+                                                                                                <p className="text-[9px] font-bold text-orange-700 leading-tight uppercase">
+                                    
+                                                                                                    Para <span className="font-black">Pagamento Parcial</span> ou <span className="font-black">Divisão de Conta</span>, utilize a ferramenta de correção na aba de comandas.
+                                    
+                                                                                                </p>
+                                    
+                                                                                            </div>
+                                    
+                                                                                        </Card>
+                                    
+                                                                                    </div>
+                                    
+                                                                                </div>
+                                    
+                                                    
+                                    
+                                                                                <footer className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                                    
+                                                                                    <Button variant="ghost" onClick={() => setActiveModal('table_details')} className="uppercase text-[10px] font-black text-slate-400 italic">Voltar para Detalhes</Button>
+                                    
+                                                                                </footer>
+                                    
+                                                                            </motion.div>
+                                    
+                                                                        </div>
+                                    
+                                                                    )}
+                                    
+                                                    {/* Modal de Checkout PDV (Balcão / Entrega) - NOVO */}
+                                                    {activeModal === 'pos_checkout' && (
+                                                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-0">
+                                                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+                                                            <motion.div 
+                                                                initial={{ x: '100%' }} 
+                                                                animate={{ x: 0 }} 
+                                                                exit={{ x: '100%' }} 
+                                                                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                                                                className="relative w-full h-full bg-slate-50 flex flex-col overflow-hidden"
+                                                            >
+                                                                <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 shadow-sm">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="p-3 bg-orange-500 text-white rounded-2xl shadow-lg shadow-orange-100">
+                                                                            <ShoppingBag size={24} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Pagamento e Entrega</h3>
+                                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Finalização de Venda</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="bg-slate-100 rounded-full h-12 w-12 hover:bg-rose-50 hover:text-rose-500 transition-all">
+                                                                        <X size={28} />
+                                                                    </Button>
+                                                                </header>
+                                    
+                                                                <div className="flex-1 flex overflow-hidden">
+                                                                    {/* Coluna Esquerda: Resumo e Ajustes */}
+                                                                    <div className="w-[450px] bg-white border-r border-slate-200 p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8 shadow-xl z-10">
+                                                                        <div className="space-y-6">
+                                                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
+                                                                                <Calculator size={14} className="text-orange-500" /> Resumo do Pedido
+                                                                            </h4>
+                                                                            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
+                                                                                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
+                                                                                <div className="space-y-4 relative z-10">
+                                                                                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                                                                        <span>Quantidade de itens:</span>
+                                                                                        <span className="text-white">{(cart.reduce((a, b) => a + b.quantity, 0) || 0).toFixed(3).replace('.', ',')}</span>
+                                                                                    </div>
+                                                                                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                                                                        <span>Total itens:</span>
+                                                                                        <span className="text-white text-sm">R$ {(cartTotal || 0).toFixed(2).replace('.', ',')}</span>
+                                                                                    </div>
+                                                                                    <div className="pt-4 border-t border-white/10 space-y-3">
+                                                                                        <div className="flex justify-between items-center">
+                                                                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Entrega:</span>
+                                                                                            <span className="text-blue-400 font-black italic">R$ {(parseFloat(posDeliveryFee || '0') || 0).toFixed(2).replace('.', ',')}</span>
+                                                                                        </div>
+                                                                                        <div className="flex justify-between items-center">
+                                                                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Acréscimo:</span>
+                                                                                            <span className="text-rose-400 font-black italic">R$ {(parseFloat(posExtraCharge || '0') || 0).toFixed(2).replace('.', ',')}</span>
+                                                                                        </div>
+                                                                                        <div className="flex justify-between items-center">
+                                                                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Desconto:</span>
+                                                                                            <span className="text-emerald-400 font-black italic">- R$ {(parseFloat(posDiscountValue || '0') || 0).toFixed(2).replace('.', ',')}</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="pt-6 border-t border-white/20">
+                                                                                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">VALOR TOTAL</span>
+                                                                                        <span className="text-5xl font-black italic text-white tracking-tighter">
+                                                                                            R$ {(cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')).toFixed(2).replace('.', ',')}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                    
+                                                                        <div className="space-y-4">
+                                                                            <div className="grid grid-cols-2 gap-4">
+                                                                                <div className="space-y-1.5">
+                                                                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Entrega (R$)</label>
+                                                                                    <input 
+                                                                                        type="number" step="0.01" value={posDeliveryFee} onChange={e => setPosDeliveryFee(e.target.value)}
+                                                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-blue-600 focus:border-blue-500 outline-none transition-all"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="space-y-1.5">
+                                                                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Acréscimo (R$)</label>
+                                                                                    <input 
+                                                                                        type="number" step="0.01" value={posExtraCharge} onChange={e => setPosExtraCharge(e.target.value)}
+                                                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-rose-600 focus:border-rose-500 outline-none transition-all"
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                    
+                                                                            <div className="space-y-1.5">
+                                                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Desconto</label>
+                                                                                <div className="flex gap-2">
+                                                                                    <div className="relative flex-1">
+                                                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">R$</span>
+                                                                                        <input 
+                                                                                            type="number" step="0.01" value={posDiscountValue} 
+                                                                                            onChange={e => {
+                                                                                                const val = e.target.value;
+                                                                                                setPosDiscountValue(val);
+                                                                                                const numVal = parseFloat(val) || 0;
+                                                                                                const perc = cartTotal > 0 ? ((numVal / cartTotal) * 100).toFixed(2) : '0';
+                                                                                                setPosDiscountPercentage(perc === 'Infinity' || perc === 'NaN' ? '0' : perc);
+                                                                                            }}
+                                                                                            className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl pl-8 pr-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div className="relative w-28">
+                                                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">%</span>
+                                                                                        <input 
+                                                                                            type="number" step="0.01" value={posDiscountPercentage}
+                                                                                            onChange={e => {
+                                                                                                const perc = e.target.value;
+                                                                                                setPosDiscountPercentage(perc);
+                                                                                                const numPerc = parseFloat(perc) || 0;
+                                                                                                const val = ((numPerc / 100) * cartTotal).toFixed(2);
+                                                                                                setPosDiscountValue(val);
+                                                                                            }}
+                                                                                            className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                    
+                                                                        <div className="space-y-1.5 mt-auto">
+                                                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Observações para entrega</label>
+                                                                            <textarea 
+                                                                                value={posObservations} onChange={e => setPosObservations(e.target.value)}
+                                                                                className="w-full h-24 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] p-4 font-bold text-xs outline-none focus:border-orange-500 transition-all resize-none shadow-inner"
+                                                                                placeholder="Ex: Portão azul, interfone 201..."
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                    
+                                                                    {/* Coluna Direita: Meios de Pagamento */}
+                                                                    <div className="flex-1 p-10 flex flex-col gap-10">
+                                                                        <div className="flex-1 space-y-8">
+                                                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
+                                                                                <Wallet size={14} className="text-orange-500" /> Formas de pagamento
+                                                                            </h4>
+                                                                            
+                                                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                                                                {paymentMethods.map(m => (
+                                                                                    <button 
+                                                                                        key={m.id} 
+                                                                                        onClick={() => setPosPaymentMethodId(m.id)}
+                                                                                        className={cn(
+                                                                                            "h-20 flex flex-col items-center justify-center gap-1 rounded-[1.5rem] border-2 transition-all shadow-sm group",
+                                                                                            posPaymentMethodId === m.id 
+                                                                                                ? "bg-blue-500 border-blue-500 text-white shadow-blue-200 shadow-xl scale-[1.02]" 
+                                                                                                : "bg-white border-slate-100 text-slate-600 hover:border-blue-400"
+                                                                                        )}
+                                                                                    >
+                                                                                        <span className={cn("text-[10px] font-black uppercase tracking-widest", posPaymentMethodId === m.id ? "text-white/80" : "text-slate-400 group-hover:text-blue-500")}>{m.name}</span>
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                    
+                                                                        <div className="bg-orange-500 rounded-[2.5rem] p-8 text-white shadow-2xl flex items-center justify-between">
+                                                                            <div>
+                                                                                <span className="text-[12px] font-black uppercase tracking-widest text-orange-200 block mb-1">Valor Restante:</span>
+                                                                                <span className="text-4xl font-black italic tracking-tighter">
+                                                                                    R$ {(!posPaymentMethodId ? (cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')) : 0).toFixed(2).replace('.', ',')}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="flex gap-4">
+                                                                                <Button variant="ghost" onClick={() => setActiveModal('none')} className="h-16 px-8 rounded-2xl bg-white/10 hover:bg-white/20 text-white uppercase font-black italic tracking-widest text-[11px]">
+                                                                                    VOLTAR
+                                                                                </Button>
+                                                                                <Button 
+                                                                                    onClick={submitOrder} 
+                                                                                    disabled={!posPaymentMethodId}
+                                                                                    className="h-16 px-12 rounded-2xl bg-white text-orange-600 hover:bg-slate-50 font-black italic tracking-widest text-[11px] shadow-xl disabled:opacity-50"
+                                                                                >
+                                                                                    FECHAR PEDIDO
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </motion.div>
+                                                        </div>
+                                                    )}
                 {/* Modal de Transferência */}
                 {activeModal === 'transfer_table' && viewingTable && (
                     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
