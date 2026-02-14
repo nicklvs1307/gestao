@@ -489,13 +489,13 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/waiter" element={
-            <ProtectedRoute>
+            <ProtectedRoute permission="waiter:pos">
               <WaiterPos />
             </ProtectedRoute>
           } />
           <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
           <Route path="/driver/dashboard" element={
-            <ProtectedRoute>
+            <ProtectedRoute permission="delivery:manage">
               <DriverDashboard />
             </ProtectedRoute>
           } />

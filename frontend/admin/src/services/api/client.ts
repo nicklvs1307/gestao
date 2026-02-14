@@ -27,8 +27,9 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 1. Lida com desautenticação
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    // 1. Lida com desautenticação (Apenas 401 - Não autorizado/Token expirado)
+    // 403 (Proibido) não deve deslogar, apenas mostrar erro de permissão.
+    if (error.response && error.response.status === 401) {
       const isLoginPath = window.location.pathname.includes('/login');
       if (!isLoginPath) {
         localStorage.removeItem('token');

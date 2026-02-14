@@ -25,11 +25,13 @@ const LoginPage: React.FC = () => {
       
       toast.success(`Bem-vindo de volta, ${user.name.split(' ')[0]}!`);
       
+      const permissions = user.permissions || [];
       const normalizedRole = user.role?.toLowerCase() || '';
 
-      if (normalizedRole.includes('waiter')) {
+      // Prioridade por permissão específica em vez de nome de cargo
+      if (permissions.includes('waiter:pos') || normalizedRole.includes('waiter')) {
           navigate('/waiter');
-      } else if (normalizedRole.includes('driver')) {
+      } else if (permissions.includes('delivery:manage') || normalizedRole.includes('driver')) {
           navigate('/driver/dashboard');
       } else {
           navigate('/dashboard');

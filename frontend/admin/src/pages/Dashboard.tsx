@@ -56,6 +56,24 @@ const Dashboard: React.FC = () => {
         navigate('/super-admin');
         return;
     }
+
+    // Redirecionamento Automático para usuários com acesso restrito
+    const permissions = user?.permissions || [];
+    const normalizedRole = user?.role?.toLowerCase() || '';
+
+    if (!user?.isSuperAdmin && !permissions.includes('all:manage')) {
+        // Se for entregador e não tiver acesso a relatórios, manda pro dashboard de driver
+        if ((permissions.includes('delivery:manage') || normalizedRole.includes('driver')) && !permissions.includes('reports:view')) {
+            navigate('/driver/dashboard');
+            return;
+        }
+        // Se for garçom e não tiver acesso a relatórios, manda pro PDV de garçom
+        if ((permissions.includes('waiter:pos') || normalizedRole.includes('waiter')) && !permissions.includes('reports:view')) {
+            navigate('/waiter');
+            return;
+        }
+    }
+
     try {
       setLoading(true);
       const [summaryData, ordersData, historyData, paymentsData, categoriesData] = await Promise.all([
