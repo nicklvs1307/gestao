@@ -91,6 +91,13 @@ const CashierManagement: React.FC = () => {
         finally { setLoading(false); }
     };
 
+    const normalize = (str: string) => {
+        if (!str) return '';
+        return str.toString().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    };
+
     useEffect(() => { fetchData(); }, []);
 
     const handleOpen = async (e: React.FormEvent) => {
@@ -223,16 +230,16 @@ const CashierManagement: React.FC = () => {
                             <div className="divide-y divide-slate-100">
                                 {paymentMethods.map(m => {
                                     // Normaliza a busca para bater com o backend
-                                    const normalizedLabel = m.label.toLowerCase().trim();
-                                    const normalizedId = (m as any).id.toLowerCase().trim();
-                                    const normalizedType = (m as any).type?.toLowerCase().trim();
+                                    const normLabel = normalize(m.label);
+                                    const normId = normalize((m as any).id);
+                                    const normType = normalize((m as any).type);
 
                                     const expected = m.id === 'cash' 
                                         ? getExpectedCash() 
                                         : (
-                                            summary?.salesByMethod?.[normalizedLabel] || 
-                                            summary?.salesByMethod?.[normalizedId] || 
-                                            (normalizedType ? summary?.salesByMethod?.[normalizedType] : 0) ||
+                                            summary?.salesByMethod?.[normLabel] || 
+                                            summary?.salesByMethod?.[normId] || 
+                                            (normType ? summary?.salesByMethod?.[normType] : 0) ||
                                             0
                                         );
                                     
@@ -352,23 +359,25 @@ const CashierManagement: React.FC = () => {
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-slate-50/50">
                                 {sessionOrders.filter(o => {
-                                    const method = (o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other').toLowerCase().trim();
+                                    const method = normalize(o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other');
                                     const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
                                     
-                                    const selectedId = selectedMethod.toLowerCase().trim();
-                                    const selectedLabel = currentDisplayMethod?.label.toLowerCase().trim();
+                                    const selId = normalize(selectedMethod);
+                                    const selLabel = normalize(currentDisplayMethod?.label || '');
+                                    const selType = normalize((currentDisplayMethod as any)?.type || '');
 
-                                    return method === selectedId || method === selectedLabel;
+                                    return method === selId || method === selLabel || method === selType;
                                 }).length > 0 ? (
                                     sessionOrders
                                         .filter(o => {
-                                            const method = (o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other').toLowerCase().trim();
+                                            const method = normalize(o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other');
                                             const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
                                             
-                                            const selectedId = selectedMethod.toLowerCase().trim();
-                                            const selectedLabel = currentDisplayMethod?.label.toLowerCase().trim();
+                                            const selId = normalize(selectedMethod);
+                                            const selLabel = normalize(currentDisplayMethod?.label || '');
+                                            const selType = normalize((currentDisplayMethod as any)?.type || '');
 
-                                            return method === selectedId || method === selectedLabel;
+                                            return method === selId || method === selLabel || method === selType;
                                         })
                                         .map((order: any) => (
                                             <div key={order.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4 group hover:border-orange-500/30 transition-all">

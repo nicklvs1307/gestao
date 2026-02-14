@@ -52,22 +52,33 @@ class CashierController {
       t.type === 'INCOME' && !t.description.includes('[REFORÇO]') && !t.description.includes('[SANGRIA]')
     );
 
-    const salesByMethod = salesTransactions.reduce((acc, curr) => {
-      const rawMethod = (curr.paymentMethod || 'other').trim().toLowerCase();
-      
-      const matchedMethod = restaurantPaymentMethods.find(m => 
-        m.name.toLowerCase().trim() === rawMethod || 
-        m.type.toLowerCase().trim() === rawMethod ||
-        (m.type === 'DEBIT_CARD' && rawMethod.includes('débito')) ||
-        (m.type === 'CREDIT_CARD' && rawMethod.includes('crédito')) ||
-        (m.type === 'CASH' && rawMethod.includes('dinheiro')) ||
-        (m.type === 'PIX' && rawMethod === 'pix')
-      );
+    // Função auxiliar para normalização de strings (remove acentos e espaços)
+    const normalize = (str) => {
+      if (!str) return '';
+      return str.toString().toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .trim();
+    };
 
-      const nameKey = matchedMethod ? matchedMethod.name.toLowerCase().trim() : rawMethod;
-      const typeKey = matchedMethod ? matchedMethod.type.toLowerCase().trim() : rawMethod;
+    const salesByMethod = salesTransactions.reduce((acc, curr) => {
+      const rawMethod = normalize(curr.paymentMethod || 'other');
       
-      // Adiciona o valor tanto na chave do NOME quanto na chave do TIPO para garantir o match
+      const matchedMethod = restaurantPaymentMethods.find(m => {
+        const normName = normalize(m.name);
+        const normType = normalize(m.type);
+        
+        return normName === rawMethod || 
+               normType === rawMethod ||
+               (m.type === 'DEBIT_CARD' && (rawMethod.includes('debito') || rawMethod === 'deb')) ||
+               (m.type === 'CREDIT_CARD' && (rawMethod.includes('credito') || rawMethod === 'cre')) ||
+               (m.type === 'CASH' && (rawMethod.includes('dinheiro') || rawMethod === 'din')) ||
+               (m.type === 'PIX' && rawMethod === 'pix') ||
+               (m.type === 'OTHER' && (rawMethod.includes('outro') || rawMethod === 'other'));
+      });
+
+      const nameKey = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
+      const typeKey = matchedMethod ? normalize(matchedMethod.type) : rawMethod;
+      
       if (!acc[nameKey]) acc[nameKey] = 0;
       acc[nameKey] += curr.amount;
 
