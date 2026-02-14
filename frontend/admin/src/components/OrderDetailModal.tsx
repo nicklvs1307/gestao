@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import type { Order } from '@/types/index.ts';
-import { getDrivers, assignDriver, getSettings, updateDeliveryType, markOrderAsPrinted } from '../services/api';
+import { 
+    getDrivers, assignDriver, getSettings, updateDeliveryType, 
+    markOrderAsPrinted, emitInvoice 
+} from '../services/api';
 import { printOrder } from '../services/printing';
 import { format } from 'date-fns';
 import { 
@@ -41,6 +44,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const [selectedDriver, setSelectedDriver] = useState<string>(order?.deliveryOrder?.driverId || "");
   const [deliveryType, setDeliveryType] = useState<string>(order?.deliveryOrder?.deliveryType || "pickup");
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isEmitting, setIsEmitting] = useState(false);
 
   useEffect(() => {
     if (order) {
@@ -48,6 +52,19 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
       setDeliveryType(order.deliveryOrder?.deliveryType || "pickup");
     }
   }, [order]);
+
+  const handleEmitInvoice = async () => {
+      setIsEmitting(true);
+      try {
+          const res = await emitInvoice(order.id);
+          toast.success("Nota emitida com sucesso!");
+          if (res.pdfUrl) window.open(res.pdfUrl, '_blank');
+      } catch (e: any) {
+          toast.error(e.message || "Erro ao emitir nota.");
+      } finally {
+          setIsEmitting(false);
+      }
+  };
 
   useEffect(() => {
     if (order?.orderType === 'DELIVERY' || !!order?.deliveryOrder) {
@@ -174,6 +191,20 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                 <span className="text-2xl font-black text-emerald-400 italic tracking-tighter">R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2)}</span>
                             </div>
                         </div>
+                        
+                        {/* Botão de NFC-e integrado ao card financeiro */}
+                        {order.status === 'COMPLETED' && (
+                            <button 
+                                onClick={handleEmitInvoice}
+                                disabled={isEmitting}
+                                className="w-full mt-4 h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 group"
+                            >
+                                {isEmitting ? <Loader2 size={14} className="animate-spin text-orange-500" /> : <FileText size={14} className="text-orange-500" />}
+                                <span className="text-[9px] font-black uppercase tracking-widest text-white group-hover:text-orange-500 transition-colors">
+                                    {order.invoice ? 'Ver NFC-e Emitida' : 'Emitir NFC-e (Nota)'}
+                                </span>
+                            </button>
+                        )}
                     </Card>
                 </section>
 
