@@ -215,10 +215,13 @@ const CashierManagement: React.FC = () => {
                             
                             <div className="divide-y divide-slate-100">
                                 {paymentMethods.map(m => {
-                                    // Tenta encontrar o valor pelo label exato ou pelo ID
+                                    // Normaliza a busca para bater com o backend
+                                    const normalizedLabel = m.label.toLowerCase().trim();
+                                    const normalizedId = m.id.toLowerCase().trim();
+
                                     const expected = m.id === 'cash' 
                                         ? getExpectedCash() 
-                                        : (summary?.salesByMethod?.[m.label] || summary?.salesByMethod?.[m.id] || 0);
+                                        : (summary?.salesByMethod?.[normalizedLabel] || summary?.salesByMethod?.[normalizedId] || 0);
                                     
                                     const informed = parseFloat(closingValues[m.id] || closingValues[m.label] || '0');
                                     const diff = informed - expected;
@@ -336,15 +339,23 @@ const CashierManagement: React.FC = () => {
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-slate-50/50">
                                 {sessionOrders.filter(o => {
-                                    const method = o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other';
+                                    const method = (o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other').toLowerCase().trim();
                                     const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
-                                    return method === selectedMethod || method === currentDisplayMethod?.label;
+                                    
+                                    const selectedId = selectedMethod.toLowerCase().trim();
+                                    const selectedLabel = currentDisplayMethod?.label.toLowerCase().trim();
+
+                                    return method === selectedId || method === selectedLabel;
                                 }).length > 0 ? (
                                     sessionOrders
                                         .filter(o => {
-                                            const method = o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other';
+                                            const method = (o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other').toLowerCase().trim();
                                             const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
-                                            return method === selectedMethod || method === currentDisplayMethod?.label;
+                                            
+                                            const selectedId = selectedMethod.toLowerCase().trim();
+                                            const selectedLabel = currentDisplayMethod?.label.toLowerCase().trim();
+
+                                            return method === selectedId || method === selectedLabel;
                                         })
                                         .map((order: any) => (
                                             <div key={order.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4 group hover:border-orange-500/30 transition-all">
