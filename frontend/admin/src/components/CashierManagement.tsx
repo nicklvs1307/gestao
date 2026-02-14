@@ -59,6 +59,7 @@ const CashierManagement: React.FC = () => {
         const dbMethods = summary.availableMethods.map((m: any) => ({
             id: m.name.toLowerCase().includes('dinheiro') ? 'cash' : m.name.toLowerCase(),
             label: m.name,
+            type: m.type, // Adicionando o tipo para conferência
             icon: m.name.toLowerCase().includes('pix') ? Smartphone : (m.name.toLowerCase().includes('cartão') ? Wallet : Banknote),
             color: 'slate'
         }));
@@ -217,11 +218,17 @@ const CashierManagement: React.FC = () => {
                                 {paymentMethods.map(m => {
                                     // Normaliza a busca para bater com o backend
                                     const normalizedLabel = m.label.toLowerCase().trim();
-                                    const normalizedId = m.id.toLowerCase().trim();
+                                    const normalizedId = (m as any).id.toLowerCase().trim();
+                                    const normalizedType = (m as any).type?.toLowerCase().trim();
 
                                     const expected = m.id === 'cash' 
                                         ? getExpectedCash() 
-                                        : (summary?.salesByMethod?.[normalizedLabel] || summary?.salesByMethod?.[normalizedId] || 0);
+                                        : (
+                                            summary?.salesByMethod?.[normalizedLabel] || 
+                                            summary?.salesByMethod?.[normalizedId] || 
+                                            (normalizedType ? summary?.salesByMethod?.[normalizedType] : 0) ||
+                                            0
+                                        );
                                     
                                     const informed = parseFloat(closingValues[m.id] || closingValues[m.label] || '0');
                                     const diff = informed - expected;
