@@ -36,6 +36,8 @@ model User {
   
   roleId       String?
   roleRef      Role?       @relation(fields: [roleId], references: [id])
+  
+  permissions  Permission[] @relation("UserPermissions")
 
   cashierSessions CashierSession[] // Relação inversa para sessões de caixa
   deliveries   DeliveryOrder[] // Relação inversa para entregas realizadas
@@ -89,6 +91,7 @@ model Permission {
   name        String   @unique // ex: "product:create", "reports:view", "franchise:manage"
   description String?
   roles       Role[]
+  users       User[]   @relation("UserPermissions")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

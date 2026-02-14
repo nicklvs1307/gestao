@@ -50,6 +50,11 @@ async function main() {
     { name: 'reports:abc', description: 'Ver Curva ABC de produtos' },
     { name: 'reports:view_all', description: 'Ver relatórios de todas as lojas (Franquia)' },
 
+    // OPERACIONAL / CHECKLIST
+    { name: 'checklists:manage', description: 'Gerenciar modelos de checklist' },
+    { name: 'checklists:view', description: 'Visualizar histórico e preencher checklists' },
+    { name: 'sectors:manage', description: 'Gerenciar setores da unidade' },
+
     // GESTÃO DE FRANQUIA
     { name: 'franchise:manage', description: 'Gerenciar lojas e usuários da própria franquia' },
 

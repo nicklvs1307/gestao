@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const ChecklistController = require('../controllers/ChecklistController');
-const { needsAuth } = require('../middlewares/auth');
+const { needsAuth, checkPermission } = require('../middlewares/auth');
 const upload = require('../config/multer');
 
-router.get('/', needsAuth, ChecklistController.index);
-router.get('/history', needsAuth, ChecklistController.executions);
+router.get('/', needsAuth, checkPermission('checklists:view'), ChecklistController.index);
+router.get('/history', needsAuth, checkPermission('checklists:view'), ChecklistController.executions);
 router.get('/:id', ChecklistController.show); // Público para QR Code
-router.post('/', needsAuth, ChecklistController.store);
-router.put('/:id', needsAuth, ChecklistController.update);
-router.delete('/:id', needsAuth, ChecklistController.delete);
+router.post('/', needsAuth, checkPermission('checklists:manage'), ChecklistController.store);
+router.put('/:id', needsAuth, checkPermission('checklists:manage'), ChecklistController.update);
+router.delete('/:id', needsAuth, checkPermission('checklists:manage'), ChecklistController.delete);
 
 // Execução
 router.post('/submit', ChecklistController.submitExecution); // Público para QR Code

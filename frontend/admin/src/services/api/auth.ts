@@ -37,3 +37,8 @@ export const getRoles = async () => {
     const response = await apiClient.get('/auth/roles');
     return response.data;
 };
+
+export const getPermissions = async () => {
+    const response = await apiClient.get('/auth/permissions');
+    return response.data;
+};

@@ -29,7 +29,8 @@ const login = async (req, res) => {
                 restaurant: { include: { settings: true } },
                 roleRef: {
                     include: { permissions: true }
-                }
+                },
+                permissions: true // Permissões diretas
             },
         });
         
@@ -37,12 +38,16 @@ const login = async (req, res) => {
             return res.status(400).json({ error: 'Credenciais inválidas.' });
         }
         
-        const permissions = user.roleRef?.permissions?.map(p => p.name) || [];
+        // Junta as permissões do Cargo + Permissões Diretas do Usuário
+        const rolePermissions = user.roleRef?.permissions?.map(p => p.name) || [];
+        const directPermissions = user.permissions?.map(p => p.name) || [];
+        const allPermissions = [...new Set([...rolePermissions, ...directPermissions])];
+
         const normalizedRole = normalizeRole(user.roleRef?.name || null, user.isSuperAdmin);
         
         // Compatibilidade: Se não tem permissões explícitas mas é admin
-        let finalPermissions = permissions;
-        if (permissions.length === 0 && (normalizedRole === 'admin' || user.isSuperAdmin)) {
+        let finalPermissions = allPermissions;
+        if (finalPermissions.length === 0 && (normalizedRole === 'admin' || user.isSuperAdmin)) {
             finalPermissions = [
                 'all:manage', 'orders:view', 'orders:manage', 'orders:edit_items', 'orders:cancel', 
                 'orders:transfer', 'orders:payment_change', 'orders:discount', 'waiter:pos', 'kds:view', 
@@ -108,17 +113,23 @@ const getUsers = async (req, res) => {
                 roleRef: {
                     select: {
                         name: true,
-                        permissions: {
-                            select: { name: true }
-                        }
+                        permissions: { select: { id: true, name: true } }
                     }
+                },
+                permissions: {
+                    select: { id: true, name: true }
                 }
             } 
         });
 
         const mappedUsers = users.map(u => ({
             ...u,
-            role: normalizeRole(u.roleRef?.name || null, u.isSuperAdmin)
+            role: normalizeRole(u.roleRef?.name || null, u.isSuperAdmin),
+            // Mescla permissões para o frontend saber o que o usuário realmente pode fazer
+            allPermissions: [...new Set([
+                ...(u.roleRef?.permissions?.map(p => p.name) || []),
+                ...(u.permissions?.map(p => p.name) || [])
+            ])]
         }));
 
         res.json(mappedUsers); 
@@ -129,30 +140,50 @@ const getUsers = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-    const { email, password, name, roleId } = req.body;
+    const { email, password, name, roleId, permissionIds } = req.body;
     try {
-        const isUserSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
-        const targetRestaurantId = isUserSuperAdmin ? (req.body.restaurantId || req.restaurantId) : req.restaurantId;
+        const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
+        const targetRestaurantId = isRequesterSuperAdmin ? (req.body.restaurantId || req.restaurantId) : req.restaurantId;
 
-        // Proteção Crítica: Validar se a Role sendo atribuída é protegida (SuperAdmin)
+        // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
+        if (permissionIds && permissionIds.length > 0 && !isRequesterSuperAdmin) {
+            const requestedPermissions = await prisma.permission.findMany({
+                where: { id: { in: permissionIds } }
+            });
+            const requestedNames = requestedPermissions.map(p => p.name);
+            
+            // Verifica se o admin que está criando tem todas essas permissões
+            const hasAll = requestedNames.every(pName => req.user.permissions.includes(pName));
+            
+            if (!hasAll) {
+                return res.status(403).json({ 
+                    error: 'Acesso negado: Você não pode conceder permissões que você mesmo não possui.' 
+                });
+            }
+        }
+
         if (roleId) {
             const roleToAssign = await prisma.role.findUnique({ where: { id: roleId } });
-            if (roleToAssign && roleToAssign.isSystem && roleToAssign.name.toLowerCase().includes('superadmin') && !isUserSuperAdmin) {
+            if (roleToAssign && roleToAssign.isSystem && roleToAssign.name.toLowerCase().includes('superadmin') && !isRequesterSuperAdmin) {
                 return res.status(403).json({ error: 'Acesso negado: Você não tem permissão para criar um SuperAdmin.' });
             }
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        res.status(201).json(await prisma.user.create({ 
+        const newUser = await prisma.user.create({ 
             data: { 
                 email, 
                 passwordHash, 
                 name, 
                 restaurantId: targetRestaurantId,
                 roleId: roleId || undefined,
-                isSuperAdmin: false // Nunca permite criar SuperAdmin via esta rota comum
+                isSuperAdmin: false,
+                permissions: permissionIds ? {
+                    connect: permissionIds.map(id => ({ id }))
+                } : undefined
             } 
-        }));
+        });
+        res.status(201).json(newUser);
     } catch (error) { 
         console.error("Erro ao criar usuário:", error);
         res.status(500).json({ error: 'Erro ao criar usuário.' }); 
@@ -161,11 +192,10 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { email, name, password, roleId } = req.body;
+    const { email, name, password, roleId, permissionIds } = req.body;
     try {
         const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
         
-        // 1. Busca o usuário que será editado
         const userToUpdate = await prisma.user.findUnique({ 
             where: { id },
             include: { roleRef: true } 
@@ -173,27 +203,26 @@ const updateUser = async (req, res) => {
 
         if (!userToUpdate) return res.status(404).json({ error: 'Usuário não encontrado.' });
 
-        // 2. Proteção: Admin comum não pode editar SuperAdmin
         if (userToUpdate.isSuperAdmin && !isRequesterSuperAdmin) {
             return res.status(403).json({ error: 'Acesso negado: Você não pode editar um SuperAdmin.' });
         }
 
-        // 3. Proteção: Admin comum só edita usuários do seu restaurante
         if (!isRequesterSuperAdmin && userToUpdate.restaurantId !== req.restaurantId) {
             return res.status(403).json({ error: 'Acesso negado: Este usuário pertence a outro restaurante.' });
         }
 
-        // 4. Proteção: Impedir auto-rebaixamento ou auto-atribuição de role (opcional, mas recomendado)
-        // Se quiser impedir que o usuário mude o próprio cargo:
-        // if (id === req.user.id && roleId && roleId !== userToUpdate.roleId) {
-        //     return res.status(403).json({ error: 'Você não pode alterar seu próprio cargo.' });
-        // }
-
-        // 5. Proteção: Impedir atribuição de role SuperAdmin por não-SuperAdmin
-        if (roleId && !isRequesterSuperAdmin) {
-            const roleToAssign = await prisma.role.findUnique({ where: { id: roleId } });
-            if (roleToAssign && roleToAssign.isSystem && roleToAssign.name.toLowerCase().includes('superadmin')) {
-                return res.status(403).json({ error: 'Acesso negado: Você não pode atribuir este cargo.' });
+        // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
+        if (permissionIds && !isRequesterSuperAdmin) {
+            const requestedPermissions = await prisma.permission.findMany({
+                where: { id: { in: permissionIds } }
+            });
+            const requestedNames = requestedPermissions.map(p => p.name);
+            const hasAll = requestedNames.every(pName => req.user.permissions.includes(pName));
+            
+            if (!hasAll) {
+                return res.status(403).json({ 
+                    error: 'Acesso negado: Você não pode conceder permissões que você mesmo não possui.' 
+                });
             }
         }
 
@@ -201,8 +230,15 @@ const updateUser = async (req, res) => {
         if (password) {
             data.passwordHash = await bcrypt.hash(password, 10);
         }
-        if (roleId) {
+        if (roleId !== undefined) {
             data.roleId = roleId;
+        }
+
+        // Atualiza permissões diretas (substitui as antigas pelas novas enviadas)
+        if (permissionIds) {
+            data.permissions = {
+                set: permissionIds.map(pid => ({ id: pid }))
+            };
         }
 
         const updated = await prisma.user.update({
