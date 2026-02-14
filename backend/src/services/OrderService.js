@@ -208,27 +208,37 @@ class OrderService {
                 }
             });
 
-            // Se o pedido já nasce aceito/preparando (balcão/auto-accept), já vincula ao financeiro/caixa
+            // Registrar transação financeira (Receita)
+            // Busca ou cria categoria de vendas
+            let category = await tx.transactionCategory.findFirst({
+                where: { restaurantId: realRestaurantId, name: 'Vendas' }
+            });
+
+            if (!category) {
+                category = await tx.transactionCategory.create({
+                    data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId: realRestaurantId }
+                });
+            }
+
             const openSession = await tx.cashierSession.findFirst({
                 where: { restaurantId: realRestaurantId, status: 'OPEN' }
             });
 
-            if (openSession) {
-                await tx.financialTransaction.create({
-                    data: {
-                        restaurantId: realRestaurantId,
-                        cashierId: openSession.id,
-                        orderId: createdOrder.id,
-                        description: `VENDA #${orderData.dailyOrderNumber || createdOrder.id.slice(-4)}`,
-                        amount: totalToPay,
-                        type: 'INCOME',
-                        status: 'PAID',
-                        dueDate: new Date(),
-                        paymentDate: new Date(),
-                        paymentMethod: paymentMethod
-                    }
-                });
-            }
+            await tx.financialTransaction.create({
+                data: {
+                    restaurantId: realRestaurantId,
+                    cashierId: openSession?.id || null,
+                    orderId: createdOrder.id,
+                    categoryId: category.id,
+                    description: `VENDA #${orderData.dailyOrderNumber || createdOrder.id.slice(-4)}`,
+                    amount: totalToPay,
+                    type: 'INCOME',
+                    status: 'PAID',
+                    dueDate: new Date(),
+                    paymentDate: new Date(),
+                    paymentMethod: paymentMethod
+                }
+            });
         }
 
         return await tx.order.findUnique({
@@ -323,18 +333,35 @@ class OrderService {
 
         if (status === 'COMPLETED') {
             await LoyaltyService.processLoyaltyRewards(order, tx);
+            
+            // Busca ou cria categoria de vendas
+            let category = await tx.transactionCategory.findFirst({
+                where: { restaurantId: order.restaurantId, name: 'Vendas' }
+            });
+
+            if (!category) {
+                category = await tx.transactionCategory.create({
+                    data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId: order.restaurantId }
+                });
+            }
+
             const openSession = await tx.cashierSession.findFirst({ 
                 where: { restaurantId: order.restaurantId, status: 'OPEN' } 
             });
 
-            if (openSession) {
-                // Cria a transação financeira vinculada ao caixa
-                const method = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
+            // Cria a transação financeira vinculada ao caixa (se houver) e à categoria
+            const method = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
+            
+            // Verifica se já não existe transação para este pedido (evitar duplicidade)
+            const existingTrans = await tx.financialTransaction.findFirst({ where: { orderId: order.id } });
+            
+            if (!existingTrans) {
                 await tx.financialTransaction.create({
                     data: {
                         restaurantId: order.restaurantId,
-                        cashierId: openSession.id,
+                        cashierId: openSession?.id || null,
                         orderId: order.id,
+                        categoryId: category.id,
                         description: `VENDA #${order.dailyOrderNumber || order.id.slice(-4)}`,
                         amount: order.total,
                         type: 'INCOME',

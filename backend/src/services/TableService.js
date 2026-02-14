@@ -107,11 +107,22 @@ class TableService {
         }
 
         // 4. Registro Financeiro
+        // Busca ou cria categoria de vendas
+        let category = await tx.transactionCategory.findFirst({
+            where: { restaurantId, name: 'Vendas' }
+        });
+
+        if (!category) {
+            category = await tx.transactionCategory.create({
+                data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId }
+            });
+        }
+
         const openSession = await tx.cashierSession.findFirst({
             where: { restaurantId, status: 'OPEN' }
         });
 
-        if (openSession && payments.length > 0) {
+        if (payments.length > 0) {
             const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
             const names = openOrders.map(o => o.customerName).filter(Boolean).join(', ');
             const description = `Venda Mesa ${table.number}${names ? ': ' + names : ''}`;
@@ -127,7 +138,8 @@ class TableService {
                     paymentMethod: payments[0]?.method || 'other',
                     restaurantId,
                     orderId: mainOrderId,
-                    cashierId: openSession.id
+                    cashierId: openSession?.id || null,
+                    categoryId: category.id
                 }
             });
         }
