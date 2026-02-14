@@ -32,7 +32,11 @@ const DeliveryMap: React.FC<{
     const leafletInstance = useRef<L.Map | null>(null);
 
     useEffect(() => {
-        if (!mapRef.current) return;
+        if (!mapRef.current || !customerCoords || !restaurantCoords) return;
+        
+        // Evita reinicialização se já existir
+        if (leafletInstance.current) return;
+
         leafletInstance.current = L.map(mapRef.current, {
             zoomControl: false,
             attributionControl: false
@@ -61,8 +65,13 @@ const DeliveryMap: React.FC<{
         
         if (route && route.length > 0) L.polyline(route, { color: '#f97316', weight: 4, opacity: 0.8 }).addTo(leafletInstance.current);
         
+        // Força o mapa a recalcular o tamanho após um pequeno delay para evitar áreas cinzas
+        setTimeout(() => {
+            leafletInstance.current?.invalidateSize();
+        }, 100);
+
         return () => { if (leafletInstance.current) { leafletInstance.current.remove(); leafletInstance.current = null; } };
-    }, [orderId, route]);
+    }, [orderId, route, customerCoords, restaurantCoords]);
 
     return <div ref={mapRef} className="w-full h-full z-0 rounded-2xl overflow-hidden" />;
 };
@@ -82,14 +91,32 @@ const DriverDashboard: React.FC = () => {
 
     const geocodeAddress = async (address: string, isRestaurant = false): Promise<[number, number] | null> => {
         const apiKey = import.meta.env.VITE_OPENROUTE_KEY;
-        if (!apiKey || !address) return null;
+        if (!apiKey) {
+            console.error("ERRO: VITE_OPENROUTE_KEY não configurada no .env");
+            return null;
+        }
+        if (!address) return null;
+        
         try {
             const searchQuery = isRestaurant ? address : `${address}, ${restaurantCity}`;
             const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(searchQuery)}&boundary.country=BR&size=1`;
             const res = await fetch(url);
+            
+            if (!res.ok) {
+                console.error(`Erro na API de Geocodificação: ${res.status}`);
+                return null;
+            }
+
             const data = await res.json();
-            if (data.features && data.features.length > 0) { const [lon, lat] = data.features[0].geometry.coordinates; return [lat, lon]; }
-        } catch (e) { console.error(e); }
+            if (data.features && data.features.length > 0) { 
+                const [lon, lat] = data.features[0].geometry.coordinates; 
+                return [lat, lon]; 
+            } else {
+                console.warn(`Endereço não encontrado: ${searchQuery}`);
+            }
+        } catch (e) { 
+            console.error("Erro ao geocodificar endereço:", e); 
+        }
         return null;
     };
 
