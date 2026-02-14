@@ -37,13 +37,17 @@ class CashierController {
       throw new Error("Nenhum caixa aberto.");
     }
 
+    // Busca formas de pagamento cadastradas
+    const restaurantPaymentMethods = await prisma.paymentMethod.findMany({
+        where: { restaurantId, isActive: true }
+    });
+
     const transactions = await prisma.financialTransaction.findMany({
       where: { cashierId: session.id, status: { not: 'CANCELED' } },
       orderBy: { createdAt: 'desc' }
     });
 
-    // Filtra apenas vendas (vendas não têm [REFORÇO] ou [SANGRIA] no começo da descrição, geralmente começam com VENDA)
-    // Ou melhor: vendas são INCOME e NÃO contêm [REFORÇO]
+    // Filtra apenas vendas
     const salesTransactions = transactions.filter(t => 
       t.type === 'INCOME' && !t.description.includes('[REFORÇO]') && !t.description.includes('[SANGRIA]')
     );
@@ -70,7 +74,8 @@ class CashierController {
       totalSales,
       salesByMethod,
       adjustments,
-      transactions
+      transactions,
+      availableMethods: restaurantPaymentMethods
     });
   });
 
@@ -145,13 +150,15 @@ class CashierController {
     }
 
     // Busca pedidos que possuem transações financeiras vinculadas a este caixa
-    // OU pedidos criados durante esta sessão (para garantir que pedidos novos apareçam)
+    // OU pedidos criados durante esta sessão
+    // OU pedidos que foram atualizados (ex: finalizados) durante esta sessão
     const orders = await prisma.order.findMany({
       where: { 
         restaurantId: req.restaurantId,
         OR: [
             { financialTransaction: { some: { cashierId: session.id } } },
-            { createdAt: { gte: session.openedAt } }
+            { createdAt: { gte: session.openedAt } },
+            { updatedAt: { gte: session.openedAt }, status: 'COMPLETED' }
         ]
       },
       include: {

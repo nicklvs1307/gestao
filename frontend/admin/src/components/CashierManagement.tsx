@@ -44,13 +44,34 @@ const CashierManagement: React.FC = () => {
     const [transAmount, setTransAmount] = useState('');
     const [transDesc, setTransDesc] = useState('');
 
-    const paymentMethods = [
+    const defaultMethods = [
         { id: 'cash', label: 'Dinheiro', icon: Banknote, color: 'emerald' },
         { id: 'pix', label: 'Pix', icon: Smartphone, color: 'blue' },
         { id: 'credit_card', label: 'Cartão Crédito', icon: Wallet, color: 'purple' },
         { id: 'debit_card', label: 'Cartão Débito', icon: Wallet, color: 'indigo' },
         { id: 'other', label: 'Outros', icon: Receipt, color: 'slate' }
     ];
+
+    // Gerar lista dinâmica de métodos baseada no que vem do backend + default
+    const getDisplayMethods = () => {
+        if (!summary?.availableMethods) return defaultMethods;
+        
+        const dbMethods = summary.availableMethods.map((m: any) => ({
+            id: m.name.toLowerCase().includes('dinheiro') ? 'cash' : m.name.toLowerCase(),
+            label: m.name,
+            icon: m.name.toLowerCase().includes('pix') ? Smartphone : (m.name.toLowerCase().includes('cartão') ? Wallet : Banknote),
+            color: 'slate'
+        }));
+
+        // Garante que 'cash' (Dinheiro) sempre exista para o cálculo de fundo de caixa
+        if (!dbMethods.find((m: any) => m.id === 'cash')) {
+            dbMethods.unshift(defaultMethods[0]);
+        }
+
+        return dbMethods;
+    };
+
+    const paymentMethods = getDisplayMethods();
 
     const fetchData = async () => {
         setLoading(true);
@@ -194,8 +215,12 @@ const CashierManagement: React.FC = () => {
                             
                             <div className="divide-y divide-slate-100">
                                 {paymentMethods.map(m => {
-                                    const expected = m.id === 'cash' ? getExpectedCash() : (summary?.salesByMethod?.[m.id] || 0);
-                                    const informed = parseFloat(closingValues[m.id] || '0');
+                                    // Tenta encontrar o valor pelo label exato ou pelo ID
+                                    const expected = m.id === 'cash' 
+                                        ? getExpectedCash() 
+                                        : (summary?.salesByMethod?.[m.label] || summary?.salesByMethod?.[m.id] || 0);
+                                    
+                                    const informed = parseFloat(closingValues[m.id] || closingValues[m.label] || '0');
                                     const diff = informed - expected;
                                     const isSelected = selectedMethod === m.id;
 
@@ -312,10 +337,15 @@ const CashierManagement: React.FC = () => {
                             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-slate-50/50">
                                 {sessionOrders.filter(o => {
                                     const method = o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other';
-                                    return method === selectedMethod;
+                                    const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
+                                    return method === selectedMethod || method === currentDisplayMethod?.label;
                                 }).length > 0 ? (
                                     sessionOrders
-                                        .filter(o => (o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other') === selectedMethod)
+                                        .filter(o => {
+                                            const method = o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other';
+                                            const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
+                                            return method === selectedMethod || method === currentDisplayMethod?.label;
+                                        })
                                         .map((order: any) => (
                                             <div key={order.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4 group hover:border-orange-500/30 transition-all">
                                                 <div className="flex items-center gap-4">
