@@ -55,7 +55,6 @@ class CashierController {
     const salesByMethod = salesTransactions.reduce((acc, curr) => {
       const rawMethod = (curr.paymentMethod || 'other').trim().toLowerCase();
       
-      // Tenta encontrar qual método oficial do restaurante corresponde a esta transação
       const matchedMethod = restaurantPaymentMethods.find(m => 
         m.name.toLowerCase().trim() === rawMethod || 
         m.type.toLowerCase().trim() === rawMethod ||
@@ -65,11 +64,18 @@ class CashierController {
         (m.type === 'PIX' && rawMethod === 'pix')
       );
 
-      // Se encontrou, usa o NOME oficial como chave, senão usa o que está na transação
-      const key = matchedMethod ? matchedMethod.name.toLowerCase().trim() : rawMethod;
+      const nameKey = matchedMethod ? matchedMethod.name.toLowerCase().trim() : rawMethod;
+      const typeKey = matchedMethod ? matchedMethod.type.toLowerCase().trim() : rawMethod;
       
-      if (!acc[key]) acc[key] = 0;
-      acc[key] += curr.amount;
+      // Adiciona o valor tanto na chave do NOME quanto na chave do TIPO para garantir o match
+      if (!acc[nameKey]) acc[nameKey] = 0;
+      acc[nameKey] += curr.amount;
+
+      if (typeKey !== nameKey) {
+        if (!acc[typeKey]) acc[typeKey] = 0;
+        acc[typeKey] += curr.amount;
+      }
+
       return acc;
     }, {});
 

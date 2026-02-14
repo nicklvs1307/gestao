@@ -143,11 +143,17 @@ const CashierManagement: React.FC = () => {
     // Cálculo de Dinheiro Esperado (Abertura + Vendas + Reforços - Sangrias)
     const getExpectedCash = () => {
         if (!summary || !session) return 0;
-        const sales = summary.salesByMethod?.cash || 0;
+        
+        // Busca o valor de vendas em dinheiro tentando várias chaves possíveis
+        const salesByMethod = summary.salesByMethod || {};
+        const cashSales = salesByMethod['cash'] || 
+                          salesByMethod['dinheiro'] || 
+                          salesByMethod['cash (dinheiro)'] || 0;
+
         const reinforcements = summary.adjustments?.reforco || 0;
         const withdraws = summary.adjustments?.sangria || 0;
         const initial = session.initialAmount || 0;
-        return initial + sales + reinforcements - withdraws;
+        return initial + cashSales + reinforcements - withdraws;
     };
 
     return (
