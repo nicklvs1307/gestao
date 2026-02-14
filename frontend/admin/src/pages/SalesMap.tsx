@@ -136,23 +136,26 @@ const SalesMap: React.FC = () => {
         heatmapData.forEach(p => {
             if (p.lat && p.lng) {
                 const marker = L.circleMarker([p.lat, p.lng], {
-                    radius: 5,
-                    fillColor: "#0f172a",
+                    radius: 6,
+                    fillColor: p.weight > 100 ? "#ef4444" : "#f97316", // Vermelho se > R$100, senão Laranja
                     color: "#fff",
-                    weight: 1,
+                    weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.9
                 });
 
                 const weight = typeof p.weight === 'number' ? p.weight : 0;
                 const popupContent = `
-                    <div class="p-2 min-w-[200px]">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-[10px] font-black bg-slate-100 px-2 py-1 rounded">#${p.orderNumber || 'N/A'}</span>
-                            <span class="text-[10px] font-bold text-orange-600">R$ ${weight.toFixed(2)}</span>
+                    <div class="p-3 min-w-[220px] font-sans">
+                        <div class="flex items-center justify-between mb-2 border-b pb-2">
+                            <span class="text-[10px] font-black bg-slate-900 text-white px-2 py-0.5 rounded italic">#${p.orderNumber || 'N/A'}</span>
+                            <span class="text-xs font-black text-emerald-600">R$ ${weight.toFixed(2).replace('.', ',')}</span>
                         </div>
-                        <p class="text-[11px] font-bold text-slate-900 mb-1">${p.customer || 'Cliente'}</p>
-                        <p class="text-[10px] text-slate-500 leading-tight">${p.address || 'Endereço não informado'}</p>
+                        <p class="text-[11px] font-black text-slate-900 uppercase italic mb-1">${p.customer || 'Cliente Geral'}</p>
+                        <div class="flex items-start gap-1 text-slate-500">
+                            <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" class="mt-0.5 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <p class="text-[9px] font-bold uppercase leading-tight">${p.address || 'Endereço não informado'}</p>
+                        </div>
                     </div>
                 `;
 

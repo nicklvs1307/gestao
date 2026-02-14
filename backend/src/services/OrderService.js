@@ -3,6 +3,7 @@ const SaiposService = require('./SaiposService');
 const PricingService = require('./PricingService');
 const InventoryService = require('./InventoryService');
 const LoyaltyService = require('./LoyaltyService');
+const GeocodingService = require('./GeocodingService'); // Novo
 const eventEmitter = require('../lib/eventEmitter');
 
 const fullOrderInclude = {
@@ -145,6 +146,9 @@ class OrderService {
              
              const cleanPhone = deliveryInfo.phone ? deliveryInfo.phone.replace(/\D/g, '') : '';
              
+             // Busca Coordenadas Automaticamente para o Mapa de Calor
+             const coords = await GeocodingService.getCoordinates(fullAddress);
+
              const customer = await tx.customer.upsert({
                  where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
                  update: {
@@ -152,14 +156,18 @@ class OrderService {
                      street: deliveryInfo.street || null, number: deliveryInfo.number || null,
                      neighborhood: deliveryInfo.neighborhood || null, city: deliveryInfo.city || null,
                      state: deliveryInfo.state || null, complement: deliveryInfo.complement || null,
-                     reference: deliveryInfo.reference || null
+                     reference: deliveryInfo.reference || null,
+                     latitude: coords?.lat || null,
+                     longitude: coords?.lng || null
                  },
                  create: {
                      name: deliveryInfo.name, phone: cleanPhone, address: fullAddress, zipCode: deliveryInfo.cep || null,
                      street: deliveryInfo.street || null, number: deliveryInfo.number || null,
                      neighborhood: deliveryInfo.neighborhood || null, city: deliveryInfo.city || null,
                      state: deliveryInfo.state || null, complement: deliveryInfo.complement || null,
-                     reference: deliveryInfo.reference || null, restaurantId: realRestaurantId
+                     reference: deliveryInfo.reference || null, restaurantId: realRestaurantId,
+                     latitude: coords?.lat || null,
+                     longitude: coords?.lng || null
                  }
              });
  
@@ -169,8 +177,8 @@ class OrderService {
                      address: fullAddress, deliveryType: deliveryInfo.deliveryType, paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
                      changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
                      deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
-                     latitude: deliveryInfo.latitude ? parseFloat(deliveryInfo.latitude) : null,
-                     longitude: deliveryInfo.longitude ? parseFloat(deliveryInfo.longitude) : null,
+                     latitude: coords?.lat || deliveryInfo.latitude ? parseFloat(coords?.lat || deliveryInfo.latitude) : null,
+                     longitude: coords?.lng || deliveryInfo.longitude ? parseFloat(coords?.lng || deliveryInfo.longitude) : null,
                      status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
                  }
              });
