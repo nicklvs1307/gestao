@@ -161,35 +161,35 @@ const CashierManagement: React.FC = () => {
 
             {!isOpen ? (
                 /* TELA DE ABERTURA */
-                <div className="max-w-xl mx-auto py-10">
-                    <Card className="p-10 space-y-10 border-slate-100 shadow-2xl bg-white relative overflow-hidden">
-                        <div className="text-center space-y-4">
-                            <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner"><Unlock size={40} /></div>
-                            <h3 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Iniciar Novo Turno</h3>
-                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Defina o fundo de reserva (troco)</p>
+                <div className="max-w-md mx-auto py-6">
+                    <Card className="p-8 space-y-8 border-slate-100 shadow-2xl bg-white relative overflow-hidden">
+                        <div className="text-center space-y-3">
+                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner"><Unlock size={32} /></div>
+                            <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Iniciar Novo Turno</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Defina o fundo de reserva (troco)</p>
                         </div>
-                        <form onSubmit={handleOpen} className="space-y-8">
-                            <div className="space-y-3">
-                                <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-1">Valor de Abertura (R$)</label>
+                        <form onSubmit={handleOpen} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor de Abertura (R$)</label>
                                 <div className="relative">
-                                    <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={28} />
-                                    <input type="number" step="0.01" value={initialAmount} onChange={e => setInitialAmount(e.target.value)} required placeholder="0.00" className="w-full h-16 bg-slate-50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 text-2xl font-black italic focus:border-blue-500 outline-none transition-all" />
+                                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                                    <input type="number" step="0.01" value={initialAmount} onChange={e => setInitialAmount(e.target.value)} required placeholder="0.00" className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl pl-12 pr-4 text-xl font-black italic focus:border-blue-500 outline-none transition-all" />
                                 </div>
                             </div>
-                            <Button fullWidth size="lg" className="h-16 rounded-2xl font-black uppercase tracking-widest italic bg-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-100 text-lg">ABRIR CAIXA AGORA</Button>
+                            <Button fullWidth size="lg" className="h-14 rounded-xl font-black uppercase tracking-widest italic bg-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-100 text-base">ABRIR CAIXA AGORA</Button>
                         </form>
                     </Card>
                 </div>
             ) : (
                 /* TELA DE FECHAMENTO (STILO SAIPOS) */
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                     
                     {/* COLUNA ESQUERDA: MASTER FINANCEIRO */}
-                    <div className="xl:col-span-5 space-y-8">
+                    <div className="xl:col-span-5 space-y-6">
                         <Card className="p-0 border-slate-200 shadow-xl overflow-hidden bg-white" noPadding>
-                            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest italic">Conferência de Valores</h3>
-                                <RefreshCw size={18} className="text-slate-300 cursor-pointer hover:text-orange-500 transition-colors" onClick={fetchData}/>
+                            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Conferência de Valores</h3>
+                                <RefreshCw size={16} className="text-slate-300 cursor-pointer hover:text-orange-500 transition-colors" onClick={fetchData}/>
                             </div>
                             
                             <div className="divide-y divide-slate-100">
@@ -204,23 +204,23 @@ const CashierManagement: React.FC = () => {
                                             key={m.id} 
                                             onClick={() => setSelectedMethod(m.id)}
                                             className={cn(
-                                                "p-6 transition-all cursor-pointer group hover:bg-slate-50 relative",
+                                                "p-4 transition-all cursor-pointer group hover:bg-slate-50 relative",
                                                 isSelected ? "bg-orange-50/30 ring-2 ring-inset ring-orange-500/20" : ""
                                             )}
                                         >
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={cn("p-3 rounded-xl shadow-sm", isSelected ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-white")}>
-                                                        <m.icon size={24} />
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn("p-2 rounded-lg shadow-sm", isSelected ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-white")}>
+                                                        <m.icon size={18} />
                                                     </div>
                                                     <div>
-                                                        <p className="text-lg font-black text-slate-900 uppercase italic tracking-tight">{m.label}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Esperado: R$ {(expected || 0).toFixed(2)}</p>
+                                                        <p className="text-sm font-black text-slate-900 uppercase italic tracking-tight">{m.label}</p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Esperado: R$ {(expected || 0).toFixed(2)}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className={cn(
-                                                        "text-sm font-black italic",
+                                                        "text-[10px] font-black italic",
                                                         diff === 0 ? "text-emerald-500" : Math.abs(diff) < 0.01 ? "text-emerald-500" : diff < 0 ? "text-rose-500" : "text-blue-500"
                                                     )}>
                                                         {Math.abs(diff) < 0.01 ? 'CONFERIDO' : `DIF: R$ ${(diff || 0).toFixed(2)}`}
@@ -228,44 +228,44 @@ const CashierManagement: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-4 items-center">
+                                            <div className="flex gap-3 items-center">
                                                 <div className="flex-1 relative">
-                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 italic">EM CAIXA: R$</span>
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 italic">EM CAIXA: R$</span>
                                                     <input 
                                                         type="number"
                                                         value={closingValues[m.id]}
                                                         onChange={(e) => setClosingValues(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                                        className="w-full h-14 bg-white border border-slate-200 rounded-xl pl-24 pr-6 text-lg font-black italic focus:border-orange-500 outline-none shadow-inner"
+                                                        className="w-full h-11 bg-white border border-slate-200 rounded-lg pl-20 pr-4 text-base font-black italic focus:border-orange-500 outline-none shadow-inner"
                                                         placeholder="0.00"
                                                         onClick={(e) => e.stopPropagation()}
                                                     />
                                                 </div>
                                                 <div className={cn(
-                                                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                                                    "w-8 h-8 rounded-full flex items-center justify-center transition-all",
                                                     isSelected ? "bg-orange-500 text-white" : "bg-slate-50 text-slate-200"
                                                 )}>
-                                                    <ChevronRight size={24} />
+                                                    <ChevronRight size={18} />
                                                 </div>
                                             </div>
 
                                             {/* Breakdown apenas para Dinheiro */}
                                             {m.id === 'cash' && (
-                                                <div className="mt-6 grid grid-cols-2 gap-3">
-                                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Abertura (+)</p>
-                                                        <p className="text-sm font-bold text-emerald-600 italic">R$ {(session?.initialAmount || 0).toFixed(2)}</p>
+                                                <div className="mt-4 grid grid-cols-2 gap-2">
+                                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Abertura (+)</p>
+                                                        <p className="text-xs font-bold text-emerald-600 italic">R$ {(session?.initialAmount || 0).toFixed(2)}</p>
                                                     </div>
-                                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Vendas (+)</p>
-                                                        <p className="text-sm font-bold text-emerald-600 italic">R$ {(summary?.salesByMethod?.cash || 0).toFixed(2)}</p>
+                                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Vendas (+)</p>
+                                                        <p className="text-xs font-bold text-emerald-600 italic">R$ {(summary?.salesByMethod?.cash || 0).toFixed(2)}</p>
                                                     </div>
-                                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Reforços (+)</p>
-                                                        <p className="text-sm font-bold text-blue-600 italic">R$ {(summary?.adjustments?.reforco || 0).toFixed(2)}</p>
+                                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Reforços (+)</p>
+                                                        <p className="text-xs font-bold text-blue-600 italic">R$ {(summary?.adjustments?.reforco || 0).toFixed(2)}</p>
                                                     </div>
-                                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Sangrias (-)</p>
-                                                        <p className="text-sm font-bold text-rose-600 italic">R$ {(summary?.adjustments?.sangria || 0).toFixed(2)}</p>
+                                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Sangrias (-)</p>
+                                                        <p className="text-xs font-bold text-rose-600 italic">R$ {(summary?.adjustments?.sangria || 0).toFixed(2)}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -274,73 +274,76 @@ const CashierManagement: React.FC = () => {
                                 })}
                             </div>
 
-                            <div className="p-8 bg-slate-900 space-y-6">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Informado</span>
-                                    <span className="text-4xl font-black text-white italic">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toFixed(2)}</span>
+                            <div className="p-6 bg-slate-900 space-y-4">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Informado</span>
+                                    <span className="text-2xl font-black text-white italic">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toFixed(2)}</span>
                                 </div>
                                 <textarea 
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm font-bold text-white uppercase italic tracking-tight focus:border-orange-500 outline-none h-24" 
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] font-bold text-white uppercase italic tracking-tight focus:border-orange-500 outline-none h-20" 
                                     placeholder="NOTAS DE FECHAMENTO..." 
                                     value={notes} 
                                     onChange={e => setNotes(e.target.value)} 
                                 />
-                                <Button fullWidth size="lg" onClick={handleClose} className="h-16 rounded-2xl font-black uppercase tracking-widest italic bg-emerald-600 hover:bg-emerald-500 border-none shadow-xl shadow-emerald-900/20 text-lg">FECHAR FRENTE DE CAIXA</Button>
+                                <Button fullWidth size="lg" onClick={handleClose} className="h-14 rounded-xl font-black uppercase tracking-widest italic bg-emerald-600 hover:bg-emerald-500 border-none shadow-xl shadow-emerald-900/20 text-base">FECHAR FRENTE DE CAIXA</Button>
                             </div>
                         </Card>
                     </div>
 
                     {/* COLUNA DIREITA: DETALHE DE VENDAS */}
-                    <div className="xl:col-span-7 space-y-8">
+                    <div className="xl:col-span-7 space-y-6">
                         <Card className="p-0 border-slate-200 shadow-xl overflow-hidden bg-white h-full flex flex-col" noPadding>
-                            <div className="p-6 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
-                                        {React.createElement(paymentMethods.find(m => m.id === selectedMethod)?.icon || HelpCircle, { size: 28 })}
+                            <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-lg flex items-center justify-center">
+                                        {React.createElement(paymentMethods.find(m => m.id === selectedMethod)?.icon || HelpCircle, { size: 22 })}
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black text-slate-900 uppercase italic">Vendas em {paymentMethods.find(m => m.id === selectedMethod)?.label}</h3>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Confira e ajuste os registros abaixo</p>
+                                        <h3 className="text-base font-black text-slate-900 uppercase italic leading-tight">Vendas em {paymentMethods.find(m => m.id === selectedMethod)?.label}</h3>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Confira e ajuste os registros abaixo</p>
                                     </div>
                                 </div>
                                 <div className="relative group">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                    <input type="text" placeholder="Filtrar pedido..." className="h-11 bg-slate-50 border border-slate-100 rounded-lg pl-12 pr-6 text-sm font-bold outline-none focus:border-orange-500 transition-all w-56" />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                                    <input type="text" placeholder="Filtrar pedido..." className="h-9 bg-slate-50 border border-slate-100 rounded-lg pl-10 pr-4 text-xs font-bold outline-none focus:border-orange-500 transition-all w-48" />
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 bg-slate-50/50">
-                                {sessionOrders.filter(o => (o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other') === selectedMethod).length > 0 ? (
+                            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-slate-50/50">
+                                {sessionOrders.filter(o => {
+                                    const method = o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other';
+                                    return method === selectedMethod;
+                                }).length > 0 ? (
                                     sessionOrders
                                         .filter(o => (o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other') === selectedMethod)
                                         .map((order: any) => (
-                                            <div key={order.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-6 group hover:border-orange-500/30 transition-all">
-                                                <div className="flex items-start gap-6">
-                                                    <div className="h-14 w-14 bg-slate-100 rounded-xl flex flex-col items-center justify-center shrink-0">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Nº</span>
-                                                        <span className="text-lg font-black text-slate-900 italic tracking-tighter leading-none">{order.dailyOrderNumber || order.id.slice(-4)}</span>
+                                            <div key={order.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4 group hover:border-orange-500/30 transition-all">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-12 w-12 bg-slate-100 rounded-lg flex flex-col items-center justify-center shrink-0">
+                                                        <span className="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Nº</span>
+                                                        <span className="text-base font-black text-slate-900 italic tracking-tighter leading-none">{order.dailyOrderNumber || order.id.slice(-4)}</span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-lg font-black text-slate-900 uppercase italic tracking-tight">{order.tableNumber ? `MESA ${order.tableNumber}` : order.deliveryOrder?.name || 'BALCÃO'}</h4>
-                                                        <div className="flex items-center gap-4 mt-2">
-                                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase"><Clock size={14}/> {order.createdAt ? format(new Date(order.createdAt), 'HH:mm') : '--:--'}</div>
-                                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase"><User size={14}/> {order.user?.name || 'SISTEMA'}</div>
+                                                        <h4 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">{order.tableNumber ? `MESA ${order.tableNumber}` : order.deliveryOrder?.name || 'BALCÃO'}</h4>
+                                                        <div className="flex items-center gap-3 mt-1">
+                                                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase"><Clock size={12}/> {order.createdAt ? format(new Date(order.createdAt), 'HH:mm') : '--:--'}</div>
+                                                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase"><User size={12}/> {order.user?.name || 'SISTEMA'}</div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex flex-col md:flex-row items-center gap-6">
+                                                <div className="flex flex-col md:flex-row items-center gap-4">
                                                     <div className="text-right">
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Valor do Pedido</p>
-                                                        <p className="text-xl font-black text-slate-900 italic">R$ {(order.total || 0).toFixed(2)}</p>
+                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Valor do Pedido</p>
+                                                        <p className="text-lg font-black text-slate-900 italic">R$ {(order.total || 0).toFixed(2)}</p>
                                                     </div>
                                                     
-                                                    <div className="h-px md:h-12 w-full md:w-px bg-slate-100 mx-2" />
+                                                    <div className="h-px md:h-10 w-full md:w-px bg-slate-100 mx-1" />
 
-                                                    <div className="space-y-2 min-w-[180px]">
-                                                        <p className="text-[10px] font-black text-orange-500 uppercase italic ml-1">Corrigir Forma:</p>
+                                                    <div className="space-y-1 min-w-[150px]">
+                                                        <p className="text-[8px] font-black text-orange-500 uppercase italic ml-0.5">Corrigir Forma:</p>
                                                         <select 
-                                                            className="w-full h-11 bg-slate-50 border border-slate-200 rounded-lg px-3 text-xs font-black uppercase italic outline-none focus:border-orange-500"
+                                                            className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg px-2 text-[10px] font-black uppercase italic outline-none focus:border-orange-500"
                                                             value={selectedMethod}
                                                             onChange={(e) => handleUpdatePayment(order.id, e.target.value)}
                                                         >
@@ -351,17 +354,17 @@ const CashierManagement: React.FC = () => {
                                             </div>
                                         ))
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center h-full opacity-20 py-32">
-                                        <Filter size={64} strokeWidth={1} className="mb-6" />
-                                        <p className="text-sm font-black uppercase tracking-widest">Nenhuma venda neste método</p>
+                                    <div className="flex flex-col items-center justify-center h-full opacity-20 py-20">
+                                        <Filter size={48} strokeWidth={1} className="mb-4" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma venda neste método</p>
                                     </div>
                                 )}
                             </div>
 
                             {/* Informativo no rodapé da direita */}
-                            <div className="p-6 bg-white border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-widest shrink-0">
+                            <div className="p-4 bg-white border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
                                 <span>Total em {paymentMethods.find(m => m.id === selectedMethod)?.label}:</span>
-                                <span className="text-slate-900 font-black italic text-lg">R$ {(summary?.salesByMethod?.[selectedMethod] || 0).toFixed(2)}</span>
+                                <span className="text-slate-900 font-black italic text-base">R$ {(summary?.salesByMethod?.[selectedMethod] || 0).toFixed(2)}</span>
                             </div>
                         </Card>
                     </div>

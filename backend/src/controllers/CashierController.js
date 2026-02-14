@@ -49,7 +49,7 @@ class CashierController {
     );
 
     const salesByMethod = salesTransactions.reduce((acc, curr) => {
-      const method = curr.paymentMethod || 'outros';
+      const method = curr.paymentMethod || 'other';
       if (!acc[method]) acc[method] = 0;
       acc[method] += curr.amount;
       return acc;
