@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { 
   X, Clock, MapPin, CheckCircle, 
   Circle, PlayCircle, XCircle, Printer, Phone, 
-  ExternalLink, Package, CreditCard, Loader2,
+  ExternalLink, Package, CreditCard, Loader2, FileText,
   ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck, List
 } from 'lucide-react';
 import { cn } from '../lib/utils';
