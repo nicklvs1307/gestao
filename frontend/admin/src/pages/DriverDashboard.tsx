@@ -168,6 +168,33 @@ const DriverDashboard: React.FC = () => {
     const [optimizedOrderIds, setOptimizedOrderIds] = useState<string[]>([]);
     const [isOptimizing, setIsOptimizing] = useState(false);
 
+    // --- LÓGICA DE ALARME E NOTIFICAÇÃO ---
+    const [lastOrderCount, setLastOrderCount] = useState(0);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+        audioRef.current.loop = true;
+        if ("Notification" in window) Notification.requestPermission();
+    }, []);
+
+    const playAlarm = () => {
+        if (audioRef.current) {
+            audioRef.current.play().catch(() => {});
+            toast.info("NOVA ENTREGA DISPONÍVEL!", {
+                action: { label: "PARAR SOM", onClick: () => stopAlarm() },
+                duration: Infinity,
+            });
+        }
+    };
+
+    const stopAlarm = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+    };
+
     // Função de Otimização Inteligente (Heurística Vizinho Mais Próximo + Urgência Temporal)
     const optimizeRoute = async () => {
         const pendingOrders = orders.filter(o => o.status === 'READY' || o.status === 'SHIPPED');
@@ -274,7 +301,24 @@ const DriverDashboard: React.FC = () => {
     const loadOrders = async () => {
         try {
             const res = await api.get('/driver/orders');
-            setOrders(res.data);
+            const newOrders = res.data;
+
+            // Dispara alarme se a contagem de pedidos pendentes aumentou
+            const currentPending = newOrders.filter((o: any) => o.status === 'READY' || o.status === 'PENDING').length;
+            if (lastOrderCount > 0 && currentPending > lastOrderCount) {
+                playAlarm();
+                if (Notification.permission === "granted") {
+                    new Notification("🚀 Nova Entrega!", {
+                        body: "Um novo pedido foi atribuído a você.",
+                        icon: "/logo.png",
+                        vibrate: [200, 100, 200]
+                    });
+                }
+            }
+            
+            setOrders(newOrders);
+            setLastOrderCount(currentPending);
+
             const settingsRes = await api.get('/settings');
             const restAddress = settingsRes.data?.address || '';
             if (restAddress) {

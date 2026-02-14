@@ -16,6 +16,7 @@ interface Address {
     number: string;
     neighborhood: string;
     city: string;
+    state: string; // Novo campo
     complement?: string;
     reference?: string;
     zipCode?: string;
@@ -25,11 +26,12 @@ interface Customer {
     id: string;
     name: string;
     phone: string;
-    addresses?: Address[]; // Assumindo que podemos trazer endereços históricos ou cadastrados
+    addresses?: Address[];
     street?: string;
     number?: string;
     neighborhood?: string;
     city?: string;
+    state?: string; // Novo campo
     complement?: string;
 }
 
@@ -49,12 +51,36 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [results, setResults] = useState<Customer[]>([]);
+    const [restaurantSettings, setRestaurantSettings] = useState<any>(null);
     
     // Estado para "Novo Endereço"
-    const [isAddingAddress, setIsAddingAddress] = useState<string | null>(null); // ID do cliente sendo editado ou 'new'
+    const [isAddingAddress, setIsAddingAddress] = useState<string | null>(null);
     const [newAddress, setNewAddress] = useState<Address>({
-        street: '', number: '', neighborhood: '', city: '', complement: '', reference: '', zipCode: ''
+        street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
     });
+
+    // Carregar configurações da loja para pegar cidade/estado padrão
+    useEffect(() => {
+        const loadSettings = async () => {
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            if (user?.restaurantId) {
+                // Tenta pegar do localStorage primeiro ou faz fetch se necessário
+                const settings = localStorage.getItem('restaurant_settings');
+                if (settings) {
+                    const parsed = JSON.parse(settings);
+                    setRestaurantSettings(parsed);
+                    // Atualiza endereço inicial com dados da loja
+                    setNewAddress(prev => ({
+                        ...prev,
+                        city: parsed.city || '',
+                        state: parsed.state || ''
+                    }));
+                }
+            }
+        };
+        if (isOpen) loadSettings();
+    }, [isOpen]);
     
     // Estado para "Novo Cliente"
     const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
@@ -89,12 +115,13 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
                 // 1. Endereço Principal Estruturado
                 if (c.street) {
-                    const full = `${c.street}, ${c.number || 'S/N'}${c.neighborhood ? ' - ' + c.neighborhood : ''}${c.city ? ', ' + c.city : ''}`;
+                    const full = `${c.street}, ${c.number || 'S/N'} - ${c.neighborhood || ''}${c.city ? ', ' + c.city : ''}${c.state ? ' / ' + c.state : ''}`;
                     add(full, {
                         street: c.street,
                         number: c.number,
                         neighborhood: c.neighborhood,
                         city: c.city,
+                        state: c.state,
                         zipCode: c.zipCode,
                         complement: c.complement
                     });
@@ -143,7 +170,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     const handleSaveNewAddress = (customerId: string) => {
         const customer = results.find(c => c.id === customerId);
         if (customer) {
-            const label = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}`;
+            const label = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}, ${newAddress.city} / ${newAddress.state}`;
             handleSelectAddress(customer, { label, data: newAddress });
         }
     };
@@ -156,10 +183,10 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         
         setIsLoading(true);
         try {
-            // Formata string para exibição
+            // Formata string para exibição incluindo cidade e estado
             let addrStr = 'Retirada no Balcão';
             if (newAddress.street) {
-                addrStr = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}`;
+                addrStr = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}, ${newAddress.city} / ${newAddress.state}`;
             }
 
             // Salva no banco de dados
@@ -346,10 +373,13 @@ const AddressForm = ({ address, onChange }: { address: Address, onChange: (a: Ad
                 <Input label="Bairro" placeholder="Centro" value={address.neighborhood} onChange={e => handleChange('neighborhood', e.target.value)} className="h-10 text-xs" />
             </div>
             <div className="col-span-4">
-                <Input label="Complemento" placeholder="Apto 101" value={address.complement} onChange={e => handleChange('complement', e.target.value)} className="h-10 text-xs" />
+                <Input label="Cidade" placeholder="Cidade" value={address.city} onChange={e => handleChange('city', e.target.value)} className="h-10 text-xs" />
             </div>
             <div className="col-span-4">
-                <Input label="Cidade" placeholder="Cidade" value={address.city} onChange={e => handleChange('city', e.target.value)} className="h-10 text-xs" />
+                <Input label="Estado" placeholder="UF" value={address.state} onChange={e => handleChange('state', e.target.value)} className="h-10 text-xs" />
+            </div>
+            <div className="col-span-12">
+                <Input label="Complemento / Referência" placeholder="Apto 101, Próximo ao mercado..." value={address.complement} onChange={e => handleChange('complement', e.target.value)} className="h-10 text-xs" />
             </div>
         </div>
     );
