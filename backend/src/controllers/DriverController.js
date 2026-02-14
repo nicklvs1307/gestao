@@ -5,6 +5,52 @@ class DriverController {
     this.getAvailableOrders = this.getAvailableOrders.bind(this);
     this.getMyOrders = this.getAvailableOrders.bind(this);
     this.updateOrderStatus = this.updateOrderStatus.bind(this);
+    this.getHistory = this.getHistory.bind(this); // Novo
+    this.updatePaymentMethod = this.updatePaymentMethod.bind(this); // Novo
+  }
+
+  // ... (getAvailableOrders mantida igual)
+
+  // Histórico de entregas do motoboy (Apenas as concluídas por ele hoje)
+  async getHistory(req, res) {
+    const { restaurantId } = req;
+    const driverId = req.user.id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    try {
+      const orders = await prisma.order.findMany({
+        where: {
+          restaurantId,
+          status: 'COMPLETED',
+          deliveryOrder: { driverId: driverId },
+          updatedAt: { gte: today }
+        },
+        include: {
+          deliveryOrder: true,
+          payments: true
+        },
+        orderBy: { updatedAt: 'desc' }
+      });
+      res.json(orders);
+    } catch (e) {
+      res.status(500).json({ error: 'Erro ao buscar histórico.' });
+    }
+  }
+
+  // Permitir que o motoboy corrija a forma de pagamento do pedido
+  async updatePaymentMethod(req, res) {
+    const { orderId } = req.params;
+    const { method } = req.body;
+    const { restaurantId } = req;
+
+    try {
+      const OrderService = require('../services/OrderService');
+      await OrderService.updatePaymentMethod(orderId, method, restaurantId);
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: 'Erro ao atualizar pagamento.' });
+    }
   }
 
   // Listar pedidos prontos para entrega (READY) e pedidos do motoboy logado
