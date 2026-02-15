@@ -1,97 +1,58 @@
-root@servergestao:~/gestao# BACKEND_ID=$(docker ps -qf name=kicardapio_backend)
-root@servergestao:~/gestao# docker exec -e VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY $BACKEND_ID node scripts/fix_financial_transactions.js
---- INICIANDO CORREÇÃO DE LANÇAMENTOS FINANCEIROS ---
-PrismaClientInitializationError:
-Invalid `prisma.order.findMany()` invocation:
+ => ERROR [builder 8/8] RUN npm run build                                                                                                       2.9s
+------
+ > [builder 8/8] RUN npm run build:
+0.565
+0.565 > admin@0.0.0 build
+0.565 > vite build
+0.565
+0.915 vite v7.1.9 building for production...
+1.352 transforming...
+2.847 ✓ 50 modules transformed.
+2.856 ✗ Build failed in 1.54s
+2.857 error during build:
+2.857 [vite:esbuild] Transform failed with 2 errors:
+2.857 /app/frontend/admin/src/pages/StockManagement.tsx:86:11: ERROR: The symbol "showProduceModal" has already been declared
+2.857 /app/frontend/admin/src/pages/StockManagement.tsx:86:29: ERROR: The symbol "setShowProduceModal" has already been declared
+2.857 file: /app/frontend/admin/src/pages/StockManagement.tsx:86:11
+2.857
+2.857 The symbol "showProduceModal" has already been declared
+2.857 84 |      const [showLossModal, setShowLossModal] = useState(false);
+2.857 85 |      const [formData, setFormData] = useState<any>({});
+2.857 86 |      const [showProduceModal, setShowProduceModal] = useState(false);
+2.857    |             ^
+2.857 87 |      const [showRecipeModal, setShowRecipeModal] = useState(false);
+2.857 88 |      const [recipeItems, setRecipeItems] = useState<{componentIngredientId: string, quantity: number}[]>([]);
+2.857
+2.857 The symbol "setShowProduceModal" has already been declared
+2.857 84 |      const [showLossModal, setShowLossModal] = useState(false);
+2.857 85 |      const [formData, setFormData] = useState<any>({});
+2.857 86 |      const [showProduceModal, setShowProduceModal] = useState(false);
+2.857    |                               ^
+2.857 87 |      const [showRecipeModal, setShowRecipeModal] = useState(false);
+2.857 88 |      const [recipeItems, setRecipeItems] = useState<{componentIngredientId: string, quantity: number}[]>([]);
+2.857
+2.857     at failureErrorWithLog (/app/frontend/admin/node_modules/esbuild/lib/main.js:1467:15)
+2.857     at /app/frontend/admin/node_modules/esbuild/lib/main.js:736:50
+2.857     at responseCallbacks.<computed> (/app/frontend/admin/node_modules/esbuild/lib/main.js:603:9)
+2.857     at handleIncomingPacket (/app/frontend/admin/node_modules/esbuild/lib/main.js:658:12)
+2.857     at Socket.readFromStdout (/app/frontend/admin/node_modules/esbuild/lib/main.js:581:7)
+2.857     at Socket.emit (node:events:524:28)
+2.857     at addChunk (node:internal/streams/readable:561:12)
+2.857     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2.857     at Readable.push (node:internal/streams/readable:392:5)
+2.857     at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+------
 
-
-error: Environment variable not found: DATABASE_URL.
-  -->  schema.prisma:7
-   |
- 6 |   provider = "postgresql"
- 7 |   url      = env("DATABASE_URL")
-   |
-
-Validation Error Count: 1
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async main (/app/scripts/fix_financial_transactions.js:8:18) {
-  clientVersion: '6.16.3',
-  errorCode: undefined,
-  retryable: undefined
-}
-root@servergestao:~/gestao# docker exec -e VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY $BACKEND_ID node scripts/fix_missing_coordinates.js
---- INICIANDO RECUPERAÇÃO DE COORDENADAS PARA MAPA DE CALOR ---
-PrismaClientInitializationError:
-Invalid `prisma.deliveryOrder.findMany()` invocation:
-
-
-error: Environment variable not found: DATABASE_URL.
-  -->  schema.prisma:7
-   |
- 6 |   provider = "postgresql"
- 7 |   url      = env("DATABASE_URL")
-   |
-
-Validation Error Count: 1
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async main (/app/scripts/fix_missing_coordinates.js:15:18) {
-  clientVersion: '6.16.3',
-  errorCode: undefined,
-  retryable: undefined
-}
-root@servergestao:~/gestao# BACKEND_ID=$(docker ps -qf name=kicardapio_backend)
-root@servergestao:~/gestao# docker exec -e DATABASE_URL=$(cat /run/secrets/db_connection_string) $BACKEND_ID node scripts/fix_financial_transactions.js
-cat: /run/secrets/db_connection_string: No such file or directory
---- INICIANDO CORREÇÃO DE LANÇAMENTOS FINANCEIROS ---
-PrismaClientInitializationError:
-Invalid `prisma.order.findMany()` invocation:
-
-
-error: Error validating datasource `db`: You must provide a nonempty URL. The environment variable `DATABASE_URL` resolved to an empty string.
-  -->  schema.prisma:7
-   |
- 6 |   provider = "postgresql"
- 7 |   url      = env("DATABASE_URL")
-   |
-
-Validation Error Count: 1
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async main (/app/scripts/fix_financial_transactions.js:8:18) {
-  clientVersion: '6.16.3',
-  errorCode: undefined,
-  retryable: undefined
-}
-root@servergestao:~/gestao# docker exec -e VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY -e DATABASE_URL=$(cat /run/secrets/db_connection_string) $BACKEND_ID node scripts/fix_missing_coordinates.js
-cat: /run/secrets/db_connection_string: No such file or directory
---- INICIANDO RECUPERAÇÃO DE COORDENADAS PARA MAPA DE CALOR ---
-PrismaClientInitializationError:
-Invalid `prisma.deliveryOrder.findMany()` invocation:
-
-
-error: Error validating datasource `db`: You must provide a nonempty URL. The environment variable `DATABASE_URL` resolved to an empty string.
-  -->  schema.prisma:7
-   |
- 6 |   provider = "postgresql"
- 7 |   url      = env("DATABASE_URL")
-   |
-
-Validation Error Count: 1
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async main (/app/scripts/fix_missing_coordinates.js:15:18) {
-  clientVersion: '6.16.3',
-  errorCode: undefined,
-  retryable: undefined
-}
-root@servergestao:~/gestao#
+ 3 warnings found (use docker --debug to expand):
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 7)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 8)
+ - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+Dockerfile:22
+--------------------
+  20 |     WORKDIR /app/frontend/admin
+  21 |     RUN npm ci
+  22 | >>> RUN npm run build
+  23 |
+  24 |     # Stage 2: Serve com Nginx
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1

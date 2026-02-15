@@ -80,7 +80,6 @@ const StockManagement: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-    const [showProduceModal, setShowProduceModal] = useState(false);
     const [showLossModal, setShowLossModal] = useState(false);
     const [formData, setFormData] = useState<any>({});
     const [showProduceModal, setShowProduceModal] = useState(false);
