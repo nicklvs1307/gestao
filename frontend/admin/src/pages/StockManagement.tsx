@@ -65,6 +65,7 @@ const StockManagement: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [ingredients, setIngredients] = useState<any[]>([]);
     const [ingredientGroups, setIngredientGroups] = useState<any[]>([]);
+    const [suppliers, setSuppliers] = useState<any[]>([]);
     const [purchases, setPurchases] = useState<any[]>([]);
     const [productionHistory, setProductionHistory] = useState<any[]>([]);
     const [recipes, setRecipes] = useState<any[]>([]);
@@ -78,6 +79,9 @@ const StockManagement: React.FC = () => {
 
     const [showForm, setShowForm] = useState(false);
     const [showGroupModal, setShowGroupModal] = useState(false);
+    const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+    const [showProduceModal, setShowProduceModal] = useState(false);
+    const [showLossModal, setShowLossModal] = useState(false);
     const [formData, setFormData] = useState<any>({});
     const [showProduceModal, setShowProduceModal] = useState(false);
     const [showRecipeModal, setShowRecipeModal] = useState(false);
@@ -91,15 +95,17 @@ const StockManagement: React.FC = () => {
             if (activeTab === 'inventory') {
                 const res = await api.get('/products');
                 setProducts(res.data);
-            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list' || activeTab === 'recipes') {
-                const [ingRes, groupRes, prodRes] = await Promise.all([
+            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list' || activeTab === 'recipes' || activeTab === 'purchases') {
+                const [ingRes, groupRes, prodRes, suppRes] = await Promise.all([
                     api.get('/ingredients'),
                     api.get('/ingredients/groups'),
-                    api.get('/products')
+                    api.get('/products'),
+                    api.get('/suppliers')
                 ]);
                 setIngredients(ingRes.data);
                 setIngredientGroups(groupRes.data);
                 setProducts(prodRes.data);
+                setSuppliers(suppRes.data);
                 if (activeTab === 'audit') {
                     const initialAudit: Record<string, number> = {};
                     res.data.forEach((i: any) => initialAudit[i.id] = i.stock);
@@ -142,8 +148,14 @@ const StockManagement: React.FC = () => {
         e.preventDefault();
         try {
             if (activeTab === 'ingredients' || activeTab === 'inventory') {
-                if (formData.id) await api.put(`/ingredients/${formData.id}`, formData);
-                else await api.post('/ingredients', formData);
+                const payload = {
+                    ...formData,
+                    stock: Number(formData.stock || 0),
+                    minStock: Number(formData.minStock || 0),
+                    averageCost: Number(formData.averageCost || 0)
+                };
+                if (formData.id) await api.put(`/ingredients/${formData.id}`, payload);
+                else await api.post('/ingredients', payload);
                 toast.success('Insumo salvo!');
                 setShowForm(false);
             } else if (activeTab === 'groups') {
@@ -154,7 +166,15 @@ const StockManagement: React.FC = () => {
             } else if (activeTab === 'losses') {
                 await createStockLoss(formData);
                 toast.success('Perda registrada!');
-                setShowForm(false);
+                setShowLossModal(false);
+            } else if (activeTab === 'purchases') {
+                await api.post('/stock/entries', formData);
+                toast.success('Entrada registrada!');
+                setShowPurchaseModal(false);
+            } else if (activeTab === 'production') {
+                await produceIngredient(formData);
+                toast.success('Produção registrada!');
+                setShowProduceModal(false);
             }
             setFormData({});
             loadData();
@@ -243,11 +263,17 @@ const StockManagement: React.FC = () => {
                                                     </h3>                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão avançada de insumos e custos</p>
                         </div>
                         <Button size="sm" className="px-6 rounded-xl italic shadow-lg shadow-orange-100" onClick={() => { 
+                            setFormData({});
                             if (activeTab === 'groups') {
-                                setFormData({});
                                 setShowGroupModal(true);
                             } else if (activeTab === 'recipes') {
                                 toast.info("Selecione um produto na lista abaixo para editar sua Ficha Técnica.");
+                            } else if (activeTab === 'purchases') {
+                                setShowPurchaseModal(true);
+                            } else if (activeTab === 'production') {
+                                setShowProduceModal(true);
+                            } else if (activeTab === 'losses') {
+                                setShowLossModal(true);
                             } else {
                                 setFormData({ controlStock: true, controlCmv: true });
                                 setShowForm(true);
@@ -766,6 +792,164 @@ const StockManagement: React.FC = () => {
                                 <div className="pt-6 flex gap-4">
                                     <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowGroupModal(false)}>Cancelar</Button>
                                     <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black bg-slate-900 text-white">SALVAR GRUPO</Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showProduceModal && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowProduceModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">Registrar Produção</h3>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowProduceModal(false)}><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Item Produzido</label>
+                                    <select className="ui-input w-full h-12" required value={formData.ingredientId || ''} onChange={e => setFormData({...formData, ingredientId: e.target.value})}>
+                                        <option value="">Selecione um insumo beneficiado</option>
+                                        {ingredients.filter(i => i.isProduced).map(i => (
+                                            <option key={i.id} value={i.id}>{i.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <Input label="Quantidade Produzida" type="number" step="0.001" required value={formData.quantity || ''} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} />
+                                <div className="pt-6 flex gap-4">
+                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowProduceModal(false)}>Cancelar</Button>
+                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl italic font-black bg-purple-600 text-white hover:bg-purple-700">CONFIRMAR PRODUÇÃO</Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showLossModal && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLossModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">Registrar Perda</h3>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowLossModal(false)}><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Insumo</label>
+                                    <select className="ui-input w-full h-12" required value={formData.ingredientId || ''} onChange={e => setFormData({...formData, ingredientId: e.target.value})}>
+                                        <option value="">Selecione o insumo</option>
+                                        {ingredients.map(i => (
+                                            <option key={i.id} value={i.id}>{i.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <Input label="Qtd. Perdida" type="number" step="0.001" required value={formData.quantity || ''} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Motivo</label>
+                                        <select className="ui-input w-full h-12" required value={formData.reason || ''} onChange={e => setFormData({...formData, reason: e.target.value})}>
+                                            <option value="">Selecione...</option>
+                                            <option value="EXPIRED">Vencimento</option>
+                                            <option value="BROKEN">Avaria / Quebra</option>
+                                            <option value="PRODUCTION_ERROR">Erro de Produção</option>
+                                            <option value="THEFT">Furto / Roubo</option>
+                                            <option value="OTHER">Outros</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <Input label="Observações" value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} />
+                                <div className="pt-6 flex gap-4">
+                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowLossModal(false)}>Cancelar</Button>
+                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl italic font-black bg-rose-600 text-white hover:bg-rose-700">REGISTRAR PERDA</Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showPurchaseModal && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPurchaseModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">Entrada de Mercadoria (Nota)</h3>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowPurchaseModal(false)}><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <Input label="Nº da Nota / Fatura" value={formData.invoiceNumber || ''} onChange={e => setFormData({...formData, invoiceNumber: e.target.value})} />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Fornecedor</label>
+                                        <select className="ui-input w-full h-12" value={formData.supplierId || ''} onChange={e => setFormData({...formData, supplierId: e.target.value})}>
+                                            <option value="">Selecione o fornecedor</option>
+                                            {suppliers.map(s => (
+                                                <option key={s.id} value={s.id}>{s.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <Input label="Data de Recebimento" type="datetime-local" value={formData.receivedAt || ''} onChange={e => setFormData({...formData, receivedAt: e.target.value})} />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Itens da Nota</h4>
+                                        <Button type="button" variant="ghost" className="text-orange-600 font-black uppercase text-[10px]" onClick={() => {
+                                            const items = formData.items || [];
+                                            setFormData({...formData, items: [...items, { ingredientId: '', quantity: 0, unitCost: 0 }]});
+                                        }}>+ Adicionar Item</Button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {(formData.items || [{ ingredientId: '', quantity: 0, unitCost: 0 }]).map((item: any, idx: number) => (
+                                            <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 items-end">
+                                                <div className="md:col-span-5 space-y-1.5">
+                                                    <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Insumo</label>
+                                                    <select className="ui-input w-full h-10 text-xs" required value={item.ingredientId} onChange={e => {
+                                                        const newItems = [...(formData.items || [{ ingredientId: '', quantity: 0, unitCost: 0 }])];
+                                                        newItems[idx].ingredientId = e.target.value;
+                                                        setFormData({...formData, items: newItems});
+                                                    }}>
+                                                        <option value="">Selecione...</option>
+                                                        {ingredients.map(ing => (
+                                                            <option key={ing.id} value={ing.id}>{ing.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="md:col-span-3 space-y-1.5">
+                                                    <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Quantidade</label>
+                                                    <input type="number" step="0.001" className="ui-input w-full h-10 text-xs" required value={item.quantity} onChange={e => {
+                                                        const newItems = [...(formData.items || [])];
+                                                        newItems[idx].quantity = parseFloat(e.target.value);
+                                                        setFormData({...formData, items: newItems});
+                                                    }} />
+                                                </div>
+                                                <div className="md:col-span-3 space-y-1.5">
+                                                    <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Custo Unitário R$</label>
+                                                    <input type="number" step="0.01" className="ui-input w-full h-10 text-xs" required value={item.unitCost} onChange={e => {
+                                                        const newItems = [...(formData.items || [])];
+                                                        newItems[idx].unitCost = parseFloat(e.target.value);
+                                                        setFormData({...formData, items: newItems});
+                                                    }} />
+                                                </div>
+                                                <div className="md:col-span-1">
+                                                    <Button type="button" variant="ghost" size="icon" className="text-rose-400 hover:text-rose-600" onClick={() => {
+                                                        const newItems = formData.items.filter((_: any, i: number) => i !== idx);
+                                                        setFormData({...formData, items: newItems});
+                                                    }}><Trash2 size={16}/></Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="pt-6 flex gap-4 shrink-0">
+                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowPurchaseModal(false)}>Cancelar</Button>
+                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl italic font-black bg-emerald-600 text-white hover:bg-emerald-700 uppercase tracking-widest">CONFIRMAR RECEBIMENTO</Button>
                                 </div>
                             </form>
                         </motion.div>

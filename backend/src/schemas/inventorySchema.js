@@ -3,9 +3,12 @@ const { z } = require('zod');
 const IngredientSchema = z.object({
   name: z.string().min(1, "Nome do insumo é obrigatório"),
   unit: z.string().default("un"),
-  group: z.string().optional().nullable(),
+  groupId: z.string().optional().nullable(),
   stock: z.number().default(0),
   minStock: z.number().default(0),
+  averageCost: z.number().optional().default(0),
+  controlStock: z.boolean().default(true),
+  controlCmv: z.boolean().default(true),
   isProduced: z.boolean().default(false),
 });
 

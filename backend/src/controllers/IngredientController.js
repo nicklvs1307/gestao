@@ -19,6 +19,9 @@ class IngredientController {
     const newIngredient = await prisma.ingredient.create({
       data: {
         ...validatedData,
+        stock: Number(validatedData.stock || 0),
+        minStock: Number(validatedData.minStock || 0),
+        averageCost: Number(validatedData.averageCost || 0),
         restaurantId: req.restaurantId
       }
     });
@@ -31,7 +34,12 @@ class IngredientController {
     const validatedData = IngredientSchema.parse(req.body);
     const updated = await prisma.ingredient.update({
       where: { id },
-      data: validatedData
+      data: {
+        ...validatedData,
+        stock: Number(validatedData.stock || 0),
+        minStock: Number(validatedData.minStock || 0),
+        averageCost: Number(validatedData.averageCost || 0)
+      }
     });
     res.json(updated);
   });
