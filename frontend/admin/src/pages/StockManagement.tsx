@@ -14,7 +14,8 @@ import {
 import { 
     Package, AlertTriangle, Plus, Disc, ShoppingCart, 
     Trash2, Receipt, Search, ArrowDownCircle, CheckCircle, 
-    X, Hammer, History, ClipboardList, Info, ArrowRight, AlertOctagon, Scale, Save, Loader2, TrendingDown, ChevronRight
+    X, Hammer, History, ClipboardList, Info, ArrowRight, AlertOctagon, Scale, Save, Loader2, TrendingDown, ChevronRight,
+    Layers, MoveHorizontal, ListOrdered, FileText, Printer, GripVertical, Folder
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -27,32 +28,43 @@ import { Input } from '../components/ui/Input';
 const StockManagement: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'inventory' | 'ingredients' | 'purchases' | 'production' | 'shopping-list' | 'losses' | 'audit'>('inventory');
+    const [activeTab, setActiveTab] = useState<'inventory' | 'ingredients' | 'groups' | 'purchases' | 'production' | 'shopping-list' | 'losses' | 'audit' | 'history' | 'moves' | 'purchase-orders' | 'recipes'>('inventory');
 
     useEffect(() => {
-        if (location.pathname.includes('/ingredients')) setActiveTab('ingredients');
+        if (location.pathname.includes('/ingredients/groups')) setActiveTab('groups');
+        else if (location.pathname.includes('/ingredients')) setActiveTab('ingredients');
         else if (location.pathname.includes('/stock/invoices')) setActiveTab('purchases');
         else if (location.pathname.includes('/stock/shopping-list')) setActiveTab('shopping-list');
         else if (location.pathname.includes('/stock/production')) setActiveTab('production');
         else if (location.pathname.includes('/stock/losses')) setActiveTab('losses');
         else if (location.pathname.includes('/stock/audit')) setActiveTab('audit');
+        else if (location.pathname.includes('/stock/history')) setActiveTab('history');
+        else if (location.pathname.includes('/stock/moves')) setActiveTab('moves');
+        else if (location.pathname.includes('/stock/purchase-orders')) setActiveTab('purchase-orders');
+        else if (location.pathname.includes('/stock/recipes')) setActiveTab('recipes');
         else setActiveTab('inventory');
     }, [location.pathname]);
 
     const handleTabChange = (tab: string) => {
         const routes: Record<string, string> = {
             'ingredients': '/ingredients',
+            'groups': '/ingredients/groups',
             'purchases': '/stock/invoices',
             'production': '/stock/production',
             'shopping-list': '/stock/shopping-list',
             'losses': '/stock/losses',
-            'audit': '/stock/audit'
+            'audit': '/stock/audit',
+            'history': '/stock/history',
+            'moves': '/stock/moves',
+            'purchase-orders': '/stock/purchase-orders',
+            'recipes': '/stock/recipes'
         };
         navigate(routes[tab] || '/stock');
     };
 
     const [products, setProducts] = useState<any[]>([]);
     const [ingredients, setIngredients] = useState<any[]>([]);
+    const [ingredientGroups, setIngredientGroups] = useState<any[]>([]);
     const [purchases, setPurchases] = useState<any[]>([]);
     const [productionHistory, setProductionHistory] = useState<any[]>([]);
     const [recipes, setRecipes] = useState<any[]>([]);
@@ -60,6 +72,9 @@ const StockManagement: React.FC = () => {
     const [auditItems, setAuditItems] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(false);
     const [stockSearch, setStockSearch] = useState('');
+    const [filterGroup, setFilterGroup] = useState('all');
+    const [filterSupplier, setFilterSupplier] = useState('all');
+    const [filterStatus, setFilterStatus] = useState('all');
 
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<any>({});
@@ -75,9 +90,13 @@ const StockManagement: React.FC = () => {
             if (activeTab === 'inventory') {
                 const res = await api.get('/products');
                 setProducts(res.data);
-            } else if (activeTab === 'ingredients' || activeTab === 'audit') {
-                const res = await api.get('/ingredients');
-                setIngredients(res.data);
+            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list') {
+                const [ingRes, groupRes] = await Promise.all([
+                    api.get('/ingredients'),
+                    api.get('/ingredients/groups')
+                ]);
+                setIngredients(ingRes.data);
+                setIngredientGroups(groupRes.data);
                 if (activeTab === 'audit') {
                     const initialAudit: Record<string, number> = {};
                     res.data.forEach((i: any) => initialAudit[i.id] = i.stock);
@@ -93,6 +112,15 @@ const StockManagement: React.FC = () => {
             } else if (activeTab === 'losses') {
                 const res = await getStockLosses();
                 setLosses(res);
+            } else if (activeTab === 'history' || activeTab === 'moves') {
+                const [entries, prodHist, lossList] = await Promise.all([
+                    api.get('/stock/entries'),
+                    getProductionHistory(),
+                    getStockLosses()
+                ]);
+                setPurchases(entries.data);
+                setProductionHistory(prodHist);
+                setLosses(lossList);
             }
         } catch (error) { console.error(error); }
         finally { setLoading(false); }
@@ -137,11 +165,17 @@ const StockManagement: React.FC = () => {
                 <div className="flex bg-slate-200/50 p-1.5 rounded-2xl gap-1 shadow-inner overflow-x-auto no-scrollbar max-w-full">
                     {[
                         { id: 'inventory', label: 'Venda', icon: Package },
+                        { id: 'recipes', label: 'Ficha Técnica', icon: FileText },
                         { id: 'ingredients', label: 'Insumos', icon: Disc },
+                        { id: 'groups', label: 'Grupos', icon: Layers },
                         { id: 'purchases', label: 'Entradas', icon: ShoppingCart },
+                        { id: 'production', label: 'Produção', icon: Hammer },
                         { id: 'losses', label: 'Perdas', icon: AlertOctagon },
+                        { id: 'history', label: 'Histórico', icon: History },
+                        { id: 'moves', label: 'Movimentos', icon: MoveHorizontal },
                         { id: 'audit', label: 'Balanço', icon: Scale },
-                        { id: 'shopping-list', label: 'Faltas', icon: ClipboardList }
+                        { id: 'shopping-list', label: 'Compras', icon: ClipboardList },
+                        { id: 'purchase-orders', label: 'O.C', icon: ListOrdered }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => handleTabChange(tab.id)} className={cn("px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap", activeTab === tab.id ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-500 hover:text-slate-700")}>
                             <tab.icon size={14} /> {tab.label}
@@ -182,29 +216,53 @@ const StockManagement: React.FC = () => {
 
             {/* Listagem Principal */}
             <Card className="p-0 overflow-hidden border-slate-200 shadow-xl">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <div>
-                        <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-base">
-                            {activeTab === 'inventory' ? 'Produtos p/ Venda' : activeTab === 'ingredients' ? 'Banco de Insumos' : activeTab === 'purchases' ? 'Histórico de Entradas' : activeTab === 'losses' ? 'Registro de Perdas' : 'Lista de Reposição'}
-                        </h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Conferência e ajustes de quantidades</p>
-                    </div>
-                    <div className="flex gap-2">
-                        {activeTab === 'inventory' && (
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
-                                <input type="text" placeholder="Filtrar..." className="ui-input pl-9 h-10 text-xs w-48" value={stockSearch} onChange={e => setStockSearch(e.target.value)} />
-                            </div>
-                        )}
-                        <Button size="sm" className="px-6 rounded-xl italic" onClick={() => { setShowForm(true); setFormData({}); }}>
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <div>
+                                                    <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-base">
+                                                        {activeTab === 'inventory' ? 'Produtos p/ Venda' : 
+                                                         activeTab === 'recipes' ? 'Fichas Técnicas' :
+                                                         activeTab === 'ingredients' ? 'Banco de Insumos' : 
+                                                         activeTab === 'groups' ? 'Hierarquia de Grupos' :
+                                                         activeTab === 'purchases' ? 'Histórico de Entradas' : 
+                                                         activeTab === 'production' ? 'Registro de Produção' :
+                                                         activeTab === 'losses' ? 'Registro de Perdas' : 
+                                                         activeTab === 'history' ? 'Posição Histórica' :
+                                                         activeTab === 'moves' ? 'Movimentações de Estoque' :
+                                                         activeTab === 'purchase-orders' ? 'Ordens de Compra' :
+                                                         'Lista de Reposição'}
+                                                    </h3>                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão avançada de insumos e custos</p>
+                        </div>
+                        <Button size="sm" className="px-6 rounded-xl italic shadow-lg shadow-orange-100" onClick={() => { setShowForm(true); setFormData({}); }}>
                             <Plus size={16} /> NOVO REGISTRO
                         </Button>
                     </div>
+
+                    {activeTab === 'ingredients' && (
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                                <input type="text" placeholder="Buscar descrição..." className="ui-input pl-9 h-10 text-[10px] font-black uppercase w-full" value={stockSearch} onChange={e => setStockSearch(e.target.value)} />
+                            </div>
+                            <select className="ui-input h-10 text-[10px] font-black uppercase" value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
+                                <option value="all">Todos os Grupos</option>
+                                {/* Mapear grupos reais aqui */}
+                            </select>
+                            <select className="ui-input h-10 text-[10px] font-black uppercase" value={filterSupplier} onChange={e => setFilterSupplier(e.target.value)}>
+                                <option value="all">Todos os Fornecedores</option>
+                            </select>
+                            <select className="ui-input h-10 text-[10px] font-black uppercase" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                                <option value="all">Todos os Status</option>
+                                <option value="low">Estoque Baixo</option>
+                                <option value="critical">Crítico</option>
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 <div className="overflow-x-auto">
                     {loading ? (
-                        <div className="p-20 text-center flex flex-col items-center justify-center gap-4"><Loader2 className="animate-spin text-orange-500" size={32} /><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Estoque...</span></div>
+                        <div className="p-20 text-center flex flex-col items-center justify-center gap-4"><Loader2 className="animate-spin text-orange-500" size={32} /><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Banco de Dados...</span></div>
                     ) : (
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -216,12 +274,44 @@ const StockManagement: React.FC = () => {
                                             <th className="px-8 py-4 text-center">Saldo Atual</th>
                                             <th className="px-8 py-4 text-right">Ajuste Rápido</th>
                                         </>
+                                    ) : activeTab === 'recipes' ? (
+                                        <>
+                                            <th className="px-8 py-4">Ficha Técnica</th>
+                                            <th className="px-8 py-4">Grupo</th>
+                                            <th className="px-8 py-4 text-center">Estoque Atual</th>
+                                            <th className="px-8 py-4 text-right">Ações</th>
+                                        </>
                                     ) : activeTab === 'ingredients' ? (
                                         <>
-                                            <th className="px-8 py-4">Insumo / Grupo</th>
-                                            <th className="px-8 py-4 text-center">Origem</th>
-                                            <th className="px-8 py-4 text-center">Saldo</th>
+                                            <th className="px-6 py-4">Ingrediente</th>
+                                            <th className="px-6 py-4">Und. Consumo</th>
+                                            <th className="px-6 py-4">Grupo</th>
+                                            <th className="px-6 py-4 text-center">Mínimo</th>
+                                            <th className="px-6 py-4 text-center">Estoque</th>
+                                            <th className="px-6 py-4 text-center">Custo Médio</th>
+                                            <th className="px-6 py-4 text-center">Estoque?</th>
+                                            <th className="px-6 py-4 text-center">CMV?</th>
+                                            <th className="px-6 py-4 text-center">Benef.</th>
+                                            <th className="px-6 py-4 text-right">Ações</th>
+                                        </>
+                                    ) : activeTab === 'groups' ? (
+                                        <>
+                                            <th className="px-8 py-4">Estrutura de Grupos</th>
                                             <th className="px-8 py-4 text-right">Ações</th>
+                                        </>
+                                    ) : activeTab === 'production' ? (
+                                        <>
+                                            <th className="px-8 py-4">Insumo Produzido</th>
+                                            <th className="px-8 py-4 text-center">Data/Hora</th>
+                                            <th className="px-8 py-4 text-center">Quantidade</th>
+                                            <th className="px-8 py-4 text-right">Ações</th>
+                                        </>
+                                    ) : activeTab === 'history' || activeTab === 'moves' ? (
+                                        <>
+                                            <th className="px-8 py-4">Data/Hora</th>
+                                            <th className="px-8 py-4">Tipo / Operação</th>
+                                            <th className="px-8 py-4">Item</th>
+                                            <th className="px-8 py-4 text-center">Qtd</th>
                                         </>
                                     ) : (
                                         <>
@@ -264,28 +354,244 @@ const StockManagement: React.FC = () => {
                                     </tr>
                                 ))}
 
-                                {activeTab === 'ingredients' && ingredients.map((i: any) => (
-                                    <tr key={i.id} className="hover:bg-slate-50/80 transition-colors group">
+                                {activeTab === 'recipes' && products.map((p: any) => (
+                                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">
                                         <td className="px-8 py-5">
-                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{i.name}</p>
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{i.group || 'Geral'} • {i.unit}</p>
+                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{p.name}</p>
                                         </td>
-                                        <td className="px-8 py-5 text-center">
-                                            <span className={cn("px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest", i.isProduced ? "bg-purple-50 text-purple-600 border border-purple-100" : "bg-slate-100 text-slate-500")}>
-                                                {i.isProduced ? 'Produção' : 'Compra'}
-                                            </span>
+                                        <td className="px-8 py-5 font-bold text-[10px] text-slate-400 uppercase">
+                                            {p.category?.name || '---'}
                                         </td>
-                                        <td className="px-8 py-5 text-center">
-                                            <span className={cn("font-black text-sm italic tracking-tighter", i.stock <= (i.minStock || 0) ? "text-rose-600" : "text-slate-900")}>{i.stock.toFixed(2)} {i.unit}</span>
+                                        <td className="px-8 py-5 text-center font-black text-sm italic tracking-tighter text-slate-600">
+                                            {p.stock || '---'}
                                         </td>
                                         <td className="px-8 py-5 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-orange-600" onClick={() => { setShowForm(true); setFormData(i); }}>Editar</Button>
-                                                {i.isProduced && <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-purple-600" onClick={() => { setFormData(i); setShowRecipeModal(true); }}>Ficha Técnica</Button>}
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600"><Printer size={14}/></Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600"><Hammer size={14}/></Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600"><Trash2 size={14}/></Button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
+
+                                {activeTab === 'ingredients' && ingredients.filter(i => i.name.toLowerCase().includes(stockSearch.toLowerCase())).map((i: any) => (
+                                    <tr key={i.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{i.name}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                                {i.unit === 'kg' ? 'Quilograma (KG)' : i.unit === 'gr' ? 'Grama (GR)' : i.unit === 'lt' ? 'Litro (LT)' : i.unit === 'ml' ? 'Mililitro (ML)' : 'Unidade (UN)'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{i.group?.name || '---'}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center font-black text-xs text-slate-400">
+                                            {i.minStock?.toFixed(2)}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={cn("font-black text-sm italic tracking-tighter", i.stock <= (i.minStock || 0) ? "text-rose-600" : "text-slate-900")}>{i.stock.toFixed(2)}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center font-black text-xs text-slate-900 italic">
+                                            R$ {i.averageCost?.toFixed(2) || '0,00'}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className={cn("w-4 h-4 mx-auto rounded border-2 flex items-center justify-center transition-all", i.controlStock ? "bg-orange-500 border-orange-500" : "border-slate-200")}>
+                                                {i.controlStock && <CheckCircle size={10} className="text-white" />}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className={cn("w-4 h-4 mx-auto rounded border-2 flex items-center justify-center transition-all", i.controlCmv ? "bg-orange-500 border-orange-500" : "border-slate-200")}>
+                                                {i.controlCmv && <CheckCircle size={10} className="text-white" />}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className={cn("w-4 h-4 mx-auto rounded border-2 flex items-center justify-center transition-all", i.isProduced ? "bg-purple-500 border-purple-500" : "border-slate-200")}>
+                                                {i.isProduced && <CheckCircle size={10} className="text-white" />}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-orange-50 hover:text-orange-600" onClick={() => { setShowForm(true); setFormData(i); }}><Hammer size={14}/></Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-rose-50 hover:text-rose-600"><Trash2 size={14}/></Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {activeTab === 'groups' && ingredientGroups.filter(g => !g.parentId).map((group: any) => (
+                                    <React.Fragment key={group.id}>
+                                        <tr className="hover:bg-slate-50/80 transition-colors group bg-slate-50/30">
+                                            <td className="px-8 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Folder className="text-orange-500" size={18} />
+                                                    <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{group.name}</p>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-4 text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-orange-600"><Plus size={14}/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-slate-600"><Hammer size={14}/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-rose-600"><Trash2 size={14}/></Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {ingredientGroups.filter(sub => sub.parentId === group.id).map((sub: any) => (
+                                            <tr key={sub.id} className="hover:bg-slate-50/80 transition-colors group border-l-4 border-orange-100">
+                                                <td className="px-16 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <ChevronRight size={14} className="text-slate-300" />
+                                                        <p className="font-bold text-[10px] text-slate-500 uppercase tracking-widest">{sub.name}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-3 text-right">
+                                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg bg-slate-50 hover:text-slate-600"><Hammer size={12}/></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg bg-slate-50 hover:text-rose-600"><Trash2 size={12}/></Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
+                                ))}
+
+                                {activeTab === 'production' && productionHistory.map((log: any) => (
+                                    <tr key={log.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{log.ingredient?.name}</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-center font-bold text-[10px] text-slate-400 uppercase">
+                                            {format(new Date(log.producedAt), 'dd/MM/yyyy HH:mm')}
+                                        </td>
+                                        <td className="px-8 py-5 text-center font-black text-sm text-slate-900 italic tracking-tighter">
+                                            {log.quantity} {log.ingredient?.unit}
+                                        </td>
+                                        <td className="px-8 py-5 text-right">
+                                            <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-rose-600">Estornar</Button>
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {(activeTab === 'history' || activeTab === 'moves') && [
+                                    ...purchases.flatMap(p => p.items.map((item: any) => ({ date: p.receivedAt, type: 'ENTRADA', item: item.ingredient?.name, qty: item.quantity, color: 'text-emerald-600' }))),
+                                    ...productionHistory.map((log: any) => ({ date: log.producedAt, type: 'PRODUÇÃO', item: log.ingredient?.name, qty: log.quantity, color: 'text-purple-600' })),
+                                    ...losses.map((loss: any) => ({ date: loss.lossDate, type: 'PERDA', item: loss.ingredient?.name, qty: -loss.quantity, color: 'text-rose-600' }))
+                                ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((move: any, idx: number) => (
+                                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase">
+                                            {format(new Date(move.date), 'dd/MM/yyyy HH:mm')}
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <span className={cn("px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border", move.color.replace('text', 'bg').replace('600', '50'), move.color.replace('text', 'border').replace('600', '100'), move.color)}>
+                                                {move.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5 font-black text-xs text-slate-900 uppercase italic tracking-tight">
+                                            {move.item}
+                                        </td>
+                                        <td className="px-8 py-5 text-center font-black text-sm italic tracking-tighter">
+                                            {move.qty > 0 ? `+${move.qty}` : move.qty}
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {activeTab === 'purchases' && purchases.map((p: any) => (
+                                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <p className="font-bold text-[10px] text-slate-400 uppercase">{format(new Date(p.receivedAt), 'dd/MM/yyyy HH:mm')}</p>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">NF: {p.invoiceNumber || 'S/N'}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{p.supplier?.name || 'Fornecedor Avulso'}</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-center">
+                                            <span className="font-black text-sm text-slate-900 italic tracking-tighter">R$ {p.totalAmount.toFixed(2)}</span>
+                                        </td>
+                                        <td className="px-8 py-5 text-right">
+                                            {p.status === 'PENDING' ? (
+                                                <Button onClick={() => handleConfirmPurchase(p.id)} className="text-[10px] font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700">Confirmar</Button>
+                                            ) : (
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center justify-end gap-1"><CheckCircle size={12}/> Recebido</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {activeTab === 'losses' && losses.map((l: any) => (
+                                    <tr key={l.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <p className="font-bold text-[10px] text-slate-400 uppercase">{format(new Date(l.lossDate), 'dd/MM/yyyy HH:mm')}</p>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{l.ingredient?.name}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{l.reason}</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-center font-black text-sm text-rose-600 italic tracking-tighter">
+                                            -{l.quantity} {l.ingredient?.unit}
+                                        </td>
+                                        <td className="px-8 py-5 text-right">
+                                            <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ver Detalhes</Button>
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {activeTab === 'audit' && ingredients.map((i: any) => (
+                                    <tr key={i.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{i.name}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Saldo Atual: {i.stock} {i.unit}</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-center" colSpan={2}>
+                                            <div className="flex items-center justify-center gap-4">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estoque Físico:</span>
+                                                <input 
+                                                    type="number" 
+                                                    className="w-24 h-10 ui-input text-center font-black"
+                                                    value={auditItems[i.id] ?? i.stock}
+                                                    onChange={e => setAuditItems({...auditItems, [i.id]: parseFloat(e.target.value)})}
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5 text-right">
+                                            {auditItems[i.id] !== i.stock && (
+                                                <span className={cn("text-[10px] font-black uppercase italic", (auditItems[i.id] - i.stock) > 0 ? "text-emerald-600" : "text-rose-600")}>
+                                                    Dif: {(auditItems[i.id] - i.stock).toFixed(2)}
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {activeTab === 'shopping-list' && ingredients.filter(i => i.stock <= (i.minStock || 0)).map((i: any) => (
+                                    <tr key={i.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{i.name}</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-center">
+                                            <p className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-1 rounded-lg inline-block border border-rose-100 uppercase tracking-widest">Abaixo do Mínimo</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-center">
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Saldo: {i.stock} / Mín: {i.minStock}</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-right">
+                                            <Button className="text-[10px] font-black uppercase tracking-widest h-10 px-6">Comprar</Button>
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {activeTab === 'purchase-orders' && (
+                                    <tr>
+                                        <td colSpan={4} className="py-20 text-center">
+                                            <div className="flex flex-col items-center gap-4 opacity-30">
+                                                <ListOrdered size={48} />
+                                                <p className="text-[10px] font-black uppercase tracking-widest">Módulo de Ordens de Compra em breve</p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase max-w-xs mx-auto">Esta funcionalidade está sendo integrada ao módulo financeiro para automação de pedidos aos fornecedores.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     )}
@@ -294,36 +600,122 @@ const StockManagement: React.FC = () => {
 
             {/* MODAIS PREMIUM */}
             <AnimatePresence>
-                {showForm && (
+                {showRecipeModal && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
-                                    {formData.id ? 'Editar' : 'Novo'} Insumo
-                                </h3>
-                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowForm(false)}><X size={24}/></Button>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowRecipeModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-5xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                                        Cadastro de Ficha Técnica
+                                    </h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Composição e custo de produção</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Button variant="outline" size="sm" className="rounded-xl h-10 px-4 font-black uppercase text-[10px] tracking-widest gap-2 bg-white">
+                                        <Printer size={16} /> Imprimir
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowRecipeModal(false)}><X size={24}/></Button>
+                                </div>
                             </header>
-                            <form onSubmit={handleSubmit} className="p-10 space-y-6">
-                                <Input label="Nome do Insumo" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Queijo Mussarela" />
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade de Medida</label>
-                                        <select className="ui-input w-full h-12" value={formData.unit || 'un'} onChange={e => setFormData({...formData, unit: e.target.value})}>
-                                            <option value="un">un (Unidade)</option><option value="kg">kg (Quilo)</option><option value="gr">gr (Grama)</option><option value="lt">lt (Litro)</option><option value="ml">ml (Mililitro)</option>
-                                        </select>
+
+                            <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
+                                {/* Cabeçalho da Ficha */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-100">
+                                    <div className="md:col-span-1 space-y-4">
+                                        <Input label="Descrição" value={formData.name || ''} readOnly className="bg-slate-50 border-none font-black italic text-lg" />
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade de Consumo</label>
+                                            <select className="ui-input w-full h-12 bg-slate-50 border-none" value={formData.unit || 'un'} disabled>
+                                                <option value="un">Unidade (UN)</option><option value="kg">Quilograma (KG)</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <Input label="Estoque Mínimo" type="number" step="0.001" value={formData.minStock || ''} onChange={e => setFormData({...formData, minStock: e.target.value})} />
+                                    <div className="md:col-span-2 space-y-6">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Tipo de Ficha Técnica</label>
+                                        <div className="flex gap-6">
+                                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setFormData({...formData, isProduced: false})}>
+                                                <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all", !formData.isProduced ? "border-orange-500 ring-4 ring-orange-50" : "border-slate-200")}>
+                                                    {!formData.isProduced && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
+                                                </div>
+                                                <span className={cn("text-xs font-black uppercase tracking-widest transition-colors", !formData.isProduced ? "text-slate-900" : "text-slate-400")}>Produto Final</span>
+                                            </div>
+                                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setFormData({...formData, isProduced: true})}>
+                                                <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all", formData.isProduced ? "border-orange-500 ring-4 ring-orange-50" : "border-slate-200")}>
+                                                    {formData.isProduced && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
+                                                </div>
+                                                <span className={cn("text-xs font-black uppercase tracking-widest transition-colors", formData.isProduced ? "text-slate-900" : "text-slate-400")}>Ingrediente Beneficiado</span>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Vínculo com Venda</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 uppercase flex items-center gap-2">
+                                                    {formData.name} • Único <X size={12} className="text-slate-300 cursor-pointer" />
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <Card className={cn("p-4 border-2 transition-all cursor-pointer flex items-center gap-3", formData.isProduced ? "border-purple-500 bg-purple-50" : "border-slate-100 bg-slate-50")} onClick={() => setFormData({...formData, isProduced: !formData.isProduced})}>
-                                    <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all", formData.isProduced ? "bg-purple-500 border-purple-500" : "border-slate-300")}>{formData.isProduced && <CheckCircle size={14} className="text-white" />}</div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Produzido Internamente (Receita)</span>
-                                </Card>
-                                <div className="pt-6 flex gap-4">
-                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowForm(false)}>Cancelar</Button>
-                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">SALVAR ALTERAÇÕES</Button>
+
+                                {/* Porções e Itens */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-xs font-black text-slate-900 uppercase italic tracking-widest flex items-center gap-2">
+                                            <GripVertical size={16} className="text-slate-300" /> Porção: {formData.name}
+                                        </h4>
+                                        <div className="flex items-center gap-8">
+                                            <div className="text-right">
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Rendimento</p>
+                                                <div className="flex items-center gap-2">
+                                                    <input type="number" className="w-16 h-8 text-center bg-slate-50 border-none font-black text-sm rounded-lg" defaultValue="1.00" />
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">({formData.unit || 'UN'})</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Custo da Porção</p>
+                                                <p className="text-lg font-black text-orange-600 italic tracking-tighter leading-none">R$ 0,00</p>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"><Trash2 size={18} /></Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Tabela de Ingredientes da Porção */}
+                                    <div className="rounded-[2rem] border-2 border-slate-100 overflow-hidden bg-slate-50/30">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="text-[8px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-white">
+                                                    <th className="px-6 py-4">Ingrediente</th>
+                                                    <th className="px-6 py-4">Unidade</th>
+                                                    <th className="px-6 py-4 text-center">Custo Médio</th>
+                                                    <th className="px-6 py-4 text-center">Quantidade</th>
+                                                    <th className="px-6 py-4 text-right">Custo na Porção</th>
+                                                    <th className="px-6 py-4"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                <tr className="bg-white/50">
+                                                    <td colSpan={6} className="px-6 py-8 text-center">
+                                                        <Button variant="ghost" className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-600 gap-2 hover:bg-orange-50 rounded-xl">
+                                                            <Plus size={16} /> Adicionar Ingrediente
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p className="text-[9px] font-bold text-slate-400 italic">Porções são tamanhos diferentes da mesma composição de ingredientes.</p>
+                                    <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-orange-500 p-0 hover:bg-transparent">+ Adicionar porção</Button>
                                 </div>
-                            </form>
+                            </div>
+
+                            <footer className="px-10 py-6 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Kicardapio Intelligence • V2.5</p>
+                                <div className="flex gap-3">
+                                    <Button variant="ghost" className="rounded-2xl h-12 px-8 font-black uppercase text-[10px] tracking-widest italic" onClick={() => setShowRecipeModal(false)}>Cancelar</Button>
+                                    <Button className="rounded-2xl h-12 px-10 font-black uppercase text-[10px] tracking-widest italic bg-slate-900 text-white shadow-xl hover:bg-orange-600 transition-all">Salvar Ficha Técnica</Button>
+                                </div>
+                            </footer>
                         </motion.div>
                     </div>
                 )}

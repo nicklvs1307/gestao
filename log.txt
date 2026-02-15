@@ -1,19 +1,97 @@
-URL da solicitação
-https://kicardapio.towersfy.com/api/settings
-Método da solicitação
-GET
-Código de status
-500 Internal Server Erro
-{"error":"Erro ao buscar configurações."}
+root@servergestao:~/gestao# BACKEND_ID=$(docker ps -qf name=kicardapio_backend)
+root@servergestao:~/gestao# docker exec -e VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY $BACKEND_ID node scripts/fix_financial_transactions.js
+--- INICIANDO CORREÇÃO DE LANÇAMENTOS FINANCEIROS ---
+PrismaClientInitializationError:
+Invalid `prisma.order.findMany()` invocation:
 
 
-URL da solicitação
-https://kicardapio.towersfy.com/api/super-admin/restaurants
-Método da solicitação
-GET
-Código de status
-500 Internal Server Erro
-{
-    "error": "Erro ao buscar restaurantes.",
-    "details": "\nInvalid `prisma.restaurant.findMany()` invocation:\n\n\nThe column `Restaurant.latitude` does not exist in the current database."
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   |
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   |
+
+Validation Error Count: 1
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async main (/app/scripts/fix_financial_transactions.js:8:18) {
+  clientVersion: '6.16.3',
+  errorCode: undefined,
+  retryable: undefined
 }
+root@servergestao:~/gestao# docker exec -e VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY $BACKEND_ID node scripts/fix_missing_coordinates.js
+--- INICIANDO RECUPERAÇÃO DE COORDENADAS PARA MAPA DE CALOR ---
+PrismaClientInitializationError:
+Invalid `prisma.deliveryOrder.findMany()` invocation:
+
+
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   |
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   |
+
+Validation Error Count: 1
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async main (/app/scripts/fix_missing_coordinates.js:15:18) {
+  clientVersion: '6.16.3',
+  errorCode: undefined,
+  retryable: undefined
+}
+root@servergestao:~/gestao# BACKEND_ID=$(docker ps -qf name=kicardapio_backend)
+root@servergestao:~/gestao# docker exec -e DATABASE_URL=$(cat /run/secrets/db_connection_string) $BACKEND_ID node scripts/fix_financial_transactions.js
+cat: /run/secrets/db_connection_string: No such file or directory
+--- INICIANDO CORREÇÃO DE LANÇAMENTOS FINANCEIROS ---
+PrismaClientInitializationError:
+Invalid `prisma.order.findMany()` invocation:
+
+
+error: Error validating datasource `db`: You must provide a nonempty URL. The environment variable `DATABASE_URL` resolved to an empty string.
+  -->  schema.prisma:7
+   |
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   |
+
+Validation Error Count: 1
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async main (/app/scripts/fix_financial_transactions.js:8:18) {
+  clientVersion: '6.16.3',
+  errorCode: undefined,
+  retryable: undefined
+}
+root@servergestao:~/gestao# docker exec -e VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY -e DATABASE_URL=$(cat /run/secrets/db_connection_string) $BACKEND_ID node scripts/fix_missing_coordinates.js
+cat: /run/secrets/db_connection_string: No such file or directory
+--- INICIANDO RECUPERAÇÃO DE COORDENADAS PARA MAPA DE CALOR ---
+PrismaClientInitializationError:
+Invalid `prisma.deliveryOrder.findMany()` invocation:
+
+
+error: Error validating datasource `db`: You must provide a nonempty URL. The environment variable `DATABASE_URL` resolved to an empty string.
+  -->  schema.prisma:7
+   |
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   |
+
+Validation Error Count: 1
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async main (/app/scripts/fix_missing_coordinates.js:15:18) {
+  clientVersion: '6.16.3',
+  errorCode: undefined,
+  retryable: undefined
+}
+root@servergestao:~/gestao#

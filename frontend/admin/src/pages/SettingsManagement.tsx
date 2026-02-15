@@ -57,6 +57,8 @@ const SettingsManagement: React.FC = () => {
   const [restaurantName, setRestaurantName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
+  const [city, setCity] = useState(''); // Novo
+  const [state, setState] = useState(''); // Novo
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [slug, setSlug] = useState('');
@@ -120,8 +122,17 @@ const SettingsManagement: React.FC = () => {
         setRestaurantName(settingsData.name || '');
         setAddress(settingsData.address || '');
         setPhone(settingsData.phone || '');
+        setCity(settingsData.city || ''); // Novo
+        setState(settingsData.state || ''); // Novo
         setLatitude(settingsData.latitude?.toString() || '');
         setLongitude(settingsData.longitude?.toString() || '');
+        
+        // Salva para uso em outros componentes (ex: modal de cliente)
+        localStorage.setItem('restaurant_settings', JSON.stringify({
+            city: settingsData.city,
+            state: settingsData.state,
+            address: settingsData.address
+        }));
         setSlug(settingsData.slug || '');
         setOriginalSlug(settingsData.slug || '');
         setServiceTaxPercentage(settingsData.serviceTaxPercentage || 10);
@@ -199,7 +210,9 @@ const SettingsManagement: React.FC = () => {
     setIsSaving(true);
     try {
       await updateSettings({
-        name: restaurantName, slug, address, phone, serviceTaxPercentage,
+        name: restaurantName, slug, address, phone, 
+        city, state, // Novos campos
+        serviceTaxPercentage,
         openingHours, latitude, longitude, primaryColor, secondaryColor, backgroundColor,
         backgroundImageUrl, isOpen: isStoreOpen, deliveryFee, deliveryTime,
         autoAcceptOrders, loyaltyEnabled, pointsPerReal, cashbackPercentage
@@ -261,6 +274,10 @@ const SettingsManagement: React.FC = () => {
                     <div className="space-y-4">
                         <Input label="Nome Fantasia" value={restaurantName} onChange={e => setRestaurantName(e.target.value)} />
                         <Input label="Endereço Físico" value={address} onChange={e => setAddress(e.target.value)} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Cidade" value={city} onChange={e => setCity(e.target.value)} placeholder="Ex: São Paulo" />
+                            <Input label="Estado (UF)" value={state} onChange={e => setState(e.target.value)} placeholder="Ex: SP" />
+                        </div>
                         <Input label="WhatsApp / Telefone" value={phone} onChange={e => setPhone(e.target.value)} />
                         <div className="grid grid-cols-2 gap-4">
                             <Input label="Latitude" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="-23.5505" />

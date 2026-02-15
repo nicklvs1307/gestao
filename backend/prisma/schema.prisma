@@ -106,6 +106,8 @@ model Restaurant {
   phone     String?  // Telefone
   serviceTaxPercentage Float? @default(0) // Taxa de serviço
   openingHours String? // Horário de funcionamento
+  city         String?  // Cidade
+  state        String?  // Estado (UF)
   latitude     Float?
   longitude    Float?
   
@@ -135,6 +137,7 @@ model Restaurant {
   
   // Relações Novos Módulos
   ingredients         Ingredient[] // Adicionado para Ficha Técnica
+  ingredientGroups    IngredientGroup[]
   stockEntries        StockEntry[] // Entradas de mercadoria
   stockLosses         StockLoss[]  // Perdas de estoque
   fiscalConfig        RestaurantFiscalConfig?
@@ -316,6 +319,7 @@ model Supplier {
   
   transactions FinancialTransaction[]
   stockEntries StockEntry[]
+  ingredientLinks IngredientSupplier[]
 
   @@index([restaurantId])
 }
@@ -330,6 +334,7 @@ model TransactionCategory {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   
   transactions FinancialTransaction[]
+  ingredients  Ingredient[]
 
   @@index([restaurantId])
 }
@@ -841,29 +846,57 @@ model Promotion {
   @@index([productId])
 }
 
-// === MODELOS PARA FICHA TÉCNICA (ESTOQUE AVANÇADO) ===
+// === MODELOS PARA FICHA TÉCNICA (ESTOQUE AVANÇADO - NÍVEL ERP) ===
+
+model IngredientGroup {
+  id           String   @id @default(cuid())
+  name         String
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  
+  parentId     String?
+  parent       IngredientGroup? @relation("SubGroups", fields: [parentId], references: [id])
+  subGroups    IngredientGroup[] @relation("SubGroups")
+  
+  ingredients  Ingredient[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([name, restaurantId, parentId])
+  @@index([restaurantId])
+}
 
 model Ingredient {
   id           String   @id @default(cuid())
   name         String
-  group        String?  // Novo: Categoria do insumo (ex: Proteínas, Limpeza)
-  unit         String   @default("un") // un, kg, lt, gr, ml
+  unit         String   @default("un") // Unidade de consumo (Ex: KG, GR, UN)
   stock        Float    @default(0)
   minStock     Float?   @default(0)
   lastUnitCost Float?   @default(0)
+  averageCost  Float?   @default(0) // Custo médio ponderado (calculado nas entradas)
   
-  // Flag para identificar se é produzido internamente
-  isProduced   Boolean  @default(false)
+  // Flags de Controle Profissional
+  controlStock Boolean  @default(true) // "Controla estoque"
+  controlCmv   Boolean  @default(true) // "Compõe CMV"
+  isProduced   Boolean  @default(false) // "Beneficiado" (Item produzido a partir de outros)
   
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
+  groupId      String?
+  group        IngredientGroup? @relation(fields: [groupId], references: [id])
+  
+  financialCategoryId String?
+  financialCategory   TransactionCategory? @relation(fields: [financialCategoryId], references: [id])
+
+  suppliers    IngredientSupplier[]
   productLinks ProductIngredient[]
   addonIngredients AddonIngredient[]
-  stockEntries StockEntryItem[] // Histórico de entradas deste insumo
-  stockLosses  StockLoss[]      // Histórico de perdas
+  stockEntries StockEntryItem[]
+  stockLosses  StockLoss[]
   
-  // Relacionamentos para Receita de Produção (Se isProduced for true)
+  // Receita para itens beneficiados
   recipe       IngredientRecipe[] @relation("ProducedIngredient")
   usedIn       IngredientRecipe[] @relation("ComponentIngredient")
   
@@ -873,6 +906,27 @@ model Ingredient {
   updatedAt    DateTime @updatedAt
 
   @@index([restaurantId])
+  @@index([groupId])
+}
+
+model IngredientSupplier {
+  id             String     @id @default(cuid())
+  ingredientId   String
+  ingredient     Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  
+  supplierId     String
+  supplier       Supplier   @relation(fields: [supplierId], references: [id])
+  
+  // Fator de Conversão (Ex: Compra Caixa com 10kg, consome em KG -> Fator 10)
+  conversionFactor Float    @default(1) 
+  purchaseUnit    String?   // Unidade de compra (Ex: CX, FD)
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([ingredientId, supplierId])
+  @@index([ingredientId])
+  @@index([supplierId])
 }
 
 model IngredientRecipe {
@@ -883,7 +937,10 @@ model IngredientRecipe {
   componentIngredientId  String
   componentIngredient    Ingredient @relation("ComponentIngredient", fields: [componentIngredientId], references: [id])
   
-  quantity               Float // Quantidade necessária do componente para fazer 1 unidade do produzido
+  quantity               Float // Quantidade necessária do componente
+  
+  // Campo para suportar "Rendimento" da ficha técnica
+  yieldAmount            Float? @default(1) 
 
   @@index([producedIngredientId])
   @@index([componentIngredientId])

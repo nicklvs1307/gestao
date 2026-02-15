@@ -426,6 +426,11 @@ function AdminRoutes() {
             />
           </ProtectedRoute>
         } />
+        <Route path="/stock/cmv" element={
+          <ProtectedRoute permission="reports:abc">
+            <CmvAnalysis />
+          </ProtectedRoute>
+        } />
         <Route path="/stock" element={
           <ProtectedRoute permission="stock:view">
             <StockManagement />

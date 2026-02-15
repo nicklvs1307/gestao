@@ -9,4 +9,9 @@ router.post('/', needsAuth, IngredientController.create);
 router.put('/:id', needsAuth, IngredientController.update);
 router.delete('/:id', needsAuth, IngredientController.delete);
 
+// Rotas de Grupos
+router.get('/groups', needsAuth, IngredientController.getGroups);
+router.post('/groups', needsAuth, IngredientController.createGroup);
+router.delete('/groups/:id', needsAuth, IngredientController.deleteGroup);
+
 module.exports = router;

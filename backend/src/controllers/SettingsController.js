@@ -41,6 +41,7 @@ const getSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
     const { 
         name, slug, address, phone, serviceTaxPercentage, openingHours,
+        city, state, // Novos campos
         latitude, longitude,
         primaryColor, secondaryColor, backgroundColor, backgroundType, 
         backgroundImageUrl, isOpen, deliveryFee, deliveryTime, autoAcceptOrders,
@@ -48,8 +49,9 @@ const updateSettings = async (req, res) => {
     } = req.body;
 
     try {
-        // Validação de Slug Personalizada
+        // ... (lógica de slug mantida)
         let finalSlug = slug ? slugify(slug) : undefined;
+        // ... rest of the existing slug logic ...
         
         if (finalSlug) {
             const existingSlug = await prisma.restaurant.findFirst({
@@ -78,6 +80,8 @@ const updateSettings = async (req, res) => {
                     name, 
                     address, 
                     phone, 
+                    city, // Novo
+                    state, // Novo
                     serviceTaxPercentage: serviceTaxPercentage !== undefined ? parseFloat(serviceTaxPercentage) : undefined,
                     openingHours,
                     latitude: latitude !== undefined ? parseFloat(latitude) : undefined,

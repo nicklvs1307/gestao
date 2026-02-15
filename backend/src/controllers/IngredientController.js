@@ -42,6 +42,38 @@ class IngredientController {
     await prisma.ingredient.delete({ where: { id } });
     res.status(204).send();
   });
+
+  // === GRUPOS DE INGREDIENTES ===
+
+  // GET /api/ingredients/groups
+  getGroups = asyncHandler(async (req, res) => {
+    const groups = await prisma.ingredientGroup.findMany({
+      where: { restaurantId: req.restaurantId },
+      orderBy: { name: 'asc' }
+    });
+    res.json(groups);
+  });
+
+  // POST /api/ingredients/groups
+  createGroup = asyncHandler(async (req, res) => {
+    const { name, parentId } = req.body;
+    const newGroup = await prisma.ingredientGroup.create({
+      data: {
+        name,
+        parentId,
+        restaurantId: req.restaurantId
+      }
+    });
+    res.status(201).json(newGroup);
+  });
+
+  // DELETE /api/ingredients/groups/:id
+  deleteGroup = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    // Prisma cuidará da integridade ou podemos impedir se houver sub-itens
+    await prisma.ingredientGroup.delete({ where: { id } });
+    res.status(204).send();
+  });
 }
 
 module.exports = new IngredientController();
