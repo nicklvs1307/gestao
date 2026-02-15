@@ -77,6 +77,7 @@ const StockManagement: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState('all');
 
     const [showForm, setShowForm] = useState(false);
+    const [showGroupModal, setShowGroupModal] = useState(false);
     const [formData, setFormData] = useState<any>({});
     const [showProduceModal, setShowProduceModal] = useState(false);
     const [showRecipeModal, setShowRecipeModal] = useState(false);
@@ -90,13 +91,15 @@ const StockManagement: React.FC = () => {
             if (activeTab === 'inventory') {
                 const res = await api.get('/products');
                 setProducts(res.data);
-            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list') {
-                const [ingRes, groupRes] = await Promise.all([
+            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list' || activeTab === 'recipes') {
+                const [ingRes, groupRes, prodRes] = await Promise.all([
                     api.get('/ingredients'),
-                    api.get('/ingredients/groups')
+                    api.get('/ingredients/groups'),
+                    api.get('/products')
                 ]);
                 setIngredients(ingRes.data);
                 setIngredientGroups(groupRes.data);
+                setProducts(prodRes.data);
                 if (activeTab === 'audit') {
                     const initialAudit: Record<string, number> = {};
                     res.data.forEach((i: any) => initialAudit[i.id] = i.stock);
@@ -138,18 +141,24 @@ const StockManagement: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (activeTab === 'ingredients') {
+            if (activeTab === 'ingredients' || activeTab === 'inventory') {
                 if (formData.id) await api.put(`/ingredients/${formData.id}`, formData);
                 else await api.post('/ingredients', formData);
-                toast.success('Salvo!');
+                toast.success('Insumo salvo!');
+                setShowForm(false);
+            } else if (activeTab === 'groups') {
+                if (formData.id) await api.put(`/ingredients/groups/${formData.id}`, formData);
+                else await api.post('/ingredients/groups', formData);
+                toast.success('Grupo salvo!');
+                setShowGroupModal(false);
             } else if (activeTab === 'losses') {
                 await createStockLoss(formData);
                 toast.success('Perda registrada!');
+                setShowForm(false);
             }
-            setShowForm(false);
             setFormData({});
             loadData();
-        } catch (error) { toast.error('Erro ao salvar.'); }
+        } catch (error) { toast.error('Erro ao salvar registro.'); }
     };
 
     return (
@@ -233,7 +242,17 @@ const StockManagement: React.FC = () => {
                                                          'Lista de Reposição'}
                                                     </h3>                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão avançada de insumos e custos</p>
                         </div>
-                        <Button size="sm" className="px-6 rounded-xl italic shadow-lg shadow-orange-100" onClick={() => { setShowForm(true); setFormData({}); }}>
+                        <Button size="sm" className="px-6 rounded-xl italic shadow-lg shadow-orange-100" onClick={() => { 
+                            if (activeTab === 'groups') {
+                                setFormData({});
+                                setShowGroupModal(true);
+                            } else if (activeTab === 'recipes') {
+                                toast.info("Selecione um produto na lista abaixo para editar sua Ficha Técnica.");
+                            } else {
+                                setFormData({ controlStock: true, controlCmv: true });
+                                setShowForm(true);
+                            }
+                        }}>
                             <Plus size={16} /> NOVO REGISTRO
                         </Button>
                     </div>
@@ -368,7 +387,7 @@ const StockManagement: React.FC = () => {
                                         <td className="px-8 py-5 text-right">
                                             <div className="flex justify-end gap-1">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600"><Printer size={14}/></Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600"><Hammer size={14}/></Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600" onClick={() => { setFormData(p); setShowRecipeModal(true); }}><Hammer size={14}/></Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600"><Trash2 size={14}/></Button>
                                             </div>
                                         </td>
@@ -432,8 +451,8 @@ const StockManagement: React.FC = () => {
                                             </td>
                                             <td className="px-8 py-4 text-right">
                                                 <div className="flex justify-end gap-1">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-orange-600"><Plus size={14}/></Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-slate-600"><Hammer size={14}/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-orange-600" onClick={() => { setFormData({ parentId: group.id }); setShowGroupModal(true); }}><Plus size={14}/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-slate-600" onClick={() => { setFormData(group); setShowGroupModal(true); }}><Hammer size={14}/></Button>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white shadow-sm hover:text-rose-600"><Trash2 size={14}/></Button>
                                                 </div>
                                             </td>
@@ -448,7 +467,7 @@ const StockManagement: React.FC = () => {
                                                 </td>
                                                 <td className="px-8 py-3 text-right">
                                                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg bg-slate-50 hover:text-slate-600"><Hammer size={12}/></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg bg-slate-50 hover:text-slate-600" onClick={() => { setFormData(sub); setShowGroupModal(true); }}><Hammer size={12}/></Button>
                                                         <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg bg-slate-50 hover:text-rose-600"><Trash2 size={12}/></Button>
                                                     </div>
                                                 </td>
@@ -716,6 +735,39 @@ const StockManagement: React.FC = () => {
                                     <Button className="rounded-2xl h-12 px-10 font-black uppercase text-[10px] tracking-widest italic bg-slate-900 text-white shadow-xl hover:bg-orange-600 transition-all">Salvar Ficha Técnica</Button>
                                 </div>
                             </footer>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showGroupModal && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowGroupModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">
+                                    {formData.id ? 'Editar' : 'Novo'} Grupo
+                                </h3>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowGroupModal(false)}><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                                <Input label="Nome do Grupo" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Proteínas" />
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Grupo Pai (Opcional)</label>
+                                    <select className="ui-input w-full h-12" value={formData.parentId || ''} onChange={e => setFormData({...formData, parentId: e.target.value})}>
+                                        <option value="">Nenhum (Grupo Raiz)</option>
+                                        {ingredientGroups.filter(g => !g.parentId).map(g => (
+                                            <option key={g.id} value={g.id}>{g.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-[9px] text-slate-400 italic">Deixe vazio para criar um grupo principal (HORTIFRUTI).</p>
+                                </div>
+                                <div className="pt-6 flex gap-4">
+                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowGroupModal(false)}>Cancelar</Button>
+                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black bg-slate-900 text-white">SALVAR GRUPO</Button>
+                                </div>
+                            </form>
                         </motion.div>
                     </div>
                 )}
