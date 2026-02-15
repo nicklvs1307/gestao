@@ -94,12 +94,12 @@ const StockManagement: React.FC = () => {
             if (activeTab === 'inventory') {
                 const res = await api.get('/products');
                 setProducts(res.data);
-            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list' || activeTab === 'recipes' || activeTab === 'purchases') {
+            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list' || activeTab === 'recipes') {
                 const [ingRes, groupRes, prodRes, suppRes] = await Promise.all([
                     api.get('/ingredients'),
                     api.get('/ingredients/groups'),
                     api.get('/products'),
-                    api.get('/suppliers')
+                    api.get('/financial/suppliers')
                 ]);
                 setIngredients(ingRes.data);
                 setIngredientGroups(groupRes.data);
@@ -107,12 +107,22 @@ const StockManagement: React.FC = () => {
                 setSuppliers(suppRes.data);
                 if (activeTab === 'audit') {
                     const initialAudit: Record<string, number> = {};
-                    res.data.forEach((i: any) => initialAudit[i.id] = i.stock);
+                    ingRes.data.forEach((i: any) => initialAudit[i.id] = i.stock);
                     setAuditItems(initialAudit);
                 }
             } else if (activeTab === 'purchases') {
-                const res = await api.get('/stock/entries');
-                setPurchases(res.data);
+                const [ingRes, groupRes, prodRes, suppRes, stockRes] = await Promise.all([
+                    api.get('/ingredients'),
+                    api.get('/ingredients/groups'),
+                    api.get('/products'),
+                    api.get('/financial/suppliers'),
+                    api.get('/stock/entries')
+                ]);
+                setIngredients(ingRes.data);
+                setIngredientGroups(groupRes.data);
+                setProducts(prodRes.data);
+                setSuppliers(suppRes.data);
+                setPurchases(stockRes.data);
             } else if (activeTab === 'production') {
                 const [histRes, recRes] = await Promise.all([getProductionHistory(), getIngredientRecipes()]);
                 setProductionHistory(histRes);
@@ -146,7 +156,7 @@ const StockManagement: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (activeTab === 'ingredients' || activeTab === 'inventory') {
+            if (showForm) {
                 const payload = {
                     ...formData,
                     stock: Number(formData.stock || 0),
@@ -157,20 +167,20 @@ const StockManagement: React.FC = () => {
                 else await api.post('/ingredients', payload);
                 toast.success('Insumo salvo!');
                 setShowForm(false);
-            } else if (activeTab === 'groups') {
+            } else if (showGroupModal) {
                 if (formData.id) await api.put(`/ingredients/groups/${formData.id}`, formData);
                 else await api.post('/ingredients/groups', formData);
                 toast.success('Grupo salvo!');
                 setShowGroupModal(false);
-            } else if (activeTab === 'losses') {
+            } else if (showLossModal) {
                 await createStockLoss(formData);
                 toast.success('Perda registrada!');
                 setShowLossModal(false);
-            } else if (activeTab === 'purchases') {
+            } else if (showPurchaseModal) {
                 await api.post('/stock/entries', formData);
                 toast.success('Entrada registrada!');
                 setShowPurchaseModal(false);
-            } else if (activeTab === 'production') {
+            } else if (showProduceModal) {
                 await produceIngredient(formData);
                 toast.success('Produção registrada!');
                 setShowProduceModal(false);
@@ -643,6 +653,79 @@ const StockManagement: React.FC = () => {
             </Card>
 
             {/* MODAIS PREMIUM */}
+            <AnimatePresence>
+                {showForm && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">
+                                    {formData.id ? 'Editar' : 'Novo'} Insumo
+                                </h3>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowForm(false)}><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="col-span-2">
+                                        <Input label="Nome do Insumo" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Filé de Frango" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade de Medida</label>
+                                        <select className="ui-input w-full h-12" required value={formData.unit || ''} onChange={e => setFormData({...formData, unit: e.target.value})}>
+                                            <option value="">Selecione...</option>
+                                            <option value="un">Unidade (UN)</option>
+                                            <option value="kg">Quilograma (KG)</option>
+                                            <option value="gr">Grama (GR)</option>
+                                            <option value="lt">Litro (LT)</option>
+                                            <option value="ml">Mililitro (ML)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Grupo</label>
+                                        <select className="ui-input w-full h-12" value={formData.groupId || ''} onChange={e => setFormData({...formData, groupId: e.target.value})}>
+                                            <option value="">Sem Grupo</option>
+                                            {ingredientGroups.map(g => (
+                                                <option key={g.id} value={g.id}>{g.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <Input label="Estoque Mínimo" type="number" step="0.001" value={formData.minStock || ''} onChange={e => setFormData({...formData, minStock: e.target.value})} />
+                                    <Input label="Estoque Inicial" type="number" step="0.001" value={formData.stock || ''} onChange={e => setFormData({...formData, stock: e.target.value})} disabled={!!formData.id} />
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+                                    <div className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl cursor-pointer transition-all hover:bg-orange-50" onClick={() => setFormData({...formData, controlStock: !formData.controlStock})}>
+                                        <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", formData.controlStock ? "bg-orange-500 border-orange-500" : "border-slate-200")}>
+                                            {formData.controlStock && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Controla Estoque</span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl cursor-pointer transition-all hover:bg-orange-50" onClick={() => setFormData({...formData, controlCmv: !formData.controlCmv})}>
+                                        <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", formData.controlCmv ? "bg-orange-500 border-orange-500" : "border-slate-200")}>
+                                            {formData.controlCmv && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Compõe CMV</span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl cursor-pointer transition-all hover:bg-purple-50" onClick={() => setFormData({...formData, isProduced: !formData.isProduced})}>
+                                        <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", formData.isProduced ? "bg-purple-500 border-purple-500" : "border-slate-200")}>
+                                            {formData.isProduced && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Beneficiado</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 flex gap-4">
+                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowForm(false)}>Cancelar</Button>
+                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl shadow-orange-100 italic font-black bg-slate-900 text-white hover:bg-orange-600 transition-all uppercase tracking-widest">
+                                        {formData.id ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR INSUMO'}
+                                    </Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <AnimatePresence>
                 {showRecipeModal && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
