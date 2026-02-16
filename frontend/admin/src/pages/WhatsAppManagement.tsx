@@ -9,7 +9,10 @@ import {
   XCircle,
   QrCode,
   Save,
-  Loader2
+  Loader2,
+  LogOut,
+  RotateCw,
+  Trash2
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -19,7 +22,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const WhatsAppManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
-  // Pega o restaurantId do localStorage ou context
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const restaurantId = user?.restaurantId;
@@ -29,13 +31,13 @@ const WhatsAppManagement: React.FC = () => {
     agentEnabled: false,
     agentName: 'Atendente Virtual',
     agentPersona: '',
-    openaiApiKey: '',
     welcomeMessage: '',
     autoAcceptOrders: false
   });
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [statusLoading, setStatusLoading] = useState(false); // Inicialização explícita
-  const [savingSettings, setSavingSettings] = useState(false); // Inicialização explícita
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false); // Para ações de controle
 
   // Helper para headers
   const getHeaders = () => ({
@@ -48,6 +50,8 @@ const WhatsAppManagement: React.FC = () => {
   useEffect(() => {
     if (restaurantId) {
       fetchData();
+      const interval = setInterval(fetchData, 10000); // Atualiza a cada 10 segundos
+      return () => clearInterval(interval);
     } else {
       toast.error('Contexto de restaurante não encontrado');
       setLoading(false);
@@ -64,6 +68,12 @@ const WhatsAppManagement: React.FC = () => {
       
       setInstance(instanceRes.data);
       setSettings(settingsRes.data);
+      // Se a instância estiver CONECTANDO ou o QR Code for exibido, busca o QR Code
+      if (instanceRes.data.localStatus === 'CONNECTING' || (!instanceRes.data.instance?.state && instanceRes.data.base64)) {
+        setQrCode(instanceRes.data.base64); // A API de status já pode retornar o QR code
+      } else {
+        setQrCode(null);
+      }
     } catch (error) {
       console.error('Erro ao buscar dados do WhatsApp:', error);
       toast.error('Erro ao carregar configurações');
@@ -74,30 +84,71 @@ const WhatsAppManagement: React.FC = () => {
 
   const handleConnect = async () => {
     try {
-      setStatusLoading(true);
+      setActionLoading(true);
       const res = await axios.post(`${API_URL}/whatsapp/connect`, {}, getHeaders());
       setInstance(res.data);
-      
-      // Busca QR Code após criar
-      const qrRes = await axios.get(`${API_URL}/whatsapp/qrcode`, getHeaders());
-      setQrCode(qrRes.data.base64);
       toast.success('Instância criada! Escaneie o QR Code.');
+      await fetchData(); // Atualiza dados para mostrar o QR code
     } catch (error) {
       toast.error('Erro ao conectar ao WhatsApp');
     } finally {
-      setStatusLoading(false);
+      setActionLoading(false);
     }
   };
 
   const handleRefreshQr = async () => {
     try {
-      setStatusLoading(true);
+      setActionLoading(true);
       const qrRes = await axios.get(`${API_URL}/whatsapp/qrcode`, getHeaders());
       setQrCode(qrRes.data.base64);
+      toast.success('QR Code atualizado!');
     } catch (error) {
       toast.error('Erro ao atualizar QR Code');
     } finally {
-      setStatusLoading(false);
+      setActionLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      setActionLoading(true);
+      await axios.post(`${API_URL}/whatsapp/logout`, {}, getHeaders());
+      toast.success('Instância desconectada.');
+      await fetchData();
+    } catch (error) {
+      toast.error('Erro ao desconectar instância.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestart = async () => {
+    try {
+      setActionLoading(true);
+      await axios.post(`${API_URL}/whatsapp/restart`, {}, getHeaders());
+      toast.success('Instância reiniciada. Aguarde o novo QR Code ou conexão.');
+      await fetchData();
+    } catch (error) {
+      toast.error('Erro ao reiniciar instância.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Tem certeza que deseja deletar esta instância do WhatsApp? Isso não pode ser desfeito.')) {
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await axios.delete(`${API_URL}/whatsapp/delete`, getHeaders());
+      toast.success('Instância deletada.');
+      setInstance(null); // Limpa a instância do estado
+      setQrCode(null);
+    } catch (error) {
+      toast.error('Erro ao deletar instância.');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -121,55 +172,90 @@ const WhatsAppManagement: React.FC = () => {
     );
   }
 
-  const isConnected = instance?.localStatus === 'CONNECTED' || instance?.instance?.state === 'open';
+  const isConnected = instance?.localStatus === 'CONNECTED';
+  const isConnecting = instance?.localStatus === 'CONNECTING' && !isConnected;
+  const isNotCreated = instance?.localStatus === 'NOT_CREATED';
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       {/* Header Conexão */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center space-y-4">
-          <div className={`p-4 rounded-full ${isConnected ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+          <div className={`p-4 rounded-full ${isConnected ? 'bg-green-100 text-green-600' : isConnecting ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'}`}>
             <MessageSquare size={48} />
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800">WhatsApp</h2>
             <p className="text-sm text-gray-500">
-              {isConnected ? 'Sua conta está conectada' : 'Aguardando conexão'}
+              {isConnected ? 'Sua conta está conectada' : isConnecting ? 'Aguardando leitura do QR Code...' : 'Aguardando conexão'}
             </p>
           </div>
           
           <div className="flex items-center space-x-2">
-            <span className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+            <span className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : isConnecting ? 'bg-yellow-500' : 'bg-red-500'} animate-pulse`} />
             <span className="text-sm font-medium uppercase tracking-wider">
-              {isConnected ? 'Online' : 'Offline'}
+              {isConnected ? 'Online' : isConnecting ? 'Conectando' : 'Offline'}
             </span>
           </div>
 
-          {!isConnected && !qrCode && (
+          {!isNotCreated && !isConnected && !qrCode && !isConnecting && (
             <button
               onClick={handleConnect}
-              disabled={statusLoading}
+              disabled={actionLoading}
               className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition flex items-center justify-center space-x-2"
             >
-              {statusLoading ? <RefreshCw className="animate-spin" size={20} /> : <Power size={20} />}
-              <span>Conectar WhatsApp</span>
+              {actionLoading ? <RefreshCw className="animate-spin" size={20} /> : <Power size={20} />}
+              <span>{isNotCreated ? 'Criar Nova Instância' : 'Tentar Conectar'}</span>
+            </button>
+          )}
+
+          {isNotCreated && (
+            <button
+              onClick={handleConnect}
+              disabled={actionLoading}
+              className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition flex items-center justify-center space-x-2"
+            >
+              {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <Power size={20} />}
+              <span>Criar Instância</span>
             </button>
           )}
 
           {isConnected && (
+            <div className="space-y-2 w-full">
+              <button
+                onClick={handleLogout}
+                disabled={actionLoading}
+                className="w-full bg-yellow-500 text-white py-2 rounded-lg font-medium hover:bg-yellow-600 transition flex items-center justify-center space-x-2"
+              >
+                {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <LogOut size={20} />}
+                <span>Desconectar</span>
+              </button>
+              <button
+                onClick={handleRestart}
+                disabled={actionLoading}
+                className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition flex items-center justify-center space-x-2"
+              >
+                {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <RotateCw size={20} />}
+                <span>Reiniciar</span>
+              </button>
+            </div>
+          )}
+
+          {!isNotCreated && (
             <button
-              onClick={fetchData}
-              className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition flex items-center justify-center space-x-2"
+              onClick={handleDelete}
+              disabled={actionLoading}
+              className="w-full bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600 transition flex items-center justify-center space-x-2"
             >
-              <RefreshCw size={20} />
-              <span>Verificar Status</span>
+              {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <Trash2 size={20} />}
+              <span>Deletar Instância</span>
             </button>
           )}
         </div>
 
         {/* QR Code ou Status Detalhado */}
         <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          {!isConnected && qrCode ? (
+          {!isConnected && qrCode && isConnecting ? (
             <div className="flex flex-col items-center justify-center h-full space-y-4">
               <h3 className="font-bold text-gray-800 flex items-center space-x-2">
                 <QrCode size={20} />
@@ -180,9 +266,10 @@ const WhatsAppManagement: React.FC = () => {
               </div>
               <button 
                 onClick={handleRefreshQr}
+                disabled={actionLoading}
                 className="text-primary text-sm font-bold flex items-center space-x-1 hover:underline"
               >
-                <RefreshCw size={14} />
+                {actionLoading ? <Loader2 className="animate-spin" size={14} /> : <RefreshCw size={14} />}
                 <span>Atualizar QR Code</span>
               </button>
               <p className="text-xs text-gray-400 text-center max-w-xs">
@@ -200,6 +287,14 @@ const WhatsAppManagement: React.FC = () => {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500 uppercase">Aparelho</p>
                   <p className="text-sm">{instance?.instance?.owner || 'Desconhecido'}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase">Número</p>
+                  <p className="text-sm">{instance?.instance?.number || 'N/A'}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase">Conectado desde</p>
+                  <p className="text-sm">{instance?.instance?.status === 'CONNECTED' ? new Date(instance.instance.statusTime).toLocaleString() : 'N/A'}</p>
                 </div>
               </div>
               <div className="flex items-center p-4 bg-blue-50 text-blue-700 rounded-lg space-x-3 text-sm">
@@ -271,7 +366,7 @@ const WhatsAppManagement: React.FC = () => {
                 rows={10}
                 value={settings.agentPersona}
                 onChange={(e) => setSettings({ ...settings, agentPersona: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 outline-none transition h-[calc(100%-1.5rem)] resize-none font-mono text-sm"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 outline-none transition resize-none font-mono text-sm"
                 placeholder="Você é um atendente da hamburgueria... Objetivos: ..."
               ></textarea>
             </div>

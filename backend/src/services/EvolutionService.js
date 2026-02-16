@@ -43,20 +43,22 @@ class EvolutionService {
       const response = await this.api.post('/instance/create', {
         instanceName,
         qrcode: true,
-        integration: 'WHATSAPP-BAILEYS' // Adicionado conforme erro 'Invalid integration'
-      }); // <<< Fechamento correto do objeto da requisição post
+        integration: 'WHATSAPP-BAILEYS'
+      });
+      
+      const { token } = response.data; // <<<<<< Correção aqui, usando 'token'
       
       // Salva no banco local
       return await prisma.whatsAppInstance.upsert({
         where: { restaurantId },
         update: {
           name: instanceName,
-          token: hash,
+          token: token,
           status: 'CONNECTING'
         },
         create: {
           name: instanceName,
-          token: hash,
+          token: token,
           status: 'CONNECTING',
           restaurantId
         }
@@ -90,6 +92,45 @@ class EvolutionService {
     } catch (error) {
       this._logError('getInstanceStatus', error);
       return { instance: { state: 'DISCONNECTED' } }; // Retorna um status padrão em caso de erro
+    }
+  }
+
+  /**
+   * Desloga a instância
+   */
+  async logoutInstance(instanceName) {
+    try {
+      const response = await this.api.delete(`/instance/logout/${instanceName}`);
+      return response.data;
+    } catch (error) {
+      this._logError('logoutInstance', error);
+      throw new Error('Falha ao deslogar instância');
+    }
+  }
+
+  /**
+   * Reinicia a instância
+   */
+  async restartInstance(instanceName) {
+    try {
+      const response = await this.api.post(`/instance/restart/${instanceName}`);
+      return response.data;
+    } catch (error) {
+      this._logError('restartInstance', error);
+      throw new Error('Falha ao reiniciar instância');
+    }
+  }
+
+  /**
+   * Deleta a instância
+   */
+  async deleteInstance(instanceName) {
+    try {
+      const response = await this.api.delete(`/instance/delete/${instanceName}`);
+      return response.data;
+    } catch (error) {
+      this._logError('deleteInstance', error);
+      throw new Error('Falha ao deletar instância');
     }
   }
 

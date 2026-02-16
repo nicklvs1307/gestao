@@ -13,9 +13,15 @@ const WhatsAppController = {
     if (!restaurantId) return res.status(400).json({ error: 'Contexto de restaurante não identificado.' });
 
     const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
+    if (!restaurant) return res.status(404).json({ error: 'Restaurante não encontrado.' });
+
     const instanceName = `rest_${restaurant.slug}`;
     const instance = await evolutionService.createInstance(instanceName, restaurantId);
     
+    // Configura o webhook automaticamente após criar a instância
+    const webhookUrl = `${process.env.API_URL}/api/whatsapp/webhook`; // API_URL deve ser o domínio público do seu backend
+    await evolutionService.setWebhook(instance.name, webhookUrl);
+
     res.json(instance);
   }),
 
@@ -49,6 +55,54 @@ const WhatsAppController = {
     });
 
     res.json({ ...status, localStatus: newState });
+  }),
+
+  // Deslogar instância
+  logout: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const instance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
+    if (!instance) return res.status(404).json({ error: 'Instância não encontrada.' });
+
+    await evolutionService.logoutInstance(instance.name);
+    
+    // Atualiza o status local para DESCONECTADO
+    await prisma.whatsAppInstance.update({
+      where: { id: instance.id },
+      data: { status: 'DISCONNECTED', qrcode: null } // Limpa QR Code também
+    });
+
+    res.json({ message: 'Instância deslogada com sucesso.' });
+  }),
+
+  // Reiniciar instância
+  restart: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const instance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
+    if (!instance) return res.status(404).json({ error: 'Instância não encontrada.' });
+
+    await evolutionService.restartInstance(instance.name);
+    
+    // Atualiza o status local para CONECTANDO
+    await prisma.whatsAppInstance.update({
+      where: { id: instance.id },
+      data: { status: 'CONNECTING' }
+    });
+
+    res.json({ message: 'Instância reiniciada com sucesso.' });
+  }),
+
+  // Deletar instância
+  delete: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const instance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
+    if (!instance) return res.status(404).json({ error: 'Instância não encontrada.' });
+
+    await evolutionService.deleteInstance(instance.name);
+    
+    // Remove a instância do banco de dados local
+    await prisma.whatsAppInstance.delete({ where: { id: instance.id } });
+
+    res.json({ message: 'Instância deletada com sucesso.' });
   }),
 
   // Atualizar Configurações da IA
