@@ -16,6 +16,7 @@ const StockEntryItemSchema = z.object({
   ingredientId: z.string(),
   quantity: z.number().positive(),
   unitCost: z.number().min(0),
+  conversionFactor: z.number().optional().default(1),
   batch: z.string().optional().nullable(),
   expirationDate: z.string().transform(str => str ? new Date(str) : null).optional().nullable(),
 });

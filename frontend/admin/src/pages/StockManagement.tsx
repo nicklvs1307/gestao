@@ -84,26 +84,29 @@ const StockManagement: React.FC = () => {
     const [formData, setFormData] = useState<any>({});
     const [showProduceModal, setShowProduceModal] = useState(false);
     const [showRecipeModal, setShowRecipeModal] = useState(false);
-    const [recipeItems, setRecipeItems] = useState<{componentIngredientId: string, quantity: number}[]>([]);
+    const [recipeItems, setRecipeItems] = useState<{componentIngredientId: string, quantity: number, unitCost?: number, name?: string}[]>([]);
+    const [yieldAmount, setYieldAmount] = useState(1);
 
     useEffect(() => { loadData(); }, [activeTab]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            if (activeTab === 'inventory') {
-                const res = await api.get('/products');
-                setProducts(res.data);
-            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list' || activeTab === 'recipes') {
-                const [ingRes, groupRes, prodRes, suppRes] = await Promise.all([
+            if (activeTab === 'inventory' || activeTab === 'recipes') {
+                const [prodRes, ingRes] = await Promise.all([
+                    api.get('/products'),
+                    api.get('/ingredients')
+                ]);
+                setProducts(prodRes.data);
+                setIngredients(ingRes.data);
+            } else if (activeTab === 'ingredients' || activeTab === 'audit' || activeTab === 'groups' || activeTab === 'shopping-list') {
+                const [ingRes, groupRes, suppRes] = await Promise.all([
                     api.get('/ingredients'),
                     api.get('/ingredients/groups'),
-                    api.get('/products'),
                     api.get('/financial/suppliers')
                 ]);
                 setIngredients(ingRes.data);
                 setIngredientGroups(groupRes.data);
-                setProducts(prodRes.data);
                 setSuppliers(suppRes.data);
                 if (activeTab === 'audit') {
                     const initialAudit: Record<string, number> = {};
@@ -111,38 +114,122 @@ const StockManagement: React.FC = () => {
                     setAuditItems(initialAudit);
                 }
             } else if (activeTab === 'purchases') {
-                const [ingRes, groupRes, prodRes, suppRes, stockRes] = await Promise.all([
+                const [ingRes, groupRes, suppRes, stockRes] = await Promise.all([
                     api.get('/ingredients'),
                     api.get('/ingredients/groups'),
-                    api.get('/products'),
                     api.get('/financial/suppliers'),
                     api.get('/stock/entries')
                 ]);
                 setIngredients(ingRes.data);
                 setIngredientGroups(groupRes.data);
-                setProducts(prodRes.data);
                 setSuppliers(suppRes.data);
                 setPurchases(stockRes.data);
             } else if (activeTab === 'production') {
-                const [histRes, recRes] = await Promise.all([getProductionHistory(), getIngredientRecipes()]);
+                const [histRes, recRes, ingRes] = await Promise.all([
+                    getProductionHistory(), 
+                    getIngredientRecipes(),
+                    api.get('/ingredients')
+                ]);
                 setProductionHistory(histRes);
                 setRecipes(recRes);
+                setIngredients(ingRes.data);
             } else if (activeTab === 'losses') {
-                const res = await getStockLosses();
-                setLosses(res);
-            } else if (activeTab === 'history' || activeTab === 'moves') {
-                const [entries, prodHist, lossList] = await Promise.all([
-                    api.get('/stock/entries'),
-                    getProductionHistory(),
-                    getStockLosses()
+                const [lossRes, ingRes] = await Promise.all([
+                    getStockLosses(),
+                    api.get('/ingredients')
                 ]);
-                setPurchases(entries.data);
-                setProductionHistory(prodHist);
-                setLosses(lossList);
+                setLosses(lossRes);
+                setIngredients(ingRes.data);
             }
         } catch (error) { console.error(error); }
         finally { setLoading(false); }
     };
+
+    const handleOpenRecipe = (item: any) => {
+        setFormData(item);
+        setYieldAmount(1);
+        
+        // Carrega itens existentes da receita
+        if (item.ingredients) {
+            setRecipeItems(item.ingredients.map((ri: any) => ({
+                componentIngredientId: ri.ingredientId,
+                quantity: ri.quantity,
+                name: ri.ingredient?.name,
+                unitCost: ri.ingredient?.lastUnitCost || 0
+            })));
+        } else if (item.recipe) {
+            setRecipeItems(item.recipe.map((ri: any) => ({
+                componentIngredientId: ri.componentIngredientId,
+                quantity: ri.quantity,
+                name: ri.componentIngredient?.name,
+                unitCost: ri.componentIngredient?.lastUnitCost || 0
+            })));
+        } else {
+            setRecipeItems([]);
+        }
+        setShowRecipeModal(true);
+    };
+
+    const addRecipeItem = () => {
+        setRecipeItems([...recipeItems, { componentIngredientId: '', quantity: 0, unitCost: 0 }]);
+    };
+
+    const updateRecipeItem = (index: number, field: string, value: any) => {
+        const newItems = [...recipeItems];
+        if (field === 'componentIngredientId') {
+            const ing = ingredients.find(i => i.id === value);
+            newItems[index] = { 
+                ...newItems[index], 
+                componentIngredientId: value, 
+                name: ing?.name, 
+                unitCost: ing?.lastUnitCost || 0 
+            };
+        } else {
+            newItems[index] = { ...newItems[index], [field]: value };
+        }
+        setRecipeItems(newItems);
+    };
+
+    const removeRecipeItem = (index: number) => {
+        setRecipeItems(recipeItems.filter((_, i) => i !== index));
+    };
+
+    const handleSaveRecipe = async () => {
+        try {
+            setLoading(true);
+            const payload = {
+                items: recipeItems.map(i => ({
+                    componentIngredientId: i.componentIngredientId,
+                    quantity: Number(i.quantity)
+                })),
+                yieldAmount: Number(yieldAmount)
+            };
+
+            if (formData.isProduced !== undefined) {
+                // É um ingrediente beneficiado
+                await api.post(`/production/${formData.id}/recipe`, payload);
+            } else {
+                // É um produto final
+                await api.put(`/products/${formData.id}`, {
+                    ...formData,
+                    ingredients: payload.items.map(i => ({
+                        ingredientId: i.componentIngredientId,
+                        quantity: i.quantity
+                    }))
+                });
+            }
+            
+            toast.success('Ficha Técnica salva com sucesso!');
+            setShowRecipeModal(false);
+            loadData();
+        } catch (error) {
+            toast.error('Erro ao salvar ficha técnica.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const totalRecipeCost = recipeItems.reduce((acc, item) => acc + (Number(item.quantity) * (item.unitCost || 0)), 0);
 
     const handleConfirmPurchase = async (id: string) => {
         if(!confirm('Confirmar recebimento?')) return;
@@ -408,26 +495,55 @@ const StockManagement: React.FC = () => {
                                     </tr>
                                 ))}
 
-                                {activeTab === 'recipes' && products.map((p: any) => (
-                                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">
-                                        <td className="px-8 py-5">
-                                            <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{p.name}</p>
-                                        </td>
-                                        <td className="px-8 py-5 font-bold text-[10px] text-slate-400 uppercase">
-                                            {p.category?.name || '---'}
-                                        </td>
-                                        <td className="px-8 py-5 text-center font-black text-sm italic tracking-tighter text-slate-600">
-                                            {p.stock || '---'}
-                                        </td>
-                                        <td className="px-8 py-5 text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600"><Printer size={14}/></Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600" onClick={() => { setFormData(p); setShowRecipeModal(true); }}><Hammer size={14}/></Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600"><Trash2 size={14}/></Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {activeTab === 'recipes' && (
+                                    <>
+                                        {/* Título de Seção: Produtos Finais */}
+                                        <tr className="bg-slate-100/50">
+                                            <td colSpan={4} className="px-8 py-2 text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Produtos p/ Venda (Cardápio)</td>
+                                        </tr>
+                                        {products.map((p: any) => (
+                                            <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">
+                                                <td className="px-8 py-3">
+                                                    <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{p.name}</p>
+                                                </td>
+                                                <td className="px-8 py-3 font-bold text-[10px] text-slate-400 uppercase">
+                                                    {p.category?.name || '---'}
+                                                </td>
+                                                <td className="px-8 py-3 text-center font-black text-sm italic tracking-tighter text-slate-600">
+                                                    {p.stock || '---'}
+                                                </td>
+                                                <td className="px-8 py-3 text-right">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600" onClick={() => handleOpenRecipe(p)}><Hammer size={14}/></Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        
+                                        {/* Título de Seção: Insumos Beneficiados */}
+                                        <tr className="bg-slate-100/50">
+                                            <td colSpan={4} className="px-8 py-2 text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] mt-4">Insumos Beneficiados (Produção Interna)</td>
+                                        </tr>
+                                        {ingredients.filter(i => i.isProduced).map((i: any) => (
+                                            <tr key={i.id} className="hover:bg-slate-50/80 transition-colors group">
+                                                <td className="px-8 py-3">
+                                                    <p className="font-black text-xs text-purple-900 uppercase italic tracking-tight">{i.name}</p>
+                                                </td>
+                                                <td className="px-8 py-3 font-bold text-[10px] text-slate-400 uppercase">
+                                                    {i.group?.name || '---'}
+                                                </td>
+                                                <td className="px-8 py-3 text-center font-black text-sm italic tracking-tighter text-slate-600">
+                                                    {i.stock.toFixed(2)} {i.unit}
+                                                </td>
+                                                <td className="px-8 py-3 text-right">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 hover:bg-purple-50 text-slate-400 hover:text-purple-600" onClick={() => handleOpenRecipe(i)}><Hammer size={14}/></Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </>
+                                )}
 
                                 {activeTab === 'ingredients' && ingredients.filter(i => i.name.toLowerCase().includes(stockSearch.toLowerCase())).map((i: any) => (
                                     <tr key={i.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -652,75 +768,88 @@ const StockManagement: React.FC = () => {
                 </div>
             </Card>
 
-            {/* MODAIS PREMIUM */}
+            {/* MODAIS INDUSTRIAIS (SIDE PANELS) */}
             <AnimatePresence>
                 {showForm && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">
-                                    {formData.id ? 'Editar' : 'Novo'} Insumo
-                                </h3>
-                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowForm(false)}><X size={24}/></Button>
+                    <div className="fixed inset-0 z-[200] flex justify-end">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
+                        <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="relative w-full max-w-lg bg-white shadow-2xl overflow-hidden flex flex-col h-screen border-l border-slate-100">
+                            <header className="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter">
+                                        {formData.id ? 'Editar' : 'Novo'} Insumo / Matéria-Prima
+                                    </h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cadastro técnico de inventário</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white border border-slate-100" onClick={() => setShowForm(false)}><X size={20}/></Button>
                             </header>
-                            <form onSubmit={handleSubmit} className="p-10 space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="col-span-2">
-                                        <Input label="Nome do Insumo" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Filé de Frango" />
+                            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                                <div className="space-y-4">
+                                    <Input label="Nome Técnico do Insumo" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: FILÉ DE FRANGO LIMPO" />
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade de Consumo</label>
+                                            <select className="ui-input w-full h-11 text-[11px] font-bold uppercase" required value={formData.unit || ''} onChange={e => setFormData({...formData, unit: e.target.value})}>
+                                                <option value="">Selecione...</option>
+                                                <option value="un">Unidade (UN)</option>
+                                                <option value="kg">Quilograma (KG)</option>
+                                                <option value="gr">Grama (GR)</option>
+                                                <option value="lt">Litro (LT)</option>
+                                                <option value="ml">Mililitro (ML)</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Grupo / Família</label>
+                                            <select className="ui-input w-full h-11 text-[11px] font-bold uppercase" value={formData.groupId || ''} onChange={e => setFormData({...formData, groupId: e.target.value})}>
+                                                <option value="">Sem Grupo</option>
+                                                {ingredientGroups.map(g => (
+                                                    <option key={g.id} value={g.id}>{g.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade de Medida</label>
-                                        <select className="ui-input w-full h-12" required value={formData.unit || ''} onChange={e => setFormData({...formData, unit: e.target.value})}>
-                                            <option value="">Selecione...</option>
-                                            <option value="un">Unidade (UN)</option>
-                                            <option value="kg">Quilograma (KG)</option>
-                                            <option value="gr">Grama (GR)</option>
-                                            <option value="lt">Litro (LT)</option>
-                                            <option value="ml">Mililitro (ML)</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Grupo</label>
-                                        <select className="ui-input w-full h-12" value={formData.groupId || ''} onChange={e => setFormData({...formData, groupId: e.target.value})}>
-                                            <option value="">Sem Grupo</option>
-                                            {ingredientGroups.map(g => (
-                                                <option key={g.id} value={g.id}>{g.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <Input label="Estoque Mínimo" type="number" step="0.001" value={formData.minStock || ''} onChange={e => setFormData({...formData, minStock: e.target.value})} />
-                                    <Input label="Estoque Inicial" type="number" step="0.001" value={formData.stock || ''} onChange={e => setFormData({...formData, stock: e.target.value})} disabled={!!formData.id} />
-                                </div>
 
-                                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
-                                    <div className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl cursor-pointer transition-all hover:bg-orange-50" onClick={() => setFormData({...formData, controlStock: !formData.controlStock})}>
-                                        <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", formData.controlStock ? "bg-orange-500 border-orange-500" : "border-slate-200")}>
-                                            {formData.controlStock && <CheckCircle size={14} className="text-white" />}
-                                        </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Controla Estoque</span>
-                                    </div>
-                                    <div className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl cursor-pointer transition-all hover:bg-orange-50" onClick={() => setFormData({...formData, controlCmv: !formData.controlCmv})}>
-                                        <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", formData.controlCmv ? "bg-orange-500 border-orange-500" : "border-slate-200")}>
-                                            {formData.controlCmv && <CheckCircle size={14} className="text-white" />}
-                                        </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Compõe CMV</span>
-                                    </div>
-                                    <div className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl cursor-pointer transition-all hover:bg-purple-50" onClick={() => setFormData({...formData, isProduced: !formData.isProduced})}>
-                                        <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", formData.isProduced ? "bg-purple-500 border-purple-500" : "border-slate-200")}>
-                                            {formData.isProduced && <CheckCircle size={14} className="text-white" />}
-                                        </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Beneficiado</span>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input label="Estoque de Segurança (Mín)" type="number" step="0.001" value={formData.minStock || ''} onChange={e => setFormData({...formData, minStock: e.target.value})} />
+                                        <Input label="Saldo Inicial" type="number" step="0.001" value={formData.stock || ''} onChange={e => setFormData({...formData, stock: e.target.value})} disabled={!!formData.id} />
                                     </div>
                                 </div>
 
-                                <div className="pt-6 flex gap-4">
-                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowForm(false)}>Cancelar</Button>
-                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl shadow-orange-100 italic font-black bg-slate-900 text-white hover:bg-orange-600 transition-all uppercase tracking-widest">
-                                        {formData.id ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR INSUMO'}
-                                    </Button>
+                                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-200 pb-2">Controle e Flags</p>
+                                    
+                                    <div className="flex items-center justify-between p-2 hover:bg-white rounded-xl transition-colors cursor-pointer group" onClick={() => setFormData({...formData, controlStock: !formData.controlStock})}>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Habilitar Controle de Estoque</span>
+                                        <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-all", formData.controlStock ? "bg-orange-500 border-orange-500" : "border-slate-300")}>
+                                            {formData.controlStock && <CheckCircle size={12} className="text-white" />}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-2 hover:bg-white rounded-xl transition-colors cursor-pointer group" onClick={() => setFormData({...formData, controlCmv: !formData.controlCmv})}>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Compor Cálculo de CMV Real</span>
+                                        <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-all", formData.controlCmv ? "bg-orange-500 border-orange-500" : "border-slate-300")}>
+                                            {formData.controlCmv && <CheckCircle size={12} className="text-white" />}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-2 hover:bg-white rounded-xl transition-colors cursor-pointer group" onClick={() => setFormData({...formData, isProduced: !formData.isProduced})}>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-purple-600">Insumo Beneficiado / Produção</span>
+                                            <p className="text-[8px] font-medium text-slate-400 uppercase tracking-tighter">Item produzido internamente via Ficha Técnica</p>
+                                        </div>
+                                        <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-all", formData.isProduced ? "bg-purple-500 border-purple-500" : "border-slate-300")}>
+                                            {formData.isProduced && <CheckCircle size={12} className="text-white" />}
+                                        </div>
+                                    </div>
                                 </div>
                             </form>
+                            <footer className="p-8 border-t border-slate-100 bg-slate-50/50 flex gap-4">
+                                <Button type="button" variant="ghost" className="flex-1 rounded-xl h-12 font-black uppercase text-[10px] tracking-widest" onClick={() => setShowForm(false)}>Cancelar</Button>
+                                <Button onClick={handleSubmit} fullWidth className="flex-[2] h-12 rounded-xl shadow-lg italic font-black bg-slate-900 text-white hover:bg-orange-600 transition-all uppercase tracking-widest text-[11px]">
+                                    {formData.id ? 'Salvar Alterações Técnicas' : 'Finalizar Cadastro de Insumo'}
+                                </Button>
+                            </footer>
                         </motion.div>
                     </div>
                 )}
@@ -728,119 +857,130 @@ const StockManagement: React.FC = () => {
 
             <AnimatePresence>
                 {showRecipeModal && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowRecipeModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-5xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
-                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                    <div className="fixed inset-0 z-[200] flex justify-end">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowRecipeModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
+                        <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="relative w-full max-w-4xl bg-white shadow-2xl overflow-hidden flex flex-col h-screen">
+                            <header className="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
-                                        Cadastro de Ficha Técnica
+                                    <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                                        Ficha Técnica Operacional
                                     </h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Composição e custo de produção</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Configuração de composição e custos</p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Button variant="outline" size="sm" className="rounded-xl h-10 px-4 font-black uppercase text-[10px] tracking-widest gap-2 bg-white">
-                                        <Printer size={16} /> Imprimir
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowRecipeModal(false)}><X size={24}/></Button>
+                                    <Button variant="ghost" size="icon" className="rounded-full bg-white border border-slate-100" onClick={() => setShowRecipeModal(false)}><X size={20}/></Button>
                                 </div>
                             </header>
 
-                            <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
-                                {/* Cabeçalho da Ficha */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-100">
-                                    <div className="md:col-span-1 space-y-4">
-                                        <Input label="Descrição" value={formData.name || ''} readOnly className="bg-slate-50 border-none font-black italic text-lg" />
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade de Consumo</label>
-                                            <select className="ui-input w-full h-12 bg-slate-50 border-none" value={formData.unit || 'un'} disabled>
-                                                <option value="un">Unidade (UN)</option><option value="kg">Quilograma (KG)</option>
-                                            </select>
-                                        </div>
+                            <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+                                {/* Informações Básicas do Item */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-slate-900 rounded-3xl text-white">
+                                    <div className="space-y-1">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Item Principal</p>
+                                        <h4 className="text-xl font-black italic uppercase tracking-tighter">{formData.name}</h4>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase">{formData.isProduced ? 'Insumo Beneficiado' : 'Produto de Venda'}</p>
                                     </div>
-                                    <div className="md:col-span-2 space-y-6">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Tipo de Ficha Técnica</label>
-                                        <div className="flex gap-6">
-                                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setFormData({...formData, isProduced: false})}>
-                                                <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all", !formData.isProduced ? "border-orange-500 ring-4 ring-orange-50" : "border-slate-200")}>
-                                                    {!formData.isProduced && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
-                                                </div>
-                                                <span className={cn("text-xs font-black uppercase tracking-widest transition-colors", !formData.isProduced ? "text-slate-900" : "text-slate-400")}>Produto Final</span>
-                                            </div>
-                                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setFormData({...formData, isProduced: true})}>
-                                                <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all", formData.isProduced ? "border-orange-500 ring-4 ring-orange-50" : "border-slate-200")}>
-                                                    {formData.isProduced && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
-                                                </div>
-                                                <span className={cn("text-xs font-black uppercase tracking-widest transition-colors", formData.isProduced ? "text-slate-900" : "text-slate-400")}>Ingrediente Beneficiado</span>
-                                            </div>
-                                        </div>
-                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Vínculo com Venda</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                <span className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 uppercase flex items-center gap-2">
-                                                    {formData.name} • Único <X size={12} className="text-slate-300 cursor-pointer" />
-                                                </span>
-                                            </div>
+                                    <div className="flex flex-col justify-center border-l border-slate-800 pl-6">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Custo Total (Estimado)</p>
+                                        <p className="text-2xl font-black text-orange-500 italic tracking-tighter">R$ {totalRecipeCost.toFixed(2)}</p>
+                                    </div>
+                                    <div className="flex flex-col justify-center border-l border-slate-800 pl-6">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Rendimento</p>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="number" 
+                                                className="w-20 h-8 bg-slate-800 border-none text-white font-black text-sm rounded-lg px-2" 
+                                                value={yieldAmount}
+                                                onChange={e => setYieldAmount(Number(e.target.value))}
+                                            />
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase">{formData.unit || 'UN'}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Porções e Itens */}
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between">
+                                {/* Editor de Composição */}
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
                                         <h4 className="text-xs font-black text-slate-900 uppercase italic tracking-widest flex items-center gap-2">
-                                            <GripVertical size={16} className="text-slate-300" /> Porção: {formData.name}
+                                            <Layers size={16} className="text-orange-500" /> Insumos da Receita
                                         </h4>
-                                        <div className="flex items-center gap-8">
-                                            <div className="text-right">
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Rendimento</p>
-                                                <div className="flex items-center gap-2">
-                                                    <input type="number" className="w-16 h-8 text-center bg-slate-50 border-none font-black text-sm rounded-lg" defaultValue="1.00" />
-                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">({formData.unit || 'UN'})</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Custo da Porção</p>
-                                                <p className="text-lg font-black text-orange-600 italic tracking-tighter leading-none">R$ 0,00</p>
-                                            </div>
-                                            <Button variant="ghost" size="icon" className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl"><Trash2 size={18} /></Button>
-                                        </div>
+                                        <Button size="sm" onClick={addRecipeItem} className="h-8 text-[9px] font-black uppercase tracking-widest bg-orange-600">
+                                            <Plus size={14} /> ADICIONAR INSUMO
+                                        </Button>
                                     </div>
 
-                                    {/* Tabela de Ingredientes da Porção */}
-                                    <div className="rounded-[2rem] border-2 border-slate-100 overflow-hidden bg-slate-50/30">
+                                    <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
                                         <table className="w-full text-left">
                                             <thead>
                                                 <tr className="text-[8px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-white">
-                                                    <th className="px-6 py-4">Ingrediente</th>
-                                                    <th className="px-6 py-4">Unidade</th>
-                                                    <th className="px-6 py-4 text-center">Custo Médio</th>
-                                                    <th className="px-6 py-4 text-center">Quantidade</th>
-                                                    <th className="px-6 py-4 text-right">Custo na Porção</th>
-                                                    <th className="px-6 py-4"></th>
+                                                    <th className="px-6 py-3 w-[45%]">Insumo</th>
+                                                    <th className="px-6 py-3 text-center">Und.</th>
+                                                    <th className="px-6 py-3 text-center">Quantidade</th>
+                                                    <th className="px-6 py-3 text-center">Custo Unit.</th>
+                                                    <th className="px-6 py-3 text-right">Subtotal</th>
+                                                    <th className="px-6 py-3"></th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
-                                                <tr className="bg-white/50">
-                                                    <td colSpan={6} className="px-6 py-8 text-center">
-                                                        <Button variant="ghost" className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-600 gap-2 hover:bg-orange-50 rounded-xl">
-                                                            <Plus size={16} /> Adicionar Ingrediente
-                                                        </Button>
-                                                    </td>
-                                                </tr>
+                                                {recipeItems.map((item, idx) => (
+                                                    <tr key={idx} className="bg-white hover:bg-slate-50 transition-colors">
+                                                        <td className="px-4 py-3">
+                                                            <select 
+                                                                className="w-full h-9 bg-slate-50 border border-slate-200 rounded-xl px-3 text-[10px] font-bold uppercase outline-none focus:border-orange-500"
+                                                                value={item.componentIngredientId}
+                                                                onChange={e => updateRecipeItem(idx, 'componentIngredientId', e.target.value)}
+                                                            >
+                                                                <option value="">Selecionar Insumo...</option>
+                                                                {ingredients.map(ing => (
+                                                                    <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-2 py-3 text-center text-[10px] font-bold text-slate-400 uppercase">
+                                                            {ingredients.find(i => i.id === item.componentIngredientId)?.unit || '---'}
+                                                        </td>
+                                                        <td className="px-2 py-3">
+                                                            <input 
+                                                                type="number" step="0.001"
+                                                                className="w-full h-9 bg-slate-50 border border-slate-200 rounded-xl px-2 text-center text-[11px] font-black outline-none focus:border-orange-500"
+                                                                value={item.quantity}
+                                                                onChange={e => updateRecipeItem(idx, 'quantity', e.target.value)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-2 py-3 text-center font-black text-[10px] text-slate-500 italic">
+                                                            R$ {item.unitCost?.toFixed(2)}
+                                                        </td>
+                                                        <td className="px-2 py-3 text-right font-black text-[11px] text-slate-900 italic">
+                                                            R$ {(Number(item.quantity) * (item.unitCost || 0)).toFixed(2)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg" onClick={() => removeRecipeItem(idx)}><Trash2 size={14}/></Button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {recipeItems.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan={6} className="px-6 py-12 text-center">
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nenhum ingrediente adicionado à receita.</p>
+                                                        </td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
-                                    <p className="text-[9px] font-bold text-slate-400 italic">Porções são tamanhos diferentes da mesma composição de ingredientes.</p>
-                                    <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-orange-500 p-0 hover:bg-transparent">+ Adicionar porção</Button>
                                 </div>
                             </div>
 
-                            <footer className="px-10 py-6 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Kicardapio Intelligence • V2.5</p>
+                            <footer className="px-8 py-5 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                <div className="flex flex-col">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Custo Final da Unidade</p>
+                                    <p className="text-sm font-black text-slate-900 italic tracking-tighter">R$ {(totalRecipeCost / (yieldAmount || 1)).toFixed(2)}</p>
+                                </div>
                                 <div className="flex gap-3">
-                                    <Button variant="ghost" className="rounded-2xl h-12 px-8 font-black uppercase text-[10px] tracking-widest italic" onClick={() => setShowRecipeModal(false)}>Cancelar</Button>
-                                    <Button className="rounded-2xl h-12 px-10 font-black uppercase text-[10px] tracking-widest italic bg-slate-900 text-white shadow-xl hover:bg-orange-600 transition-all">Salvar Ficha Técnica</Button>
+                                    <Button variant="ghost" className="rounded-xl h-11 px-6 font-black uppercase text-[10px] tracking-widest italic" onClick={() => setShowRecipeModal(false)}>Descartar</Button>
+                                    <Button onClick={handleSaveRecipe} disabled={loading} className="rounded-xl h-11 px-8 font-black uppercase text-[10px] tracking-widest italic bg-slate-900 text-white shadow-lg hover:bg-orange-600 transition-all flex items-center gap-2">
+                                        {loading ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />} SALVAR FICHA TÉCNICA
+                                    </Button>
                                 </div>
                             </footer>
                         </motion.div>
@@ -957,70 +1097,86 @@ const StockManagement: React.FC = () => {
 
             <AnimatePresence>
                 {showPurchaseModal && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPurchaseModal(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
-                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
-                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">Entrada de Mercadoria (Nota)</h3>
-                                <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowPurchaseModal(false)}><X size={24}/></Button>
+                    <div className="fixed inset-0 z-[200] flex justify-end">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPurchaseModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
+                        <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="relative w-full max-w-5xl bg-white shadow-2xl overflow-hidden flex flex-col h-screen border-l border-slate-100">
+                            <header className="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                                        Entrada de Mercadoria / NF
+                                    </h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Lançamento de compras e atualização de custos</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white border border-slate-100" onClick={() => setShowPurchaseModal(false)}><X size={20}/></Button>
                             </header>
-                            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <Input label="Nº da Nota / Fatura" value={formData.invoiceNumber || ''} onChange={e => setFormData({...formData, invoiceNumber: e.target.value})} />
+                            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                                    <Input label="Número da Nota" value={formData.invoiceNumber || ''} onChange={e => setFormData({...formData, invoiceNumber: e.target.value})} placeholder="000.000.000" />
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Fornecedor</label>
-                                        <select className="ui-input w-full h-12" value={formData.supplierId || ''} onChange={e => setFormData({...formData, supplierId: e.target.value})}>
+                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Fornecedor</label>
+                                        <select className="ui-input w-full h-11 text-[11px] font-bold uppercase" value={formData.supplierId || ''} onChange={e => setFormData({...formData, supplierId: e.target.value})}>
                                             <option value="">Selecione o fornecedor</option>
                                             {suppliers.map(s => (
                                                 <option key={s.id} value={s.id}>{s.name}</option>
                                             ))}
                                         </select>
                                     </div>
-                                    <Input label="Data de Recebimento" type="datetime-local" value={formData.receivedAt || ''} onChange={e => setFormData({...formData, receivedAt: e.target.value})} />
+                                    <Input label="Data Recebimento" type="datetime-local" value={formData.receivedAt || ''} onChange={e => setFormData({...formData, receivedAt: e.target.value})} />
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Itens da Nota</h4>
-                                        <Button type="button" variant="ghost" className="text-orange-600 font-black uppercase text-[10px]" onClick={() => {
+                                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                        <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] italic">Grade de Itens da Nota</h4>
+                                        <Button type="button" variant="ghost" onClick={() => {
                                             const items = formData.items || [];
                                             setFormData({...formData, items: [...items, { ingredientId: '', quantity: 0, unitCost: 0 }]});
-                                        }}>+ Adicionar Item</Button>
+                                        }} className="h-8 text-orange-600 font-black uppercase text-[9px] tracking-widest gap-2 bg-orange-50 hover:bg-orange-100 rounded-lg">
+                                            <Plus size={14} /> Adicionar Item
+                                        </Button>
                                     </div>
-                                    <div className="space-y-3">
-                                        {(formData.items || [{ ingredientId: '', quantity: 0, unitCost: 0 }]).map((item: any, idx: number) => (
-                                            <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 items-end">
-                                                <div className="md:col-span-5 space-y-1.5">
+                                    
+                                    <div className="space-y-2">
+                                        {(formData.items || [{ ingredientId: '', quantity: 0, unitCost: 0, conversionFactor: 1 }]).map((item: any, idx: number) => (
+                                            <div key={idx} className="grid grid-cols-12 gap-3 bg-white p-3 rounded-xl border border-slate-100 items-end hover:border-orange-200 transition-all shadow-sm">
+                                                <div className="col-span-4 space-y-1">
                                                     <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Insumo</label>
-                                                    <select className="ui-input w-full h-10 text-xs" required value={item.ingredientId} onChange={e => {
-                                                        const newItems = [...(formData.items || [{ ingredientId: '', quantity: 0, unitCost: 0 }])];
+                                                    <select className="ui-input w-full h-9 text-[10px] font-bold uppercase" required value={item.ingredientId} onChange={e => {
+                                                        const newItems = [...(formData.items || [{ ingredientId: '', quantity: 0, unitCost: 0, conversionFactor: 1 }])];
                                                         newItems[idx].ingredientId = e.target.value;
                                                         setFormData({...formData, items: newItems});
                                                     }}>
-                                                        <option value="">Selecione...</option>
+                                                        <option value="">Buscar insumo...</option>
                                                         {ingredients.map(ing => (
                                                             <option key={ing.id} value={ing.id}>{ing.name}</option>
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <div className="md:col-span-3 space-y-1.5">
-                                                    <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Quantidade</label>
-                                                    <input type="number" step="0.001" className="ui-input w-full h-10 text-xs" required value={item.quantity} onChange={e => {
+                                                <div className="col-span-2 space-y-1">
+                                                    <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Qtd Comprada</label>
+                                                    <input type="number" step="0.001" className="ui-input w-full h-9 text-[11px] font-black text-center" required value={item.quantity} onChange={e => {
                                                         const newItems = [...(formData.items || [])];
                                                         newItems[idx].quantity = parseFloat(e.target.value);
                                                         setFormData({...formData, items: newItems});
                                                     }} />
                                                 </div>
-                                                <div className="md:col-span-3 space-y-1.5">
+                                                <div className="col-span-2 space-y-1">
+                                                    <label className="text-[8px] font-black uppercase text-orange-400 ml-1">Fator Conv.</label>
+                                                    <input type="number" step="0.001" className="ui-input w-full h-9 text-[11px] font-black text-center border-orange-100" required value={item.conversionFactor || 1} onChange={e => {
+                                                        const newItems = [...(formData.items || [])];
+                                                        newItems[idx].conversionFactor = parseFloat(e.target.value);
+                                                        setFormData({...formData, items: newItems});
+                                                    }} />
+                                                </div>
+                                                <div className="col-span-3 space-y-1">
                                                     <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Custo Unitário R$</label>
-                                                    <input type="number" step="0.01" className="ui-input w-full h-10 text-xs" required value={item.unitCost} onChange={e => {
+                                                    <input type="number" step="0.01" className="ui-input w-full h-9 text-[11px] font-black text-center text-emerald-600" required value={item.unitCost} onChange={e => {
                                                         const newItems = [...(formData.items || [])];
                                                         newItems[idx].unitCost = parseFloat(e.target.value);
                                                         setFormData({...formData, items: newItems});
                                                     }} />
                                                 </div>
-                                                <div className="md:col-span-1">
-                                                    <Button type="button" variant="ghost" size="icon" className="text-rose-400 hover:text-rose-600" onClick={() => {
+                                                <div className="col-span-1 flex justify-end">
+                                                    <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-rose-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg" onClick={() => {
                                                         const newItems = formData.items.filter((_: any, i: number) => i !== idx);
                                                         setFormData({...formData, items: newItems});
                                                     }}><Trash2 size={16}/></Button>
@@ -1029,11 +1185,19 @@ const StockManagement: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <div className="pt-6 flex gap-4 shrink-0">
-                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl" onClick={() => setShowPurchaseModal(false)}>Cancelar</Button>
-                                    <Button type="submit" fullWidth className="flex-[2] h-14 rounded-2xl shadow-xl italic font-black bg-emerald-600 text-white hover:bg-emerald-700 uppercase tracking-widest">CONFIRMAR RECEBIMENTO</Button>
-                                </div>
                             </form>
+                            <footer className="px-8 py-5 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+                                <div className="flex flex-col">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Valor Total da Nota</p>
+                                    <p className="text-xl font-black text-slate-900 italic tracking-tighter">R$ {(formData.items || []).reduce((acc: number, item: any) => acc + (item.quantity * item.unitCost), 0).toFixed(2)}</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <Button type="button" variant="ghost" className="rounded-xl h-12 px-8 font-black uppercase text-[10px] tracking-widest italic" onClick={() => setShowPurchaseModal(false)}>Cancelar</Button>
+                                    <Button onClick={handleSubmit} fullWidth className="h-12 px-10 rounded-xl shadow-xl italic font-black bg-emerald-600 text-white hover:bg-emerald-700 uppercase tracking-widest text-[11px]">
+                                        CONFIRMAR RECEBIMENTO TÉCNICO
+                                    </Button>
+                                </div>
+                            </footer>
                         </motion.div>
                     </div>
                 )}

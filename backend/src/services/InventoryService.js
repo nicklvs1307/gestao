@@ -31,11 +31,15 @@ class InventoryService {
 
     // 1. Atualizar estoque de cada ingrediente
     for (const item of entry.items) {
+      // Aplica fator de conversão se existir (ex: Compra 1 CX com Fator 12 -> Incrementa 12 no estoque)
+      const conversionFactor = item.conversionFactor || 1;
+      const quantityToIncrement = item.quantity * conversionFactor;
+
       await tx.ingredient.update({
         where: { id: item.ingredientId },
         data: {
-          stock: { increment: item.quantity },
-          lastUnitCost: item.unitCost
+          stock: { increment: quantityToIncrement },
+          lastUnitCost: item.unitCost / conversionFactor // O custo unitário real é dividido pelo fator
         }
       });
     }

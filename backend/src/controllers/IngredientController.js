@@ -82,6 +82,47 @@ class IngredientController {
     await prisma.ingredientGroup.delete({ where: { id } });
     res.status(204).send();
   });
+
+  // === RECEITAS DE INSUMOS BENEFICIADOS ===
+
+  // GET /api/ingredients/:id/recipe
+  getRecipe = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const recipe = await prisma.ingredientRecipe.findMany({
+      where: { producedIngredientId: id },
+      include: { componentIngredient: true }
+    });
+    res.json(recipe);
+  });
+
+  // POST /api/ingredients/:id/recipe
+  saveRecipe = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { items, yieldAmount } = req.body;
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Limpa receita anterior
+      await tx.ingredientRecipe.deleteMany({
+        where: { producedIngredientId: id }
+      });
+
+      // Cria nova receita
+      const created = await Promise.all(items.map(item => 
+        tx.ingredientRecipe.create({
+          data: {
+            producedIngredientId: id,
+            componentIngredientId: item.componentIngredientId,
+            quantity: Number(item.quantity),
+            yieldAmount: Number(yieldAmount || 1)
+          }
+        })
+      ));
+
+      return created;
+    });
+
+    res.json(result);
+  });
 }
 
 module.exports = new IngredientController();

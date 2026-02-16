@@ -14,4 +14,8 @@ router.get('/groups', needsAuth, IngredientController.getGroups);
 router.post('/groups', needsAuth, IngredientController.createGroup);
 router.delete('/groups/:id', needsAuth, IngredientController.deleteGroup);
 
+// Rotas de Receitas (Insumos Beneficiados)
+router.get('/:id/recipe', needsAuth, IngredientController.getRecipe);
+router.post('/:id/recipe', needsAuth, IngredientController.saveRecipe);
+
 module.exports = router;
