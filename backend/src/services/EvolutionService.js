@@ -54,9 +54,9 @@ class EvolutionService {
         integration: 'WHATSAPP-BAILEYS'
       });
       
-      const { token } = response.data; // <<<<<< Correção aqui, usando 'token'
+      // Na Evolution v2, o token de acesso da instância é o campo 'hash'
+      const token = response.data.hash || response.data.instance?.hash || response.data.token;
       
-      // Salva no banco local
       return await prisma.whatsAppInstance.upsert({
         where: { restaurantId },
         update: {
@@ -73,7 +73,9 @@ class EvolutionService {
       });
     } catch (error) {
       this._logError('createInstance', error);
-      throw new Error('Falha ao criar instância de WhatsApp');
+      // Lança a mensagem de erro vinda da API para o controller tratar
+      const apiMessage = error.response?.data?.response?.message?.[0] || error.response?.data?.message?.[0] || error.message;
+      throw new Error(apiMessage);
     }
   }
 
@@ -87,6 +89,23 @@ class EvolutionService {
     } catch (error) {
       this._logError('getQrCode', error);
       throw new Error('Falha ao obter QR Code');
+    }
+  }
+
+  /**
+   * Busca dados de uma instância específica
+   */
+  async fetchInstance(instanceName) {
+    try {
+      const response = await this.api.get(`/instance/fetchInstances?instanceName=${instanceName}`);
+      // fetchInstances retorna um array
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        return response.data[0];
+      }
+      return response.data; // Caso não venha como array em algumas versões
+    } catch (error) {
+      this._logError('fetchInstance', error);
+      return null;
     }
   }
 

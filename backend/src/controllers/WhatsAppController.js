@@ -53,32 +53,32 @@ const WhatsAppController = {
     try {
       instance = await evolutionService.createInstance(instanceName, restaurantId);
     } catch (createError) {
-      // Se a criação falhar e for um "name already in use", tenta buscar a existente
+      // Se a criação falhar e for um "already in use", tenta buscar a existente para pegar o token
       if (createError.message.includes('already in use')) {
-        console.warn(`Instância '${instanceName}' já existe na Evolution API, tentando buscá-la...`);
+        console.warn(`Instância '${instanceName}' já existe na Evolution API, recuperando dados...`);
         try {
-          const statusResponse = await evolutionService.getInstanceStatus(instanceName);
-          if (statusResponse.instance) {
+          const instanceData = await evolutionService.fetchInstance(instanceName);
+          if (instanceData) {
             instance = await prisma.whatsAppInstance.upsert({
               where: { restaurantId },
               update: {
                 name: instanceName,
-                token: statusResponse.instance.token,
-                status: statusResponse.instance.state === 'open' ? 'CONNECTED' : 'CONNECTING'
+                token: instanceData.hash || instanceData.token, // Recupera o token correto
+                status: instanceData.status === 'open' || instanceData.connectionStatus === 'open' ? 'CONNECTED' : 'CONNECTING'
               },
               create: {
                 name: instanceName,
-                token: statusResponse.instance.token,
-                status: statusResponse.instance.state === 'open' ? 'CONNECTED' : 'CONNECTING',
+                token: instanceData.hash || instanceData.token,
+                status: instanceData.status === 'open' || instanceData.connectionStatus === 'open' ? 'CONNECTED' : 'CONNECTING',
                 restaurantId
               }
             });
           } else {
-            throw new Error('Falha ao sincronizar instância existente com a Evolution API.');
+            throw new Error('Falha ao sincronizar: instância não encontrada na Evolution API.');
           }
         } catch (fetchError) {
           console.error('connect:fetchExistingInstance', fetchError);
-          throw new Error('Falha ao criar ou sincronizar instância de WhatsApp.');
+          throw new Error('Falha ao sincronizar instância de WhatsApp.');
         }
       } else {
         throw createError;
@@ -230,12 +230,13 @@ const WhatsAppController = {
   webhook: asyncHandler(async (req, res) => {
     const { event, data, instance } = req.body;
     
-    // Ignora eventos que não são de interesse ou mensagens de grupos
-    if (data?.key?.remoteJid?.endsWith('@g.us')) {
+    // Log inicial para debug de recebimento
+    console.log(`[Webhook Evolution] Recebido: ${event} | Instância: ${instance}`);
+
+    // Ignora mensagens de grupos ( remoteJid termina com @g.us )
+    if (data?.key?.remoteJid?.includes('@g.us')) {
       return res.sendStatus(200);
     }
-
-    console.log(`[Webhook Evolution] Evento: ${event} na instância: ${instance}`);
 
     const dbInstance = await prisma.whatsAppInstance.findFirst({ 
       where: { name: instance },
