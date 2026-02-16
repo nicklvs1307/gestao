@@ -7,7 +7,8 @@ import {
     Layers, ClipboardList, Tag, FileText, 
     Clock, MapPin, Users2, Ticket, Calculator,
     Receipt, Warehouse, MoveHorizontal, ShoppingCart,
-    Bell, UserCog, Database, Building2, ChefHat, ListOrdered, Search, CreditCard, Monitor, Maximize2
+    Bell, UserCog, Database, Building2, ChefHat, ListOrdered, Search, CreditCard, Monitor, Maximize2,
+    MessageSquare
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
