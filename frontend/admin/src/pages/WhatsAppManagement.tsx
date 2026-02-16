@@ -250,18 +250,6 @@ const WhatsAppManagement: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">OpenAI API Key (Opcional)</label>
-              <input 
-                type="password" 
-                value={settings.openaiApiKey}
-                onChange={(e) => setSettings({ ...settings, openaiApiKey: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 outline-none transition"
-                placeholder="sk-..."
-              />
-              <p className="text-[10px] text-gray-400 mt-1 italic">Se vazio, usaremos a chave global do sistema.</p>
-            </div>
-
-            <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Mensagem de Boas-vindas</label>
               <textarea 
                 rows={3}

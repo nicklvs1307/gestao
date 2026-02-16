@@ -484,7 +484,6 @@ model WhatsAppSettings {
   agentEnabled     Boolean  @default(false)
   agentName        String   @default("Atendente Virtual")
   agentPersona     String?  @db.Text // Prompt de persona do sistema
-  openaiApiKey     String?  // Chave da OpenAI por restaurante (ou global)
   
   // Configurações de Mensagens
   welcomeMessage   String?  @db.Text

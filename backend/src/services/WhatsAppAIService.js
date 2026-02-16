@@ -3,15 +3,20 @@ const prisma = require('../lib/prisma');
 
 class WhatsAppAIService {
   constructor() {
-    this.defaultApiKey = process.env.OPENAI_API_KEY;
+    // A chave agora será SEMPRE lida de process.env.OPENAI_API_KEY
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn('OPENAI_API_KEY não definida no ambiente. O agente AI pode não funcionar.');
+    }
+    this.openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
 
-  async getClient(restaurantId) {
-    const settings = await prisma.whatsAppSettings.findUnique({ where: { restaurantId } });
-    const apiKey = settings?.openaiApiKey || this.defaultApiKey;
-    if (!apiKey) throw new Error('OpenAI API Key não configurada');
-    return new OpenAI({ apiKey });
-  }
+  // Não precisamos mais do getClient, pois a chave é global
+  // async getClient(restaurantId) {
+  //   const settings = await prisma.whatsAppSettings.findUnique({ where: { restaurantId } });
+  //   const apiKey = settings?.openaiApiKey || this.defaultApiKey;
+  //   if (!apiKey) throw new Error('OpenAI API Key não configurada');
+  //   return new OpenAI({ apiKey });
+  // }
 
   /**
    * Definição das ferramentas (Tools) que a IA pode usar
@@ -105,10 +110,15 @@ class WhatsAppAIService {
 
   async handleMessage(restaurantId, customerPhone, messageContent) {
     try {
+      if (!process.env.OPENAI_API_KEY) {
+        return "Desculpe, a chave da API da OpenAI não está configurada no servidor.";
+      }
+
       const settings = await prisma.whatsAppSettings.findUnique({ where: { restaurantId } });
       if (!settings || !settings.agentEnabled) return null;
 
-      const openai = await this.getClient(restaurantId);
+      // Usando o cliente OpenAI global
+      const openai = this.openaiClient;
       
       // Memória de Curto Prazo (Histórico do Banco)
       const history = await prisma.whatsAppChatMessage.findMany({
@@ -182,7 +192,7 @@ class WhatsAppAIService {
       return responseText;
     } catch (error) {
       console.error('Erro na IA:', error);
-      return null;
+      return "Desculpe, tive um problema técnico ao processar sua mensagem. Posso te ajudar com outra coisa?";
     }
   }
 }
