@@ -2,6 +2,7 @@ const evolutionService = require('../services/EvolutionService');
 const aiService = require('../services/WhatsAppAIService');
 const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
+const socketLib = require('../lib/socket');
 
 // Controle de mensagens picadas (Debouncing)
 const pendingMessages = new Map(); // key: customerPhone_restaurantId, value: { timer, content: [] }
@@ -33,7 +34,13 @@ const WhatsAppController = {
             token: statusResponse.instance.token || existingLocalInstance.token // Usa o token do status ou mantém o existente
           }
         });
-        // Se já está conectada ou conectando, retorna.
+
+        // Notifica via Socket
+        socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
+          status: instance.status,
+          instanceName: instance.name
+        });
+
         return res.json(instance);
       } else {
         // Se a instância existe localmente mas está "fechada" ou com problema na Evolution, deleta a local para tentar recriar
@@ -50,15 +57,13 @@ const WhatsAppController = {
       if (createError.message.includes('already in use')) {
         console.warn(`Instância '${instanceName}' já existe na Evolution API, tentando buscá-la...`);
         try {
-          // Tenta buscar o status da instância que já existe
           const statusResponse = await evolutionService.getInstanceStatus(instanceName);
           if (statusResponse.instance) {
-            // Se encontrou na Evolution, salva/atualiza no DB local
             instance = await prisma.whatsAppInstance.upsert({
               where: { restaurantId },
               update: {
                 name: instanceName,
-                token: statusResponse.instance.token, // Pega o token da instância existente
+                token: statusResponse.instance.token,
                 status: statusResponse.instance.state === 'open' ? 'CONNECTED' : 'CONNECTING'
               },
               create: {
@@ -68,24 +73,27 @@ const WhatsAppController = {
                 restaurantId
               }
             });
-            console.log(`Instância '${instanceName}' sincronizada com o banco de dados local.`);
           } else {
-            // Se não encontrou na Evolution mesmo com "name in use", algo está muito errado
             throw new Error('Falha ao sincronizar instância existente com a Evolution API.');
           }
         } catch (fetchError) {
-          this._logError('connect:fetchExistingInstance', fetchError); // Loga erro de busca da instância
+          console.error('connect:fetchExistingInstance', fetchError);
           throw new Error('Falha ao criar ou sincronizar instância de WhatsApp.');
         }
       } else {
-        // Outro erro na criação, relança o erro original
         throw createError;
       }
     }
 
-    // Configura o webhook automaticamente após criar/sincronizar a instância
-    const webhookUrl = `${process.env.API_URL}/api/whatsapp/webhook`; // API_URL deve ser o domínio público do seu backend
+    // Configura o webhook automaticamente
+    const webhookUrl = `${process.env.API_URL}/api/whatsapp/webhook`;
     await evolutionService.setWebhook(instance.name, webhookUrl);
+
+    // Notifica via Socket
+    socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
+      status: instance.status,
+      instanceName: instance.name
+    });
 
     res.json(instance);
   }),
@@ -100,6 +108,15 @@ const WhatsAppController = {
     }
 
     const qrData = await evolutionService.getQrCode(instance.name);
+    
+    // Se recebeu um QR code novo, atualiza no DB
+    if (qrData.base64) {
+      await prisma.whatsAppInstance.update({
+        where: { id: instance.id },
+        data: { qrcode: qrData.base64 }
+      });
+    }
+
     res.json(qrData);
   }),
 
@@ -108,15 +125,20 @@ const WhatsAppController = {
     const restaurantId = req.restaurantId;
     const instance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
     
-    if (!instance) return res.json({ localStatus: 'NOT_CREATED' }); // Mudado para localStatus para consistência
+    if (!instance) return res.json({ localStatus: 'NOT_CREATED' });
 
     const status = await evolutionService.getInstanceStatus(instance.name);
     
-    // Atualiza status local
     const newState = status.instance?.state === 'open' ? 'CONNECTED' : 'DISCONNECTED';
     await prisma.whatsAppInstance.update({
       where: { id: instance.id },
-      data: { status: newState, token: status.instance?.token || instance.token } // Atualiza o token também
+      data: { status: newState, token: status.instance?.token || instance.token }
+    });
+
+    // Notifica via Socket
+    socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
+      status: newState,
+      instanceName: instance.name
     });
 
     res.json({ ...status, localStatus: newState });
@@ -130,10 +152,14 @@ const WhatsAppController = {
 
     await evolutionService.logoutInstance(instance.name);
     
-    // Atualiza o status local para DESCONECTADO
     await prisma.whatsAppInstance.update({
       where: { id: instance.id },
-      data: { status: 'DISCONNECTED', qrcode: null } // Limpa QR Code também
+      data: { status: 'DISCONNECTED', qrcode: null }
+    });
+
+    socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
+      status: 'DISCONNECTED',
+      instanceName: instance.name
     });
 
     res.json({ message: 'Instância deslogada com sucesso.' });
@@ -147,10 +173,14 @@ const WhatsAppController = {
 
     await evolutionService.restartInstance(instance.name);
     
-    // Atualiza o status local para CONECTANDO
     await prisma.whatsAppInstance.update({
       where: { id: instance.id },
       data: { status: 'CONNECTING' }
+    });
+
+    socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
+      status: 'CONNECTING',
+      instanceName: instance.name
     });
 
     res.json({ message: 'Instância reiniciada com sucesso.' });
@@ -164,8 +194,12 @@ const WhatsAppController = {
 
     await evolutionService.deleteInstance(instance.name);
     
-    // Remove a instância do banco de dados local
     await prisma.whatsAppInstance.delete({ where: { id: instance.id } });
+
+    socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
+      status: 'NOT_CREATED',
+      instanceName: instance.name
+    });
 
     res.json({ message: 'Instância deletada com sucesso.' });
   }),
@@ -194,78 +228,107 @@ const WhatsAppController = {
    * WEBHOOK PRINCIPAL - Lógica de Mensagens Picadas e Resposta Humanizada
    */
   webhook: asyncHandler(async (req, res) => {
-    // Adicionando log detalhado para visualizar o webhook
-    console.log('--- Webhook Recebido ---');
-    console.log('Timestamp:', new Date().toISOString());
-    console.log('Headers:', req.headers);
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-    console.log('-------------------------');
-
     const { event, data, instance } = req.body;
+    
+    // Ignora eventos que não são de interesse ou mensagens de grupos
+    if (data?.key?.remoteJid?.endsWith('@g.us')) {
+      return res.sendStatus(200);
+    }
 
+    console.log(`[Webhook Evolution] Evento: ${event} na instância: ${instance}`);
+
+    const dbInstance = await prisma.whatsAppInstance.findFirst({ 
+      where: { name: instance },
+      include: { restaurant: true }
+    });
+
+    if (!dbInstance) {
+      console.warn(`Instância ${instance} não encontrada no banco de dados.`);
+      return res.sendStatus(200);
+    }
+
+    const restaurantId = dbInstance.restaurantId;
+
+    // 1. Tratamento de Atualização de Conexão
+    if (event === 'CONNECTION_UPDATE') {
+      const state = data.state;
+      const newState = state === 'open' ? 'CONNECTED' : 'DISCONNECTED';
+      
+      await prisma.whatsAppInstance.update({
+        where: { id: dbInstance.id },
+        data: { status: newState }
+      });
+
+      socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
+        status: newState,
+        instanceName: instance
+      });
+    }
+
+    // 2. Tratamento de Atualização de QR Code
+    if (event === 'QRCODE_UPDATED') {
+      const qrcode = data.qrcode?.base64;
+      if (qrcode) {
+        await prisma.whatsAppInstance.update({
+          where: { id: dbInstance.id },
+          data: { qrcode, status: 'CONNECTING' }
+        });
+
+        socketLib.emitToRestaurant(restaurantId, 'whatsapp_qrcode', {
+          qrcode,
+          status: 'CONNECTING'
+        });
+      }
+    }
+
+    // 3. Tratamento de Mensagens Recebidas
     if (event === 'MESSAGES_UPSERT') {
       const message = data.message;
       const fromMe = data.key.fromMe;
       const customerPhone = data.key.remoteJid;
       
+      // Notifica o frontend que chegou uma mensagem (opcional, para um chat em tempo real)
+      socketLib.emitToRestaurant(restaurantId, 'whatsapp_message', data);
+
       let messageContent = message.conversation || 
                            message.extendedTextMessage?.text || 
                            message.imageMessage?.caption || 
                            "";
 
       if (message.audioMessage) {
-        // Log para áudio recebido
-        console.log(`Áudio recebido de ${customerPhone}. Tentando transcrever...`);
         const transcription = await evolutionService.transcribeAudio(instance, data.key);
         if (transcription) {
           messageContent = transcription;
-          console.log(`Transcrição do áudio: "${transcription}"`);
-        } else {
-          console.warn('Falha na transcrição do áudio.');
-          messageContent = "[Áudio não transcrito]"; // Fallback caso a transcrição falhe
         }
       }
 
       if (!fromMe && messageContent) {
-        const dbInstance = await prisma.whatsAppInstance.findFirst({ where: { name: instance } });
-        if (!dbInstance) {
-          console.warn(`Instância ${instance} não encontrada no banco de dados. Ignorando mensagem.`);
-          return res.sendStatus(200);
-        }
-
-        const debouncerKey = `${customerPhone}_${dbInstance.restaurantId}`;
+        const debouncerKey = `${customerPhone}_${restaurantId}`;
         
         if (pendingMessages.has(debouncerKey)) {
           clearTimeout(pendingMessages.get(debouncerKey).timer);
-          console.log(`Reiniciando timer de debounce para ${customerPhone}...`);
         }
 
         const currentData = pendingMessages.get(debouncerKey) || { content: [] };
         currentData.content.push(messageContent);
-        console.log(`Mensagem adicionada ao buffer de ${customerPhone}. Conteúdo atual: ${currentData.content.join(' ')}`);
 
         const timer = setTimeout(async () => {
           const finalContent = currentData.content.join(" ");
           pendingMessages.delete(debouncerKey);
-          console.log(`Debounce finalizado para ${customerPhone}. Processando: "${finalContent}"`);
 
           const aiResponse = await aiService.handleMessage(
-            dbInstance.restaurantId,
+            restaurantId,
             customerPhone,
             finalContent
           );
 
           if (aiResponse) {
-            console.log(`Resposta da IA para ${customerPhone}: "${aiResponse}"`);
             const paragraphs = aiResponse.split('\n').filter(p => p.trim() !== "");
             
             for (const paragraph of paragraphs) {
               const typingTime = Math.min(Math.max(paragraph.length * 50, 1000), 4000);
-              console.log(`Enviando parágrafo: "${paragraph}" com delay de ${typingTime}ms`);
               await evolutionService.sendText(instance, customerPhone, paragraph, typingTime);
             }
-          } else {
-            console.warn(`IA não gerou resposta para ${customerPhone}.`);
           }
         }, 5000); // 5 segundos de debounce
 

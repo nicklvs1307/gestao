@@ -1,5 +1,9 @@
 const axios = require('axios');
 const prisma = require('../lib/prisma');
+const OpenAI = require('openai');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
 class EvolutionService {
   constructor() {
@@ -13,6 +17,10 @@ class EvolutionService {
         'Content-Type': 'application/json'
       }
     });
+
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
   }
 
   /**
@@ -143,19 +151,16 @@ class EvolutionService {
       
       const response = await this.api.post(`/message/sendText/${instanceName}`, {
         number: remoteJid,
+        text: text,
         options: {
           delay: delay,
           presence: 'composing',
           linkPreview: true
-        },
-        textMessage: {
-          text
         }
       });
       return response.data;
     } catch (error) {
       this._logError('sendText', error);
-      // Não joga erro aqui, apenas loga, pois pode ser um erro recuperável de envio
     }
   }
 
@@ -163,18 +168,44 @@ class EvolutionService {
    * Transcreve áudio recebido via OpenAI Whisper
    */
   async transcribeAudio(instanceName, messageKey) {
+    if (!this.openai) {
+      console.warn('OpenAI não configurado para transcrição de áudio.');
+      return null;
+    }
+
     try {
       // Busca o arquivo base64 do áudio na Evolution
-      const response = await this.api.post(`/message/getBase64/${instanceName}`, {
-        key: messageKey
+      // Endpoint correto na Evolution v2: /chat/getBase64FromMediaMessage/{{instance}}
+      const response = await this.api.post(`/chat/getBase64FromMediaMessage/${instanceName}`, {
+        message: {
+          key: messageKey
+        },
+        convertToMp4: false
       });
       
       const base64Data = response.data.base64;
-      if (!base64Data) return null;
+      if (!base64Data) {
+        console.warn('Base64 do áudio não recebido da Evolution API.');
+        return null;
+      }
 
-      // TODO: Integrar com a API Whisper da OpenAI aqui.
-      // Por enquanto, apenas um placeholder.
-      return "[Áudio recebido e processado]"; 
+      // Cria um arquivo temporário
+      const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.ogg`);
+      fs.writeFileSync(tempFilePath, Buffer.from(base64Data, 'base64'));
+
+      try {
+        const transcription = await this.openai.audio.transcriptions.create({
+          file: fs.createReadStream(tempFilePath),
+          model: "whisper-1",
+        });
+
+        return transcription.text;
+      } finally {
+        // Limpa o arquivo temporário
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+      }
     } catch (error) {
       this._logError('transcribeAudio', error);
       return null;

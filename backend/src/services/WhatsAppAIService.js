@@ -34,8 +34,30 @@ class WhatsAppAIService {
       {
         type: 'function',
         function: {
+          name: 'get_payment_methods',
+          description: 'Retorna as formas de pagamento aceitas pelo restaurante.',
+          parameters: { type: 'object', properties: {} }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'get_order_history',
+          description: 'Retorna o histórico de pedidos recentes do cliente.',
+          parameters: {
+            type: 'object',
+            properties: {
+              phone: { type: 'string' }
+            },
+            required: ['phone']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
           name: 'create_order',
-          description: 'Cria um pedido no sistema.',
+          description: 'Cria um pedido no sistema. Use quando o cliente confirmar os itens, endereço e forma de pagamento.',
           parameters: {
             type: 'object',
             properties: {
@@ -44,18 +66,18 @@ class WhatsAppAIService {
                 items: {
                   type: 'object',
                   properties: {
-                    name: { type: 'string' },
+                    name: { type: 'string', description: 'Nome do produto exatamente como no cardápio' },
                     quantity: { type: 'number' },
-                    observations: { type: 'string' }
+                    observations: { type: 'string', description: 'Ex: Sem cebola, bem passado' }
                   }
                 }
               },
               customerName: { type: 'string' },
               deliveryAddress: { type: 'string' },
-              paymentMethod: { type: 'string', enum: ['PIX', 'CARTAO', 'DINHEIRO'] },
+              paymentMethod: { type: 'string', enum: ['PIX', 'CARTÃO', 'DINHEIRO'] },
               orderType: { type: 'string', enum: ['DELIVERY', 'PICKUP'] }
             },
-            required: ['items', 'orderType']
+            required: ['items', 'orderType', 'customerName', 'paymentMethod']
           }
         }
       },
@@ -84,24 +106,68 @@ class WhatsAppAIService {
 
     switch (name) {
       case 'get_menu':
-        const products = await prisma.product.findMany({
-          where: { restaurantId, isAvailable: true },
-          select: { name: true, price: true, description: true, categories: { select: { name: true } } }
+        const categories = await prisma.category.findMany({
+          where: { restaurantId },
+          include: { products: { where: { isAvailable: true } } },
+          orderBy: { order: 'asc' }
         });
-        return JSON.stringify(products);
+        
+        let menuText = "Cardápio Atual:\n";
+        categories.forEach(cat => {
+          if (cat.products.length > 0) {
+            menuText += `\n--- ${cat.name} ---\n`;
+            cat.products.forEach(p => {
+              menuText += `- ${p.name}: R$ ${p.price.toFixed(2)}${p.description ? ` (${p.description})` : ''}\n`;
+            });
+          }
+        });
+        return menuText;
+
+      case 'get_payment_methods':
+        const methods = await prisma.paymentMethod.findMany({
+          where: { restaurantId, isActive: true }
+        });
+        if (methods.length === 0) return "Aceitamos Dinheiro, PIX e Cartões de Crédito/Débito.";
+        return "Formas de pagamento aceitas: " + methods.map(m => m.name).join(', ');
 
       case 'check_order_status':
         const order = await prisma.order.findFirst({
-          where: { restaurantId, deliveryOrder: { phone: args.phone } },
+          where: { 
+            restaurantId, 
+            deliveryOrder: { phone: args.phone.replace(/\D/g, '') } 
+          },
           orderBy: { createdAt: 'desc' },
           include: { deliveryOrder: true }
         });
         if (!order) return "Nenhum pedido encontrado para este número.";
-        return `Pedido #${order.id} - Status: ${order.status}`;
+        const statusMap = {
+          'PENDING': 'Pendente',
+          'PREPARING': 'Em Preparo',
+          'READY': 'Pronto',
+          'SHIPPED': 'Saiu para Entrega',
+          'DELIVERED': 'Entregue',
+          'CANCELED': 'Cancelado',
+          'COMPLETED': 'Finalizado'
+        };
+        return `Pedido #${order.id} - Status: ${statusMap[order.status] || order.status}`;
+
+      case 'get_order_history':
+        const orders = await prisma.order.findMany({
+          where: { 
+            restaurantId, 
+            deliveryOrder: { phone: args.phone.replace(/\D/g, '') } 
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 3,
+          include: { items: { include: { product: true } } }
+        });
+        if (orders.length === 0) return "O cliente ainda não possui histórico de pedidos.";
+        return orders.map(o => `Pedido em ${new Date(o.createdAt).toLocaleDateString()}: ${o.items.map(i => i.product.name).join(', ')}`).join('\n');
 
       case 'create_order':
-        // Lógica simplificada de criação. Em produção, buscaria os IDs dos produtos.
-        return `Pedido recebido com sucesso! Itens: ${args.items.length}. Um atendente humano irá confirmar em instantes.`;
+        // Por enquanto, apenas simula, mas com mais detalhes
+        console.log(`[AI ORDER] Restaurante ${restaurantId} - Cliente ${args.customerName}:`, args.items);
+        return `Perfeito! Registrei seu pedido de: ${args.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}. O total será calculado e um atendente humano confirmará em instantes para iniciar o preparo.`;
 
       default:
         return "Função não encontrada.";
@@ -117,31 +183,37 @@ class WhatsAppAIService {
       const settings = await prisma.whatsAppSettings.findUnique({ where: { restaurantId } });
       if (!settings || !settings.agentEnabled) return null;
 
-      // Usando o cliente OpenAI global
       const openai = this.openaiClient;
       
-      // Memória de Curto Prazo (Histórico do Banco)
       const history = await prisma.whatsAppChatMessage.findMany({
         where: { restaurantId, customerPhone },
         orderBy: { timestamp: 'desc' },
-        take: 15
+        take: 10
       });
 
-      // Busca dados do restaurante para o System Prompt
-      const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
+      const restaurant = await prisma.restaurant.findUnique({ 
+        where: { id: restaurantId },
+        include: { settings: true }
+      });
 
       let messages = [
         { 
           role: 'system', 
-          content: `${settings.agentPersona || 'Você é um atendente humanizado.'}
-          Nome do Restaurante: ${restaurant.name}
-          Hoje é: ${new Date().toLocaleDateString('pt-BR')}
-          Instruções:
-          - Nunca responda como robô.
-          - Use emojis moderadamente.
-          - Se o cliente for novo, seja caloroso.
-          - Se ele já pediu antes, seja mais direto.
-          - IMPORTANTE: Sempre use a ferramenta 'get_menu' para saber os preços antes de informar ao cliente.`
+          content: `Você é o ${settings.agentName || 'Atendente Virtual'} do restaurante ${restaurant.name}.
+          ${settings.agentPersona || 'Você é um atendente humanizado, educado e eficiente.'}
+          
+          Contexto do Restaurante:
+          - Endereço: ${restaurant.address || 'Não informado'}
+          - Telefone: ${restaurant.phone || 'Não informado'}
+          - Taxa de Entrega: R$ ${restaurant.settings?.deliveryFee || 'A consultar'}
+          - Tempo de Entrega: ${restaurant.settings?.deliveryTime || 'Não informado'}
+          
+          Diretrizes:
+          1. SEMPRE consulte o cardápio usando 'get_menu' antes de falar sobre produtos ou preços.
+          2. Seja conciso, mas amigável. Use emojis moderadamente 🍕🍔.
+          3. Se o cliente quiser fazer um pedido, colete: Itens, Nome, Endereço (se delivery), Forma de Pagamento e Tipo (Delivery ou Retirada).
+          4. Ao final, use 'create_order' para registrar.
+          5. Hoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`
         },
         ...history.reverse().map(msg => ({ role: msg.role, content: msg.content })),
         { role: 'user', content: messageContent }

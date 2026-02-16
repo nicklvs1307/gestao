@@ -159,4 +159,9 @@ app.get('/api', (req, res) => res.send('API Online!'));
 const errorHandler = require('./src/middlewares/errorHandler');
 app.use(errorHandler);
 
-app.listen(PORT, () => logger.info(`Servidor rodando em http://localhost:${PORT}`));
+const http = require('http');
+const server = http.createServer(app);
+const socketLib = require('./src/lib/socket');
+socketLib.init(server);
+
+server.listen(PORT, () => logger.info(`Servidor rodando em http://localhost:${PORT}`));

@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { io } from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const SOCKET_URL = API_URL.replace('/api', '');
 
 const WhatsAppManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -50,8 +52,37 @@ const WhatsAppManagement: React.FC = () => {
   useEffect(() => {
     if (restaurantId) {
       fetchData();
-      const interval = setInterval(fetchData, 10000); // Atualiza a cada 10 segundos
-      return () => clearInterval(interval);
+      
+      // Inicializa WebSocket
+      const socket = io(SOCKET_URL, {
+        query: { restaurantId }
+      });
+
+      socket.on('whatsapp_status', (data) => {
+        console.log('Update de status via socket:', data);
+        setInstance((prev: any) => ({
+          ...prev,
+          localStatus: data.status,
+          name: data.instanceName
+        }));
+        if (data.status === 'CONNECTED') {
+          setQrCode(null);
+          toast.success('WhatsApp conectado!');
+        }
+      });
+
+      socket.on('whatsapp_qrcode', (data) => {
+        console.log('Novo QR Code via socket');
+        setQrCode(data.qrcode);
+        setInstance((prev: any) => ({
+          ...prev,
+          localStatus: 'CONNECTING'
+        }));
+      });
+
+      return () => {
+        socket.disconnect();
+      };
     } else {
       toast.error('Contexto de restaurante não encontrado');
       setLoading(false);
