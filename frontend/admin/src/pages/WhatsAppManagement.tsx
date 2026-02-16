@@ -33,6 +33,9 @@ const WhatsAppManagement: React.FC = () => {
     welcomeMessage: '',
     autoAcceptOrders: false
   });
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false); // Inicialização explícita
+  const [savingSettings, setSavingSettings] = useState(false); // Inicialização explícita
 
   // Helper para headers
   const getHeaders = () => ({
