@@ -18,6 +18,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const WhatsAppManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  
+  // Pega o restaurantId do localStorage ou context
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const restaurantId = user?.restaurantId;
+
   const [instance, setInstance] = useState<any>(null);
   const [settings, setSettings] = useState<any>({
     agentEnabled: false,
@@ -27,20 +33,30 @@ const WhatsAppManagement: React.FC = () => {
     welcomeMessage: '',
     autoAcceptOrders: false
   });
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [statusLoading, setStatusLoading] = useState(false);
-  const [savingSettings, setSavingSettings] = useState(false);
+
+  // Helper para headers
+  const getHeaders = () => ({
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      'x-restaurant-id': restaurantId
+    }
+  });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (restaurantId) {
+      fetchData();
+    } else {
+      toast.error('Contexto de restaurante não encontrado');
+      setLoading(false);
+    }
+  }, [restaurantId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [instanceRes, settingsRes] = await Promise.all([
-        axios.get(`${API_URL}/whatsapp/status`),
-        axios.get(`${API_URL}/whatsapp/settings`)
+        axios.get(`${API_URL}/whatsapp/status`, getHeaders()),
+        axios.get(`${API_URL}/whatsapp/settings`, getHeaders())
       ]);
       
       setInstance(instanceRes.data);
@@ -56,11 +72,11 @@ const WhatsAppManagement: React.FC = () => {
   const handleConnect = async () => {
     try {
       setStatusLoading(true);
-      const res = await axios.post(`${API_URL}/whatsapp/connect`);
+      const res = await axios.post(`${API_URL}/whatsapp/connect`, {}, getHeaders());
       setInstance(res.data);
       
       // Busca QR Code após criar
-      const qrRes = await axios.get(`${API_URL}/whatsapp/qrcode`);
+      const qrRes = await axios.get(`${API_URL}/whatsapp/qrcode`, getHeaders());
       setQrCode(qrRes.data.base64);
       toast.success('Instância criada! Escaneie o QR Code.');
     } catch (error) {
@@ -73,7 +89,7 @@ const WhatsAppManagement: React.FC = () => {
   const handleRefreshQr = async () => {
     try {
       setStatusLoading(true);
-      const qrRes = await axios.get(`${API_URL}/whatsapp/qrcode`);
+      const qrRes = await axios.get(`${API_URL}/whatsapp/qrcode`, getHeaders());
       setQrCode(qrRes.data.base64);
     } catch (error) {
       toast.error('Erro ao atualizar QR Code');
@@ -85,7 +101,7 @@ const WhatsAppManagement: React.FC = () => {
   const handleSaveSettings = async () => {
     try {
       setSavingSettings(true);
-      await axios.put(`${API_URL}/whatsapp/settings`, settings);
+      await axios.put(`${API_URL}/whatsapp/settings`, settings, getHeaders());
       toast.success('Configurações salvas com sucesso!');
     } catch (error) {
       toast.error('Erro ao salvar configurações');
