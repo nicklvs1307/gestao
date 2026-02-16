@@ -173,8 +173,8 @@ const WhatsAppManagement: React.FC = () => {
   }
 
   const isConnected = instance?.localStatus === 'CONNECTED';
-  const isConnecting = instance?.localStatus === 'CONNECTING' && !isConnected;
-  const isNotCreated = instance?.localStatus === 'NOT_CREATED';
+  const isConnecting = instance?.localStatus === 'CONNECTING'; // Pode ser conectando ou esperando QR Code
+  const isNotCreated = instance?.localStatus === 'NOT_CREATED' || !instance?.name; // 'NOT_CREATED' ou sem nome de instância local
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
@@ -198,17 +198,6 @@ const WhatsAppManagement: React.FC = () => {
             </span>
           </div>
 
-          {!isNotCreated && !isConnected && !qrCode && !isConnecting && (
-            <button
-              onClick={handleConnect}
-              disabled={actionLoading}
-              className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition flex items-center justify-center space-x-2"
-            >
-              {actionLoading ? <RefreshCw className="animate-spin" size={20} /> : <Power size={20} />}
-              <span>{isNotCreated ? 'Criar Nova Instância' : 'Tentar Conectar'}</span>
-            </button>
-          )}
-
           {isNotCreated && (
             <button
               onClick={handleConnect}
@@ -217,6 +206,17 @@ const WhatsAppManagement: React.FC = () => {
             >
               {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <Power size={20} />}
               <span>Criar Instância</span>
+            </button>
+          )}
+
+          {!isNotCreated && !isConnected && !isConnecting && ( // Se existe mas não está conectado ou conectando
+            <button
+              onClick={handleRestart} // Tenta reiniciar para gerar um novo QR Code ou conectar
+              disabled={actionLoading}
+              className="w-full bg-yellow-500 text-white py-2 rounded-lg font-medium hover:bg-yellow-600 transition flex items-center justify-center space-x-2"
+            >
+              {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <RotateCw size={20} />}
+              <span>Tentar Reconectar</span>
             </button>
           )}
 
@@ -241,7 +241,7 @@ const WhatsAppManagement: React.FC = () => {
             </div>
           )}
 
-          {!isNotCreated && (
+          {!isNotCreated && ( // Botão de deletar sempre visível se a instância existe localmente
             <button
               onClick={handleDelete}
               disabled={actionLoading}
@@ -255,7 +255,7 @@ const WhatsAppManagement: React.FC = () => {
 
         {/* QR Code ou Status Detalhado */}
         <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          {!isConnected && qrCode && isConnecting ? (
+          {!isConnected && qrCode && isConnecting ? ( // Exibe QR Code apenas se estiver CONECTANDO e tiver QR Code
             <div className="flex flex-col items-center justify-center h-full space-y-4">
               <h3 className="font-bold text-gray-800 flex items-center space-x-2">
                 <QrCode size={20} />
@@ -305,7 +305,9 @@ const WhatsAppManagement: React.FC = () => {
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-4">
               <MessageSquare size={64} className="opacity-20" />
-              <p>Inicie a conexão para visualizar o QR Code</p>
+              <p>
+                {isNotCreated ? 'Clique em "Criar Instância" para começar' : 'Instância desconectada ou aguardando QR Code.'}
+              </p>
             </div>
           )}
         </div>

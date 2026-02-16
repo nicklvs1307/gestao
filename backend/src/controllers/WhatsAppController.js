@@ -15,6 +15,24 @@ const WhatsAppController = {
     const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
     if (!restaurant) return res.status(404).json({ error: 'Restaurante não encontrado.' });
 
+    // Verifica se já existe uma instância localmente
+    let existingInstance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
+    
+    if (existingInstance && existingInstance.status !== 'NOT_CREATED') { // NOT_CREATED é um status interno para quando não há registro
+      // Se já existe e não está no estado 'não criado', tentamos buscar o status/QR
+      const statusResponse = await evolutionService.getInstanceStatus(existingInstance.name);
+      if (statusResponse.instance && statusResponse.instance.status !== 'CLOSED') { // Se a instância existe e não está fechada na Evolution
+         return res.json({ 
+          ...existingInstance, 
+          status: statusResponse.instance?.state === 'open' ? 'CONNECTED' : 'CONNECTING',
+          base64: statusResponse.base64 // Pode já vir no status
+         });
+      }
+      // Se a instância existe localmente mas está fechada na Evolution, ou com erro, deletamos a local para recriar
+      await prisma.whatsAppInstance.delete({ where: { id: existingInstance.id } });
+      existingInstance = null;
+    }
+
     const instanceName = `rest_${restaurant.slug}`;
     const instance = await evolutionService.createInstance(instanceName, restaurantId);
     
@@ -43,7 +61,7 @@ const WhatsAppController = {
     const restaurantId = req.restaurantId;
     const instance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
     
-    if (!instance) return res.json({ status: 'NOT_CREATED' });
+    if (!instance) return res.json({ localStatus: 'NOT_CREATED' }); // Mudado para localStatus para consistência
 
     const status = await evolutionService.getInstanceStatus(instance.name);
     
