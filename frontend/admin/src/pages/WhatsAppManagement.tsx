@@ -117,10 +117,20 @@ const WhatsAppManagement: React.FC = () => {
     try {
       setActionLoading(true);
       const res = await axios.post(`${API_URL}/whatsapp/connect`, {}, getHeaders());
-      setInstance(res.data);
-      toast.success('Instância criada! Escaneie o QR Code.');
-      await fetchData(); // Atualiza dados para mostrar o QR code
+      // Garante que o estado local reflita o que veio da API
+      const instanceData = res.data;
+      setInstance({
+        ...instanceData,
+        localStatus: instanceData.localStatus || instanceData.status
+      });
+      toast.success('Instância sincronizada! Aguarde o QR Code.');
+      
+      // Se não conectou de primeira, busca o QR code
+      if (instanceData.status !== 'CONNECTED') {
+        await handleRefreshQr();
+      }
     } catch (error) {
+      console.error('Erro ao conectar:', error);
       toast.error('Erro ao conectar ao WhatsApp');
     } finally {
       setActionLoading(false);

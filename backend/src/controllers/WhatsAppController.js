@@ -85,9 +85,15 @@ const WhatsAppController = {
       }
     }
 
-    // Configura o webhook automaticamente
-    const webhookUrl = `${process.env.API_URL}/api/whatsapp/webhook`;
-    await evolutionService.setWebhook(instance.name, webhookUrl);
+    // Configura o webhook automaticamente - Envolvido em try/catch para não travar a conexão
+    try {
+      const webhookUrl = `${process.env.API_URL}/api/whatsapp/webhook`;
+      await evolutionService.setWebhook(instance.name, webhookUrl);
+      console.log(`Webhook configurado com sucesso para ${instance.name}`);
+    } catch (webhookError) {
+      console.warn(`Aviso: Falha ao configurar webhook para ${instance.name}:`, webhookError.message);
+      // Não lançamos erro aqui para permitir que o usuário veja a instância criada
+    }
 
     // Notifica via Socket
     socketLib.emitToRestaurant(restaurantId, 'whatsapp_status', {
@@ -95,7 +101,7 @@ const WhatsAppController = {
       instanceName: instance.name
     });
 
-    res.json(instance);
+    res.json({ ...instance, localStatus: instance.status });
   }),
 
   // Obter QR Code
@@ -113,7 +119,12 @@ const WhatsAppController = {
     if (qrData.base64) {
       await prisma.whatsAppInstance.update({
         where: { id: instance.id },
-        data: { qrcode: qrData.base64 }
+        data: { qrcode: qrData.base64, status: 'CONNECTING' }
+      });
+      
+      socketLib.emitToRestaurant(restaurantId, 'whatsapp_qrcode', {
+        qrcode: qrData.base64,
+        status: 'CONNECTING'
       });
     }
 
@@ -129,7 +140,13 @@ const WhatsAppController = {
 
     const status = await evolutionService.getInstanceStatus(instance.name);
     
-    const newState = status.instance?.state === 'open' ? 'CONNECTED' : 'DISCONNECTED';
+    // Mapeamento de estados da Evolution v2
+    const state = status.instance?.state || status.instance?.status;
+    let newState = 'DISCONNECTED';
+    
+    if (state === 'open') newState = 'CONNECTED';
+    else if (state === 'connecting' || state === 'connecting') newState = 'CONNECTING';
+    
     await prisma.whatsAppInstance.update({
       where: { id: instance.id },
       data: { status: newState, token: status.instance?.token || instance.token }
@@ -141,7 +158,7 @@ const WhatsAppController = {
       instanceName: instance.name
     });
 
-    res.json({ ...status, localStatus: newState });
+    res.json({ ...status, localStatus: newState, name: instance.name });
   }),
 
   // Deslogar instância
