@@ -176,13 +176,25 @@ class WhatsAppAIService {
 
   async handleMessage(restaurantId, customerPhone, messageContent) {
     try {
+      console.log(`[AI Service] Processando mensagem para restaurante ${restaurantId}, cliente ${customerPhone}`);
+      
       if (!process.env.OPENAI_API_KEY) {
+        console.error('[AI Service] OPENAI_API_KEY não encontrada no .env');
         return "Desculpe, a chave da API da OpenAI não está configurada no servidor.";
       }
 
       const settings = await prisma.whatsAppSettings.findUnique({ where: { restaurantId } });
-      if (!settings || !settings.agentEnabled) return null;
+      if (!settings) {
+        console.warn(`[AI Service] Configurações de WhatsApp não encontradas para o restaurante ${restaurantId}`);
+        return null;
+      }
+      
+      if (!settings.agentEnabled) {
+        console.log(`[AI Service] Agente de IA está DESATIVADO para o restaurante ${restaurantId}`);
+        return null;
+      }
 
+      console.log(`[AI Service] Agente ${settings.agentName} ativo. Chamando OpenAI...`);
       const openai = this.openaiClient;
       
       const history = await prisma.whatsAppChatMessage.findMany({

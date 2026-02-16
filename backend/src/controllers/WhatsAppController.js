@@ -266,10 +266,12 @@ const WhatsAppController = {
     }
 
     const restaurantId = dbInstance.restaurantId;
+    // Normaliza o evento para maiúsculas e troca pontos por underscores para compatibilidade
+    const normalizedEvent = event.toUpperCase().replace(/\./g, '_');
 
     // 1. Tratamento de Atualização de Conexão
-    if (event === 'CONNECTION_UPDATE') {
-      const state = data.state;
+    if (normalizedEvent === 'CONNECTION_UPDATE') {
+      const state = data.state || data.status;
       const newState = state === 'open' ? 'CONNECTED' : 'DISCONNECTED';
       
       await prisma.whatsAppInstance.update({
@@ -284,7 +286,7 @@ const WhatsAppController = {
     }
 
     // 2. Tratamento de Atualização de QR Code
-    if (event === 'QRCODE_UPDATED') {
+    if (normalizedEvent === 'QRCODE_UPDATED') {
       const qrcode = data.qrcode?.base64;
       if (qrcode) {
         await prisma.whatsAppInstance.update({
@@ -300,12 +302,16 @@ const WhatsAppController = {
     }
 
     // 3. Tratamento de Mensagens Recebidas
-    if (event === 'MESSAGES_UPSERT') {
+    if (normalizedEvent === 'MESSAGES_UPSERT') {
       const message = data.message;
       const fromMe = data.key.fromMe;
       const customerPhone = data.key.remoteJid;
       
-      // Notifica o frontend que chegou uma mensagem (opcional, para um chat em tempo real)
+      if (fromMe) return res.sendStatus(200);
+
+      console.log(`[WhatsApp] Mensagem recebida de ${customerPhone}`);
+      
+      // Notifica o frontend
       socketLib.emitToRestaurant(restaurantId, 'whatsapp_message', data);
 
       let messageContent = message.conversation || 
