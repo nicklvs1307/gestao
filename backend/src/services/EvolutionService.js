@@ -44,8 +44,7 @@ class EvolutionService {
         instanceName,
         qrcode: true,
         integration: 'WHATSAPP-BAILEYS' // Adicionado conforme erro 'Invalid integration'
-
-      const { hash } = response.data;
+      }); // <<< Fechamento correto do objeto da requisição post
       
       // Salva no banco local
       return await prisma.whatsAppInstance.upsert({
