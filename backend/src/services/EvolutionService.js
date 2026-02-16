@@ -42,8 +42,8 @@ class EvolutionService {
     try {
       const response = await this.api.post('/instance/create', {
         instanceName,
-        qrcode: true // Apenas envie o que é estritamente necessário ou requerido
-      });
+        qrcode: true,
+        integration: 'WHATSAPP-BAILEYS' // Adicionado conforme erro 'Invalid integration'
 
       const { hash } = response.data;
       
