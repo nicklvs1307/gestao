@@ -16,6 +16,23 @@ class EvolutionService {
   }
 
   /**
+   * Função auxiliar para logar erros de forma detalhada
+   */
+  _logError(method, error) {
+    console.error(`Erro em ${method} da Evolution API:`);
+    if (error.response) {
+      console.error('  Status:', error.response.status);
+      console.error('  Data:', error.response.data);
+      console.error('  Headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('  No response received:', error.request);
+    } else {
+      console.error('  Message:', error.message);
+    }
+    console.error('  Config:', error.config);
+  }
+
+  /**
    * Cria uma nova instância na Evolution API
    */
   async createInstance(instanceName, restaurantId) {
@@ -45,7 +62,7 @@ class EvolutionService {
         }
       });
     } catch (error) {
-      console.error('Erro ao criar instância na Evolution:', error.response?.data || error.message);
+      this._logError('createInstance', error);
       throw new Error('Falha ao criar instância de WhatsApp');
     }
   }
@@ -58,7 +75,7 @@ class EvolutionService {
       const response = await this.api.get(`/instance/connect/${instanceName}`);
       return response.data; // Normalmente retorna { base64: '...' }
     } catch (error) {
-      console.error('Erro ao buscar QR Code:', error.response?.data || error.message);
+      this._logError('getQrCode', error);
       throw new Error('Falha ao obter QR Code');
     }
   }
@@ -71,8 +88,8 @@ class EvolutionService {
       const response = await this.api.get(`/instance/connectionState/${instanceName}`);
       return response.data;
     } catch (error) {
-      console.error('Erro ao buscar status da instância:', error.response?.data || error.message);
-      return { instance: { state: 'DISCONNECTED' } };
+      this._logError('getInstanceStatus', error);
+      return { instance: { state: 'DISCONNECTED' } }; // Retorna um status padrão em caso de erro
     }
   }
 
@@ -96,7 +113,8 @@ class EvolutionService {
       });
       return response.data;
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error.response?.data || error.message);
+      this._logError('sendText', error);
+      // Não joga erro aqui, apenas loga, pois pode ser um erro recuperável de envio
     }
   }
 
@@ -113,12 +131,11 @@ class EvolutionService {
       const base64Data = response.data.base64;
       if (!base64Data) return null;
 
-      // Aqui você precisaria salvar temporariamente e mandar para a OpenAI
-      // Por simplicidade, assumiremos que a Evolution já pode mandar o áudio convertido
-      // Ou usamos o Whisper. Vou deixar o placeholder da lógica:
+      // TODO: Integrar com a API Whisper da OpenAI aqui.
+      // Por enquanto, apenas um placeholder.
       return "[Áudio recebido e processado]"; 
     } catch (error) {
-      console.error('Erro ao transcrever áudio:', error);
+      this._logError('transcribeAudio', error);
       return null;
     }
   }
@@ -139,7 +156,7 @@ class EvolutionService {
       });
       return response.data;
     } catch (error) {
-      console.error('Erro ao configurar webhook:', error.response?.data || error.message);
+      this._logError('setWebhook', error);
       throw new Error('Falha ao configurar webhook');
     }
   }
