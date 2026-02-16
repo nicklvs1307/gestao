@@ -23,6 +23,9 @@ class EvolutionService {
     if (error.response) {
       console.error('  Status:', error.response.status);
       console.error('  Data:', error.response.data);
+      if (error.response.data && error.response.data.response && error.response.data.response.message) {
+        console.error('  Evolution API Message:', JSON.stringify(error.response.data.response.message, null, 2));
+      }
       console.error('  Headers:', error.response.headers);
     } else if (error.request) {
       console.error('  No response received:', error.request);
