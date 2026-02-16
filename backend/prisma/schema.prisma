@@ -134,6 +134,8 @@ model Restaurant {
   tableRequests TableRequest[] // Adicionado relação inversa para chamados de mesa
   settings  RestaurantSettings?
   integrationSettings IntegrationSettings? // Relação com as configurações de integração
+  whatsappInstance WhatsAppInstance?
+  whatsappSettings WhatsAppSettings?
   
   // Relações Novos Módulos
   ingredients         Ingredient[] // Adicionado para Ficha Técnica
@@ -455,6 +457,60 @@ model IntegrationSettings {
 
   restaurantId            String    @unique
   restaurant              Restaurant @relation(fields: [restaurantId], references: [id])
+}
+
+// === MÓDULO WHATSAPP & IA ===
+
+model WhatsAppInstance {
+  id            String   @id @default(cuid())
+  name          String   @unique // Nome da instância na Evolution API
+  token         String?  // Token da instância (gerado pela Evolution)
+  status        String   @default("DISCONNECTED") // CONNECTED, DISCONNECTED, CONNECTING
+  qrcode        String?  // Base64 do QR Code atual
+  
+  restaurantId  String   @unique
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WhatsAppSettings {
+  id               String   @id @default(cuid())
+  restaurantId     String   @unique
+  restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
+
+  // Configurações do Agente de IA
+  agentEnabled     Boolean  @default(false)
+  agentName        String   @default("Atendente Virtual")
+  agentPersona     String?  @db.Text // Prompt de persona do sistema
+  openaiApiKey     String?  // Chave da OpenAI por restaurante (ou global)
+  
+  // Configurações de Mensagens
+  welcomeMessage   String?  @db.Text
+  offlineMessage   String?  @db.Text
+  autoAcceptOrders Boolean  @default(false)
+  
+  // Webhook da Evolution (caso queira gerenciar por restaurante)
+  webhookUrl       String?
+  webhookEnabled   Boolean  @default(true)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model WhatsAppChatMessage {
+  id           String   @id @default(cuid())
+  externalId   String?  // ID da mensagem na Evolution/WhatsApp
+  role         String   // "user", "assistant", "system"
+  content      String   @db.Text
+  timestamp    DateTime @default(now())
+  
+  customerPhone String
+  restaurantId  String
+
+  @@index([customerPhone, restaurantId])
+  @@index([restaurantId])
 }
 model Category {
   id          String   @id @default(cuid())

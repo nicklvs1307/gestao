@@ -48,6 +48,7 @@ import StaffPerformance from './components/StaffPerformance';
 import GlobalSizesPage from './pages/GlobalSizesPage';
 import ChecklistManagement from './pages/ChecklistManagement';
 import ChecklistFill from './pages/ChecklistFill';
+import WhatsAppManagement from './pages/WhatsAppManagement';
 import { Toaster } from 'sonner';
 
 import GlobalModals from './components/GlobalModals';
@@ -238,6 +239,9 @@ function AdminRoutes() {
         break;
       case '/checklists':
         setPageTitle('Checklists & Rotinas');
+        break;
+      case '/whatsapp':
+        setPageTitle('WhatsApp & IA');
         break;
       default:
         if (location.pathname.startsWith('/products/')) {
@@ -451,6 +455,11 @@ function AdminRoutes() {
         <Route path="/checklists" element={
           <ProtectedRoute permission="orders:view">
             <ChecklistManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/whatsapp" element={
+          <ProtectedRoute permission="settings:manage">
+            <WhatsAppManagement />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

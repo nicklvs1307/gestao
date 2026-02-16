@@ -164,6 +164,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                 { label: "Status da Venda", path: "/settings/sale-status", icon: Star, permission: 'settings:manage' },
                 { label: "Turnos", path: "/settings/shifts", icon: Clock, permission: 'settings:manage' },
                 { label: "Usuários e Permissões", path: "/users", icon: ShieldCheck, permission: 'users:manage' },
+                { label: "WhatsApp & IA", path: "/whatsapp", icon: MessageSquare, permission: 'settings:manage' },
             ].filter(item => hasPermission(item.permission))
         }
     ];

@@ -1,58 +1,119 @@
- => ERROR [builder 8/8] RUN npm run build                                                                                                       2.9s
-------
- > [builder 8/8] RUN npm run build:
-0.565
-0.565 > admin@0.0.0 build
-0.565 > vite build
-0.565
-0.915 vite v7.1.9 building for production...
-1.352 transforming...
-2.847 ✓ 50 modules transformed.
-2.856 ✗ Build failed in 1.54s
-2.857 error during build:
-2.857 [vite:esbuild] Transform failed with 2 errors:
-2.857 /app/frontend/admin/src/pages/StockManagement.tsx:86:11: ERROR: The symbol "showProduceModal" has already been declared
-2.857 /app/frontend/admin/src/pages/StockManagement.tsx:86:29: ERROR: The symbol "setShowProduceModal" has already been declared
-2.857 file: /app/frontend/admin/src/pages/StockManagement.tsx:86:11
-2.857
-2.857 The symbol "showProduceModal" has already been declared
-2.857 84 |      const [showLossModal, setShowLossModal] = useState(false);
-2.857 85 |      const [formData, setFormData] = useState<any>({});
-2.857 86 |      const [showProduceModal, setShowProduceModal] = useState(false);
-2.857    |             ^
-2.857 87 |      const [showRecipeModal, setShowRecipeModal] = useState(false);
-2.857 88 |      const [recipeItems, setRecipeItems] = useState<{componentIngredientId: string, quantity: number}[]>([]);
-2.857
-2.857 The symbol "setShowProduceModal" has already been declared
-2.857 84 |      const [showLossModal, setShowLossModal] = useState(false);
-2.857 85 |      const [formData, setFormData] = useState<any>({});
-2.857 86 |      const [showProduceModal, setShowProduceModal] = useState(false);
-2.857    |                               ^
-2.857 87 |      const [showRecipeModal, setShowRecipeModal] = useState(false);
-2.857 88 |      const [recipeItems, setRecipeItems] = useState<{componentIngredientId: string, quantity: number}[]>([]);
-2.857
-2.857     at failureErrorWithLog (/app/frontend/admin/node_modules/esbuild/lib/main.js:1467:15)
-2.857     at /app/frontend/admin/node_modules/esbuild/lib/main.js:736:50
-2.857     at responseCallbacks.<computed> (/app/frontend/admin/node_modules/esbuild/lib/main.js:603:9)
-2.857     at handleIncomingPacket (/app/frontend/admin/node_modules/esbuild/lib/main.js:658:12)
-2.857     at Socket.readFromStdout (/app/frontend/admin/node_modules/esbuild/lib/main.js:581:7)
-2.857     at Socket.emit (node:events:524:28)
-2.857     at addChunk (node:internal/streams/readable:561:12)
-2.857     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
-2.857     at Readable.push (node:internal/streams/readable:392:5)
-2.857     at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
-------
-
- 3 warnings found (use docker --debug to expand):
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 7)
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 8)
- - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
-Dockerfile:22
---------------------
-  20 |     WORKDIR /app/frontend/admin
-  21 |     RUN npm ci
-  22 | >>> RUN npm run build
-  23 |
-  24 |     # Stage 2: Serve com Nginx
---------------------
-ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+index-BrelHz7F.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-BrelHz7F.js:25 [Violation] 'message' handler took 273ms
+index-BrelHz7F.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-BrelHz7F.js:53  GET https://kicardapio.towersfy.com/api/suppliers 404 (Not Found)
+(anônimo) @ index-BrelHz7F.js:53
+xhr @ index-BrelHz7F.js:53
+TH @ index-BrelHz7F.js:55
+Promise.then
+_request @ index-BrelHz7F.js:56
+request @ index-BrelHz7F.js:55
+P2.<computed> @ index-BrelHz7F.js:56
+(anônimo) @ index-BrelHz7F.js:51
+ot @ index-BrelHz7F.js:8654
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
+index-BrelHz7F.js:8654 Error: Ocorreu um erro inesperado.
+    at index-BrelHz7F.js:56:6071
+    at async P2.request (index-BrelHz7F.js:55:2001)
+    at async Promise.all (index 3)
+    at async ot (index-BrelHz7F.js:8654:290845)
+ot @ index-BrelHz7F.js:8654
+await in ot
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
+index-BrelHz7F.js:53  GET https://kicardapio.towersfy.com/api/suppliers 404 (Not Found)
+(anônimo) @ index-BrelHz7F.js:53
+xhr @ index-BrelHz7F.js:53
+TH @ index-BrelHz7F.js:55
+Promise.then
+_request @ index-BrelHz7F.js:56
+request @ index-BrelHz7F.js:55
+P2.<computed> @ index-BrelHz7F.js:56
+(anônimo) @ index-BrelHz7F.js:51
+ot @ index-BrelHz7F.js:8654
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
+index-BrelHz7F.js:8654 Error: Ocorreu um erro inesperado.
+    at index-BrelHz7F.js:56:6071
+    at async P2.request (index-BrelHz7F.js:55:2001)
+    at async Promise.all (index 3)
+    at async ot (index-BrelHz7F.js:8654:290845)
+ot @ index-BrelHz7F.js:8654
+await in ot
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
+index-BrelHz7F.js:53  GET https://kicardapio.towersfy.com/api/suppliers 404 (Not Found)
+(anônimo) @ index-BrelHz7F.js:53
+xhr @ index-BrelHz7F.js:53
+TH @ index-BrelHz7F.js:55
+Promise.then
+_request @ index-BrelHz7F.js:56
+request @ index-BrelHz7F.js:55
+P2.<computed> @ index-BrelHz7F.js:56
+(anônimo) @ index-BrelHz7F.js:51
+ot @ index-BrelHz7F.js:8654
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
+index-BrelHz7F.js:8654 Error: Ocorreu um erro inesperado.
+    at index-BrelHz7F.js:56:6071
+    at async P2.request (index-BrelHz7F.js:55:2001)
+    at async Promise.all (index 3)
+    at async ot (index-BrelHz7F.js:8654:290845)
+ot @ index-BrelHz7F.js:8654
+await in ot
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
+index-BrelHz7F.js:53  GET https://kicardapio.towersfy.com/api/suppliers 404 (Not Found)
+(anônimo) @ index-BrelHz7F.js:53
+xhr @ index-BrelHz7F.js:53
+TH @ index-BrelHz7F.js:55
+Promise.then
+_request @ index-BrelHz7F.js:56
+request @ index-BrelHz7F.js:55
+P2.<computed> @ index-BrelHz7F.js:56
+(anônimo) @ index-BrelHz7F.js:51
+ot @ index-BrelHz7F.js:8654
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
+index-BrelHz7F.js:8654 Error: Ocorreu um erro inesperado.
+    at index-BrelHz7F.js:56:6071
+    at async P2.request (index-BrelHz7F.js:55:2001)
+    at async Promise.all (index 3)
+    at async ot (index-BrelHz7F.js:8654:290845)
+ot @ index-BrelHz7F.js:8654
+await in ot
+(anônimo) @ index-BrelHz7F.js:8654
+ex @ index-BrelHz7F.js:40
+wf @ index-BrelHz7F.js:40
+(anônimo) @ index-BrelHz7F.js:40
+$ @ index-BrelHz7F.js:25
+V @ index-BrelHz7F.js:25
