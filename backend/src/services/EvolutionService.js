@@ -42,9 +42,7 @@ class EvolutionService {
     try {
       const response = await this.api.post('/instance/create', {
         instanceName,
-        token: '', // Deixa a API gerar o token
-        qrcode: true,
-        number: ''
+        qrcode: true // Apenas envie o que é estritamente necessário ou requerido
       });
 
       const { hash } = response.data;
