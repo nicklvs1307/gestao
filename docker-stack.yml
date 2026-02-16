@@ -20,6 +20,9 @@ services:
       ADMIN_URL: https://kicardapio.towersfy.com
       API_URL: https://apikicardapio.towersfy.com
       ALLOWED_ORIGINS: "*"
+      OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+      EVOLUTION_API_URL_FILE: /run/secrets/evolution_api_url
+      EVOLUTION_API_KEY_FILE: /run/secrets/evolution_api_key
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api"]
       interval: 30s
@@ -33,6 +36,9 @@ services:
     secrets:
       - db_connection_string
       - jwt_secret
+      - openai_api_key
+      - evolution_api_url
+      - evolution_api_key
     deploy:
       replicas: 1
       restart_policy:
@@ -121,4 +127,10 @@ secrets:
   db_connection_string:
     external: true
   jwt_secret:
+    external: true
+  openai_api_key:
+    external: true
+  evolution_api_url:
+    external: true
+  evolution_api_key:
     external: true

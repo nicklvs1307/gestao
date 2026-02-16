@@ -32,6 +32,9 @@ file_env() {
 # Carrega os segredos
 file_env 'DATABASE_URL'
 file_env 'JWT_SECRET'
+file_env 'OPENAI_API_KEY'
+file_env 'EVOLUTION_API_URL'
+file_env 'EVOLUTION_API_KEY'
 
 # Aguarda o banco de dados estar pronto (evita falha na inicialização)
 echo "Aguardando banco de dados responder em $DATABASE_URL..."
