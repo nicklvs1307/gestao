@@ -1,7 +1,7 @@
 const evolutionService = require('../services/EvolutionService');
 const aiService = require('../services/WhatsAppAIService');
 const prisma = require('../lib/prisma');
-const { asyncHandler } = require('../middlewares/asyncHandler');
+const asyncHandler = require('../middlewares/asyncHandler');
 
 // Controle de mensagens picadas (Debouncing)
 const pendingMessages = new Map(); // key: customerPhone_restaurantId, value: { timer, content: [] }
