@@ -237,13 +237,17 @@ class EvolutionService {
   async setWebhook(instanceName, webhookUrl) {
     try {
       const response = await this.api.post(`/webhook/set/${instanceName}`, {
-        url: webhookUrl,
-        enabled: true,
-        events: [
-          'MESSAGES_UPSERT',
-          'CONNECTION_UPDATE',
-          'QRCODE_UPDATED'
-        ]
+        webhook: {
+          enabled: true,
+          url: webhookUrl,
+          byEvents: false,
+          base64: false,
+          events: [
+            'MESSAGES_UPSERT',
+            'CONNECTION_UPDATE',
+            'QRCODE_UPDATED'
+          ]
+        }
       });
       return response.data;
     } catch (error) {
