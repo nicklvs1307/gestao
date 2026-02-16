@@ -15,28 +15,75 @@ const WhatsAppController = {
     const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
     if (!restaurant) return res.status(404).json({ error: 'Restaurante não encontrado.' });
 
-    // Verifica se já existe uma instância localmente
-    let existingInstance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
-    
-    if (existingInstance && existingInstance.status !== 'NOT_CREATED') { // NOT_CREATED é um status interno para quando não há registro
-      // Se já existe e não está no estado 'não criado', tentamos buscar o status/QR
-      const statusResponse = await evolutionService.getInstanceStatus(existingInstance.name);
-      if (statusResponse.instance && statusResponse.instance.status !== 'CLOSED') { // Se a instância existe e não está fechada na Evolution
-         return res.json({ 
-          ...existingInstance, 
-          status: statusResponse.instance?.state === 'open' ? 'CONNECTED' : 'CONNECTING',
-          base64: statusResponse.base64 // Pode já vir no status
-         });
+    const instanceName = `rest_${restaurant.slug}`;
+    let instance;
+
+    // 1. Tenta buscar uma instância local existente
+    let existingLocalInstance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
+
+    if (existingLocalInstance) {
+      // Se a instância local existe, tenta verificar seu status na Evolution API
+      const statusResponse = await evolutionService.getInstanceStatus(existingLocalInstance.name);
+      if (statusResponse.instance && statusResponse.instance.status !== 'CLOSED') {
+        // Se a instância existe na Evolution e não está fechada, atualiza o status local
+        instance = await prisma.whatsAppInstance.update({
+          where: { id: existingLocalInstance.id },
+          data: {
+            status: statusResponse.instance.state === 'open' ? 'CONNECTED' : 'CONNECTING',
+            token: statusResponse.instance.token || existingLocalInstance.token // Usa o token do status ou mantém o existente
+          }
+        });
+        // Se já está conectada ou conectando, retorna.
+        return res.json(instance);
+      } else {
+        // Se a instância existe localmente mas está "fechada" ou com problema na Evolution, deleta a local para tentar recriar
+        await prisma.whatsAppInstance.delete({ where: { id: existingLocalInstance.id } });
+        existingLocalInstance = null; // Garante que a lógica de criação abaixo será executada
       }
-      // Se a instância existe localmente mas está fechada na Evolution, ou com erro, deletamos a local para recriar
-      await prisma.whatsAppInstance.delete({ where: { id: existingInstance.id } });
-      existingInstance = null;
     }
 
-    const instanceName = `rest_${restaurant.slug}`;
-    const instance = await evolutionService.createInstance(instanceName, restaurantId);
-    
-    // Configura o webhook automaticamente após criar a instância
+    // 2. Se não há instância local ou a local foi deletada (por estar "velha" na Evolution), tenta criar uma nova
+    try {
+      instance = await evolutionService.createInstance(instanceName, restaurantId);
+    } catch (createError) {
+      // Se a criação falhar e for um "name already in use", tenta buscar a existente
+      if (createError.message.includes('already in use')) {
+        console.warn(`Instância '${instanceName}' já existe na Evolution API, tentando buscá-la...`);
+        try {
+          // Tenta buscar o status da instância que já existe
+          const statusResponse = await evolutionService.getInstanceStatus(instanceName);
+          if (statusResponse.instance) {
+            // Se encontrou na Evolution, salva/atualiza no DB local
+            instance = await prisma.whatsAppInstance.upsert({
+              where: { restaurantId },
+              update: {
+                name: instanceName,
+                token: statusResponse.instance.token, // Pega o token da instância existente
+                status: statusResponse.instance.state === 'open' ? 'CONNECTED' : 'CONNECTING'
+              },
+              create: {
+                name: instanceName,
+                token: statusResponse.instance.token,
+                status: statusResponse.instance.state === 'open' ? 'CONNECTED' : 'CONNECTING',
+                restaurantId
+              }
+            });
+            console.log(`Instância '${instanceName}' sincronizada com o banco de dados local.`);
+          } else {
+            // Se não encontrou na Evolution mesmo com "name in use", algo está muito errado
+            throw new Error('Falha ao sincronizar instância existente com a Evolution API.');
+          }
+        } catch (fetchError) {
+          this._logError('connect:fetchExistingInstance', fetchError); // Loga erro de busca da instância
+          throw new Error('Falha ao criar ou sincronizar instância de WhatsApp.');
+        }
+      } else {
+        // Outro erro na criação, relança o erro original
+        throw createError;
+      }
+    }
+
+    // Configura o webhook automaticamente após criar/sincronizar a instância
     const webhookUrl = `${process.env.API_URL}/api/whatsapp/webhook`; // API_URL deve ser o domínio público do seu backend
     await evolutionService.setWebhook(instance.name, webhookUrl);
 
@@ -69,7 +116,7 @@ const WhatsAppController = {
     const newState = status.instance?.state === 'open' ? 'CONNECTED' : 'DISCONNECTED';
     await prisma.whatsAppInstance.update({
       where: { id: instance.id },
-      data: { status: newState }
+      data: { status: newState, token: status.instance?.token || instance.token } // Atualiza o token também
     });
 
     res.json({ ...status, localStatus: newState });
