@@ -58,16 +58,19 @@ const OrderManagement: React.FC = () => {
         return newOrders;
       });
 
-      // Se o pedido selecionado for o que atualizou, atualiza ele também
-      if (selectedOrder && selectedOrder.id === updatedOrder.id) {
-        setSelectedOrder(updatedOrder);
-      }
+      // Atualiza o pedido selecionado se for o mesmo que mudou, usando a forma funcional
+      setSelectedOrder(current => {
+        if (current && current.id === updatedOrder.id) {
+          return updatedOrder;
+        }
+        return current;
+      });
     });
 
     return () => {
       off('order_update');
     };
-  }, [on, off, selectedOrder]);
+  }, [on, off]); // Removido selectedOrder para evitar loops
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {

@@ -42,10 +42,9 @@ app.use(cors({
 app.use(express.json());
 
 // 4. SEGURANÇA: Rate Limiting Global (SPA Friendly)
-// Aumentado para 1000 requisições a cada 15 min (Cerca de 1 requisição por segundo contínua)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000, 
+  max: 5000, // Aumentado para 5000 para evitar 429 em uso intenso de dashboards
   message: { error: 'Muitas requisições vindas deste IP. Tente novamente em 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
