@@ -203,14 +203,24 @@ class WhatsAppAIService {
           const orderItemsData = [];
 
           for (const item of args.items) {
+            // Busca o produto real no banco para garantir que o ID existe
             const dbProduct = await prisma.product.findFirst({
-              where: { restaurantId, name: { contains: item.name, mode: 'insensitive' } }
+              where: { 
+                restaurantId, 
+                name: { contains: item.name, mode: 'insensitive' } 
+              }
             });
-            const price = dbProduct?.price || 0;
+
+            if (!dbProduct) {
+              console.warn(`[AI ORDER] Produto não encontrado: ${item.name}`);
+              return `Não consegui localizar o produto "${item.name}" no meu sistema. Por favor, verifique se o nome está correto conforme o cardápio e tente novamente.`;
+            }
+
+            const price = dbProduct.price;
             calculatedTotal += price * item.quantity;
             
             orderItemsData.push({
-              productId: dbProduct?.id || 'manual_entry',
+              productId: dbProduct.id,
               quantity: item.quantity,
               priceAtTime: price,
               observations: item.observations || ''
@@ -313,9 +323,10 @@ class WhatsAppAIService {
           1. Respostas CURTAS e DIRETAS. Use no máximo 2 ou 3 frases curtas por mensagem.
           2. Nunca envie blocos grandes de texto, a menos que seja a revisão final do pedido.
           3. SEMPRE consulte o cardápio usando 'get_menu' para saber os PREÇOS reais antes de informar ao cliente.
-          4. Se um produto tiver tamanhos (ex: P, M, G ou 1L, 2L), você DEVE perguntar qual o tamanho desejado antes de confirmar o preço.
-          5. NUNCA invente preços. Se o produto não estiver no cardápio retornado pela ferramenta, diga que não localizou e pergunte se o cliente gostaria de outra coisa.
-          6. Use emojis moderadamente e seja amigável.
+          4. Ao usar 'create_order', use o NOME EXATO do produto conforme aparece no cardápio.
+          5. Se um produto tiver tamanhos (ex: P, M, G ou 1L, 2L), você DEVE perguntar qual o tamanho desejado antes de confirmar o preço.
+          6. NUNCA invente preços. Se o produto não estiver no cardápio retornado pela ferramenta, diga que não localizou e pergunte se o cliente gostaria de outra coisa.
+          7. Use emojis moderadamente e seja amigável.
           7. Hoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`
         },
         ...history.reverse().map(msg => ({ role: msg.role, content: msg.content })),
