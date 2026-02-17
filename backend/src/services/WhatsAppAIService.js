@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const prisma = require('../lib/prisma');
+const socketLib = require('../lib/socket');
 
 class WhatsAppAIService {
   constructor() {
@@ -193,9 +194,69 @@ class WhatsAppAIService {
         return orders.map(o => `Pedido em ${new Date(o.createdAt).toLocaleDateString()}: ${o.items.map(i => i.product.name).join(', ')}`).join('\n');
 
       case 'create_order':
-        // Por enquanto, apenas simula, mas com mais detalhes
-        console.log(`[AI ORDER] Restaurante ${restaurantId} - Cliente ${args.customerName}:`, args.items);
-        return `Perfeito! Registrei seu pedido de: ${args.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}. O total será calculado e um atendente humano confirmará em instantes para iniciar o preparo.`;
+        try {
+          console.log(`[AI ORDER] Iniciando criação de pedido para ${args.customerName}`);
+          
+          // 1. Calcula o total (simplificado, baseado nos nomes/preços do cardápio)
+          // Em um fluxo ideal, a IA passaria os IDs, mas aqui vamos buscar pelo nome
+          let calculatedTotal = 0;
+          const orderItemsData = [];
+
+          for (const item of args.items) {
+            const dbProduct = await prisma.product.findFirst({
+              where: { restaurantId, name: { contains: item.name, mode: 'insensitive' } }
+            });
+            const price = dbProduct?.price || 0;
+            calculatedTotal += price * item.quantity;
+            
+            orderItemsData.push({
+              productId: dbProduct?.id || 'manual_entry',
+              quantity: item.quantity,
+              priceAtTime: price,
+              observations: item.observations || ''
+            });
+          }
+
+          // 2. Cria o Pedido no Banco de Dados
+          const newOrder = await prisma.order.create({
+            data: {
+              restaurantId,
+              status: 'PENDING',
+              orderType: 'DELIVERY',
+              total: calculatedTotal,
+              customerName: args.customerName,
+              items: {
+                create: orderItemsData.map(i => ({
+                  productId: i.productId,
+                  quantity: i.quantity,
+                  priceAtTime: i.priceAtTime,
+                  observations: i.observations
+                }))
+              },
+              deliveryOrder: {
+                create: {
+                  name: args.customerName,
+                  address: args.deliveryAddress || 'Retirada',
+                  phone: customerPhone.replace(/\D/g, ''),
+                  deliveryType: args.orderType.toLowerCase(),
+                  paymentMethod: args.paymentMethod,
+                  deliveryFee: 0 // Pode ser ajustado conforme a área
+                }
+              }
+            },
+            include: { deliveryOrder: true, items: true }
+          });
+
+          console.log(`[AI ORDER] Pedido #${newOrder.id} criado com sucesso!`);
+          
+          // 3. Notifica o Frontend via Socket (para o painel de pedidos atualizar na hora)
+          socketLib.emitToRestaurant(restaurantId, 'new_order', newOrder);
+
+          return `Pedido #${newOrder.id} registrado com sucesso! Itens: ${args.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}. O total é R$ ${calculatedTotal.toFixed(2)}. Um atendente irá confirmar em breve!`;
+        } catch (error) {
+          console.error('[AI ORDER] Erro ao criar pedido:', error);
+          return "Tive um problema ao registrar seu pedido no sistema. Por favor, aguarde um instante que um atendente humano irá te ajudar.";
+        }
 
       default:
         return "Função não encontrada.";
