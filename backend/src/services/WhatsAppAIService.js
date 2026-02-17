@@ -101,7 +101,7 @@ class WhatsAppAIService {
   /**
    * Execução das funções chamadas pela IA
    */
-  async handleToolCall(restaurantId, toolCall) {
+  async handleToolCall(restaurantId, toolCall, customerPhone) {
     const { name, arguments: argsString } = toolCall.function;
     const args = JSON.parse(argsString);
 
@@ -337,7 +337,7 @@ class WhatsAppAIService {
         messages.push(responseMessage);
 
         for (const toolCall of responseMessage.tool_calls) {
-          const toolResult = await this.handleToolCall(restaurantId, toolCall);
+          const toolResult = await this.handleToolCall(restaurantId, toolCall, customerPhone);
           messages.push({
             tool_call_id: toolCall.id,
             role: 'tool',
