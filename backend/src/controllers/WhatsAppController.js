@@ -241,6 +241,44 @@ const WhatsAppController = {
     res.json(settings || {});
   }),
 
+  // === Gestão de Base de Conhecimento (RAG) ===
+  getKnowledge: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const knowledge = await prisma.storeKnowledge.findMany({
+      where: { restaurantId },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(knowledge);
+  }),
+
+  addKnowledge: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const { question, answer, category } = req.body;
+
+    const entry = await prisma.storeKnowledge.create({
+      data: {
+        question,
+        answer,
+        category,
+        restaurantId
+      }
+    });
+
+    res.status(201).json(entry);
+  }),
+
+  deleteKnowledge: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const restaurantId = req.restaurantId;
+
+    // Garante que o item pertence ao restaurante
+    await prisma.storeKnowledge.delete({
+      where: { id, restaurantId }
+    });
+
+    res.json({ message: 'Conhecimento removido com sucesso.' });
+  }),
+
   /**
    * WEBHOOK PRINCIPAL - Lógica de Mensagens Picadas e Resposta Humanizada
    */

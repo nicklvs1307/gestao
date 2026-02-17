@@ -136,6 +136,7 @@ model Restaurant {
   integrationSettings IntegrationSettings? // Relação com as configurações de integração
   whatsappInstance WhatsAppInstance?
   whatsappSettings WhatsAppSettings?
+  storeKnowledge StoreKnowledge[]
   
   // Relações Novos Módulos
   ingredients         Ingredient[] // Adicionado para Ficha Técnica
@@ -509,6 +510,22 @@ model WhatsAppChatMessage {
   restaurantId  String
 
   @@index([customerPhone, restaurantId])
+  @@index([restaurantId])
+}
+
+model StoreKnowledge {
+  id           String   @id @default(cuid())
+  question     String   @db.Text
+  answer       String   @db.Text
+  category     String?  // Ex: "delivery", "policy", "faq"
+  isActive     Boolean  @default(true)
+  
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   @@index([restaurantId])
 }
 model Category {

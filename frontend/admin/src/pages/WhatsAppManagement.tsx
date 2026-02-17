@@ -12,7 +12,10 @@ import {
   Loader2,
   LogOut,
   RotateCw,
-  Trash2
+  Trash2,
+  BookOpen,
+  Plus,
+  Info
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -20,6 +23,149 @@ import { io } from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const SOCKET_URL = API_URL.replace('/api', '');
+
+const KnowledgeBase: React.FC<{ restaurantId: string, getHeaders: any }> = ({ restaurantId, getHeaders }) => {
+  const [knowledge, setKnowledge] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [newEntry, setNewEntry] = useState({ question: '', answer: '', category: 'faq' });
+
+  useEffect(() => {
+    fetchKnowledge();
+  }, [restaurantId]);
+
+  const fetchKnowledge = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/whatsapp/knowledge`, getHeaders());
+      setKnowledge(res.data);
+    } catch (error) {
+      toast.error('Erro ao buscar base de conhecimento');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEntry.question || !newEntry.answer) return;
+
+    try {
+      setAdding(true);
+      const res = await axios.post(`${API_URL}/whatsapp/knowledge`, newEntry, getHeaders());
+      setKnowledge([res.data, ...knowledge]);
+      setNewEntry({ question: '', answer: '', category: 'faq' });
+      toast.success('Informação adicionada à base do agente!');
+    } catch (error) {
+      toast.error('Erro ao adicionar informação');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Remover esta informação da base do agente?')) return;
+    try {
+      await axios.delete(`${API_URL}/whatsapp/knowledge/${id}`, getHeaders());
+      setKnowledge(knowledge.filter(k => k.id !== id));
+      toast.success('Informação removida.');
+    } catch (error) {
+      toast.error('Erro ao remover informação');
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b border-gray-50 flex items-center space-x-3 bg-gray-50/50">
+        <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+          <BookOpen size={24} />
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-800">Base de Conhecimento (RAG)</h3>
+          <p className="text-xs text-gray-500 italic">Ensine seu agente sobre regras da casa, taxas, horários e políticas específicas</p>
+        </div>
+      </div>
+
+      <div className="p-6">
+        <form onSubmit={handleAdd} className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Pergunta / Tópico</label>
+              <input 
+                type="text"
+                placeholder="Ex: Qual o horário de funcionamento?"
+                value={newEntry.question}
+                onChange={e => setNewEntry({ ...newEntry, question: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Categoria</label>
+              <select 
+                value={newEntry.category}
+                onChange={e => setNewEntry({ ...newEntry, category: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+              >
+                <option value="faq">FAQ / Geral</option>
+                <option value="delivery">Entrega / Taxas</option>
+                <option value="policy">Políticas / Cancelamento</option>
+                <option value="promo">Promoções</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Resposta / Informação Detalhada</label>
+            <textarea 
+              placeholder="Ex: Funcionamos de terça a domingo, das 18h às 23h. Nas segundas estamos fechados."
+              value={newEntry.answer}
+              onChange={e => setNewEntry({ ...newEntry, answer: e.target.value })}
+              className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+              rows={3}
+              required
+            ></textarea>
+          </div>
+          <button 
+            type="submit"
+            disabled={adding}
+            className="w-full md:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center justify-center space-x-2"
+          >
+            {adding ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
+            <span>Adicionar à Base</span>
+          </button>
+        </form>
+
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center p-8"><Loader2 className="animate-spin text-gray-300" /></div>
+          ) : knowledge.length === 0 ? (
+            <div className="text-center p-8 border-2 border-dashed border-gray-100 rounded-xl text-gray-400">
+              <Info size={32} className="mx-auto mb-2 opacity-20" />
+              <p>Nenhuma informação personalizada cadastrada ainda.</p>
+            </div>
+          ) : (
+            knowledge.map((item) => (
+              <div key={item.id} className="group flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded uppercase">{item.category}</span>
+                    <h4 className="font-bold text-gray-800 text-sm">{item.question}</h4>
+                  </div>
+                  <p className="text-sm text-gray-600">{item.answer}</p>
+                </div>
+                <button 
+                  onClick={() => handleDelete(item.id)}
+                  className="text-gray-300 hover:text-red-500 p-2 transition"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const WhatsAppManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -427,6 +573,9 @@ const WhatsAppManagement: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Base de Conhecimento (RAG) */}
+      <KnowledgeBase restaurantId={restaurantId} getHeaders={getHeaders} />
     </div>
   );
 };

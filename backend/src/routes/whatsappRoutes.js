@@ -10,6 +10,11 @@ router.get('/status', needsAuth, WhatsAppController.status);
 router.get('/settings', needsAuth, WhatsAppController.getSettings);
 router.put('/settings', needsAuth, WhatsAppController.updateSettings);
 
+// Gestão de Base de Conhecimento (RAG)
+router.get('/knowledge', needsAuth, WhatsAppController.getKnowledge);
+router.post('/knowledge', needsAuth, WhatsAppController.addKnowledge);
+router.delete('/knowledge/:id', needsAuth, WhatsAppController.deleteKnowledge);
+
 // Novas rotas de controle de instância
 router.post('/logout', needsAuth, WhatsAppController.logout);
 router.post('/restart', needsAuth, WhatsAppController.restart);
