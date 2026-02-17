@@ -4,7 +4,7 @@ const PricingService = require('./PricingService');
 const InventoryService = require('./InventoryService');
 const LoyaltyService = require('./LoyaltyService');
 const GeocodingService = require('./GeocodingService'); // Novo
-const eventEmitter = require('../lib/eventEmitter');
+const socketLib = require('../lib/socket');
 
 const fullOrderInclude = {
   items: { include: { product: { include: { categories: true } } } },
@@ -21,14 +21,14 @@ async function emitOrderUpdate(orderId, eventType = 'ORDER_UPDATED') {
       include: fullOrderInclude,
     });
     if (order) {
-      eventEmitter.emit('order_update', {
+      // Emite via Socket.io para o canal do restaurante
+      socketLib.emitToRestaurant(order.restaurantId, 'order_update', {
         eventType,
-        restaurantId: order.restaurantId,
         payload: order,
       });
     }
   } catch (error) {
-    console.error(`[SSE] Failed to emit event for order ${orderId}:`, error);
+    console.error(`[Socket] Failed to emit event for order ${orderId}:`, error);
   }
 }
 

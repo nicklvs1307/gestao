@@ -14,8 +14,11 @@ import { toast } from 'sonner';
 type ViewMode = 'kanban' | 'list';
 type OrderSegment = 'ALL' | 'TABLE' | 'DELIVERY';
 
+import { useSocket } from '../hooks/useSocket';
+
 const OrderManagement: React.FC = () => {
   const navigate = useNavigate();
+  const { on, off } = useSocket();
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeSegment, setActiveSegment] = useState<OrderSegment>('ALL');
   const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -40,17 +43,8 @@ const OrderManagement: React.FC = () => {
   useEffect(() => {
     fetchOrders();
 
-    // SSE for real-time updates in this view
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
-    
-    const eventSource = new EventSource(`${window.location.origin}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
-
-    eventSource.onmessage = (event) => {
-      const eventData = JSON.parse(event.data);
-      if (eventData.type === 'CONNECTION_ESTABLISHED') return;
-
+    // Socket.io for real-time updates
+    on('order_update', (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
       
       setAllOrders(prevOrders => {
@@ -63,12 +57,17 @@ const OrderManagement: React.FC = () => {
         }
         return newOrders;
       });
-    };
+
+      // Se o pedido selecionado for o que atualizou, atualiza ele também
+      if (selectedOrder && selectedOrder.id === updatedOrder.id) {
+        setSelectedOrder(updatedOrder);
+      }
+    });
 
     return () => {
-      eventSource.close();
+      off('order_update');
     };
-  }, []);
+  }, [on, off, selectedOrder]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {

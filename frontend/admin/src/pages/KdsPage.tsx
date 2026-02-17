@@ -9,9 +9,12 @@ import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 
+import { useSocket } from '../hooks/useSocket';
+
 const KdsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { on, off } = useSocket();
     const [rawItems, setRawItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     
@@ -56,22 +59,15 @@ const KdsPage: React.FC = () => {
     useEffect(() => {
         loadKds();
 
-        const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
-
-        const eventSource = new EventSource(`${window.location.origin}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
-
-        eventSource.onmessage = (event) => {
-            const eventData = JSON.parse(event.data);
-            if (eventData.type === 'CONNECTION_ESTABLISHED') return;
+        // Socket.io for real-time updates
+        on('order_update', () => {
             loadKds();
-        };
+        });
 
         return () => {
-            eventSource.close();
+            off('order_update');
         };
-    }, [area]);
+    }, [area, on, off]);
 
     const changeArea = (newArea: string) => {
         setSearchParams({ area: newArea });
