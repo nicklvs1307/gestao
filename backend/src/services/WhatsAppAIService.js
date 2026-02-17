@@ -255,6 +255,9 @@ class WhatsAppAIService {
           const orderItemsData = [];
 
           for (const item of args.items) {
+            // Garante quantidade mínima de 1 para evitar NaN
+            const quantity = Number(item.quantity) || 1;
+
             // Tenta buscar por ID se a IA for inteligente o suficiente para passar o ID do prompt, caso contrário busca por nome flexível
             const dbProduct = await prisma.product.findFirst({
               where: { 
@@ -309,15 +312,14 @@ class WhatsAppAIService {
                     break;
                   }
                 }
-                if (!found) return `ERRO: Adicional "${addonName}" não encontrado para o produto "${dbProduct.name}".`;
               }
             }
 
-            calculatedTotal += (itemPrice + addonsTotal) * item.quantity;
+            calculatedTotal += (itemPrice + addonsTotal) * quantity;
             
             orderItemsData.push({
               productId: dbProduct.id,
-              quantity: item.quantity,
+              quantity: quantity,
               priceAtTime: itemPrice + addonsTotal,
               observations: item.observations || '',
               sizeJson,
@@ -337,10 +339,10 @@ class WhatsAppAIService {
           // Cria o Pedido
           const newOrder = await prisma.order.create({
             data: {
-              restaurantId,
+              restaurant: { connect: { id: restaurantId } },
               status: 'PENDING',
               orderType: 'DELIVERY',
-              total: calculatedTotal,
+              total: Number(calculatedTotal.toFixed(2)),
               customerName: args.customerName,
               items: {
                 create: orderItemsData.map(i => ({
