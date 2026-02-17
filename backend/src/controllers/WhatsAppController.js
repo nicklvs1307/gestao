@@ -347,11 +347,18 @@ const WhatsAppController = {
           );
 
           if (aiResponse) {
-            const paragraphs = aiResponse.split('\n').filter(p => p.trim() !== "");
+            // Divide a resposta em frases ou parágrafos para parecer mais humano
+            const chunks = aiResponse
+              .split(/(?<=[.!?])\s+|\n+/)
+              .filter(p => p.trim() !== "");
             
-            for (const paragraph of paragraphs) {
-              const typingTime = Math.min(Math.max(paragraph.length * 50, 1000), 4000);
-              await evolutionService.sendText(instance, customerPhone, paragraph, typingTime);
+            for (const chunk of chunks) {
+              // Delay proporcional ao tamanho da frase, mas garantindo naturalidade
+              const typingTime = Math.min(Math.max(chunk.length * 60, 1500), 5000);
+              await evolutionService.sendText(instance, customerPhone, chunk, typingTime);
+              
+              // Pequena pausa entre mensagens para não chegar tudo junto
+              await new Promise(resolve => setTimeout(resolve, 800));
             }
           }
         }, 5000); // 5 segundos de debounce

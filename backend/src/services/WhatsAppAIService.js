@@ -115,9 +115,9 @@ class WhatsAppAIService {
         let menuText = "Cardápio Atual:\n";
         categories.forEach(cat => {
           if (cat.products.length > 0) {
-            menuText += `\n--- ${cat.name} ---\n`;
+            menuText += `\n--- CATEGORIA: ${cat.name} ---\n`;
             cat.products.forEach(p => {
-              menuText += `- ${p.name}: R$ ${p.price.toFixed(2)}${p.description ? ` (${p.description})` : ''}\n`;
+              menuText += `PRODUTO: ${p.name} | PREÇO: R$ ${p.price.toFixed(2)} | DESCRIÇÃO: ${p.description || 'N/A'}\n`;
             });
           }
         });
@@ -220,12 +220,15 @@ class WhatsAppAIService {
           - Taxa de Entrega: R$ ${restaurant.settings?.deliveryFee || 'A consultar'}
           - Tempo de Entrega: ${restaurant.settings?.deliveryTime || 'Não informado'}
           
-          Diretrizes:
-          1. SEMPRE consulte o cardápio usando 'get_menu' antes de falar sobre produtos ou preços.
-          2. Seja conciso, mas amigável. Use emojis moderadamente 🍕🍔.
-          3. Se o cliente quiser fazer um pedido, colete: Itens, Nome, Endereço (se delivery), Forma de Pagamento e Tipo (Delivery ou Retirada).
-          4. Ao final, use 'create_order' para registrar.
-          5. Hoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`
+          Diretrizes de Resposta:
+          1. Respostas CURTAS e DIRETAS. Use no máximo 2 ou 3 frases curtas por mensagem.
+          2. Nunca envie blocos grandes de texto, a menos que seja a revisão final do pedido.
+          3. SEMPRE consulte o cardápio usando 'get_menu' para saber os PREÇOS reais antes de informar ao cliente.
+          4. Se o cliente perguntar o preço, diga o valor exato que está no cardápio.
+          5. Use emojis moderadamente e seja amigável.
+          6. Ao listar opções, use tópicos curtos.
+          
+          Hoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`
         },
         ...history.reverse().map(msg => ({ role: msg.role, content: msg.content })),
         { role: 'user', content: messageContent }
