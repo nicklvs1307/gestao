@@ -67,9 +67,10 @@ class WhatsAppAIService {
                 items: {
                   type: 'object',
                   properties: {
-                    name: { type: 'string', description: 'Nome do produto exatamente como no cardápio' },
+                    name: { type: 'string', description: 'Nome exato do produto' },
+                    size: { type: 'string', description: 'Tamanho escolhido (ex: G, M, 2 Litros), se houver' },
                     quantity: { type: 'number' },
-                    observations: { type: 'string', description: 'Ex: Sem cebola, bem passado' }
+                    observations: { type: 'string', description: 'Observações do item' }
                   }
                 }
               },
@@ -203,27 +204,48 @@ class WhatsAppAIService {
           const orderItemsData = [];
 
           for (const item of args.items) {
-            // Busca o produto real no banco para garantir que o ID existe
+            // Busca o produto real
             const dbProduct = await prisma.product.findFirst({
               where: { 
                 restaurantId, 
                 name: { contains: item.name, mode: 'insensitive' } 
-              }
+              },
+              include: { sizes: { include: { globalSize: true } } }
             });
 
             if (!dbProduct) {
-              console.warn(`[AI ORDER] Produto não encontrado: ${item.name}`);
-              return `Não consegui localizar o produto "${item.name}" no meu sistema. Por favor, verifique se o nome está correto conforme o cardápio e tente novamente.`;
+              return `Não localizei o produto "${item.name}". Verifique o nome no cardápio.`;
             }
 
-            const price = dbProduct.price;
-            calculatedTotal += price * item.quantity;
+            let itemPrice = dbProduct.price;
+            let sizeId = null;
+
+            // Se o produto tem tamanhos e a IA informou um tamanho
+            if (dbProduct.sizes.length > 0) {
+              const selectedSize = dbProduct.sizes.find(s => 
+                (s.name && s.name.toLowerCase() === item.size?.toLowerCase()) || 
+                (s.globalSize?.name.toLowerCase() === item.size?.toLowerCase())
+              );
+
+              if (selectedSize) {
+                itemPrice = selectedSize.price;
+                sizeId = selectedSize.id;
+              } else if (item.size) {
+                return `O produto "${dbProduct.name}" não possui o tamanho "${item.size}". Os tamanhos disponíveis são: ${dbProduct.sizes.map(s => s.name || s.globalSize?.name).join(', ')}.`;
+              } else {
+                return `O produto "${dbProduct.name}" exige que você escolha um tamanho: ${dbProduct.sizes.map(s => s.name || s.globalSize?.name).join(', ')}.`;
+              }
+            }
+
+            calculatedTotal += itemPrice * item.quantity;
             
             orderItemsData.push({
               productId: dbProduct.id,
               quantity: item.quantity,
-              priceAtTime: price,
-              observations: item.observations || ''
+              priceAtTime: itemPrice,
+              observations: item.observations || '',
+              // Salvamos o tamanho escolhido no JSON do item para exibição no painel
+              sizeJson: item.size ? JSON.stringify({ name: item.size, price: itemPrice }) : null
             });
           }
 
@@ -323,10 +345,10 @@ class WhatsAppAIService {
           1. Respostas CURTAS e DIRETAS. Use no máximo 2 ou 3 frases curtas por mensagem.
           2. Nunca envie blocos grandes de texto, a menos que seja a revisão final do pedido.
           3. SEMPRE consulte o cardápio usando 'get_menu' para saber os PREÇOS reais antes de informar ao cliente.
-          4. Ao usar 'create_order', use o NOME EXATO do produto conforme aparece no cardápio.
-          5. Se um produto tiver tamanhos (ex: P, M, G ou 1L, 2L), você DEVE perguntar qual o tamanho desejado antes de confirmar o preço.
-          6. NUNCA invente preços. Se o produto não estiver no cardápio retornado pela ferramenta, diga que não localizou e pergunte se o cliente gostaria de outra coisa.
-          7. Use emojis moderadamente e seja amigável.
+          4. Se um produto tiver tamanhos (ex: P, M, G ou 1L, 2L), você DEVE perguntar qual o tamanho desejado ANTES de falar o preço ou registrar o pedido.
+          5. Ao usar 'create_order', passe o campo 'size' corretamente conforme selecionado pelo cliente.
+          6. NUNCA invente preços. O preço correto é aquele que está vinculado ao TAMANHO no cardápio.
+          7. Se o cliente pedir algo que não está no cardápio retornado pela ferramenta, admita que não encontrou.
           7. Hoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`
         },
         ...history.reverse().map(msg => ({ role: msg.role, content: msg.content })),
