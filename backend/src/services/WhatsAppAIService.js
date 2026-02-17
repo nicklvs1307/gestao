@@ -255,12 +255,15 @@ class WhatsAppAIService {
           const orderItemsData = [];
 
           for (const item of args.items) {
-            // Busca mais flexível para evitar erros de "não encontrado"
+            // Tenta buscar por ID se a IA for inteligente o suficiente para passar o ID do prompt, caso contrário busca por nome flexível
             const dbProduct = await prisma.product.findFirst({
               where: { 
                 restaurantId, 
                 isAvailable: true,
-                name: { contains: item.name, mode: 'insensitive' } 
+                OR: [
+                  { name: { contains: item.name, mode: 'insensitive' } },
+                  { id: item.productId || undefined } // Suporte para ID se fornecido
+                ]
               },
               include: { 
                 sizes: { include: { globalSize: true } },
@@ -269,24 +272,25 @@ class WhatsAppAIService {
             });
 
             if (!dbProduct) {
-              console.warn(`[AI] Produto não encontrado: ${item.name}`);
-              return `ERRO: Não encontrei o produto "${item.name}" no nosso cardápio atual. Por favor, verifique se o nome está correto ou use a ferramenta 'search_products' para ver as opções disponíveis.`;
+              console.warn(`[AI] Produto NÃO localizado: ${item.name}`);
+              return `ERRO: Não consegui confirmar o produto "${item.name}" no sistema. Por favor, peça ao cliente para confirmar se o nome está exatamente como no cardápio ou tente buscá-lo novamente.`;
             }
 
             let itemPrice = dbProduct.price;
             let sizeJson = null;
 
+            // Busca tamanho de forma MUITO mais flexível
             if (dbProduct.sizes.length > 0) {
               const selectedSize = dbProduct.sizes.find(s => 
-                (s.name && s.name.toLowerCase() === item.size?.toLowerCase()) || 
-                (s.globalSize?.name.toLowerCase() === item.size?.toLowerCase())
+                (s.name && item.size && s.name.toLowerCase().includes(item.size.toLowerCase())) || 
+                (s.globalSize?.name && item.size && s.globalSize.name.toLowerCase().includes(item.size.toLowerCase()))
               );
 
               if (selectedSize) {
                 itemPrice = selectedSize.price;
                 sizeJson = JSON.stringify({ name: selectedSize.name || selectedSize.globalSize?.name, price: itemPrice });
-              } else {
-                return `ERRO: Tamanho "${item.size}" inválido para "${dbProduct.name}". Opções: ${dbProduct.sizes.map(s => s.name || s.globalSize?.name).join(', ')}.`;
+              } else if (item.size) {
+                return `ERRO: O tamanho "${item.size}" não existe para "${dbProduct.name}". Escolha: ${dbProduct.sizes.map(s => s.name || s.globalSize?.name).join(', ')}.`;
               }
             }
 
@@ -385,41 +389,81 @@ class WhatsAppAIService {
       const history = await prisma.whatsAppChatMessage.findMany({
         where: { restaurantId, customerPhone },
         orderBy: { timestamp: 'desc' },
-        take: 12
+        take: 20
       });
+
+      // Inverte para ficar cronológico (mais antiga para mais recente)
+      const chatContext = history.reverse().map(msg => ({ role: msg.role, content: msg.content }));
 
       const restaurant = await prisma.restaurant.findUnique({ 
         where: { id: restaurantId },
-        include: { settings: true }
+        include: { 
+          settings: true,
+          categories: {
+            include: {
+              products: {
+                where: { isAvailable: true },
+                include: {
+                  sizes: { include: { globalSize: true } },
+                  addonGroups: { include: { addons: true } }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Constrói uma representação compacta do cardápio para o prompt
+      let menuContext = "";
+      restaurant.categories.forEach(cat => {
+        if (cat.products.length > 0) {
+          menuContext += `\nCategoria: ${cat.name}\n`;
+          cat.products.forEach(p => {
+            const sizes = p.sizes.map(s => `${s.name || s.globalSize?.name} (R$${s.price})`).join(", ");
+            menuContext += `- [ID: ${p.id}] ${p.name}: R$ ${p.price}${sizes ? ` | Tamanhos: ${sizes}` : ""}\n`;
+            if (p.addonGroups.length > 0) {
+              p.addonGroups.forEach(g => {
+                const addons = g.addons.map(a => `${a.name} (R$${a.price})`).join(", ");
+                menuContext += `  * Adicionais (${g.name}): ${addons}\n`;
+              });
+            }
+          });
+        }
       });
 
       const systemPrompt = `Você é o ${settings.agentName || 'Atendente'}, o assistente virtual inteligente do restaurante ${restaurant.name}.
 
-OBJETIVO: Atender o cliente com excelência, tirar dúvidas e realizar pedidos de forma fluida e sem erros.
+OBJETIVO: Realizar pedidos sem erros. Você tem acesso TOTAL ao cardápio abaixo.
 
-REGRAS CRÍTICAS DE INTELIGÊNCIA:
-1. PENSAMENTO ESTRUTURADO: Sempre verifique se você tem todas as informações necessárias para um pedido (Produtos, Tamanhos, Adicionais, Endereço, Forma de Pagamento).
-2. BUSCA DE DADOS: Nunca invente nada. Se não souber algo, use 'get_store_info' (RAG) ou 'get_menu'.
-3. FORMATAÇÃO: Use negrito para nomes de produtos e valores. Use listas com emojis para resumir pedidos. Mantenha as mensagens curtas e amigáveis.
-4. ESTADO DO PEDIDO: Mantenha em sua memória interna os itens que o cliente está escolhendo. Antes de chamar 'create_order', você DEVE apresentar um RESUMO DO PEDIDO com os valores e perguntar: "Posso finalizar o seu pedido?"
-5. ERRO NO PRODUTO: Se o cliente pedir algo e você não encontrar, use 'search_products' para tentar localizar algo similar antes de dizer que não tem.
-6. CONTRADIÇÃO: Se você disse que tinha e o sistema retornar erro, explique educadamente que houve um erro de atualização e mostre as opções reais.
+CARDÁPIO REAL (USE APENAS ESTES ITENS):
+${menuContext}
 
-COMO EVITAR MENSAGENS FEIAS:
-- Não envie o cardápio inteiro de uma vez se for muito grande. Pergunte qual categoria ele prefere ou mande os destaques.
-- Use quebras de linha estrategicamente.
-- Seja humanizado: "Com certeza!", "Perfeito, um momento...", "Excelente escolha!".
+REGRAS CRÍTICAS:
+1. MAPEAMENTO DE ITENS: Quando o cliente pedir algo, identifique o ID correspondente no cardápio acima. 
+2. VALIDAÇÃO: Se o cliente pedir algo vagamente (ex: "uma pizza"), pergunte o sabor e tamanho baseado nas opções da categoria "Pizzas" acima.
+3. RESUMO OBRIGATÓRIO: Antes de 'create_order', envie um resumo:
+   *Item 1* (Tamanho) - R$ XX
+   *Adicionais:* Item A, Item B
+   *Total:* R$ XX
+   "Posso confirmar?"
+4. CRIAÇÃO DE PEDIDO: Ao chamar 'create_order', use os nomes EXATOS do cardápio.
+5. PAGAMENTO: Pergunte a forma de pagamento (Dinheiro, PIX, Cartão) e se precisa de troco.
+6. ENDEREÇO: Peça o endereço completo para entrega ou informe se é para retirada.
 
-DADOS DO ESTABELECIMENTO:
-- Endereço: ${restaurant.address || 'Consultar get_store_info'}
-- Taxa: R$ ${restaurant.settings?.deliveryFee || 'Consultar get_store_info'}
-- Tempo: ${restaurant.settings?.deliveryTime || 'Consultar get_store_info'}
+DADOS DO RESTAURANTE:
+- Endereço: ${restaurant.address || 'Não informado'}
+- Taxa de Entrega: R$ ${restaurant.settings?.deliveryFee || 0}
+- Tempo Estimado: ${restaurant.settings?.deliveryTime || '30-40 min'}`;
 
-HOJE É: ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}.`;
+      // Formata o histórico para a API da OpenAI
+      const formattedHistory = history.map(msg => ({ 
+        role: msg.role === 'assistant' ? 'assistant' : 'user', 
+        content: msg.content 
+      }));
 
       let messages = [
         { role: 'system', content: systemPrompt },
-        ...history.reverse().map(msg => ({ role: msg.role, content: msg.content })),
+        ...formattedHistory,
         { role: 'user', content: messageContent }
       ];
 
