@@ -108,16 +108,44 @@ class WhatsAppAIService {
       case 'get_menu':
         const categories = await prisma.category.findMany({
           where: { restaurantId },
-          include: { products: { where: { isAvailable: true } } },
+          include: { 
+            products: { 
+              where: { isAvailable: true },
+              include: {
+                sizes: { include: { globalSize: true } },
+                addonGroups: { include: { addons: true } }
+              }
+            } 
+          },
           orderBy: { order: 'asc' }
         });
         
-        let menuText = "Cardápio Atual:\n";
+        let menuText = "CARDÁPIO OFICIAL E PREÇOS (NUNCA INVENTE VALORES):\n";
         categories.forEach(cat => {
           if (cat.products.length > 0) {
-            menuText += `\n--- CATEGORIA: ${cat.name} ---\n`;
+            menuText += `\n--- ${cat.name.toUpperCase()} ---\n`;
             cat.products.forEach(p => {
-              menuText += `PRODUTO: ${p.name} | PREÇO: R$ ${p.price.toFixed(2)} | DESCRIÇÃO: ${p.description || 'N/A'}\n`;
+              menuText += `* ${p.name}\n`;
+              
+              if (p.sizes.length > 0) {
+                menuText += `  Tamanhos e Preços:\n`;
+                p.sizes.forEach(s => {
+                  menuText += `  - ${s.name || s.globalSize?.name}: R$ ${s.price.toFixed(2)}\n`;
+                });
+              } else {
+                menuText += `  Preço: R$ ${p.price.toFixed(2)}\n`;
+              }
+
+              if (p.addonGroups.length > 0) {
+                p.addonGroups.forEach(group => {
+                  menuText += `  ${group.name} (Adicionais):\n`;
+                  group.addons.forEach(addon => {
+                    menuText += `    + ${addon.name}: R$ ${addon.price.toFixed(2)}\n`;
+                  });
+                });
+              }
+              
+              if (p.description) menuText += `  Info: ${p.description}\n`;
             });
           }
         });
@@ -224,11 +252,10 @@ class WhatsAppAIService {
           1. Respostas CURTAS e DIRETAS. Use no máximo 2 ou 3 frases curtas por mensagem.
           2. Nunca envie blocos grandes de texto, a menos que seja a revisão final do pedido.
           3. SEMPRE consulte o cardápio usando 'get_menu' para saber os PREÇOS reais antes de informar ao cliente.
-          4. Se o cliente perguntar o preço, diga o valor exato que está no cardápio.
-          5. Use emojis moderadamente e seja amigável.
-          6. Ao listar opções, use tópicos curtos.
-          
-          Hoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`
+          4. Se um produto tiver tamanhos (ex: P, M, G ou 1L, 2L), você DEVE perguntar qual o tamanho desejado antes de confirmar o preço.
+          5. NUNCA invente preços. Se o produto não estiver no cardápio retornado pela ferramenta, diga que não localizou e pergunte se o cliente gostaria de outra coisa.
+          6. Use emojis moderadamente e seja amigável.
+          7. Hoje é ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`
         },
         ...history.reverse().map(msg => ({ role: msg.role, content: msg.content })),
         { role: 'user', content: messageContent }
