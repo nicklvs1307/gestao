@@ -222,15 +222,20 @@ class WhatsAppAIService {
         return "Formas de pagamento aceitas: " + methods.map(m => m.name).join(', ');
 
       case 'check_order_status':
+        const searchPhone = (args.phone || customerPhone).replace(/\D/g, '');
+        console.log(`[AI] Buscando status do pedido para: ${searchPhone}`);
+        
         const orderStatus = await prisma.order.findFirst({
           where: { 
             restaurantId, 
-            deliveryOrder: { phone: args.phone.replace(/\D/g, '') } 
+            deliveryOrder: { phone: { contains: searchPhone } } 
           },
           orderBy: { createdAt: 'desc' },
           include: { deliveryOrder: true }
         });
-        if (!orderStatus) return "Nenhum pedido encontrado para este número.";
+
+        if (!orderStatus) return "Não encontrei nenhum pedido recente para este número de telefone.";
+
         const statusMap = {
           'BUILDING': 'Sendo montado',
           'PENDING': 'Pendente (Aguardando Restaurante)',
@@ -241,17 +246,20 @@ class WhatsAppAIService {
           'CANCELED': 'Cancelado',
           'COMPLETED': 'Finalizado'
         };
-        return `Pedido #${orderStatus.id} - Status: ${statusMap[orderStatus.status] || orderStatus.status}`;
+        return `Pedido #${orderStatus.id} - Status: ${statusMap[orderStatus.status] || orderStatus.status}.`;
 
       case 'create_order':
         try {
+          console.log(`[AI] Iniciando criação de pedido para ${args.customerName}`);
           let calculatedTotal = 0;
           const orderItemsData = [];
 
           for (const item of args.items) {
+            // Busca mais flexível para evitar erros de "não encontrado"
             const dbProduct = await prisma.product.findFirst({
               where: { 
                 restaurantId, 
+                isAvailable: true,
                 name: { contains: item.name, mode: 'insensitive' } 
               },
               include: { 
@@ -260,7 +268,10 @@ class WhatsAppAIService {
               }
             });
 
-            if (!dbProduct) return `ERRO: Produto "${item.name}" não localizado. Use nomes idênticos ao cardápio.`;
+            if (!dbProduct) {
+              console.warn(`[AI] Produto não encontrado: ${item.name}`);
+              return `ERRO: Não encontrei o produto "${item.name}" no nosso cardápio atual. Por favor, verifique se o nome está correto ou use a ferramenta 'search_products' para ver as opções disponíveis.`;
+            }
 
             let itemPrice = dbProduct.price;
             let sizeJson = null;
@@ -310,6 +321,15 @@ class WhatsAppAIService {
             });
           }
 
+          // Busca configurações do restaurante para taxa de entrega
+          const restaurantInfo = await prisma.restaurant.findUnique({
+            where: { id: restaurantId },
+            include: { settings: true }
+          });
+          
+          const deliveryFee = restaurantInfo?.settings?.deliveryFee || 0;
+          calculatedTotal += deliveryFee;
+
           // Cria o Pedido
           const newOrder = await prisma.order.create({
             data: {
@@ -336,7 +356,7 @@ class WhatsAppAIService {
                   deliveryType: args.orderType.toLowerCase(),
                   paymentMethod: args.paymentMethod,
                   changeFor: args.changeFor || 0,
-                  deliveryFee: 0 
+                  deliveryFee: deliveryFee 
                 }
               }
             },

@@ -385,19 +385,9 @@ const WhatsAppController = {
           );
 
           if (aiResponse) {
-            // Divide a resposta em frases ou parágrafos para parecer mais humano
-            const chunks = aiResponse
-              .split(/(?<=[.!?])\s+|\n+/)
-              .filter(p => p.trim() !== "");
-            
-            for (const chunk of chunks) {
-              // Delay proporcional ao tamanho da frase, mas garantindo naturalidade
-              const typingTime = Math.min(Math.max(chunk.length * 60, 1500), 5000);
-              await evolutionService.sendText(instance, customerPhone, chunk, typingTime);
-              
-              // Pequena pausa entre mensagens para não chegar tudo junto
-              await new Promise(resolve => setTimeout(resolve, 800));
-            }
+            // Envia a resposta completa em uma única mensagem
+            const typingTime = Math.min(Math.max(aiResponse.length * 50, 2000), 10000);
+            await evolutionService.sendText(instance, customerPhone, aiResponse, typingTime);
           }
         }, 5000); // 5 segundos de debounce
 
