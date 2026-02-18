@@ -381,6 +381,18 @@ class WhatsAppAIService {
     }
   }
 
+  async clearChatHistory(restaurantId, customerPhone) {
+    try {
+      await prisma.whatsAppChatMessage.deleteMany({
+        where: { restaurantId, customerPhone }
+      });
+      return true;
+    } catch (error) {
+      console.error('[AI SERVICE CLEAR HISTORY ERROR]', error);
+      return false;
+    }
+  }
+
   async handleMessage(restaurantId, customerPhone, messageContent) {
     try {
       if (!process.env.OPENAI_API_KEY) return "Erro: API Key não configurada.";
@@ -434,6 +446,8 @@ class WhatsAppAIService {
       });
 
       const systemPrompt = `Você é o ${settings.agentName || 'Atendente'}, o assistente virtual inteligente do restaurante ${restaurant.name}.
+
+${settings.agentPersona || ''}
 
 OBJETIVO: Realizar pedidos sem erros. Você tem acesso TOTAL ao cardápio abaixo.
 

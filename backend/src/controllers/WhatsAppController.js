@@ -279,6 +279,31 @@ const WhatsAppController = {
     res.json({ message: 'Conhecimento removido com sucesso.' });
   }),
 
+  // Limpar histórico de conversa
+  clearHistory: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const { customerPhone, all } = req.body;
+
+    let success;
+    if (all) {
+      await prisma.whatsAppChatMessage.deleteMany({
+        where: { restaurantId }
+      });
+      success = true;
+    } else {
+      if (!customerPhone) {
+        return res.status(400).json({ error: 'Número do cliente não informado.' });
+      }
+      success = await aiService.clearChatHistory(restaurantId, customerPhone);
+    }
+
+    if (success) {
+      res.json({ message: 'Histórico limpo com sucesso.' });
+    } else {
+      res.status(500).json({ error: 'Erro ao limpar histórico.' });
+    }
+  }),
+
   /**
    * WEBHOOK PRINCIPAL - Lógica de Mensagens Picadas e Resposta Humanizada
    */
@@ -377,6 +402,13 @@ const WhatsAppController = {
         const timer = setTimeout(async () => {
           const finalContent = currentData.content.join(" ");
           pendingMessages.delete(debouncerKey);
+
+          // Comando para reiniciar histórico (útil para testes e para o cliente)
+          if (finalContent.toLowerCase().includes('!reiniciar') || finalContent.toLowerCase().includes('!reset')) {
+            await aiService.clearChatHistory(restaurantId, customerPhone);
+            await evolutionService.sendText(instance, customerPhone, "Histórico de conversa reiniciado com sucesso! Como posso te ajudar agora?", 2000);
+            return;
+          }
 
           const aiResponse = await aiService.handleMessage(
             restaurantId,

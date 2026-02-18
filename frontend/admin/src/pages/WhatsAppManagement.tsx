@@ -185,6 +185,7 @@ const WhatsAppManagement: React.FC = () => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [clearingHistory, setClearingHistory] = useState(false);
   const [actionLoading, setActionLoading] = useState(false); // Para ações de controle
 
   // Helper para headers
@@ -348,6 +349,22 @@ const WhatsAppManagement: React.FC = () => {
       toast.error('Erro ao salvar configurações');
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (!window.confirm('Deseja realmente limpar TODO o histórico de conversas do agente? Esta ação fará com que a IA perca o contexto de todos os atendimentos atuais.')) {
+      return;
+    }
+
+    try {
+      setClearingHistory(true);
+      await axios.post(`${API_URL}/whatsapp/clear-history`, { all: true }, getHeaders());
+      toast.success('Histórico de conversas reiniciado!');
+    } catch (error) {
+      toast.error('Erro ao limpar histórico');
+    } finally {
+      setClearingHistory(false);
     }
   };
 
@@ -562,7 +579,16 @@ const WhatsAppManagement: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end items-center">
+        <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+          <button
+            onClick={handleClearHistory}
+            disabled={clearingHistory}
+            className="text-red-500 hover:text-red-700 text-sm font-bold flex items-center space-x-2 transition disabled:opacity-50"
+          >
+            {clearingHistory ? <RefreshCw className="animate-spin" size={16} /> : <RotateCw size={16} />}
+            <span>Reiniciar Todas as Conversas</span>
+          </button>
+
           <button
             onClick={handleSaveSettings}
             disabled={savingSettings}

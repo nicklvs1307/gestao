@@ -9,6 +9,7 @@ router.get('/qrcode', needsAuth, WhatsAppController.getQrCode);
 router.get('/status', needsAuth, WhatsAppController.status);
 router.get('/settings', needsAuth, WhatsAppController.getSettings);
 router.put('/settings', needsAuth, WhatsAppController.updateSettings);
+router.post('/clear-history', needsAuth, WhatsAppController.clearHistory);
 
 // Gestão de Base de Conhecimento (RAG)
 router.get('/knowledge', needsAuth, WhatsAppController.getKnowledge);
