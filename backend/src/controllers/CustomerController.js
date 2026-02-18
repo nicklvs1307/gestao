@@ -1,9 +1,47 @@
 const prisma = require('../lib/prisma');
+const { normalizePhone } = require('../lib/phoneUtils');
 
 class CustomerController {
   // Listar todos os clientes com paginação e busca
   async index(req, res) {
-    // ... código existente ...
+    const { restaurantId } = req;
+    const { search, page = 1, limit = 50 } = req.query;
+    
+    try {
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      
+      const where = {
+        restaurantId,
+        ...(search && {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { phone: { contains: search } }
+          ]
+        })
+      };
+
+      const [customers, total] = await Promise.all([
+        prisma.customer.findMany({
+          where,
+          skip,
+          take: parseInt(limit),
+          orderBy: { name: 'asc' }
+        }),
+        prisma.customer.count({ where })
+      ]);
+
+      res.json({
+        customers,
+        pagination: {
+          total,
+          page: parseInt(page),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao listar clientes:', error);
+      res.status(500).json({ error: 'Erro ao listar clientes.' });
+    }
   }
 
   // Criar novo cliente
@@ -11,7 +49,7 @@ class CustomerController {
     const { restaurantId } = req;
     const data = req.body;
     try {
-      const cleanPhone = data.phone.replace(/\D/g, '');
+      const cleanPhone = normalizePhone(data.phone);
       const customer = await prisma.customer.create({
         data: {
           name: data.name,
@@ -67,7 +105,7 @@ class CustomerController {
         where: { id },
         data: {
           name: data.name,
-          phone: data.phone,
+          phone: normalizePhone(data.phone),
           zipCode: data.zipCode,
           street: data.street,
           number: data.number,
@@ -76,11 +114,14 @@ class CustomerController {
           state: data.state,
           complement: data.complement,
           reference: data.reference,
-          address: data.address // Mantém o campo de exibição rápida
+          address: data.address
         }
       });
       res.json(updated);
     } catch (error) {
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'Já existe um cliente com este telefone.' });
+      }
       res.status(500).json({ error: 'Erro ao atualizar cliente.' });
     }
   }

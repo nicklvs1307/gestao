@@ -26,8 +26,14 @@ const CustomerManagement: React.FC = () => {
         setLoading(true);
         try {
             const res = await api.get(`/customers?search=${searchTerm}&page=${page}`);
-            setCustomers(res.data.customers);
-            setTotalPages(res.data.pages);
+            // A API agora retorna { customers, pagination }
+            if (res.data && res.data.customers) {
+                setCustomers(res.data.customers);
+                setTotalPages(res.data.pagination?.pages || 1);
+            } else {
+                setCustomers(Array.isArray(res.data) ? res.data : []);
+                setTotalPages(1);
+            }
         } catch (error) {
             toast.error('Erro ao carregar clientes');
         } finally {
