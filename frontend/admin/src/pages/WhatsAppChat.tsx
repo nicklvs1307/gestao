@@ -15,7 +15,7 @@ import {
 import axios from 'axios';
 import { toast } from 'sonner';
 import { io } from 'socket.io-client';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
