@@ -11,6 +11,12 @@ router.get('/settings', needsAuth, WhatsAppController.getSettings);
 router.put('/settings', needsAuth, WhatsAppController.updateSettings);
 router.post('/clear-history', needsAuth, WhatsAppController.clearHistory);
 
+// Chat e Conversas em Tempo Real
+router.get('/conversations', needsAuth, WhatsAppController.getConversations);
+router.get('/conversations/:phone/messages', needsAuth, WhatsAppController.getMessages);
+router.post('/conversations/:phone/toggle-agent', needsAuth, WhatsAppController.toggleAgent);
+router.post('/send-message', needsAuth, WhatsAppController.sendMessage);
+
 // Gestão de Base de Conhecimento (RAG)
 router.get('/knowledge', needsAuth, WhatsAppController.getKnowledge);
 router.post('/knowledge', needsAuth, WhatsAppController.addKnowledge);

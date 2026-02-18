@@ -136,6 +136,7 @@ model Restaurant {
   integrationSettings IntegrationSettings? // Relação com as configurações de integração
   whatsappInstance WhatsAppInstance?
   whatsappSettings WhatsAppSettings?
+  whatsappConversations WhatsAppConversation[]
   storeKnowledge StoreKnowledge[]
   
   // Relações Novos Módulos
@@ -510,6 +511,25 @@ model WhatsAppChatMessage {
   restaurantId  String
 
   @@index([customerPhone, restaurantId])
+  @@index([restaurantId])
+}
+
+model WhatsAppConversation {
+  id              String   @id @default(cuid())
+  customerPhone   String
+  customerName    String?
+  lastMessage     String?  @db.Text
+  lastMessageAt   DateTime @default(now())
+  unreadCount     Int      @default(0)
+  isAgentEnabled  Boolean  @default(true) // Controle individual por conversa
+  
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([customerPhone, restaurantId])
   @@index([restaurantId])
 }
 

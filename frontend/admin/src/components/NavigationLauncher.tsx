@@ -61,6 +61,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
             icon: ShoppingCart,
             items: [
                 { label: "Monitor de Pedidos", path: "/orders", icon: ListOrdered, permission: 'orders:view' },
+                { label: "Central de Atendimento", path: "/whatsapp/chat", icon: MessageSquare, permission: 'orders:view' },
                 { label: "PDV - Frente de Caixa", path: "/pos", icon: Calculator, permission: 'pos:access' },
                 { label: "KDS - Monitor de Cozinha", path: "/kds", icon: ChefHat, permission: 'kds:view' },
                 { label: "Checklists & Rotinas", path: "/checklists", icon: ClipboardList, permission: 'orders:view' },

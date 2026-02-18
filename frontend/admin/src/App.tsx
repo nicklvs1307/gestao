@@ -50,6 +50,7 @@ import ChecklistManagement from './pages/ChecklistManagement';
 import ChecklistFill from './pages/ChecklistFill';
 import TableCheckout from './pages/TableCheckout';
 import WhatsAppManagement from './pages/WhatsAppManagement';
+import WhatsAppChat from './pages/WhatsAppChat';
 import { Toaster } from 'sonner';
 
 import GlobalModals from './components/GlobalModals';
@@ -246,6 +247,9 @@ function AdminRoutes() {
         break;
       case '/whatsapp':
         setPageTitle('WhatsApp & IA');
+        break;
+      case '/whatsapp/chat':
+        setPageTitle('Central de Atendimento');
         break;
       default:
         if (location.pathname.startsWith('/products/')) {
@@ -469,6 +473,11 @@ function AdminRoutes() {
         <Route path="/whatsapp" element={
           <ProtectedRoute permission="settings:manage">
             <WhatsAppManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/whatsapp/chat" element={
+          <ProtectedRoute permission="orders:view">
+            <WhatsAppChat />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

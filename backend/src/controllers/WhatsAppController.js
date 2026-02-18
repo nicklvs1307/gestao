@@ -304,6 +304,85 @@ const WhatsAppController = {
     }
   }),
 
+  // Listar Conversas (Chats)
+  getConversations: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const conversations = await prisma.whatsAppConversation.findMany({
+      where: { restaurantId },
+      orderBy: { lastMessageAt: 'desc' }
+    });
+    res.json(conversations);
+  }),
+
+  // Buscar Mensagens de uma Conversa
+  getMessages: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const { phone } = req.params;
+
+    const messages = await prisma.whatsAppChatMessage.findMany({
+      where: { 
+        restaurantId,
+        customerPhone: phone
+      },
+      orderBy: { timestamp: 'asc' },
+      take: 50
+    });
+
+    res.json(messages);
+  }),
+
+  // Alternar Status do Agente para uma Conversa específica
+  toggleAgent: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const { phone } = req.params;
+    const { enabled } = req.body;
+
+    const conversation = await prisma.whatsAppConversation.update({
+      where: { 
+        customerPhone_restaurantId: {
+          customerPhone: phone,
+          restaurantId
+        }
+      },
+      data: { isAgentEnabled: enabled }
+    });
+
+    res.json(conversation);
+  }),
+
+  // Enviar mensagem manual pelo painel
+  sendMessage: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const { phone, message } = req.body;
+
+    const instance = await prisma.whatsAppInstance.findUnique({ where: { restaurantId } });
+    if (!instance || instance.status !== 'CONNECTED') {
+      return res.status(400).json({ error: 'WhatsApp não conectado.' });
+    }
+
+    // Envia via Evolution API
+    await evolutionService.sendText(instance.name, phone, message);
+
+    // Salva no banco como mensagem do assistente/sistema
+    const savedMsg = await prisma.whatsAppChatMessage.create({
+      data: {
+        restaurantId,
+        customerPhone: phone,
+        role: 'assistant',
+        content: message
+      }
+    });
+
+    // Atualiza a conversa
+    await prisma.whatsAppConversation.upsert({
+      where: { customerPhone_restaurantId: { customerPhone: phone, restaurantId } },
+      update: { lastMessage: message, lastMessageAt: new Date() },
+      create: { customerPhone: phone, restaurantId, lastMessage: message }
+    });
+
+    res.json(savedMsg);
+  }),
+
   /**
    * WEBHOOK PRINCIPAL - Lógica de Mensagens Picadas e Resposta Humanizada
    */
@@ -392,6 +471,31 @@ const WhatsAppController = {
       if (!fromMe && messageContent) {
         const debouncerKey = `${customerPhone}_${restaurantId}`;
         
+        // 1. Registra/Atualiza a Conversa no banco
+        const pushName = data.pushName || null;
+        const conversation = await prisma.whatsAppConversation.upsert({
+          where: { customerPhone_restaurantId: { customerPhone, restaurantId } },
+          update: { 
+            lastMessage: messageContent, 
+            lastMessageAt: new Date(),
+            customerName: pushName || undefined,
+            unreadCount: { increment: 1 }
+          },
+          create: { 
+            customerPhone, 
+            restaurantId, 
+            lastMessage: messageContent,
+            customerName: pushName,
+            unreadCount: 1
+          }
+        });
+
+        // 2. Se o agente estiver desabilitado para este contato, apenas notifica via socket e encerra
+        if (!conversation.isAgentEnabled) {
+          console.log(`[WhatsApp] Agente pausado para ${customerPhone}. Aguardando intervenção humana.`);
+          return res.sendStatus(200);
+        }
+
         if (pendingMessages.has(debouncerKey)) {
           clearTimeout(pendingMessages.get(debouncerKey).timer);
         }
