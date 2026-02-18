@@ -53,3 +53,29 @@ export const getDashboardStats = async () => {
         customersToday: new Set(ordersToday.map((o: any) => o.tableNumber)).size,
     };
 };
+
+export const getConsumedItems = async (startDate?: string, endDate?: string) => {
+    const response = await apiClient.get('/admin/reports/consumed-items', {
+        params: { startDate, endDate }
+    });
+    return response.data;
+};
+
+export const getProductionTimeReport = async (startDate?: string, endDate?: string) => {
+    const response = await apiClient.get('/admin/reports/production-time', {
+        params: { startDate, endDate }
+    });
+    return response.data;
+};
+
+export const getStatusTimeReport = async (startDate?: string, endDate?: string) => {
+    const response = await apiClient.get('/admin/reports/status-time', {
+        params: { startDate, endDate }
+    });
+    return response.data;
+};
+
+export const getCouponsReport = async () => {
+    const response = await apiClient.get('/admin/reports/coupons');
+    return response.data;
+};

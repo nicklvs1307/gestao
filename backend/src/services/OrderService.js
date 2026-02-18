@@ -98,6 +98,9 @@ class OrderService {
       total: orderTotal,
       orderType: finalOrderType,
       status: initialStatus,
+      // Timestamps de Performance
+      pendingAt: initialStatus === 'PENDING' ? new Date() : null,
+      preparingAt: initialStatus === 'PREPARING' ? new Date() : null,
       userId: userId || null, 
       customerName: customerName || null,
       items: { create: processedItems }
@@ -302,13 +305,21 @@ class OrderService {
         const isAutoAccept = originalOrder.restaurant.settings?.autoAcceptOrders || false;
         const newStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
         
+        const updateData = { 
+            total: originalOrder.total + additionalTotal, 
+            status: originalOrder.status === 'COMPLETED' ? 'COMPLETED' : newStatus,
+            userId 
+        };
+
+        // Se o status mudou de algo para PENDING/PREPARING, marca o timestamp
+        if (originalOrder.status !== 'COMPLETED') {
+            if (newStatus === 'PENDING') updateData.pendingAt = new Date();
+            if (newStatus === 'PREPARING') updateData.preparingAt = new Date();
+        }
+        
         return await tx.order.update({
             where: { id: orderId },
-            data: { 
-                total: originalOrder.total + additionalTotal, 
-                status: originalOrder.status === 'COMPLETED' ? 'COMPLETED' : newStatus,
-                userId 
-            },
+            data: updateData,
             include: fullOrderInclude
         });
     });
@@ -325,9 +336,21 @@ class OrderService {
    */
   async updateOrderStatus(orderId, status) {
     const updatedOrder = await prisma.$transaction(async (tx) => {
+        const updateData = { status };
+        
+        switch(status) {
+            case 'PENDING': updateData.pendingAt = new Date(); break;
+            case 'PREPARING': updateData.preparingAt = new Date(); break;
+            case 'READY': updateData.readyAt = new Date(); break;
+            case 'SHIPPED': updateData.shippedAt = new Date(); break;
+            case 'DELIVERED': updateData.deliveredAt = new Date(); break;
+            case 'COMPLETED': updateData.completedAt = new Date(); break;
+            case 'CANCELED': updateData.canceledAt = new Date(); break;
+        }
+
         const order = await tx.order.update({
             where: { id: orderId }, 
-            data: { status }, 
+            data: updateData, 
             include: { deliveryOrder: true, payments: true }
         });
 

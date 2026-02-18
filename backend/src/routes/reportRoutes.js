@@ -21,6 +21,9 @@ router.get('/abc-analysis', ReportController.getAbcAnalysis);
 router.get('/delivery-area-stats', ReportController.getDeliveryAreaStats);
 router.get('/detailed-payments', ReportController.getDetailedPayments);
 router.get('/consumed-items', ReportController.getConsumedItems);
+router.get('/production-time', ReportController.getProductionTimeReport);
+router.get('/status-time', ReportController.getStatusTimeReport);
+router.get('/coupons', ReportController.getCouponsReport);
 router.get('/hourly-sales', ReportController.getHourlySales);
 router.get('/sales-heatmap', ReportController.getSalesHeatmap);
 

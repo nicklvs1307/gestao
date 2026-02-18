@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getTables, deleteTable } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { getTables, deleteTable, api } from '../services/api';
 import type { Table } from '@/types/index';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Plus, QrCode, Copy, ExternalLink, Trash2, Edit, CheckCircle, Armchair, X, Loader2, RefreshCw } from 'lucide-react';
@@ -17,8 +18,9 @@ interface TableManagementProps {
 }
 
 const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEditTableClick, refetchTrigger }) => {
-  const [tables, setTables] = useState<Table[]>([]);
+  const [tables, setTables] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [qrCodeLink, setQrCodeLink] = useState<string | null>(null);
   const { user } = useAuth();
@@ -27,8 +29,8 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
   const fetchTables = async () => {
     try {
       setIsLoading(true);
-      const data = await getTables();
-      setTables(data);
+      const res = await api.get('/admin/tables/summary');
+      setTables(res.data);
       setError(null);
     } catch (err) {
       setError('Falha ao buscar as mesas.');
@@ -195,6 +197,16 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
                             </div>
 
                             {/* Checkout Action if needed */}
+                            {isOccupied && table.tabs?.[0]?.orderId && (
+                                <Button 
+                                    fullWidth 
+                                    className="mt-4 bg-orange-500 hover:bg-orange-600 h-12 rounded-xl italic font-black uppercase text-[10px] tracking-widest shadow-lg shadow-orange-100"
+                                    onClick={() => navigate(`/pos/checkout/${table.tabs[0].orderId}`)}
+                                >
+                                    <DollarSign size={16} className="mr-2" /> Fechar Conta
+                                </Button>
+                            )}
+
                             {isAwaiting && (
                                 <Button 
                                     fullWidth 

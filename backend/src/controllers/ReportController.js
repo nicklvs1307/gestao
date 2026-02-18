@@ -550,6 +550,84 @@ const ReportController = {
         }
     },
 
+    async getProductionTimeReport(req, res) {
+        try {
+            const { restaurantId } = req;
+            const { startDate, endDate } = req.query;
+            const start = startDate ? startOfDay(new Date(startDate)) : startOfDay(new Date());
+            const end = endDate ? endOfDay(new Date(endDate)) : endOfDay(new Date());
+
+            const orders = await prisma.order.findMany({
+                where: {
+                    restaurantId,
+                    status: 'COMPLETED',
+                    preparingAt: { not: null },
+                    readyAt: { not: null },
+                    completedAt: { gte: start, lte: end }
+                },
+                select: {
+                    id: true, dailyOrderNumber: true, tableNumber: true,
+                    preparingAt: true, readyAt: true, completedAt: true
+                },
+                orderBy: { completedAt: 'desc' }
+            });
+
+            const report = orders.map(o => {
+                const startProd = new Date(o.preparingAt).getTime();
+                const endProd = new Date(o.readyAt || o.completedAt).getTime();
+                const durationMinutes = Math.round((endProd - startProd) / 60000);
+                return { ...o, durationMinutes };
+            });
+
+            res.json(report);
+        } catch (error) {
+            res.status(500).json({ error: 'Erro ao buscar tempo de produção.' });
+        }
+    },
+
+    async getStatusTimeReport(req, res) {
+        try {
+            const { restaurantId } = req;
+            const { startDate, endDate } = req.query;
+            const start = startDate ? startOfDay(new Date(startDate)) : startOfDay(new Date());
+            const end = endDate ? endOfDay(new Date(endDate)) : endOfDay(new Date());
+
+            const orders = await prisma.order.findMany({
+                where: {
+                    restaurantId,
+                    status: 'COMPLETED',
+                    createdAt: { gte: start, lte: end }
+                },
+                select: {
+                    id: true, dailyOrderNumber: true, tableNumber: true,
+                    createdAt: true, pendingAt: true, preparingAt: true, readyAt: true, completedAt: true
+                }
+            });
+
+            const report = orders.map(o => {
+                const created = new Date(o.createdAt).getTime();
+                const pending = o.pendingAt ? new Date(o.pendingAt).getTime() : created;
+                const preparing = o.preparingAt ? new Date(o.preparingAt).getTime() : pending;
+                const ready = o.readyAt ? new Date(o.readyAt).getTime() : preparing;
+                const completed = new Date(o.completedAt).getTime();
+
+                return {
+                    id: o.id,
+                    dailyOrderNumber: o.dailyOrderNumber,
+                    tableNumber: o.tableNumber,
+                    waitToPrepareMinutes: Math.round((preparing - created) / 60000),
+                    prepareToReadyMinutes: Math.round((ready - preparing) / 60000),
+                    readyToCompleteMinutes: Math.round((completed - ready) / 60000),
+                    totalCycleMinutes: Math.round((completed - created) / 60000)
+                };
+            });
+
+            res.json(report);
+        } catch (error) {
+            res.status(500).json({ error: 'Erro ao buscar tempo por status.' });
+        }
+    },
+
     async getHourlySales(req, res) {
         // ... (conteúdo original)
     },
@@ -605,6 +683,29 @@ const ReportController = {
             });
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar dados do mapa de calor.' });
+        }
+    },
+
+    async getCouponsReport(req, res) {
+        try {
+            const { restaurantId } = req;
+            const coupons = await prisma.promotion.findMany({
+                where: { 
+                    restaurantId,
+                    code: { not: null }
+                },
+                include: {
+                    product: { select: { name: true } }
+                }
+            });
+
+            // Lógica simplificada: como não temos uma tabela de "CupomUsado",
+            // vamos estimar o impacto baseados no status do cupom.
+            // Idealmente, no futuro, criar uma tabela de relação Order <=> Promotion.
+            
+            res.json(coupons);
+        } catch (error) {
+            res.status(500).json({ error: 'Erro ao buscar relatório de cupons.' });
         }
     }
 };

@@ -48,6 +48,7 @@ import StaffPerformance from './components/StaffPerformance';
 import GlobalSizesPage from './pages/GlobalSizesPage';
 import ChecklistManagement from './pages/ChecklistManagement';
 import ChecklistFill from './pages/ChecklistFill';
+import TableCheckout from './pages/TableCheckout';
 import WhatsAppManagement from './pages/WhatsAppManagement';
 import { Toaster } from 'sonner';
 
@@ -182,6 +183,9 @@ function AdminRoutes() {
         break;
       case '/tables':
         setPageTitle('Gestão de Mesas');
+        break;
+      case '/pos/checkout':
+        setPageTitle('Fechamento de Mesa');
         break;
       case '/reports':
         setPageTitle('Relatórios');
@@ -344,6 +348,11 @@ function AdminRoutes() {
               onEditTableClick={handleEditTableClick}
               refetchTrigger={refetchTables}
             />
+          </ProtectedRoute>
+        } />
+        <Route path="/pos/checkout/:orderId" element={
+          <ProtectedRoute permission="table:manage">
+            <TableCheckout />
           </ProtectedRoute>
         } />
         <Route path="/drivers" element={

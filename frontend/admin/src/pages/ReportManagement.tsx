@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { format, startOfMonth } from 'date-fns';
 import { 
   api,
   getReportsSummary, 
@@ -29,7 +30,11 @@ import {
   Download,
   PieChart,
   History,
-  ClipboardList
+  ClipboardList,
+  Users,
+  Ticket,
+  Calculator,
+  User
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -248,6 +253,362 @@ const DeliveryAreaReportView: React.FC = () => {
     );
 };
 
+// --- VIEW: ITENS CONSUMIDOS ---
+const ConsumedItemsView: React.FC = () => {
+    const [items, setItems] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/admin/reports/consumed-items').then(res => {
+            setItems(res.data);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="p-20 text-center opacity-30"><Loader2 className="animate-spin text-orange-500 mx-auto" /></div>;
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <Card className="p-8 border-slate-100 bg-white flex justify-between items-center">
+                <div>
+                    <h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none mb-2">Itens Consumidos</h3>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Detalhamento de tudo o que saiu da sua cozinha</p>
+                </div>
+                <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl shadow-lg shadow-orange-100"><Utensils size={28} /></div>
+            </Card>
+
+            <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/30">
+                                <th className="px-8 py-4">Data/Hora</th>
+                                <th className="px-8 py-4">Pedido</th>
+                                <th className="px-8 py-4">Mesa/Comanda</th>
+                                <th className="px-8 py-4">Produto</th>
+                                <th className="px-8 py-4 text-right">Qtd</th>
+                                <th className="px-8 py-4 text-right">Valor Unit.</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 text-slate-900">
+                            {items.map((item: any, idx: number) => (
+                                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-8 py-5 text-[10px] font-bold text-slate-500">{new Date(item.order.createdAt).toLocaleString('pt-BR')}</td>
+                                    <td className="px-8 py-5 font-black text-slate-900 italic">#{item.order.dailyOrderNumber}</td>
+                                    <td className="px-8 py-5 font-bold text-slate-600 text-xs uppercase italic">{item.order.tableNumber ? `Mesa ${item.order.tableNumber}` : 'Delivery'}</td>
+                                    <td className="px-8 py-5 font-black text-xs text-slate-900 uppercase italic tracking-tight">{item.product.name}</td>
+                                    <td className="px-8 py-5 text-right font-bold text-slate-500">{item.quantity}</td>
+                                    <td className="px-8 py-5 text-right font-black text-emerald-600 italic tracking-tighter">R$ {item.priceAtTime.toFixed(2).replace('.', ',')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
+// --- VIEW: TEMPO DE PRODUÇÃO ---
+const ProductionTimeView: React.FC = () => {
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/admin/reports/production-time').then(res => {
+            setData(res.data);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="p-20 text-center opacity-30"><Loader2 className="animate-spin text-orange-500 mx-auto" /></div>;
+
+    const avgTime = data.length > 0 ? Math.round(data.reduce((acc, curr) => acc + curr.durationMinutes, 0) / data.length) : 0;
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-8 border-slate-100 bg-white flex justify-between items-center">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none mb-2">Tempo de Produção</h3>
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Performance da sua cozinha</p>
+                    </div>
+                </Card>
+                <Card className="p-8 border-orange-100 bg-orange-50/20 flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">Média Geral</p>
+                    <h4 className="text-4xl font-black italic tracking-tighter text-orange-900">{avgTime} min</h4>
+                </Card>
+            </div>
+
+            <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/30">
+                                <th className="px-8 py-4">Pedido</th>
+                                <th className="px-8 py-4">Início Prep.</th>
+                                <th className="px-8 py-4">Pronto em</th>
+                                <th className="px-8 py-4 text-right">Duração Total</th>
+                                <th className="px-8 py-4 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 text-slate-900">
+                            {data.map((o: any, idx: number) => (
+                                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-8 py-5 font-black text-slate-900 italic">#{o.dailyOrderNumber}</td>
+                                    <td className="px-8 py-5 text-[10px] font-bold text-slate-500">{new Date(o.preparingAt).toLocaleTimeString('pt-BR')}</td>
+                                    <td className="px-8 py-5 text-[10px] font-bold text-slate-500">{new Date(o.readyAt || o.completedAt).toLocaleTimeString('pt-BR')}</td>
+                                    <td className="px-8 py-5 text-right font-black text-slate-900 italic tracking-tighter">{o.durationMinutes} min</td>
+                                    <td className="px-8 py-5 text-right">
+                                        <span className={cn(
+                                            "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                                            o.durationMinutes <= 20 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
+                                            o.durationMinutes <= 40 ? "bg-orange-50 text-orange-600 border-orange-100" : 
+                                            "bg-rose-50 text-rose-600 border-rose-100"
+                                        )}>
+                                            {o.durationMinutes <= 20 ? 'Excelente' : o.durationMinutes <= 40 ? 'Regular' : 'Lento'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
+// --- VIEW: TEMPO POR STATUS ---
+const StatusTimeView: React.FC = () => {
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/admin/reports/status-time').then(res => {
+            setData(res.data);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="p-20 text-center opacity-30"><Loader2 className="animate-spin text-orange-500 mx-auto" /></div>;
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <Card className="p-8 border-slate-100 bg-white">
+                <h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none mb-2">Tempo por Status</h3>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Identifique gargalos na sua operação</p>
+            </Card>
+
+            <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/30">
+                                <th className="px-8 py-4">Pedido</th>
+                                <th className="px-8 py-4">Espera (min)</th>
+                                <th className="px-8 py-4">Produção (min)</th>
+                                <th className="px-8 py-4">Entrega/Final (min)</th>
+                                <th className="px-8 py-4 text-right font-black">Ciclo Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 text-slate-900">
+                            {data.map((o: any, idx: number) => (
+                                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-8 py-5 font-black text-slate-900 italic">#{o.dailyOrderNumber}</td>
+                                    <td className="px-8 py-5 font-bold text-slate-500">{o.waitToPrepareMinutes} min</td>
+                                    <td className="px-8 py-5 font-bold text-slate-500">{o.prepareToReadyMinutes} min</td>
+                                    <td className="px-8 py-5 font-bold text-slate-500">{o.readyToCompleteMinutes} min</td>
+                                    <td className="px-8 py-5 text-right font-black text-orange-600 italic tracking-tighter">{o.totalCycleMinutes} min</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
+// --- VIEW: CUPONS GERADOS ---
+const CouponsReportView: React.FC = () => {
+    const [coupons, setCoupons] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/admin/reports/coupons').then(res => {
+            setCoupons(res.data);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="p-20 text-center opacity-30"><Loader2 className="animate-spin text-orange-500 mx-auto" /></div>;
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <Card className="p-8 border-slate-100 bg-white flex justify-between items-center">
+                <div>
+                    <h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none mb-2">Cupons de Desconto</h3>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Performance das suas campanhas de marketing</p>
+                </div>
+                <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl shadow-lg shadow-emerald-100"><TrendingUp size={28} /></div>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {coupons.map((coupon: any, idx: number) => (
+                    <Card key={idx} className="p-6 border-slate-100 bg-white relative overflow-hidden group">
+                        <div className="absolute -right-4 -top-4 w-20 h-20 bg-slate-900 text-white rounded-full flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform">
+                            <span className="text-[10px] font-black uppercase italic">{coupon.usedCount} usos</span>
+                        </div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Código</p>
+                        <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter mb-4">{coupon.code || coupon.name}</h4>
+                        <div className="flex justify-between items-end border-t border-slate-50 pt-4">
+                            <div>
+                                <p className="text-[8px] font-black uppercase text-slate-400">Tipo / Valor</p>
+                                <p className="text-xs font-bold text-slate-700">{coupon.discountType === 'percentage' ? `${coupon.discountValue}% Off` : `R$ ${coupon.discountValue.toFixed(2)} Off`}</p>
+                            </div>
+                            <span className={cn(
+                                "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border",
+                                coupon.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                            )}>
+                                {coupon.isActive ? 'Ativo' : 'Inativo'}
+                            </span>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// --- VIEW: VENDAS POR PERÍODO ---
+const SalesPeriodView: React.FC = () => {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [dates, setDates] = useState({ 
+        start: format(startOfMonth(new Date()), 'yyyy-MM-dd'), 
+        end: format(new Date(), 'yyyy-MM-dd') 
+    });
+
+    const fetchSales = () => {
+        setLoading(true);
+        api.get('/admin/reports/sales-period', { params: { startDate: dates.start, endDate: dates.end } }).then(res => {
+            setData(res.data);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    };
+
+    useEffect(() => { fetchSales(); }, []);
+
+    if (loading && !data) return <div className="p-20 text-center opacity-30"><Loader2 className="animate-spin text-orange-500 mx-auto" /></div>;
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <Card className="p-8 border-slate-100 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none mb-2">Vendas por Período</h3>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Listagem detalhada de transações</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <input type="date" value={dates.start} onChange={e => setDates(prev => ({ ...prev, start: e.target.value }))} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-black uppercase" />
+                    <input type="date" value={dates.end} onChange={e => setDates(prev => ({ ...prev, end: e.target.value }))} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-black uppercase" />
+                    <Button onClick={fetchSales} size="sm" className="rounded-xl italic">FILTRAR</Button>
+                </div>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-6 bg-slate-900 text-white flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Faturado</p>
+                    <h4 className="text-4xl font-black italic tracking-tighter text-emerald-400">R$ {data?.totalSales.toFixed(2).replace('.', ',')}</h4>
+                </Card>
+                <Card className="p-6 bg-white border-slate-100 flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total de Pedidos</p>
+                    <h4 className="text-4xl font-black italic tracking-tighter text-slate-900">{data?.count}</h4>
+                </Card>
+            </div>
+
+            <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/30">
+                                <th className="px-8 py-4">ID / Data</th>
+                                <th className="px-8 py-4">Tipo</th>
+                                <th className="px-8 py-4">Mesa</th>
+                                <th className="px-8 py-4">Status</th>
+                                <th className="px-8 py-4 text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 text-slate-900">
+                            {data?.sales.map((o: any, idx: number) => (
+                                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-8 py-5">
+                                        <p className="font-black text-slate-900 italic">#{o.dailyOrderNumber || o.id.slice(-4)}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">{new Date(o.createdAt).toLocaleString('pt-BR')}</p>
+                                    </td>
+                                    <td className="px-8 py-5 font-bold text-slate-600 text-[10px] uppercase">{o.orderType}</td>
+                                    <td className="px-8 py-5 font-bold text-slate-600">{o.tableNumber || '-'}</td>
+                                    <td className="px-8 py-5">
+                                        <span className="text-[9px] font-black uppercase tracking-widest">{o.status}</span>
+                                    </td>
+                                    <td className="px-8 py-5 text-right font-black text-slate-900 italic tracking-tighter">R$ {o.total.toFixed(2).replace('.', ',')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
+// --- VIEW: MÉTODOS DE PAGAMENTO ---
+const PaymentMethodsView: React.FC = () => {
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/admin/reports/payment-methods').then(res => {
+            setData(res.data);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="p-20 text-center opacity-30"><Loader2 className="animate-spin text-orange-500 mx-auto" /></div>;
+
+    const total = data.reduce((acc, curr) => acc + curr.total, 0);
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <Card className="p-8 border-slate-100 bg-white flex justify-between items-center">
+                <div>
+                    <h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none mb-2">Métodos de Pagamento</h3>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Mix de recebimento dos últimos 30 dias</p>
+                </div>
+                <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl shadow-lg shadow-blue-100"><CreditCard size={28} /></div>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {data.map((pm: any, idx: number) => {
+                    const perc = (pm.total / total) * 100;
+                    return (
+                        <Card key={idx} className="p-6 border-slate-100 bg-white group">
+                            <div className="flex justify-between items-start mb-4">
+                                <h4 className="text-lg font-black text-slate-900 uppercase italic truncate">{pm.method}</h4>
+                                <span className="text-[10px] font-black text-blue-600">{perc.toFixed(1)}%</span>
+                            </div>
+                            <h3 className="text-3xl font-black text-slate-900 italic tracking-tighter mb-4">R$ {pm.total.toFixed(2).replace('.', ',')}</h3>
+                            <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden">
+                                <div className="bg-blue-500 h-full" style={{ width: `${perc}%` }} />
+                            </div>
+                        </Card>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 const ReportManagement: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -285,6 +646,12 @@ const ReportManagement: React.FC = () => {
   if (location.pathname.includes('/reports/sales-map')) return <SalesMap />;
   if (location.pathname.includes('/reports/items')) return <AbcAnalysisView />;
   if (location.pathname.includes('/reports/delivery-areas')) return <DeliveryAreaReportView />;
+  if (location.pathname.includes('/reports/consumed-items')) return <ConsumedItemsView />;
+  if (location.pathname.includes('/reports/production-time')) return <ProductionTimeView />;
+  if (location.pathname.includes('/reports/status-time')) return <StatusTimeView />;
+  if (location.pathname.includes('/reports/coupons')) return <CouponsReportView />;
+  if (location.pathname.includes('/reports/sales-period')) return <SalesPeriodView />;
+  if (location.pathname.includes('/reports/payment-methods-detail')) return <PaymentMethodsView />;
   
   if (location.pathname !== '/reports' && location.pathname !== '/reports/') {
       return (
@@ -416,8 +783,13 @@ const ReportManagement: React.FC = () => {
                             { label: 'DRE Gerencial', path: '/reports/dre', icon: Calculator },
                             { label: 'Mapa Geográfico', path: '/reports/sales-map', icon: MapPin },
                             { label: 'Mapa de Calor', path: '/reports/delivery-areas', icon: MapPin },
-                            { label: 'Equipe & Comissão', path: '/reports/staff', icon: User },
-                            { label: 'Consumo Detalhado', path: '/reports/consumed-items', icon: History }
+                            { label: 'Equipe & Comissão', path: '/reports/staff', icon: Users },
+                            { label: 'Consumo Detalhado', path: '/reports/consumed-items', icon: History },
+                            { label: 'Vendas por Período', path: '/reports/sales-period', icon: Calendar },
+                            { label: 'Mix de Pagamentos', path: '/reports/payment-methods-detail', icon: CreditCard },
+                            { label: 'Tempo de Produção', path: '/reports/production-time', icon: TrendingUp },
+                            { label: 'Tempo por Status', path: '/reports/status-time', icon: History },
+                            { label: 'Cupons Gerados', path: '/reports/coupons', icon: Ticket }
                         ].map((btn, i) => (
                             <Button key={i} variant="outline" className="bg-white rounded-2xl h-14 px-6 border-slate-200 hover:border-orange-500/20 group" onClick={() => navigate(btn.path)}>
                                 <btn.icon size={18} className="text-slate-400 group-hover:text-orange-500 transition-colors mr-2" />

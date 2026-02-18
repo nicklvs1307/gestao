@@ -151,42 +151,82 @@ class TableService {
   /**
    * Registra pagamento parcial de itens específicos
    */
-  async processPartialItemPayment(tableId, restaurantId, { itemIds, payments }) {
+  async processPartialItemPayment(tableId, restaurantId, { itemIds, payments, discount = 0, surcharge = 0 }) {
     const table = await prisma.table.findUnique({ where: { id: tableId } });
     if (!table) throw new Error("Mesa não encontrada");
 
     return await prisma.$transaction(async (tx) => {
+        // 1. Marca itens como pagos
         await tx.orderItem.updateMany({
             where: { id: { in: itemIds } },
             data: { isPaid: true }
         });
 
+        // 2. Registra os pagamentos vinculados ao primeiro item (para ter um orderId de referência)
         const firstItem = await tx.orderItem.findUnique({ where: { id: itemIds[0] } });
+        const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
+
         for (const p of payments) {
             await tx.payment.create({
                 data: { orderId: firstItem.orderId, amount: p.amount, method: p.method }
             });
         }
 
+        // 3. Registro Financeiro com categoria correta
+        let category = await tx.transactionCategory.findFirst({
+            where: { restaurantId, name: 'Vendas' }
+        });
+
         const openSession = await tx.cashierSession.findFirst({
             where: { restaurantId, status: 'OPEN' }
         });
 
-        if (openSession) {
-            const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
-            await tx.financialTransaction.create({
-                data: {
-                    description: `Pagto Parcial Itens - Mesa ${table.number}`,
-                    amount: totalPaid,
-                    type: 'INCOME',
-                    status: 'PAID',
-                    dueDate: new Date(),
-                    paymentDate: new Date(),
-                    paymentMethod: payments[0]?.method || 'other',
-                    restaurantId,
-                    cashierId: openSession.id
-                }
+        const netAmount = totalPaid; // O valor já vem calculado do front com descontos/acréscimos no total de pagamentos
+
+        await tx.financialTransaction.create({
+            data: {
+                description: `Pagto Parcial Itens - Mesa ${table.number} (Subtotal: R$ ${(totalPaid + discount - surcharge).toFixed(2)})`,
+                amount: netAmount,
+                type: 'INCOME',
+                status: 'PAID',
+                dueDate: new Date(),
+                paymentDate: new Date(),
+                paymentMethod: payments[0]?.method || 'other',
+                restaurantId,
+                orderId: firstItem.orderId,
+                cashierId: openSession?.id || null,
+                categoryId: category?.id
+            }
+        });
+
+        // 4. Verifica se todos os itens de todos os pedidos da mesa foram pagos
+        const activeOrders = await tx.order.findMany({
+            where: { 
+                restaurantId, 
+                tableNumber: table.number,
+                status: { notIn: ['COMPLETED', 'CANCELED'] }
+            },
+            include: { items: true }
+        });
+
+        let allPaid = true;
+        for (const order of activeOrders) {
+            const hasUnpaid = await tx.orderItem.findFirst({
+                where: { orderId: order.id, isPaid: false }
             });
+            if (hasUnpaid) {
+                allPaid = false;
+                break;
+            }
+        }
+
+        // Se tudo estiver pago, finaliza os pedidos e libera a mesa
+        if (allPaid && activeOrders.length > 0) {
+            await tx.order.updateMany({
+                where: { id: { in: activeOrders.map(o => o.id) } },
+                data: { status: 'COMPLETED' }
+            });
+            await tx.table.update({ where: { id: tableId }, data: { status: 'free' } });
         }
     });
   }

@@ -712,6 +712,16 @@ model Order {
   total        Float
   orderType    OrderType   @default(TABLE) // Novo campo para diferenciar o tipo de pedido
   isPrinted    Boolean     @default(false) // Controle definitivo de impressão
+  
+  // Timestamps para Relatórios de Performance
+  pendingAt    DateTime?
+  preparingAt  DateTime?
+  readyAt      DateTime?
+  shippedAt    DateTime?
+  deliveredAt  DateTime?
+  completedAt  DateTime?
+  canceledAt   DateTime?
+
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   saiposOrderId String?

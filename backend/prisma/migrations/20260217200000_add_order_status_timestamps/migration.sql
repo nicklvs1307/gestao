@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN "pendingAt" TIMESTAMP(3),
+ADD COLUMN "preparingAt" TIMESTAMP(3),
+ADD COLUMN "readyAt" TIMESTAMP(3),
+ADD COLUMN "shippedAt" TIMESTAMP(3),
+ADD COLUMN "deliveredAt" TIMESTAMP(3),
+ADD COLUMN "completedAt" TIMESTAMP(3),
+ADD COLUMN "canceledAt" TIMESTAMP(3);
