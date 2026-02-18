@@ -1,41 +1,80 @@
- => ERROR [builder 8/8] RUN npm run build                                                                                                       7.6s
-------
- > [builder 8/8] RUN npm run build:
-0.589
-0.589 > admin@0.0.0 build
-0.589 > vite build
-0.589
-0.929 vite v7.1.9 building for production...
-1.367 transforming...
-7.424 ✓ 2373 modules transformed.
-7.435 ✗ Build failed in 6.11s
-7.435 error during build:
-7.435 [vite]: Rollup failed to resolve import "@/lib/utils" from "/app/frontend/admin/src/pages/WhatsAppChat.tsx".
-7.435 This is most likely unintended because it can break your application at runtime.
-7.435 If you do want to externalize this module explicitly add it to
-7.435 `build.rollupOptions.external`
-7.435     at viteLog (file:///app/frontend/admin/node_modules/vite/dist/node/chunks/dep-Chhhsdoe.js:33989:57)
-7.435     at file:///app/frontend/admin/node_modules/vite/dist/node/chunks/dep-Chhhsdoe.js:34025:73
-7.435     at onwarn (file:///app/frontend/admin/node_modules/@vitejs/plugin-react/dist/index.js:55:7)
-7.435     at file:///app/frontend/admin/node_modules/vite/dist/node/chunks/dep-Chhhsdoe.js:34025:28
-7.435     at onRollupLog (file:///app/frontend/admin/node_modules/vite/dist/node/chunks/dep-Chhhsdoe.js:34020:63)
-7.435     at onLog (file:///app/frontend/admin/node_modules/vite/dist/node/chunks/dep-Chhhsdoe.js:33821:4)
-7.435     at file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:20937:32
-7.435     at Object.logger [as onLog] (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:22823:9)
-7.435     at ModuleLoader.handleInvalidResolvedId (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:21567:26)
-7.435     at file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:21525:26
-------
-
- 3 warnings found (use docker --debug to expand):
- - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 7)
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 8)
-Dockerfile:22
---------------------
-  20 |     WORKDIR /app/frontend/admin
-  21 |     RUN npm ci
-  22 | >>> RUN npm run build
-  23 |
-  24 |     # Stage 2: Serve com Nginx
---------------------
-ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+index-nWdzBNXV.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-nWdzBNXV.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-nWdzBNXV.js:8631 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cml8p6bpl0001my01h5rgpsgo&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwic3RvY2s6bWFuYWdlIiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRz...a19hY2NvdW50czptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJkcml2ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJwcm9kdWN0czp2aWV3Iiwic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsInVzZXJzOm1hbmFnZSIsImludGVncmF0aW9uczptYW5hZ2UiLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJvcmRlcnM6ZWRpdF9pdGVtcyIsIm9yZGVyczpjYW5jZWwiLCJvcmRlcnM6dHJhbnNmZXIiXSwiaWF0IjoxNzcxNDEwMzEzLCJleHAiOjE3NzE0MzkxMTN9.a8MPz2k_9Tn3-maanJsPCX3W0NTYF9OnS6h4Oa0ysVE&EIO=4&transport=websocket' failed: 
+createSocket @ index-nWdzBNXV.js:8631
+doOpen @ index-nWdzBNXV.js:8631
+open @ index-nWdzBNXV.js:8631
+_open @ index-nWdzBNXV.js:8631
+_u @ index-nWdzBNXV.js:8631
+bWe @ index-nWdzBNXV.js:8631
+kWe @ index-nWdzBNXV.js:8631
+open @ index-nWdzBNXV.js:8631
+QB @ index-nWdzBNXV.js:8631
+wm @ index-nWdzBNXV.js:8631
+(anônimo) @ index-nWdzBNXV.js:8631
+yy @ index-nWdzBNXV.js:40
+T2 @ index-nWdzBNXV.js:40
+(anônimo) @ index-nWdzBNXV.js:40
+R @ index-nWdzBNXV.js:25
+q @ index-nWdzBNXV.js:25
+index-nWdzBNXV.js:40 ReferenceError: MessageSquare is not defined
+    at ZGe (index-nWdzBNXV.js:8690:75201)
+    at Du (index-nWdzBNXV.js:38:17892)
+    at zH (index-nWdzBNXV.js:40:45208)
+    at IH (index-nWdzBNXV.js:40:40756)
+    at Zne (index-nWdzBNXV.js:40:40683)
+    at jy (index-nWdzBNXV.js:40:40534)
+    at YO (index-nWdzBNXV.js:40:36786)
+    at LH (index-nWdzBNXV.js:40:35726)
+    at R (index-nWdzBNXV.js:25:1634)
+    at MessagePort.q (index-nWdzBNXV.js:25:2007)
+PO @ index-nWdzBNXV.js:40
+KV.v.callback @ index-nWdzBNXV.js:40
+jo @ index-nWdzBNXV.js:38
+NH @ index-nWdzBNXV.js:40
+_H @ index-nWdzBNXV.js:40
+Une @ index-nWdzBNXV.js:40
+Xne @ index-nWdzBNXV.js:40
+qu @ index-nWdzBNXV.js:40
+LH @ index-nWdzBNXV.js:40
+R @ index-nWdzBNXV.js:25
+q @ index-nWdzBNXV.js:25
+index-nWdzBNXV.js:8690 Uncaught ReferenceError: MessageSquare is not defined
+    at ZGe (index-nWdzBNXV.js:8690:75201)
+    at Du (index-nWdzBNXV.js:38:17892)
+    at zH (index-nWdzBNXV.js:40:45208)
+    at IH (index-nWdzBNXV.js:40:40756)
+    at Zne (index-nWdzBNXV.js:40:40683)
+    at jy (index-nWdzBNXV.js:40:40534)
+    at YO (index-nWdzBNXV.js:40:36786)
+    at LH (index-nWdzBNXV.js:40:35726)
+    at R (index-nWdzBNXV.js:25:1634)
+    at MessagePort.q (index-nWdzBNXV.js:25:2007)
+ZGe @ index-nWdzBNXV.js:8690
+Du @ index-nWdzBNXV.js:38
+zH @ index-nWdzBNXV.js:40
+IH @ index-nWdzBNXV.js:40
+Zne @ index-nWdzBNXV.js:40
+jy @ index-nWdzBNXV.js:40
+YO @ index-nWdzBNXV.js:40
+LH @ index-nWdzBNXV.js:40
+R @ index-nWdzBNXV.js:25
+q @ index-nWdzBNXV.js:25
+index-nWdzBNXV.js:8631 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cml8p6bpl0001my01h5rgpsgo&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwic3RvY2s6bWFuYWdlIiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRz...a19hY2NvdW50czptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJkcml2ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJwcm9kdWN0czp2aWV3Iiwic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsInVzZXJzOm1hbmFnZSIsImludGVncmF0aW9uczptYW5hZ2UiLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJvcmRlcnM6ZWRpdF9pdGVtcyIsIm9yZGVyczpjYW5jZWwiLCJvcmRlcnM6dHJhbnNmZXIiXSwiaWF0IjoxNzcxNDEwMzEzLCJleHAiOjE3NzE0MzkxMTN9.a8MPz2k_9Tn3-maanJsPCX3W0NTYF9OnS6h4Oa0ysVE&EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+doClose @ index-nWdzBNXV.js:8631
+close @ index-nWdzBNXV.js:8631
+_onClose @ index-nWdzBNXV.js:8631
+e @ index-nWdzBNXV.js:8631
+close @ index-nWdzBNXV.js:8631
+onclose @ index-nWdzBNXV.js:8631
+_close @ index-nWdzBNXV.js:8631
+_destroy @ index-nWdzBNXV.js:8631
+destroy @ index-nWdzBNXV.js:8631
+disconnect @ index-nWdzBNXV.js:8631
+(anônimo) @ index-nWdzBNXV.js:8631
+$O @ index-nWdzBNXV.js:40
+eg @ index-nWdzBNXV.js:40
+T2 @ index-nWdzBNXV.js:40
+(anônimo) @ index-nWdzBNXV.js:40
+R @ index-nWdzBNXV.js:25
+q @ index-nWdzBNXV.js:25
