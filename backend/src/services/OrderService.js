@@ -5,6 +5,7 @@ const InventoryService = require('./InventoryService');
 const LoyaltyService = require('./LoyaltyService');
 const GeocodingService = require('./GeocodingService'); // Novo
 const WhatsAppNotificationService = require('./WhatsAppNotificationService');
+const { normalizePhone } = require('../lib/phoneUtils');
 const socketLib = require('../lib/socket');
 
 const fullOrderInclude = {
@@ -148,7 +149,7 @@ class OrderService {
                  }
              }
              
-             const cleanPhone = deliveryInfo.phone ? deliveryInfo.phone.replace(/\D/g, '') : '';
+             const cleanPhone = normalizePhone(deliveryInfo.phone);
              
              // Busca Coordenadas Automaticamente para o Mapa de Calor
              const coords = await GeocodingService.getCoordinates(fullAddress);

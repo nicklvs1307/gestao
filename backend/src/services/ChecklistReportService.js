@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const evolutionService = require('./EvolutionService');
+const { normalizePhone } = require('../lib/phoneUtils');
 const { startOfDay, endOfDay, format } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
 
@@ -17,6 +18,9 @@ class ChecklistReportService {
     if (!settings || !settings.enabled || !settings.recipientPhone) {
       return;
     }
+
+    const recipient = normalizePhone(settings.recipientPhone);
+    if (!recipient) return;
 
     // 2. Busca a instância do WhatsApp conectada
     const instance = await prisma.whatsAppInstance.findUnique({
@@ -114,8 +118,8 @@ _Relatório gerado automaticamente pelo sistema Pedify._`;
 
     // 7. Envia via WhatsApp
     try {
-      await evolutionService.sendText(instance.name, settings.recipientPhone, message);
-      console.log(`[ChecklistReport] Relatório enviado para ${settings.recipientPhone} (Restaurante: ${restaurantId})`);
+      await evolutionService.sendText(instance.name, recipient, message);
+      console.log(`[ChecklistReport] Relatório enviado para ${recipient} (Restaurante: ${restaurantId})`);
     } catch (error) {
       console.error(`[ChecklistReport] Erro ao enviar relatório:`, error);
     }

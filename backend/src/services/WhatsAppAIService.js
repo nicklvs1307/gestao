@@ -1,6 +1,7 @@
 const OpenAI = require('openai');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
+const { normalizePhone } = require('../lib/phoneUtils');
 
 class WhatsAppAIService {
   constructor() {
@@ -222,7 +223,7 @@ class WhatsAppAIService {
         return "Formas de pagamento aceitas: " + methods.map(m => m.name).join(', ');
 
       case 'check_order_status':
-        const searchPhone = (args.phone || customerPhone).replace(/\D/g, '');
+        const searchPhone = normalizePhone(args.phone || customerPhone);
         console.log(`[AI] Buscando status do pedido para: ${searchPhone}`);
         
         const orderStatus = await prisma.order.findFirst({
@@ -358,7 +359,7 @@ class WhatsAppAIService {
                 create: {
                   name: args.customerName,
                   address: args.deliveryAddress || 'Retirada',
-                  phone: customerPhone.replace(/\D/g, ''),
+                  phone: normalizePhone(customerPhone),
                   deliveryType: args.orderType.toLowerCase(),
                   paymentMethod: args.paymentMethod,
                   changeFor: args.changeFor || 0,

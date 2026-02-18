@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const evolutionService = require('./EvolutionService');
+const { normalizePhone } = require('../lib/phoneUtils');
 
 class WhatsAppNotificationService {
   
@@ -17,7 +18,7 @@ class WhatsAppNotificationService {
       if (!order) return;
 
       // Só envia se for pedido de delivery ou se tiver telefone no deliveryOrder
-      const phone = order.deliveryOrder?.phone?.replace(/\D/g, '');
+      const phone = normalizePhone(order.deliveryOrder?.phone);
       if (!phone) return;
 
       const instance = await prisma.whatsAppInstance.findUnique({
