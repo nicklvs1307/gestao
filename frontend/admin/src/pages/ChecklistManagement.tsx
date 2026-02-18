@@ -12,17 +12,23 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { 
     getChecklists, createChecklist, updateChecklist, deleteChecklist,
-    getSectors, createSector, deleteSector
-} from '../services/api';
+    getSectors, createSector, deleteSector,
+    getChecklistReportSettings, updateChecklistReportSettings
+} from '../services/api/checklists';
 import apiClient from '../services/api/client';
 
 const ChecklistManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'checklists' | 'sectors' | 'executions'>('checklists');
+    const [activeTab, setActiveTab] = useState<'checklists' | 'sectors' | 'executions' | 'report'>('checklists');
     
     const [checklists, setChecklists] = useState<any[]>([]);
     const [sectors, setSectors] = useState<any[]>([]);
     const [executions, setExecutions] = useState<any[]>([]);
+    const [reportSettings, setReportSettings] = useState<any>({
+        enabled: false,
+        recipientPhone: '',
+        sendTime: '22:00'
+    });
     
     const [isEditingChecklist, setIsEditingChecklist] = useState(false);
     const [showQRCodeModal, setShowQRCodeModal] = useState(false);
@@ -107,16 +113,27 @@ const ChecklistManagement: React.FC = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [checklistsData, sectorsData] = await Promise.all([
+            const [checklistsData, sectorsData, reportData] = await Promise.all([
                 getChecklists(),
-                getSectors()
+                getSectors(),
+                getChecklistReportSettings().catch(() => ({ enabled: false, recipientPhone: '', sendTime: '22:00' }))
             ]);
             setChecklists(checklistsData);
             setSectors(sectorsData);
+            setReportSettings(reportData);
         } catch (error) {
             toast.error("Erro ao carregar dados do Checklist");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveReportSettings = async () => {
+        try {
+            await updateChecklistReportSettings(reportSettings);
+            toast.success("Configurações de relatório salvas!");
+        } catch (error) {
+            toast.error("Erro ao salvar configurações");
         }
     };
 
@@ -234,10 +251,11 @@ const ChecklistManagement: React.FC = () => {
             </header>
 
             {/* Tabs */}
-            <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full max-w-md mx-auto shadow-inner">
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full max-w-lg mx-auto shadow-inner">
                 <button onClick={() => setActiveTab('checklists')} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'checklists' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Modelos</button>
                 <button onClick={() => setActiveTab('sectors')} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'sectors' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Setores</button>
                 <button onClick={() => setActiveTab('executions')} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'executions' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Histórico</button>
+                <button onClick={() => setActiveTab('report')} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'report' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Relatório</button>
             </div>
 
             {/* Content */}
@@ -431,6 +449,74 @@ const ChecklistManagement: React.FC = () => {
                                     </Card>
                                 ))
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'report' && (
+                    <div className="max-w-2xl mx-auto w-full space-y-6">
+                        <Card className="p-8 border-slate-100 bg-white">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 bg-orange-500 text-white rounded-2xl">
+                                    <Clock size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">Relatório de Conformidade</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Envio Automático via WhatsApp</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                                    <div>
+                                        <p className="text-xs font-black text-slate-900 uppercase italic">Ativar Envio Diário</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">O sistema enviará um resumo do dia no horário definido</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setReportSettings({...reportSettings, enabled: !reportSettings.enabled})}
+                                        className={`w-14 h-7 rounded-full transition-all relative ${reportSettings.enabled ? 'bg-orange-500' : 'bg-slate-300'}`}
+                                    >
+                                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${reportSettings.enabled ? 'left-8' : 'left-1'}`} />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">WhatsApp de Recebimento</label>
+                                        <Input 
+                                            placeholder="5511999999999" 
+                                            value={reportSettings.recipientPhone} 
+                                            onChange={e => setReportSettings({...reportSettings, recipientPhone: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Horário de Envio</label>
+                                        <input 
+                                            type="time" 
+                                            className="w-full h-12 px-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-orange-500 font-bold text-sm outline-none transition-all"
+                                            value={reportSettings.sendTime}
+                                            onChange={e => setReportSettings({...reportSettings, sendTime: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-50 flex justify-end">
+                                    <Button onClick={handleSaveReportSettings} className="px-10 rounded-2xl italic uppercase text-[10px] font-black tracking-widest shadow-lg shadow-orange-100 h-12">
+                                        Salvar Configuração
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100 flex gap-4">
+                            <AlertCircle className="text-orange-500 shrink-0" size={20} />
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-orange-900 uppercase italic">Importante</p>
+                                <p className="text-[11px] text-orange-700 font-medium leading-relaxed">
+                                    Para que o envio funcione, sua instância do WhatsApp deve estar <b>CONECTADA</b> no menu de integração. 
+                                    O relatório incluirá a taxa de conformidade e o resumo das tarefas realizadas no dia.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}

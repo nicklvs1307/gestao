@@ -49,3 +49,12 @@ export const getChecklistExecutions = async (params?: any) => {
     const response = await apiClient.get('/checklists/history', { params });
     return response.data;
 };
+export const getChecklistReportSettings = async () => {
+    const response = await apiClient.get('/checklists/settings/report');
+    return response.data;
+};
+
+export const updateChecklistReportSettings = async (data: any) => {
+    const response = await apiClient.put('/checklists/settings/report', data);
+    return response.data;
+};

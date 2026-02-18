@@ -163,4 +163,8 @@ const server = http.createServer(app);
 const socketLib = require('./src/lib/socket');
 socketLib.init(server);
 
+// Inicializa o agendador de tarefas (Cron Jobs)
+const JobService = require('./src/services/JobService');
+JobService.init();
+
 server.listen(PORT, () => logger.info(`Servidor rodando em http://localhost:${PORT}`));

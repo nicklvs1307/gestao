@@ -162,6 +162,29 @@ class ChecklistController {
     res.json(history);
   });
 
+  getReportSettings = asyncHandler(async (req, res) => {
+    const { restaurantId } = req;
+    const settings = await prisma.checklistReportSettings.upsert({
+      where: { restaurantId },
+      update: {},
+      create: { restaurantId, enabled: false, sendTime: '22:00' }
+    });
+    res.json(settings);
+  });
+
+  updateReportSettings = asyncHandler(async (req, res) => {
+    const { restaurantId } = req;
+    const { enabled, recipientPhone, sendTime } = req.body;
+
+    const settings = await prisma.checklistReportSettings.upsert({
+      where: { restaurantId },
+      update: { enabled, recipientPhone, sendTime },
+      create: { restaurantId, enabled, recipientPhone, sendTime }
+    });
+
+    res.json(settings);
+  });
+
   uploadFile = asyncHandler(async (req, res) => {
     if (!req.file) {
       res.status(400);
