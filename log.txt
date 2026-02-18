@@ -1,80 +1,51 @@
-index-nWdzBNXV.js:8605 [SSE] Conexão estabelecida com o servidor.
-index-nWdzBNXV.js:8605 [SSE] Conexão estabelecida com o servidor.
-index-nWdzBNXV.js:8631 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cml8p6bpl0001my01h5rgpsgo&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwic3RvY2s6bWFuYWdlIiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRz...a19hY2NvdW50czptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJkcml2ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJwcm9kdWN0czp2aWV3Iiwic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsInVzZXJzOm1hbmFnZSIsImludGVncmF0aW9uczptYW5hZ2UiLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJvcmRlcnM6ZWRpdF9pdGVtcyIsIm9yZGVyczpjYW5jZWwiLCJvcmRlcnM6dHJhbnNmZXIiXSwiaWF0IjoxNzcxNDEwMzEzLCJleHAiOjE3NzE0MzkxMTN9.a8MPz2k_9Tn3-maanJsPCX3W0NTYF9OnS6h4Oa0ysVE&EIO=4&transport=websocket' failed: 
-createSocket @ index-nWdzBNXV.js:8631
-doOpen @ index-nWdzBNXV.js:8631
-open @ index-nWdzBNXV.js:8631
-_open @ index-nWdzBNXV.js:8631
-_u @ index-nWdzBNXV.js:8631
-bWe @ index-nWdzBNXV.js:8631
-kWe @ index-nWdzBNXV.js:8631
-open @ index-nWdzBNXV.js:8631
-QB @ index-nWdzBNXV.js:8631
-wm @ index-nWdzBNXV.js:8631
-(anônimo) @ index-nWdzBNXV.js:8631
-yy @ index-nWdzBNXV.js:40
-T2 @ index-nWdzBNXV.js:40
-(anônimo) @ index-nWdzBNXV.js:40
-R @ index-nWdzBNXV.js:25
-q @ index-nWdzBNXV.js:25
-index-nWdzBNXV.js:40 ReferenceError: MessageSquare is not defined
-    at ZGe (index-nWdzBNXV.js:8690:75201)
-    at Du (index-nWdzBNXV.js:38:17892)
-    at zH (index-nWdzBNXV.js:40:45208)
-    at IH (index-nWdzBNXV.js:40:40756)
-    at Zne (index-nWdzBNXV.js:40:40683)
-    at jy (index-nWdzBNXV.js:40:40534)
-    at YO (index-nWdzBNXV.js:40:36786)
-    at LH (index-nWdzBNXV.js:40:35726)
-    at R (index-nWdzBNXV.js:25:1634)
-    at MessagePort.q (index-nWdzBNXV.js:25:2007)
-PO @ index-nWdzBNXV.js:40
-KV.v.callback @ index-nWdzBNXV.js:40
-jo @ index-nWdzBNXV.js:38
-NH @ index-nWdzBNXV.js:40
-_H @ index-nWdzBNXV.js:40
-Une @ index-nWdzBNXV.js:40
-Xne @ index-nWdzBNXV.js:40
-qu @ index-nWdzBNXV.js:40
-LH @ index-nWdzBNXV.js:40
-R @ index-nWdzBNXV.js:25
-q @ index-nWdzBNXV.js:25
-index-nWdzBNXV.js:8690 Uncaught ReferenceError: MessageSquare is not defined
-    at ZGe (index-nWdzBNXV.js:8690:75201)
-    at Du (index-nWdzBNXV.js:38:17892)
-    at zH (index-nWdzBNXV.js:40:45208)
-    at IH (index-nWdzBNXV.js:40:40756)
-    at Zne (index-nWdzBNXV.js:40:40683)
-    at jy (index-nWdzBNXV.js:40:40534)
-    at YO (index-nWdzBNXV.js:40:36786)
-    at LH (index-nWdzBNXV.js:40:35726)
-    at R (index-nWdzBNXV.js:25:1634)
-    at MessagePort.q (index-nWdzBNXV.js:25:2007)
-ZGe @ index-nWdzBNXV.js:8690
-Du @ index-nWdzBNXV.js:38
-zH @ index-nWdzBNXV.js:40
-IH @ index-nWdzBNXV.js:40
-Zne @ index-nWdzBNXV.js:40
-jy @ index-nWdzBNXV.js:40
-YO @ index-nWdzBNXV.js:40
-LH @ index-nWdzBNXV.js:40
-R @ index-nWdzBNXV.js:25
-q @ index-nWdzBNXV.js:25
-index-nWdzBNXV.js:8631 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cml8p6bpl0001my01h5rgpsgo&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwic3RvY2s6bWFuYWdlIiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRz...a19hY2NvdW50czptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJkcml2ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJwcm9kdWN0czp2aWV3Iiwic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsInVzZXJzOm1hbmFnZSIsImludGVncmF0aW9uczptYW5hZ2UiLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJvcmRlcnM6ZWRpdF9pdGVtcyIsIm9yZGVyczpjYW5jZWwiLCJvcmRlcnM6dHJhbnNmZXIiXSwiaWF0IjoxNzcxNDEwMzEzLCJleHAiOjE3NzE0MzkxMTN9.a8MPz2k_9Tn3-maanJsPCX3W0NTYF9OnS6h4Oa0ysVE&EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
-doClose @ index-nWdzBNXV.js:8631
-close @ index-nWdzBNXV.js:8631
-_onClose @ index-nWdzBNXV.js:8631
-e @ index-nWdzBNXV.js:8631
-close @ index-nWdzBNXV.js:8631
-onclose @ index-nWdzBNXV.js:8631
-_close @ index-nWdzBNXV.js:8631
-_destroy @ index-nWdzBNXV.js:8631
-destroy @ index-nWdzBNXV.js:8631
-disconnect @ index-nWdzBNXV.js:8631
-(anônimo) @ index-nWdzBNXV.js:8631
-$O @ index-nWdzBNXV.js:40
-eg @ index-nWdzBNXV.js:40
-T2 @ index-nWdzBNXV.js:40
-(anônimo) @ index-nWdzBNXV.js:40
-R @ index-nWdzBNXV.js:25
-q @ index-nWdzBNXV.js:25
+index-B0AWdqkx.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-B0AWdqkx.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-B0AWdqkx.js:8605 SSE Error: Event {isTrusted: true, type: 'error', target: EventSource, currentTarget: EventSource, eventPhase: 2, …}
+O.onerror @ index-B0AWdqkx.js:8605
+/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwic3RvY2s6bWFuYWdlIiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJwb3M6YWNjZXNzIiwicmVwb3J0czphYmMiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsImZpbmFuY2lhbDp2aWV3IiwiZmluYW5jaWFsOm1hbmFnZSIsIm9yZGVyczp2aWV3Iiwib3JkZXJzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJkcml2ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJwcm9kdWN0czp2aWV3Iiwic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsInVzZXJzOm1hbmFnZSIsImludGVncmF0aW9uczptYW5hZ2UiLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJvcmRlcnM6ZWRpdF9pdGVtcyIsIm9yZGVyczpjYW5jZWwiLCJvcmRlcnM6dHJhbnNmZXIiXSwiaWF0IjoxNzcxNDEwMzEzLCJleHAiOjE3NzE0MzkxMTN9.a8MPz2k_9Tn3-maanJsPCX3W0NTYF9OnS6h4Oa0ysVE&restaurantId=cml8p6bpl0001my01h5rgpsgo:1  GET https://kicardapio.towersfy.com/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwic3RvY2s6bWFuYWdlIiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJwb3M6YWNjZXNzIiwicmVwb3J0czphYmMiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsImZpbmFuY2lhbDp2aWV3IiwiZmluYW5jaWFsOm1hbmFnZSIsIm9yZGVyczp2aWV3Iiwib3JkZXJzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJkcml2ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJwcm9kdWN0czp2aWV3Iiwic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsInVzZXJzOm1hbmFnZSIsImludGVncmF0aW9uczptYW5hZ2UiLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJvcmRlcnM6ZWRpdF9pdGVtcyIsIm9yZGVyczpjYW5jZWwiLCJvcmRlcnM6dHJhbnNmZXIiXSwiaWF0IjoxNzcxNDEwMzEzLCJleHAiOjE3NzE0MzkxMTN9.a8MPz2k_9Tn3-maanJsPCX3W0NTYF9OnS6h4Oa0ysVE&restaurantId=cml8p6bpl0001my01h5rgpsgo net::ERR_QUIC_PROTOCOL_ERROR 200 (OK)
+index-B0AWdqkx.js:40 ReferenceError: CheckCircle is not defined
+    at w (index-B0AWdqkx.js:8654:460637)
+    at index-B0AWdqkx.js:8654:463144
+    at Array.map (<anonymous>)
+    at OGe (index-B0AWdqkx.js:8654:463080)
+    at Du (index-B0AWdqkx.js:38:17892)
+    at EO (index-B0AWdqkx.js:40:3167)
+    at zH (index-B0AWdqkx.js:40:45983)
+    at IH (index-B0AWdqkx.js:40:40756)
+    at Zne (index-B0AWdqkx.js:40:40683)
+    at jy (index-B0AWdqkx.js:40:40534)
+PO @ index-B0AWdqkx.js:40
+KV.v.callback @ index-B0AWdqkx.js:40
+jo @ index-B0AWdqkx.js:38
+NH @ index-B0AWdqkx.js:40
+_H @ index-B0AWdqkx.js:40
+Une @ index-B0AWdqkx.js:40
+Xne @ index-B0AWdqkx.js:40
+qu @ index-B0AWdqkx.js:40
+LH @ index-B0AWdqkx.js:40
+R @ index-B0AWdqkx.js:25
+q @ index-B0AWdqkx.js:25
+index-B0AWdqkx.js:8654 Uncaught ReferenceError: CheckCircle is not defined
+    at w (index-B0AWdqkx.js:8654:460637)
+    at index-B0AWdqkx.js:8654:463144
+    at Array.map (<anonymous>)
+    at OGe (index-B0AWdqkx.js:8654:463080)
+    at Du (index-B0AWdqkx.js:38:17892)
+    at EO (index-B0AWdqkx.js:40:3167)
+    at zH (index-B0AWdqkx.js:40:45983)
+    at IH (index-B0AWdqkx.js:40:40756)
+    at Zne (index-B0AWdqkx.js:40:40683)
+    at jy (index-B0AWdqkx.js:40:40534)
+w @ index-B0AWdqkx.js:8654
+(anônimo) @ index-B0AWdqkx.js:8654
+OGe @ index-B0AWdqkx.js:8654
+Du @ index-B0AWdqkx.js:38
+EO @ index-B0AWdqkx.js:40
+zH @ index-B0AWdqkx.js:40
+IH @ index-B0AWdqkx.js:40
+Zne @ index-B0AWdqkx.js:40
+jy @ index-B0AWdqkx.js:40
+YO @ index-B0AWdqkx.js:40
+LH @ index-B0AWdqkx.js:40
+R @ index-B0AWdqkx.js:25
+q @ index-B0AWdqkx.js:25

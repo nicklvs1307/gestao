@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getTables, deleteTable, api } from '../services/api';
 import type { Table } from '@/types/index';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Plus, QrCode, Copy, ExternalLink, Trash2, Edit, CheckCircle, Armchair, X, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, QrCode, Copy, ExternalLink, Trash2, Edit, CheckCircle, Armchair, X, Loader2, RefreshCw, DollarSign } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card } from './ui/Card';

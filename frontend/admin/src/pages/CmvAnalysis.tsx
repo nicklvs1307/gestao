@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getProducts, getIngredients } from '../services/api';
 import { 
     Calculator, AlertTriangle, Search, 
-    Percent, DollarSign, Package, Info, RefreshCw, Loader2, TrendingUp, TrendingDown, Target
+    Percent, DollarSign, Package, Info, RefreshCw, Loader2, TrendingUp, TrendingDown, Target, CheckCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
