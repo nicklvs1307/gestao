@@ -4,6 +4,7 @@ const PricingService = require('./PricingService');
 const InventoryService = require('./InventoryService');
 const LoyaltyService = require('./LoyaltyService');
 const GeocodingService = require('./GeocodingService'); // Novo
+const WhatsAppNotificationService = require('./WhatsAppNotificationService');
 const socketLib = require('../lib/socket');
 
 const fullOrderInclude = {
@@ -263,6 +264,11 @@ class OrderService {
     
     const finalOrder = await prisma.order.findUnique({ where: { id: newOrder.id }, include: fullOrderInclude });
     
+    // Notifica via WhatsApp o recebimento (PENDING)
+    if (finalOrder.orderType === 'DELIVERY' && finalOrder.deliveryOrder?.phone) {
+        WhatsAppNotificationService.notifyOrderUpdate(finalOrder.id, finalOrder.status).catch(err => console.error('[WhatsApp Notification] Error:', err));
+    }
+
     emitOrderUpdate(finalOrder.id, 'ORDER_CREATED');
     
     return finalOrder;
@@ -413,6 +419,9 @@ class OrderService {
     }
     
     emitOrderUpdate(updatedOrder.id);
+    
+    // Notifica via WhatsApp o novo status
+    WhatsAppNotificationService.notifyOrderUpdate(updatedOrder.id, status).catch(err => console.error('[WhatsApp Notification] Error:', err));
     
     const finalOrder = await prisma.order.findUnique({ where: { id: updatedOrder.id }, include: fullOrderInclude });
     return finalOrder;
