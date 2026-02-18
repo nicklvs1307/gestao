@@ -1,5 +1,6 @@
+# syntax=docker/dockerfile:1
 # Stage 1: Build
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL

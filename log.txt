@@ -1,25 +1,4 @@
-URL da solicitação
-https://kicardapio.towersfy.com/api/checklists
-Método da solicitação
-GET
-Código de status
-403 Forbidden
-{"error":"Acesso negado. Você não tem a permissão necessária: checklists:view"}
-
-URL da solicitação
-https://kicardapio.towersfy.com/api/sectors
-Método da solicitação
-GET
-Código de status
-403 Forbidden
-{"error":"Acesso negado. Você não tem a permissão necessária: sectors:manage"}
-
-URL da solicitação
-https://kicardapio.towersfy.com/api/checklists/settings/report
-Método da solicitação
-GET
-Código de status
-403 Forbidden
-{
-    "error": "Acesso negado. Você não tem a permissão necessária: checklists:manage"
-}
+ 3 warnings found (use docker --debug to expand):
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 8)
+ - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 7)

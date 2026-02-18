@@ -1,9 +1,11 @@
+# syntax=docker/dockerfile:1
 # Stage 1: Build
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
+# VITE_OPENROUTE_KEY é necessária em tempo de build para o Vite injetar no código
 ARG VITE_OPENROUTE_KEY
 ENV VITE_OPENROUTE_KEY=$VITE_OPENROUTE_KEY
 
