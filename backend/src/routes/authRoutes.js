@@ -35,12 +35,32 @@ router.get('/drivers', needsAuth, async (req, res) => {
         const drivers = await prisma.user.findMany({
             where: { 
                 restaurantId: req.restaurantId,
-                roleRef: {
-                    name: {
-                        equals: 'driver',
-                        mode: 'insensitive'
+                OR: [
+                    {
+                        roleRef: {
+                            name: {
+                                in: ['driver', 'Entregador'],
+                                mode: 'insensitive'
+                            }
+                        }
+                    },
+                    {
+                        roleRef: {
+                            permissions: {
+                                some: {
+                                    name: 'delivery:manage'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        permissions: {
+                            some: {
+                                name: 'delivery:manage'
+                            }
+                        }
                     }
-                }
+                ]
             },
             select: { id: true, name: true }
         });
