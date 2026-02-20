@@ -181,24 +181,37 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
         
         {/* COLUNA ESQUERDA: CARRINHO E RESUMO (35%) */}
         <div className="w-[400px] bg-white border-r border-slate-200 flex flex-col shadow-xl z-10">
-            {/* Identificação do Cliente */}
+            {/* Identificação do Cliente - Expandida */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xs font-black text-slate-900 uppercase italic flex items-center gap-2">
-                        <User size={14} className="text-orange-500" /> {order.deliveryOrder?.name || order.customerName || 'Consumidor'}
-                    </h2>
-                    <button className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-colors">
-                        <User size={12} />
-                    </button>
-                </div>
-                <div className="mt-2 p-2.5 bg-orange-100/50 border border-orange-200 rounded-xl">
-                    <p className="text-[10px] font-bold text-orange-800 italic">Observação interna</p>
-                    <textarea 
-                        className="w-full bg-transparent border-none focus:ring-0 text-[11px] text-orange-900 p-0 mt-1 placeholder:text-orange-300 resize-none h-12"
-                        placeholder="Clique para adicionar uma nota..."
-                        value={internalObs}
-                        onChange={(e) => setInternalObs(e.target.value)}
-                    />
+                <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-[11px] font-black text-slate-900 uppercase italic flex items-center gap-2 mb-1">
+                            <User size={14} className="text-orange-500" /> {order.deliveryOrder?.name || order.customerName || 'Consumidor'}
+                        </h2>
+                        {isDelivery && order.deliveryOrder?.address && (
+                            <p className="text-[9px] font-bold text-slate-500 uppercase italic leading-tight line-clamp-2">
+                                <MapPin size={10} className="inline mr-1 text-slate-400" /> {order.deliveryOrder.address}
+                            </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-black uppercase">
+                                {isDelivery ? 'Delivery' : 'Mesa ' + order.tableNumber}
+                            </span>
+                            {order.deliveryOrder?.phone && (
+                                <span className="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg font-black italic">
+                                    {order.deliveryOrder.phone}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-1 ml-3">
+                        <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
+                            <User size={14} />
+                        </button>
+                        <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm" title="Editar Cliente">
+                            <FileText size={14} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -232,21 +245,18 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 ))}
             </div>
 
-            {/* Resumo de Valores Inferior */}
-            <div className="p-6 bg-slate-900 text-white space-y-3">
+            {/* Resumo de Valores Inferior - Botão Reduzido */}
+            <div className="p-5 bg-slate-900 text-white space-y-3">
                 <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black text-slate-500 uppercase italic">Valor Total</span>
-                    <span className="text-3xl font-black text-white italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
+                    <span className="text-2xl font-black text-white italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
                 </div>
-                <div className="text-[9px] font-bold text-slate-400 space-y-1 opacity-60">
-                    <p>Operador: Admin</p>
-                    <p>Caixa: Principal - {format(new Date(), "dd/MM/yyyy HH:mm")}</p>
-                </div>
+                
                 <button 
                     onClick={() => setActiveTab(activeTab === 'items' ? 'payment' : 'items')}
-                    className="w-full h-12 bg-blue-500 hover:bg-blue-400 text-white rounded-xl font-black text-xs uppercase italic tracking-widest transition-all shadow-lg active:scale-95"
+                    className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase italic tracking-widest transition-all shadow-lg active:scale-95 border-b-4 border-blue-800 active:border-b-0"
                 >
-                    {activeTab === 'items' ? 'PAGAMENTO E ENTREGA' : 'VOLTAR PARA ITENS'}
+                    {activeTab === 'items' ? 'IR PARA PAGAMENTO' : 'ADICIONAR MAIS ITENS'}
                 </button>
             </div>
         </div>
@@ -310,32 +320,32 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             ) : (
                 /* ABA DE PAGAMENTO E FINANCEIRO */
                 <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-                    <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
                         
                         {/* Coluna Financeiro (Esquerda) */}
-                        <div className="space-y-6">
-                            <Card className="p-6 rounded-[2.5rem] border-slate-200 shadow-sm bg-white">
+                        <div className="lg:col-span-1 space-y-6">
+                            <Card className="p-6 rounded-[2rem] border-slate-200 shadow-sm bg-white">
                                 <h3 className="text-sm font-black text-slate-900 uppercase italic mb-6 flex items-center gap-2">
                                     <DollarSign size={18} className="text-orange-500" /> Pagamento
                                 </h3>
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase">
+                                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
                                         <span>Quantidade de itens:</span>
                                         <span className="text-slate-900 font-black">{order.items.reduce((acc, i) => acc + i.quantity, 0).toFixed(3)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase">
+                                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
                                         <span>Total itens:</span>
                                         <span className="text-slate-900 font-black italic text-sm">R$ {subtotal.toFixed(2)}</span>
                                     </div>
                                     
                                     {/* Campo Taxa de Entrega */}
-                                    <div className="flex items-center gap-4">
-                                        <span className="flex-1 text-xs font-bold text-slate-500 uppercase italic">Entrega:</span>
-                                        <div className="relative w-32">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
+                                    <div className="flex items-center gap-4 pt-2">
+                                        <span className="flex-1 text-[10px] font-black text-slate-500 uppercase italic">Entrega:</span>
+                                        <div className="relative w-28">
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
                                             <input 
                                                 type="number" 
-                                                className="w-full h-10 pl-8 pr-3 bg-slate-100 border-none rounded-xl text-sm font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
+                                                className="w-full h-9 pl-7 pr-2 bg-slate-100 border-none rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
                                                 value={deliveryFee}
                                                 onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
                                             />
@@ -344,12 +354,12 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
                                     {/* Campo Acréscimo */}
                                     <div className="flex items-center gap-4">
-                                        <span className="flex-1 text-xs font-bold text-slate-500 uppercase italic">Acréscimo:</span>
-                                        <div className="relative w-32">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
+                                        <span className="flex-1 text-[10px] font-black text-slate-500 uppercase italic">Acréscimo:</span>
+                                        <div className="relative w-28">
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
                                             <input 
                                                 type="number" 
-                                                className="w-full h-10 pl-8 pr-3 bg-slate-100 border-none rounded-xl text-sm font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
+                                                className="w-full h-9 pl-7 pr-2 bg-slate-100 border-none rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
                                                 value={surcharge}
                                                 onChange={(e) => setSurcharge(parseFloat(e.target.value) || 0)}
                                             />
@@ -358,39 +368,31 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
                                     {/* Campo Desconto */}
                                     <div className="flex items-center gap-4">
-                                        <span className="flex-1 text-xs font-bold text-slate-500 uppercase italic">Desconto:</span>
-                                        <div className="flex gap-2 w-48">
+                                        <span className="flex-1 text-[10px] font-black text-slate-500 uppercase italic">Desconto:</span>
+                                        <div className="flex gap-1.5 w-40">
                                             <div className="relative flex-1">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
                                                 <input 
                                                     type="number" 
-                                                    className="w-full h-10 pl-8 pr-3 bg-slate-100 border-none rounded-xl text-sm font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
+                                                    className="w-full h-9 pl-7 pr-2 bg-slate-100 border-none rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
                                                     value={discount}
                                                     onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                                                />
-                                            </div>
-                                            <div className="relative w-20">
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">%</span>
-                                                <input 
-                                                    type="number" 
-                                                    className="w-full h-10 pl-3 pr-8 bg-slate-100 border-none rounded-xl text-sm font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
-                                                    onChange={(e) => setDiscount((parseFloat(e.target.value) / 100) * subtotal || 0)}
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
-                                        <span className="text-sm font-black text-slate-900 uppercase italic">Valor Total</span>
-                                        <span className="text-2xl font-black text-slate-900 italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
+                                        <span className="text-[11px] font-black text-slate-900 uppercase italic">Valor Total</span>
+                                        <span className="text-xl font-black text-slate-900 italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
                                     </div>
                                 </div>
                             </Card>
                         </div>
 
-                        {/* Coluna Formas de Pagamento (Direita) */}
-                        <div className="space-y-6">
-                            <Card className="p-6 rounded-[2.5rem] border-slate-200 shadow-sm bg-white">
+                        {/* Coluna Meio: Formas de Pagamento */}
+                        <div className="lg:col-span-1 space-y-6">
+                            <Card className="p-6 rounded-[2rem] border-slate-200 shadow-sm bg-white">
                                 <h3 className="text-sm font-black text-slate-900 uppercase italic mb-6 flex items-center gap-2">
                                     <CreditCard size={18} className="text-blue-500" /> Formas de pagamento
                                 </h3>
@@ -398,28 +400,44 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                     <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex justify-between items-center group">
                                         <div>
                                             <p className="text-[10px] font-black text-slate-900 uppercase italic">{order.deliveryOrder?.paymentMethod || 'A DEFINIR'}</p>
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">VINCULADO AO CLIENTE</p>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5 italic">VINCULADO AO PEDIDO</p>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl font-black text-xs italic">
                                                 R$ {totalGeral.toFixed(2)}
                                             </div>
-                                            <button className="p-1.5 bg-orange-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                                            <button className="p-1.5 bg-orange-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-md">
                                                 <X size={14} />
                                             </button>
                                         </div>
                                     </div>
 
-                                    <button className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-[10px] uppercase italic tracking-widest transition-all shadow-md shadow-blue-100">
-                                        ADICIONAR OUTRA FORMA DE PAGAMENTO
+                                    <button className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[9px] uppercase italic tracking-widest transition-all shadow-md">
+                                        ADICIONAR OUTRA FORMA
                                     </button>
                                 </div>
                             </Card>
+                        </div>
 
-                            {/* Observações de Entrega */}
-                            <Card className="p-6 rounded-[2.5rem] border-slate-200 shadow-sm bg-white">
-                                <h3 className="text-sm font-black text-slate-900 uppercase italic mb-4">Observações para entrega</h3>
-                                <div className="p-4 bg-slate-100/50 border border-slate-200 rounded-2xl h-24 text-xs font-bold text-slate-600 italic">
+                        {/* Coluna Direita: Observações Combinadas */}
+                        <div className="lg:col-span-1 space-y-4">
+                            <Card className="p-5 rounded-[2rem] border-slate-200 shadow-sm bg-white">
+                                <h3 className="text-[10px] font-black text-slate-900 uppercase italic mb-3 flex items-center gap-2">
+                                    <Tag size={14} className="text-orange-500" /> Notas Internas
+                                </h3>
+                                <textarea 
+                                    className="w-full bg-orange-50/50 border border-orange-100 rounded-2xl p-3 text-[11px] text-slate-700 italic placeholder:text-orange-300 focus:ring-2 focus:ring-orange-500/20 h-24 resize-none"
+                                    placeholder="Clique para adicionar uma nota interna que não sai na impressão do cliente..."
+                                    value={internalObs}
+                                    onChange={(e) => setInternalObs(e.target.value)}
+                                />
+                            </Card>
+
+                            <Card className="p-5 rounded-[2rem] border-slate-200 shadow-sm bg-white">
+                                <h3 className="text-[10px] font-black text-slate-900 uppercase italic mb-3 flex items-center gap-2">
+                                    <Truck size={14} className="text-blue-500" /> Observações para entrega
+                                </h3>
+                                <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-bold text-slate-600 italic h-24 overflow-y-auto">
                                     {order.deliveryOrder?.address || 'Sem observações específicas'}
                                 </div>
                             </Card>
@@ -428,6 +446,12 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                     </div>
                 </div>
             )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
 
         </div>
       </div>
