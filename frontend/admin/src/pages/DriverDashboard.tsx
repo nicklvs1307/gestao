@@ -192,11 +192,17 @@ const DriverDashboard: React.FC = () => {
                 setHistory(res.data);
             }
 
-            // Pega endereço da loja
+            // Pega endereço da loja e prioriza coordenadas se existirem
             const settingsRes = await api.get('/settings');
-            if (settingsRes.data?.address) {
-                const coords = await geocodeAddress(settingsRes.data.address);
-                if (coords) setRestaurantCoords(coords);
+            if (settingsRes.data?.settings) {
+                const s = settingsRes.data.settings;
+                if (s.latitude && s.longitude) {
+                    console.log("[MAPS] Usando coordenadas fixas do restaurante.");
+                    setRestaurantCoords([s.latitude, s.longitude]);
+                } else if (s.address) {
+                    const coords = await geocodeAddress(s.address);
+                    if (coords) setRestaurantCoords(coords);
+                }
             }
         } catch (error) { console.error("Erro loadData:", error); }
         finally { setLoading(false); }
