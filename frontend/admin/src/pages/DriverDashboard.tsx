@@ -45,19 +45,26 @@ const DeliveryMap: React.FC<{
     const polylineRef = useRef<L.Polyline | null>(null);
 
     useEffect(() => {
-        if (!mapRef.current || !customerCoords || !restaurantCoords) return;
+        if (!mapRef.current) return;
         
+        console.log("[MAPS] Inicializando mapa Leaflet...");
+        console.log("[MAPS] Restaurant Coords:", restaurantCoords);
+        console.log("[MAPS] Customer Coords:", customerCoords);
+        console.log("[MAPS] Driver Coords:", currentLocation);
+
         // Destruir instância anterior se existir
         if (leafletInstance.current) {
             leafletInstance.current.remove();
             leafletInstance.current = null;
         }
 
+        const center = currentLocation || restaurantCoords || [-23.5505, -46.6333];
+
         // Inicializar Novo Mapa
         const map = L.map(mapRef.current, {
             zoomControl: false,
             attributionControl: false
-        }).setView(currentLocation || restaurantCoords, 15);
+        }).setView(center, 15);
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19
@@ -80,8 +87,8 @@ const DeliveryMap: React.FC<{
             className: '', iconSize: [32, 32], iconAnchor: [16, 16]
         });
 
-        L.marker(restaurantCoords, { icon: restaurantIcon }).addTo(map);
-        L.marker(customerCoords, { icon: customerIcon }).addTo(map);
+        if (restaurantCoords) L.marker(restaurantCoords, { icon: restaurantIcon }).addTo(map);
+        if (customerCoords) L.marker(customerCoords, { icon: customerIcon }).addTo(map);
         if (currentLocation) {
             L.marker(currentLocation, { icon: driverIcon }).addTo(map);
         }
@@ -90,9 +97,15 @@ const DeliveryMap: React.FC<{
             polylineRef.current = L.polyline(route, { color: '#f97316', weight: 6, opacity: 0.8, lineJoin: 'round' }).addTo(map);
             map.fitBounds(polylineRef.current.getBounds(), { padding: [50, 50] });
         } else {
-            const bounds = L.latLngBounds([restaurantCoords, customerCoords]);
-            if (currentLocation) bounds.extend(currentLocation);
-            map.fitBounds(bounds, { padding: [50, 50] });
+            const points: L.LatLngExpression[] = [];
+            if (restaurantCoords) points.push(restaurantCoords);
+            if (customerCoords) points.push(customerCoords);
+            if (currentLocation) points.push(currentLocation);
+            
+            if (points.length > 1) {
+                const bounds = L.latLngBounds(points);
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
         }
         
         setTimeout(() => { map.invalidateSize(); }, 200);
@@ -205,13 +218,28 @@ const DriverDashboard: React.FC = () => {
 
     const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
         const apiKey = import.meta.env.VITE_OPENROUTE_KEY;
-        if (!apiKey || !address || address === 'Retirada no Balcão') return null;
+        if (!apiKey) {
+            console.error("[MAPS] Erro: VITE_OPENROUTE_KEY não configurada no .env");
+            return null;
+        }
+        if (!address || address === 'Retirada no Balcão') return null;
+        
         try {
+            console.log(`[MAPS] Geocodificando endereço: ${address}`);
             const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&boundary.country=BR&size=1`;
             const res = await fetch(url);
             const data = await res.json();
-            if (data.features?.length > 0) { const [lon, lat] = data.features[0].geometry.coordinates; return [lat, lon]; }
-        } catch (e) { console.error("Erro geocode:", e); }
+            
+            if (data.features?.length > 0) { 
+                const [lon, lat] = data.features[0].geometry.coordinates; 
+                console.log(`[MAPS] Coordenadas encontradas: ${lat}, ${lon}`);
+                return [lat, lon]; 
+            } else {
+                console.warn(`[MAPS] Nenhum resultado para o endereço: ${address}`);
+            }
+        } catch (e) { 
+            console.error("[MAPS] Erro na requisição de geocodificação:", e); 
+        }
         return null;
     };
 
@@ -220,6 +248,7 @@ const DriverDashboard: React.FC = () => {
         if (!apiKey) return;
         setIsRouting(true);
         try {
+            console.log(`[MAPS] Calculando rota entre ${start} e ${end}`);
             const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}`;
             const res = await fetch(url);
             const data = await res.json();
@@ -227,8 +256,14 @@ const DriverDashboard: React.FC = () => {
                 const coords = data.features[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
                 setRoute(coords);
                 setIsMapExpanded(true);
+                console.log("[MAPS] Rota traçada com sucesso!");
+            } else {
+                console.warn("[MAPS] Nenhuma rota encontrada entre os pontos.");
             }
-        } catch (e) { toast.error("Erro ao calcular rota."); }
+        } catch (e) { 
+            console.error("[MAPS] Erro ao buscar rota:", e);
+            toast.error("Erro ao calcular rota."); 
+        }
         finally { setIsRouting(false); }
     };
 
