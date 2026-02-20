@@ -311,8 +311,15 @@ const PosPage: React.FC = () => {
             setOrderMode('table');
             setActiveTab('pos');
         } else {
-            setViewingTable(table);
-            setActiveModal('table_details');
+            // Se a mesa estiver ocupada, vai para a nova tela de checkout
+            const orderId = table.tabs?.[0]?.orderId;
+            if (orderId) {
+                navigate(`/pos/checkout/${orderId}`);
+            } else {
+                // Fallback para o modal antigo se não houver orderId (segurança)
+                setViewingTable(table);
+                setActiveModal('table_details');
+            }
         }
     };
 
