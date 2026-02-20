@@ -54,7 +54,6 @@ const TableCheckout: React.FC = () => {
 
     useEffect(() => {
         fetchOrder();
-        fetchPaymentMethods();
     }, [orderId]);
 
     const fetchOrder = async () => {
@@ -62,6 +61,8 @@ const TableCheckout: React.FC = () => {
             setLoading(true);
             const res = await api.get(`/admin/orders/${orderId}`);
             setOrder(res.data);
+            // Carrega pagamentos somente após ter os dados do pedido (e do restaurante)
+            fetchPaymentMethods(res.data.restaurantId);
         } catch (err) {
             toast.error("Erro ao carregar pedido");
             navigate('/pos?tab=tables');
@@ -70,9 +71,9 @@ const TableCheckout: React.FC = () => {
         }
     };
 
-    const fetchPaymentMethods = async () => {
+    const fetchPaymentMethods = async (restaurantId: string) => {
         try {
-            const res = await getPaymentMethods(order?.restaurantId || '');
+            const res = await getPaymentMethods(restaurantId);
             const filtered = res.filter((m: any) => m.isActive);
             setPaymentMethods(filtered);
             if (filtered.length > 0) setSelectedMethodId(filtered[0].id);

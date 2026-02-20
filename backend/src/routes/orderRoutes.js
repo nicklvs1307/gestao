@@ -32,6 +32,24 @@ router.get('/', needsAuth, checkPermission('orders:view'), async (req, res) => {
 // SSE endpoint for real-time order updates
 router.get('/events', needsAuth, checkPermission('orders:view'), OrderController.streamOrderEvents);
 
+router.get('/:orderId', needsAuth, checkPermission('orders:view'), async (req, res) => {
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id: req.params.orderId, restaurantId: req.restaurantId },
+            include: {
+                items: { include: { product: { include: { categories: true } } } },
+                deliveryOrder: { include: { customer: true, driver: { select: { id: true, name: true } } } },
+                user: { select: { name: true } },
+                payments: true
+            }
+        });
+        if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        res.json(order);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao buscar pedido.' });
+    }
+});
 
 router.put('/:orderId/status', needsAuth, checkPermission('orders:manage'), OrderController.updateStatus);
 router.post('/:orderId/items', needsAuth, checkPermission('orders:manage'), OrderController.addItemsToOrder);
