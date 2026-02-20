@@ -453,10 +453,4 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   );
 };
 
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default OrderEditor;
