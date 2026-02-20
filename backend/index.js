@@ -123,6 +123,7 @@ app.use('/api/promotions', promotionRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/tables', tableRoutes);
+app.use('/api/admin/tables', tableRoutes); // Alias para compatibilidade com o front
 app.use('/api/customers', customerRoutes);
 app.use('/api/admin/reports', reportRoutes);
 app.use('/api/admin/waiters', require('./src/routes/waiterRoutes')); // Nova rota de Acerto Garçom
