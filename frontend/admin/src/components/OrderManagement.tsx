@@ -5,7 +5,7 @@ import OrderListView from './OrderListView';
 import OrderDetailModal from './OrderDetailModal';
 import { getAdminOrders, updateOrderStatus } from '../services/api';
 import type { Order } from '@/types/index.ts';
-import { Kanban, List, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone } from 'lucide-react';
+import { Kanban, List, Search, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
@@ -21,6 +21,7 @@ const OrderManagement: React.FC = () => {
   const { on, off } = useSocket();
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeSegment, setActiveSegment] = useState<OrderSegment>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -109,7 +110,13 @@ const OrderManagement: React.FC = () => {
   const filteredOrders = allOrders.filter(o => {
       const isStatusMatch = ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'].includes(o.status);
       const isSegmentMatch = activeSegment === 'ALL' || o.orderType === activeSegment;
-      return isStatusMatch && isSegmentMatch;
+      const isSearchMatch = !searchTerm || 
+        o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (o.customerName && o.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (o.deliveryOrder?.name && o.deliveryOrder.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (o.tableNumber && o.tableNumber.toString().includes(searchTerm));
+      
+      return isStatusMatch && isSegmentMatch && isSearchMatch;
   });
 
   const counts = {
@@ -126,66 +133,78 @@ const OrderManagement: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 -m-2">
+    <div className="space-y-2 animate-in fade-in duration-500 -m-2">
       
-      {/* Header Gestão de Pedidos */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-5">
-            <div className="p-3.5 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200">
-                <ShoppingBag size={28} />
-            </div>
-            <div>
-                <h1 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Pedidos</h1>
-                <div className="flex items-center gap-2 mt-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{counts.ALL} Pedidos em Produção</span>
-                </div>
-            </div>
-        </div>
+      {/* Header Compacto com Ferramentas */}
+      <div className="flex flex-col lg:flex-row items-center gap-2 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
         
-        <div className="flex flex-wrap items-center gap-3">
-            {/* Ações em Massa */}
+        <div className="flex flex-1 w-full lg:w-auto items-center gap-2">
+            {/* Search Bar */}
+            <div className="relative flex-1 lg:max-w-[300px]">
+                <input 
+                    type="text" 
+                    placeholder="BUSCAR PEDIDO OU MESA..." 
+                    className="w-full h-9 pl-9 pr-4 bg-slate-100 border-none rounded-xl text-[9px] font-black uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-400"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                {searchTerm && (
+                    <button onClick={() => setSearchTerm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <X size={12} />
+                    </button>
+                )}
+            </div>
+
+            {/* Ações em Massa - Compactas */}
             {selectedOrderIds.length > 0 && (
-                <div className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300 bg-orange-50 p-1.5 rounded-2xl border border-orange-100 shadow-lg">
-                    <span className="text-[10px] font-black text-orange-600 px-3 uppercase italic">{selectedOrderIds.length} Selecionados</span>
-                    <Button onClick={() => handleBulkStatusChange('READY')} size="sm" className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 italic">PRONTOS</Button>
-                    <Button onClick={() => handleBulkStatusChange('COMPLETED')} size="sm" className="h-9 px-4 rounded-xl bg-slate-900 italic">FINALIZAR</Button>
-                    <Button onClick={() => setSelectedOrderIds([])} variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400"><X size={16} /></Button>
+                <div className="flex items-center gap-1.5 animate-in slide-in-from-left-4 duration-300 bg-orange-50 p-1 rounded-xl border border-orange-100 shadow-sm">
+                    <span className="text-[9px] font-black text-orange-600 px-2 uppercase italic">{selectedOrderIds.length}</span>
+                    <button onClick={() => handleBulkStatusChange('READY')} className="h-7 px-3 rounded-lg bg-emerald-600 text-white text-[8px] font-black uppercase hover:bg-emerald-500 italic transition-all">PRONTOS</button>
+                    <button onClick={() => handleBulkStatusChange('COMPLETED')} className="h-7 px-3 rounded-lg bg-slate-900 text-white text-[8px] font-black uppercase italic transition-all">FINALIZAR</button>
+                    <button onClick={() => setSelectedOrderIds([])} className="h-7 w-7 rounded-lg text-slate-400 hover:bg-slate-200 flex items-center justify-center transition-all"><X size={14} /></button>
                 </div>
             )}
-
-            {/* Filtro de Segmento */}
-            <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+        </div>
+        
+        <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
+            {/* Filtro de Segmento - Compacto */}
+            <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 shadow-inner">
                 {[
-                    { id: 'ALL', label: 'TUDO', icon: List },
-                    { id: 'DELIVERY', label: 'DELIVERY/BALCÃO', icon: Package },
-                    { id: 'TABLE', label: 'MESAS', icon: Smartphone }
+                    { id: 'ALL', label: 'TUDO', icon: List, count: counts.ALL },
+                    { id: 'DELIVERY', label: 'DELIVERY/BALCÃO', icon: Package, count: counts.DELIVERY },
+                    { id: 'TABLE', label: 'MESAS', icon: Smartphone, count: counts.TABLE }
                 ].map(seg => (
                     <button 
                         key={seg.id}
                         onClick={() => seg.id === 'TABLE' ? navigate('/tables') : setActiveSegment(seg.id as any)}
                         className={cn(
-                            "px-4 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
-                            activeSegment === seg.id ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-400 hover:text-slate-600"
+                            "px-3 py-1.5 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap",
+                            activeSegment === seg.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
                         )}
                     >
-                        <seg.icon size={12} /> {seg.label}
+                        <seg.icon size={10} /> 
+                        {seg.label}
+                        <span className={cn(
+                            "ml-0.5 px-1 py-0.2 rounded text-[7px]",
+                            activeSegment === seg.id ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500"
+                        )}>{seg.count}</span>
                     </button>
                 ))}
             </div>
 
-            {/* Alternador de Visão */}
-            <div className="flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200">
-                <button onClick={() => setViewMode('kanban')} className={cn("p-2.5 rounded-xl transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-md" : "text-slate-400")}><Kanban size={18} /></button>
-                <button onClick={() => setViewMode('list')} className={cn("p-2.5 rounded-xl transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-md" : "text-slate-400")}><List size={18} /></button>
+            {/* Alternador de Visão - Compacto */}
+            <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200">
+                <button onClick={() => setViewMode('kanban')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><Kanban size={14} /></button>
+                <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><List size={14} /></button>
             </div>
 
-            <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl bg-white border-slate-200" onClick={fetchOrders}><RefreshCw size={18} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={fetchOrders}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
         </div>
       </div>
 
       {/* Conteúdo Principal (Kanban ou Lista) */}
-      <div className="flex-1 min-h-0 overflow-hidden rounded-[2.5rem] border-2 border-slate-100 bg-slate-50/50 shadow-inner p-2">
+      <div className="flex-1 min-h-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 shadow-inner p-1">
         {viewMode === 'kanban' ? (
           <OrderKanbanBoard 
             orders={filteredOrders} 

@@ -38,7 +38,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     >
       {/* Header da Coluna */}
       <div className={cn(
-        "p-5 font-black text-[10px] uppercase tracking-[0.2em] flex justify-between items-center bg-transparent",
+        "p-3 font-black text-[10px] uppercase tracking-[0.2em] flex justify-between items-center bg-transparent",
         isOver && "text-orange-600"
       )}>
         <div className="flex items-center gap-3 text-slate-900">
@@ -65,7 +65,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
       
       <SortableContext id={id} items={orders.map(o => o.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 p-3 overflow-y-auto space-y-3 min-h-[200px] transition-colors custom-scrollbar">
+        <div className="flex-1 p-2 overflow-y-auto space-y-2 min-h-[200px] transition-colors custom-scrollbar">
           {orders.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center opacity-30 py-20 grayscale scale-90">
                   <div className="w-16 h-16 rounded-[2rem] border-2 border-dashed border-slate-400 mb-4 flex items-center justify-center">

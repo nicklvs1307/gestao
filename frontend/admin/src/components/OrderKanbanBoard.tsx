@@ -77,12 +77,17 @@ const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({
         collisionDetection={closestCorners} 
         onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-row gap-4 h-full p-1 overflow-x-auto custom-scrollbar">
+      <div className="flex flex-row gap-2 h-full p-0.5 overflow-x-auto custom-scrollbar">
         {Object.entries(KANBAN_COLUMNS).map(([statusKey, statusValue]) => {
           const columnOrders = orders.filter(order => order.status === statusKey);
           
+          // Se for a coluna PENDENTE e não houver pedidos, não renderiza
+          if (statusKey === 'PENDING' && columnOrders.length === 0) {
+            return null;
+          }
+          
           return (
-            <div key={statusKey} className="flex flex-col flex-none w-[320px] sm:w-[350px] h-full bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden">
+            <div key={statusKey} className="flex flex-col flex-none w-[280px] sm:w-[310px] h-full bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden">
                 <KanbanColumn
                   id={statusKey}
                   title={statusValue}
