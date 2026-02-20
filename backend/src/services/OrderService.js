@@ -542,18 +542,69 @@ class OrderService {
     return result;
   }
 
-  async updateDeliveryType(orderId, deliveryType) {
-    const order = await prisma.order.findUnique({ where: { id: orderId }, include: { deliveryOrder: true, restaurant: { include: { settings: true } } } });
+  async updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge }) {
+    const order = await prisma.order.findUnique({ 
+        where: { id: orderId }, 
+        include: { deliveryOrder: true } 
+    });
+    if (!order) throw new Error('Pedido não encontrado.');
+
+    return await prisma.$transaction(async (tx) => {
+        // Se houver deliveryOrder, atualiza a taxa
+        if (order.deliveryOrder && deliveryFee !== undefined) {
+            await tx.deliveryOrder.update({
+                where: { id: order.deliveryOrder.id },
+                data: { deliveryFee: parseFloat(deliveryFee) }
+            });
+        }
+
+        // Atualiza o total do pedido se fornecido (ou recalculado no front)
+        const updatedOrder = await tx.order.update({
+            where: { id: orderId },
+            data: { 
+                total: total !== undefined ? parseFloat(total) : order.total 
+            },
+            include: fullOrderInclude
+        });
+
+        emitOrderUpdate(orderId);
+        return updatedOrder;
+    });
+  }
+
+  async updateDeliveryType(orderId, deliveryType, manualFee = null) {
+    const order = await prisma.order.findUnique({ 
+        where: { id: orderId }, 
+        include: { 
+            deliveryOrder: true, 
+            restaurant: { include: { settings: true } } 
+        } 
+    });
     if (!order?.deliveryOrder) throw new Error('Pedido não encontrado.');
     
-    const deliveryFee = deliveryType === 'delivery' ? (order.restaurant.settings?.deliveryFee || 0) : 0;
+    // Se manualFee for passado, usa ele. Senão usa o padrão ou 0.
+    let deliveryFee = manualFee !== null ? parseFloat(manualFee) : 0;
+    
+    if (manualFee === null && deliveryType === 'delivery') {
+        deliveryFee = order.restaurant.settings?.deliveryFee || 0;
+    }
+
+    const oldFee = order.deliveryOrder.deliveryFee || 0;
     const updateData = { deliveryType, deliveryFee };
     if (deliveryType === 'pickup') updateData.driverId = null;
     
-    const result = await prisma.deliveryOrder.update({ where: { id: order.deliveryOrder.id }, data: updateData });
+    const result = await prisma.$transaction(async (tx) => {
+        await tx.deliveryOrder.update({ where: { id: order.deliveryOrder.id }, data: updateData });
+        
+        // Ajusta o total do pedido baseado na diferença de taxas
+        return await tx.order.update({
+            where: { id: orderId },
+            data: { total: { increment: deliveryFee - oldFee } },
+            include: fullOrderInclude
+        });
+    });
 
     emitOrderUpdate(orderId);
-
     return result;
   }
 

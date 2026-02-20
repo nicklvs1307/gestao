@@ -10,6 +10,11 @@ export const updateOrderStatus = async (orderId: string, status: string) => {
   return response.data;
 };
 
+export const updateOrderFinancials = async (orderId: string, financials: { deliveryFee?: number, total?: number, discount?: number, surcharge?: number }) => {
+    const response = await apiClient.patch(`/admin/orders/${orderId}/financials`, financials);
+    return response.data;
+};
+
 export const updateOrderPaymentMethod = async (orderId: string, newMethod: string) => {
   const response = await apiClient.patch(`/admin/orders/${orderId}/payment-method`, { newMethod });
   return response.data;

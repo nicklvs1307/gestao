@@ -118,12 +118,21 @@ class OrderController {
       res.json(result);
   });
 
+  // PATCH /api/admin/orders/:orderId/financials
+  updateFinancials = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const { deliveryFee, total, discount, surcharge } = req.body;
+
+    const result = await OrderService.updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge });
+    res.json(result);
+  });
+
   // PATCH /api/admin/orders/:orderId/delivery-type
   updateDeliveryType = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
-    const { deliveryType } = req.body;
+    const { deliveryType, manualFee } = req.body;
 
-    const result = await OrderService.updateDeliveryType(orderId, deliveryType);
+    const result = await OrderService.updateDeliveryType(orderId, deliveryType, manualFee);
     res.json(result);
   });
 

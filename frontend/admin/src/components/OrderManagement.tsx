@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import OrderKanbanBoard from './OrderKanbanBoard';
 import OrderListView from './OrderListView';
 import OrderDetailModal from './OrderDetailModal';
+import OrderEditor from './OrderEditor';
 import { getAdminOrders, updateOrderStatus } from '../services/api';
 import type { Order } from '@/types/index.ts';
 import { Kanban, List, Search, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone } from 'lucide-react';
@@ -224,10 +225,10 @@ const OrderManagement: React.FC = () => {
       </div>
 
       {selectedOrder && (
-        <OrderDetailModal 
+        <OrderEditor 
           order={selectedOrder} 
           onClose={() => setSelectedOrder(null)} 
-          onStatusChange={handleStatusChange} 
+          onRefresh={fetchOrders}
         />
       )}
     </div>
