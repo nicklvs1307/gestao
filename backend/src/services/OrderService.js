@@ -543,33 +543,55 @@ class OrderService {
   }
 
   async updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge }) {
-    const order = await prisma.order.findUnique({ 
-        where: { id: orderId }, 
-        include: { deliveryOrder: true } 
-    });
-    if (!order) throw new Error('Pedido não encontrado.');
+    // ... (existing code remains)
+  }
 
-    return await prisma.$transaction(async (tx) => {
-        // Se houver deliveryOrder, atualiza a taxa
-        if (order.deliveryOrder && deliveryFee !== undefined) {
-            await tx.deliveryOrder.update({
-                where: { id: order.deliveryOrder.id },
-                data: { deliveryFee: parseFloat(deliveryFee) }
-            });
+  async addPaymentToOrder(orderId, { amount, method }) {
+    const result = await prisma.payment.create({
+        data: {
+            orderId,
+            amount: parseFloat(amount),
+            method
         }
-
-        // Atualiza o total do pedido se fornecido (ou recalculado no front)
-        const updatedOrder = await tx.order.update({
-            where: { id: orderId },
-            data: { 
-                total: total !== undefined ? parseFloat(total) : order.total 
-            },
-            include: fullOrderInclude
-        });
-
-        emitOrderUpdate(orderId);
-        return updatedOrder;
     });
+    emitOrderUpdate(orderId);
+    return result;
+  }
+
+  async removePaymentFromOrder(paymentId) {
+    const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment) throw new Error('Pagamento não encontrado.');
+    
+    await prisma.payment.delete({ where: { id: paymentId } });
+    emitOrderUpdate(payment.orderId);
+    return { success: true };
+  }
+
+  async updateOrderCustomer(orderId, customerData) {
+    const order = await prisma.order.findUnique({ 
+        where: { id: orderId },
+        include: { deliveryOrder: true }
+    });
+    
+    if (order.deliveryOrder) {
+        await prisma.deliveryOrder.update({
+            where: { id: order.deliveryOrder.id },
+            data: {
+                name: customerData.name,
+                phone: customerData.phone,
+                address: customerData.address
+            }
+        });
+    }
+
+    const updated = await prisma.order.update({
+        where: { id: orderId },
+        data: { customerName: customerData.name },
+        include: fullOrderInclude
+    });
+
+    emitOrderUpdate(orderId);
+    return updated;
   }
 
   async updateDeliveryType(orderId, deliveryType, manualFee = null) {

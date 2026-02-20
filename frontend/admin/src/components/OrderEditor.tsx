@@ -3,7 +3,8 @@ import type { Order, Product, Category, PaymentMethod as PaymentMethodType } fro
 import { 
     getDrivers, assignDriver, getSettings, updateDeliveryType, 
     markOrderAsPrinted, emitInvoice, getProducts, getCategories,
-    getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem
+    getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem,
+    updateOrderCustomer, addOrderPayment, removeOrderPayment
 } from '../services/api';
 import { format } from 'date-fns';
 import { 
@@ -45,6 +46,18 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const [discount, setDiscount] = useState(0);
   const [surcharge, setSurcharge] = useState(0);
   const [internalObs, setInternalObs] = useState('');
+
+  // Estados para Edição de Cliente
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [customerForm, setCustomerData] = useState({
+      name: order.deliveryOrder?.name || order.customerName || '',
+      phone: order.deliveryOrder?.phone || '',
+      address: order.deliveryOrder?.address || ''
+  });
+
+  // Estados para Novos Pagamentos
+  const [isAddingPayment, setIsAddingPayment] = useState(false);
+  const [newPayment, setNewPayment] = useState({ methodId: '', amount: 0 });
   
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -104,6 +117,56 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       }
   };
 
+  const handleUpdateCustomer = async () => {
+      try {
+          setIsSaving(true);
+          await updateOrderCustomer(order.id, customerForm);
+          toast.success("Cliente atualizado!");
+          setIsEditingCustomer(false);
+          onRefresh();
+      } catch (e) {
+          toast.error("Erro ao atualizar cliente.");
+      } finally {
+          setIsSaving(false);
+      }
+  };
+
+  const handleAddPayment = async () => {
+      if (!newPayment.methodId || newPayment.amount <= 0) {
+          toast.error("Selecione a forma e o valor.");
+          return;
+      }
+      try {
+          setIsSaving(true);
+          const method = paymentMethods.find(p => p.id === newPayment.methodId)?.name || 'Outro';
+          await addOrderPayment(order.id, {
+              amount: newPayment.amount,
+              method: method
+          });
+          toast.success("Pagamento adicionado!");
+          setIsAddingPayment(false);
+          setNewPayment({ methodId: '', amount: 0 });
+          onRefresh();
+      } catch (e) {
+          toast.error("Erro ao adicionar pagamento.");
+      } finally {
+          setIsSaving(false);
+      }
+  };
+
+  const handleRemovePayment = async (paymentId: string) => {
+      try {
+          setIsSaving(true);
+          await removeOrderPayment(paymentId);
+          toast.success("Pagamento removido!");
+          onRefresh();
+      } catch (e) {
+          toast.error("Erro ao remover pagamento.");
+      } finally {
+          setIsSaving(false);
+      }
+  };
+
   const handleSaveFinancials = async () => {
       try {
           setIsSaving(true);
@@ -134,6 +197,8 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
   const subtotal = order.items.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
   const totalGeral = subtotal + deliveryFee + surcharge - discount;
+  const totalPaid = order.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
+  const remainingToPay = totalGeral - totalPaid;
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
   const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
@@ -185,33 +250,49 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-[11px] font-black text-slate-900 uppercase italic flex items-center gap-2 mb-1">
-                            <User size={14} className="text-orange-500" /> {order.deliveryOrder?.name || order.customerName || 'Consumidor'}
-                        </h2>
-                        {isDelivery && order.deliveryOrder?.address && (
-                            <p className="text-[9px] font-bold text-slate-500 uppercase italic leading-tight line-clamp-2">
-                                <MapPin size={10} className="inline mr-1 text-slate-400" /> {order.deliveryOrder.address}
-                            </p>
+                        {isEditingCustomer ? (
+                            <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                                <input className="w-full h-8 px-2 bg-white border border-slate-200 rounded text-[10px] font-bold" value={customerForm.name} onChange={e => setCustomerData({...customerForm, name: e.target.value})} placeholder="Nome do Cliente" />
+                                <input className="w-full h-8 px-2 bg-white border border-slate-200 rounded text-[10px] font-bold" value={customerForm.phone} onChange={e => setCustomerData({...customerForm, phone: e.target.value})} placeholder="Telefone" />
+                                <textarea className="w-full h-12 p-2 bg-white border border-slate-200 rounded text-[10px] font-bold resize-none" value={customerForm.address} onChange={e => setCustomerData({...customerForm, address: e.target.value})} placeholder="Endereço Completo" />
+                                <div className="flex gap-1">
+                                    <button onClick={handleUpdateCustomer} className="flex-1 h-7 bg-emerald-600 text-white text-[8px] font-black uppercase rounded shadow-sm">Gravar</button>
+                                    <button onClick={() => setIsEditingCustomer(false)} className="px-3 h-7 bg-slate-200 text-slate-600 text-[8px] font-black uppercase rounded">Cancelar</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <h2 className="text-[11px] font-black text-slate-900 uppercase italic flex items-center gap-2 mb-1">
+                                    <User size={14} className="text-orange-500" /> {order.deliveryOrder?.name || order.customerName || 'Consumidor'}
+                                </h2>
+                                {isDelivery && order.deliveryOrder?.address && (
+                                    <p className="text-[9px] font-bold text-slate-500 uppercase italic leading-tight line-clamp-2">
+                                        <MapPin size={10} className="inline mr-1 text-slate-400" /> {order.deliveryOrder.address}
+                                    </p>
+                                )}
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-black uppercase">
+                                        {isDelivery ? 'Delivery' : 'Mesa ' + order.tableNumber}
+                                    </span>
+                                    {order.deliveryOrder?.phone && (
+                                        <span className="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg font-black italic">
+                                            {order.deliveryOrder.phone}
+                                        </span>
+                                    )}
+                                </div>
+                            </>
                         )}
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-black uppercase">
-                                {isDelivery ? 'Delivery' : 'Mesa ' + order.tableNumber}
-                            </span>
-                            {order.deliveryOrder?.phone && (
-                                <span className="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg font-black italic">
-                                    {order.deliveryOrder.phone}
-                                </span>
-                            )}
+                    </div>
+                    {!isEditingCustomer && (
+                        <div className="flex flex-col gap-1 ml-3">
+                            <button onClick={() => setIsEditingCustomer(true)} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
+                                <User size={14} />
+                            </button>
+                            <button onClick={() => setIsEditingCustomer(true)} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm" title="Editar Cliente">
+                                <FileText size={14} />
+                            </button>
                         </div>
-                    </div>
-                    <div className="flex flex-col gap-1 ml-3">
-                        <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
-                            <User size={14} />
-                        </button>
-                        <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm" title="Editar Cliente">
-                            <FileText size={14} />
-                        </button>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -320,7 +401,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             ) : (
                 /* ABA DE PAGAMENTO E FINANCEIRO */
                 <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-                    <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
                         
                         {/* Coluna Financeiro (Esquerda) */}
                         <div className="lg:col-span-1 space-y-6">
@@ -330,12 +411,8 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                 </h3>
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
-                                        <span>Quantidade de itens:</span>
-                                        <span className="text-slate-900 font-black">{order.items.reduce((acc, i) => acc + i.quantity, 0).toFixed(3)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
-                                        <span>Total itens:</span>
-                                        <span className="text-slate-900 font-black italic text-sm">R$ {subtotal.toFixed(2)}</span>
+                                        <span>Itens:</span>
+                                        <span className="text-slate-900 font-black italic">R$ {subtotal.toFixed(2)}</span>
                                     </div>
                                     
                                     {/* Campo Taxa de Entrega */}
@@ -369,52 +446,94 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                     {/* Campo Desconto */}
                                     <div className="flex items-center gap-4">
                                         <span className="flex-1 text-[10px] font-black text-slate-500 uppercase italic">Desconto:</span>
-                                        <div className="flex gap-1.5 w-40">
-                                            <div className="relative flex-1">
-                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
-                                                <input 
-                                                    type="number" 
-                                                    className="w-full h-9 pl-7 pr-2 bg-slate-100 border-none rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
-                                                    value={discount}
-                                                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                                                />
-                                            </div>
+                                        <div className="relative w-28">
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
+                                            <input 
+                                                type="number" 
+                                                className="w-full h-9 pl-7 pr-2 bg-slate-100 border-none rounded-xl text-xs font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20"
+                                                value={discount}
+                                                onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
-                                        <span className="text-[11px] font-black text-slate-900 uppercase italic">Valor Total</span>
+                                        <span className="text-[11px] font-black text-slate-900 uppercase italic">Total</span>
                                         <span className="text-xl font-black text-slate-900 italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
                                     </div>
                                 </div>
                             </Card>
                         </div>
 
-                        {/* Coluna Meio: Formas de Pagamento */}
-                        <div className="lg:col-span-1 space-y-6">
-                            <Card className="p-6 rounded-[2rem] border-slate-200 shadow-sm bg-white">
-                                <h3 className="text-sm font-black text-slate-900 uppercase italic mb-6 flex items-center gap-2">
-                                    <CreditCard size={18} className="text-blue-500" /> Formas de pagamento
-                                </h3>
-                                <div className="space-y-4">
-                                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex justify-between items-center group">
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-900 uppercase italic">{order.deliveryOrder?.paymentMethod || 'A DEFINIR'}</p>
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5 italic">VINCULADO AO PEDIDO</p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl font-black text-xs italic">
-                                                R$ {totalGeral.toFixed(2)}
-                                            </div>
-                                            <button className="p-1.5 bg-orange-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-md">
-                                                <X size={14} />
-                                            </button>
-                                        </div>
+                        {/* Coluna Meio: Formas de Pagamento (Largura Dobrada) */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <Card className="p-6 rounded-[2rem] border-slate-200 shadow-sm bg-white min-h-[300px] flex flex-col">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-sm font-black text-slate-900 uppercase italic flex items-center gap-2">
+                                        <CreditCard size={18} className="text-blue-500" /> Formas de pagamento
+                                    </h3>
+                                    <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black italic">
+                                        Faltam: R$ {remainingToPay.toFixed(2)}
                                     </div>
+                                </div>
 
-                                    <button className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[9px] uppercase italic tracking-widest transition-all shadow-md">
-                                        ADICIONAR OUTRA FORMA
-                                    </button>
+                                <div className="space-y-3 flex-1">
+                                    {order.payments?.map((pay: any) => (
+                                        <div key={pay.id} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex justify-between items-center group animate-in slide-in-from-left-2">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-900 uppercase italic">{pay.method.toUpperCase()}</p>
+                                                <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5 italic">REGISTRADO EM {format(new Date(pay.createdAt), 'HH:mm')}</p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-white border border-slate-200 px-4 py-2 rounded-xl font-black text-sm italic text-slate-900 shadow-sm">
+                                                    R$ {pay.amount.toFixed(2)}
+                                                </div>
+                                                <button onClick={() => handleRemovePayment(pay.id)} className="p-2 bg-rose-500 text-white rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600 active:scale-90">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {isAddingPayment ? (
+                                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl space-y-4 animate-in zoom-in-95 duration-200">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <select 
+                                                    className="h-10 px-3 bg-white border border-blue-200 rounded-xl text-[10px] font-black text-blue-900 outline-none"
+                                                    value={newPayment.methodId}
+                                                    onChange={e => setNewPayment({...newPayment, methodId: e.target.value})}
+                                                >
+                                                    <option value="">FORMA...</option>
+                                                    {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.name.toUpperCase()}</option>)}
+                                                </select>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-blue-400">R$</span>
+                                                    <input 
+                                                        type="number" 
+                                                        className="w-full h-10 pl-8 pr-3 bg-white border border-blue-200 rounded-xl text-sm font-black text-blue-900 outline-none"
+                                                        value={newPayment.amount || ''}
+                                                        onChange={e => setNewPayment({...newPayment, amount: parseFloat(e.target.value) || 0})}
+                                                        placeholder="0,00"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={handleAddPayment} className="flex-1 h-10 bg-blue-600 text-white text-[9px] font-black uppercase rounded-xl shadow-md">Confirmar</button>
+                                                <button onClick={() => setIsAddingPayment(false)} className="px-4 h-10 bg-slate-200 text-slate-600 text-[9px] font-black uppercase rounded-xl">Cancelar</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => {
+                                                setIsAddingPayment(true);
+                                                setNewPayment({...newPayment, amount: remainingToPay > 0 ? remainingToPay : 0});
+                                            }}
+                                            className="w-full h-14 border-2 border-dashed border-blue-200 rounded-2xl flex items-center justify-center gap-3 text-blue-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all group"
+                                        >
+                                            <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest italic">Adicionar Outra Forma de Pagamento</span>
+                                        </button>
+                                    )}
                                 </div>
                             </Card>
                         </div>
@@ -426,8 +545,8 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                     <Tag size={14} className="text-orange-500" /> Notas Internas
                                 </h3>
                                 <textarea 
-                                    className="w-full bg-orange-50/50 border border-orange-100 rounded-2xl p-3 text-[11px] text-slate-700 italic placeholder:text-orange-300 focus:ring-2 focus:ring-orange-500/20 h-24 resize-none"
-                                    placeholder="Clique para adicionar uma nota interna que não sai na impressão do cliente..."
+                                    className="w-full bg-orange-50/50 border border-orange-100 rounded-2xl p-3 text-[11px] text-slate-700 italic placeholder:text-orange-300 focus:ring-2 focus:ring-orange-500/20 h-32 resize-none"
+                                    placeholder="Clique para adicionar uma nota interna..."
                                     value={internalObs}
                                     onChange={(e) => setInternalObs(e.target.value)}
                                 />

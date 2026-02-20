@@ -15,6 +15,21 @@ export const updateOrderFinancials = async (orderId: string, financials: { deliv
     return response.data;
 };
 
+export const addOrderPayment = async (orderId: string, paymentData: { amount: number, method: string }) => {
+    const response = await apiClient.post(`/admin/orders/${orderId}/payments`, paymentData);
+    return response.data;
+};
+
+export const removeOrderPayment = async (paymentId: string) => {
+    const response = await apiClient.delete(`/admin/orders/payments/${paymentId}`);
+    return response.data;
+};
+
+export const updateOrderCustomer = async (orderId: string, customerData: { name: string, phone: string, address: string }) => {
+    const response = await apiClient.patch(`/admin/orders/${orderId}/customer`, customerData);
+    return response.data;
+};
+
 export const updateOrderPaymentMethod = async (orderId: string, newMethod: string) => {
   const response = await apiClient.patch(`/admin/orders/${orderId}/payment-method`, { newMethod });
   return response.data;

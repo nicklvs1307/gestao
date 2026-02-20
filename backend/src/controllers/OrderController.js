@@ -127,6 +127,28 @@ class OrderController {
     res.json(result);
   });
 
+  // POST /api/admin/orders/:orderId/payments
+  addPayment = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const { amount, method } = req.body;
+    const result = await OrderService.addPaymentToOrder(orderId, { amount, method });
+    res.json(result);
+  });
+
+  // DELETE /api/admin/orders/payments/:paymentId
+  removePayment = asyncHandler(async (req, res) => {
+    const { paymentId } = req.params;
+    const result = await OrderService.removePaymentFromOrder(paymentId);
+    res.json(result);
+  });
+
+  // PATCH /api/admin/orders/:orderId/customer
+  updateCustomer = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const result = await OrderService.updateOrderCustomer(orderId, req.body);
+    res.json(result);
+  });
+
   // PATCH /api/admin/orders/:orderId/delivery-type
   updateDeliveryType = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
