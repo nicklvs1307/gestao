@@ -110,298 +110,176 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300 overflow-hidden">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+    <div className="fixed inset-0 z-[210] flex items-center justify-center p-2 animate-in fade-in duration-300 overflow-hidden">
+      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-5xl max-h-[95vh] lg:max-h-[85vh] flex flex-col bg-slate-50 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 border border-white/20">
+      <div className="relative w-full max-w-4xl h-[90vh] lg:h-auto lg:max-h-[85vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 border border-slate-200">
         
-        {/* HEADER MODERNO */}
-        <div className="flex items-center justify-between px-8 py-5 border-b bg-white shrink-0 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
-          <div className="flex items-center gap-5">
-            <div className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-all transform hover:rotate-3",
-                currentStatus.bg, currentStatus.border, currentStatus.color
-            )}>
-                <currentStatus.icon size={28} strokeWidth={2.5} />
+        {/* HEADER ULTRA COMPACTO */}
+        <div className="flex items-center justify-between px-5 py-2.5 border-b bg-white shrink-0 relative">
+          <div className="flex items-center gap-3">
+            <div className={cn("p-1.5 rounded-lg border shadow-sm", currentStatus.bg, currentStatus.border, currentStatus.color)}>
+                <currentStatus.icon size={16} strokeWidth={3} />
             </div>
             <div>
-                <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter">
                         Pedido <span className="text-orange-600">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</span>
                     </h2>
-                    <div className={cn(
-                        "px-3 py-1 rounded-full text-[9px] font-black border uppercase tracking-[0.2em] shadow-sm",
-                        currentStatus.bg, currentStatus.color, currentStatus.border
-                    )}>
+                    <span className={cn("px-1.5 py-0.5 rounded-md text-[7px] font-black border uppercase tracking-widest", currentStatus.bg, currentStatus.color, currentStatus.border)}>
                         {currentStatus.label}
-                    </div>
-                </div>
-                <div className="flex items-center gap-4 mt-2 text-slate-400 text-[9px] font-black uppercase tracking-widest">
-                    <span className="flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg">
-                        <Clock size={12} className="text-orange-500"/> {format(new Date(order.createdAt), "HH:mm")}
-                    </span>
-                    <span className="flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg">
-                        {isDelivery ? (
-                            <>
-                                {order.deliveryOrder?.deliveryType === 'delivery' ? <Truck size={12} className="text-blue-500"/> : <ShoppingBag size={12} className="text-blue-500"/>}
-                                {order.deliveryOrder?.deliveryType === 'delivery' ? 'Entrega' : 'Retirada'}
-                            </>
-                        ) : (
-                            <>
-                                <Utensils size={12} className="text-emerald-500"/> Mesa {order.tableNumber}
-                            </>
-                        )}
                     </span>
                 </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button 
                 onClick={handlePrint} 
                 disabled={isPrinting} 
-                className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white h-12 px-6 rounded-2xl transition-all shadow-xl shadow-slate-200 group active:scale-95"
+                className="flex items-center gap-1.5 bg-slate-900 text-white h-8 px-3 rounded-xl hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
             >
-                {isPrinting ? <Loader2 className="animate-spin" size={16} /> : <Printer className="group-hover:rotate-12 transition-transform" size={16} />} 
-                <span className="italic font-black text-[10px] uppercase tracking-widest">Imprimir</span>
+                {isPrinting ? <Loader2 className="animate-spin" size={12} /> : <Printer size={12} />} 
+                <span className="italic font-black text-[8px] uppercase tracking-widest">Imprimir</span>
             </button>
             <button 
                 onClick={onClose} 
-                className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white hover:rotate-90 transition-all duration-300 shadow-sm"
+                className="w-8 h-8 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
             >
-                <X size={24} />
+                <X size={16} />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 custom-scrollbar">
-            {/* COLUNA ESQUERDA: CLIENTE E LOGÍSTICA */}
-            <div className="lg:col-span-4 space-y-6">
-                {/* CARD DO CLIENTE */}
-                <section>
-                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-3 ml-1 flex items-center gap-2 italic">
-                        <User size={14} className="text-orange-500"/> Identificação
+        <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 bg-slate-50/30">
+            {/* COLUNA ESQUERDA: CLIENTE, LOGÍSTICA E FINANCEIRO */}
+            <div className="lg:col-span-4 p-4 space-y-3 border-r border-slate-100 overflow-y-auto custom-scrollbar">
+                {/* DADOS DO CLIENTE */}
+                <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                    <h3 className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-1.5 italic">
+                        <User size={10} className="text-orange-500"/> Identificação
                     </h3>
-                    <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <User size={64} />
-                        </div>
-                        {isDelivery ? (
-                            <div className="space-y-4">
-                                <div>
-                                    <p className="text-lg font-black text-slate-900 uppercase italic leading-tight tracking-tight">
-                                        {order.deliveryOrder?.name || 'Cliente Geral'}
+                    {isDelivery ? (
+                        <div className="space-y-2">
+                            <p className="text-xs font-black text-slate-900 uppercase italic leading-none truncate">
+                                {order.deliveryOrder?.name || 'Cliente Geral'}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <a href={`tel:${order.deliveryOrder?.phone}`} className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">
+                                    <Phone size={10} /> {order.deliveryOrder?.phone || 'N/A'}
+                                </a>
+                            </div>
+                            {order.deliveryOrder?.address && (
+                                <div className="mt-1 pt-1.5 border-t border-slate-50 relative group">
+                                    <p className="text-[7px] font-black text-slate-400 uppercase mb-1">Endereço</p>
+                                    <p className="text-[9px] font-bold text-slate-600 uppercase italic leading-tight pr-6">
+                                        {order.deliveryOrder.address}
                                     </p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <a href={`tel:${order.deliveryOrder?.phone}`} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600 hover:text-white transition-all">
-                                            <Phone size={12} /> {order.deliveryOrder?.phone || 'N/A'}
-                                        </a>
-                                    </div>
-                                </div>
-                                <div className="pt-4 border-t border-slate-50">
-                                    <p className="text-[8px] font-black text-slate-400 uppercase mb-2 flex items-center gap-1.5">
-                                        <MapPin size={10} className="text-orange-500"/> Endereço de Entrega
-                                    </p>
-                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-[10px] font-bold text-slate-600 uppercase italic leading-relaxed group/map relative">
-                                        {order.deliveryOrder?.address || 'Retirada no Balcão'}
-                                        {order.deliveryOrder?.address && order.deliveryOrder.address !== 'Retirada no Balcão' && (
-                                            <a 
-                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryOrder.address)}`} 
-                                                target="_blank" 
-                                                className="absolute -right-2 -top-2 bg-blue-600 text-white p-2 rounded-xl shadow-lg opacity-0 group-hover/map:opacity-100 translate-y-1 group-hover/map:translate-y-0 transition-all hover:scale-110 active:scale-95"
-                                            >
-                                                <ExternalLink size={12} />
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-4 py-2">
-                                <div className="bg-orange-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-100">
-                                    <Utensils size={28} />
-                                </div>
-                                <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Local de Consumo</p>
-                                    <p className="text-3xl font-black text-slate-900 italic tracking-tighter">MESA {order.tableNumber}</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </section>
-
-                {/* LOGÍSTICA (ENTREGADOR) */}
-                {isDelivery && (
-                    <section className="animate-in slide-in-from-left-4 duration-500 delay-75">
-                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-3 ml-1 flex items-center gap-2 italic">
-                            <Truck size={14} className="text-blue-500"/> Logística e Entrega
-                        </h3>
-                        <div className="bg-blue-50/50 border-2 border-blue-100 p-4 rounded-[2rem] space-y-4">
-                            <div className="flex gap-2 p-1 bg-blue-100/50 rounded-2xl">
-                                <button 
-                                    onClick={() => handleUpdateDeliveryType('pickup')} 
-                                    className={cn(
-                                        "flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center justify-center gap-2", 
-                                        deliveryType === 'pickup' ? "bg-white text-blue-600 shadow-md" : "text-blue-400 hover:text-blue-500"
-                                    )}
-                                >
-                                    <ShoppingBag size={12} /> Balcão
-                                </button>
-                                <button 
-                                    onClick={() => handleUpdateDeliveryType('delivery')} 
-                                    className={cn(
-                                        "flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center justify-center gap-2", 
-                                        deliveryType === 'delivery' ? "bg-white text-blue-600 shadow-md" : "text-blue-400 hover:text-blue-500"
-                                    )}
-                                >
-                                    <Truck size={12} /> Entrega
-                                </button>
-                            </div>
-                            {deliveryType === 'delivery' && (
-                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                    <p className="text-[8px] font-black text-blue-500 uppercase ml-1 italic">Entregador Responsável</p>
-                                    <select 
-                                        className="w-full bg-white border-2 border-blue-100 rounded-xl h-11 px-4 text-[11px] font-black text-blue-900 outline-none italic shadow-sm focus:border-blue-500 transition-colors" 
-                                        value={selectedDriver} 
-                                        onChange={(e) => handleAssignDriver(e.target.value)}
-                                    >
-                                        <option value="">SELECIONE UM MOTOBOY...</option>
-                                        {drivers.map(d => <option key={d.id} value={d.id}>{d.name.toUpperCase()}</option>)}
-                                    </select>
+                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryOrder.address)}`} target="_blank" className="absolute right-0 bottom-0 text-blue-500 hover:text-blue-700 p-1">
+                                        <ExternalLink size={10} />
+                                    </a>
                                 </div>
                             )}
                         </div>
-                    </section>
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <div className="bg-orange-500 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-md">
+                                <Utensils size={16} />
+                            </div>
+                            <div>
+                                <p className="text-[7px] font-black text-slate-400 uppercase">Localização</p>
+                                <p className="text-lg font-black text-slate-900 italic leading-none">MESA {order.tableNumber}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* LOGÍSTICA COMPACTA */}
+                {isDelivery && (
+                    <div className="bg-blue-50/50 border border-blue-100 p-3 rounded-2xl space-y-2">
+                        <div className="flex gap-1 p-0.5 bg-blue-100/50 rounded-xl">
+                            <button onClick={() => handleUpdateDeliveryType('pickup')} className={cn("flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all", deliveryType === 'pickup' ? "bg-white text-blue-600 shadow-sm" : "text-blue-400")}>Balcão</button>
+                            <button onClick={() => handleUpdateDeliveryType('delivery')} className={cn("flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all", deliveryType === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-blue-400")}>Entrega</button>
+                        </div>
+                        {deliveryType === 'delivery' && (
+                            <select className="w-full bg-white border border-blue-100 rounded-lg h-8 px-2 text-[9px] font-black text-blue-900 outline-none italic shadow-sm" value={selectedDriver} onChange={(e) => handleAssignDriver(e.target.value)}>
+                                <option value="">MOTOBOY...</option>
+                                {drivers.map(d => <option key={d.id} value={d.id}>{d.name.toUpperCase()}</option>)}
+                            </select>
+                        )}
+                    </div>
                 )}
 
-                {/* FINANCEIRO PREMIUM */}
-                <section className="animate-in slide-in-from-left-4 duration-500 delay-150">
-                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-3 ml-1 flex items-center gap-2 italic">
-                        <CreditCard size={14} className="text-orange-500"/> Detalhamento Financeiro
-                    </h3>
-                    <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-white/5 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[60px] -mr-16 -mt-16 rounded-full group-hover:bg-orange-500/20 transition-all duration-700" />
-                        <div className="space-y-3 relative z-10">
-                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                <span>Subtotal</span>
-                                <span className="text-slate-300">R$ {order.total.toFixed(2)}</span>
-                            </div>
-                            {isDelivery && (
-                                <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    <span>Taxa de Entrega</span>
-                                    <span className="text-blue-400 font-bold">+ R$ {(order.deliveryOrder?.deliveryFee || 0).toFixed(2)}</span>
-                                </div>
-                            )}
-                            <div className="pt-4 mt-2 border-t border-white/10 flex justify-between items-end">
-                                <div>
-                                    <p className="text-[9px] font-black text-orange-500 uppercase mb-1 tracking-widest">Total do Pedido</p>
-                                    <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
-                                        <CreditCard size={12} className="text-slate-400" />
-                                        <span className="text-[9px] font-black text-white uppercase italic">
-                                            {order.deliveryOrder?.paymentMethod || 'A DEFINIR'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-3xl font-black text-emerald-400 italic tracking-tighter block leading-none">
-                                        R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
-                                    </span>
-                                </div>
-                            </div>
+                {/* FINANCEIRO DENSO */}
+                <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div className="space-y-1.5 relative z-10">
+                        <div className="flex justify-between items-center text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                            <span>Produtos / Taxa</span>
+                            <span className="text-slate-300">R$ {order.total.toFixed(2)} {isDelivery && `+ ${order.deliveryOrder?.deliveryFee || 0}`}</span>
                         </div>
-                        
-                        {order.status === 'COMPLETED' && (
-                            <button 
-                                onClick={handleEmitInvoice}
-                                disabled={isEmitting}
-                                className="w-full mt-6 h-12 bg-emerald-500 hover:bg-emerald-400 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-950/20 active:scale-95 group"
-                            >
-                                {isEmitting ? <Loader2 size={16} className="animate-spin text-white" /> : <FileText size={16} className="text-white group-hover:rotate-6 transition-transform" />}
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white">
-                                    {order.invoice ? 'Visualizar NFC-e' : 'Emitir Nota Fiscal'}
-                                </span>
-                            </button>
-                        )}
+                        <div className="pt-2 mt-1 border-t border-white/10 flex justify-between items-center">
+                            <div>
+                                <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                                    <CreditCard size={8} className="text-slate-400" />
+                                    <span className="text-[7px] font-black text-white uppercase italic">{order.deliveryOrder?.paymentMethod || 'A PAGAR'}</span>
+                                </div>
+                            </div>
+                            <span className="text-xl font-black text-emerald-400 italic tracking-tighter leading-none">
+                                R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2)}
+                            </span>
+                        </div>
                     </div>
-                </section>
+                    
+                    {order.status === 'COMPLETED' && (
+                        <button onClick={handleEmitInvoice} disabled={isEmitting} className="w-full mt-3 h-8 bg-emerald-500 hover:bg-emerald-400 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95">
+                            {isEmitting ? <Loader2 size={12} className="animate-spin text-white" /> : <FileText size={12} className="text-white" />}
+                            <span className="text-[8px] font-black uppercase tracking-widest text-white">{order.invoice ? 'Ver NFC-e' : 'Emitir Nota'}</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* COLUNA DIREITA: ITENS DO PEDIDO */}
-            <div className="lg:col-span-8 flex flex-col min-h-0 bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between p-6 bg-slate-50/50 border-b border-slate-100 shrink-0">
-                  <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter flex items-center gap-3">
-                      <div className="p-2 bg-orange-500 text-white rounded-xl shadow-lg shadow-orange-100">
-                          <List size={20} />
-                      </div>
-                      Carrinho de Itens
+            {/* COLUNA DIREITA: LISTA DE ITENS COM SCROLL INTERNO */}
+            <div className="lg:col-span-8 flex flex-col min-h-0 bg-white">
+                <div className="px-5 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between shrink-0">
+                  <h3 className="text-[10px] font-black text-slate-900 uppercase italic tracking-tighter flex items-center gap-2">
+                      <List size={14} className="text-orange-500" /> Itens do Pedido
                   </h3>
-                  <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black text-slate-400 bg-white border border-slate-200 px-3 py-1 rounded-xl uppercase shadow-sm">
-                          {order.items.length} {order.items.length === 1 ? 'Produto' : 'Produtos'}
-                      </span>
-                  </div>
+                  <span className="text-[8px] font-black text-slate-400">{order.items.length} UN</span>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                     {order.items.map((item: any) => (
-                        <div key={item.id} className="p-4 flex items-start gap-5 border border-slate-100 rounded-3xl bg-white hover:bg-slate-50/50 hover:border-orange-200 transition-all group relative">
-                            <div className="absolute top-4 right-4 font-black text-slate-900 text-sm italic tracking-tighter bg-slate-50 px-3 py-1 rounded-xl group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                        <div key={item.id} className="p-2.5 flex items-start gap-3 border border-slate-100 rounded-2xl bg-white hover:bg-slate-50 transition-colors group relative">
+                            <div className="absolute top-2.5 right-3 font-black text-slate-900 text-[10px] italic tracking-tighter">
                                 R$ {(item.quantity * item.priceAtTime).toFixed(2)}
                             </div>
-                            
-                            <div className="bg-slate-900 text-white w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl italic shrink-0 shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform">
+                            <div className="bg-slate-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm italic shrink-0">
                                 {item.quantity}
                             </div>
-                            
-                            <div className="flex-1 min-w-0 pr-20">
-                                <h4 className="font-black text-slate-900 uppercase italic text-sm tracking-tight leading-tight mb-2 group-hover:text-orange-600 transition-colors">
+                            <div className="flex-1 min-w-0 pr-16">
+                                <h4 className="font-black text-slate-900 uppercase italic text-[10px] tracking-tight leading-none mb-1">
                                     {item.product.name}
                                 </h4>
-                                
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                    {item.sizeJson && (
-                                        <div className="flex items-center gap-1 text-[8px] bg-blue-600 text-white px-2 py-0.5 rounded-lg font-black uppercase italic shadow-sm">
-                                            <Package size={10} /> TAM: {JSON.parse(item.sizeJson).name}
-                                        </div>
-                                    )}
-                                    {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, i: number) => (
-                                        <div key={i} className="flex items-center gap-1 text-[8px] bg-orange-500 text-white px-2 py-0.5 rounded-lg font-black uppercase italic shadow-sm">
-                                            <Info size={10} /> {f.name}
-                                        </div>
-                                    ))}
-                                    {item.addonsJson && JSON.parse(item.addonsJson).map((a: any, i: number) => (
-                                        <div key={i} className="flex items-center gap-1 text-[8px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg font-black uppercase italic border border-slate-200">
-                                            + {a.name}
-                                        </div>
-                                    ))}
+                                <div className="flex flex-wrap gap-1">
+                                    {item.sizeJson && <span className="text-[7px] bg-blue-50 text-blue-600 px-1 py-0.2 rounded font-black uppercase italic">T: {JSON.parse(item.sizeJson).name}</span>}
+                                    {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, i: number) => <span key={i} className="text-[7px] bg-orange-50 text-orange-600 px-1 py-0.2 rounded font-black uppercase italic">{f.name}</span>)}
+                                    {item.addonsJson && JSON.parse(item.addonsJson).map((a: any, i: number) => <span key={i} className="text-[7px] bg-slate-50 text-slate-400 px-1 py-0.2 rounded font-black uppercase italic">+ {a.name}</span>)}
                                 </div>
-                                
                                 {item.observations && (
-                                    <div className="mt-3 p-2.5 bg-orange-50 rounded-xl border-l-4 border-orange-500 flex items-start gap-2 animate-in slide-in-from-left-2">
-                                        <Info size={12} className="text-orange-500 shrink-0 mt-0.5" />
-                                        <p className="text-[10px] font-bold text-orange-600 italic leading-relaxed">
-                                            OBSERVAÇÃO: {item.observations.toUpperCase()}
-                                        </p>
+                                    <div className="mt-1.5 p-1.5 bg-orange-50 rounded-lg border-l-2 border-orange-500">
+                                        <p className="text-[8px] font-bold text-orange-600 italic">OBS: {item.observations.toUpperCase()}</p>
                                     </div>
                                 )}
                             </div>
                         </div>
                     ))}
-                    
-                    {order.items.length === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center py-20 opacity-20 grayscale">
-                            <ShoppingBag size={64} className="mb-4" />
-                            <p className="font-black uppercase tracking-widest italic">Nenhum item encontrado</p>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
 
-        {/* RODAPÉ DE AÇÕES DE STATUS */}
-        <div className="p-6 bg-white border-t border-slate-100 flex flex-wrap justify-center items-center gap-3 shrink-0">
-            <p className="w-full text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2 italic">Alterar Status do Pedido</p>
+        {/* FOOTER DE STATUS SLIM */}
+        <div className="p-3 bg-white border-t border-slate-100 flex flex-wrap justify-center items-center gap-1.5 shrink-0">
             {onStatusChange && STATUS_OPTIONS.map((status) => {
                 const isActive = order.status === status.value;
                 return (
@@ -410,15 +288,14 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                         onClick={() => onStatusChange(order.id, status.value)} 
                         disabled={isActive}
                         className={cn(
-                            "flex items-center gap-2 h-12 px-5 rounded-2xl text-[9px] uppercase tracking-widest italic font-black transition-all active:scale-95 border-2",
+                            "flex items-center gap-1.5 h-8 px-3 rounded-xl text-[7px] uppercase tracking-widest italic font-black transition-all border shadow-sm",
                             isActive 
-                                ? cn(status.bg, status.color, status.border, "shadow-xl scale-105 z-10") 
-                                : "bg-white border-slate-100 text-slate-400 hover:border-slate-300 hover:text-slate-600"
+                                ? cn(status.bg, status.color, status.border, "scale-105 z-10") 
+                                : "bg-white border-slate-100 text-slate-400 hover:bg-slate-50"
                         )}
                     >
-                        <status.icon size={16} strokeWidth={isActive ? 3 : 2} /> 
+                        <status.icon size={10} strokeWidth={isActive ? 3 : 2} /> 
                         {status.label}
-                        {isActive && <CheckCircle size={12} className="ml-1 animate-in zoom-in" />}
                     </button>
                 );
             })}
