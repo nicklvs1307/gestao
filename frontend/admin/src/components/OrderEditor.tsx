@@ -62,7 +62,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
         const [prodData, catData, payData] = await Promise.all([
             getProducts(),
             getCategories(),
-            getPaymentMethods()
+            getPaymentMethods(order.restaurantId)
         ]);
         setProducts(prodData);
         setCategories(catData);
