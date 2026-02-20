@@ -1,31 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, getPaymentMethods } from '../services/api';
 import { 
-    ChevronLeft, 
-    Users, 
-    Clock, 
-    DollarSign, 
-    ArrowRightLeft, 
-    Plus, 
-    Minus, 
-    MinusCircle,
-    Ticket,
-    Trash2, 
-    CreditCard, 
-    Banknote, 
-    QrCode, 
-    Percent, 
-    PlusCircle,
-    CheckCircle2,
-    Loader2,
-    Printer,
-    History
+    ChevronLeft, Users, Clock, DollarSign, ArrowRightLeft, 
+    Plus, Minus, Trash2, CreditCard, Banknote, QrCode, 
+    Percent, PlusCircle, CheckCircle2, Loader2, Printer, 
+    History, X, MinusCircle, ChevronDown, User, MoveHorizontal
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
+import { format } from 'date-fns';
 
 interface OrderItem {
     id: string;
@@ -56,13 +42,15 @@ const TableCheckout: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     
-    // Estado para o carrinho de pagamento parcial
-    const [selectedItems, setSelectedItems] = useState<{itemId: string, quantity: number, price: number, name: string}[]>([]);
+    // Estado para o carrinho de pagamento atual (Coluna 2)
+    const [payingItems, setPayingItems] = useState<{itemId: string, quantity: number, price: number, name: string}[]>([]);
     const [currentPayments, setCurrentPayments] = useState<{method: string, amount: number}[]>([]);
     const [discount, setDiscount] = useState(0);
     const [surcharge, setSurcharge] = useState(0);
     const [inputValue, setInputValue] = useState('');
-    const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+    const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
+    
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchOrder();
@@ -76,7 +64,7 @@ const TableCheckout: React.FC = () => {
             setOrder(res.data);
         } catch (err) {
             toast.error("Erro ao carregar pedido");
-            navigate('/tables');
+            navigate('/pos?tab=tables');
         } finally {
             setLoading(false);
         }
@@ -84,202 +72,183 @@ const TableCheckout: React.FC = () => {
 
     const fetchPaymentMethods = async () => {
         try {
-            const res = await api.get('/admin/payment-methods');
-            setPaymentMethods(res.data.filter((m: any) => m.isActive));
+            const res = await getPaymentMethods(order?.restaurantId || '');
+            const filtered = res.filter((m: any) => m.isActive);
+            setPaymentMethods(filtered);
+            if (filtered.length > 0) setSelectedMethodId(filtered[0].id);
         } catch (err) {
             console.error(err);
         }
     };
 
-    const addToSelected = (item: OrderItem, qty: number) => {
-        const existing = selectedItems.find(i => i.itemId === item.id);
-        const availableQty = item.quantity - (existing?.quantity || 0);
+    // --- LOGICA COLUNA 1 (CONSUMO -> PAGAMENTO) ---
+    const addOneToPayment = (item: OrderItem) => {
+        const existing = payingItems.find(i => i.itemId === item.id);
+        const alreadyInPayment = existing?.quantity || 0;
+        
+        if (alreadyInPayment < item.quantity) {
+            if (existing) {
+                setPayingItems(payingItems.map(i => i.itemId === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+            } else {
+                setPayingItems([...payingItems, { itemId: item.id, quantity: 1, price: item.priceAtTime, name: item.product.name }]);
+            }
+        }
+    };
 
-        if (qty > availableQty) qty = availableQty;
-        if (qty <= 0) return;
-
+    const addAllToPayment = (item: OrderItem) => {
+        const existing = payingItems.find(i => i.itemId === item.id);
         if (existing) {
-            setSelectedItems(selectedItems.map(i => 
-                i.itemId === item.id ? { ...i, quantity: i.quantity + qty } : i
-            ));
+            setPayingItems(payingItems.map(i => i.itemId === item.id ? { ...i, quantity: item.quantity } : i));
         } else {
-            setSelectedItems([...selectedItems, { 
-                itemId: item.id, 
-                quantity: qty, 
-                price: item.priceAtTime, 
-                name: item.product.name 
-            }]);
+            setPayingItems([...payingItems, { itemId: item.id, quantity: item.quantity, price: item.priceAtTime, name: item.product.name }]);
         }
     };
 
-    const removeFromSelected = (itemId: string, qty: number) => {
-        const existing = selectedItems.find(i => i.itemId === itemId);
+    const payEverything = () => {
+        if (!order) return;
+        const allItems = order.items.filter(i => !i.isPaid).map(i => ({
+            itemId: i.id,
+            quantity: i.quantity,
+            price: i.priceAtTime,
+            name: i.product.name
+        }));
+        setPayingItems(allItems);
+    };
+
+    // --- LOGICA COLUNA 2 (REMOVER DO PAGAMENTO) ---
+    const removeOneFromPayment = (itemId: string) => {
+        const existing = payingItems.find(i => i.itemId === itemId);
         if (!existing) return;
-
-        if (existing.quantity <= qty) {
-            setSelectedItems(selectedItems.filter(i => i.itemId !== itemId));
+        if (existing.quantity > 1) {
+            setPayingItems(payingItems.map(i => i.itemId === itemId ? { ...i, quantity: i.quantity - 1 } : i));
         } else {
-            setSelectedItems(selectedItems.map(i => 
-                i.itemId === itemId ? { ...i, quantity: i.quantity - qty } : i
-            ));
+            setPayingItems(payingItems.filter(i => i.itemId !== itemId));
         }
     };
 
+    const removeAllFromPayment = (itemId: string) => {
+        setPayingItems(payingItems.filter(i => i.itemId !== itemId));
+    };
+
+    // --- LOGICA FINANCEIRA E PAGAMENTOS ---
     const handleAddPayment = () => {
-        if (!selectedMethod || !inputValue) {
-            toast.error("Selecione um método e informe o valor");
+        const method = paymentMethods.find(m => m.id === selectedMethodId);
+        if (!method) {
+            toast.error("Selecione um método de pagamento");
             return;
         }
 
         const amount = parseFloat(inputValue.replace(',', '.'));
-        if (isNaN(amount) || amount <= 0) return;
+        if (isNaN(amount) || amount <= 0) {
+            toast.error("Informe um valor válido");
+            return;
+        }
 
-        setCurrentPayments([...currentPayments, { method: selectedMethod, amount }]);
+        setCurrentPayments([...currentPayments, { method: method.name, amount }]);
         setInputValue('');
-        setSelectedMethod(null);
+        if (inputRef.current) inputRef.current.focus();
     };
 
-    const subtotalSelected = selectedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
-    const totalSelected = subtotalSelected + surcharge - discount;
+    const subtotalPaying = payingItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+    const totalWithFees = subtotalPaying + surcharge - discount;
     const amountPaid = currentPayments.reduce((acc, p) => acc + p.amount, 0);
-    const remainingToPay = Math.max(0, totalSelected - amountPaid);
+    const remainingToPay = Math.max(0, totalWithFees - amountPaid);
 
-    const handleFinalizePartial = async () => {
-        if (currentPayments.length === 0) {
-            toast.error("Adicione ao menos um pagamento");
-            return;
-        }
+    useEffect(() => {
+        if (remainingToPay > 0) setInputValue(remainingToPay.toFixed(2));
+    }, [payingItems, discount, surcharge]);
 
-        if (amountPaid < totalSelected) {
-            toast.error("O valor pago é menor que o total selecionado");
-            return;
-        }
+    const handleConfirmPayment = async () => {
+        if (currentPayments.length === 0) return toast.error("Adicione ao menos um pagamento");
+        if (amountPaid < totalWithFees) return toast.error("O valor pago é insuficiente");
 
         try {
-            const tableRes = await api.get('/admin/tables');
-            const table = tableRes.data.find((t: any) => t.number === order.tableNumber);
-            
-            await api.post(`/admin/tables/${table.id}/partial-payment`, {
-                itemIds: selectedItems.map(i => i.itemId),
+            await api.post(`/admin/tables/partial-payment-simple`, {
+                orderId: order?.id,
+                itemIds: payingItems.map(i => i.itemId),
                 payments: currentPayments,
-                discount,
-                surcharge
+                discount, surcharge
             });
 
-            toast.success("Pagamento parcial realizado!");
-            setSelectedItems([]);
+            toast.success("Pagamento processado!");
+            setPayingItems([]);
             setCurrentPayments([]);
             setDiscount(0);
             setSurcharge(0);
             fetchOrder();
-        } catch (err) {
-            toast.error("Erro ao processar pagamento parcial");
-        }
+        } catch (e) { toast.error("Erro ao processar pagamento"); }
     };
 
-    const handleCloseTable = async () => {
-        if (!order) return;
-        try {
-            const tableRes = await api.get('/admin/tables');
-            const table = tableRes.data.find((t: any) => t.number === order.tableNumber);
-
-            await api.post(`/admin/tables/${table.id}/checkout`, {
-                orderIds: [order.id],
-                payments: currentPayments
-            });
-            toast.success("Mesa fechada com sucesso!");
-            navigate('/tables');
-        } catch (err) {
-            toast.error("Erro ao fechar mesa");
-        }
-    };
-
-    if (loading || !order) return <div className="flex h-screen items-center justify-center bg-slate-50"><Loader2 className="animate-spin text-orange-500" size={40} /></div>;
-
-    const timeOpen = () => {
-        const diff = new Date().getTime() - new Date(order.createdAt).getTime();
-        const mins = Math.floor(diff / 60000);
-        const hours = Math.floor(mins / 60);
-        const days = Math.floor(hours / 24);
-        
-        if (days > 0) return `${days}d ${hours % 24}h ${mins % 60}m`;
-        if (hours > 0) return `${hours}h ${mins % 60}m`;
-        return `${mins}min`;
-    };
+    if (loading || !order) return <div className="flex h-screen items-center justify-center bg-slate-100"><Loader2 className="animate-spin text-blue-500" size={40} /></div>;
 
     return (
-        <div className="h-screen flex flex-col bg-[#f4f7f6] overflow-hidden font-sans">
-            {/* Header POS */}
-            <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm z-10">
+        <div className="h-screen flex flex-col bg-slate-200 overflow-hidden select-none">
+            
+            {/* TOP HEADER */}
+            <header className="h-16 bg-white border-b border-slate-300 flex items-center justify-between px-6 shrink-0 shadow-sm">
                 <div className="flex items-center gap-6">
-                    <button onClick={() => navigate('/tables')} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <ChevronLeft size={24} className="text-slate-600" />
-                    </button>
-                    <div className="flex items-center gap-4">
-                        <div className="bg-slate-900 text-white w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg">
-                            {order.tableNumber}
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">Mesa {order.tableNumber}</h1>
-                                <button className="p-1 hover:text-orange-500 transition-colors"><ArrowRightLeft size={16}/></button>
-                            </div>
-                            <div className="flex items-center gap-3 text-[10px] font-black uppercase text-slate-400 tracking-widest mt-1">
-                                <span className="flex items-center gap-1"><Users size={12}/> {order.customerName || 'Cliente Geral'}</span>
-                                <span className="flex items-center gap-1"><Clock size={12}/> {timeOpen()}</span>
-                            </div>
-                        </div>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">Mesa: {order.tableNumber}</h1>
+                        <button className="p-1.5 bg-slate-100 rounded-lg hover:bg-slate-200 transition-all shadow-sm"><ArrowRightLeft size={16} className="text-slate-600"/></button>
+                    </div>
+                    <div className="h-8 w-px bg-slate-200" />
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none">Cliente</span>
+                        <span className="text-xs font-bold text-slate-700 uppercase italic mt-1">{order.customerName || 'Não Informado'}</span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none">Tempo</span>
+                        <span className="text-xs font-bold text-slate-700 mt-1 uppercase italic">{format(new Date(order.createdAt), "HH:mm")}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="text-right mr-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total da Mesa</p>
-                        <p className="text-2xl font-black text-slate-900 italic tracking-tighter">R$ {order.total.toFixed(2).replace('.', ',')}</p>
+
+                <div className="flex items-center gap-8">
+                    <div className="text-right">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Consumido</p>
+                        <p className="text-2xl font-black text-slate-900 italic tracking-tighter">R$ {order.total.toFixed(2)}</p>
                     </div>
-                    <Button variant="outline" className="rounded-xl border-slate-200 h-12 px-6 font-black uppercase tracking-widest text-[10px]"><Printer className="mr-2" size={16}/> Prévia</Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" className="h-10 bg-slate-100 border-slate-300 font-black text-[9px] uppercase"><Printer size={14} className="mr-2"/> IMPRIMIR CAIXA</Button>
+                        <Button className="h-10 bg-blue-600 hover:bg-blue-700 font-black text-[9px] uppercase shadow-lg shadow-blue-100">SALVAR</Button>
+                        <button onClick={() => navigate('/pos?tab=tables')} className="w-10 h-10 bg-rose-500 text-white rounded-xl flex items-center justify-center hover:bg-rose-600 transition-all shadow-md active:scale-95"><X size={20} /></button>
+                    </div>
                 </div>
             </header>
 
-            {/* Main Content Area */}
-            <main className="flex-1 flex overflow-hidden p-6 gap-6">
+            {/* MAIN THREE-COLUMN GRID */}
+            <div className="flex-1 flex overflow-hidden p-3 gap-3">
                 
-                {/* Column 1: Items in Account */}
-                <section className="w-1/3 flex flex-col gap-4">
-                    <div className="flex items-center justify-between px-2">
-                        <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><History size={14}/> Itens em Aberto</h2>
-                        <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase text-blue-600" onClick={() => order.items.filter(i => !i.isPaid).forEach(i => addToSelected(i, i.quantity))}>PAGAR TUDO</Button>
+                {/* COLUNA 1: CONSUMO (ESQUERDA) */}
+                <section className="w-[350px] flex flex-col gap-3">
+                    <div className="flex gap-2">
+                        <button onClick={payEverything} className="flex-1 h-12 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase italic transition-all shadow-md">PAGAR TUDO</button>
+                        <button className="flex-1 h-12 bg-blue-400 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase italic transition-all shadow-md">DIVIDIR TUDO</button>
                     </div>
-                    <Card className="flex-1 overflow-y-auto p-0 border-slate-200 bg-white shadow-sm" noPadding>
-                        <div className="divide-y divide-slate-50">
-                            {order.items.filter(i => !i.isPaid).map((item) => {
-                                const inCart = selectedItems.find(si => si.itemId === item.id)?.quantity || 0;
-                                const available = item.quantity - inCart;
+                    
+                    <Card className="flex-1 overflow-hidden flex flex-col bg-white border-slate-300 rounded-[1.5rem] shadow-sm" noPadding>
+                        <div className="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Qtd. Item</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor</span>
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+                            {order.items.filter(i => !i.isPaid).map(item => {
+                                const qtyInPayment = payingItems.find(pi => pi.itemId === item.id)?.quantity || 0;
+                                const remainingQty = item.quantity - qtyInPayment;
 
                                 return (
-                                    <div key={item.id} className={cn("p-4 group transition-colors", available === 0 ? "opacity-40 bg-slate-50" : "hover:bg-slate-50/50")}>
+                                    <div key={item.id} className={cn("p-3 rounded-2xl border transition-all", remainingQty === 0 ? "bg-slate-100 border-transparent opacity-50" : "bg-white border-slate-100 shadow-sm")}>
                                         <div className="flex justify-between items-start mb-2">
-                                            <div className="flex-1">
-                                                <h4 className="text-xs font-black text-slate-900 uppercase italic leading-tight">{item.product.name}</h4>
-                                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">{item.quantity} un x R$ {item.priceAtTime.toFixed(2)}</p>
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <p className="text-[11px] font-black text-slate-900 uppercase italic truncate">{item.product.name}</p>
+                                                <p className="text-[8px] font-bold text-slate-400 mt-0.5">{item.quantity.toFixed(3)} UN x R$ {item.priceAtTime.toFixed(2)}</p>
                                             </div>
-                                            <span className="text-sm font-black text-slate-900 italic">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
+                                            <span className="text-xs font-black text-slate-900 italic shrink-0">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
                                         </div>
-                                        {available > 0 && (
-                                            <div className="flex gap-2 mt-3">
-                                                <Button 
-                                                    variant="outline" 
-                                                    className="h-8 flex-1 rounded-lg text-[9px] font-black uppercase border-slate-200 hover:border-blue-500 hover:text-blue-600"
-                                                    onClick={() => addToSelected(item, 1)}
-                                                >
-                                                    <PlusCircle size={12} className="mr-1"/> Adicionar 1
-                                                </Button>
-                                                <Button 
-                                                    variant="outline"
-                                                    className="h-8 flex-1 rounded-lg text-[9px] font-black uppercase border-slate-200 hover:border-blue-500 hover:text-blue-600"
-                                                    onClick={() => addToSelected(item, item.quantity)}
-                                                >
-                                                    Todos
-                                                </Button>
+                                        
+                                        {remainingQty > 0 && (
+                                            <div className="flex gap-1">
+                                                <button onClick={() => addOneToPayment(item)} className="flex-1 h-8 bg-blue-100 text-blue-600 rounded-lg font-black text-[8px] uppercase hover:bg-blue-600 hover:text-white transition-all">ADICIONAR 1</button>
+                                                <button onClick={() => addAllToPayment(item)} className="flex-1 h-8 bg-blue-600 text-white rounded-lg font-black text-[8px] uppercase hover:bg-blue-700 transition-all">ADICIONAR TODOS</button>
                                             </div>
                                         )}
                                     </div>
@@ -289,186 +258,145 @@ const TableCheckout: React.FC = () => {
                     </Card>
                 </section>
 
-                {/* Column 2: Selection & Partial Total */}
-                <section className="w-1/3 flex flex-col gap-4">
-                    <div className="flex items-center justify-between px-2">
-                        <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500"/> Selecionados para Pagar</h2>
-                        <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase text-rose-500" onClick={() => setSelectedItems([])}>LIMPAR</Button>
+                {/* COLUNA 2: PAGAMENTO ATUAL (MEIO) */}
+                <section className="flex-1 flex flex-col gap-3">
+                    <div className="flex gap-3 h-12">
+                        <button onClick={() => setDiscount(prev => prev + 5)} className="flex-1 bg-slate-500 hover:bg-slate-600 text-white rounded-xl font-black text-[10px] uppercase italic transition-all shadow-md">DESCONTO</button>
+                        <button onClick={() => setSurcharge(prev => prev + 5)} className="flex-1 bg-slate-500 hover:bg-slate-600 text-white rounded-xl font-black text-[10px] uppercase italic transition-all shadow-md">ACRÉSCIMO</button>
                     </div>
-                    
-                    <Card className="flex-1 overflow-y-auto p-0 border-slate-200 bg-white shadow-md ring-4 ring-slate-100" noPadding>
-                        {selectedItems.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center p-10 text-center opacity-20">
-                                <DollarSign size={48} strokeWidth={1} className="mb-4" />
-                                <p className="text-[10px] font-black uppercase tracking-widest">Nenhum item selecionado para pagamento parcial</p>
+
+                    <Card className="flex-1 flex flex-col bg-white border-slate-300 rounded-[1.5rem] shadow-lg relative overflow-hidden" noPadding>
+                        <div className="absolute top-0 left-0 w-full h-1 bg-blue-500" />
+                        <div className="p-6 text-center bg-slate-50/50 border-b border-slate-100">
+                            <p className="text-3xl font-black text-slate-900 italic tracking-tighter">R$ {totalWithFees.toFixed(2).replace('.', ',')}</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Valor do Pagamento Atual</p>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+                            <div className="flex justify-between items-center px-2 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2">
+                                <span>Qtd. Item</span>
+                                <span>Valor</span>
                             </div>
-                        ) : (
-                            <div className="divide-y divide-slate-50">
-                                {selectedItems.map((item) => (
-                                    <div key={item.itemId} className="p-4 bg-emerald-50/30">
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex flex-col items-center">
-                                                    <button onClick={() => removeFromSelected(item.itemId, 1)} className="p-1 hover:bg-white rounded-md text-rose-500"><Minus size={14}/></button>
-                                                    <span className="text-xs font-black text-slate-900">{item.quantity}</span>
-                                                    <button onClick={() => addToSelected(order.items.find(i => i.id === item.itemId)!, 1)} className="p-1 hover:bg-white rounded-md text-emerald-500"><Plus size={14}/></button>
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-[10px] font-black text-slate-800 uppercase italic leading-tight">{item.name}</h4>
-                                                    <p className="text-[9px] font-bold text-slate-400">R$ {item.price.toFixed(2)} un</p>
-                                                </div>
+                            
+                            {payingItems.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center opacity-20 grayscale py-20">
+                                    <ShoppingCart size={48} className="mb-4" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest italic text-center">Selecione itens da esquerda<br/>para iniciar o pagamento</p>
+                                </div>
+                            ) : (
+                                payingItems.map(item => (
+                                    <div key={item.itemId} className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between group animate-in slide-in-from-left-2">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex flex-col items-center bg-white rounded-xl p-1 shadow-sm border border-blue-100">
+                                                <span className="text-[11px] font-black text-slate-900">{item.quantity}</span>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-sm font-black text-slate-900 italic">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                                <button onClick={() => removeFromSelected(item.itemId, item.quantity)} className="text-rose-400 hover:text-rose-600"><Trash2 size={16}/></button>
+                                            <div>
+                                                <p className="text-xs font-black text-slate-900 uppercase italic">{item.name}</p>
+                                                <p className="text-[9px] font-bold text-slate-400 italic">Preço Unit: R$ {item.price.toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-black text-slate-900 italic">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => removeOneFromPayment(item.itemId)} className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"><Minus size={14} /></button>
+                                                <button onClick={() => removeAllFromPayment(item.itemId)} className="p-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600"><Trash2 size={14} /></button>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </Card>
-
-                    {/* Fees & Discounts Area */}
-                    <Card className="p-4 border-slate-200 bg-white space-y-3">
-                        <div className="grid grid-cols-2 gap-2">
-                            <button onClick={() => setDiscount(prev => prev + 5)} className="h-10 border border-rose-100 bg-rose-50 rounded-xl text-rose-600 text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-rose-100">
-                                <MinusCircle size={14}/> Desconto R$ 5
-                            </button>
-                            <button onClick={() => setSurcharge(prev => prev + 5)} className="h-10 border border-emerald-100 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-emerald-100">
-                                <PlusCircle size={14}/> Acréscimo R$ 5
-                            </button>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-t border-slate-50">
-                            <span className="text-[10px] font-black uppercase text-slate-400">Subtotal Selecionado</span>
-                            <span className="text-sm font-bold text-slate-600 italic">R$ {subtotalSelected.toFixed(2)}</span>
-                        </div>
-                        {discount > 0 && (
-                            <div className="flex justify-between items-center text-rose-600">
-                                <span className="text-[10px] font-black uppercase">Desconto Total</span>
-                                <span className="text-sm font-bold italic">- R$ {discount.toFixed(2)}</span>
-                            </div>
-                        )}
-                        {surcharge > 0 && (
-                            <div className="flex justify-between items-center text-emerald-600">
-                                <span className="text-[10px] font-black uppercase">Acréscimo Total</span>
-                                <span className="text-sm font-bold italic">+ R$ {surcharge.toFixed(2)}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between items-center pt-2 border-t border-slate-900/10">
-                            <span className="text-xs font-black uppercase text-slate-900">Total a Pagar</span>
-                            <span className="text-xl font-black text-slate-900 italic">R$ {totalSelected.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                    </Card>
-                </section>
-
-                {/* Column 3: Payment Methods & Finalization */}
-                <section className="w-1/3 flex flex-col gap-4">
-                    <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 px-2 flex items-center gap-2"><CreditCard size={14}/> Métodos de Pagamento</h2>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                        {paymentMethods.map((m) => (
-                            <button 
-                                key={m.id}
-                                onClick={() => setSelectedMethod(m.name)}
-                                className={cn(
-                                    "h-16 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all",
-                                    selectedMethod === m.name 
-                                        ? "border-orange-500 bg-orange-50 text-orange-600 shadow-lg shadow-orange-100" 
-                                        : "border-white bg-white text-slate-400 hover:border-slate-200 shadow-sm"
-                                )}
-                            >
-                                {m.type === 'CASH' && <Banknote size={20}/>}
-                                {m.type === 'PIX' && <QrCode size={20}/>}
-                                {(m.type === 'CREDIT_CARD' || m.type === 'DEBIT_CARD') && <CreditCard size={20}/>}
-                                {m.type === 'VOUCHER' && <Percent size={20}/>}
-                                <span className="text-[9px] font-black uppercase tracking-widest">{m.name}</span>
-                            </button>
-                        ))}
-                    </div>
-
-                    <Card className="p-6 border-slate-200 bg-white space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor a Adicionar</label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
-                                <input 
-                                    type="text" 
-                                    value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
-                                    placeholder={remainingToPay.toFixed(2)}
-                                    className="w-full h-14 pl-12 pr-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-xl font-black text-slate-900 focus:border-orange-500 outline-none transition-all"
-                                />
-                            </div>
+                                ))
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2">
-                            {[10, 20, 50].map(val => (
-                                <button key={val} onClick={() => setInputValue(val.toFixed(2))} className="h-10 bg-slate-100 hover:bg-slate-200 rounded-xl text-[10px] font-black text-slate-600">R$ {val}</button>
-                            ))}
-                        </div>
-
-                        <Button 
-                            fullWidth 
-                            className="h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-100 italic"
-                            onClick={handleAddPayment}
-                        >
-                            ADICIONAR PAGAMENTO
-                        </Button>
-                    </Card>
-
-                    <Card className="flex-1 overflow-y-auto p-4 border-slate-200 bg-white/50" noPadding>
-                        <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4 px-2">Pagamentos Adicionados</h4>
-                        <div className="space-y-2">
-                            {currentPayments.map((p, i) => (
-                                <div key={i} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100">
-                                    <span className="text-[10px] font-black text-slate-900 uppercase italic">{p.method}</span>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs font-black text-emerald-600 italic">R$ {p.amount.toFixed(2)}</span>
-                                        <button onClick={() => setCurrentPayments(currentPayments.filter((_, idx) => idx !== i))} className="text-rose-400 hover:text-rose-600"><Trash2 size={14}/></button>
+                        {/* Pagamentos já registrados nesta transação */}
+                        <div className="p-4 bg-slate-100 border-t border-slate-200">
+                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 italic">Pagamentos inseridos</h4>
+                            <div className="space-y-2">
+                                {currentPayments.map((p, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm animate-in zoom-in-95">
+                                        <span className="text-[10px] font-black text-slate-900 uppercase italic">{p.method}</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-black text-emerald-600 italic">R$ {p.amount.toFixed(2)}</span>
+                                            <button onClick={() => setCurrentPayments(currentPayments.filter((_, i) => i !== idx))} className="text-rose-400 hover:text-rose-600"><X size={14}/></button>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
+                                {currentPayments.length === 0 && <p className="text-center py-4 text-[9px] font-bold text-slate-300 uppercase">Nenhum pagamento adicionado</p>}
+                            </div>
+                        </div>
+                    </Card>
+                </section>
+
+                {/* COLUNA 3: METODOS E VALORES (DIREITA) */}
+                <section className="w-[320px] flex flex-col gap-3">
+                    <Card className="flex-1 flex flex-col bg-white border-slate-300 rounded-[1.5rem] shadow-sm overflow-hidden" noPadding>
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                            {paymentMethods.map(m => (
+                                <button 
+                                    key={m.id}
+                                    onClick={() => setSelectedMethodId(m.id)}
+                                    className={cn(
+                                        "w-full h-14 rounded-2xl border-2 flex items-center gap-4 px-4 transition-all group",
+                                        selectedMethodId === m.id 
+                                            ? "border-blue-500 bg-blue-50 text-blue-600 shadow-md shadow-blue-50" 
+                                            : "border-slate-100 bg-white text-slate-400 hover:border-slate-200"
+                                    )}
+                                >
+                                    <div className={cn("p-2 rounded-xl group-hover:scale-110 transition-transform", selectedMethodId === m.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400")}>
+                                        {m.type === 'CASH' ? <Banknote size={18}/> : m.type === 'PIX' ? <QrCode size={18}/> : <CreditCard size={18}/>}
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{m.name}</span>
+                                </button>
                             ))}
-                            {currentPayments.length === 0 && (
-                                <p className="text-center py-10 text-[10px] font-bold text-slate-300 uppercase tracking-widest">Nenhum pagamento</p>
-                            )}
+                            <button className="w-full h-10 bg-white border border-slate-200 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50">EXIBIR MAIS</button>
+                        </div>
+
+                        <div className="p-5 border-t border-slate-100 bg-slate-50 space-y-4">
+                            <div>
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1 leading-none block mb-2">Valor a pagar</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400">R$</span>
+                                    <input 
+                                        ref={inputRef}
+                                        type="text" 
+                                        value={inputValue}
+                                        onChange={e => setInputValue(e.target.value)}
+                                        className="w-full h-16 pl-12 pr-4 bg-white border-2 border-slate-200 rounded-2xl text-2xl font-black text-slate-900 focus:border-blue-500 outline-none transition-all shadow-inner"
+                                        placeholder="0,00"
+                                    />
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={handleAddPayment}
+                                className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase italic tracking-widest transition-all shadow-lg shadow-emerald-100 active:scale-95"
+                            >
+                                ADICIONAR PAGAMENTO
+                            </button>
                         </div>
                     </Card>
 
-                    {/* Final Action Buttons */}
-                    <div className="grid grid-cols-2 gap-4 mt-auto">
-                        <Button 
-                            variant="outline" 
-                            className="h-16 rounded-2xl border-slate-200 text-slate-500 bg-white flex flex-col items-center justify-center gap-1 group"
-                            onClick={() => navigate('/tables')}
-                        >
-                            <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-rose-500">Voltar</span>
-                        </Button>
-                        <Button 
-                            className={cn(
-                                "h-16 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 italic",
-                                remainingToPay === 0 && amountPaid > 0 ? "bg-slate-900 text-white" : "bg-orange-500 text-white"
-                            )}
-                            onClick={remainingToPay === 0 ? handleFinalizePartial : undefined}
-                            disabled={remainingToPay > 0}
-                        >
-                            <span className="text-xs font-black uppercase tracking-widest">Confirmar Pagamento</span>
-                            <span className="text-[9px] opacity-80 font-bold tracking-widest">R$ {amountPaid.toFixed(2)}</span>
-                        </Button>
-                    </div>
-
-                    {order.items.every(i => i.isPaid) && (
-                        <Button 
-                            fullWidth 
-                            variant="outline"
-                            className="h-14 rounded-2xl border-emerald-500 text-emerald-600 bg-emerald-50 mt-2 font-black uppercase italic"
-                            onClick={handleCloseTable}
-                        >
-                            <CheckCircle2 size={18} className="mr-2"/> FINALIZAR E LIBERAR MESA
-                        </Button>
-                    )}
+                    <Button 
+                        onClick={handleConfirmPayment}
+                        disabled={remainingToPay > 0 || currentPayments.length === 0}
+                        className={cn(
+                            "h-20 rounded-[1.5rem] font-black text-sm uppercase italic tracking-widest shadow-xl transition-all active:scale-95",
+                            remainingToPay === 0 && currentPayments.length > 0 ? "bg-slate-900 text-white" : "bg-slate-400 text-white opacity-50"
+                        )}
+                    >
+                        CONFIRMAR RECEBIMENTO
+                    </Button>
                 </section>
-            </main>
+            </div>
+
+            {/* BARRA DE RODAPÉ (ACOES GERAIS) */}
+            <footer className="h-16 bg-white border-t border-slate-300 flex items-center justify-between px-6 shrink-0">
+                <Button variant="outline" className="h-11 px-8 rounded-xl border-slate-300 bg-slate-50 font-black text-[10px] uppercase italic text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all" onClick={() => navigate('/pos?tab=tables')}>
+                    VOLTAR
+                </Button>
+                <div className="flex gap-3">
+                    <Button className="h-11 px-8 rounded-xl bg-blue-500 hover:bg-blue-600 font-black text-[10px] uppercase italic tracking-widest shadow-lg">PAGAMENTOS REALIZADOS ({order.payments?.length || 0})</Button>
+                </div>
+            </footer>
         </div>
     );
 };
