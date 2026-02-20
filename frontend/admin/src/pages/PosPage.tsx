@@ -306,20 +306,12 @@ const PosPage: React.FC = () => {
 
     // --- LÓGICA DE PEDIDOS E MESAS ---
     const handleTableClick = (table: TableSummary) => {
-        if (table.status === 'free') {
-            setSelectedTable(table.number.toString());
-            setOrderMode('table');
-            setActiveTab('pos');
-        } else {
-            // Se a mesa estiver ocupada, vai para a nova tela de checkout
-            const orderId = table.tabs?.[0]?.orderId;
-            if (orderId) {
-                navigate(`/pos/checkout/${orderId}`);
-            } else {
-                // Fallback para o modal antigo se não houver orderId (segurança)
-                setViewingTable(table);
-                setActiveModal('table_details');
-            }
+        setSelectedTable(table.number.toString());
+        setOrderMode('table');
+        setActiveTab('pos');
+        
+        if (table.status !== 'free') {
+            toast.info(`Mesa ${table.number} selecionada. Itens adicionados serão somados à conta atual.`);
         }
     };
 
@@ -472,14 +464,50 @@ const PosPage: React.FC = () => {
             <aside className="w-[380px] bg-white border-r border-slate-200 flex flex-col shadow-2xl z-20">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-black text-slate-900 uppercase italic tracking-tighter leading-none">
-                            {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Balcão'}
-                        </h3>
+                        <div className="flex flex-col">
+                            <h3 className={cn(
+                                "text-lg font-black uppercase italic tracking-tighter leading-none",
+                                orderMode === 'table' ? "text-emerald-600" : "text-blue-600"
+                            )}>
+                                {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Balcão / Entrega'}
+                            </h3>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                {orderMode === 'table' ? 'Lançamento em Mesa' : 'Venda Direta'}
+                            </span>
+                        </div>
                         <div className="flex bg-slate-200/50 p-0.5 rounded-lg">
-                            <button onClick={() => setOrderMode('table')} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'table' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Utensils size={12} className="inline mr-1"/>Mesa</button>
-                            <button onClick={() => setOrderMode('delivery')} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'delivery' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}><Truck size={12} className="inline mr-1"/>Balcão</button>
+                            <button onClick={() => { setOrderMode('table'); setSelectedTable(''); }} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}><Utensils size={12} className="inline mr-1"/>Mesa</button>
+                            <button onClick={() => { setOrderMode('delivery'); setSelectedTable(''); }} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}><Truck size={12} className="inline mr-1"/>Balcão</button>
                         </div>
                     </div>
+
+                    {orderMode === 'table' && selectedTable && (
+                        (() => {
+                            const tableInfo = tablesSummary.find(t => t.number === parseInt(selectedTable));
+                            if (tableInfo && tableInfo.status !== 'free') {
+                                return (
+                                    <div className="mb-4 p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex items-center justify-between animate-in zoom-in-95">
+                                        <div>
+                                            <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Conta em Aberto</p>
+                                            <p className="text-sm font-black text-emerald-900 italic">R$ {tableInfo.totalAmount.toFixed(2)}</p>
+                                        </div>
+                                        <Button 
+                                            size="sm" 
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-[9px] font-black uppercase italic h-9 px-4 rounded-xl shadow-lg shadow-emerald-200"
+                                            onClick={() => {
+                                                const orderId = tableInfo.tabs?.[0]?.orderId;
+                                                if (orderId) navigate(`/pos/checkout/${orderId}`);
+                                                else toast.error("Pedido não localizado.");
+                                            }}
+                                        >
+                                            FECHAR MESA
+                                        </Button>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()
+                    )}
 
                     {orderMode === 'table' ? (
                         <div className="space-y-2">
