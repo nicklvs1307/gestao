@@ -5,7 +5,8 @@ import {
     ChevronLeft, Users, Clock, DollarSign, ArrowRightLeft, 
     Plus, Minus, Trash2, CreditCard, Banknote, QrCode, 
     Percent, PlusCircle, CheckCircle2, Loader2, Printer, 
-    History, X, MinusCircle, ChevronDown, User, MoveHorizontal
+    History, X, MinusCircle, ChevronDown, User, MoveHorizontal,
+    ShoppingCart
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
