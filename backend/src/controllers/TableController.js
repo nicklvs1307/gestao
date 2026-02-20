@@ -29,6 +29,64 @@ class TableController {
     res.json(summary);
   });
 
+  // POST /api/tables/partial-payment-simple
+  partialPaymentSimple = asyncHandler(async (req, res) => {
+    const { orderId, itemIds, payments, discount, surcharge } = req.body;
+    const restaurantId = req.restaurantId;
+
+    if (!orderId || !itemIds) {
+        res.status(400);
+        throw new Error("Dados incompletos para pagamento parcial.");
+    }
+
+    await prisma.$transaction(async (tx) => {
+        // 1. Marcar itens como pagos
+        await tx.orderItem.updateMany({
+            where: { id: { in: itemIds }, orderId: orderId },
+            data: { isPaid: true }
+        });
+
+        // 2. Registrar os pagamentos
+        for (const p of payments) {
+            await tx.payment.create({
+                data: { orderId, amount: p.amount, method: p.method }
+            });
+        }
+
+        // 3. Registrar no financeiro (Receita)
+        const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
+        const openSession = await tx.cashierSession.findFirst({
+            where: { restaurantId, status: 'OPEN' }
+        });
+
+        await tx.financialTransaction.create({
+            data: {
+                restaurantId,
+                cashierId: openSession?.id || null,
+                orderId,
+                description: `Pagto Parcial Mesa (Simplificado)`,
+                amount: totalPaid,
+                type: 'INCOME',
+                status: 'PAID',
+                dueDate: new Date(),
+                paymentDate: new Date(),
+                paymentMethod: payments[0]?.method || 'cash'
+            }
+        });
+
+        // 4. Verificar se o pedido foi totalmente pago para finalizar
+        const allItems = await tx.orderItem.findMany({ where: { orderId } });
+        const allPaid = allItems.every(i => i.isPaid);
+        
+        if (allPaid) {
+            // Se tudo pago, podemos mudar o status do pedido para COMPLETED se desejar, 
+            // mas aqui apenas mantemos a integridade dos itens.
+        }
+    });
+
+    res.json({ success: true });
+  });
+
   // POST /api/tables/:tableId/checkout
   checkoutTable = asyncHandler(async (req, res) => {
     const { tableId } = req.params;
