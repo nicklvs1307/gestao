@@ -17,7 +17,7 @@ import {
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import type { Product, Category, CartItem, TableSummary, PaymentMethod } from '../types';
 import { Card } from '../components/ui/Card';
@@ -26,6 +26,7 @@ import { Input } from '../components/ui/Input';
 
 const PosPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     
     // --- ESTADOS DE DADOS ---
     const [products, setProducts] = useState<Product[]>([]);
@@ -43,6 +44,15 @@ const PosPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [activeTab, setActiveTab] = useState<'pos' | 'tables'>('pos');
+
+    // Verifica se deve abrir diretamente nas mesas
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const tab = params.get('tab');
+        if (tab === 'tables') {
+            setActiveTab('tables');
+        }
+    }, [location.search]);
     
     // --- ESTADOS DE VENDA ATUAL ---
     const [cart, setCart] = useState<CartItem[]>([]);
