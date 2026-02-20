@@ -55,6 +55,11 @@ export const createOrder = async (orderData: any) => {
   return response.data;
 };
 
+export const addItemsToOrder = async (orderId: string, items: any[]) => {
+    const response = await apiClient.post(`/admin/orders/${orderId}/items`, { items });
+    return response.data;
+};
+
 export const markOrderAsPrinted = async (orderId: string) => {
   const response = await apiClient.patch(`/admin/orders/${orderId}/printed`);
   return response.data;
