@@ -178,7 +178,7 @@ const OrderManagement: React.FC = () => {
                 ].map(seg => (
                     <button 
                         key={seg.id}
-                        onClick={() => seg.id === 'TABLE' ? navigate('/tables') : setActiveSegment(seg.id as any)}
+                        onClick={() => seg.id === 'TABLE' ? navigate('/pos') : setActiveSegment(seg.id as any)}
                         className={cn(
                             "px-3 py-1.5 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap",
                             activeSegment === seg.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
