@@ -1,26 +1,56 @@
-index-DmBVILVt.js:8654 [MAPS] Geocodificando endereço: Rua Vitória Varaldi Buzato, 79 - Vila Buzato, Andradas/
-index-DmBVILVt.js:8654 [MAPS] Erro na requisição de geocodificação: TypeError: Failed to fetch
-    at ve (index-DmBVILVt.js:8654:408089)
-    at onClick (index-DmBVILVt.js:8654:419225)
-    at Object.Hn (index-DmBVILVt.js:37:9853)
-    at Di (index-DmBVILVt.js:37:10013)
-    at Ri (index-DmBVILVt.js:37:10073)
-    at ad (index-DmBVILVt.js:37:31502)
-    at id (index-DmBVILVt.js:37:31946)
-    at index-DmBVILVt.js:37:37174
-    at JO (index-DmBVILVt.js:40:37817)
-    at At (index-DmBVILVt.js:37:8986)
-ve @ index-DmBVILVt.js:8654
-index-DmBVILVt.js:8654 [MAPS] Geocodificando endereço: Rua Vitória Varaldi Buzato, 79 - Vila Buzato, Andradas/
-index-DmBVILVt.js:8654 [MAPS] Erro na requisição de geocodificação: TypeError: Failed to fetch
-    at ve (index-DmBVILVt.js:8654:408089)
-    at onClick (index-DmBVILVt.js:8654:413636)
-    at Object.Hn (index-DmBVILVt.js:37:9853)
-    at Di (index-DmBVILVt.js:37:10013)
-    at Ri (index-DmBVILVt.js:37:10073)
-    at ad (index-DmBVILVt.js:37:31502)
-    at id (index-DmBVILVt.js:37:31946)
-    at index-DmBVILVt.js:37:37174
-    at JO (index-DmBVILVt.js:40:37817)
-    at At (index-DmBVILVt.js:37:8986)
-ve @ index-DmBVILVt.js:8654
+index-CNpwLxDP.js:8654 [MAPS] Usando coordenadas fixas do restaurante.
+index-CNpwLxDP.js:8654 [MAPS] Tentando geocodificar: Rua Vitória Buzato, 79
+index-CNpwLxDP.js:8654 [MAPS] Erro na requisição ORS: TypeError: Failed to fetch
+    at ve (index-CNpwLxDP.js:8654:408247)
+    at onClick (index-CNpwLxDP.js:8654:420285)
+    at Object.Hn (index-CNpwLxDP.js:37:9850)
+    at Di (index-CNpwLxDP.js:37:10010)
+    at Ri (index-CNpwLxDP.js:37:10070)
+    at ad (index-CNpwLxDP.js:37:31499)
+    at id (index-CNpwLxDP.js:37:31943)
+    at index-CNpwLxDP.js:37:37171
+    at JO (index-CNpwLxDP.js:40:37817)
+    at At (index-CNpwLxDP.js:37:8983)
+ve @ index-CNpwLxDP.js:8654
+await in ve
+onClick @ index-CNpwLxDP.js:8654
+Hn @ index-CNpwLxDP.js:37
+Di @ index-CNpwLxDP.js:37
+Ri @ index-CNpwLxDP.js:37
+ad @ index-CNpwLxDP.js:37
+id @ index-CNpwLxDP.js:37
+(anônimo) @ index-CNpwLxDP.js:37
+JO @ index-CNpwLxDP.js:40
+At @ index-CNpwLxDP.js:37
+h @ index-CNpwLxDP.js:37
+Cl @ index-CNpwLxDP.js:37
+qd @ index-CNpwLxDP.js:37
+index-CNpwLxDP.js:8654 [MAPS] Tentando fallback Nominatim: Rua Vitória Buzato, 79
+index-CNpwLxDP.js:8654 [MAPS] Coordenadas encontradas (OSM): -22.0629993, -46.5667037
+index-CNpwLxDP.js:8654 [MAPS] Inicializando mapa Leaflet (Primeira vez)...
+index-CNpwLxDP.js:8654 [MAPS] Calculando rota entre -22.063677866992666,-46.56747203129584 e -22.0629993,-46.5667037
+index-CNpwLxDP.js:8654 [MAPS] Erro ao buscar rota: TypeError: Failed to fetch
+    at ce (index-CNpwLxDP.js:8654:409530)
+    at onClick (index-CNpwLxDP.js:8654:414550)
+    at Object.Hn (index-CNpwLxDP.js:37:9850)
+    at Di (index-CNpwLxDP.js:37:10010)
+    at Ri (index-CNpwLxDP.js:37:10070)
+    at ad (index-CNpwLxDP.js:37:31499)
+    at id (index-CNpwLxDP.js:37:31943)
+    at index-CNpwLxDP.js:37:37171
+    at JO (index-CNpwLxDP.js:40:37817)
+    at At (index-CNpwLxDP.js:37:8983)
+ce @ index-CNpwLxDP.js:8654
+await in ce
+onClick @ index-CNpwLxDP.js:8654
+Hn @ index-CNpwLxDP.js:37
+Di @ index-CNpwLxDP.js:37
+Ri @ index-CNpwLxDP.js:37
+ad @ index-CNpwLxDP.js:37
+id @ index-CNpwLxDP.js:37
+(anônimo) @ index-CNpwLxDP.js:37
+JO @ index-CNpwLxDP.js:40
+At @ index-CNpwLxDP.js:37
+h @ index-CNpwLxDP.js:37
+Cl @ index-CNpwLxDP.js:37
+qd @ index-CNpwLxDP.js:37

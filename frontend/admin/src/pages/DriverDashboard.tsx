@@ -308,23 +308,52 @@ const DriverDashboard: React.FC = () => {
 
     const fetchRoute = async (start: [number, number], end: [number, number]) => {
         const apiKey = import.meta.env.VITE_OPENROUTE_KEY;
-        if (!apiKey) return;
         setIsRouting(true);
         try {
             console.log(`[MAPS] Calculando rota entre ${start} e ${end}`);
-            const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.features?.length > 0) {
-                const coords = data.features[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
-                setRoute(coords);
-                setIsMapExpanded(true);
-                console.log("[MAPS] Rota traçada com sucesso!");
-            } else {
-                console.warn("[MAPS] Nenhuma rota encontrada entre os pontos.");
+            
+            // 1. Tentar OpenRouteService (se tiver chave)
+            if (apiKey) {
+                try {
+                    const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}`;
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.features?.length > 0) {
+                            const coords = data.features[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+                            setRoute(coords);
+                            setIsMapExpanded(true);
+                            console.log("[MAPS] Rota traçada com sucesso (ORS)!");
+                            return;
+                        }
+                    } else {
+                        console.warn(`[MAPS] ORS retornou status ${res.status}. Tentando fallback...`);
+                    }
+                } catch (e) {
+                    console.warn("[MAPS] Erro de rede no ORS. Tentando fallback OSRM...");
+                }
             }
+
+            // 2. Fallback para OSRM (Gratuito, sem chave)
+            console.log(`[MAPS] Tentando fallback OSRM: ${start[1]},${start[0]} para ${end[1]},${end[0]}`);
+            const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+            const osrmRes = await fetch(osrmUrl);
+            
+            if (osrmRes.ok) {
+                const osrmData = await osrmRes.json();
+                if (osrmData.routes?.length > 0) {
+                    const coords = osrmData.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+                    setRoute(coords);
+                    setIsMapExpanded(true);
+                    console.log("[MAPS] Rota traçada com sucesso (OSRM)!");
+                    return;
+                }
+            }
+            
+            console.warn("[MAPS] Nenhum provedor de rota conseguiu processar o pedido.");
+            toast.error("Não foi possível traçar a rota.");
         } catch (e) { 
-            console.error("[MAPS] Erro ao buscar rota:", e);
+            console.error("[MAPS] Erro fatal ao buscar rota:", e);
             toast.error("Erro ao calcular rota."); 
         }
         finally { setIsRouting(false); }
