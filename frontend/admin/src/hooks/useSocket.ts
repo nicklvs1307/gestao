@@ -14,8 +14,12 @@ export const useSocket = () => {
 
     // Conecta ao servidor socket
     const socket = io(window.location.origin, {
-      query: { restaurantId, token },
-      transports: ['websocket'],
+      query: { 
+        restaurantId, 
+        token,
+        timestamp: new Date().getTime() // Cache busting for some proxies
+      },
+      transports: ['websocket', 'polling'], // Adicionado polling como fallback
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,

@@ -58,7 +58,10 @@ interface Message {
   timestamp: string;
 }
 
+import { useSocket } from '../hooks/useSocket';
+
 const WhatsAppChat: React.FC = () => {
+  const { on, off } = useSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedChat, setSelectedChat] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -89,9 +92,7 @@ const WhatsAppChat: React.FC = () => {
   useEffect(() => {
     fetchConversations();
 
-    const socket = io(SOCKET_URL, { query: { restaurantId } });
-
-    socket.on('whatsapp_message', (data) => {
+    on('whatsapp_message', (data: any) => {
       console.log('Nova mensagem via socket:', data);
       
       // Atualiza lista de conversas sem mostrar loading (silencioso)
@@ -122,8 +123,8 @@ const WhatsAppChat: React.FC = () => {
       }
     });
 
-    return () => { socket.disconnect(); };
-  }, [restaurantId]);
+    return () => { off('whatsapp_message'); };
+  }, [on, off]);
 
   useEffect(() => {
     if (scrollRef.current) {
