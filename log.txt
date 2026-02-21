@@ -1,4 +1,26 @@
- 3 warnings found (use docker --debug to expand):
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 8)
- - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 7)
+index-DmBVILVt.js:8654 [MAPS] Geocodificando endereço: Rua Vitória Varaldi Buzato, 79 - Vila Buzato, Andradas/
+index-DmBVILVt.js:8654 [MAPS] Erro na requisição de geocodificação: TypeError: Failed to fetch
+    at ve (index-DmBVILVt.js:8654:408089)
+    at onClick (index-DmBVILVt.js:8654:419225)
+    at Object.Hn (index-DmBVILVt.js:37:9853)
+    at Di (index-DmBVILVt.js:37:10013)
+    at Ri (index-DmBVILVt.js:37:10073)
+    at ad (index-DmBVILVt.js:37:31502)
+    at id (index-DmBVILVt.js:37:31946)
+    at index-DmBVILVt.js:37:37174
+    at JO (index-DmBVILVt.js:40:37817)
+    at At (index-DmBVILVt.js:37:8986)
+ve @ index-DmBVILVt.js:8654
+index-DmBVILVt.js:8654 [MAPS] Geocodificando endereço: Rua Vitória Varaldi Buzato, 79 - Vila Buzato, Andradas/
+index-DmBVILVt.js:8654 [MAPS] Erro na requisição de geocodificação: TypeError: Failed to fetch
+    at ve (index-DmBVILVt.js:8654:408089)
+    at onClick (index-DmBVILVt.js:8654:413636)
+    at Object.Hn (index-DmBVILVt.js:37:9853)
+    at Di (index-DmBVILVt.js:37:10013)
+    at Ri (index-DmBVILVt.js:37:10073)
+    at ad (index-DmBVILVt.js:37:31502)
+    at id (index-DmBVILVt.js:37:31946)
+    at index-DmBVILVt.js:37:37174
+    at JO (index-DmBVILVt.js:40:37817)
+    at At (index-DmBVILVt.js:37:8986)
+ve @ index-DmBVILVt.js:8654

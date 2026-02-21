@@ -42,25 +42,20 @@ const DeliveryMap: React.FC<{
 }> = ({ orderId, customerCoords, restaurantCoords, currentLocation, route }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const leafletInstance = useRef<L.Map | null>(null);
+    const markersRef = useRef<{
+        restaurant?: L.Marker;
+        customer?: L.Marker;
+        driver?: L.Marker;
+    }>({});
     const polylineRef = useRef<L.Polyline | null>(null);
 
+    // 1. Inicialização Única do Mapa
     useEffect(() => {
-        if (!mapRef.current) return;
+        if (!mapRef.current || leafletInstance.current) return;
         
-        console.log("[MAPS] Inicializando mapa Leaflet...");
-        console.log("[MAPS] Restaurant Coords:", restaurantCoords);
-        console.log("[MAPS] Customer Coords:", customerCoords);
-        console.log("[MAPS] Driver Coords:", currentLocation);
-
-        // Destruir instância anterior se existir
-        if (leafletInstance.current) {
-            leafletInstance.current.remove();
-            leafletInstance.current = null;
-        }
-
+        console.log("[MAPS] Inicializando mapa Leaflet (Primeira vez)...");
         const center = currentLocation || restaurantCoords || [-23.5505, -46.6333];
 
-        // Inicializar Novo Mapa
         const map = L.map(mapRef.current, {
             zoomControl: false,
             attributionControl: false
@@ -71,6 +66,19 @@ const DeliveryMap: React.FC<{
         }).addTo(map);
 
         leafletInstance.current = map;
+
+        return () => {
+            if (leafletInstance.current) {
+                leafletInstance.current.remove();
+                leafletInstance.current = null;
+            }
+        };
+    }, []); // Roda apenas uma vez
+
+    // 2. Atualização de Marcadores e Rota (Sem destruir o mapa)
+    useEffect(() => {
+        const map = leafletInstance.current;
+        if (!map) return;
 
         const restaurantIcon = L.divIcon({
             html: `<div class="bg-slate-900 p-2 rounded-full border-2 border-white shadow-lg text-white flex items-center justify-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>`,
@@ -87,11 +95,35 @@ const DeliveryMap: React.FC<{
             className: '', iconSize: [32, 32], iconAnchor: [16, 16]
         });
 
-        if (restaurantCoords) L.marker(restaurantCoords, { icon: restaurantIcon }).addTo(map);
-        if (customerCoords) L.marker(customerCoords, { icon: customerIcon }).addTo(map);
-        if (currentLocation) {
-            L.marker(currentLocation, { icon: driverIcon }).addTo(map);
+        // Atualiza Restaurante
+        if (restaurantCoords) {
+            if (markersRef.current.restaurant) {
+                markersRef.current.restaurant.setLatLng(restaurantCoords);
+            } else {
+                markersRef.current.restaurant = L.marker(restaurantCoords, { icon: restaurantIcon }).addTo(map);
+            }
         }
+
+        // Atualiza Cliente
+        if (customerCoords) {
+            if (markersRef.current.customer) {
+                markersRef.current.customer.setLatLng(customerCoords);
+            } else {
+                markersRef.current.customer = L.marker(customerCoords, { icon: customerIcon }).addTo(map);
+            }
+        }
+
+        // Atualiza Entregador
+        if (currentLocation) {
+            if (markersRef.current.driver) {
+                markersRef.current.driver.setLatLng(currentLocation);
+            } else {
+                markersRef.current.driver = L.marker(currentLocation, { icon: driverIcon }).addTo(map);
+            }
+        }
+
+        // Atualiza Rota
+        if (polylineRef.current) map.removeLayer(polylineRef.current);
         
         if (route && route.length > 0) {
             polylineRef.current = L.polyline(route, { color: '#f97316', weight: 6, opacity: 0.8, lineJoin: 'round' }).addTo(map);
@@ -108,14 +140,7 @@ const DeliveryMap: React.FC<{
             }
         }
         
-        setTimeout(() => { map.invalidateSize(); }, 200);
-
-        return () => {
-            if (leafletInstance.current) {
-                leafletInstance.current.remove();
-                leafletInstance.current = null;
-            }
-        };
+        map.invalidateSize();
     }, [orderId, customerCoords, restaurantCoords, currentLocation, route]);
 
     return <div ref={mapRef} className="w-full h-full min-h-[300px] z-0" />;
@@ -137,7 +162,7 @@ const DriverDashboard: React.FC = () => {
     // Geolocation & Routing
     const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
     const [customerCoords, setCustomerCoords] = useState<[number, number] | null>(null);
-    const [restaurantCoords, setRestaurantCoords] = useState<[number, number]>([-23.5505, -46.6333]);
+    const [restaurantCoords, setRestaurantCoords] = useState<[number, number] | null>(null);
     const [route, setRoute] = useState<[number, number][]>([]);
     
     const [isGeocoding, setIsGeocoding] = useState(false);
@@ -194,8 +219,8 @@ const DriverDashboard: React.FC = () => {
 
             // Pega endereço da loja e prioriza coordenadas se existirem
             const settingsRes = await api.get('/settings');
-            if (settingsRes.data?.settings) {
-                const s = settingsRes.data.settings;
+            if (settingsRes.data) {
+                const s = settingsRes.data;
                 if (s.latitude && s.longitude) {
                     console.log("[MAPS] Usando coordenadas fixas do restaurante.");
                     setRestaurantCoords([s.latitude, s.longitude]);
@@ -224,27 +249,59 @@ const DriverDashboard: React.FC = () => {
 
     const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
         const apiKey = import.meta.env.VITE_OPENROUTE_KEY;
-        if (!apiKey) {
-            console.error("[MAPS] Erro: VITE_OPENROUTE_KEY não configurada no .env");
-            return null;
-        }
         if (!address || address === 'Retirada no Balcão') return null;
         
+        setIsGeocoding(true);
+        // Limpeza básica do endereço (remove barras finais e espaços extras)
+        const cleanAddress = address.replace(/\/+$/, '').trim();
+
         try {
-            console.log(`[MAPS] Geocodificando endereço: ${address}`);
-            const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&boundary.country=BR&size=1`;
-            const res = await fetch(url);
-            const data = await res.json();
+            console.log(`[MAPS] Tentando geocodificar: ${cleanAddress}`);
             
-            if (data.features?.length > 0) { 
-                const [lon, lat] = data.features[0].geometry.coordinates; 
-                console.log(`[MAPS] Coordenadas encontradas: ${lat}, ${lon}`);
-                return [lat, lon]; 
+            // 1. Tentar OpenRouteService (se tiver chave)
+            if (apiKey) {
+                try {
+                    const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(cleanAddress)}&boundary.country=BR&size=1`;
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.features?.length > 0) { 
+                            const [lon, lat] = data.features[0].geometry.coordinates; 
+                            console.log(`[MAPS] Coordenadas encontradas (ORS): ${lat}, ${lon}`);
+                            return [lat, lon]; 
+                        }
+                    } else {
+                        console.warn(`[MAPS] ORS falhou (Status: ${res.status}). Tentando fallback...`);
+                    }
+                } catch (e) {
+                    console.error("[MAPS] Erro na requisição ORS:", e);
+                }
             } else {
-                console.warn(`[MAPS] Nenhum resultado para o endereço: ${address}`);
+                console.warn("[MAPS] VITE_OPENROUTE_KEY não configurada. Usando fallback OSM.");
             }
+
+            // 2. Fallback para Nominatim (OpenStreetMap) - Gratuito, sem chave
+            console.log(`[MAPS] Tentando fallback Nominatim: ${cleanAddress}`);
+            const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1&countrycodes=br`;
+            const osmRes = await fetch(osmUrl, {
+                headers: { 'Accept-Language': 'pt-BR' }
+            });
+            
+            if (osmRes.ok) {
+                const osmData = await osmRes.json();
+                if (osmData && osmData.length > 0) {
+                    const lat = parseFloat(osmData[0].lat);
+                    const lon = parseFloat(osmData[0].lon);
+                    console.log(`[MAPS] Coordenadas encontradas (OSM): ${lat}, ${lon}`);
+                    return [lat, lon];
+                }
+            }
+            
+            console.warn(`[MAPS] Nenhum resultado para o endereço: ${cleanAddress}`);
         } catch (e) { 
-            console.error("[MAPS] Erro na requisição de geocodificação:", e); 
+            console.error("[MAPS] Erro fatal na geocodificação:", e); 
+        } finally {
+            setIsGeocoding(false);
         }
         return null;
     };
@@ -298,13 +355,16 @@ const DriverDashboard: React.FC = () => {
         try {
             const validWithCoords = await Promise.all(pending.map(async o => {
                 const c = await geocodeAddress(o.deliveryOrder?.address);
-                return c ? { ...o, coords: c } : null;
+                return c ? { ...o, coords: c } : { ...o, coords: null };
             }));
-            const filtered = validWithCoords.filter(o => o !== null) as any[];
             
-            let current = currentLocation || restaurantCoords;
+            const hasCoords = validWithCoords.filter(o => o.coords !== null);
+            const noCoords = validWithCoords.filter(o => o.coords === null);
+            
+            let current = currentLocation || restaurantCoords || [-23.5505, -46.6333];
             const result: any[] = [];
-            const pool = [...filtered];
+            const pool = [...hasCoords];
+            
             while(pool.length > 0) {
                 pool.sort((a, b) => {
                     const distA = Math.sqrt(Math.pow(a.coords[0]-current[0], 2) + Math.pow(a.coords[1]-current[1], 2));
@@ -315,7 +375,9 @@ const DriverDashboard: React.FC = () => {
                 result.push(next);
                 current = next.coords;
             }
-            setOrders(result);
+            
+            // Adiciona os sem coordenadas ao final para não perdê-los
+            setOrders([...result, ...noCoords]);
             toast.success("Rota otimizada!");
         } catch (e) { toast.error("Erro ao otimizar."); }
         finally { setIsOptimizing(false); }
@@ -341,9 +403,9 @@ const DriverDashboard: React.FC = () => {
                     <Card className={cn("p-0 overflow-hidden border-slate-200 shadow-xl relative bg-white transition-all duration-500", isMapExpanded ? "fixed inset-0 z-[150] rounded-none h-full" : "h-[40vh] min-h-[300px]")}>
                         {isGeocoding ? (
                             <div className="h-full flex flex-col items-center justify-center gap-3 opacity-30"><Loader2 className="animate-spin text-orange-500" size={32} /><span className="text-[10px] font-black uppercase tracking-widest">Localizando...</span></div>
-                        ) : customerCoords ? (
+                        ) : (customerCoords || restaurantCoords) ? (
                             <div className="w-full h-full relative">
-                                <DeliveryMap orderId={selectedOrder.id} customerCoords={customerCoords} restaurantCoords={restaurantCoords} currentLocation={currentLocation} route={route} />
+                                <DeliveryMap orderId={selectedOrder.id} customerCoords={customerCoords || [0,0]} restaurantCoords={restaurantCoords || [-23.5505, -46.6333]} currentLocation={currentLocation} route={route} />
                                 <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
                                     <button onClick={() => setIsMapExpanded(!isMapExpanded)} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-slate-100 text-slate-900">{isMapExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}</button>
                                 </div>
@@ -371,10 +433,14 @@ const DriverDashboard: React.FC = () => {
                                 </div>
                                 <div className="flex gap-2 pt-6 border-t border-slate-100">
                                     <Button onClick={async () => {
-                                        const coords = await geocodeAddress(dOrder.address);
+                                        let coords = customerCoords;
+                                        if (!coords && dOrder.address) {
+                                            coords = await geocodeAddress(dOrder.address);
+                                            if (coords) setCustomerCoords(coords);
+                                        }
+
                                         if (coords) {
-                                            setCustomerCoords(coords);
-                                            fetchRoute(currentLocation || restaurantCoords, coords);
+                                            fetchRoute(currentLocation || restaurantCoords || [-23.5505, -46.6333], coords);
                                         } else {
                                             toast.error("Não foi possível traçar rota.");
                                         }
@@ -389,7 +455,7 @@ const DriverDashboard: React.FC = () => {
                                     <h3 className="text-[10px] font-black uppercase text-slate-400 italic">Valor a Receber</h3>
                                     <span className="text-[10px] font-black text-orange-500 bg-orange-500/10 px-2 py-1 rounded border border-orange-500/20">{dOrder.paymentMethod || 'PENDENTE'}</span>
                                 </div>
-                                <div className="text-4xl font-black italic tracking-tighter relative z-10">R$ {(selectedOrder.total + (dOrder.deliveryFee || 0)).toFixed(2).replace('.', ',')}</div>
+                                <div className="text-4xl font-black italic tracking-tighter relative z-10">R$ {selectedOrder.total.toFixed(2).replace('.', ',')}</div>
                             </Card>
 
                             <div className="pt-4">
@@ -466,7 +532,12 @@ const DriverDashboard: React.FC = () => {
                                             setSelectedOrder(order); 
                                             setView('detail');
                                             // Prepara coordenadas do cliente ao abrir
-                                            geocodeAddress(order.deliveryOrder?.address).then(setCustomerCoords);
+                                            if (order.deliveryOrder?.latitude && order.deliveryOrder?.longitude) {
+                                                console.log("[MAPS] Usando coordenadas fixas do cliente.");
+                                                setCustomerCoords([order.deliveryOrder.latitude, order.deliveryOrder.longitude]);
+                                            } else {
+                                                geocodeAddress(order.deliveryOrder?.address).then(setCustomerCoords);
+                                            }
                                         }} className={cn("p-0 overflow-hidden border-2 transition-all active:scale-[0.98] cursor-pointer", order.status === 'SHIPPED' ? "border-orange-500 bg-orange-50/20 shadow-orange-100" : "border-white bg-white shadow-sm")}>
                                             <div className="p-4 flex items-center gap-4">
                                                 <div className={cn("h-14 w-14 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm", order.status === 'SHIPPED' ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400")}>

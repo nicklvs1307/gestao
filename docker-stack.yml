@@ -23,6 +23,7 @@ services:
       OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
       EVOLUTION_API_URL_FILE: /run/secrets/evolution_api_url
       EVOLUTION_API_KEY_FILE: /run/secrets/evolution_api_key
+      VITE_OPENROUTE_KEY: ${VITE_OPENROUTE_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api"]
       interval: 30s
