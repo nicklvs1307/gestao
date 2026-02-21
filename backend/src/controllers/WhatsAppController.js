@@ -361,7 +361,7 @@ const WhatsAppController = {
     }
 
     // Envia via Evolution API
-    await evolutionService.sendText(instance.name, phone, message);
+    const response = await evolutionService.sendText(instance.name, phone, message);
 
     // Salva no banco como mensagem do assistente/sistema
     const savedMsg = await prisma.whatsAppChatMessage.create({
@@ -378,6 +378,13 @@ const WhatsAppController = {
       where: { customerPhone_restaurantId: { customerPhone: phone, restaurantId } },
       update: { lastMessage: message, lastMessageAt: new Date() },
       create: { customerPhone: phone, restaurantId, lastMessage: message }
+    });
+
+    // Notifica outros painéis abertos (Tempo Real)
+    socketLib.emitToRestaurant(restaurantId, 'whatsapp_message', {
+      key: { remoteJid: phone, fromMe: true, id: savedMsg.id },
+      message: { conversation: message },
+      pushName: 'Sistema'
     });
 
     res.json(savedMsg);
@@ -443,17 +450,14 @@ const WhatsAppController = {
       }
     }
 
-    // 3. Tratamento de Mensagens Recebidas
+    // 3. Tratamento de Mensagens Recebidas e ENVIADAS (Sincronização em tempo real)
     if (normalizedEvent === 'MESSAGES_UPSERT') {
       const message = data.message;
       const fromMe = data.key.fromMe;
       const customerPhone = data.key.remoteJid;
       
-      if (fromMe) return res.sendStatus(200);
-
-      console.log(`[WhatsApp] Mensagem recebida de ${customerPhone}`);
-      
-      // Notifica o frontend
+      // Notifica o frontend IMEDIATAMENTE (Independente se é FromMe ou não)
+      // Isso resolve o problema de não atualizar quando o usuário responde pelo celular
       socketLib.emitToRestaurant(restaurantId, 'whatsapp_message', data);
 
       let messageContent = message.conversation || 
@@ -465,20 +469,67 @@ const WhatsAppController = {
         const transcription = await evolutionService.transcribeAudio(instance, data.key);
         if (transcription) {
           messageContent = transcription;
+        } else {
+          messageContent = "🎤 Mensagem de áudio";
         }
       }
 
-      if (!fromMe && messageContent) {
-        const debouncerKey = `${customerPhone}_${restaurantId}`;
-        
-        // 1. Registra/Atualiza a Conversa no banco
+      if (messageContent) {
         const pushName = data.pushName || null;
+        
+        // Se for uma mensagem que EU mandei pelo celular, apenas atualizamos a conversa no banco
+        if (fromMe) {
+          await prisma.whatsAppConversation.upsert({
+            where: { customerPhone_restaurantId: { customerPhone, restaurantId } },
+            update: { 
+              lastMessage: messageContent, 
+              lastMessageAt: new Date(),
+              unreadCount: 0 // Zera unread se eu respondi pelo celular
+            },
+            create: { 
+              customerPhone, 
+              restaurantId, 
+              lastMessage: messageContent,
+              customerName: pushName,
+              unreadCount: 0
+            }
+          });
+
+          // Salva no histórico como assistant
+          await prisma.whatsAppChatMessage.create({
+            data: {
+              restaurantId,
+              customerPhone,
+              role: 'assistant',
+              content: messageContent,
+              externalId: data.key.id
+            }
+          });
+
+          return res.sendStatus(200);
+        }
+
+        // --- MENSAGEM DO CLIENTE ---
+        console.log(`[WhatsApp] Mensagem recebida de ${customerPhone}`);
+        
+        // Busca foto de perfil se não tivermos ou se a última atualização for antiga (cache simples)
+        let profilePic = null;
+        const existingConv = await prisma.whatsAppConversation.findUnique({
+          where: { customerPhone_restaurantId: { customerPhone, restaurantId } }
+        });
+
+        if (!existingConv || !existingConv.profilePictureUrl || (new Date().getTime() - new Date(existingConv.updatedAt).getTime() > 86400000)) {
+           profilePic = await evolutionService.getProfilePicture(instance, customerPhone);
+        }
+
+        // 1. Registra/Atualiza a Conversa no banco
         const conversation = await prisma.whatsAppConversation.upsert({
           where: { customerPhone_restaurantId: { customerPhone, restaurantId } },
           update: { 
             lastMessage: messageContent, 
             lastMessageAt: new Date(),
             customerName: pushName || undefined,
+            profilePictureUrl: profilePic || undefined,
             unreadCount: { increment: 1 }
           },
           create: { 
@@ -486,11 +537,25 @@ const WhatsAppController = {
             restaurantId, 
             lastMessage: messageContent,
             customerName: pushName,
+            profilePictureUrl: profilePic,
             unreadCount: 1
           }
         });
 
-        // 2. Se o agente estiver desabilitado para este contato, apenas notifica via socket e encerra
+        // Salva no histórico como user
+        await prisma.whatsAppChatMessage.create({
+          data: {
+            restaurantId,
+            customerPhone,
+            role: 'user',
+            content: messageContent,
+            externalId: data.key.id
+          }
+        });
+
+        const debouncerKey = `${customerPhone}_${restaurantId}`;
+        
+        // 2. Se o agente estiver desabilitado para este contato, encerra
         if (!conversation.isAgentEnabled) {
           console.log(`[WhatsApp] Agente pausado para ${customerPhone}. Aguardando intervenção humana.`);
           return res.sendStatus(200);

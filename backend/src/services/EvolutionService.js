@@ -162,6 +162,22 @@ class EvolutionService {
   }
 
   /**
+   * Busca a foto de perfil de um número
+   */
+  async getProfilePicture(instanceName, number) {
+    try {
+      const remoteJid = number.includes('@') ? number : `${number.replace(/\D/g, '')}@s.whatsapp.net`;
+      const response = await this.api.post(`/chat/fetchProfilePictureUrl/${instanceName}`, {
+        number: remoteJid
+      });
+      return response.data.profilePictureUrl || response.data.url || null;
+    } catch (error) {
+      // Não logamos erro pesado aqui pois é comum contatos não terem foto
+      return null;
+    }
+  }
+
+  /**
    * Envia uma mensagem de texto com simulação de digitação
    */
   async sendText(instanceName, number, text, delay = 1200) {

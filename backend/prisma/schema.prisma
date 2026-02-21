@@ -519,6 +519,7 @@ model WhatsAppConversation {
   id              String   @id @default(cuid())
   customerPhone   String
   customerName    String?
+  profilePictureUrl String?
   lastMessage     String?  @db.Text
   lastMessageAt   DateTime @default(now())
   unreadCount     Int      @default(0)
