@@ -21,8 +21,10 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const CashierManagement: React.FC = () => {
+    const { user: authUser } = useAuth();
     const [cashierData, setCashierData] = useState<any>(null);
     const [summary, setSummary] = useState<any>(null);
     const [history, setHistory] = useState<any[]>([]);

@@ -1,56 +1,45 @@
-index-CNpwLxDP.js:8654 [MAPS] Usando coordenadas fixas do restaurante.
-index-CNpwLxDP.js:8654 [MAPS] Tentando geocodificar: Rua Vitória Buzato, 79
-index-CNpwLxDP.js:8654 [MAPS] Erro na requisição ORS: TypeError: Failed to fetch
-    at ve (index-CNpwLxDP.js:8654:408247)
-    at onClick (index-CNpwLxDP.js:8654:420285)
-    at Object.Hn (index-CNpwLxDP.js:37:9850)
-    at Di (index-CNpwLxDP.js:37:10010)
-    at Ri (index-CNpwLxDP.js:37:10070)
-    at ad (index-CNpwLxDP.js:37:31499)
-    at id (index-CNpwLxDP.js:37:31943)
-    at index-CNpwLxDP.js:37:37171
-    at JO (index-CNpwLxDP.js:40:37817)
-    at At (index-CNpwLxDP.js:37:8983)
-ve @ index-CNpwLxDP.js:8654
-await in ve
-onClick @ index-CNpwLxDP.js:8654
-Hn @ index-CNpwLxDP.js:37
-Di @ index-CNpwLxDP.js:37
-Ri @ index-CNpwLxDP.js:37
-ad @ index-CNpwLxDP.js:37
-id @ index-CNpwLxDP.js:37
-(anônimo) @ index-CNpwLxDP.js:37
-JO @ index-CNpwLxDP.js:40
-At @ index-CNpwLxDP.js:37
-h @ index-CNpwLxDP.js:37
-Cl @ index-CNpwLxDP.js:37
-qd @ index-CNpwLxDP.js:37
-index-CNpwLxDP.js:8654 [MAPS] Tentando fallback Nominatim: Rua Vitória Buzato, 79
-index-CNpwLxDP.js:8654 [MAPS] Coordenadas encontradas (OSM): -22.0629993, -46.5667037
-index-CNpwLxDP.js:8654 [MAPS] Inicializando mapa Leaflet (Primeira vez)...
-index-CNpwLxDP.js:8654 [MAPS] Calculando rota entre -22.063677866992666,-46.56747203129584 e -22.0629993,-46.5667037
-index-CNpwLxDP.js:8654 [MAPS] Erro ao buscar rota: TypeError: Failed to fetch
-    at ce (index-CNpwLxDP.js:8654:409530)
-    at onClick (index-CNpwLxDP.js:8654:414550)
-    at Object.Hn (index-CNpwLxDP.js:37:9850)
-    at Di (index-CNpwLxDP.js:37:10010)
-    at Ri (index-CNpwLxDP.js:37:10070)
-    at ad (index-CNpwLxDP.js:37:31499)
-    at id (index-CNpwLxDP.js:37:31943)
-    at index-CNpwLxDP.js:37:37171
-    at JO (index-CNpwLxDP.js:40:37817)
-    at At (index-CNpwLxDP.js:37:8983)
-ce @ index-CNpwLxDP.js:8654
-await in ce
-onClick @ index-CNpwLxDP.js:8654
-Hn @ index-CNpwLxDP.js:37
-Di @ index-CNpwLxDP.js:37
-Ri @ index-CNpwLxDP.js:37
-ad @ index-CNpwLxDP.js:37
-id @ index-CNpwLxDP.js:37
-(anônimo) @ index-CNpwLxDP.js:37
-JO @ index-CNpwLxDP.js:40
-At @ index-CNpwLxDP.js:37
-h @ index-CNpwLxDP.js:37
-Cl @ index-CNpwLxDP.js:37
-qd @ index-CNpwLxDP.js:37
+index-GujRcjHp.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-GujRcjHp.js:40 ReferenceError: authUser is not defined
+    at RGe (index-GujRcjHp.js:8654:292579)
+    at Du (index-GujRcjHp.js:38:17898)
+    at TO (index-GujRcjHp.js:40:3167)
+    at DH (index-GujRcjHp.js:40:45983)
+    at PH (index-GujRcjHp.js:40:40756)
+    at Yne (index-GujRcjHp.js:40:40683)
+    at Ly (index-GujRcjHp.js:40:40534)
+    at XO (index-GujRcjHp.js:40:36786)
+    at CH (index-GujRcjHp.js:40:35726)
+    at $ (index-GujRcjHp.js:25:1637)
+EO @ index-GujRcjHp.js:40
+JV.v.callback @ index-GujRcjHp.js:40
+Lo @ index-GujRcjHp.js:38
+jH @ index-GujRcjHp.js:40
+NH @ index-GujRcjHp.js:40
+Wne @ index-GujRcjHp.js:40
+Kne @ index-GujRcjHp.js:40
+qu @ index-GujRcjHp.js:40
+CH @ index-GujRcjHp.js:40
+$ @ index-GujRcjHp.js:25
+q @ index-GujRcjHp.js:25
+index-GujRcjHp.js:8654 Uncaught ReferenceError: authUser is not defined
+    at RGe (index-GujRcjHp.js:8654:292579)
+    at Du (index-GujRcjHp.js:38:17898)
+    at TO (index-GujRcjHp.js:40:3167)
+    at DH (index-GujRcjHp.js:40:45983)
+    at PH (index-GujRcjHp.js:40:40756)
+    at Yne (index-GujRcjHp.js:40:40683)
+    at Ly (index-GujRcjHp.js:40:40534)
+    at XO (index-GujRcjHp.js:40:36786)
+    at CH (index-GujRcjHp.js:40:35726)
+    at $ (index-GujRcjHp.js:25:1637)
+RGe @ index-GujRcjHp.js:8654
+Du @ index-GujRcjHp.js:38
+TO @ index-GujRcjHp.js:40
+DH @ index-GujRcjHp.js:40
+PH @ index-GujRcjHp.js:40
+Yne @ index-GujRcjHp.js:40
+Ly @ index-GujRcjHp.js:40
+XO @ index-GujRcjHp.js:40
+CH @ index-GujRcjHp.js:40
+$ @ index-GujRcjHp.js:25
+q @ index-GujRcjHp.js:25
