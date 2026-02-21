@@ -576,5 +576,3 @@ const WhatsAppChat: React.FC = () => {
 };
 
 export default WhatsAppChat;
-
-export default WhatsAppChat;
