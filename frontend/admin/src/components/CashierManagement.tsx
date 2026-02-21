@@ -164,33 +164,36 @@ const CashierManagement: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-            {/* Header Compacto */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                <div className="flex items-center gap-6">
-                    <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-lg"><Wallet size={32} /></div>
-                    <div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Fechamento de Frente de Caixa</h2>
-                        <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                            {isOpen ? `Aberto em: ${session?.openedAt ? format(new Date(session.openedAt), 'dd/MM/yyyy HH:mm') : '---'}` : 'Caixa Encerrado'}
-                        </p>
+        <div className="space-y-4 animate-in fade-in duration-500 pb-10">
+            {/* Header Ultra Compacto e Moderno */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 sticky top-0 z-[40]">
+                <div className="flex items-center gap-4">
+                    <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-lg"><Wallet size={20} /></div>
+                    <div className="flex flex-col">
+                        <h2 className="text-lg font-black text-slate-900 tracking-tighter italic uppercase leading-none">Turno de Caixa</h2>
+                        {isOpen && (
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 flex items-center gap-2">
+                                <Clock size={10} className="text-orange-500"/> {session?.openedAt ? format(new Date(session.openedAt), 'HH:mm') : '---'} • <User size={10}/> {authUser?.name || 'Operador'}
+                            </p>
+                        )}
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-4">
-                    {isOpen && !isClosingProcess && (
-                        <div className="flex gap-3 mr-4">
-                            <Button variant="secondary" size="lg" onClick={() => setShowTransactionModal('INCOME')} className="h-12 rounded-xl text-xs font-black italic gap-2 px-6"><Plus size={18}/> REFORÇO</Button>
-                            <Button variant="secondary" size="lg" onClick={() => setShowTransactionModal('EXPENSE')} className="h-12 rounded-xl text-xs font-black italic gap-2 px-6"><Minus size={18}/> SANGRIA</Button>
+                <div className="flex items-center gap-3">
+                    {isOpen && (
+                        <div className="flex gap-2">
+                            <button onClick={() => setShowTransactionModal('INCOME')} className="h-9 px-4 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-black italic flex items-center gap-1.5 hover:bg-emerald-100 transition-colors uppercase"><Plus size={14}/> REFORÇO</button>
+                            <button onClick={() => setShowTransactionModal('EXPENSE')} className="h-9 px-4 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-black italic flex items-center gap-1.5 hover:bg-rose-100 transition-colors uppercase"><Minus size={14}/> SANGRIA</button>
                         </div>
                     )}
                     <div className={cn(
-                        "flex items-center gap-3 px-6 py-3 rounded-xl border-2 font-black uppercase text-xs tracking-widest",
+                        "flex items-center gap-2.5 px-4 py-2 rounded-lg border-2 font-black uppercase text-[10px] tracking-widest",
                         isOpen ? "border-emerald-100 bg-emerald-50 text-emerald-600" : "border-rose-100 bg-rose-50 text-rose-600 shadow-sm"
                     )}>
                         <div className={cn("w-2 h-2 rounded-full", isOpen ? "bg-emerald-500 animate-pulse" : "bg-rose-500")} />
                         {isOpen ? 'OPERACIONAL' : 'CAIXA FECHADO'}
                     </div>
+                    <button onClick={fetchData} className="p-2 text-slate-300 hover:text-slate-900 transition-colors"><RefreshCw size={18} className={loading ? "animate-spin" : ""}/></button>
                 </div>
             </div>
 
@@ -217,14 +220,14 @@ const CashierManagement: React.FC = () => {
                 </div>
             ) : (
                 /* TELA DE FECHAMENTO (STILO SAIPOS) */
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
                     
                     {/* COLUNA ESQUERDA: MASTER FINANCEIRO */}
-                    <div className="xl:col-span-5 space-y-6">
+                    <div className="xl:col-span-4 space-y-4">
                         <Card className="p-0 border-slate-200 shadow-xl overflow-hidden bg-white" noPadding>
-                            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                                <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Conferência de Valores</h3>
-                                <RefreshCw size={16} className="text-slate-300 cursor-pointer hover:text-orange-500 transition-colors" onClick={fetchData}/>
+                            <div className="p-3 border-b border-slate-100 bg-slate-900 text-white flex justify-between items-center">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] italic">Conferência de Turno</h3>
+                                <RefreshCw size={14} className="text-slate-400 cursor-pointer hover:text-orange-500 transition-colors" onClick={fetchData}/>
                             </div>
                             
                             <div className="divide-y divide-slate-100">
@@ -322,18 +325,18 @@ const CashierManagement: React.FC = () => {
                                 })}
                             </div>
 
-                            <div className="p-6 bg-slate-900 space-y-4">
+                            <div className="p-4 bg-slate-900 space-y-3">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Informado</span>
-                                    <span className="text-2xl font-black text-white italic">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toFixed(2)}</span>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Informado</span>
+                                    <span className="text-xl font-black text-white italic">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toFixed(2)}</span>
                                 </div>
                                 <textarea 
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] font-bold text-white uppercase italic tracking-tight focus:border-orange-500 outline-none h-20" 
-                                    placeholder="NOTAS DE FECHAMENTO..." 
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-[10px] font-bold text-white uppercase italic tracking-tight focus:border-orange-500 outline-none h-16 resize-none" 
+                                    placeholder="OBSERVAÇÕES..." 
                                     value={notes} 
                                     onChange={e => setNotes(e.target.value)} 
                                 />
-                                <Button fullWidth size="lg" onClick={handleClose} className="h-14 rounded-xl font-black uppercase tracking-widest italic bg-emerald-600 hover:bg-emerald-500 border-none shadow-xl shadow-emerald-900/20 text-base">FECHAR FRENTE DE CAIXA</Button>
+                                <Button fullWidth onClick={handleClose} className="h-11 rounded-lg font-black uppercase tracking-widest italic bg-emerald-600 hover:bg-emerald-500 border-none shadow-lg shadow-emerald-900/20 text-[10px]">ENCERRAR TURNO</Button>
                             </div>
                         </Card>
                     </div>
