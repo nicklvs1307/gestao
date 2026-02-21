@@ -11,7 +11,11 @@ import {
   Clock,
   CheckCheck,
   Power,
-  MessageSquare
+  MessageSquare,
+  Tag,
+  Info,
+  MapPin,
+  Calendar
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -32,6 +36,19 @@ interface Conversation {
   lastMessageAt: string;
   unreadCount: number;
   isAgentEnabled: boolean;
+  labels: string[]; // Adicionado Labels
+  customer?: {
+    id: string;
+    name: string;
+    phone: string;
+    address?: string;
+    loyaltyPoints: number;
+    createdAt: string;
+    neighborhood?: string;
+    city?: string;
+    street?: string;
+    number?: string;
+  }
 }
 
 interface Message {
@@ -49,8 +66,16 @@ const WhatsAppChat: React.FC = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
   
   const scrollRef = useRef<HTMLDivElement>(null);
+  const selectedChatRef = useRef<Conversation | null>(null);
+
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
+
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const restaurantId = user?.restaurantId;
 
@@ -69,11 +94,13 @@ const WhatsAppChat: React.FC = () => {
     socket.on('whatsapp_message', (data) => {
       console.log('Nova mensagem via socket:', data);
       
-      // Atualiza lista de conversas em tempo real
+      // Atualiza lista de conversas sem mostrar loading (silencioso)
       fetchConversations(false);
       
+      const currentSelected = selectedChatRef.current;
+      
       // Se o chat aberto for o mesmo da mensagem recebida/enviada, adiciona a mensagem
-      if (selectedChat && data.key.remoteJid === selectedChat.customerPhone) {
+      if (currentSelected && data.key.remoteJid === currentSelected.customerPhone) {
         const msgContent = data.message?.conversation || 
                            data.message?.extendedTextMessage?.text || 
                            data.message?.imageMessage?.caption || 
@@ -87,7 +114,6 @@ const WhatsAppChat: React.FC = () => {
             timestamp: new Date().toISOString()
           };
           
-          // Evita duplicidade se já salvamos localmente ao enviar pelo painel
           setMessages(prev => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
@@ -97,7 +123,7 @@ const WhatsAppChat: React.FC = () => {
     });
 
     return () => { socket.disconnect(); };
-  }, [selectedChat, restaurantId]);
+  }, [restaurantId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -112,8 +138,8 @@ const WhatsAppChat: React.FC = () => {
       setConversations(res.data);
       
       // Atualiza o selectedChat se ele estiver na lista para pegar dados novos (como foto ou status da IA)
-      if (selectedChat) {
-        const updated = res.data.find((c: Conversation) => c.customerPhone === selectedChat.customerPhone);
+      if (selectedChatRef.current) {
+        const updated = res.data.find((c: Conversation) => c.customerPhone === selectedChatRef.current?.customerPhone);
         if (updated) setSelectedChat(updated);
       }
     } catch (error) {
@@ -148,7 +174,7 @@ const WhatsAppChat: React.FC = () => {
     setNewMessage('');
 
     try {
-      const res = await axios.post(`${API_URL}/whatsapp/send-message`, {
+      const res = await axios.post(`${API_URL}/send-message`, {
         phone: selectedChat.customerPhone,
         message: content
       }, getHeaders());
@@ -181,9 +207,41 @@ const WhatsAppChat: React.FC = () => {
     }
   };
 
+  const handleAddLabel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newLabel.trim() || !selectedChat) return;
+
+    const labels = [...selectedChat.labels, newLabel.trim()];
+    try {
+      await axios.put(`${API_URL}/whatsapp/conversations/${selectedChat.customerPhone}/labels`, { labels }, getHeaders());
+      setSelectedChat({ ...selectedChat, labels });
+      setConversations(prev => prev.map(c => 
+        c.customerPhone === selectedChat.customerPhone ? { ...c, labels } : c
+      ));
+      setNewLabel('');
+    } catch (error) {
+      toast.error('Erro ao adicionar etiqueta');
+    }
+  };
+
+  const removeLabel = async (labelToRemove: string) => {
+    if (!selectedChat) return;
+    const labels = selectedChat.labels.filter(l => l !== labelToRemove);
+    try {
+      await axios.put(`${API_URL}/whatsapp/conversations/${selectedChat.customerPhone}/labels`, { labels }, getHeaders());
+      setSelectedChat({ ...selectedChat, labels });
+      setConversations(prev => prev.map(c => 
+        c.customerPhone === selectedChat.customerPhone ? { ...c, labels } : c
+      ));
+    } catch (error) {
+      toast.error('Erro ao remover etiqueta');
+    }
+  };
+
   const filteredConversations = conversations.filter(c => 
     c.customerPhone.includes(searchQuery) || 
-    (c.customerName?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    (c.customerName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    c.labels.some(l => l.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -196,7 +254,7 @@ const WhatsAppChat: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
-              placeholder="Buscar contato..."
+              placeholder="Buscar contato ou etiqueta..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
@@ -248,6 +306,17 @@ const WhatsAppChat: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 truncate mt-0.5">{chat.lastMessage || 'Sem mensagens'}</p>
+                  
+                  {/* Etiquetas na Lista */}
+                  {chat.labels.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {chat.labels.map(label => (
+                        <span key={label} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-bold uppercase tracking-tighter">
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {chat.unreadCount > 0 && (
                   <div className="bg-primary text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
@@ -261,24 +330,28 @@ const WhatsAppChat: React.FC = () => {
       </div>
 
       {/* Área do Chat */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white overflow-hidden">
         {selectedChat ? (
           <>
             {/* Header do Chat */}
-            <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-white">
+            <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-white z-20">
               <div className="flex items-center space-x-3">
                 {selectedChat.profilePictureUrl ? (
                    <img 
                     src={selectedChat.profilePictureUrl} 
                     alt={selectedChat.customerName || 'User'} 
-                    className="w-10 h-10 rounded-full object-cover border border-gray-100"
+                    className="w-10 h-10 rounded-full object-cover border border-gray-100 cursor-pointer"
+                    onClick={() => setShowDetails(!showDetails)}
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold">
+                  <div 
+                    className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold cursor-pointer"
+                    onClick={() => setShowDetails(!showDetails)}
+                  >
                     {selectedChat.customerName?.charAt(0) || <User size={20} />}
                   </div>
                 )}
-                <div>
+                <div className="cursor-pointer" onClick={() => setShowDetails(!showDetails)}>
                   <h3 className="font-bold text-slate-800 text-sm">{selectedChat.customerName || selectedChat.customerPhone}</h3>
                   <div className="flex items-center space-x-1.5">
                     <div className={cn("w-1.5 h-1.5 rounded-full", selectedChat.isAgentEnabled ? "bg-green-500" : "bg-orange-500")}></div>
@@ -305,69 +378,187 @@ const WhatsAppChat: React.FC = () => {
                     <><Bot size={14} /> <span>Ativar IA</span></>
                   )}
                 </button>
-                <button className="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition"><MoreVertical size={20} /></button>
+                <button 
+                  onClick={() => setShowDetails(!showDetails)}
+                  className={cn("p-2 rounded-lg transition", showDetails ? "bg-primary text-white" : "text-gray-400 hover:bg-gray-50")}
+                >
+                  <Info size={20} />
+                </button>
               </div>
             </div>
 
-            {/* Mensagens */}
-            <div 
-              ref={scrollRef}
-              className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#e5ddd5] bg-[url('https://web.whatsapp.com/img/bg-chat-tile-light_04fc0d130c5d6e648594d4f85edf8a8a.png')] bg-repeat"
-            >
-              {loadingMessages ? (
-                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary opacity-20" /></div>
-              ) : (
-                messages.map((msg, idx) => {
-                  const isMe = msg.role === 'assistant' || msg.role === 'system';
-                  return (
-                    <div key={msg.id || idx} className={cn("flex w-full", isMe ? "justify-end" : "justify-start")}>
-                      <div className={cn(
-                        "max-w-[80%] rounded-xl px-3 py-1.5 shadow-sm relative group min-w-[60px]",
-                        isMe ? "bg-[#d9fdd3] text-slate-800 rounded-tr-none" : "bg-white text-slate-800 rounded-tl-none"
-                      )}>
-                        {/* Indicador de quem respondeu (IA ou Humano) */}
-                        {isMe && (
-                          <div className="flex items-center space-x-1 mb-0.5">
-                             <span className="text-[8px] font-bold text-gray-400 uppercase italic">Enviado pelo Sistema</span>
+            <div className="flex-1 flex overflow-hidden">
+              {/* Mensagens */}
+              <div className="flex-1 flex flex-col relative">
+                <div 
+                  ref={scrollRef}
+                  className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#e5ddd5] bg-[url('https://web.whatsapp.com/img/bg-chat-tile-light_04fc0d130c5d6e648594d4f85edf8a8a.png')] bg-repeat"
+                >
+                  {loadingMessages ? (
+                    <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary opacity-20" /></div>
+                  ) : (
+                    messages.map((msg, idx) => {
+                      const isMe = msg.role === 'assistant' || msg.role === 'system';
+                      return (
+                        <div key={msg.id || idx} className={cn("flex w-full", isMe ? "justify-end" : "justify-start")}>
+                          <div className={cn(
+                            "max-w-[80%] rounded-xl px-3 py-1.5 shadow-sm relative group min-w-[60px]",
+                            isMe ? "bg-[#d9fdd3] text-slate-800 rounded-tr-none" : "bg-white text-slate-800 rounded-tl-none"
+                          )}>
+                            {isMe && (
+                              <div className="flex items-center space-x-1 mb-0.5">
+                                <span className="text-[8px] font-bold text-gray-400 uppercase italic">Enviado pelo Sistema</span>
+                              </div>
+                            )}
+                            
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                            <div className="flex items-center justify-end space-x-1 mt-0.5">
+                              <span className="text-[9px] text-gray-400">{format(new Date(msg.timestamp), 'HH:mm')}</span>
+                              {isMe && <CheckCheck size={12} className="text-blue-500" />}
+                            </div>
                           </div>
-                        )}
-                        
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                        <div className="flex items-center justify-end space-x-1 mt-0.5">
-                          <span className="text-[9px] text-gray-400">{format(new Date(msg.timestamp), 'HH:mm')}</span>
-                          {isMe && <CheckCheck size={12} className="text-blue-500" />}
                         </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                      );
+                    })
+                  )}
+                </div>
 
-            {/* Input de Mensagem */}
-            <div className="p-4 bg-gray-100 border-t border-gray-200">
-              {selectedChat.isAgentEnabled && (
-                <div className="mb-3 px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl flex items-center space-x-3">
-                  <Bot size={16} className="text-blue-500" />
-                  <p className="text-[10px] font-bold text-blue-600 uppercase">O agente está respondendo automaticamente. Pause o agente para intervir sem interferência.</p>
+                {/* Input de Mensagem */}
+                <div className="p-4 bg-gray-100 border-t border-gray-200">
+                  {selectedChat.isAgentEnabled && (
+                    <div className="mb-3 px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl flex items-center space-x-3">
+                      <Bot size={16} className="text-blue-500" />
+                      <p className="text-[10px] font-bold text-blue-600 uppercase">O agente está respondendo automaticamente. Pause o agente para intervir sem interferência.</p>
+                    </div>
+                  )}
+                  <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+                    <input 
+                      type="text" 
+                      value={newMessage}
+                      onChange={e => setNewMessage(e.target.value)}
+                      placeholder="Digite sua mensagem..."
+                      className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={!newMessage.trim()}
+                      className="p-3 bg-primary text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition disabled:opacity-50"
+                    >
+                      <Send size={20} />
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Sidebar de Detalhes do Cliente */}
+              {showDetails && (
+                <div className="w-80 border-l border-gray-100 bg-gray-50/50 flex flex-col animate-in slide-in-from-right duration-300">
+                  <div className="p-6 overflow-y-auto flex-1">
+                    <div className="flex flex-col items-center text-center mb-8">
+                       {selectedChat.profilePictureUrl ? (
+                        <img 
+                          src={selectedChat.profilePictureUrl} 
+                          alt={selectedChat.customerName || 'User'} 
+                          className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-sm mb-4"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 text-3xl font-bold mb-4 shadow-sm border-4 border-white">
+                          {selectedChat.customerName?.charAt(0) || <User size={48} />}
+                        </div>
+                      )}
+                      <h3 className="font-black text-slate-800 italic uppercase text-lg leading-tight tracking-tighter">{selectedChat.customerName || 'Desconhecido'}</h3>
+                      <p className="text-gray-500 font-medium text-sm">{selectedChat.customerPhone}</p>
+                    </div>
+
+                    {/* Etiquetas */}
+                    <div className="mb-8">
+                      <div className="flex items-center space-x-2 text-slate-800 font-black italic uppercase text-xs mb-3 tracking-tighter">
+                        <Tag size={14} className="text-primary" />
+                        <span>Etiquetas</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {selectedChat.labels.map(label => (
+                          <div key={label} className="group relative">
+                            <span className="px-2 py-1 bg-white border border-gray-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-tighter flex items-center shadow-sm">
+                              {label}
+                              <button 
+                                onClick={() => removeLabel(label)}
+                                className="ml-1.5 text-gray-400 hover:text-red-500 transition"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <form onSubmit={handleAddLabel} className="flex space-x-2">
+                        <input 
+                          type="text" 
+                          placeholder="Nova etiqueta..."
+                          value={newLabel}
+                          onChange={e => setNewLabel(e.target.value)}
+                          className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-[10px] outline-none focus:ring-1 focus:ring-primary/20"
+                        />
+                        <button className="px-3 py-2 bg-slate-800 text-white rounded-lg text-[10px] font-black uppercase tracking-tighter hover:bg-black transition">Add</button>
+                      </form>
+                    </div>
+
+                    {/* Dados do Cadastro */}
+                    <div>
+                      <div className="flex items-center space-x-2 text-slate-800 font-black italic uppercase text-xs mb-3 tracking-tighter">
+                        <User size={14} className="text-primary" />
+                        <span>Dados do Cadastro</span>
+                      </div>
+                      
+                      {selectedChat.customer ? (
+                        <div className="space-y-4">
+                          <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Telefone</p>
+                            <div className="flex items-center space-x-2 text-slate-700 text-xs font-bold">
+                              <Phone size={12} className="text-gray-400" />
+                              <span>{selectedChat.customer.phone}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Endereço</p>
+                            <div className="flex items-start space-x-2 text-slate-700 text-xs font-bold leading-relaxed">
+                              <MapPin size={12} className="text-gray-400 mt-0.5" />
+                              <span>
+                                {selectedChat.customer.street ? (
+                                  `${selectedChat.customer.street}, ${selectedChat.customer.number || 'S/N'}${selectedChat.customer.neighborhood ? ` - ${selectedChat.customer.neighborhood}` : ''}`
+                                ) : (
+                                  selectedChat.customer.address || 'Não informado'
+                                )}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Desde</p>
+                            <div className="flex items-center space-x-2 text-slate-700 text-xs font-bold">
+                              <Calendar size={12} className="text-gray-400" />
+                              <span>{format(new Date(selectedChat.customer.createdAt), "dd 'de' MMMM, yyyy", { locale: ptBR })}</span>
+                            </div>
+                          </div>
+
+                          <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
+                            <p className="text-[10px] text-primary font-bold uppercase mb-1">Pontos Fidelidade</p>
+                            <div className="text-primary text-xl font-black italic tracking-tighter">
+                              {selectedChat.customer.loyaltyPoints} pts
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl text-center">
+                          <p className="text-[10px] text-orange-600 font-bold uppercase">Cliente não cadastrado no PDV</p>
+                          <p className="text-[9px] text-orange-400 mt-1 uppercase italic leading-tight">Cadastre o número para visualizar detalhes de pedidos e fidelidade.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
-              <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                <input 
-                  type="text" 
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  placeholder="Digite sua mensagem..."
-                  className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition"
-                />
-                <button 
-                  type="submit"
-                  disabled={!newMessage.trim()}
-                  className="p-3 bg-primary text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition disabled:opacity-50"
-                >
-                  <Send size={20} />
-                </button>
-              </form>
             </div>
           </>
         ) : (
@@ -383,5 +574,7 @@ const WhatsAppChat: React.FC = () => {
     </div>
   );
 };
+
+export default WhatsAppChat;
 
 export default WhatsAppChat;

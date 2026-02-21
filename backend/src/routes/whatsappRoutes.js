@@ -15,6 +15,7 @@ router.post('/clear-history', needsAuth, WhatsAppController.clearHistory);
 router.get('/conversations', needsAuth, WhatsAppController.getConversations);
 router.get('/conversations/:phone/messages', needsAuth, WhatsAppController.getMessages);
 router.post('/conversations/:phone/toggle-agent', needsAuth, WhatsAppController.toggleAgent);
+router.put('/conversations/:phone/labels', needsAuth, WhatsAppController.updateLabels);
 router.post('/send-message', needsAuth, WhatsAppController.sendMessage);
 
 // Gestão de Base de Conhecimento (RAG)

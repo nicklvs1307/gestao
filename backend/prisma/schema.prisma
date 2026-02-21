@@ -524,9 +524,13 @@ model WhatsAppConversation {
   lastMessageAt   DateTime @default(now())
   unreadCount     Int      @default(0)
   isAgentEnabled  Boolean  @default(true) // Controle individual por conversa
+  labels          String[] @default([]) // Etiquetas (ex: "VIP", "Novo", "Problema")
   
   restaurantId    String
   restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+
+  customerId      String?
+  customer        Customer?  @relation(fields: [customerId], references: [id])
 
   createdAt       DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -855,6 +859,7 @@ model Customer {
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
 
   deliveryOrders DeliveryOrder[]
+  whatsappConversations WhatsAppConversation[]
 
   @@unique([phone, restaurantId])
   @@index([restaurantId])

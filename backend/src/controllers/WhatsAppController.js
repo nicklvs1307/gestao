@@ -309,9 +309,31 @@ const WhatsAppController = {
     const restaurantId = req.restaurantId;
     const conversations = await prisma.whatsAppConversation.findMany({
       where: { restaurantId },
+      include: {
+        customer: true // Inclui dados do cadastro se houver
+      },
       orderBy: { lastMessageAt: 'desc' }
     });
     res.json(conversations);
+  }),
+
+  // Atualizar Etiquetas da Conversa
+  updateLabels: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const { phone } = req.params;
+    const { labels } = req.body; // Array de strings
+
+    const conversation = await prisma.whatsAppConversation.update({
+      where: { 
+        customerPhone_restaurantId: {
+          customerPhone: phone,
+          restaurantId
+        }
+      },
+      data: { labels }
+    });
+
+    res.json(conversation);
   }),
 
   // Buscar Mensagens de uma Conversa
@@ -522,6 +544,17 @@ const WhatsAppController = {
            profilePic = await evolutionService.getProfilePicture(instance, customerPhone);
         }
 
+        // --- NOVO: Vínculo automático com o cadastro de clientes ---
+        // Normaliza o telefone para buscar no banco de clientes (remove @s.whatsapp.net e DDI se necessário)
+        const cleanPhone = customerPhone.split('@')[0].replace(/\D/g, '');
+        // Tenta achar um cliente que termine com esses números (para lidar com 9 dígitos ou DDI)
+        const customer = await prisma.customer.findFirst({
+          where: { 
+            restaurantId,
+            phone: { contains: cleanPhone.slice(-8) } // Busca flexível pelos últimos 8 dígitos
+          }
+        });
+
         // 1. Registra/Atualiza a Conversa no banco
         const conversation = await prisma.whatsAppConversation.upsert({
           where: { customerPhone_restaurantId: { customerPhone, restaurantId } },
@@ -530,7 +563,8 @@ const WhatsAppController = {
             lastMessageAt: new Date(),
             customerName: pushName || undefined,
             profilePictureUrl: profilePic || undefined,
-            unreadCount: { increment: 1 }
+            unreadCount: { increment: 1 },
+            customerId: customer ? customer.id : undefined
           },
           create: { 
             customerPhone, 
@@ -538,7 +572,8 @@ const WhatsAppController = {
             lastMessage: messageContent,
             customerName: pushName,
             profilePictureUrl: profilePic,
-            unreadCount: 1
+            unreadCount: 1,
+            customerId: customer ? customer.id : null
           }
         });
 
