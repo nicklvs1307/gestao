@@ -1,45 +1,48 @@
-index-GujRcjHp.js:8605 [SSE] Conexão estabelecida com o servidor.
-index-GujRcjHp.js:40 ReferenceError: authUser is not defined
-    at RGe (index-GujRcjHp.js:8654:292579)
-    at Du (index-GujRcjHp.js:38:17898)
-    at TO (index-GujRcjHp.js:40:3167)
-    at DH (index-GujRcjHp.js:40:45983)
-    at PH (index-GujRcjHp.js:40:40756)
-    at Yne (index-GujRcjHp.js:40:40683)
-    at Ly (index-GujRcjHp.js:40:40534)
-    at XO (index-GujRcjHp.js:40:36786)
-    at CH (index-GujRcjHp.js:40:35726)
-    at $ (index-GujRcjHp.js:25:1637)
-EO @ index-GujRcjHp.js:40
-JV.v.callback @ index-GujRcjHp.js:40
-Lo @ index-GujRcjHp.js:38
-jH @ index-GujRcjHp.js:40
-NH @ index-GujRcjHp.js:40
-Wne @ index-GujRcjHp.js:40
-Kne @ index-GujRcjHp.js:40
-qu @ index-GujRcjHp.js:40
-CH @ index-GujRcjHp.js:40
-$ @ index-GujRcjHp.js:25
-q @ index-GujRcjHp.js:25
-index-GujRcjHp.js:8654 Uncaught ReferenceError: authUser is not defined
-    at RGe (index-GujRcjHp.js:8654:292579)
-    at Du (index-GujRcjHp.js:38:17898)
-    at TO (index-GujRcjHp.js:40:3167)
-    at DH (index-GujRcjHp.js:40:45983)
-    at PH (index-GujRcjHp.js:40:40756)
-    at Yne (index-GujRcjHp.js:40:40683)
-    at Ly (index-GujRcjHp.js:40:40534)
-    at XO (index-GujRcjHp.js:40:36786)
-    at CH (index-GujRcjHp.js:40:35726)
-    at $ (index-GujRcjHp.js:25:1637)
-RGe @ index-GujRcjHp.js:8654
-Du @ index-GujRcjHp.js:38
-TO @ index-GujRcjHp.js:40
-DH @ index-GujRcjHp.js:40
-PH @ index-GujRcjHp.js:40
-Yne @ index-GujRcjHp.js:40
-Ly @ index-GujRcjHp.js:40
-XO @ index-GujRcjHp.js:40
-CH @ index-GujRcjHp.js:40
-$ @ index-GujRcjHp.js:25
-q @ index-GujRcjHp.js:25
+ => ERROR [builder 8/8] RUN npm run build                                                                                                       3.1s
+------
+ > [builder 8/8] RUN npm run build:
+0.568
+0.568 > admin@0.0.0 build
+0.568 > vite build
+0.568
+0.909 vite v7.1.9 building for production...
+1.312 transforming...
+3.039 ✓ 65 modules transformed.
+3.046 ✗ Build failed in 1.77s
+3.046 error during build:
+3.046 [vite:esbuild] Transform failed with 1 error:
+3.046 /app/frontend/admin/src/pages/WhatsAppChat.tsx:386:16: ERROR: Unexpected ")"
+3.046 file: /app/frontend/admin/src/pages/WhatsAppChat.tsx:386:16
+3.046
+3.046 Unexpected ")"
+3.046 384 |    );
+3.046 385 |  };
+3.046 386 |                  )}
+3.046     |                  ^
+3.046 387 |                >
+3.046 388 |                  <div className="relative">
+3.046
+3.046     at failureErrorWithLog (/app/frontend/admin/node_modules/esbuild/lib/main.js:1467:15)
+3.046     at /app/frontend/admin/node_modules/esbuild/lib/main.js:736:50
+3.046     at responseCallbacks.<computed> (/app/frontend/admin/node_modules/esbuild/lib/main.js:603:9)
+3.046     at handleIncomingPacket (/app/frontend/admin/node_modules/esbuild/lib/main.js:658:12)
+3.046     at Socket.readFromStdout (/app/frontend/admin/node_modules/esbuild/lib/main.js:581:7)
+3.046     at Socket.emit (node:events:524:28)
+3.046     at addChunk (node:internal/streams/readable:561:12)
+3.046     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+3.046     at Readable.push (node:internal/streams/readable:392:5)
+3.046     at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+------
+
+ 2 warnings found (use docker --debug to expand):
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 10)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 9)
+Dockerfile:24
+--------------------
+  22 |     WORKDIR /app/frontend/admin
+  23 |     RUN npm ci
+  24 | >>> RUN npm run build
+  25 |
+  26 |     # Stage 2: Serve com Nginx
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
