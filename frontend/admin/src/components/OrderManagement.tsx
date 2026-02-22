@@ -21,7 +21,7 @@ const OrderManagement: React.FC = () => {
   const navigate = useNavigate();
   const { on, off } = useSocket();
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
-  const [activeSegment, setActiveSegment] = useState<OrderSegment>('ALL');
+  const [activeSegment, setActiveSegment] = useState<OrderSegment>('DELIVERY');
   const [searchTerm, setSearchTerm] = useState('');
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +32,9 @@ const OrderManagement: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await getAdminOrders();
-      const sortedOrders = data.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      // Filtrar apenas pedidos DELIVERY conforme solicitado
+      const deliveryOrders = data.filter((o: Order) => o.orderType === 'DELIVERY');
+      const sortedOrders = deliveryOrders.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setAllOrders(sortedOrders);
     } catch (err) {
       console.error(err);
@@ -49,6 +51,9 @@ const OrderManagement: React.FC = () => {
     on('order_update', (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
       
+      // Apenas processar se for DELIVERY
+      if (updatedOrder.orderType !== 'DELIVERY') return;
+
       setAllOrders(prevOrders => {
         const newOrders = [...prevOrders];
         const index = newOrders.findIndex(o => o.id === updatedOrder.id);
@@ -121,8 +126,6 @@ const OrderManagement: React.FC = () => {
   });
 
   const counts = {
-      ALL: allOrders.filter(o => ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'].includes(o.status)).length,
-      TABLE: allOrders.filter(o => o.orderType === 'TABLE' && ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'].includes(o.status)).length,
       DELIVERY: allOrders.filter(o => o.orderType === 'DELIVERY' && ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'].includes(o.status)).length,
   };
 
@@ -169,27 +172,20 @@ const OrderManagement: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
-            {/* Filtro de Segmento - Compacto */}
+            {/* Filtro de Segmento - Apenas Delivery conforme solicitado */}
             <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 shadow-inner">
                 {[
-                    { id: 'ALL', label: 'TUDO', icon: List, count: counts.ALL },
-                    { id: 'DELIVERY', label: 'DELIVERY/BALCÃO', icon: Package, count: counts.DELIVERY },
-                    { id: 'TABLE', label: 'MESAS', icon: Smartphone, count: counts.TABLE }
+                    { id: 'DELIVERY', label: 'PEDIDOS DELIVERY', icon: Package, count: counts.DELIVERY }
                 ].map(seg => (
                     <button 
                         key={seg.id}
-                        onClick={() => seg.id === 'TABLE' ? navigate('/pos?tab=tables') : setActiveSegment(seg.id as any)}
                         className={cn(
-                            "px-3 py-1.5 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap",
-                            activeSegment === seg.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                            "px-3 py-1.5 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap bg-white text-slate-900 shadow-sm"
                         )}
                     >
                         <seg.icon size={10} /> 
                         {seg.label}
-                        <span className={cn(
-                            "ml-0.5 px-1 py-0.2 rounded text-[7px]",
-                            activeSegment === seg.id ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500"
-                        )}>{seg.count}</span>
+                        <span className="ml-0.5 px-1 py-0.2 rounded text-[7px] bg-slate-900 text-white">{seg.count}</span>
                     </button>
                 ))}
             </div>

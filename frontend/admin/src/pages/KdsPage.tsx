@@ -168,7 +168,9 @@ const KdsPage: React.FC = () => {
                                                 </span>
                                             </div>
                                             <h4 className="text-2xl font-black italic uppercase tracking-tighter text-white">
-                                                #{order.dailyOrderNumber} <span className="text-white/10 mx-0.5">•</span> <span className="text-orange-500">{order.customerName?.split(' ')[0] || (order.deliveryOrder?.name?.split(' ')[0]) || 'BOX'}</span>
+                                                {order.dailyOrderNumber ? `#${order.dailyOrderNumber}` : ''} 
+                                                {order.dailyOrderNumber && <span className="text-white/10 mx-0.5">•</span>}
+                                                <span className="text-orange-500">{order.customerName?.split(' ')[0] || (order.deliveryOrder?.name?.split(' ')[0]) || 'BOX'}</span>
                                             </h4>
                                         </div>
                                         <div className={cn("px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-2", isUrgent ? "bg-orange-500" : "bg-white/5 text-emerald-400")}>

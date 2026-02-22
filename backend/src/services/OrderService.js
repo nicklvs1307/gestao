@@ -116,15 +116,30 @@ class OrderService {
 
     // 2. Transação de Criação
     const newOrder = await prisma.$transaction(async (tx) => {
-        // Gerar número diário sequencial
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const lastOrder = await tx.order.findFirst({
-            where: { restaurantId: realRestaurantId, createdAt: { gte: today } },
-            orderBy: { dailyOrderNumber: 'desc' },
-            select: { dailyOrderNumber: true }
-        });
+        // Gerar número diário sequencial apenas para DELIVERY
+        if (finalOrderType === 'DELIVERY') {
+            const openSession = await tx.cashierSession.findFirst({
+                where: { restaurantId: realRestaurantId, status: 'OPEN' },
+                orderBy: { openedAt: 'desc' }
+            });
 
-        orderData.dailyOrderNumber = (lastOrder?.dailyOrderNumber || 0) + 1;
+            const startTime = openSession ? openSession.openedAt : new Date();
+            if (!openSession) startTime.setHours(0, 0, 0, 0);
+
+            const lastOrder = await tx.order.findFirst({
+                where: { 
+                    restaurantId: realRestaurantId, 
+                    orderType: 'DELIVERY',
+                    createdAt: { gte: startTime } 
+                },
+                orderBy: { dailyOrderNumber: 'desc' },
+                select: { dailyOrderNumber: true }
+            });
+
+            orderData.dailyOrderNumber = (lastOrder?.dailyOrderNumber || 0) + 1;
+        } else {
+            orderData.dailyOrderNumber = null;
+        }
 
         const createdOrder = await tx.order.create({ data: orderData });
 
@@ -474,10 +489,8 @@ class OrderService {
         });
         
         if (!targetOrder) {
-             const today = new Date(); today.setHours(0, 0, 0, 0);
-             const lastOrder = await tx.order.findFirst({ where: { restaurantId, createdAt: { gte: today } }, orderBy: { dailyOrderNumber: 'desc' } });
              targetOrder = await tx.order.create({
-                data: { restaurantId, tableNumber: parseInt(targetTableNumber), status: 'PENDING', total: 0, orderType: 'TABLE', dailyOrderNumber: (lastOrder?.dailyOrderNumber || 0) + 1, userId }
+                data: { restaurantId, tableNumber: parseInt(targetTableNumber), status: 'PENDING', total: 0, orderType: 'TABLE', dailyOrderNumber: null, userId }
             });
             await tx.table.updateMany({ where: { number: parseInt(targetTableNumber), restaurantId }, data: { status: 'occupied' } });
         }
