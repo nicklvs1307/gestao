@@ -73,9 +73,17 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
   };
 
   const generateMenuLink = (tableNumber: number) => {
-    const baseUrl = user?.menuUrl || window.location.origin.replace(window.location.port, '5174');
+    // Busca a URL base das configurações ou usa o hostname atual como fallback
+    const baseUrl = user?.menuUrl || window.location.origin.replace('admin.', '').replace(':5173', ':5174');
     const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    return `${sanitizedBaseUrl}/cardapio/${user?.restaurantId}/${tableNumber}`;
+    
+    // Se a URL base for localhost ou contiver o ID do restaurante, mantemos o formato antigo por compatibilidade
+    // Caso contrário, usamos o novo formato amigável /mesa/numero
+    if (sanitizedBaseUrl.includes('localhost') || sanitizedBaseUrl.includes('127.0.0.1')) {
+      return `${sanitizedBaseUrl}/cardapio/${user?.restaurantId}/${tableNumber}`;
+    }
+    
+    return `${sanitizedBaseUrl}/mesa/${tableNumber}`;
   };
 
   const copyToClipboard = (text: string) => {

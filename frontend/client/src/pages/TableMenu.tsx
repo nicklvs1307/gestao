@@ -22,10 +22,28 @@ import { cn } from '../lib/utils';
 import { Button } from '../components/ui/Button';
 import { isCategoryAvailable } from '../utils/availability';
 
-const TableMenu = () => {
+interface TableMenuProps {
+  sessionData: any;
+}
+
+const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   const { restaurantId, tableNumber } = useParams<{ restaurantId: string; tableNumber: string }>();
   const { restaurantSettings } = useRestaurant();
   const isStoreOpen = restaurantSettings?.isOpen ?? true;
+
+  // Extrair dados da sessão vindo do Wrapper (Repassado via props)
+  const {
+    order,
+    setOrder,
+    allProducts,
+    categories,
+    tableInfo,
+    featuredImages,
+    isLoading,
+  } = sessionData;
+  
+  // Cores Dinâmicas
+  const primaryColor = restaurantSettings?.primaryColor || '#ea580c'; // Default orange-600
   
   // Modais
   const { isOpen: isCartOpen, open: openCart, close: closeCart } = useModal();
@@ -63,35 +81,41 @@ const TableMenu = () => {
     }, 500);
   }, []);
 
-  const {
-    order,
-    setOrder,
-    allProducts,
-    categories,
-    tableInfo,
-    featuredImages,
-    isLoading,
-  } = useTableSession({
-    restaurantId,
-    tableNumber,
-    setIsThankYouModalOpen: openThankYouModal,
-    setShowSplashScreen,
-    setIsAppVisible,
-    onFinishLoading: handleStartSplashExit,
-  });
+  // Lógica de Inatividade (Screensaver)
+  useEffect(() => {
+    let inactivityTimer: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      if (showSplashScreen) return;
+      clearTimeout(inactivityTimer);
+      // Volta para a splash após 2 minutos de inatividade
+      inactivityTimer = setTimeout(() => {
+        setShowSplashScreen(true);
+        setIsAppVisible(false);
+      }, 120000); 
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => document.addEventListener(event, resetTimer));
+
+    resetTimer();
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach(event => document.removeEventListener(event, resetTimer));
+    };
+  }, [showSplashScreen]);
 
   const availableCategories = useMemo(() => {
     return categories.filter(isCategoryAvailable);
   }, [categories]);
 
   useEffect(() => {
-    if (!isLoading && showSplashScreen) {
-      const timer = setTimeout(() => {
-        handleStartSplashExit();
-      }, 1000);
-      return () => clearTimeout(timer);
+    if (!isLoading && showSplashScreen && !isAppVisible) {
+      // O Wrapper já carregou os dados, então podemos liberar a splash se quisermos
+      // Mas aqui mantemos o comportamento de esperar o clique em "Iniciar" na SplashScreen
     }
-  }, [isLoading, showSplashScreen, handleStartSplashExit]);
+  }, [isLoading, showSplashScreen, isAppVisible]);
   
   const showInfoModal = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setInfoModal({ isOpen: true, title, message, type });
@@ -122,11 +146,7 @@ const TableMenu = () => {
     if (!order || localCartItems.length === 0) return;
     setIsPlacingOrder(true);
     try {
-      // Tenta pegar o usuário (garçom) logado se houver
-      const userStr = localStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : null;
-
-      const updatedOrder = await batchAddItemsToOrder(order.id, localCartItems, user?.id);
+      const updatedOrder = await batchAddItemsToOrder(order.id, localCartItems);
       setOrder(updatedOrder);
       clearCart();
       closeCart();
@@ -151,9 +171,15 @@ const TableMenu = () => {
 
   const filteredProducts = useMemo(() => {
     let products = allProducts;
+    
+    // Filtro de Categorias corrigido para n:m
     if (activeCategory !== 'todos') {
-      products = products.filter(p => p.categoryId === activeCategory);
+      products = products.filter(p => 
+        p.categoryId === activeCategory || 
+        (p.categories && p.categories.some((c: any) => c.id === activeCategory))
+      );
     }
+
     if (searchTerm) {
       const low = searchTerm.toLowerCase();
       products = products.filter(p => p.name.toLowerCase().includes(low) || p.description?.toLowerCase().includes(low));
@@ -171,7 +197,7 @@ const TableMenu = () => {
       isExitingSplash={isExitingSplash}
       onStart={handleStartSplashExit}
     >
-      <div className="bg-background min-h-screen pb-32 font-sans selection:bg-primary selection:text-white">
+      <div className="bg-background min-h-screen pb-32 font-sans selection:bg-primary selection:text-white" style={{ '--primary': primaryColor } as React.CSSProperties}>
         
         {/* Banner Loja Fechada */}
         {!isStoreOpen && (
@@ -235,7 +261,7 @@ const TableMenu = () => {
             </div>
         </header>
 
-        {/* BANNER E PROMOÇÕES (Reutilizando componentes do Delivery) */}
+        {/* BANNER E PROMOÇÕES */}
         <div className="px-5 mb-8 pt-4">
             <Banner 
                 restaurantId={restaurantId!} 
@@ -248,7 +274,7 @@ const TableMenu = () => {
             onProductClick={handleProductClick}
         />
 
-        {/* NAVEGAÇÃO DE CATEGORIAS EM PÍLULAS */}
+        {/* NAVEGAÇÃO DE CATEGORIAS */}
         <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">
             <button 
                 onClick={() => setActiveCategory('todos')}
@@ -275,16 +301,24 @@ const TableMenu = () => {
 
         {/* LISTAGEM DE PRODUTOS */}
         <main className="p-5">
-            <div className="grid grid-cols-2 gap-4">
-                {filteredProducts.map(product => (
-                    <DeliveryProductCard 
-                        key={product.id} 
-                        product={product} 
-                        onAddToCart={handleProductClick} 
-                    />
-                ))}
-            </div>
-            {filteredProducts.length === 0 && (
+            {isLoading && allProducts.length === 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                    {[1,2,3,4].map(i => (
+                        <div key={i} className="aspect-[4/5] bg-slate-100 animate-pulse rounded-3xl" />
+                    ))}
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-4">
+                    {filteredProducts.map(product => (
+                        <DeliveryProductCard 
+                            key={product.id} 
+                            product={product} 
+                            onAddToCart={() => handleProductClick(product)} 
+                        />
+                    ))}
+                </div>
+            )}
+            {!isLoading && filteredProducts.length === 0 && (
                 <div className="py-20 text-center opacity-30 flex flex-col items-center gap-4 grayscale">
                     <Search size={48} strokeWidth={1} />
                     <p className="font-black uppercase tracking-widest text-xs">Nenhum item encontrado</p>
@@ -292,7 +326,7 @@ const TableMenu = () => {
             )}
         </main>
 
-        {/* MODAIS E FOOTER */}
+        {/* FOOTER E CARRINHO */}
         <FooterCart 
             items={localCartItems}
             total={localCartTotal}
