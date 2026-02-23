@@ -135,12 +135,12 @@ const ReportController = {
             const staffDetails = await Promise.all(stats.map(async (s) => {
                 const user = await prisma.user.findUnique({
                     where: { id: s.userId },
-                    select: { name: true, role: true }
+                    select: { name: true, roleRef: { select: { name: true } } }
                 });
                 return {
                     userId: s.userId,
                     name: user?.name || 'Desconhecido',
-                    role: user?.role,
+                    role: user?.roleRef?.name,
                     totalRevenue: s._sum.total || 0,
                     ordersCount: s._count.id || 0,
                     averageTicket: (s._sum.total || 0) / (s._count.id || 1)
