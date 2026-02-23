@@ -1,16 +1,3 @@
-
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { RestaurantProvider } from '../context/RestaurantContext';
-import { useModal } from '../hooks/useModal';
-import TableMenu from './TableMenu';
-import { useTableSession } from '../hooks/useTableSession';
-
-interface TableMenuWrapperProps {
-  restaurantId?: string;
-  tableNumber?: string;
-}
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { RestaurantProvider } from '../context/RestaurantContext';
@@ -24,8 +11,8 @@ interface TableMenuWrapperProps {
 }
 
 const TableMenuWrapper: React.FC<TableMenuWrapperProps> = ({ 
-  restaurantId: propRestaurantId, 
-  tableNumber: propTableNumber 
+  restaurantId: propRestaurantId,
+  tableNumber: propTableNumber
 }) => {
   const params = useParams<{ restaurantId: string; tableNumber: string }>();
   const { isOpen: isThankYouModalOpen, open: openThankYouModal, close: closeThankYouModal } = useModal();
@@ -70,7 +57,5 @@ const TableMenuWrapper: React.FC<TableMenuWrapperProps> = ({
     </RestaurantProvider>
   );
 };
-
-export default TableMenuWrapper;
 
 export default TableMenuWrapper;
