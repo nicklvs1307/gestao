@@ -52,6 +52,15 @@ class SaiposService {
    * Endpoint: POST /order
    */
   async sendOrderToSaipos(orderId) {
+    // Função para remover acentos e normalizar texto (disponível para todo o método)
+    const normalize = (str) => {
+        if (!str) return '';
+        return str.toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .trim();
+    };
+
     try {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
@@ -179,15 +188,6 @@ class SaiposService {
       if (orderMethod.mode === 'DELIVERY') {
         const c = order.deliveryOrder?.customer;
         
-        // Função para remover acentos e normalizar texto
-        const normalize = (str) => {
-            if (!str) return '';
-            return str.toString()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-                .trim();
-        };
-
         // Identifica a origem dos dados para o log
         const citySource = c?.city ? 'Cliente' : (order.restaurant?.city ? 'Restaurante' : 'Padrão');
         const stateSource = c?.state ? 'Cliente' : (order.restaurant?.state ? 'Restaurante' : 'Padrão');
