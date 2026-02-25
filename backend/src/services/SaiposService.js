@@ -192,10 +192,19 @@ class SaiposService {
         const citySource = c?.city ? 'Cliente' : (order.restaurant?.city ? 'Restaurante' : 'Padrão');
         const stateSource = c?.state ? 'Cliente' : (order.restaurant?.state ? 'Restaurante' : 'Padrão');
 
+        let state = normalize(c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP').toUpperCase().slice(0, 2);
+        let city = normalize(c?.city || order.restaurant?.city || fiscalConfig?.city || 'Sao Paulo');
+
+        // Proteção extra para Andradas (MG) caso o estado venha errado
+        if (city.toLowerCase().includes('andradas') && state === 'SP') {
+            state = 'MG';
+            console.log(`[SAIPOS] Correção Automática: Cidade Andradas detectada, forçando UF para MG.`);
+        }
+
         deliveryAddress = {
           country: 'BR',
-          state: normalize(c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP').toUpperCase().slice(0, 2),
-          city: normalize(c?.city || order.restaurant?.city || fiscalConfig?.city || 'Sao Paulo'),
+          state: state,
+          city: city,
           district: normalize(c?.neighborhood || 'Bairro'),
           street_name: normalize(c?.street || order.deliveryOrder?.address || 'Rua nao informada'),
           street_number: normalize(c?.number || 'S/N'),
@@ -229,7 +238,7 @@ class SaiposService {
           const methodToMap = dbPaymentMethod?.saiposIntegrationCode || dbPaymentMethod?.type || methodName;
           
           // Fix: order.total already includes deliveryFee in this system. Force 2 decimal places.
-          const finalAmount = parseFloat(parseFloat(order.total).toFixed(2));
+          const finalAmount = Math.round(order.total * 100) / 100;
           const paymentData = this.mapPaymentMethod(methodToMap, finalAmount, order.deliveryOrder?.changeFor || 0);
           paymentTypes.push(paymentData);
       }
@@ -243,7 +252,7 @@ class SaiposService {
         notes: order.deliveryOrder?.notes || '',
         total_increase: 0,
         total_discount: 0,
-        total_amount: parseFloat(parseFloat(order.total).toFixed(2)),
+        total_amount: Math.round(order.total * 100) / 100,
         customer: {
           id: order.deliveryOrder?.customer?.id || 'GUEST',
           name: normalize(order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcao')),
