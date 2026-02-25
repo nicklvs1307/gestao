@@ -310,7 +310,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                     {isLoadingFlavors ? (
                       <div className="py-8 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>
                     ) : (
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {availableFlavors.map(flavor => {
                           const isSelected = selectedFlavors.some(f => f.id === flavor.id);
                           const flavorPrice = selectedSize ? ((flavor.sizes || []).find(s => s.name === selectedSize.name)?.price || flavor.price) : flavor.price;
@@ -319,20 +319,47 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                 key={flavor.id} 
                                 onClick={() => handleFlavorToggle(flavor)} 
                                 className={cn(
-                                    "flex items-center justify-between p-4 border-2 transition-all duration-300", 
+                                    "flex flex-col p-0 border-2 transition-all duration-300 overflow-hidden relative group cursor-pointer", 
                                     isSelected ? "border-primary bg-white shadow-lg shadow-primary/5 scale-[1.01]" : "border-transparent bg-white hover:border-slate-200"
                                 )}
                             >
-                              <div className="flex items-center gap-4">
-                                 <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300", isSelected ? "border-primary bg-primary" : "border-slate-300")}>
-                                    {isSelected && <Check size={12} className="text-white" strokeWidth={4} />}
+                              {/* Overlay de Seleção */}
+                              {isSelected && (
+                                  <div className="absolute top-2 right-2 z-10 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
+                                      <Check size={14} strokeWidth={4} />
+                                  </div>
+                              )}
+
+                              <div className="flex items-center gap-3 p-3">
+                                 <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 shadow-sm relative">
+                                    {flavor.imageUrl ? (
+                                        <img src={flavor.imageUrl} alt={flavor.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                            <PizzaIcon size={24} strokeWidth={1} />
+                                        </div>
+                                    )}
+                                    {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
                                  </div>
-                                 <div className="text-left">
-                                    <span className={cn("font-black text-sm uppercase italic tracking-tighter block leading-none", isSelected ? "text-primary" : "text-slate-700")}>{flavor.name}</span>
-                                    {flavor.description && <span className="text-[10px] text-slate-400 font-medium line-clamp-1 mt-1">{flavor.description}</span>}
+
+                                 <div className="flex-1 min-w-0 pr-4">
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className={cn("font-black text-xs uppercase italic tracking-tighter block leading-tight truncate", isSelected ? "text-primary" : "text-slate-900")}>
+                                            {flavor.name}
+                                        </span>
+                                        {flavor.description && (
+                                            <span className="text-[9px] text-slate-400 font-medium line-clamp-2 leading-tight h-6">
+                                                {flavor.description}
+                                            </span>
+                                        )}
+                                        <div className="flex items-center justify-between mt-1">
+                                            <span className="text-[10px] font-black text-slate-900 italic">
+                                                + R$ {flavorPrice.toFixed(2).replace('.', ',')}
+                                            </span>
+                                        </div>
+                                    </div>
                                  </div>
                               </div>
-                              <span className="text-xs font-black text-slate-900 italic">R$ {flavorPrice.toFixed(2).replace('.', ',')}</span>
                             </Card>
                           );
                         })}
