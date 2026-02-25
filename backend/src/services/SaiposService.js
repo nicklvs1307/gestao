@@ -179,17 +179,19 @@ class SaiposService {
       if (orderMethod.mode === 'DELIVERY') {
         const c = order.deliveryOrder?.customer;
         
-        // Prioriza os campos estruturados do banco de dados para evitar endereço "tudo junto"
+        // Função para limpar e formatar strings de endereço
+        const formatAddr = (val) => val ? val.toString().trim() : '';
+
         deliveryAddress = {
           country: 'BR',
-          state: c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP',
-          city: c?.city || order.restaurant?.city || fiscalConfig?.city || 'São Paulo',
-          district: c?.neighborhood || 'Bairro',
-          street_name: c?.street || order.deliveryOrder?.address || '',
-          street_number: c?.number || 'S/N',
-          postal_code: c?.zipCode?.replace(/\D/g, '') || '00000000',
-          reference: c?.reference || '',
-          complement: c?.complement || '',
+          state: formatAddr(c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP').toUpperCase().slice(0, 2),
+          city: formatAddr(c?.city || order.restaurant?.city || fiscalConfig?.city || 'São Paulo'),
+          district: formatAddr(c?.neighborhood || 'Bairro'),
+          street_name: formatAddr(c?.street || order.deliveryOrder?.address || 'Rua não informada'),
+          street_number: formatAddr(c?.number || 'S/N'),
+          postal_code: formatAddr(c?.zipCode || '00000000').replace(/\D/g, ''),
+          reference: formatAddr(c?.reference || ''),
+          complement: formatAddr(c?.complement || ''),
           coordinates: { latitude: 0, longitude: 0 }
         };
       }
@@ -249,6 +251,9 @@ class SaiposService {
       }));
 
       console.log(`[SAIPOS] Enviando Pedido #${order.dailyOrderNumber} (Modo: ${orderMethod.mode}) para Loja ${settings.saiposCodStore}...`);
+      if (deliveryAddress) {
+          console.log(`[SAIPOS] Endereço de Entrega: ${deliveryAddress.city}/${deliveryAddress.state} - Bairro: ${deliveryAddress.district}`);
+      }
       
       const response = await axios.post(`${baseUrl}/order`, payload, {
         headers: {

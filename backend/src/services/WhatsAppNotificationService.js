@@ -33,7 +33,14 @@ class WhatsAppNotificationService {
 
       const orderNumber = order.dailyOrderNumber || order.id.slice(-4);
       const customerName = order.deliveryOrder.name || order.deliveryOrder.customer?.name || 'Cliente';
-      const menuUrl = order.restaurant.settings?.menuUrl || 'http://localhost:5173';
+      
+      // Lógica para evitar localhost no link
+      let menuUrl = order.restaurant.settings?.menuUrl || '';
+      if (!menuUrl || menuUrl.includes('localhost')) {
+          // Fallback para o subdomínio correto do sistema (slug.towersfy.com)
+          menuUrl = `https://${order.restaurant.slug}.towersfy.com`;
+      }
+      
       const trackingLink = `${menuUrl}/order-status/${order.id}`;
 
       // 1. Mensagem de Boas-vindas baseada no status
