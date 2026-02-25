@@ -155,9 +155,11 @@ class OrderService {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
              let fullAddress = 'Retirada no Balcão';
              
+             // Extração segura dos campos de endereço
+             const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
+             
              if (isDelivery) {
                  if (typeof deliveryInfo.address === 'object') {
-                     const addr = deliveryInfo.address;
                      fullAddress = `${addr.street || ''}, ${addr.number || 'S/N'}${addr.complement ? ' (' + addr.complement + ')' : ''} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
                  } else {
                      fullAddress = deliveryInfo.address || 'Endereço não informado';
@@ -172,20 +174,32 @@ class OrderService {
              const customer = await tx.customer.upsert({
                  where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
                  update: {
-                     name: deliveryInfo.name, address: fullAddress, zipCode: deliveryInfo.cep || null,
-                     street: deliveryInfo.street || null, number: deliveryInfo.number || null,
-                     neighborhood: deliveryInfo.neighborhood || null, city: deliveryInfo.city || null,
-                     state: deliveryInfo.state || null, complement: deliveryInfo.complement || null,
-                     reference: deliveryInfo.reference || null,
+                     name: deliveryInfo.name, 
+                     address: fullAddress, 
+                     zipCode: addr.zipCode || addr.cep || deliveryInfo.cep || null,
+                     street: addr.street || null, 
+                     number: addr.number || null,
+                     neighborhood: addr.neighborhood || null, 
+                     city: addr.city || null,
+                     state: addr.state || null, 
+                     complement: addr.complement || deliveryInfo.complement || null,
+                     reference: addr.reference || deliveryInfo.reference || null,
                      latitude: coords?.lat || null,
                      longitude: coords?.lng || null
                  },
                  create: {
-                     name: deliveryInfo.name, phone: cleanPhone, address: fullAddress, zipCode: deliveryInfo.cep || null,
-                     street: deliveryInfo.street || null, number: deliveryInfo.number || null,
-                     neighborhood: deliveryInfo.neighborhood || null, city: deliveryInfo.city || null,
-                     state: deliveryInfo.state || null, complement: deliveryInfo.complement || null,
-                     reference: deliveryInfo.reference || null, restaurantId: realRestaurantId,
+                     name: deliveryInfo.name, 
+                     phone: cleanPhone, 
+                     address: fullAddress, 
+                     zipCode: addr.zipCode || addr.cep || deliveryInfo.cep || null,
+                     street: addr.street || null, 
+                     number: addr.number || null,
+                     neighborhood: addr.neighborhood || null, 
+                     city: addr.city || null,
+                     state: addr.state || null, 
+                     complement: addr.complement || deliveryInfo.complement || null,
+                     reference: addr.reference || deliveryInfo.reference || null, 
+                     restaurantId: realRestaurantId,
                      latitude: coords?.lat || null,
                      longitude: coords?.lng || null
                  }

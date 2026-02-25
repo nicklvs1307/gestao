@@ -179,10 +179,11 @@ class SaiposService {
       if (orderMethod.mode === 'DELIVERY') {
         const c = order.deliveryOrder?.customer;
         
+        // Prioriza os campos estruturados do banco de dados para evitar endereço "tudo junto"
         deliveryAddress = {
           country: 'BR',
-          state: c?.state || fiscalConfig?.state || 'SP',
-          city: c?.city || fiscalConfig?.city || 'São Paulo',
+          state: c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP',
+          city: c?.city || order.restaurant?.city || fiscalConfig?.city || 'São Paulo',
           district: c?.neighborhood || 'Bairro',
           street_name: c?.street || order.deliveryOrder?.address || '',
           street_number: c?.number || 'S/N',
@@ -200,9 +201,20 @@ class SaiposService {
       // 3. Mapeamento de Pagamento
       let paymentTypes = [];
       if (orderMethod.mode !== 'TABLE') {
-          const method = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
-          // Fix: order.total already includes deliveryFee in this system
-          const paymentData = this.mapPaymentMethod(method, order.total, order.deliveryOrder?.changeFor || 0);
+          const methodName = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
+          
+          // Busca a configuração da forma de pagamento no banco para pegar o código Saipos
+          const dbPaymentMethod = await prisma.paymentMethod.findFirst({
+              where: {
+                  restaurantId: order.restaurantId,
+                  name: { equals: methodName, mode: 'insensitive' }
+              }
+          });
+
+          // Se tiver um código configurado, usa ele. Senão tenta mapear pelo nome/tipo.
+          const methodToMap = dbPaymentMethod?.saiposIntegrationCode || dbPaymentMethod?.type || methodName;
+          
+          const paymentData = this.mapPaymentMethod(methodToMap, order.total, order.deliveryOrder?.changeFor || 0);
           paymentTypes.push(paymentData);
       }
 
@@ -259,27 +271,40 @@ class SaiposService {
   }
 
   /**
-   * Mapeamento de pagamentos similar à automação funcional
+   * Mapeamento de pagamentos para os códigos da Saipos
    */
   mapPaymentMethod(method, amount, change_for = 0) {
-    method = method.toLowerCase();
+    method = (method || 'DIN').toUpperCase();
     
-    // Pagamentos Online
-    if (method === 'pix_online') {
-        return { code: "PARTNER_PAYMENT", type: "ONLINE", amount, complement: "pix", change_for: 0 };
-    }
-
-    const map = {
-      'cash': { code: 'DIN', type: 'OFFLINE' },
-      'pix': { code: 'PARTNER_PAYMENT', type: 'ONLINE', complement: 'pix' },
-      'pix_on_delivery': { code: 'PARTNER_PAYMENT', type: 'ONLINE', complement: 'pix' },
-      'credit_card': { code: 'CRE', type: 'OFFLINE' },
-      'debit_card': { code: 'DEB', type: 'OFFLINE' },
-      'card': { code: 'CARD', type: 'OFFLINE' },
-      'meal_voucher': { code: 'VALE', type: 'OFFLINE' }
+    // Se o método já for um código Saipos válido (Ex: DIN, CRE, DEB, PIX)
+    const validSaiposCodes = ['DIN', 'CRE', 'DEB', 'PIX', 'VALE', 'CARD', 'OUTRO'];
+    
+    // Mapeamento de tipos do banco para códigos Saipos
+    const typeToCode = {
+      'CASH': 'DIN',
+      'CREDIT_CARD': 'CRE',
+      'DEBIT_CARD': 'DEB',
+      'PIX': 'PIX',
+      'PIX_ONLINE': 'PIX',
+      'VOUCHER': 'VALE',
+      'MEAL_VOUCHER': 'VALE',
+      'DINHEIRO': 'DIN',
+      'CARTÃO': 'CARD',
+      'CARTAO': 'CARD'
     };
 
-    const result = map[method] || { code: 'DIN', type: 'OFFLINE' };
+    const code = validSaiposCodes.includes(method) ? method : (typeToCode[method] || 'DIN');
+    
+    // Determinar se é ONLINE ou OFFLINE baseado no código
+    // Geralmente PIX do sistema é ONLINE, o restante é OFFLINE para a Saipos
+    const type = (code === 'PIX' || method.includes('ONLINE')) ? 'ONLINE' : 'OFFLINE';
+    
+    const result = { code, type, amount };
+    
+    if (code === 'PIX') {
+        result.complement = 'pix';
+    }
+
     return { ...result, amount, change_for: parseFloat(change_for || 0) };
   }
 }

@@ -9,8 +9,12 @@ class WhatsAppNotificationService {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
         include: {
-          restaurant: true,
-          deliveryOrder: true,
+          restaurant: {
+            include: { settings: true }
+          },
+          deliveryOrder: {
+            include: { customer: true }
+          },
           items: { include: { product: true } }
         }
       });
@@ -27,59 +31,74 @@ class WhatsAppNotificationService {
 
       if (!instance || instance.status !== 'CONNECTED') return;
 
-      const statusMessages = {
-        'PENDING': `*Pedido Recebido!* 📝
+      const orderNumber = order.dailyOrderNumber || order.id.slice(-4);
+      const customerName = order.deliveryOrder.name || order.deliveryOrder.customer?.name || 'Cliente';
+      const menuUrl = order.restaurant.settings?.menuUrl || 'http://localhost:5173';
+      const trackingLink = `${menuUrl}/order-status/${order.id}`;
 
-Olá ${order.deliveryOrder.name || 'Cliente'}, recebemos seu pedido #${order.dailyOrderNumber || order.id.slice(-4)}.
-
-Estamos aguardando a confirmação do restaurante.`,
-        
-        'PREPARING': `*Pedido em Preparo!* 🔥
-
-Seu pedido #${order.dailyOrderNumber || order.id.slice(-4)} já está sendo preparado com muito carinho pela nossa equipe!`,
-        
-        'READY': `*Pedido Pronto!* ✅
-
-Boas notícias! Seu pedido #${order.dailyOrderNumber || order.id.slice(-4)} está pronto e logo sairá para entrega ou estará disponível para retirada.`,
-        
-        'SHIPPED': `*Pedido Saiu para Entrega!* 🛵
-
-Opa! Seu pedido #${order.dailyOrderNumber || order.id.slice(-4)} acabou de sair com o nosso entregador. Prepare a mesa!`,
-        
-        'DELIVERED': `*Pedido Entregue!* 😋
-
-Seu pedido #${order.dailyOrderNumber || order.id.slice(-4)} foi entregue. Esperamos que aproveite! Bom apetite!`,
-        
-        'CANCELED': `*Pedido Cancelado* ❌
-
-Olá, infelizmente seu pedido #${order.dailyOrderNumber || order.id.slice(-4)} foi cancelado. Se tiver dúvidas, entre em contato conosco.`
-      };
-
-      let message = statusMessages[status];
-
-      // Se for a primeira mensagem (PENDING), adiciona o resumo do pedido
+      // 1. Mensagem de Boas-vindas baseada no status
+      let header = '';
       if (status === 'PENDING') {
-        message += `
-
-*Resumo do Pedido:*`;
-        order.items.forEach(item => {
-          message += `
-- ${item.quantity}x ${item.product.name}`;
-          if (item.sizeJson) {
-            const size = JSON.parse(item.sizeJson);
-            message += ` (${size.name})`;
-          }
-        });
-        message += `
-
-*Total:* R$ ${order.total.toFixed(2)}`;
-        message += `
-*Pagamento:* ${order.deliveryOrder.paymentMethod || 'Não informado'}`;
+          header = `Olá, ${customerName}! Seu pedido foi recebido e aguarda aprovação. Segue abaixo um resumo do seu pedido \n \n  *Pedido #${orderNumber}*`;
+      } else if (status === 'PREPARING') {
+          header = `Olá, ${customerName}! Seu pedido foi aprovado. Segue abaixo um resumo do seu pedido \n \n  *Pedido #${orderNumber}*`;
+      } else {
+          // Para outros status, usamos a lógica simplificada anterior ou personalizada
+          const statusMessages = {
+            'READY': `*Pedido Pronto!* ✅\n\nBoas notícias! Seu pedido #${orderNumber} está pronto.`,
+            'SHIPPED': `*Pedido Saiu para Entrega!* 🛵\n\nOpa! Seu pedido #${orderNumber} acabou de sair com o nosso entregador.`,
+            'DELIVERED': `*Pedido Entregue!* 😋\n\nSeu pedido #${orderNumber} foi entregue. Bom apetite!`,
+            'CANCELED': `*Pedido Cancelado* ❌\n\nInfelizmente seu pedido #${orderNumber} foi cancelado.`
+          };
+          header = statusMessages[status] || `Status do pedido #${orderNumber}: ${status}`;
       }
 
-      message += `
+      let message = `${header}\n\nLink para acompanhar status do pedido: \n${trackingLink}\n\n`;
 
-_Mensagem automática de ${order.restaurant.name}_`;
+      // 2. Listagem de Itens (apenas para PENDING ou PREPARING para não ficar repetitivo)
+      if (status === 'PENDING' || status === 'PREPARING') {
+          let itemsTotal = 0;
+          order.items.forEach(item => {
+              const size = item.sizeJson ? JSON.parse(item.sizeJson) : null;
+              const subtotal = item.priceAtTime * item.quantity;
+              itemsTotal += subtotal;
+
+              message += `${item.quantity}x ${item.product.name}${size ? ` ${size.name}` : ''} (R$ ${item.priceAtTime.toFixed(2).replace('.', ',')})\n`;
+              message += `Subtotal do item: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
+              message += `- - - - - - - - - - - - - -\n`;
+          });
+
+          message += `*SUBTOTAL: R$ ${itemsTotal.toFixed(2).replace('.', ',')}*\n\n`;
+
+          // 3. Dados de Entrega
+          if (order.deliveryOrder?.deliveryType === 'delivery') {
+              const c = order.deliveryOrder.customer;
+              message += ` ------------------------------------------\n▶ *Dados para entrega* \n \n`;
+              message += `Nome: ${customerName}\n`;
+              message += `Endereço: ${c?.street || order.deliveryOrder.address || 'Não informado'}, nº: ${c?.number || 'S/N'}\n`;
+              message += `Bairro: ${c?.neighborhood || 'Não informado'}\n`;
+              message += `WhatsApp: ${order.deliveryOrder.phone}\n\n`;
+              message += `Taxa de Entrega: R$ ${order.deliveryOrder.deliveryFee.toFixed(2).replace('.', ',')}\n\n`;
+              
+              if (order.restaurant.settings?.deliveryTime) {
+                  message += ` 🕙 Tempo de Entrega: aprox. ${order.restaurant.settings.deliveryTime}\n\n`;
+              }
+          } else {
+              message += ` ------------------------------------------\n▶ *Retirada no Balcão*\n \n`;
+          }
+
+          message += ` ------------------------------- \n▶ *TOTAL = R$ ${order.total.toFixed(2).replace('.', ',')}*\n ------------------------------ \n\n`;
+
+          // 4. Pagamento
+          const payment = order.deliveryOrder.paymentMethod || 'Não informado';
+          message += `▶ *PAGAMENTO* \n \n${payment}`;
+          
+          if (order.deliveryOrder.changeFor) {
+              message += `\n(Levar troco para R$ ${order.deliveryOrder.changeFor.toFixed(2).replace('.', ',')})`;
+          }
+      }
+
+      message += `\n\n_Mensagem automática de ${order.restaurant.name}_`;
 
       await evolutionService.sendText(instance.name, phone, message);
       console.log(`[WhatsApp Notification] Status ${status} enviado para ${phone} (Pedido #${order.id})`);
