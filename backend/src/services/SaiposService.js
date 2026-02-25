@@ -179,19 +179,25 @@ class SaiposService {
       if (orderMethod.mode === 'DELIVERY') {
         const c = order.deliveryOrder?.customer;
         
-        // Função para limpar e formatar strings de endereço
-        const formatAddr = (val) => val ? val.toString().trim() : '';
+        // Função para remover acentos e normalizar texto
+        const normalize = (str) => {
+            if (!str) return '';
+            return str.toString()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+                .trim();
+        };
 
         deliveryAddress = {
           country: 'BR',
-          state: formatAddr(c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP').toUpperCase().slice(0, 2),
-          city: formatAddr(c?.city || order.restaurant?.city || fiscalConfig?.city || 'São Paulo'),
-          district: formatAddr(c?.neighborhood || 'Bairro'),
-          street_name: formatAddr(c?.street || order.deliveryOrder?.address || 'Rua não informada'),
-          street_number: formatAddr(c?.number || 'S/N'),
-          postal_code: formatAddr(c?.zipCode || '00000000').replace(/\D/g, ''),
-          reference: formatAddr(c?.reference || ''),
-          complement: formatAddr(c?.complement || ''),
+          state: normalize(c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP').toUpperCase().slice(0, 2),
+          city: normalize(c?.city || order.restaurant?.city || fiscalConfig?.city || 'Sao Paulo'),
+          district: normalize(c?.neighborhood || 'Bairro'),
+          street_name: normalize(c?.street || order.deliveryOrder?.address || 'Rua nao informada'),
+          street_number: normalize(c?.number || 'S/N'),
+          postal_code: (c?.zipCode || '00000000').replace(/\D/g, ''),
+          reference: normalize(c?.reference || ''),
+          complement: normalize(c?.complement || ''),
           coordinates: { latitude: 0, longitude: 0 }
         };
       }
@@ -232,7 +238,7 @@ class SaiposService {
         total_amount: parseFloat(order.total),
         customer: {
           id: order.deliveryOrder?.customer?.id || 'GUEST',
-          name: order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcão'),
+          name: order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcao'),
           phone: order.deliveryOrder?.phone?.replace(/\D/g, '') || ''
         },
         order_method: orderMethod,
@@ -251,9 +257,6 @@ class SaiposService {
       }));
 
       console.log(`[SAIPOS] Enviando Pedido #${order.dailyOrderNumber} (Modo: ${orderMethod.mode}) para Loja ${settings.saiposCodStore}...`);
-      if (deliveryAddress) {
-          console.log(`[SAIPOS] Endereço de Entrega: ${deliveryAddress.city}/${deliveryAddress.state} - Bairro: ${deliveryAddress.district}`);
-      }
       
       const response = await axios.post(`${baseUrl}/order`, payload, {
         headers: {
@@ -272,7 +275,12 @@ class SaiposService {
 
     } catch (error) {
       console.error(`[SAIPOS] Erro no envio (Pedido ${orderId}):`, error.response?.data || error.message);
+      // Se houver erro, logamos o payload para você conferir os dados enviados
+      if (error.response?.data) {
+          console.log(`[SAIPOS] Payload que falhou:`, JSON.stringify(error.config?.data ? JSON.parse(error.config.data) : 'N/A', null, 2));
+      }
     }
+  }
   }
 
   /**
