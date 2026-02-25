@@ -188,6 +188,10 @@ class SaiposService {
                 .trim();
         };
 
+        // Identifica a origem dos dados para o log
+        const citySource = c?.city ? 'Cliente' : (order.restaurant?.city ? 'Restaurante' : 'Padrão');
+        const stateSource = c?.state ? 'Cliente' : (order.restaurant?.state ? 'Restaurante' : 'Padrão');
+
         deliveryAddress = {
           country: 'BR',
           state: normalize(c?.state || order.restaurant?.state || fiscalConfig?.state || 'SP').toUpperCase().slice(0, 2),
@@ -200,6 +204,8 @@ class SaiposService {
           complement: normalize(c?.complement || ''),
           coordinates: { latitude: 0, longitude: 0 }
         };
+
+        console.log(`[SAIPOS] Endereço montado - Cidade: ${deliveryAddress.city} (via ${citySource}), UF: ${deliveryAddress.state} (via ${stateSource})`);
       }
 
       if (orderMethod.mode === 'TABLE') {
@@ -222,7 +228,9 @@ class SaiposService {
           // Se tiver um código configurado, usa ele. Senão tenta mapear pelo nome/tipo.
           const methodToMap = dbPaymentMethod?.saiposIntegrationCode || dbPaymentMethod?.type || methodName;
           
-          const paymentData = this.mapPaymentMethod(methodToMap, order.total, order.deliveryOrder?.changeFor || 0);
+          // Fix: order.total already includes deliveryFee in this system. Force 2 decimal places.
+          const finalAmount = parseFloat(parseFloat(order.total).toFixed(2));
+          const paymentData = this.mapPaymentMethod(methodToMap, finalAmount, order.deliveryOrder?.changeFor || 0);
           paymentTypes.push(paymentData);
       }
 
@@ -235,10 +243,10 @@ class SaiposService {
         notes: order.deliveryOrder?.notes || '',
         total_increase: 0,
         total_discount: 0,
-        total_amount: parseFloat(order.total),
+        total_amount: parseFloat(parseFloat(order.total).toFixed(2)),
         customer: {
           id: order.deliveryOrder?.customer?.id || 'GUEST',
-          name: order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcao'),
+          name: normalize(order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcao')),
           phone: order.deliveryOrder?.phone?.replace(/\D/g, '') || ''
         },
         order_method: orderMethod,
