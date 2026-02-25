@@ -239,18 +239,47 @@ const OrderTracking: React.FC = () => {
               </div>
 
               <div className="space-y-4 mb-8 relative z-10">
-                  {order.items.map((item: any, i: number) => (
-                      <div key={i} className="flex justify-between items-start group">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-bold flex items-center gap-2 text-slate-100">
-                                <span className="w-5 h-5 flex items-center justify-center bg-primary/20 text-primary text-[10px] rounded-md">{item.quantity}</span>
-                                {item.product.name}
-                            </span>
-                            {item.observations && <span className="text-[10px] text-slate-500 italic mt-1 ml-7">"{item.observations}"</span>}
-                          </div>
-                          <span className="text-xs font-black text-slate-400">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
-                      </div>
-                  ))}
+                  {order.items.map((item: any, i: number) => {
+                      const size = item.sizeJson ? JSON.parse(item.sizeJson) : null;
+                      const addons = item.addonsJson ? JSON.parse(item.addonsJson) : [];
+                      const flavors = item.flavorsJson ? JSON.parse(item.flavorsJson) : [];
+
+                      return (
+                        <div key={i} className="flex flex-col group border-b border-white/5 pb-4 last:border-0">
+                            <div className="flex justify-between items-start">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold flex items-center gap-2 text-slate-100">
+                                        <span className="w-5 h-5 flex items-center justify-center bg-primary/20 text-primary text-[10px] rounded-md">{item.quantity}</span>
+                                        {item.product.name}
+                                        {size && <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-slate-300 uppercase">{size.name}</span>}
+                                    </span>
+                                </div>
+                                <span className="text-xs font-black text-slate-400">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
+                            </div>
+
+                            {/* Detalhes de Sabores e Adicionais */}
+                            <div className="ml-7 mt-1 space-y-1">
+                                {flavors.map((f: any, idx: number) => (
+                                    <p key={idx} className="text-[10px] text-slate-400 flex items-center gap-1 italic">
+                                        <span className="w-1 h-1 bg-primary/40 rounded-full" />
+                                        Sabor: {f.name}
+                                    </p>
+                                ))}
+                                {addons.map((a: any, idx: number) => (
+                                    <p key={idx} className="text-[10px] text-slate-400 flex items-center gap-1">
+                                        <span className="w-1 h-1 bg-indigo-400/40 rounded-full" />
+                                        +{a.quantity > 1 ? `${a.quantity}x ` : ''}{a.name} (R$ {(a.price * (a.quantity || 1)).toFixed(2)})
+                                    </p>
+                                ))}
+                                {item.observations && (
+                                    <p className="text-[10px] text-amber-400/60 italic mt-2 bg-amber-400/5 px-2 py-1 rounded-lg inline-block">
+                                        "{item.observations}"
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                      );
+                  })}
                   
                   {order.deliveryOrder && (
                       <div className="flex justify-between items-center pt-4 border-t border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500">
@@ -265,7 +294,8 @@ const OrderTracking: React.FC = () => {
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Valor Total</p>
                       <p className="text-4xl font-black italic tracking-tighter text-white">
                         <span className="text-primary mr-1">R$</span>
-                        {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2)}
+                        {/* FIX: order.total already includes deliveryFee in our backend */}
+                        {parseFloat(order.total).toFixed(2)}
                       </p>
                   </div>
                   <div className="text-right">

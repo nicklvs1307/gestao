@@ -101,7 +101,14 @@ class SaiposService {
         
         const choiceItems = [];
         
-        // Adiciona Tamanho
+        // Calcula o total apenas dos adicionais para subtrair do unitPrice (pois o sistema salva o total no unitPrice)
+        const addonsTotalPrice = addons.reduce((sum, a) => sum + (parseFloat(a.price || 0) * (a.quantity || 1)), 0);
+        
+        // O unitPrice na Saipos deve ser o preço base (com tamanho/promoção) sem os adicionais
+        const baseUnitPrice = Math.max(0, parseFloat(item.priceAtTime) - addonsTotalPrice);
+
+        // Adiciona Tamanho (Geralmente no sistema o tamanho já define o preço base, 
+        // então enviamos o código de integração do tamanho mas com preço 0)
         if (size) {
           choiceItems.push({
             integration_code: size.saiposIntegrationCode || 'SIZE_DEFAULT',
@@ -117,7 +124,7 @@ class SaiposService {
           choiceItems.push({
             integration_code: f.saiposIntegrationCode || 'FLAVOR_DEFAULT',
             desc_item_choice: `Sabor: ${f.name}`,
-            aditional_price: 0,
+            aditional_price: 0, // O preço da pizza já está no unit_price (regra de maior valor/média aplicada no backend)
             quantity: 1,
             notes: ''
           });
@@ -139,7 +146,7 @@ class SaiposService {
           integration_code: item.product.saiposIntegrationCode || item.product.id,
           desc_item: item.product.name,
           quantity: item.quantity,
-          unit_price: parseFloat(item.priceAtTime),
+          unit_price: baseUnitPrice,
           notes: item.observations || '',
           choice_items: choiceItems
         };
