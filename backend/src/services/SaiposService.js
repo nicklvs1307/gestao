@@ -281,7 +281,6 @@ class SaiposService {
       }
     }
   }
-  }
 
   /**
    * Mapeamento de pagamentos para os códigos da Saipos
