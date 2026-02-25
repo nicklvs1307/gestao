@@ -146,11 +146,18 @@ class SaiposService {
       });
 
       // 2. Definição do Método e Endereço
-      // Correção: Garantir que se houver dados de entrega, o modo seja DELIVERY
-      const isDelivery = order.orderType === 'DELIVERY' || order.deliveryOrder !== null;
+      const isDeliveryOrder = order.orderType === 'DELIVERY' || order.deliveryOrder !== null;
+      const isPickup = order.deliveryOrder?.deliveryType === 'pickup';
+      
+      let mode = 'TAKEOUT';
+      if (order.tableNumber) {
+          mode = 'TABLE';
+      } else if (isDeliveryOrder && !isPickup) {
+          mode = 'DELIVERY';
+      }
       
       let orderMethod = {
-          mode: isDelivery ? 'DELIVERY' : (order.tableNumber ? 'TABLE' : 'TAKEOUT'),
+          mode: mode,
           scheduled: false,
           delivery_date_time: new Date().toISOString()
       };
@@ -170,7 +177,7 @@ class SaiposService {
           state: c?.state || fiscalConfig?.state || 'SP',
           city: c?.city || fiscalConfig?.city || 'São Paulo',
           district: c?.neighborhood || 'Bairro',
-          street_name: c?.street || order.deliveryOrder?.address || 'Retirada no Balcão',
+          street_name: c?.street || order.deliveryOrder?.address || '',
           street_number: c?.number || 'S/N',
           postal_code: c?.zipCode?.replace(/\D/g, '') || '00000000',
           reference: c?.reference || '',
@@ -187,7 +194,8 @@ class SaiposService {
       let paymentTypes = [];
       if (orderMethod.mode !== 'TABLE') {
           const method = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
-          const paymentData = this.mapPaymentMethod(method, order.total + (order.deliveryOrder?.deliveryFee || 0), order.deliveryOrder?.changeFor || 0);
+          // Fix: order.total already includes deliveryFee in this system
+          const paymentData = this.mapPaymentMethod(method, order.total, order.deliveryOrder?.changeFor || 0);
           paymentTypes.push(paymentData);
       }
 
@@ -200,7 +208,7 @@ class SaiposService {
         notes: order.deliveryOrder?.notes || '',
         total_increase: 0,
         total_discount: 0,
-        total_amount: parseFloat(order.total) + parseFloat(order.deliveryOrder?.deliveryFee || 0),
+        total_amount: parseFloat(order.total),
         customer: {
           id: order.deliveryOrder?.customer?.id || 'GUEST',
           name: order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcão'),

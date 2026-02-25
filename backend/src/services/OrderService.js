@@ -639,6 +639,9 @@ class OrderService {
         });
     });
 
+    // Sincroniza com Saipos após alteração de tipo/taxa
+    SaiposService.sendOrderToSaipos(orderId).catch(err => console.error('[SAIPOS] UpdateDeliveryType Sync Error:', err));
+
     emitOrderUpdate(orderId);
     return result;
   }
