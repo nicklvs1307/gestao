@@ -244,7 +244,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 <X size={20} strokeWidth={3} />
             </Button>
 
-            <div className="w-full md:w-5/12 h-64 md:h-auto relative shrink-0">
+            <div className="w-full md:w-5/12 h-56 md:h-auto relative shrink-0">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
               ) : (
@@ -259,24 +259,24 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             </div>
 
             <div className="w-full md:w-7/12 flex flex-col min-h-0 flex-1 bg-slate-50 relative">
-              <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-8 custom-scrollbar">
-                <div className="space-y-4 hidden md:block">
-                  <h3 className="text-4xl md:text-5xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{product.name}</h3>
-                  <p className="text-slate-500 text-base font-medium leading-relaxed max-w-xl">{product.description}</p>
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar">
+                <div className="space-y-2 hidden md:block">
+                  <h3 className="text-3xl md:text-4xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{product.name}</h3>
+                  <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-2xl">{product.description}</p>
                 </div>
 
-                <div className="space-y-4 md:hidden">
-                   <p className="text-slate-500 text-sm font-medium leading-relaxed">{product.description}</p>
+                <div className="space-y-2 md:hidden">
+                   <p className="text-slate-500 text-xs font-medium leading-relaxed">{product.description}</p>
                 </div>
 
                 {/* SEÇÃO DE TAMANHOS */}
                 {sizes.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-5 bg-primary rounded-full shadow-lg shadow-primary/30" />
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" />
                         <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">1. Escolha o Tamanho</h4>
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-1.5">
                       {sizes.map(size => {
                         const isSelected = selectedSize?.id === size.id;
                         return (
@@ -299,10 +299,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
                 {/* SEÇÃO DE SABORES (PIZZA) */}
                 {product.pizzaConfig && (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <PizzaIcon className="text-primary" size={20} />
+                        <div className="flex items-center gap-2">
+                            <PizzaIcon className="text-primary" size={18} />
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900">2. Escolha os Sabores</h4>
                         </div>
                         <span className="text-[8px] bg-slate-900 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest shadow-sm">Até {getMaxFlavors()} opções</span>
@@ -330,30 +330,30 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                   </div>
                               )}
 
-                              <div className="flex items-center gap-3 p-3">
-                                 <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 shadow-sm relative">
+                              <div className="flex items-center gap-2.5 p-2">
+                                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 shadow-sm relative">
                                     {flavor.imageUrl ? (
                                         <img src={flavor.imageUrl} alt={flavor.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                            <PizzaIcon size={24} strokeWidth={1} />
+                                            <PizzaIcon size={20} strokeWidth={1} />
                                         </div>
                                     )}
                                     {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
                                  </div>
 
-                                 <div className="flex-1 min-w-0 pr-4">
+                                 <div className="flex-1 min-w-0 pr-2">
                                     <div className="flex flex-col gap-0.5">
-                                        <span className={cn("font-black text-xs uppercase italic tracking-tighter block leading-tight truncate", isSelected ? "text-primary" : "text-slate-900")}>
+                                        <span className={cn("font-black text-[11px] md:text-xs uppercase italic tracking-tighter block leading-tight truncate", isSelected ? "text-primary" : "text-slate-900")}>
                                             {flavor.name}
                                         </span>
                                         {flavor.description && (
-                                            <span className="text-[9px] text-slate-400 font-medium line-clamp-2 leading-tight h-6">
+                                            <span className="text-[9px] text-slate-400 font-medium line-clamp-2 leading-tight h-5 md:h-6">
                                                 {flavor.description}
                                             </span>
                                         )}
-                                        <div className="flex items-center justify-between mt-1">
-                                            <span className="text-[10px] font-black text-slate-900 italic">
+                                        <div className="flex items-center justify-between mt-0.5">
+                                            <span className="text-[9px] md:text-[10px] font-black text-slate-900 italic">
                                                 + R$ {flavorPrice.toFixed(2).replace('.', ',')}
                                             </span>
                                         </div>
@@ -370,15 +370,15 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
                 {/* ADICIONAIS */}
                 {addonGroups.map((group) => (
-                  <div key={group.id} className="space-y-4">
+                  <div key={group.id} className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-5 bg-primary rounded-full shadow-lg shadow-primary/30" />
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" />
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{group.name}</h4>
                         </div>
                         {group.isRequired && <span className="text-[8px] bg-orange-500 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Obrigatório</span>}
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-1.5">
                       {(group.addons || []).map(addon => {
                         const selectedAddon = selectedAddons.find(a => a.id === addon.id);
                         const isSelected = !!selectedAddon;
@@ -389,25 +389,25 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                           <Card 
                             key={addon.id} 
                             className={cn(
-                                "flex items-center justify-between p-4 border-2 transition-all duration-300", 
+                                "flex items-center justify-between p-3 border-2 transition-all duration-300", 
                                 isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200"
                             )}
                           >
-                            <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)}>
-                               <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300", isSelected ? "border-primary bg-primary" : "border-slate-300")}>
-                                  {isSelected && <Check size={12} className="text-white" strokeWidth={4} />}
+                            <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)}>
+                               <div className={cn("w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all duration-300", isSelected ? "border-primary bg-primary" : "border-slate-300")}>
+                                  {isSelected && <Check size={10} className="text-white" strokeWidth={4} />}
                                </div>
-                               <div className="flex flex-col leading-none">
-                                <span className={cn("font-black text-sm uppercase italic tracking-tighter", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
-                                {addon.price > 0 && <span className="text-[10px] font-black text-slate-400 mt-1">+ R$ {addon.price.toFixed(2).replace('.', ',')}</span>}
+                               <div className="flex flex-col leading-tight">
+                                <span className={cn("font-black text-xs uppercase italic tracking-tighter", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
+                                {addon.price > 0 && <span className="text-[9px] font-black text-slate-400 mt-0.5">+ R$ {addon.price.toFixed(2).replace('.', ',')}</span>}
                                </div>
                             </div>
                             
                             {isSelected && maxQty > 1 && (
-                              <div className="flex items-center bg-white rounded-xl p-1 border border-slate-100 shadow-sm ml-4">
-                                <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={14} strokeWidth={3} /></button>
-                                <span className="w-6 text-center font-black text-sm text-slate-900 italic">{currentQty}</span>
-                                <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={currentQty >= maxQty} className={cn("w-8 h-8 flex items-center justify-center transition-colors", currentQty >= maxQty ? "text-slate-200" : "text-primary hover:text-primary/80")}><Plus size={14} strokeWidth={3} /></button>
+                              <div className="flex items-center bg-white rounded-lg p-1 border border-slate-100 shadow-sm ml-2">
+                                <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={12} strokeWidth={3} /></button>
+                                <span className="w-5 text-center font-black text-xs text-slate-900 italic">{currentQty}</span>
+                                <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={currentQty >= maxQty} className={cn("w-7 h-7 flex items-center justify-center transition-colors", currentQty >= maxQty ? "text-slate-200" : "text-primary hover:text-primary/80")}><Plus size={12} strokeWidth={3} /></button>
                               </div>
                             )}
                           </Card>
@@ -419,19 +419,19 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
               </div>
 
               {/* RODAPÉ FIXO */}
-              <div className="p-6 md:p-10 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] sticky bottom-0">
-                 <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-slate-100 rounded-[1.25rem] p-1 border border-slate-200 shadow-inner">
-                       <button onClick={() => handleQuantityChange(-1)} className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white rounded-xl transition-all"><Minus size={20} strokeWidth={3} /></button>
-                       <span className="w-8 text-center font-black text-xl text-slate-900 italic">{quantity}</span>
-                       <button onClick={() => handleQuantityChange(1)} className="w-12 h-12 flex items-center justify-center text-slate-900 hover:bg-white rounded-xl transition-all"><Plus size={20} strokeWidth={3} /></button>
+              <div className="p-4 md:p-6 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] sticky bottom-0">
+                 <div className="flex items-center gap-3">
+                    <div className="flex items-center bg-slate-100 rounded-[1rem] p-1 border border-slate-200 shadow-inner">
+                       <button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white rounded-lg transition-all"><Minus size={18} strokeWidth={3} /></button>
+                       <span className="w-6 text-center font-black text-lg text-slate-900 italic">{quantity}</span>
+                       <button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 hover:bg-white rounded-lg transition-all"><Plus size={18} strokeWidth={3} /></button>
                     </div>
                     
                     <Button 
                         onClick={handleAddToCartClick} 
                         disabled={isAdded} 
                         className={cn(
-                            "flex-1 h-14 md:h-16 rounded-[1.5rem] shadow-xl transition-all duration-500", 
+                            "flex-1 h-12 md:h-14 rounded-[1.25rem] shadow-xl transition-all duration-500", 
                             isAdded ? "bg-emerald-500 shadow-emerald-100" : "bg-slate-900 shadow-slate-200"
                         )}
                     >

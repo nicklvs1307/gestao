@@ -74,22 +74,31 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
       {bannerItems.map((item, index) => {
         const product = item.type === 'promotion' ? item.data.product! : item.data;
         const isActive = currentSlide === index;
+        
+        const hasSizes = product.sizes && product.sizes.length > 0;
+        const basePrice = hasSizes 
+          ? Math.min(...product.sizes.map(s => s.price)) 
+          : product.price;
 
         let title = 'Destaque da Casa';
         let priceElement = (
-             <span className="text-2xl font-black italic tracking-tighter">
-                R$ {product.price.toFixed(2).replace('.', ',')}
-             </span>
+             <div className="flex flex-col items-end">
+                {hasSizes && <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 leading-none drop-shadow-md">A partir de</span>}
+                <span className="text-2xl font-black italic tracking-tighter drop-shadow-lg">
+                    R$ {basePrice.toFixed(2).replace('.', ',')}
+                </span>
+             </div>
         );
 
         if (item.type === 'promotion') {
           const promo = item.data;
-          const discountedPrice = calculateDiscountedPrice(product.price, promo);
+          const discountedPrice = calculateDiscountedPrice(basePrice, promo);
           title = promo.name;
           priceElement = (
             <div className="flex flex-col items-end">
-              <span className="text-[12px] line-through opacity-60 font-bold">R$ {product.price.toFixed(2).replace('.', ',')}</span>
-              <span className="text-3xl font-black italic text-white tracking-tighter">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
+              {hasSizes && <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 leading-none drop-shadow-md">A partir de</span>}
+              <span className="text-[12px] line-through opacity-60 font-bold drop-shadow-md">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
+              <span className="text-3xl font-black italic text-white tracking-tighter drop-shadow-2xl">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
             </div>
           );
         }

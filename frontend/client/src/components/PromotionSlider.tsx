@@ -74,16 +74,21 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
       >
         {promotions.map((promo) => {
           const product = promo.product!;
-          const discountedPrice = calculateDiscountedPrice(product.price, promo);
+          const hasSizes = product.sizes && product.sizes.length > 0;
+          const basePrice = hasSizes 
+            ? Math.min(...product.sizes.map(s => s.price)) 
+            : product.price;
+          
+          const discountedPrice = calculateDiscountedPrice(basePrice, promo);
 
           return (
             <div 
               key={promo.id}
               onClick={() => onProductClick(product)}
-              className="min-w-[280px] md:min-w-[320px] bg-white rounded-3xl p-3 border border-slate-100 shadow-xl shadow-slate-200/50 flex gap-4 active:scale-95 transition-all cursor-pointer"
+              className="min-w-[280px] md:min-w-[320px] bg-white rounded-3xl p-3 border border-slate-100 shadow-xl shadow-slate-200/50 flex gap-4 active:scale-[0.98] transition-all cursor-pointer group"
             >
               <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-50 shadow-inner">
-                  <img src={product.imageUrl} className="w-full h-full object-cover" alt={product.name} />
+                  <img src={product.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={product.name} />
               </div>
               
               <div className="flex-1 flex flex-col justify-between py-1">
@@ -96,8 +101,11 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
 
                   <div className="flex items-end justify-between">
                       <div className="flex flex-col">
-                          <span className="text-[10px] line-through text-slate-300 font-bold leading-none">R$ {product.price.toFixed(2)}</span>
-                          <span className="text-xl font-black italic text-emerald-600 tracking-tighter">R$ {discountedPrice.toFixed(2)}</span>
+                          {hasSizes && (
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 leading-none">A partir de</span>
+                          )}
+                          <span className="text-[10px] line-through text-slate-300 font-bold leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
+                          <span className="text-xl font-black italic text-emerald-600 tracking-tighter">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
                       </div>
                       <div className="bg-slate-900 text-white p-2 rounded-xl shadow-lg group-hover:bg-primary transition-colors">
                           <ChevronRight size={16} />
