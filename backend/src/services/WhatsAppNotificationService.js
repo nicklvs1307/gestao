@@ -38,25 +38,31 @@ class WhatsAppNotificationService {
 
       // 1. Mensagem de Boas-vindas baseada no status
       let header = '';
+      let includeSummary = false;
+
       if (status === 'PENDING') {
           header = `Olá, ${customerName}! Seu pedido foi recebido e aguarda aprovação. Segue abaixo um resumo do seu pedido \n \n  *Pedido #${orderNumber}*`;
+          includeSummary = true;
       } else if (status === 'PREPARING') {
-          header = `Olá, ${customerName}! Seu pedido foi aprovado. Segue abaixo um resumo do seu pedido \n \n  *Pedido #${orderNumber}*`;
+          header = `✅ *Pedido Aprovado!* \n \nOlá, ${customerName}! Seu pedido #${orderNumber} já está em preparação na nossa cozinha. 🔥`;
+          includeSummary = true;
+      } else if (status === 'READY') {
+          header = `✨ *Pedido Pronto!* \n \nBoas notícias, ${customerName}! Seu pedido #${orderNumber} está pronto e aguardando a saída para entrega.`;
+      } else if (status === 'SHIPPED') {
+          header = `🛵 *Saiu para Entrega!* \n \n${customerName}, seu pedido #${orderNumber} acabou de sair! Nosso entregador já está a caminho.`;
+      } else if (status === 'DELIVERED') {
+          header = `😋 *Pedido Entregue!* \n \nSeu pedido #${orderNumber} foi entregue. Esperamos que goste e tenha um excelente apetite!`;
+      } else if (status === 'CANCELED') {
+          header = `❌ *Pedido Cancelado* \n \nOlá, ${customerName}. Infelizmente seu pedido #${orderNumber} foi cancelado. Se tiver dúvidas, por favor entre em contato conosco.`;
       } else {
-          // Para outros status, usamos a lógica simplificada anterior ou personalizada
-          const statusMessages = {
-            'READY': `*Pedido Pronto!* ✅\n\nBoas notícias! Seu pedido #${orderNumber} está pronto.`,
-            'SHIPPED': `*Pedido Saiu para Entrega!* 🛵\n\nOpa! Seu pedido #${orderNumber} acabou de sair com o nosso entregador.`,
-            'DELIVERED': `*Pedido Entregue!* 😋\n\nSeu pedido #${orderNumber} foi entregue. Bom apetite!`,
-            'CANCELED': `*Pedido Cancelado* ❌\n\nInfelizmente seu pedido #${orderNumber} foi cancelado.`
-          };
-          header = statusMessages[status] || `Status do pedido #${orderNumber}: ${status}`;
+          // COMPLETED ou outros status não enviam mensagem
+          return;
       }
 
       let message = `${header}\n\nLink para acompanhar status do pedido: \n${trackingLink}\n\n`;
 
       // 2. Listagem de Itens (apenas para PENDING ou PREPARING para não ficar repetitivo)
-      if (status === 'PENDING' || status === 'PREPARING') {
+      if (includeSummary) {
           let itemsTotal = 0;
           order.items.forEach(item => {
               const size = item.sizeJson ? JSON.parse(item.sizeJson) : null;

@@ -9,7 +9,8 @@ export const useLocalCart = () => {
     quantity: number,
     selectedSize: SizeOption | null,
     selectedAddons: AddonOption[],
-    selectedFlavors?: Product[]
+    selectedFlavors?: Product[],
+    observations?: string
   ) => {
     // 1. Cálculo do Preço Base (considerando Pizzas)
     let basePrice = selectedSize ? selectedSize.price : product.price;
@@ -57,6 +58,7 @@ export const useLocalCart = () => {
       sizeJson: selectedSize ? JSON.stringify(selectedSize) : null,
       addonsJson: selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null,
       flavorsJson: selectedFlavors && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : null,
+      observations: observations || null,
     };
 
     setLocalCartItems(prevItems => [...prevItems, newCartItem]);

@@ -69,9 +69,10 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     quantity: number, 
     selectedSize: SizeOption | null, 
     selectedAddons: AddonOption[],
-    selectedFlavors?: Product[]
+    selectedFlavors?: Product[],
+    observations?: string
   ) => {
-      addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
+      addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors, observations);
       setProductModalOpen(false);
       setCartOpen(true);
   };

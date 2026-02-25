@@ -33,6 +33,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
+  const [observations, setObservations] = useState('');
   const [isAdded, setIsAdded] = useState(false);
   
   const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
@@ -46,6 +47,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       setSelectedSize(sizes.length > 0 ? sizes[0] : null);
       setSelectedAddons([]);
       setSelectedFlavors([]);
+      setObservations('');
       setIsAdded(false);
 
       if (product.pizzaConfig?.flavorCategoryId) {
@@ -205,7 +207,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         }
       }
     }
-    onAddToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
+    onAddToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors, observations);
     setIsAdded(true);
     toast.success("Adicionado ao pedido!");
     setTimeout(onClose, 800);
@@ -416,6 +418,21 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                     </div>
                   </div>
                 ))}
+
+                {/* CAMPO DE OBSERVAÇÕES */}
+                <div className="space-y-2 pb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-amber-400 rounded-full shadow-lg shadow-amber-400/30" />
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Alguma observação?</h4>
+                    </div>
+                    <textarea 
+                        className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-xs font-medium text-slate-700 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm"
+                        placeholder="Ex: Tirar cebola, maionese à parte, ponto da carne, etc..."
+                        rows={3}
+                        value={observations}
+                        onChange={(e) => setObservations(e.target.value)}
+                    />
+                </div>
               </div>
 
               {/* RODAPÉ FIXO */}

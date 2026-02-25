@@ -27,6 +27,7 @@ interface DeliveryInfo {
   number?: string;
   street?: string;
   neighborhood?: string;
+  notes?: string;
 }
 
 interface DeliveryCheckoutProps {
@@ -53,6 +54,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
   const [neighborhood, setNeighborhood] = useState(savedData.neighborhood || '');
   const [state, setState] = useState(savedData.state || '');
   const [city, setCity] = useState(savedData.city || '');
+  const [notes, setNotes] = useState('');
   
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(savedData.deliveryType || 'delivery');
   const [paymentMethod, setPaymentMethod] = useState<string>(savedData.paymentMethod || '');
@@ -198,6 +200,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
         complement: savedData.complement || ''
       } : 'Retirada no Balcão',
       deliveryFee: deliveryType === 'delivery' ? deliveryFee : 0,
+      notes: notes
     };
 
     // SALVA OS DADOS PARA A PRÓXIMA COMPRA
@@ -331,6 +334,18 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                             </div>
                         </div>
                     )}
+
+                    {/* CAMPO DE OBSERVAÇÕES GERAIS */}
+                    <div className="space-y-2 pt-2">
+                        <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Observações do Pedido</label>
+                        <textarea 
+                            className="w-full bg-white border-2 border-slate-200 rounded-xl p-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm"
+                            placeholder="Ex: Tocar campainha ao chegar, portão azul, etc..."
+                            rows={2}
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
                 </section>
 
                 <section className="space-y-4 pb-10">
