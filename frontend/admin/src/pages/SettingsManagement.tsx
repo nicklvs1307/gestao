@@ -71,6 +71,7 @@ const SettingsManagement: React.FC = () => {
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [deliveryTime, setDeliveryTime] = useState('30-40 min');
   const [autoAcceptOrders, setAutoAcceptOrders] = useState(false);
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(true);
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
   // Fidelidade
@@ -150,6 +151,7 @@ const SettingsManagement: React.FC = () => {
           setDeliveryFee(s.deliveryFee || 0);
           setDeliveryTime(s.deliveryTime || '30-40 min');
           setAutoAcceptOrders(s.autoAcceptOrders || false);
+          setAutoPrintEnabled(s.autoPrintEnabled !== undefined ? s.autoPrintEnabled : true);
           setLoyaltyEnabled(s.loyaltyEnabled || false);
           setPointsPerReal(s.pointsPerReal || 1);
           setCashbackPercentage(s.cashbackPercentage || 0);
@@ -215,7 +217,7 @@ const SettingsManagement: React.FC = () => {
         serviceTaxPercentage,
         openingHours, latitude, longitude, primaryColor, secondaryColor, backgroundColor,
         backgroundImageUrl, isOpen: isStoreOpen, deliveryFee, deliveryTime,
-        autoAcceptOrders, loyaltyEnabled, pointsPerReal, cashbackPercentage
+        autoAcceptOrders, autoPrintEnabled, loyaltyEnabled, pointsPerReal, cashbackPercentage
       });
       setOriginalSlug(slug);
       setIsSlugAvailable(null);
@@ -381,6 +383,22 @@ const SettingsManagement: React.FC = () => {
                     <Button variant="outline" size="sm" className="h-8 rounded-lg text-[9px] font-black" onClick={loadPrinters}>
                         <RefreshCw size={14} className={cn(agentStatus === 'checking' && 'animate-spin', "mr-1")}/> ATUALIZAR
                     </Button>
+                </Card>
+
+                <Card className="p-4 bg-white border-2 border-slate-100 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className={cn("p-3 rounded-xl shadow-md", autoPrintEnabled ? "bg-blue-500 text-white" : "bg-slate-200 text-slate-400")}><PrinterIcon size={24}/></div>
+                        <div>
+                            <h3 className="text-sm font-black uppercase italic text-slate-900 leading-none">Impressão Automática</h3>
+                            <p className="text-[8px] font-black text-slate-400 uppercase mt-1">Disparar cupons ao aceitar pedidos</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setAutoPrintEnabled(!autoPrintEnabled)} 
+                        className={cn("w-12 h-6 rounded-full relative transition-all shadow-inner", autoPrintEnabled ? "bg-blue-500" : "bg-slate-300")}
+                    >
+                        <div className={cn("absolute w-4 h-4 bg-white rounded-full top-1 transition-all shadow-sm", autoPrintEnabled ? "left-7" : "left-1")} />
+                    </button>
                 </Card>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

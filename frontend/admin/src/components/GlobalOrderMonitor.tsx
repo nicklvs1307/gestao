@@ -23,6 +23,7 @@ const GlobalOrderMonitor: React.FC = () => {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isAutoAccept, setIsAutoAccept] = useState(false);
+  const [isAutoPrint, setIsAutoPrint] = useState(true);
   
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -57,6 +58,7 @@ const GlobalOrderMonitor: React.FC = () => {
       try {
         const settingsData = await getSettings();
         setIsAutoAccept(settingsData?.settings?.autoAcceptOrders || false);
+        setIsAutoPrint(settingsData?.settings?.autoPrintEnabled !== undefined ? settingsData?.settings?.autoPrintEnabled : true);
 
         const userStr = localStorage.getItem('user');
         if (userStr) {
@@ -179,6 +181,8 @@ const GlobalOrderMonitor: React.FC = () => {
   // --- PRINTING LOGIC ---
   useEffect(() => {
     const processPrinting = async () => {
+      if (!isAutoPrint) return; // Trava aqui se a impressão estiver desativada
+
       const toPrintProduction = allOrders.filter(o => o.status === 'PREPARING' && !o.isPrinted);
       const toPrintFinal = allOrders.filter(o => o.status === 'COMPLETED' && o.orderType === 'DELIVERY' && !o.isPrinted);
       const allToPrint = [...toPrintProduction, ...toPrintFinal];

@@ -4,6 +4,23 @@ import { format } from 'date-fns';
 
 const AGENT_URL = 'http://localhost:4676';
 
+// Função auxiliar para fetch com timeout para não travar a interface
+const fetchWithTimeout = async (url: string, options: any = {}, timeout = 3000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(id);
+        return response;
+    } catch (e) {
+        clearTimeout(id);
+        throw e;
+    }
+};
+
 const getAgentUrl = () => {
     // Se o site estiver em HTTPS, o agente local também deve ser acessado de forma segura
     // ou o navegador bloqueará por Mixed Content. 
@@ -31,7 +48,7 @@ export interface ReceiptSettings {
 
 export const checkAgentStatus = async (): Promise<boolean> => {
   try {
-    const res = await fetch(`${getAgentUrl()}/status`);
+    const res = await fetchWithTimeout(`${getAgentUrl()}/status`);
     return res.ok;
   } catch {
     return false;
@@ -40,7 +57,7 @@ export const checkAgentStatus = async (): Promise<boolean> => {
 
 export const getPrinters = async (): Promise<string[]> => {
   try {
-    const res = await fetch(`${getAgentUrl()}/printers`);
+    const res = await fetchWithTimeout(`${getAgentUrl()}/printers`);
     const data = await res.json();
     // No Windows, o pdf-to-printer pode retornar um array de strings diretamente
     // ou um array de objetos dependendo da versão/plataforma.
@@ -576,7 +593,7 @@ export const printTableCheckout = async (tableNumber: number, items: any[], paym
     
     if (config.cashierPrinters && config.cashierPrinters.length > 0) {
         for (const p of config.cashierPrinters) {
-            await fetch(`${getAgentUrl()}/print`, {
+            await fetchWithTimeout(`${getAgentUrl()}/print`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ printer: p, content: pdf })
@@ -601,7 +618,7 @@ export const printCashierClosure = async (summary: any) => {
     
     if (config.cashierPrinters && config.cashierPrinters.length > 0) {
         for (const p of config.cashierPrinters) {
-            await fetch(`${getAgentUrl()}/print`, {
+            await fetchWithTimeout(`${getAgentUrl()}/print`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ printer: p, content: pdf })
@@ -633,7 +650,7 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
 
   const sendToAgent = async (printer: string, pdf: string) => {
       if (!printer) return;
-      await fetch(`${getAgentUrl()}/print`, {
+      await fetchWithTimeout(`${getAgentUrl()}/print`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ printer, content: pdf })

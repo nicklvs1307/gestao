@@ -226,6 +226,7 @@ model RestaurantSettings {
   deliveryFee  Float?   @default(0)
   deliveryTime String?  @default("30-40 min")
   autoAcceptOrders Boolean @default(false)
+  autoPrintEnabled Boolean @default(true)
 
   // === Configurações de Marketing/Fidelidade ===
   loyaltyEnabled      Boolean @default(false)
