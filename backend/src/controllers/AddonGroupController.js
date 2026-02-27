@@ -196,6 +196,7 @@ const reorderGroups = async (req, res) => {
 module.exports = {
     getAddonGroups,
     createAddonGroup,
+    duplicateAddonGroup,
     updateAddonGroup,
     deleteAddonGroup,
     reorderGroups
