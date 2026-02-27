@@ -12,6 +12,8 @@ ALTER TABLE "AddonGroup" ADD COLUMN IF NOT EXISTS "maxQuantity" INTEGER NOT NULL
 
 -- 3. Tabela Addon
 ALTER TABLE "Addon" ADD COLUMN IF NOT EXISTS "maxQuantity" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "Addon" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "Addon" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
 
 -- 4. Tabela de Junção (M:N) - Essencial para o novo sistema de categorias
 CREATE TABLE IF NOT EXISTS "_CategoryToProduct" (
