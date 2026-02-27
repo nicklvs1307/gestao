@@ -1,0 +1,6 @@
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+Error: P3008
+
+The migration `20260227200000_fix_standardized_product_addons` is already recorded as applied in the database.
+
+root@servergestao:~/gestao#
