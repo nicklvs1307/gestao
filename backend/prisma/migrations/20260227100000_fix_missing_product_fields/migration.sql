@@ -1,0 +1,1 @@
+-- AlterTable`nALTER TABLE \"Product\" ADD COLUMN \"showInMenu\" BOOLEAN NOT NULL DEFAULT true;`nALTER TABLE \"Product\" ADD COLUMN \"isFlavor\" BOOLEAN NOT NULL DEFAULT false;`n`n-- AlterTable`nALTER TABLE \"AddonGroup\" ADD COLUMN \"isFlavorGroup\" BOOLEAN NOT NULL DEFAULT false;

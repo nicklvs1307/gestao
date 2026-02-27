@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
-// import type { Product, Size, AddonGroup, Addon, Category } from '@/types/index';
-// Placeholder types to fix build
-type Product = any;
-type Size = any;
-type AddonGroup = any;
-type Addon = any;
-type Category = any;
+import type { Product, Size, AddonGroup, Addon, Category } from '@/types/index';
 import { getCategories, createProduct, updateProduct, api } from '../services/api';
-import { Pizza, Maximize2, List, Disc, Plus, Trash2, CheckCircle, Layers } from 'lucide-react';
+import { Pizza, Maximize2, List, Disc, Plus, Trash2, CheckCircle, Layers, X } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
@@ -27,9 +21,9 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
   const [isFeatured, setIsFeatured] = useState(false);
   const [isAvailable, setIsAvailable] = useState(true);
   const [stock, setStock] = useState(0);
-  const [tags, setTags] = useState(''); // Usar string para facilitar a edição
-  const [categoryId, setCategoryId] = useState('');
-  const [saiposIntegrationCode, setSaiposIntegrationCode] = useState(''); // Novo estado
+  const [tags, setTags] = useState(''); 
+  const [categoryIds, setCategoryIds] = useState<string[]>([]); // Alterado para Array
+  const [saiposIntegrationCode, setSaiposIntegrationCode] = useState(''); 
   const [sizes, setSizes] = useState<Partial<Size>[]>([]);
   const [addonGroups, setAddonGroups] = useState<Partial<AddonGroup & { addons: Partial<Addon>[] }>[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -41,8 +35,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
   const [pizzaConfig, setPizzaConfig] = useState({
     maxFlavors: 2,
     sliceCount: 8,
-    priceRule: 'higher', // 'higher' | 'average'
-    flavorCategoryId: '', // ID da categoria que contém os sabores
+    priceRule: 'higher', 
+    flavorCategoryId: '', 
     sizes: {
         'Grande': { active: true, slices: 8, maxFlavors: 2 },
         'Familia': { active: false, slices: 12, maxFlavors: 4 }
@@ -52,7 +46,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
   const isEditing = !!productToEdit;
 
   useEffect(() => {
-    // Popula o formulário se estiver no modo de edição
     if (isEditing && productToEdit) {
       setName(productToEdit.name);
       setDescription(productToEdit.description || '');
@@ -61,21 +54,22 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       setIsFeatured(productToEdit.isFeatured);
       setIsAvailable(productToEdit.isAvailable);
       setStock(productToEdit.stock);
-      setTags(productToEdit.tags.join(', '));
-      setCategoryId(productToEdit.categoryId);
-      setSaiposIntegrationCode(productToEdit.saiposIntegrationCode || ''); // Popular novo campo
+      setTags(productToEdit.tags?.join(', ') || '');
+      
+      // Carregar categorias (suporta legado e novo array)
+      const initialCats = productToEdit.categoryIds || (productToEdit.categories?.map((c: any) => c.id)) || (productToEdit.categoryId ? [productToEdit.categoryId] : []);
+      setCategoryIds(initialCats);
+
+      setSaiposIntegrationCode(productToEdit.saiposIntegrationCode || ''); 
       setSizes(productToEdit.sizes || []);
       setAddonGroups(productToEdit.addonGroups || []);
       setProductIngredients(productToEdit.ingredients || []);
       
-      // Carregar config de pizza
       if (productToEdit.pizzaConfig) {
           setIsPizza(true);
-          // Garantir merge com defaults caso falte algo
           setPizzaConfig({ 
             ...pizzaConfig, 
             ...productToEdit.pizzaConfig,
-            // Garantir que sizes existam se vierem nulos do banco
             sizes: productToEdit.pizzaConfig.sizes || pizzaConfig.sizes
           });
       } else {
@@ -83,7 +77,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       }
 
     } else {
-      // Limpa o formulário se estiver no modo de adição
       setName('');
       setDescription('');
       setPrice(0);
@@ -92,8 +85,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       setIsAvailable(true);
       setStock(0);
       setTags('');
-      setCategoryId('');
-      setSaiposIntegrationCode(''); // Limpar novo campo
+      setCategoryIds([]);
+      setSaiposIntegrationCode(''); 
       setSizes([]);
       setAddonGroups([]);
       setIsPizza(false);
@@ -110,65 +103,16 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
     }
   }, [productToEdit, isEditing]);
 
-  // Funções de gerenciamento para Grupos de Adicionais
-  const addAddonGroup = () => {
-    setAddonGroups([
-      ...addonGroups, 
-      { 
-        name: '', 
-        type: 'multiple', 
-        isRequired: false, 
-        addons: [{ name: '', price: 0, saiposIntegrationCode: '' }] 
-      }
-    ]);
+  const toggleCategory = (id: string) => {
+    setCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
   };
-
-  const handleAddonGroupChange = (index: number, field: string, value: any) => {
-    const updatedGroups = [...addonGroups];
-    updatedGroups[index] = { ...updatedGroups[index], [field]: value };
-    setAddonGroups(updatedGroups);
-  };
-
-  const removeAddonGroup = (index: number) => {
-    setAddonGroups(addonGroups.filter((_, i) => i !== index));
-  };
-
-  const addAddon = (groupIndex: number) => {
-    const updatedGroups = [...addonGroups];
-    const group = { ...updatedGroups[groupIndex] };
-    group.addons = [...(group.addons || []), { name: '', price: 0, saiposIntegrationCode: '' }];
-    updatedGroups[groupIndex] = group;
-    setAddonGroups(updatedGroups);
-  };
-
-  const handleAddonChange = (groupIndex: number, addonIndex: number, field: string, value: any) => {
-    const updatedGroups = [...addonGroups];
-    const group = { ...updatedGroups[groupIndex] };
-    const updatedAddons = [...(group.addons || [])];
-    updatedAddons[addonIndex] = { ...updatedAddons[addonIndex], [field]: value };
-    group.addons = updatedAddons;
-    updatedGroups[groupIndex] = group;
-    setAddonGroups(updatedGroups);
-  };
-
-  const removeAddon = (groupIndex: number, addonIndex: number) => {
-    const updatedGroups = [...addonGroups];
-    const group = { ...updatedGroups[groupIndex] };
-    group.addons = (group.addons || []).filter((_: any, i: number) => i !== addonIndex);
-    updatedGroups[groupIndex] = group;
-    setAddonGroups(updatedGroups);
-  };
-
 
   useEffect(() => {
     if (isOpen) {
       const fetchCategories = async () => {
         try {
-          const categoriesData = await getCategories(true); // Fetch flat list
+          const categoriesData = await getCategories(true);
           setAllCategories(categoriesData);
-          if (!isEditing && categoriesData.length > 0) {
-            setCategoryId(categoriesData[0].id);
-          }
         } catch (error) {
           console.error("Failed to fetch categories", error);
         }
@@ -183,13 +127,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       };
       fetchIngredients();
     }
-  }, [isOpen, isEditing]);
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Basic validation
-    if (!name || !categoryId || price <= 0) {
-      alert('Por favor, preencha Nome, Categoria e Preço.');
+    if (!name || categoryIds.length === 0 || price <= 0) {
+      alert('Por favor, preencha Nome, pelo menos uma Categoria e Preço.');
       return;
     }
 
@@ -202,16 +145,10 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       isAvailable,
       stock,
       tags: tags.split(',').map(t => t.trim()).filter(t => t),
-      saiposIntegrationCode, // Adicionar ao payload
-      categoryId,
-      sizes: sizes.map(({ id, productId, ...rest }) => rest), // Remove campos extras
-      addonGroups: addonGroups.map(g => ({
-        name: g.name,
-        type: g.type,
-        isRequired: g.isRequired,
-        order: g.order || 0,
-        addons: g.addons.map(({ id, addonGroupId, ...rest }: any) => rest) 
-      })),
+      saiposIntegrationCode,
+      categoryIds, // Enviando como array conforme backend
+      sizes: sizes.filter(s => s.name).map(({ id, productId, ...rest }: any) => rest),
+      addonGroups: addonGroups.filter(g => g.id).map(g => ({ id: g.id })), // O backend espera apenas IDs no connect/set
       ingredients: productIngredients.filter(pi => pi.ingredientId && pi.quantity > 0),
       pizzaConfig: isPizza ? pizzaConfig : null,
     };
@@ -223,10 +160,10 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       } else {
         savedProduct = await createProduct(productData);
       }
-      onSave(savedProduct); // onSave is called from AdminLayout, which closes the modal and refetches
+      onSave(savedProduct);
     } catch (error) {
       console.error('Failed to save product:', error);
-      alert('Falha ao salvar o produto. Verifique o console para mais detalhes.');
+      alert('Falha ao salvar o produto.');
     }
   };
 
@@ -251,14 +188,28 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
               <label className="text-sm font-bold text-slate-700">Nome do Produto</label>
               <input type="text" className="ui-input w-full" value={name} onChange={e => setName(e.target.value)} required placeholder="Ex: Pizza de Calabresa" />
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Categoria</label>
-              <select className="ui-input w-full appearance-none" value={categoryId} onChange={e => setCategoryId(e.target.value)} required>
-                <option value="" disabled>Selecione uma categoria</option>
-                {allCategories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+              <label className="text-sm font-bold text-slate-700">Categorias (Selecione uma ou mais)</label>
+              <div className="flex flex-wrap gap-2 p-3 bg-white border border-slate-200 rounded-xl min-h-[46px]">
+                  {allCategories.map(cat => {
+                      const isSelected = categoryIds.includes(cat.id);
+                      return (
+                          <button 
+                            key={cat.id} 
+                            type="button"
+                            onClick={() => toggleCategory(cat.id)}
+                            className={cn(
+                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2",
+                                isSelected ? "bg-orange-600 text-white shadow-md" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                            )}
+                          >
+                              {isSelected && <CheckCircle size={12} />}
+                              {cat.name}
+                          </button>
+                      );
+                  })}
+              </div>
             </div>
           </div>
 

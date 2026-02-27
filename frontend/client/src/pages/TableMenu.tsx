@@ -357,6 +357,7 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
             isOpen={isProductDetailModalOpen} 
             onClose={closeProductDetailModal}
             product={selectedProduct}
+            allProducts={allProducts}
             onAddToCart={handleAddToCart}
         />
 

@@ -20,16 +20,18 @@ interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
+  allProducts?: Product[]; // Lista completa para busca local de sabores
   onAddToCart: (
     product: Product, 
     quantity: number, 
     selectedSize: SizeOption | null, 
     selectedAddons: AddonOption[],
-    selectedFlavors?: Product[]
+    selectedFlavors?: Product[],
+    observations?: string
   ) => void;
 }
 
-const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, onAddToCart }) => {
+const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, allProducts = [], onAddToCart }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
@@ -39,6 +41,28 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
   const [selectedFlavors, setSelectedFlavors] = useState<Product[]>([]);
   const [isLoadingFlavors, setIsLoadingFlavors] = useState(false);
+
+  // LOGICA DE MERGE DE ADICIONAIS (Produto + Categorias)
+  const addonGroups = React.useMemo(() => {
+    if (!product) return [];
+    
+    // Grupos do produto
+    const productGroups = product.addonGroups || [];
+    
+    // Grupos herdados das categorias
+    const categoryGroups = (product.categories || [])
+        .flatMap(cat => cat.addonGroups || []);
+    
+    // Merge removendo duplicatas por ID
+    const merged = [...productGroups, ...categoryGroups];
+    const uniqueIds = new Set();
+    
+    return merged.filter(group => {
+        if (!group || uniqueIds.has(group.id)) return false;
+        uniqueIds.add(group.id);
+        return true;
+    }).sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [product]);
 
   useEffect(() => {
     if (isOpen && product) {
@@ -51,31 +75,24 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       setIsAdded(false);
 
       if (product.pizzaConfig?.flavorCategoryId) {
-        loadFlavors(product.restaurantId, product.pizzaConfig.flavorCategoryId);
+        loadFlavors(product.pizzaConfig.flavorCategoryId);
       }
     }
   }, [isOpen, product]);
 
-  const loadFlavors = async (restaurantId: string, categoryId: string) => {
+  const loadFlavors = (categoryId: string) => {
     setIsLoadingFlavors(true);
     try {
-      console.log(`Carregando sabores para categoria: ${categoryId}`);
-      const allProducts = await getProducts(restaurantId);
-      console.log(`Total de produtos carregados: ${allProducts.length}`);
-
-      // Correção: Verificar tanto o array categories quanto o campo legado categoryId
+      // Filtrar localmente da lista de produtos já carregada (muito mais rápido)
       const flavors = allProducts.filter(p => {
         const hasCategory = p.categories?.some(c => c.id === categoryId) || p.categoryId === categoryId;
         return hasCategory && p.isAvailable;
       });
-
-      console.log(`Sabores encontrados: ${flavors.length}`);
-      if (flavors.length === 0) console.warn("Nenhum sabor encontrado. Verifique se os produtos estão ativos e vinculados à categoria.");
       
       setAvailableFlavors(flavors);
     } catch (error) {
       console.error("Erro ao carregar sabores:", error);
-      toast.error("Não foi possível carregar os sabores. Tente novamente.");
+      toast.error("Não foi possível carregar os sabores.");
     } finally {
       setIsLoadingFlavors(false);
     }
@@ -214,7 +231,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   };
 
   const sizes = product?.sizes || [];
-  const addonGroups = product?.addonGroups || [];
 
   return (
     <AnimatePresence>

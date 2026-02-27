@@ -9,10 +9,12 @@ export interface AddonOption {
 export interface Addon {
   id: string;
   name: string;
+  description?: string;
   price: number;
   maxQuantity: number;
   order: number;
   addonGroupId: string;
+  saiposIntegrationCode?: string | null;
 }
 
 export interface AddonGroup {
@@ -20,11 +22,12 @@ export interface AddonGroup {
   name: string;
   type: 'single' | 'multiple';
   isRequired: boolean;
+  isFlavorGroup?: boolean;
   minQuantity?: number;
   maxQuantity?: number;
   order: number;
-  productId: string;
   addons: Addon[];
+  saiposIntegrationCode?: string | null;
 }
 
 export interface SizeOption {
@@ -33,16 +36,26 @@ export interface SizeOption {
   price: number;
   order: number;
   productId: string;
+  globalSizeId?: string | null;
+  saiposIntegrationCode?: string | null;
 }
 
 export interface Category {
   id: string;
   name: string;
+  description?: string;
+  cuisineType?: string;
   order: number;
   restaurantId: string;
   products: Product[]; 
+  addonGroups?: AddonGroup[];
   parentId?: string | null;
   subCategories?: Category[];
+  saiposIntegrationCode?: string | null;
+  halfAndHalfRule?: string;
+  availableDays?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface PizzaSizeConfig {
@@ -69,22 +82,27 @@ export interface Product {
   imageUrl: string;
   isFeatured: boolean;
   isAvailable: boolean;
+  isFlavor: boolean; 
+  showInMenu: boolean; 
   stock: number;
   tags: string[];
   order: number;
-  categoryId: string;
+  categoryId?: string; 
+  categories: Category[]; 
   restaurantId: string;
-  category: Category;
+  category?: Category; 
   sizes: SizeOption[];
   addonGroups: AddonGroup[];
   promotions: Promotion[];
-  pizzaConfig?: PizzaConfig | null; // Adicionado aqui
+  pizzaConfig?: PizzaConfig | null;
+  saiposIntegrationCode?: string | null;
 }
 
 export interface Promotion {
   id: string;
   name: string;
   description?: string;
+  code?: string | null;
   discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
   startDate: string;
@@ -92,6 +110,8 @@ export interface Promotion {
   isActive: boolean;
   productId?: string;
   product?: Product;
+  saiposIntegrationCode?: string | null;
+  minOrderValue?: number;
 }
 
 export interface LocalCartItem {
@@ -129,6 +149,7 @@ export interface Order {
   status: string; 
   total: number;
   orderType?: 'TABLE' | 'DELIVERY';
+  isPrinted: boolean;
   createdAt: string;
   updatedAt: string;
   restaurantId: string;
@@ -148,18 +169,33 @@ export interface SaiposIntegrationSettings {
   saiposCodStore: string | null;
 }
 
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  type: string;
+  isActive: boolean;
+  saiposIntegrationCode?: string | null;
+  allowDelivery: boolean;
+  allowPos: boolean;
+  allowTable: boolean;
+}
+
 export interface Restaurant {
   id: string;
-  slug: string; // Adicionado
+  slug: string;
   name: string;
   logoUrl?: string;
   address?: string;
   phone?: string;
+  city?: string;
+  state?: string;
+  latitude?: number;
+  longitude?: number;
   serviceTaxPercentage?: number;
   openingHours?: string;
   settings?: RestaurantSettings;
   categories: Category[];
-  paymentMethods?: { id: string; name: string; type: string }[];
+  paymentMethods?: PaymentMethod[];
 }
 
 export interface RestaurantSettings {
@@ -172,6 +208,10 @@ export interface RestaurantSettings {
   backgroundType?: string;
   backgroundImageUrl?: string;
   allowTakeaway?: boolean;
+  menuUrl?: string;
+  isOpen: boolean; 
+  autoAcceptOrders: boolean; 
+  autoPrintEnabled: boolean; 
   textColor?: string;
   restaurant: Restaurant;
 }
