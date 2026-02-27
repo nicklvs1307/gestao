@@ -1,6 +1,191 @@
+Run 'docker --help' for more information
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                    PORTS                                                                          NAMES
+f3d5de39114a   cardapio-backend:latest         "docker-entrypoint.sh"   16 seconds ago   Up 11 seconds (healthy)   3001/tcp                                                                       kicardapio_backend.1.7uwu2drdklbae7yjciqhrdudk
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago      Up 3 weeks                0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago      Up 3 weeks                5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago      Up 3 weeks                8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago      Up 3 weeks                                                                                               portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker exec -it f3d5de39114a /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate deploy && node prisma/seed_permissions.js'
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+49 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+--- INICIANDO SEED DE PERMISSÕES E CONSOLIDAÇÃO ---
+Sincronizando permissões...
+Resolvendo redundâncias de cargos...
+Sincronizando cargos operacionais...
+--- SEED FINALIZADO COM SUCESSO ---
+root@servergestao:~/gestao# docker exec -it 8027a002bc26 /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate resolve --applied 20260227200000_fix_standardized_product_addons'
+Error response from daemon: No such container: 8027a002bc26
+root@servergestao:~/gestao# DOCKER PS
+DOCKER: command not found
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED         STATUS                   PORTS                                                                          NAMES
+f3d5de39114a   cardapio-backend:latest         "docker-entrypoint.sh"   4 minutes ago   Up 4 minutes (healthy)   3001/tcp                                                                       kicardapio_backend.1.7uwu2drdklbae7yjciqhrdudk
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago     Up 2 hours               80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   2 hours ago     Up 2 hours               80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago     Up 3 weeks               0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago     Up 3 weeks               5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago     Up 3 weeks               8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago     Up 3 weeks                                                                                              portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker exec -it f3d5de39114a /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate resolve --applied 20260227200000_fix_standardized_product_addons'
+Prisma schema loaded from prisma/schema.prisma
 Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
 Error: P3008
 
 The migration `20260227200000_fix_standardized_product_addons` is already recorded as applied in the database.
 
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                    PORTS                                                                          NAMES
+f3d5de39114a   cardapio-backend:latest         "docker-entrypoint.sh"   12 minutes ago   Up 12 minutes (healthy)   3001/tcp                                                                       kicardapio_backend.1.7uwu2drdklbae7yjciqhrdudk
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago      Up 3 weeks                0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago      Up 3 weeks                5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago      Up 3 weeks                8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago      Up 3 weeks                                                                                               portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker exec -it f3d5de39114a /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate resolve --rolled-back 20260227200000_fix_standardized_product_addons'
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+Error: P3012
+
+Migration `20260227200000_fix_standardized_product_addons` cannot be rolled back because it is not in a failed state.
+
+root@servergestao:~/gestao# git pull origin main
+remote: Enumerating objects: 12, done.
+remote: Counting objects: 100% (12/12), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 8 (delta 4), reused 8 (delta 4), pack-reused 0 (from 0)
+Unpacking objects: 100% (8/8), 1.38 KiB | 202.00 KiB/s, done.
+From https://github.com/nicklvs1307/gestao
+ * branch            main       -> FETCH_HEAD
+   5ed1712..2e5e8fb  main       -> origin/main
+Updating 5ed1712..2e5e8fb
+Fast-forward
+ .../prisma/migrations/{20260227200000_fix_standardized_product_addons => 20260227230000_final_fix_erp_columns}/migration.sql  | 16 +++++++---------
+ log.txt                                                                                                                       |  6 ++++++
+ 2 files changed, 13 insertions(+), 9 deletions(-)
+ rename backend/prisma/migrations/{20260227200000_fix_standardized_product_addons => 20260227230000_final_fix_erp_columns}/migration.sql (66%)
+ create mode 100644 log.txt
+root@servergestao:~/gestao# docker exec -it f3d5de39114a /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate resolve --rolled-back 20260227200000_fix_standardized_product_addons'
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+Error: P3012
+
+Migration `20260227200000_fix_standardized_product_addons` cannot be rolled back because it is not in a failed state.
+
+root@servergestao:~/gestao# docker build -t cardapio-backend:latest -f backend/Dockerfile .
+[+] Building 46.1s (17/17) FINISHED                                                                                                   docker:default
+ => [internal] load build definition from Dockerfile                                                                                            0.0s
+ => => transferring dockerfile: 753B                                                                                                            0.0s
+ => resolve image config for docker-image://docker.io/docker/dockerfile:1                                                                       0.2s
+ => CACHED docker-image://docker.io/docker/dockerfile:1@sha256:b6afd42430b15f2d2a4c5a02b919e98a525b785b1aaff16747d2f623364e39b6                 0.0s
+ => => resolve docker.io/docker/dockerfile:1@sha256:b6afd42430b15f2d2a4c5a02b919e98a525b785b1aaff16747d2f623364e39b6                            0.0s
+ => [internal] load metadata for docker.io/library/node:20-alpine                                                                               0.1s
+ => [internal] load .dockerignore                                                                                                               0.0s
+ => => transferring context: 2B                                                                                                                 0.0s
+ => [ 1/10] FROM docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8                       0.0s
+ => => resolve docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8                         0.0s
+ => [internal] load build context                                                                                                               0.0s
+ => => transferring context: 18.66kB                                                                                                            0.0s
+ => CACHED [ 2/10] WORKDIR /app                                                                                                                 0.0s
+ => CACHED [ 3/10] RUN apk add --no-cache openssl curl                                                                                          0.0s
+ => CACHED [ 4/10] COPY backend/package*.json ./                                                                                                0.0s
+ => [ 5/10] COPY backend/prisma ./prisma/                                                                                                       0.1s
+ => [ 6/10] RUN npm ci                                                                                                                         14.7s
+ => [ 7/10] RUN npx prisma generate                                                                                                             4.1s
+ => [ 8/10] COPY backend/ .                                                                                                                     0.2s
+ => [ 9/10] COPY backend/docker-entrypoint.sh /usr/local/bin/                                                                                   0.0s
+ => [10/10] RUN chmod +x /usr/local/bin/docker-entrypoint.sh                                                                                    0.2s
+ => exporting to image                                                                                                                         26.0s
+ => => exporting layers                                                                                                                        20.6s
+ => => exporting manifest sha256:bd829da1bcacd70cf51b62dca940be939524d3fdef0c1997f1f384121f667f1c                                               0.0s
+ => => exporting config sha256:cc4253ea2faf16b0e85455760008ed602d8c3ba32245dd8a166501798a35fa96                                                 0.0s
+ => => exporting attestation manifest sha256:77344b34f443a949d8905d5bc476de46b21015070112d5f86bb64eee5b20e53c                                   0.0s
+ => => exporting manifest list sha256:3804e130bb9200070aeb38fdee093a7da60604ef431a3aa39ee619ac40974d5f                                          0.0s
+ => => naming to docker.io/library/cardapio-backend:latest                                                                                      0.0s
+ => => unpacking to docker.io/library/cardapio-backend:latest                                                                                   5.3s
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                    PORTS                                                                          NAMES
+f3d5de39114a   62fc24e55a72                    "docker-entrypoint.sh"   18 minutes ago   Up 18 minutes (healthy)   3001/tcp                                                                       kicardapio_backend.1.7uwu2drdklbae7yjciqhrdudk
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago      Up 3 weeks                0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago      Up 3 weeks                5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago      Up 3 weeks                8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago      Up 3 weeks                                                                                               portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker stop f3d5de39114a
+docker psf3d5de39114a
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED       STATUS       PORTS                                                                          NAMES
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago   Up 2 hours   80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   2 hours ago   Up 2 hours   80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago   Up 3 weeks   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago   Up 3 weeks   5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago   Up 3 weeks   8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago   Up 3 weeks                                                                                  portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED       STATUS       PORTS                                                                          NAMES
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago   Up 2 hours   80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   2 hours ago   Up 2 hours   80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago   Up 3 weeks   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago   Up 3 weeks   5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago   Up 3 weeks   8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago   Up 3 weeks                                                                                  portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                    PORTS                                                                          NAMES
+5327655e238d   cardapio-backend:latest         "docker-entrypoint.sh"   21 seconds ago   Up 15 seconds (healthy)   3001/tcp                                                                       kicardapio_backend.1.1bi82qgvena22pq9cu1ygzjtw
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   2 hours ago      Up 2 hours                80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago      Up 3 weeks                0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago      Up 3 weeks                5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago      Up 3 weeks                8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago      Up 3 weeks                                                                                               portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker exec -it 5327655e238d /bin/sh -c 'export DATABASE_URL=$(cat /run/secrets/db_connection_string) && npx prisma migrate deploy'
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+49 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+root@servergestao:~/gestao# docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED         STATUS                   PORTS                                                                          NAMES
+5327655e238d   cardapio-backend:latest         "docker-entrypoint.sh"   2 minutes ago   Up 2 minutes (healthy)   3001/tcp                                                                       kicardapio_backend.1.1bi82qgvena22pq9cu1ygzjtw
+42f38a49d21e   cardapio-client:latest          "/docker-entrypoint.…"   3 hours ago     Up 3 hours               80/tcp                                                                         kicardapio_frontend-client.1.e4ywmz3gr8tn7dib2uniwo4eu
+a4004944320e   cardapio-admin:latest           "/docker-entrypoint.…"   3 hours ago     Up 3 hours               80/tcp                                                                         kicardapio_frontend-admin.1.nw95rfxb6nglba2xopm79pkta
+f93d37bc50a5   traefik:v3.5.3                  "/entrypoint.sh --ap…"   3 weeks ago     Up 3 weeks               0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   traefik_traefik.1.pg1sahj5mlffrrnlzmmj9wthg
+30490cca7c9b   postgres:14                     "docker-entrypoint.s…"   3 weeks ago     Up 3 weeks               5432/tcp                                                                       postgres_postgres.1.sp9aj25m60pzi9jerv9i0stfj
+c7b6a1d21fee   portainer/portainer-ce:latest   "/portainer -H tcp:/…"   3 weeks ago     Up 3 weeks               8000/tcp, 9000/tcp, 9443/tcp                                                   portainer_portainer.1.x4kdurh9c9jyxcdhh0c6kdqqq
+f993feca46ff   portainer/agent:latest          "./agent"                3 weeks ago     Up 3 weeks                                                                                              portainer_agent.2n1ni2q9i7lfthn8xxt1zd5cz.r8i9lovyt115dy952u3ykq2cz
+root@servergestao:~/gestao# docker logs 5327655e238d
+Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+49 migrations found in prisma/migrations
+
+Applying migration `20260227230000_final_fix_erp_columns`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260227230000_final_fix_erp_columns/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+Executando Seed de Permissões...
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[JobService] Inicializando agendador de tarefas...
+[JobService] Tarefas agendadas com sucesso.
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+{"level":"error","message":"400 - Erro de banco de dados. - /api/products - GET - IP: 10.0.1.202"}
 root@servergestao:~/gestao#

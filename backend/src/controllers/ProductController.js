@@ -6,27 +6,32 @@ class ProductController {
   
   // GET /api/products
   getProducts = asyncHandler(async (req, res) => {
-    const products = await prisma.product.findMany({
-      where: { restaurantId: req.restaurantId },
-      include: { 
-        categories: {
+    try {
+        const products = await prisma.product.findMany({
+          where: { restaurantId: req.restaurantId },
           include: { 
+            categories: {
+              include: { 
+                addonGroups: { 
+                  include: { addons: { orderBy: { order: 'asc' } } },
+                  orderBy: { order: 'asc' }
+                } 
+              }
+            }, 
+            sizes: { include: { globalSize: true }, orderBy: { order: 'asc' } }, 
             addonGroups: { 
               include: { addons: { orderBy: { order: 'asc' } } },
               orderBy: { order: 'asc' }
-            } 
-          }
-        }, 
-        sizes: { include: { globalSize: true }, orderBy: { order: 'asc' } }, 
-        addonGroups: { 
-          include: { addons: { orderBy: { order: 'asc' } } },
-          orderBy: { order: 'asc' }
-        },
-        ingredients: { include: { ingredient: true } }
-      },
-      orderBy: { order: 'asc' },
-    });
-    res.json(products);
+            },
+            ingredients: { include: { ingredient: true } }
+          },
+          orderBy: { order: 'asc' },
+        });
+        res.json(products);
+    } catch (error) {
+        console.error("[GET_PRODUCTS_ERROR]", error);
+        res.status(500).json({ error: "Erro interno ao carregar produtos", details: error.message });
+    }
   });
 
   // GET /api/products/:id

@@ -13,6 +13,8 @@ const productBase = {
   stock: z.coerce.number().int().default(0),
   measureUnit: z.string().default('UN'),
   order: z.coerce.number().default(0),
+  showInMenu: z.boolean().default(true),
+  isFlavor: z.boolean().default(false),
   
   // IDs de relacionamento
   categoryId: z.string().optional().nullable(),
@@ -62,6 +64,8 @@ const UpdateProductSchema = z.object({
   stock: z.coerce.number().int().optional(),
   measureUnit: z.string().optional(),
   order: z.coerce.number().optional(),
+  showInMenu: z.boolean().optional(),
+  isFlavor: z.boolean().optional(),
   
   categoryId: z.string().optional().nullable(),
   categoryIds: z.array(z.string()).optional(),
