@@ -620,6 +620,10 @@ model Product {
   productionArea String?  @default("Cozinha") // Movido da Categoria para o Produto
   saiposIntegrationCode String?  // Código de integração da Saipos
   
+  // === Campos de Visibilidade e Estrutura (Estilo Saipos/iFood) ===
+  showInMenu    Boolean  @default(true)  // Se deve aparecer na vitrine principal
+  isFlavor      Boolean  @default(false) // Se é um sabor que será usado dentro de outro produto
+  
   // === Campo Legado (Manter como opcional para evitar quebra no banco) ===
   categoryId    String?
 
@@ -678,6 +682,7 @@ model AddonGroup {
   name      String  // Ex: "Molhos", "Acompanhamentos"
   type      String  @default("multiple") // "single" ou "multiple"
   isRequired Boolean @default(false) 
+  isFlavorGroup Boolean @default(false) // Define se o grupo contém Sabores (Pizzas)
   
   // Novos campos para limites do GRUPO (Combo)
   minQuantity Int     @default(0) // Mínimo total de itens que devem ser selecionados no grupo
@@ -702,6 +707,8 @@ model AddonGroup {
 model Addon {
   id           String  @id @default(cuid())
   name         String
+  description  String?
+  imageUrl     String?
   price        Float
   maxQuantity  Int     @default(1) // Novo: Quantidade máxima permitida para este adicional
   order     Int     @default(0)

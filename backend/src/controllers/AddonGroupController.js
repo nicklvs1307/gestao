@@ -26,7 +26,7 @@ const getAddonGroups = async (req, res) => {
 };
 
 const createAddonGroup = async (req, res) => {
-    const { name, type, isRequired, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
+    const { name, type, isRequired, isFlavorGroup, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
     
     try {
         const newGroup = await prisma.addonGroup.create({
@@ -34,6 +34,7 @@ const createAddonGroup = async (req, res) => {
                 name,
                 type: type || 'multiple',
                 isRequired: isRequired || false,
+                isFlavorGroup: isFlavorGroup || false,
                 minQuantity: minQuantity || 0,
                 maxQuantity: maxQuantity || 1,
                 order: order || 0,
@@ -42,6 +43,8 @@ const createAddonGroup = async (req, res) => {
                 addons: {
                     create: addons?.map(addon => ({
                         name: addon.name,
+                        description: addon.description,
+                        imageUrl: addon.imageUrl,
                         price: addon.price,
                         maxQuantity: addon.maxQuantity || 1,
                         order: addon.order || 0,
@@ -64,9 +67,62 @@ const createAddonGroup = async (req, res) => {
     }
 };
 
+const duplicateAddonGroup = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const originalGroup = await prisma.addonGroup.findUnique({
+            where: { id },
+            include: { 
+                addons: {
+                    include: { ingredients: true }
+                }
+            }
+        });
+
+        if (!originalGroup) {
+            return res.status(404).json({ error: 'Grupo original não encontrado.' });
+        }
+
+        const duplicatedGroup = await prisma.addonGroup.create({
+            data: {
+                name: `${originalGroup.name} (Cópia)`,
+                type: originalGroup.type,
+                isRequired: originalGroup.isRequired,
+                isFlavorGroup: originalGroup.isFlavorGroup,
+                minQuantity: originalGroup.minQuantity,
+                maxQuantity: originalGroup.maxQuantity,
+                order: originalGroup.order + 1,
+                restaurantId: req.restaurantId,
+                addons: {
+                    create: originalGroup.addons.map(addon => ({
+                        name: addon.name,
+                        description: addon.description,
+                        imageUrl: addon.imageUrl,
+                        price: addon.price,
+                        maxQuantity: addon.maxQuantity,
+                        order: addon.order,
+                        ingredients: {
+                            create: addon.ingredients.map(ing => ({
+                                ingredientId: ing.ingredientId,
+                                quantity: ing.quantity
+                            }))
+                        }
+                    }))
+                }
+            },
+            include: { addons: true }
+        });
+
+        res.status(201).json(duplicatedGroup);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao duplicar grupo de complementos.' });
+    }
+};
+
 const updateAddonGroup = async (req, res) => {
     const { id } = req.params;
-    const { name, type, isRequired, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
+    const { name, type, isRequired, isFlavorGroup, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
 
     try {
         // Para manter a integridade, vamos atualizar o grupo e reconstruir os addons
@@ -77,6 +133,7 @@ const updateAddonGroup = async (req, res) => {
                 name,
                 type,
                 isRequired,
+                isFlavorGroup: isFlavorGroup || false,
                 minQuantity: minQuantity || 0,
                 maxQuantity: maxQuantity || 1,
                 order,
@@ -85,6 +142,8 @@ const updateAddonGroup = async (req, res) => {
                     deleteMany: {},
                     create: addons?.map(addon => ({
                         name: addon.name,
+                        description: addon.description,
+                        imageUrl: addon.imageUrl,
                         price: addon.price,
                         maxQuantity: addon.maxQuantity || 1,
                         order: addon.order || 0,

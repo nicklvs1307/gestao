@@ -8,6 +8,8 @@ export interface AddonIngredient {
 export interface Addon {
   id?: string;
   name: string;
+  description?: string;
+  imageUrl?: string;
   price: number;
   maxQuantity: number;
   order: number;
@@ -20,6 +22,7 @@ export interface AddonGroup {
   name: string;
   type: 'single' | 'multiple';
   isRequired: boolean;
+  isFlavorGroup?: boolean;
   minQuantity?: number; // Mínimo total de itens no grupo
   maxQuantity?: number; // Máximo total de itens no grupo
   order: number;
@@ -40,6 +43,11 @@ export const addonService = {
 
   update: async (id: string, data: AddonGroup) => {
     const response = await api.put<AddonGroup>(`/addons/${id}`, data);
+    return response.data;
+  },
+
+  duplicate: async (id: string) => {
+    const response = await api.post<AddonGroup>(`/addons/${id}/duplicate`);
     return response.data;
   },
 

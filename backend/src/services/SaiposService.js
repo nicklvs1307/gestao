@@ -249,7 +249,7 @@ class SaiposService {
         display_id: order.dailyOrderNumber ? order.dailyOrderNumber.toString() : order.id.slice(-4),
         cod_store: settings.saiposCodStore,
         created_at: order.createdAt.toISOString(),
-        notes: order.deliveryOrder?.notes || '',
+        notes: normalize(order.deliveryOrder?.notes || ''),
         total_increase: 0,
         total_discount: 0,
         total_amount: Math.round(order.total * 100) / 100,

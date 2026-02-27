@@ -8,6 +8,7 @@ router.use(needsAuth);
 router.get('/', AddonGroupController.getAddonGroups);
 router.patch('/reorder', AddonGroupController.reorderGroups);
 router.post('/', AddonGroupController.createAddonGroup);
+router.post('/:id/duplicate', AddonGroupController.duplicateAddonGroup);
 router.put('/:id', AddonGroupController.updateAddonGroup);
 router.delete('/:id', AddonGroupController.deleteAddonGroup);
 

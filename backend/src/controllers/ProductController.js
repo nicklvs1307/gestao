@@ -35,7 +35,13 @@ class ProductController {
     const product = await prisma.product.findUnique({
       where: { id },
       include: { 
-        categories: true, 
+        categories: {
+            include: {
+                addonGroups: {
+                    include: { addons: true }
+                }
+            }
+        }, 
         sizes: { include: { globalSize: true }, orderBy: { order: 'asc' } }, 
         addonGroups: { 
           include: { addons: { orderBy: { order: 'asc' } } },

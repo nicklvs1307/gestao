@@ -207,10 +207,16 @@ class OrderService {
  
              await tx.deliveryOrder.create({
                  data: {
-                     orderId: createdOrder.id, customerId: customer.id, name: deliveryInfo.name, phone: deliveryInfo.phone,
-                     address: fullAddress, deliveryType: deliveryInfo.deliveryType, paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
+                     orderId: createdOrder.id, 
+                     customerId: customer.id, 
+                     name: deliveryInfo.name, 
+                     phone: deliveryInfo.phone,
+                     address: fullAddress, 
+                     deliveryType: deliveryInfo.deliveryType, 
+                     paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
                      changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
                      deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
+                     notes: deliveryInfo.notes || null,
                      latitude: coords?.lat || deliveryInfo.latitude ? parseFloat(coords?.lat || deliveryInfo.latitude) : null,
                      longitude: coords?.lng || deliveryInfo.longitude ? parseFloat(coords?.lng || deliveryInfo.longitude) : null,
                      status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
