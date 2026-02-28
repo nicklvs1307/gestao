@@ -5,6 +5,7 @@ import { Pizza, Maximize2, List, Disc, Plus, Trash2, CheckCircle, Layers, X } fr
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProductFormModalProps {
   isOpen: boolean;

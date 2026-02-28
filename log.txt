@@ -1,18 +1,45 @@
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
-/app/src/services/OrderService.js:339
-      });
-       ^
-
-SyntaxError: Unexpected token ')'
-    at wrapSafe (node:internal/modules/cjs/loader:1464:18)
-    at Module._compile (node:internal/modules/cjs/loader:1495:20)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-    at Module.load (node:internal/modules/cjs/loader:1266:32)
-    at Module._load (node:internal/modules/cjs/loader:1091:12)
-    at Module.require (node:internal/modules/cjs/loader:1289:19)
-    at require (node:internal/modules/helpers:182:18)
-    at Object.<anonymous> (/app/src/controllers/OrderController.js:1:22)
-    at Module._compile (node:internal/modules/cjs/loader:1521:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-
-Node.js v20.20.0
+index-BaJuV94m.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-BaJuV94m.js:40 ReferenceError: motion is not defined
+    at LGe (index-BaJuV94m.js:8654:78131)
+    at Fu (index-BaJuV94m.js:38:17898)
+    at zO (index-BaJuV94m.js:40:3167)
+    at RH (index-BaJuV94m.js:40:45983)
+    at EH (index-BaJuV94m.js:40:40756)
+    at Jne (index-BaJuV94m.js:40:40683)
+    at Cy (index-BaJuV94m.js:40:40534)
+    at KO (index-BaJuV94m.js:40:36786)
+    at AH (index-BaJuV94m.js:40:37599)
+    at Z (index-BaJuV94m.js:38:3267)
+TO @ index-BaJuV94m.js:40
+QV.v.callback @ index-BaJuV94m.js:40
+Ao @ index-BaJuV94m.js:38
+MH @ index-BaJuV94m.js:40
+jH @ index-BaJuV94m.js:40
+Yne @ index-BaJuV94m.js:40
+ese @ index-BaJuV94m.js:40
+Uu @ index-BaJuV94m.js:40
+AH @ index-BaJuV94m.js:40
+Z @ index-BaJuV94m.js:38
+(anônimo) @ index-BaJuV94m.js:40
+index-BaJuV94m.js:8654 Uncaught ReferenceError: motion is not defined
+    at LGe (index-BaJuV94m.js:8654:78131)
+    at Fu (index-BaJuV94m.js:38:17898)
+    at zO (index-BaJuV94m.js:40:3167)
+    at RH (index-BaJuV94m.js:40:45983)
+    at EH (index-BaJuV94m.js:40:40756)
+    at Jne (index-BaJuV94m.js:40:40683)
+    at Cy (index-BaJuV94m.js:40:40534)
+    at KO (index-BaJuV94m.js:40:36786)
+    at AH (index-BaJuV94m.js:40:37599)
+    at Z (index-BaJuV94m.js:38:3267)
+LGe @ index-BaJuV94m.js:8654
+Fu @ index-BaJuV94m.js:38
+zO @ index-BaJuV94m.js:40
+RH @ index-BaJuV94m.js:40
+EH @ index-BaJuV94m.js:40
+Jne @ index-BaJuV94m.js:40
+Cy @ index-BaJuV94m.js:40
+KO @ index-BaJuV94m.js:40
+AH @ index-BaJuV94m.js:40
+Z @ index-BaJuV94m.js:38
+(anônimo) @ index-BaJuV94m.js:40
