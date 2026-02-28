@@ -261,6 +261,42 @@ function ProductFormPage() {
                                     </div>
                                 </Card>
 
+                                <Card className="p-4 border-slate-200 bg-white space-y-4 shadow-sm">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-orange-500 text-white p-1.5 rounded-lg"><Pizza size={14} /></div>
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase text-slate-900 italic leading-none">Configuração de Pizza</h4>
+                                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Marcar este produto como Pizza</p>
+                                            </div>
+                                        </div>
+                                        <div className={cn("p-1.5 border rounded-lg flex items-center gap-3 transition-all cursor-pointer px-3", watch('pizzaConfig.active') ? "bg-orange-50 border-orange-200" : "bg-white border-slate-200")} onClick={() => setValue('pizzaConfig.active', !watch('pizzaConfig.active'))}>
+                                            <span className="text-[9px] font-black uppercase italic text-slate-600">{watch('pizzaConfig.active') ? 'ATIVADO' : 'DESATIVADO'}</span>
+                                            <div className={cn("w-8 h-4 rounded-full relative", watch('pizzaConfig.active') ? "bg-orange-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all", watch('pizzaConfig.active') ? "left-4.5" : "left-0.5")} /></div>
+                                        </div>
+                                    </div>
+
+                                    {watch('pizzaConfig.active') && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Regra de Preço Padrão</label>
+                                                <div className="flex p-1 bg-slate-100 rounded-xl gap-1 border border-slate-200">
+                                                    {[
+                                                        { id: 'higher', label: 'Maior Valor' },
+                                                        { id: 'average', label: 'Valor Médio' }
+                                                    ].map(rule => (
+                                                        <button key={rule.id} type="button" onClick={() => setValue('pizzaConfig.priceRule', rule.id)} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all", watch('pizzaConfig.priceRule') === rule.id ? "bg-white text-orange-600 shadow-sm" : "text-slate-400 hover:bg-slate-200")}>{rule.label}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Qtd. de Fatias</label>
+                                                <input type="number" {...register('pizzaConfig.sliceCount')} className="ui-input w-full h-10 italic uppercase text-[10px] font-black rounded-xl border border-slate-200 px-3" />
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </Card>
+
                                 <Card className="p-4 border-slate-200 bg-white">
                                     <h4 className="text-[9px] font-black uppercase text-slate-400 mb-3 flex items-center gap-2 italic"><ImageIcon size={10} className="text-orange-500" /> Imagem Industrial</h4>
                                     <div className="flex gap-4 items-center">
