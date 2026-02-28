@@ -117,8 +117,6 @@ app.use('/api/cashier', cashierRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/fiscal', fiscalRoutes);
 app.use('/api/stock', stockRoutes);
-app.use('/api/ingredients', require('./src/routes/ingredientRoutes'));
-app.use('/api/production', require('./src/routes/productionRoutes'));
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/integrations', integrationRoutes);
@@ -131,8 +129,6 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/delivery-areas', deliveryAreaRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
-app.use('/api/sectors', require('./src/routes/sectorRoutes'));
-app.use('/api/checklists', require('./src/routes/checklistRoutes'));
 app.use('/api/whatsapp', whatsappRoutes);
 
 // KDS Alias

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup, Addon } from '../services/api/addonService';
 import { getIngredients } from '../services/api';
-import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, GripVertical, Loader2, List, Settings, CheckCircle, Info, RefreshCw, Copy, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, GripVertical, Loader2, List, Settings, CheckCircle, Info, RefreshCw, Copy, Image as ImageIcon, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 import {
