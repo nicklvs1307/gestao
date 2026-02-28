@@ -5,11 +5,18 @@ class PricingService {
    * Calcula o preço unitário e total de um item, considerando regras de negócio,
    * tamanhos, pizzas (sabores) e adicionais.
    */
-  async calculateItemPrice(productId, quantity, sizeId, addonsIds = [], flavorIds = []) {
+  async calculateItemPrice(productId, quantity, sizeId, addonsIds = []) {
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: { 
         sizes: true, 
+        categories: {
+            include: {
+                addonGroups: {
+                    include: { addons: true }
+                }
+            }
+        },
         addonGroups: { include: { addons: true } },
         promotions: {
             where: { isActive: true }
@@ -39,11 +46,7 @@ class PricingService {
       };
     }
 
-    // 2. Lógica de Pizza (Multi-sabores via Produtos vinculados - Legado)
-    const { finalBasePrice: pizzaBasePrice, flavorsObjects } = await this._calculatePizzaPrice(product, unitPrice, sizeName, flavorIds);
-    unitPrice = pizzaBasePrice;
-
-    // 3. Aplicação de Promoção
+    // 2. Aplicação de Promoção
     const activePromotion = product.promotions?.[0];
     if (activePromotion) {
         if (activePromotion.discountType === 'percentage') {
@@ -53,7 +56,7 @@ class PricingService {
         }
     }
 
-    // 4. Cálculo de Adicionais (Unificado: Extras + Sabores como Opções)
+    // 3. Cálculo de Adicionais (Unificado: Extras + Sabores como Opções)
     const { addonsTotal, addonsObjects } = await this._calculateAddonsPriceV2(product, addonsIds, sizeName);
     
     const finalUnitPrice = unitPrice + addonsTotal;
@@ -65,13 +68,13 @@ class PricingService {
       basePrice: unitPrice,      
       totalPrice: totalItemPrice,
       sizeObj,
-      addonsObjects,
-      flavorsObjects
+      addonsObjects
     };
   }
 
   /**
    * Cálculo de Adicionais Versão 2: Suporta regras de Sabores (Maior Valor / Média)
+   * e herança de grupos via categorias.
    */
   async _calculateAddonsPriceV2(product, addonsIds, sizeName) {
     let addonsTotal = 0;
@@ -81,41 +84,54 @@ class PricingService {
       return { addonsTotal, addonsObjects };
     }
 
-    // Busca os grupos para saber quais são FlavorGroups
-    const groups = await prisma.addonGroup.findMany({
-        where: { products: { some: { id: product.id } } },
-        include: { addons: true }
-    });
+    // 1. Coletar grupos do Produto e das Categorias (Herança)
+    const productGroups = product.addonGroups || [];
+    const categoryGroups = (product.categories || []).flatMap(c => c.addonGroups || []);
+    
+    // De-duplicate por ID
+    const allGroupsMap = new Map();
+    [...categoryGroups, ...productGroups].forEach(g => allGroupsMap.set(g.id, g));
+    const groups = Array.from(allGroupsMap.values());
 
     const counts = {};
     addonsIds.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
 
-    // Processar cada grupo separadamente para aplicar as regras de sabor
+    // 2. Processar cada grupo separadamente para aplicar as regras de sabor
     for (const group of groups) {
         const selectedAddonsInGroup = group.addons.filter(a => counts[a.id]);
         
         if (selectedAddonsInGroup.length === 0) continue;
 
         if (group.isFlavorGroup) {
-            // Regra de Pizza: Maior valor entre os selecionados
-            // Nota: No modelo de Adicionais, o preço costuma ser absoluto ou incremental.
-            // Para "Sabores como Adicionais", o preço do adicional costuma ser o preço do sabor.
-            const prices = selectedAddonsInGroup.map(a => a.price);
-            
-            // Aqui pegamos o MAIOR preço do adicional e somamos (ou subtraímos a diferença do base)
-            // Para simplificar padrão Saipos: o produto base tem preço 0 ou preço da massa, 
-            // e o "Adicional Sabor" tem o preço real.
-            const groupPrice = Math.max(...prices);
-            addonsTotal += groupPrice;
+            // Coleta os preços de cada seleção individual (considerando quantidade)
+            const selectionPrices = [];
+            selectedAddonsInGroup.forEach(addon => {
+                const qty = counts[addon.id];
+                for (let i = 0; i < qty; i++) {
+                    selectionPrices.push(addon.price);
+                }
+            });
+
+            if (selectionPrices.length > 0) {
+                const rule = group.priceRule || 'higher';
+                
+                if (rule === 'average') {
+                    const sum = selectionPrices.reduce((a, b) => a + b, 0);
+                    addonsTotal += (sum / selectionPrices.length);
+                } else {
+                    // "higher" (Padrão Saipos/iFood)
+                    addonsTotal += Math.max(...selectionPrices);
+                }
+            }
         } else {
-            // Regra Normal: Somar todos
+            // Regra Normal: Somar todos os itens (Adicionais comuns)
             selectedAddonsInGroup.forEach(addon => {
                 const qty = counts[addon.id];
                 addonsTotal += (addon.price * qty);
             });
         }
 
-        // Monta objetos para o retorno
+        // Monta objetos para o retorno (metadados do pedido)
         selectedAddonsInGroup.forEach(addon => {
             addonsObjects.push({
                 id: addon.id,

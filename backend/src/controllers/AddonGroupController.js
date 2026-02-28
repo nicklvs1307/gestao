@@ -26,7 +26,7 @@ const getAddonGroups = async (req, res) => {
 };
 
 const createAddonGroup = async (req, res) => {
-    const { name, type, isRequired, isFlavorGroup, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
+    const { name, type, isRequired, isFlavorGroup, priceRule, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
     
     try {
         const newGroup = await prisma.addonGroup.create({
@@ -35,6 +35,7 @@ const createAddonGroup = async (req, res) => {
                 type: type || 'multiple',
                 isRequired: isRequired || false,
                 isFlavorGroup: isFlavorGroup || false,
+                priceRule: priceRule || 'higher',
                 minQuantity: minQuantity || 0,
                 maxQuantity: maxQuantity || 1,
                 order: order || 0,
@@ -122,7 +123,7 @@ const duplicateAddonGroup = async (req, res) => {
 
 const updateAddonGroup = async (req, res) => {
     const { id } = req.params;
-    const { name, type, isRequired, isFlavorGroup, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
+    const { name, type, isRequired, isFlavorGroup, priceRule, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
 
     try {
         // Para manter a integridade, vamos atualizar o grupo e reconstruir os addons
@@ -134,6 +135,7 @@ const updateAddonGroup = async (req, res) => {
                 type,
                 isRequired,
                 isFlavorGroup: isFlavorGroup || false,
+                priceRule: priceRule || 'higher',
                 minQuantity: minQuantity || 0,
                 maxQuantity: maxQuantity || 1,
                 order,

@@ -167,31 +167,20 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       basePrice = selectedSize.price;
     }
 
-    // 2. Lógica Especial para Pizzas (Múltiplos Sabores) - Regra vem do PRODUTO (pizzaConfig)
+    // 2. Lógica Especial para Pizzas LEGADAS (Múltiplos Sabores via Produto)
     if (product.pizzaConfig && selectedFlavors.length > 0) {
-      // Prioridade de Regra de Preço: 
-      // 1. Configuração do Produto (pizzaConfig.priceRule)
-      // 2. Padrão: Maior Valor (higher)
       const rule = product.pizzaConfig.priceRule || 'higher';
-
-      // Mapear o preço de cada sabor NO TAMANHO SELECIONADO
       const flavorPrices = selectedFlavors.map(flavor => {
         if (selectedSize) {
-          // Busca o preço deste sabor específico para o tamanho que o usuário escolheu (ex: "Grande")
           const sizeInFlavor = (flavor.sizes || []).find(s => 
             s.name === selectedSize.name || 
             (s.globalSizeId && s.globalSizeId === selectedSize.globalSizeId)
           );
-          
-          // Se o sabor tiver preço para esse tamanho, usa ele. 
-          // Se não, usa o preço base do sabor.
-          // Se o sabor for R$ 0, usa o preço do tamanho da pizza principal.
           return (sizeInFlavor && sizeInFlavor.price > 0) ? sizeInFlavor.price : (flavor.price > 0 ? flavor.price : selectedSize.price);
         }
         return flavor.price > 0 ? flavor.price : basePrice;
       });
 
-      // Aplicar a regra (Maior Valor ou Média)
       if (flavorPrices.length > 0) {
         if (rule === 'higher') {
           basePrice = Math.max(...flavorPrices);
@@ -212,11 +201,37 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         }
     }
 
-    // 4. Somar Adicionais e Multiplicar pela Quantidade
+    // 4. Somar Adicionais e Grupos de Sabores (NOVO PADRÃO)
     let total = basePrice;
     
-    // Adicionais normais
-    total += selectedAddons.reduce((acc, addon) => acc + (addon.price * (addon.quantity || 1)), 0);
+    addonGroups.forEach(group => {
+      const selectedInGroup = selectedAddons.filter(sa => 
+        group.addons.some(ga => ga.id === sa.id)
+      );
+      
+      if (selectedInGroup.length === 0) return;
+
+      if (group.isFlavorGroup) {
+        // Regra de Sabores para Adicionais
+        const prices = [];
+        selectedInGroup.forEach(sa => {
+          for (let i = 0; i < (sa.quantity || 1); i++) {
+            prices.push(sa.price);
+          }
+        });
+
+        const rule = group.priceRule || 'higher';
+        if (rule === 'average') {
+          const sum = prices.reduce((a, b) => a + b, 0);
+          total += (sum / prices.length);
+        } else {
+          total += Math.max(...prices);
+        }
+      } else {
+        // Regra normal para adicionais comuns
+        total += selectedInGroup.reduce((acc, sa) => acc + (sa.price * (sa.quantity || 1)), 0);
+      }
+    });
     
     return total * quantity;
   };

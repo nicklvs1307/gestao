@@ -49,8 +49,7 @@ class OrderService {
         item.productId, 
         item.quantity, 
         item.sizeId, 
-        item.addonsIds,
-        item.flavorIds
+        item.addonsIds
       );
 
       orderTotal += calculation.totalPrice;
@@ -61,7 +60,6 @@ class OrderService {
         priceAtTime: calculation.unitPrice,
         sizeJson: calculation.sizeObj ? JSON.stringify(calculation.sizeObj) : null,
         addonsJson: calculation.addonsObjects.length ? JSON.stringify(calculation.addonsObjects) : null,
-        flavorsJson: calculation.flavorsObjects.length ? JSON.stringify(calculation.flavorsObjects) : null,
         observations: item.observations || ''
       });
     }
@@ -327,7 +325,7 @@ class OrderService {
 
     for (const item of items) {
        const calculation = await PricingService.calculateItemPrice(
-        item.productId, item.quantity, item.sizeId, item.addonsIds, item.flavorIds
+        item.productId, item.quantity, item.sizeId, item.addonsIds
       );
       additionalTotal += calculation.totalPrice;
       
@@ -336,8 +334,8 @@ class OrderService {
         priceAtTime: calculation.unitPrice,
         sizeJson: item.sizeJson || (calculation.sizeObj ? JSON.stringify(calculation.sizeObj) : null),
         addonsJson: item.addonsJson || (calculation.addonsObjects.length ? JSON.stringify(calculation.addonsObjects) : null),
-        flavorsJson: item.flavorsJson || (calculation.flavorsObjects.length ? JSON.stringify(calculation.flavorsObjects) : null),
         observations: item.observations || ''
+      });
       });
     }
 
