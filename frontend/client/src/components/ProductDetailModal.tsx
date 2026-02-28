@@ -37,10 +37,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
   const [observations, setObservations] = useState('');
   const [isAdded, setIsAdded] = useState(false);
-  
-  const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
-  const [selectedFlavors, setSelectedFlavors] = useState<Product[]>([]);
-  const [isLoadingFlavors, setIsLoadingFlavors] = useState(false);
 
   // LOGICA DE MERGE DE ADICIONAIS (Produto + Categorias)
   const addonGroups = React.useMemo(() => {
@@ -70,92 +66,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       const sizes = product.sizes || [];
       setSelectedSize(sizes.length > 0 ? sizes[0] : null);
       setSelectedAddons([]);
-      setSelectedFlavors([]);
       setObservations('');
       setIsAdded(false);
-
-      if (product.pizzaConfig?.flavorCategoryId) {
-        loadFlavors(product.pizzaConfig.flavorCategoryId);
-      }
     }
   }, [isOpen, product]);
 
-  const loadFlavors = (categoryId: string) => {
-    setIsLoadingFlavors(true);
-    try {
-      // Filtrar localmente da lista de produtos já carregada (muito mais rápido)
-      const flavors = allProducts.filter(p => {
-        const hasCategory = p.categories?.some(c => c.id === categoryId) || p.categoryId === categoryId;
-        return hasCategory && p.isAvailable;
-      });
-      
-      setAvailableFlavors(flavors);
-    } catch (error) {
-      console.error("Erro ao carregar sabores:", error);
-      toast.error("Não foi possível carregar os sabores.");
-    } finally {
-      setIsLoadingFlavors(false);
-    }
-  };
-
   const handleQuantityChange = (val: number) => {
       setQuantity(prev => Math.max(1, prev + val));
-  };
-
-  const handleAddonQuantityChange = (addon: AddonOption, delta: number, group: any) => {
-    if (isAdded) return;
-    
-    const currentAddon = selectedAddons.find(a => a.id === addon.id);
-    const currentQty = currentAddon?.quantity || 0;
-    const newQty = Math.max(0, currentQty + delta);
-    
-    // 1. Verificar limite INDIVIDUAL do adicional
-    const maxQty = addon.maxQuantity || 1;
-    if (newQty > maxQty && delta > 0) return;
-
-    // 2. Verificar limite TOTAL do GRUPO (Combo)
-    if (delta > 0 && group.maxQuantity > 0) {
-        const groupAddonIds = group.addons.map((a: any) => a.id);
-        const currentGroupTotal = selectedAddons
-            .filter(a => groupAddonIds.includes(a.id))
-            .reduce((sum, a) => sum + (a.quantity || 0), 0);
-        
-        if (currentGroupTotal + delta > group.maxQuantity) {
-            toast.warning(`O limite total para "${group.name}" é de ${group.maxQuantity} itens.`);
-            return;
-        }
-    }
-
-    if (newQty === 0) {
-      setSelectedAddons(prev => prev.filter(a => a.id !== addon.id));
-    } else {
-      if (currentAddon) {
-        setSelectedAddons(prev => prev.map(a => a.id === addon.id ? { ...a, quantity: newQty } : a));
-      } else {
-        setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
-      }
-    }
-  };
-
-  const getMaxFlavors = () => {
-    if (!product?.pizzaConfig || !selectedSize) return 1;
-    const sizeConfig = product.pizzaConfig.sizes ? product.pizzaConfig.sizes[selectedSize.name] : null;
-    return sizeConfig?.maxFlavors || product.pizzaConfig.maxFlavors || 1;
-  };
-
-  const handleFlavorToggle = (flavor: Product) => {
-    if (isAdded) return;
-    const max = getMaxFlavors();
-    const isSelected = selectedFlavors.some(f => f.id === flavor.id);
-    if (isSelected) {
-      setSelectedFlavors(prev => prev.filter(f => f.id !== flavor.id));
-    } else {
-      if (selectedFlavors.length < max) {
-        setSelectedFlavors(prev => [...prev, flavor]);
-      } else if (max === 1) {
-        setSelectedFlavors([flavor]);
-      }
-    }
   };
 
   const calculateCurrentPrice = () => {
@@ -167,31 +84,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       basePrice = selectedSize.price;
     }
 
-    // 2. Lógica Especial para Pizzas LEGADAS (Múltiplos Sabores via Produto)
-    if (product.pizzaConfig && selectedFlavors.length > 0) {
-      const rule = product.pizzaConfig.priceRule || 'higher';
-      const flavorPrices = selectedFlavors.map(flavor => {
-        if (selectedSize) {
-          const sizeInFlavor = (flavor.sizes || []).find(s => 
-            s.name === selectedSize.name || 
-            (s.globalSizeId && s.globalSizeId === selectedSize.globalSizeId)
-          );
-          return (sizeInFlavor && sizeInFlavor.price > 0) ? sizeInFlavor.price : (flavor.price > 0 ? flavor.price : selectedSize.price);
-        }
-        return flavor.price > 0 ? flavor.price : basePrice;
-      });
-
-      if (flavorPrices.length > 0) {
-        if (rule === 'higher') {
-          basePrice = Math.max(...flavorPrices);
-        } else {
-          const sum = flavorPrices.reduce((a, b) => a + b, 0);
-          basePrice = sum / flavorPrices.length;
-        }
-      }
-    }
-
-    // 3. Aplicar Promoção sobre o preço base calculado
+    // 2. Aplicar Promoção sobre o preço base calculado
     const activePromotion = product.promotions?.find(p => p.isActive);
     if (activePromotion) {
         if (activePromotion.discountType === 'percentage') {
@@ -201,7 +94,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         }
     }
 
-    // 4. Somar Adicionais e Grupos de Sabores (NOVO PADRÃO)
+    // 3. Somar Adicionais e Grupos de Sabores (NOVO PADRÃO)
     let total = basePrice;
     
     addonGroups.forEach(group => {
@@ -238,10 +131,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const handleAddToCartClick = () => {
     if (isAdded || !product) return;
-    if (product.pizzaConfig && selectedFlavors.length === 0) {
-      toast.warning("Por favor, selecione pelo menos 1 sabor.");
-      return;
-    }
     
     // Validação de Grupos de Adicionais e Sabores
     const groups = addonGroups;
@@ -267,7 +156,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         }
       }
     }
-    onAddToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors, observations);
+    onAddToCart(product, quantity, selectedSize, selectedAddons, [], observations);
     setIsAdded(true);
     toast.success("Adicionado ao pedido!");
     setTimeout(onClose, 800);
@@ -441,49 +330,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
-                {/* SEÇÃO DE SABORES (PIZZA) */}
-                {product.pizzaConfig && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between bg-slate-100/50 p-3 rounded-2xl border border-slate-100">
-                        <div className="flex items-center gap-2">
-                            <PizzaIcon className="text-primary" size={20} />
-                            <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900">2. Escolha os Sabores</h4>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Até {getMaxFlavors()} opções</p>
-                            </div>
-                        </div>
-                        {selectedFlavors.length > 0 && (
-                            <div className="bg-primary text-white px-3 py-1.5 rounded-xl font-black text-[10px] italic shadow-lg shadow-primary/20">
-                                {selectedFlavors.length}/{getMaxFlavors()} SELECIONADO
-                            </div>
-                        )}
-                    </div>
-                    
-                    {isLoadingFlavors ? (
-                      <div className="py-8 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availableFlavors.map(flavor => {
-                          const isSelected = selectedFlavors.some(f => f.id === flavor.id);
-                          const flavorPrice = selectedSize ? 
-                            ((flavor.sizes || []).find(s => s.name === selectedSize.name || s.globalSizeId === selectedSize.globalSizeId)?.price || flavor.price) : 
-                            flavor.price;
-                          
-                          return (
-                            <FlavorCard 
-                                key={flavor.id}
-                                item={flavor}
-                                isSelected={isSelected}
-                                onToggle={() => handleFlavorToggle(flavor)}
-                                price={flavorPrice}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 )}
 

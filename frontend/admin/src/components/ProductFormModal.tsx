@@ -30,19 +30,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
   const [allIngredients, setAllIngredients] = useState<any[]>([]);
   const [productIngredients, setProductIngredients] = useState<{ ingredientId: string, quantity: number }[]>([]);
 
-  // Estados Pizza
-  const [isPizza, setIsPizza] = useState(false);
-  const [pizzaConfig, setPizzaConfig] = useState({
-    maxFlavors: 2,
-    sliceCount: 8,
-    priceRule: 'higher', 
-    flavorCategoryId: '', 
-    sizes: {
-        'Grande': { active: true, slices: 8, maxFlavors: 2 },
-        'Familia': { active: false, slices: 12, maxFlavors: 4 }
-    }
-  });
-
   const isEditing = !!productToEdit;
 
   useEffect(() => {
@@ -64,18 +51,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       setSizes(productToEdit.sizes || []);
       setAddonGroups(productToEdit.addonGroups || []);
       setProductIngredients(productToEdit.ingredients || []);
-      
-      if (productToEdit.pizzaConfig) {
-          setIsPizza(true);
-          setPizzaConfig({ 
-            ...pizzaConfig, 
-            ...productToEdit.pizzaConfig,
-            sizes: productToEdit.pizzaConfig.sizes || pizzaConfig.sizes
-          });
-      } else {
-          setIsPizza(false);
-      }
-
     } else {
       setName('');
       setDescription('');
@@ -89,17 +64,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       setSaiposIntegrationCode(''); 
       setSizes([]);
       setAddonGroups([]);
-      setIsPizza(false);
-      setPizzaConfig({
-        maxFlavors: 2,
-        sliceCount: 8,
-        priceRule: 'higher',
-        flavorCategoryId: '',
-        sizes: {
-            'Grande': { active: true, slices: 8, maxFlavors: 2 },
-            'Familia': { active: false, slices: 12, maxFlavors: 4 }
-        }
-      });
+      setProductIngredients([]);
     }
   }, [productToEdit, isEditing]);
 
@@ -150,7 +115,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       sizes: sizes.filter(s => s.name).map(({ id, productId, ...rest }: any) => rest),
       addonGroups: addonGroups.filter(g => g.id).map(g => ({ id: g.id })), // O backend espera apenas IDs no connect/set
       ingredients: productIngredients.filter(pi => pi.ingredientId && pi.quantity > 0),
-      pizzaConfig: isPizza ? pizzaConfig : null,
     };
 
     try {
@@ -240,22 +204,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
               </label>
             </div>
           </div>
-
-          <div className="flex items-center gap-3 p-4 bg-orange-600 text-white rounded-2xl shadow-lg shadow-orange-600/20">
-              <input 
-                type="checkbox" 
-                id="isPizzaToggle" 
-                checked={isPizza} 
-                onChange={e => setIsPizza(e.target.checked)}
-                className="w-5 h-5 accent-white cursor-pointer"
-              />
-              <label htmlFor="isPizzaToggle" className="font-bold text-sm flex items-center gap-2 cursor-pointer select-none">
-                <Pizza size={20} /> 
-                Configurador de Pizza (Permite múltiplos sabores)
-              </label>
-          </div>
-
-          {/* ... (Pizza Config mantido com ajustes de cores se necessário) ... */}
 
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-700">Descrição do Item</label>

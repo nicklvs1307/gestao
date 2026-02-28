@@ -1,120 +1,18 @@
-index-Dl_dC9vZ.js:8605 [SSE] Conexão estabelecida com o servidor.
-login:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input id=​"input-foh1m2zlx" class=​"
-            flex h-12 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm 
-            placeholder:​text-slate-400 focus:​border-primary focus:​outline-none focus:​ring-4 focus:​ring-primary/​10
-            disabled:​cursor-not-allowed disabled:​opacity-50 transition-all font-medium text-slate-900
-            
-            pl-12
-            h-14
-          " type=​"password" required placeholder=​"••••••••" value=​"rom@pizza@2026">​
-index-Dl_dC9vZ.js:40 TypeError: e.filter is not a function
-    at index-Dl_dC9vZ.js:8654:198716
-    at Object.HV [as useMemo] (index-Dl_dC9vZ.js:38:22335)
-    at ss.useMemo (index-Dl_dC9vZ.js:9:6413)
-    at DGe (index-Dl_dC9vZ.js:8654:198702)
-    at $u (index-Dl_dC9vZ.js:38:17898)
-    at zO (index-Dl_dC9vZ.js:40:3167)
-    at RH (index-Dl_dC9vZ.js:40:45983)
-    at EH (index-Dl_dC9vZ.js:40:40756)
-    at Jne (index-Dl_dC9vZ.js:40:40683)
-    at Cy (index-Dl_dC9vZ.js:40:40534)
-TO @ index-Dl_dC9vZ.js:40
-index-Dl_dC9vZ.js:40 Uncaught TypeError: e.filter is not a function
-    at index-Dl_dC9vZ.js:8654:198716
-    at Object.HV [as useMemo] (index-Dl_dC9vZ.js:38:22335)
-    at ss.useMemo (index-Dl_dC9vZ.js:9:6413)
-    at DGe (index-Dl_dC9vZ.js:8654:198702)
-    at $u (index-Dl_dC9vZ.js:38:17898)
-    at zO (index-Dl_dC9vZ.js:40:3167)
-    at RH (index-Dl_dC9vZ.js:40:45983)
-    at EH (index-Dl_dC9vZ.js:40:40756)
-    at Jne (index-Dl_dC9vZ.js:40:40683)
-    at Cy (index-Dl_dC9vZ.js:40:40534)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+/app/src/services/OrderService.js:339
+      });
+       ^
 
+SyntaxError: Unexpected token ')'
+    at wrapSafe (node:internal/modules/cjs/loader:1464:18)
+    at Module._compile (node:internal/modules/cjs/loader:1495:20)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/app/src/controllers/OrderController.js:1:22)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
 
-
-index-Dl_dC9vZ.js:8605 [SSE] Conexão estabelecida com o servidor.
-index-Dl_dC9vZ.js:8631 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cmm6nas6m0001k801znx8seh8&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJyZXBvcnRzOmFiYyIsImtkczp2aWV3IiwidGFibGU6bWFuYWdlIiwiZGVsaXZlcnk6bWFuYWdlIiwiY2hlY2tsaXN0czptYW5hZ2UiLCJjaGVja2xp...FjY291bnRzOm1hbmFnZSIsImZpbmFuY2lhbF9jYXRlZ29yaWVzOm1hbmFnZSIsIndhaXRlcl9zZXR0bGVtZW50Om1hbmFnZSIsImRyaXZlcl9zZXR0bGVtZW50Om1hbmFnZSIsInByb2R1Y3RzOnZpZXciLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJzdG9jazptYW5hZ2UiLCJzdXBwbGllcnM6bWFuYWdlIiwicmVwb3J0czp2aWV3IiwicmVwb3J0czpmaW5hbmNpYWwiLCJvcmRlcnM6ZGlzY291bnQiLCJyZXBvcnRzOnBlcmZvcm1hbmNlIl0sImlhdCI6MTc3MjMwMjg2NCwiZXhwIjoxNzcyMzMxNjY0fQ.HjXwYJz1LYHMDs2XJZ2S9SlPtwmQNtURc8cDbrXum9I&timestamp=1772302679212&EIO=4&transport=websocket' failed: 
-createSocket @ index-Dl_dC9vZ.js:8631
-doOpen @ index-Dl_dC9vZ.js:8631
-open @ index-Dl_dC9vZ.js:8631
-_open @ index-Dl_dC9vZ.js:8631
-Mu @ index-Dl_dC9vZ.js:8631
-AWe @ index-Dl_dC9vZ.js:8631
-IWe @ index-Dl_dC9vZ.js:8631
-open @ index-Dl_dC9vZ.js:8631
-Qq @ index-Dl_dC9vZ.js:8631
-kx @ index-Dl_dC9vZ.js:8631
-(anônimo) @ index-Dl_dC9vZ.js:8631
-by @ index-Dl_dC9vZ.js:40
-z2 @ index-Dl_dC9vZ.js:40
-(anônimo) @ index-Dl_dC9vZ.js:40
-F @ index-Dl_dC9vZ.js:25
-B @ index-Dl_dC9vZ.js:25
-index-Dl_dC9vZ.js:8631 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cmm6nas6m0001k801znx8seh8&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJyZXBvcnRzOmFiYyIsImtkczp2aWV3IiwidGFibGU6bWFuYWdlIiwiZGVsaXZlcnk6bWFuYWdlIiwiY2hlY2tsaXN0czptYW5hZ2UiLCJjaGVja2xp...FjY291bnRzOm1hbmFnZSIsImZpbmFuY2lhbF9jYXRlZ29yaWVzOm1hbmFnZSIsIndhaXRlcl9zZXR0bGVtZW50Om1hbmFnZSIsImRyaXZlcl9zZXR0bGVtZW50Om1hbmFnZSIsInByb2R1Y3RzOnZpZXciLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJzdG9jazptYW5hZ2UiLCJzdXBwbGllcnM6bWFuYWdlIiwicmVwb3J0czp2aWV3IiwicmVwb3J0czpmaW5hbmNpYWwiLCJvcmRlcnM6ZGlzY291bnQiLCJyZXBvcnRzOnBlcmZvcm1hbmNlIl0sImlhdCI6MTc3MjMwMjg2NCwiZXhwIjoxNzcyMzMxNjY0fQ.HjXwYJz1LYHMDs2XJZ2S9SlPtwmQNtURc8cDbrXum9I&timestamp=1772302679212&EIO=4&transport=websocket' failed: 
-createSocket @ index-Dl_dC9vZ.js:8631
-doOpen @ index-Dl_dC9vZ.js:8631
-open @ index-Dl_dC9vZ.js:8631
-_open @ index-Dl_dC9vZ.js:8631
-Mu @ index-Dl_dC9vZ.js:8631
-AWe @ index-Dl_dC9vZ.js:8631
-IWe @ index-Dl_dC9vZ.js:8631
-open @ index-Dl_dC9vZ.js:8631
-(anônimo) @ index-Dl_dC9vZ.js:8631
-index-Dl_dC9vZ.js:8631 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cmm6nas6m0001k801znx8seh8&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJyZXBvcnRzOmFiYyIsImtkczp2aWV3IiwidGFibGU6bWFuYWdlIiwiZGVsaXZlcnk6bWFuYWdlIiwiY2hlY2tsaXN0czptYW5hZ2UiLCJjaGVja2xp...FjY291bnRzOm1hbmFnZSIsImZpbmFuY2lhbF9jYXRlZ29yaWVzOm1hbmFnZSIsIndhaXRlcl9zZXR0bGVtZW50Om1hbmFnZSIsImRyaXZlcl9zZXR0bGVtZW50Om1hbmFnZSIsInByb2R1Y3RzOnZpZXciLCJwcm9kdWN0czptYW5hZ2UiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJzdG9jazptYW5hZ2UiLCJzdXBwbGllcnM6bWFuYWdlIiwicmVwb3J0czp2aWV3IiwicmVwb3J0czpmaW5hbmNpYWwiLCJvcmRlcnM6ZGlzY291bnQiLCJyZXBvcnRzOnBlcmZvcm1hbmNlIl0sImlhdCI6MTc3MjMwMjg2NCwiZXhwIjoxNzcyMzMxNjY0fQ.HjXwYJz1LYHMDs2XJZ2S9SlPtwmQNtURc8cDbrXum9I&timestamp=1772302679212&EIO=4&transport=websocket' failed: 
-createSocket @ index-Dl_dC9vZ.js:8631
-doOpen @ index-Dl_dC9vZ.js:8631
-open @ index-Dl_dC9vZ.js:8631
-_open @ index-Dl_dC9vZ.js:8631
-Mu @ index-Dl_dC9vZ.js:8631
-AWe @ index-Dl_dC9vZ.js:8631
-IWe @ index-Dl_dC9vZ.js:8631
-open @ index-Dl_dC9vZ.js:8631
-(anônimo) @ index-Dl_dC9vZ.js:8631
-index-Dl_dC9vZ.js:40 TypeError: n.filter is not a function
-    at index-Dl_dC9vZ.js:8627:11012
-    at Object.HV [as useMemo] (index-Dl_dC9vZ.js:38:22335)
-    at ss.useMemo (index-Dl_dC9vZ.js:9:6413)
-    at CVe (index-Dl_dC9vZ.js:8627:10998)
-    at $u (index-Dl_dC9vZ.js:38:17898)
-    at zO (index-Dl_dC9vZ.js:40:3167)
-    at RH (index-Dl_dC9vZ.js:40:45983)
-    at EH (index-Dl_dC9vZ.js:40:40756)
-    at Jne (index-Dl_dC9vZ.js:40:40683)
-    at Cy (index-Dl_dC9vZ.js:40:40534)
-TO @ index-Dl_dC9vZ.js:40
-QV.v.callback @ index-Dl_dC9vZ.js:40
-Lo @ index-Dl_dC9vZ.js:38
-MH @ index-Dl_dC9vZ.js:40
-jH @ index-Dl_dC9vZ.js:40
-Yne @ index-Dl_dC9vZ.js:40
-ese @ index-Dl_dC9vZ.js:40
-Wu @ index-Dl_dC9vZ.js:40
-SH @ index-Dl_dC9vZ.js:40
-F @ index-Dl_dC9vZ.js:25
-B @ index-Dl_dC9vZ.js:25
-index-Dl_dC9vZ.js:8627 Uncaught TypeError: n.filter is not a function
-    at index-Dl_dC9vZ.js:8627:11012
-    at Object.HV [as useMemo] (index-Dl_dC9vZ.js:38:22335)
-    at ss.useMemo (index-Dl_dC9vZ.js:9:6413)
-    at CVe (index-Dl_dC9vZ.js:8627:10998)
-    at $u (index-Dl_dC9vZ.js:38:17898)
-    at zO (index-Dl_dC9vZ.js:40:3167)
-    at RH (index-Dl_dC9vZ.js:40:45983)
-    at EH (index-Dl_dC9vZ.js:40:40756)
-    at Jne (index-Dl_dC9vZ.js:40:40683)
-    at Cy (index-Dl_dC9vZ.js:40:40534)
-(anônimo) @ index-Dl_dC9vZ.js:8627
-HV @ index-Dl_dC9vZ.js:38
-ss.useMemo @ index-Dl_dC9vZ.js:9
-CVe @ index-Dl_dC9vZ.js:8627
-$u @ index-Dl_dC9vZ.js:38
-zO @ index-Dl_dC9vZ.js:40
-RH @ index-Dl_dC9vZ.js:40
-EH @ index-Dl_dC9vZ.js:40
-Jne @ index-Dl_dC9vZ.js:40
-Cy @ index-Dl_dC9vZ.js:40
-KO @ index-Dl_dC9vZ.js:40
-SH @ index-Dl_dC9vZ.js:40
-F @ index-Dl_dC9vZ.js:25
-B @ index-Dl_dC9vZ.js:25
+Node.js v20.20.0

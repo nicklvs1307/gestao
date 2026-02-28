@@ -37,8 +37,6 @@ const WaiterPos: React.FC = () => {
     const [productWithOptions, setProductWithOptions] = useState<Product | null>(null);
     const [selectedSizeId, setSelectedSizeId] = useState<string>('');
     const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
-    const [selectedFlavorIds, setSelectedFlavorIds] = useState<string[]>([]);
-    const [availableFlavors, setAvailableFlavors] = useState<Product[]>([]);
     const [tempQty, setTempQty] = useState(1);
     const [obs, setObs] = useState('');
 
@@ -67,46 +65,16 @@ const WaiterPos: React.FC = () => {
     };
 
     const handleProductClick = (product: Product) => {
-        const hasOptions = (product.sizes && product.sizes.length > 0) || (product.addonGroups && product.addonGroups.length > 0) || (product.pizzaConfig);
+        const hasOptions = (product.sizes && product.sizes.length > 0) || (product.addonGroups && product.addonGroups.length > 0);
         
         if (hasOptions) {
             setProductWithOptions(product);
             setSelectedSizeId(product.sizes?.[0]?.id || '');
             setSelectedAddonIds([]);
-            setSelectedFlavorIds([]);
             setTempQty(1);
             setObs('');
-            
-            if (product.pizzaConfig?.flavorCategoryId) {
-                const flavors = products.filter(p => 
-                    (p.categoryId === product.pizzaConfig?.flavorCategoryId || p.categories?.some(c => c.id === product.pizzaConfig?.flavorCategoryId)) && 
-                    p.isAvailable
-                );
-                setAvailableFlavors(flavors);
-            } else {
-                setAvailableFlavors([]);
-            }
         } else {
             addToCartDirect(product);
-        }
-    };
-
-    const handleFlavorToggle = (flavorId: string) => {
-        if (!productWithOptions?.pizzaConfig) return;
-        
-        const size = productWithOptions.sizes.find(s => s.id === selectedSizeId);
-        const max = productWithOptions.pizzaConfig.sizes?.[size?.name || '']?.maxFlavors || productWithOptions.pizzaConfig.maxFlavors || 1;
-
-        if (selectedFlavorIds.includes(flavorId)) {
-            setSelectedFlavorIds(prev => prev.filter(id => id !== flavorId));
-        } else {
-            if (selectedFlavorIds.length < max) {
-                setSelectedFlavorIds(prev => [...prev, flavorId]);
-            } else if (max === 1) {
-                setSelectedFlavorIds([flavorId]);
-            } else {
-                toast.warning(`Limite de ${max} sabores atingido.`);
-            }
         }
     };
 
@@ -116,20 +84,22 @@ const WaiterPos: React.FC = () => {
         const size = product.sizes?.find(s => s.id === selectedSizeId);
         let basePrice = size?.price || product.price;
 
-        if (product.pizzaConfig && selectedFlavorIds.length > 0) {
-            const rule = product.pizzaConfig.priceRule || 'higher';
-            const flavors = availableFlavors.filter(f => selectedFlavorIds.includes(f.id));
-            const flavorPrices = flavors.map(f => {
-                const s = f.sizes?.find(sz => sz.name === size?.name);
-                return s ? s.price : f.price;
-            });
-            basePrice = rule === 'higher' ? Math.max(...flavorPrices) : flavorPrices.reduce((a, b) => a + b, 0) / flavorPrices.length;
-        }
-
         const addonsPrice = product.addonGroups?.reduce((total, group) => {
-            return total + group.addons.reduce((sum, addon) => {
-                return selectedAddonIds.includes(addon.id) ? sum + addon.price : sum;
-            }, 0);
+            const selectedInGroup = group.addons.filter(a => selectedAddonIds.includes(a.id));
+            
+            if (selectedInGroup.length === 0) return total;
+
+            if (group.isFlavorGroup) {
+                const prices = selectedInGroup.map(a => a.price);
+                const rule = group.priceRule || 'higher';
+                if (rule === 'average') {
+                    return total + (prices.reduce((a, b) => a + b, 0) / prices.length);
+                } else {
+                    return total + Math.max(...prices);
+                }
+            }
+
+            return total + selectedInGroup.reduce((sum, addon) => sum + addon.price, 0);
         }, 0) || 0;
 
         return (basePrice + addonsPrice) * tempQty;
@@ -161,11 +131,9 @@ const WaiterPos: React.FC = () => {
         const product = productWithOptions;
         const size = product.sizes?.find(s => s.id === selectedSizeId);
         const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => selectedAddonIds.includes(a.id)) || [];
-        const flavors = availableFlavors.filter(f => selectedFlavorIds.includes(f.id));
 
         let itemName = product.name;
         if (size) itemName += ` (${size.name})`;
-        if (flavors.length > 0) itemName += ` [${flavors.map(f => f.name).join('/')}]`;
 
         const newItem: CartItem = {
             id: Date.now().toString(),
@@ -178,10 +146,10 @@ const WaiterPos: React.FC = () => {
             observation: obs.trim(),
             selectedSizeDbId: selectedSizeId,
             selectedAddonDbIds: selectedAddonIds,
-            selectedFlavorIds: selectedFlavorIds,
+            selectedFlavorIds: [],
             sizeJson: size ? JSON.stringify(size) : null,
             addonsJson: JSON.stringify(selectedAddons),
-            flavorsJson: JSON.stringify(flavors.map(f => ({ id: f.id, name: f.name, price: f.price })))
+            flavorsJson: JSON.stringify([])
         };
         
         setCart([...cart, newItem]);
@@ -401,24 +369,6 @@ const WaiterPos: React.FC = () => {
                                                     </div>
                                                 </button>
                                             ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Sabores de Pizza (Lógica PDV) */}
-                                {productWithOptions.pizzaConfig && availableFlavors.length > 0 && (
-                                    <div className="space-y-4">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><PizzaIcon size={14} className="text-orange-500" /> 2. Selecione os Sabores</h4>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {availableFlavors.map(flavor => {
-                                                const isSelected = selectedFlavorIds.includes(flavor.id);
-                                                return (
-                                                    <button key={flavor.id} onClick={() => handleFlavorToggle(flavor.id)} className={cn("p-4 rounded-2xl border-2 text-left transition-all", isSelected ? "border-orange-500 bg-orange-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
-                                                        <span className="font-black text-[10px] uppercase italic leading-tight block truncate">{flavor.name}</span>
-                                                        {isSelected && <CheckCircle size={12} className="text-orange-500 mt-1" />}
-                                                    </button>
-                                                );
-                                            })}
                                         </div>
                                     </div>
                                 )}
