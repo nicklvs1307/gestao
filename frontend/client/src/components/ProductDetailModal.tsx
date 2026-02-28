@@ -250,80 +250,85 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const sizes = product?.sizes || [];
 
-  // Componente de Card de Sabor para Reuso (Estilo Industrial/Premium)
+  // Componente de Card de Sabor para Reuso (Réplica exata do DeliveryProductCard)
   const FlavorCard = ({ item, isSelected, onToggle, price }: { item: any, isSelected: boolean, onToggle: () => void, price?: number }) => (
     <Card 
         onClick={onToggle} 
         className={cn(
-            "flex flex-col p-0 border-2 transition-all duration-500 overflow-hidden relative group cursor-pointer h-full rounded-[2rem]", 
-            isSelected ? "border-primary bg-white shadow-2xl shadow-primary/20 scale-[1.02] z-10" : "border-slate-100 bg-white hover:border-slate-300"
+            "flex h-36 overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2", 
+            isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 scale-[1.02] z-10" : "border-slate-100 bg-white hover:border-slate-200"
         )}
     >
       {/* Badge de Seleção com Blur */}
       <AnimatePresence mode="wait">
         {isSelected && (
             <motion.div 
-              initial={{ scale: 0, opacity: 0, rotate: -45 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              exit={{ scale: 0, opacity: 0, rotate: 45 }}
-              className="absolute top-4 right-4 z-20 bg-primary text-white p-2 rounded-full shadow-2xl border-2 border-white"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className="absolute top-2 right-2 z-20 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white"
             >
-                <Check size={18} strokeWidth={4} />
+                <Check size={14} strokeWidth={4} />
             </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col h-full">
-         {/* Imagem Gigante e Sangrada (Edge-to-Edge) */}
-         <div className="w-full aspect-[16/11] overflow-hidden bg-slate-100 shrink-0 relative">
-            {item.imageUrl ? (
-                <img 
-                  src={item.imageUrl} 
-                  alt={item.name} 
-                  className={cn(
-                    "w-full h-full object-cover transition-all duration-1000",
-                    isSelected ? "scale-110 rotate-1" : "group-hover:scale-105"
-                  )} 
-                />
-            ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-                    <PizzaIcon size={40} strokeWidth={1} />
-                </div>
-            )}
-            
-            {/* Overlay sutil para destacar o nome se necessário */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            
-            {/* Preço flutuante no card com estilo mais forte */}
-            {price !== undefined && price > 0 && (
-                <div className="absolute bottom-3 right-3 bg-slate-900 text-white px-3 py-1.5 rounded-xl font-black text-[11px] italic shadow-2xl tracking-tighter border border-white/10">
-                    + R$ {price.toFixed(2).replace('.', ',')}
-                </div>
-            )}
-         </div>
-
-         <div className="p-5 flex-1 flex flex-col justify-between bg-white">
-            <div className="space-y-1.5">
-                <span className={cn(
-                  "font-black text-sm md:text-base uppercase italic tracking-tighter block leading-none", 
-                  isSelected ? "text-primary" : "text-slate-900"
-                )}>
-                    {item.name}
-                </span>
-                {item.description && (
-                    <p className="text-[10px] text-slate-400 font-bold leading-tight line-clamp-2 uppercase tracking-tight opacity-80">
-                        {item.description}
-                    </p>
-                )}
+      {/* Imagem Estilo Borda Infinita (Esquerda) */}
+      <div className="w-32 md:w-36 h-full shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
+        {item.imageUrl ? (
+          <>
+            <img 
+              src={item.imageUrl} 
+              alt={item.name} 
+              className={cn(
+                "w-full h-full object-cover transition-transform duration-700",
+                isSelected ? "scale-110" : "group-hover:scale-110"
+              )} 
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
+          </>
+        ) : (
+          <div className="flex items-center justify-center w-full h-full text-slate-200">
+             <ShoppingBag size={40} strokeWidth={1} />
+          </div>
+        )}
+        
+        {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
+      </div>
+      
+      {/* Conteúdo à Direita */}
+      <div className="flex flex-col flex-grow p-3 md:p-4 min-w-0 justify-between">
+          <div className="space-y-1">
+              <h3 className={cn(
+                "text-[11px] md:text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
+                isSelected ? "text-primary" : "text-slate-900"
+              )}>
+                {item.name}
+              </h3>
+              <p className="text-[9px] md:text-[10px] text-slate-500 line-clamp-2 leading-relaxed font-medium uppercase tracking-tight opacity-80">
+                {item.description}
+              </p>
+          </div>
+          
+          <div className="flex justify-between items-end">
+            <div className="flex flex-col">
+                 {price !== undefined && price > 0 && (
+                   <div className="flex items-baseline gap-1">
+                      <span className="text-[9px] md:text-xs font-black text-primary">R$</span>
+                      <span className="text-sm md:text-xl font-black text-slate-900 tracking-tighter italic">
+                          {price.toFixed(2).replace('.', ',')}
+                      </span>
+                   </div>
+                 )}
             </div>
             
             {isSelected && (
-              <div className="mt-4 flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
-                <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em] italic">Selecionado</span>
+                <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] italic">Ok</span>
               </div>
             )}
-         </div>
+          </div>
       </div>
     </Card>
   );
