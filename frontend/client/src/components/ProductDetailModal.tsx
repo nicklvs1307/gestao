@@ -167,25 +167,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       basePrice = selectedSize.price;
     }
 
-    // 2. Lógica Especial para Pizzas (Múltiplos Sabores)
+    // 2. Lógica Especial para Pizzas (Múltiplos Sabores) - Regra vem do PRODUTO (pizzaConfig)
     if (product.pizzaConfig && selectedFlavors.length > 0) {
       // Prioridade de Regra de Preço: 
-      // 1. Categoria (halfAndHalfRule)
-      // 2. Configuração do Produto (pizzaConfig.priceRule)
-      // 3. Padrão: Maior Valor (higher)
-      
-      const categoryRule = product.categories?.[0]?.halfAndHalfRule;
-      let rule = 'higher'; // Default
-      
-      if (categoryRule === 'HIGHER_VALUE') rule = 'higher';
-      else if (categoryRule === 'AVERAGE_VALUE') rule = 'average';
-      else if (product.pizzaConfig.priceRule) rule = product.pizzaConfig.priceRule;
+      // 1. Configuração do Produto (pizzaConfig.priceRule)
+      // 2. Padrão: Maior Valor (higher)
+      const rule = product.pizzaConfig.priceRule || 'higher';
 
       // Mapear o preço de cada sabor NO TAMANHO SELECIONADO
       const flavorPrices = selectedFlavors.map(flavor => {
         if (selectedSize) {
           // Busca o preço deste sabor específico para o tamanho que o usuário escolheu (ex: "Grande")
-          // Compara por nome ou globalSizeId para garantir compatibilidade
           const sizeInFlavor = (flavor.sizes || []).find(s => 
             s.name === selectedSize.name || 
             (s.globalSizeId && s.globalSizeId === selectedSize.globalSizeId)
@@ -193,7 +185,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
           
           // Se o sabor tiver preço para esse tamanho, usa ele. 
           // Se não, usa o preço base do sabor.
-          // Se o sabor for R$ 0 (comum em cadastros de sabores), usa o preço do tamanho da pizza principal.
+          // Se o sabor for R$ 0, usa o preço do tamanho da pizza principal.
           return (sizeInFlavor && sizeInFlavor.price > 0) ? sizeInFlavor.price : (flavor.price > 0 ? flavor.price : selectedSize.price);
         }
         return flavor.price > 0 ? flavor.price : basePrice;
@@ -222,6 +214,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
     // 4. Somar Adicionais e Multiplicar pela Quantidade
     let total = basePrice;
+    
+    // Adicionais normais
     total += selectedAddons.reduce((acc, addon) => acc + (addon.price * (addon.quantity || 1)), 0);
     
     return total * quantity;
