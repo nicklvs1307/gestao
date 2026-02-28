@@ -1,47 +1,12 @@
-index-BcDHHRMg.js:8605 [SSE] Conexão estabelecida com o servidor.
-index-BcDHHRMg.js:8605 SSE Error: Event {isTrusted: true, type: 'error', target: EventSource, currentTarget: EventSource, eventPhase: 2, …}
-te.onerror @ index-BcDHHRMg.js:8605
-api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOmRpc2NvdW50Iiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInBvczphY2Nlc3MiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJmaW5hbmNpYWw6dmlldyIsImZpbmFuY2lhbDptYW5hZ2UiLCJjYXNoaWVyOm1hbmFnZSIsImJhbmtfYWNjb3VudHM6bWFuYWdlIiwicmVwb3J0czphYmMiLCJjaGVja2xpc3RzOm1hbmFnZSIsImNoZWNrbGlzdHM6dmlldyIsInNlY3RvcnM6bWFuYWdlIiwiZmluYW5jaWFsX2NhdGVnb3JpZXM6bWFuYWdlIiwid2FpdGVyX3NldHRsZW1lbnQ6bWFuYWdlIiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsInNldHRpbmdzOnZpZXciLCJzZXR0aW5nczptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJpbnRlZ3JhdGlvbnM6bWFuYWdlIiwib3JkZXJzOnZpZXciLCJvcmRlcnM6bWFuYWdlIiwib3JkZXJzOmVkaXRfaXRlbXMiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJzdG9jazptYW5hZ2UiLCJvcmRlcnM6Y2FuY2VsIiwib3JkZXJzOnRyYW5zZmVyIiwib3JkZXJzOnBheW1lbnRfY2hhbmdlIl0sImlhdCI6MTc3MjI3MzYyOCwiZXhwIjoxNzcyMzAyNDI4fQ.o4xitGLjgOiX90rXqaP2NqrXI90lHe4uwoBKJyz-lko&restaurantId=cml8p6bpl0001my01h5rgpsgo:1  GET https://kicardapio.towersfy.com/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbDhwNmJ0YzAwMDVteTAxdnQxZXAzcHEiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbDhwNmJwbDAwMDFteTAxaDVyZ3BzZ28iLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsib3JkZXJzOmRpc2NvdW50Iiwid2FpdGVyOnBvcyIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInBvczphY2Nlc3MiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJmaW5hbmNpYWw6dmlldyIsImZpbmFuY2lhbDptYW5hZ2UiLCJjYXNoaWVyOm1hbmFnZSIsImJhbmtfYWNjb3VudHM6bWFuYWdlIiwicmVwb3J0czphYmMiLCJjaGVja2xpc3RzOm1hbmFnZSIsImNoZWNrbGlzdHM6dmlldyIsInNlY3RvcnM6bWFuYWdlIiwiZmluYW5jaWFsX2NhdGVnb3JpZXM6bWFuYWdlIiwid2FpdGVyX3NldHRsZW1lbnQ6bWFuYWdlIiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsInNldHRpbmdzOnZpZXciLCJzZXR0aW5nczptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJpbnRlZ3JhdGlvbnM6bWFuYWdlIiwib3JkZXJzOnZpZXciLCJvcmRlcnM6bWFuYWdlIiwib3JkZXJzOmVkaXRfaXRlbXMiLCJjYXRlZ29yaWVzOm1hbmFnZSIsInN0b2NrOnZpZXciLCJzdG9jazptYW5hZ2UiLCJvcmRlcnM6Y2FuY2VsIiwib3JkZXJzOnRyYW5zZmVyIiwib3JkZXJzOnBheW1lbnRfY2hhbmdlIl0sImlhdCI6MTc3MjI3MzYyOCwiZXhwIjoxNzcyMzAyNDI4fQ.o4xitGLjgOiX90rXqaP2NqrXI90lHe4uwoBKJyz-lko&restaurantId=cml8p6bpl0001my01h5rgpsgo net::ERR_QUIC_PROTOCOL_ERROR 200 (OK)
-index-BcDHHRMg.js:40 ReferenceError: Upload is not defined
-    at jGe (index-BcDHHRMg.js:8654:70322)
-    at $u (index-BcDHHRMg.js:38:17898)
-    at RH (index-BcDHHRMg.js:40:45208)
-    at EH (index-BcDHHRMg.js:40:40756)
-    at Jne (index-BcDHHRMg.js:40:40683)
-    at Cy (index-BcDHHRMg.js:40:40534)
-    at KO (index-BcDHHRMg.js:40:36786)
-    at AH (index-BcDHHRMg.js:40:37599)
-    at G (index-BcDHHRMg.js:38:3267)
-    at index-BcDHHRMg.js:40:35087
-TO @ index-BcDHHRMg.js:40
-QV.v.callback @ index-BcDHHRMg.js:40
-Lo @ index-BcDHHRMg.js:38
-MH @ index-BcDHHRMg.js:40
-jH @ index-BcDHHRMg.js:40
-Yne @ index-BcDHHRMg.js:40
-ese @ index-BcDHHRMg.js:40
-Wu @ index-BcDHHRMg.js:40
-AH @ index-BcDHHRMg.js:40
-G @ index-BcDHHRMg.js:38
-(anônimo) @ index-BcDHHRMg.js:40
-index-BcDHHRMg.js:8654 Uncaught ReferenceError: Upload is not defined
-    at jGe (index-BcDHHRMg.js:8654:70322)
-    at $u (index-BcDHHRMg.js:38:17898)
-    at RH (index-BcDHHRMg.js:40:45208)
-    at EH (index-BcDHHRMg.js:40:40756)
-    at Jne (index-BcDHHRMg.js:40:40683)
-    at Cy (index-BcDHHRMg.js:40:40534)
-    at KO (index-BcDHHRMg.js:40:36786)
-    at AH (index-BcDHHRMg.js:40:37599)
-    at G (index-BcDHHRMg.js:38:3267)
-    at index-BcDHHRMg.js:40:35087
-jGe @ index-BcDHHRMg.js:8654
-$u @ index-BcDHHRMg.js:38
-RH @ index-BcDHHRMg.js:40
-EH @ index-BcDHHRMg.js:40
-Jne @ index-BcDHHRMg.js:40
-Cy @ index-BcDHHRMg.js:40
-KO @ index-BcDHHRMg.js:40
-AH @ index-BcDHHRMg.js:40
-G @ index-BcDHHRMg.js:38
-(anônimo) @ index-BcDHHRMg.js:40
+root@servergestao:~/gestao# docker logs a7e29be101d5
+Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
+Sincronizando Banco de Dados com o Schema...
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+52 migrations found in prisma/migrations
+
+Error: P3009
+
+migrate found failed migrations in the target database, new migrations will not be applied. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
+The `20260228200000_emergency_repair_db_tables` migration started at 2026-02-28 12:52:34.327847 UTC failed

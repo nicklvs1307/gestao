@@ -1,64 +1,107 @@
-const logger = require('../config/logger');
-const { ZodError } = require('zod');
-const { Prisma } = require('@prisma/client');
+const AppError = require('../utils/AppError');
+const logger = require('../config/logger') || console; // Fallback para console se logger não existir
 
-const errorHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || 500;
-  let message = err.message || 'Erro Interno do Servidor';
-  let details = undefined;
+const handleCastErrorDB = (err) => {
+  const message = `Invalid ${err.path}: ${err.value}.`;
+  return new AppError(message, 400);
+};
 
-  // Erros do Prisma
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    switch (err.code) {
-      case 'P2002': // Unique constraint failed
-        statusCode = 400;
-        const target = err.meta?.target || [];
-        message = `Já existe um registro com este(a) ${target.join(', ')}.`;
-        break;
-      case 'P2003': // Foreign key constraint failed
-        statusCode = 400;
-        message = 'Não é possível excluir ou alterar este registro pois ele está sendo usado em outro lugar.';
-        break;
-      case 'P2025': // Record not found
-        statusCode = 404;
-        message = 'O registro solicitado não foi encontrado.';
-        break;
-      default:
-        statusCode = 400;
-        message = 'Erro de banco de dados.';
-        break;
-    }
-  } else if (err instanceof Prisma.PrismaClientValidationError) {
-    statusCode = 400;
-    message = 'Dados inválidos enviados para o banco de dados.';
-  }
-  // Tratamento especial para erros de validação do Zod
-  else if (err instanceof ZodError || err.name === 'ZodError') {
-    statusCode = 400;
-    message = 'Erro de validação nos dados enviados.';
-    
-    const errors = err.errors || (typeof err.message === 'string' ? JSON.parse(err.message) : []);
-    
-    details = Array.isArray(errors) ? errors.map(e => ({
-      field: e.path?.join('.') || 'unknown',
-      message: e.message
-    })) : [];
-  }
-  
-  // Log do erro
-  if (logger && logger.error) {
-    logger.error(`${statusCode} - ${message} - ${req.originalUrl} - ${req.method} - IP: ${req.ip}`);
-    if (statusCode === 500) logger.error(err.stack);
-  } else {
-    console.error(err);
+const handleDuplicateFieldsDB = (err) => {
+  // Extrai o valor duplicado entre aspas usando regex
+  const value = err.message.match(/(["'])(\\?.)*?\1/)[0];
+  const message = `Duplicate field value: ${value}. Please use another value!`;
+  return new AppError(message, 400);
+};
+
+const handleValidationErrorDB = (err) => {
+  const errors = Object.values(err.errors).map((el) => el.message);
+  const message = `Invalid input data. ${errors.join('. ')}`;
+  return new AppError(message, 400);
+};
+
+const handleJWTError = () =>
+  new AppError('Invalid token. Please log in again!', 401);
+
+const handleJWTExpiredError = () =>
+  new AppError('Your token has expired! Please log in again.', 401);
+
+const sendErrorDev = (err, req, res) => {
+  // A) API
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      error: err,
+      message: err.message,
+      stack: err.stack,
+    });
   }
 
-  res.status(statusCode).json({
-    success: false,
-    error: message,
-    details,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  // B) Rendered Website (Opcional, se houver renderização server-side)
+  console.error('ERROR 💥', err);
+  return res.status(err.statusCode).render('error', {
+    title: 'Something went wrong!',
+    msg: err.message,
   });
 };
 
-module.exports = errorHandler;
+const sendErrorProd = (err, req, res) => {
+  // A) API
+  if (req.originalUrl.startsWith('/api')) {
+    // A) Operational, trusted error: send message to client
+    if (err.isOperational) {
+      return res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    }
+
+    // B) Programming or other unknown error: don't leak error details
+    // 1) Log error
+    console.error('ERROR 💥', err);
+
+    // 2) Send generic message
+    return res.status(500).json({
+      status: 'error',
+      message: 'Something went very wrong!',
+    });
+  }
+
+  // B) Rendered Website
+  // A) Operational, trusted error: send message to client
+  if (err.isOperational) {
+    return res.status(err.statusCode).render('error', {
+      title: 'Something went wrong!',
+      msg: err.message,
+    });
+  }
+
+  // B) Programming or other unknown error: don't leak error details
+  // 1) Log error
+  console.error('ERROR 💥', err);
+
+  // 2) Send generic message
+  return res.status(err.statusCode).render('error', {
+    title: 'Something went wrong!',
+    msg: 'Please try again later.',
+  });
+};
+
+module.exports = (err, req, res, next) => {
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
+
+  if (process.env.NODE_ENV === 'development') {
+    sendErrorDev(err, req, res);
+  } else {
+    let error = { ...err };
+    error.message = err.message;
+
+    if (error.name === 'CastError') error = handleCastErrorDB(error);
+    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+    if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+    if (error.name === 'JsonWebTokenError') error = handleJWTError();
+    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+
+    sendErrorProd(error, req, res);
+  }
+};

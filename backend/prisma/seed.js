@@ -94,12 +94,15 @@ async function main() {
   // 3. CRIAÇÃO DE USUÁRIO ADMIN
   console.log('Criando usuário administrador...');
   const adminPasswordHash = await bcrypt.hash('admin123', 10);
+  
+  // Primeiro buscamos a Role de Administrador (que deve ser criada pelo seed_permissions)
+  // Se não existir (rodando seed sozinho), usamos isSuperAdmin
   await prisma.user.create({
     data: {
       email: 'admin@hamburgueriateste.com',
       name: 'Admin Geral',
       passwordHash: adminPasswordHash,
-      role: 'admin',
+      isSuperAdmin: true,
       restaurantId: restaurant.id,
     },
   });
@@ -223,7 +226,9 @@ async function createProduct(categoryId, restaurantId, categoryName) {
         imageUrl: faker.image.urlLoremFlickr({ category: 'food' }),
         isAvailable: true,
         restaurantId: restaurantId,
-        categoryId: categoryId,
+        categories: {
+          connect: { id: categoryId }
+        },
         // Adiciona tamanhos para pizzas
         ...(categoryName.toLowerCase().includes('pizza') && {
           sizes: {

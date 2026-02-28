@@ -1,0 +1,145 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+const AppError = require('../utils/AppError');
+
+class ProductService {
+  async getAllProducts(restaurantId, query) {
+    const { categoryId, isAvailable, showInMenu, search } = query;
+
+    const where = {
+      restaurantId,
+      ...(categoryId && { categories: { some: { id: categoryId } } }), // Filtro Many-to-Many
+      ...(isAvailable !== undefined && { isAvailable: isAvailable === 'true' }),
+      ...(showInMenu !== undefined && { showInMenu: showInMenu === 'true' }),
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    const products = await prisma.product.findMany({
+      where,
+      include: {
+        categories: true,
+        sizes: true,
+        addonGroups: {
+          include: {
+            addons: true,
+          },
+        },
+        promotions: {
+          where: {
+            isActive: true,
+            startDate: { lte: new Date() },
+            endDate: { gte: new Date() },
+          },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+
+    return products;
+  }
+
+  async getProductById(id, restaurantId) {
+    const product = await prisma.product.findFirst({
+      where: { id, restaurantId },
+      include: {
+        categories: true,
+        sizes: true,
+        addonGroups: {
+          include: {
+            addons: true,
+          },
+        },
+        promotions: true,
+      },
+    });
+
+    if (!product) {
+      throw new AppError('Product not found', 404);
+    }
+
+    return product;
+  }
+
+  async createProduct(data, restaurantId) {
+    // Validação de Nome Único (Regra de Negócio)
+    const existingProduct = await prisma.product.findFirst({
+      where: { name: data.name, restaurantId },
+    });
+
+    if (existingProduct) {
+      throw new AppError('Product with this name already exists in this restaurant', 400);
+    }
+
+    // Preparar dados para criação (tratando relacionamentos)
+    const { categoryIds, sizes, addonGroups, ...productData } = data;
+
+    const product = await prisma.product.create({
+      data: {
+        ...productData,
+        restaurantId,
+        categories: {
+          connect: categoryIds.map((id) => ({ id })), // Conecta categorias existentes
+        },
+        sizes: {
+          create: sizes, // Cria tamanhos aninhados
+        },
+        addonGroups: {
+          create: addonGroups?.map((group) => ({
+            ...group,
+            restaurantId, // Garante vínculo com o restaurante
+            addons: {
+              create: group.addons,
+            },
+          })),
+        },
+      },
+      include: {
+        categories: true,
+        sizes: true,
+        addonGroups: true,
+      },
+    });
+
+    return product;
+  }
+
+  async updateProduct(id, data, restaurantId) {
+    // Verificar se existe
+    await this.getProductById(id, restaurantId);
+
+    const { categoryIds, sizes, addonGroups, ...productData } = data;
+
+    // Atualização Complexa (Prisma transaction implícita)
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...productData,
+        ...(categoryIds && {
+          categories: {
+            set: categoryIds.map((cid) => ({ id: cid })), // Substitui todas as categorias
+          },
+        }),
+        // Nota: Atualizar nested relations (sizes, addons) requer lógica mais complexa (deleteMany + create ou upsert)
+        // Por simplicidade neste exemplo, focamos nos dados base. 
+        // Para produção, recomendaria endpoints específicos para gerenciar tamanhos/adicionais ou uma lógica de diff mais robusta aqui.
+      },
+    });
+
+    return product;
+  }
+
+  async deleteProduct(id, restaurantId) {
+    await this.getProductById(id, restaurantId);
+
+    await prisma.product.delete({
+      where: { id },
+    });
+  }
+}
+
+module.exports = new ProductService();
