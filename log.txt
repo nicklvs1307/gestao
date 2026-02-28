@@ -1,12 +1,21 @@
-root@servergestao:~/gestao# docker logs a7e29be101d5
-Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
-Sincronizando Banco de Dados com o Schema...
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+No pending migrations to apply.
+Executando Seed de Permissões...
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+/app/node_modules/router/lib/route.js:228
+        throw new TypeError('argument handler must be a function')
+        ^
 
-52 migrations found in prisma/migrations
+TypeError: argument handler must be a function
+    at Route.<computed> [as get] (/app/node_modules/router/lib/route.js:228:15)
+    at Router.<computed> [as get] (/app/node_modules/router/index.js:448:19)
+    at Object.<anonymous> (/app/src/routes/productRoutes.js:8:8)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/app/index.js:73:23)
 
-Error: P3009
-
-migrate found failed migrations in the target database, new migrations will not be applied. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
-The `20260228200000_emergency_repair_db_tables` migration started at 2026-02-28 12:52:34.327847 UTC failed
+Node.js v20.20.0

@@ -140,6 +140,46 @@ class ProductService {
       where: { id },
     });
   }
+
+  // Lógica de Reordenação de Produtos
+  async reorderProducts(products, restaurantId) {
+    const transactions = products.map((p) =>
+      prisma.product.update({
+        where: { id: p.id, restaurantId },
+        data: { order: p.order },
+      })
+    );
+    return await prisma.$transaction(transactions);
+  }
+
+  // Análise de Precificação Simples
+  async getPricingAnalysis(restaurantId) {
+    const products = await prisma.product.findMany({
+      where: { restaurantId },
+      include: {
+        ingredients: {
+          include: {
+            ingredient: true,
+          },
+        },
+      },
+    });
+
+    return products.map((p) => {
+      const cost = p.ingredients.reduce(
+        (acc, i) => acc + (i.quantity * (i.ingredient.averageCost || 0)),
+        0
+      );
+      const margin = p.price > 0 ? ((p.price - cost) / p.price) * 100 : 0;
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        cost,
+        margin: Math.round(margin * 100) / 100,
+      };
+    });
+  }
 }
 
 module.exports = new ProductService();
