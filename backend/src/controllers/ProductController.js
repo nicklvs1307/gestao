@@ -27,30 +27,24 @@ class ProductController {
   // MÉTODOS ORIGINAIS REFATORADOS
   async getAll(req, res, next) {
     try {
-      const { restaurantId } = req.user; // Obtido do middleware de auth
+      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
       const products = await this.service.getAllProducts(restaurantId, req.query);
       
-      res.status(200).json({
-        status: 'success',
-        results: products.length,
-        data: { products },
-      });
+      // DEVOLVER O ARRAY DIRETAMENTE (Compatibilidade Frontend)
+      res.json(products);
     } catch (error) {
-      next(error); // Encaminha para o Global Error Handler
+      next(error);
     }
   }
 
   async getOne(req, res, next) {
     try {
       const { id } = req.params;
-      const { restaurantId } = req.user;
+      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
       
       const product = await this.service.getProductById(id, restaurantId);
 
-      res.status(200).json({
-        status: 'success',
-        data: { product },
-      });
+      res.json(product);
     } catch (error) {
       next(error);
     }
@@ -58,13 +52,10 @@ class ProductController {
 
   async create(req, res, next) {
     try {
-      const { restaurantId } = req.user;
+      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
       const product = await this.service.createProduct(req.body, restaurantId);
 
-      res.status(201).json({
-        status: 'success',
-        data: { product },
-      });
+      res.status(201).json(product);
     } catch (error) {
       next(error);
     }
@@ -73,14 +64,11 @@ class ProductController {
   async update(req, res, next) {
     try {
       const { id } = req.params;
-      const { restaurantId } = req.user;
+      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
       
       const product = await this.service.updateProduct(id, req.body, restaurantId);
 
-      res.status(200).json({
-        status: 'success',
-        data: { product },
-      });
+      res.json(product);
     } catch (error) {
       next(error);
     }
@@ -89,14 +77,11 @@ class ProductController {
   async delete(req, res, next) {
     try {
       const { id } = req.params;
-      const { restaurantId } = req.user;
+      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
       
       await this.service.deleteProduct(id, restaurantId);
 
-      res.status(204).json({
-        status: 'success',
-        data: null,
-      });
+      res.status(204).end();
     } catch (error) {
       next(error);
     }
@@ -105,9 +90,9 @@ class ProductController {
   // MÉTODOS ADICIONAIS NECESSÁRIOS
   async getPricingAnalysis(req, res, next) {
     try {
-      const { restaurantId } = req.user;
+      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
       const analysis = await this.service.getPricingAnalysis(restaurantId);
-      res.status(200).json({ status: 'success', data: analysis });
+      res.json(analysis);
     } catch (error) {
       next(error);
     }
@@ -130,7 +115,7 @@ class ProductController {
         throw new AppError('No image uploaded', 400);
       }
       const imageUrl = `/uploads/${req.file.filename}`;
-      res.status(200).json({ status: 'success', data: { imageUrl } });
+      res.json({ imageUrl }); // Devolve o objeto com imageUrl direto
     } catch (error) {
       next(error);
     }
@@ -140,7 +125,7 @@ class ProductController {
     try {
       const { restaurantId } = req.params;
       const products = await this.service.getAllProducts(restaurantId, req.query);
-      res.status(200).json({ status: 'success', data: { products } });
+      res.json(products); // Devolve o array direto
     } catch (error) {
       next(error);
     }
