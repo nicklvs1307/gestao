@@ -21,7 +21,6 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
     description: '',
     cuisineType: 'Geral',
     saiposIntegrationCode: '',
-    halfAndHalfRule: 'NONE',
     availableDays: '1,2,3,4,5,6,7',
     startTime: '00:00',
     endTime: '00:00',
@@ -74,7 +73,6 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
         description: categoryToEdit.description || '',
         cuisineType: categoryToEdit.cuisineType || 'Geral',
         saiposIntegrationCode: categoryToEdit.saiposIntegrationCode || '',
-        halfAndHalfRule: categoryToEdit.halfAndHalfRule || 'NONE',
         availableDays: categoryToEdit.availableDays || '1,2,3,4,5,6,7',
         startTime: categoryToEdit.startTime || '00:00',
         endTime: categoryToEdit.endTime || '00:00',
@@ -83,7 +81,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
       });
     } else {
       setFormData({
-        name: '', description: '', cuisineType: 'Geral', saiposIntegrationCode: '', halfAndHalfRule: 'NONE', availableDays: '1,2,3,4,5,6,7', startTime: '00:00', endTime: '00:00', parentId: null, addonGroups: [],
+        name: '', description: '', cuisineType: 'Geral', saiposIntegrationCode: '', availableDays: '1,2,3,4,5,6,7', startTime: '00:00', endTime: '00:00', parentId: null, addonGroups: [],
       });
     }
   }, [categoryToEdit, isEditing, isOpen]);
@@ -145,19 +143,6 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
                 <div className="space-y-1.5">
                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Nome da Categoria</label>
                     <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-xs outline-none focus:border-emerald-500" placeholder="Ex: Pizzas Tradicionais" />
-                </div>
-
-                <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic flex items-center gap-2"><Pizza size={12} className="text-orange-500" /> Regra de Preço Meio a Meio</label>
-                    <div className="flex p-1 bg-slate-200/50 rounded-xl gap-1">
-                        {[
-                            { id: 'NONE', label: 'OFF' },
-                            { id: 'HIGHER_VALUE', label: 'Maior Valor' },
-                            { id: 'AVERAGE_VALUE', label: 'Valor Médio' }
-                        ].map(rule => (
-                            <button key={rule.id} type="button" onClick={() => setFormData({ ...formData, halfAndHalfRule: rule.id })} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all", formData.halfAndHalfRule === rule.id ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:bg-slate-200")}>{rule.label}</button>
-                        ))}
-                    </div>
                 </div>
 
                 <div className="space-y-1.5">

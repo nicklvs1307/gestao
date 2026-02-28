@@ -286,7 +286,7 @@ const AddonManagement: React.FC = () => {
   );
 
   const [formData, setFormData] = useState<AddonGroup>({
-    name: '', type: 'multiple', isRequired: false, isFlavorGroup: false, minQuantity: 0, maxQuantity: 1, order: 0, saiposIntegrationCode: '', addons: []
+    name: '', type: 'multiple', isRequired: false, isFlavorGroup: false, priceRule: 'higher', minQuantity: 0, maxQuantity: 1, order: 0, saiposIntegrationCode: '', addons: []
   });
 
   useEffect(() => { fetchData(); }, []);
@@ -334,10 +334,13 @@ const AddonManagement: React.FC = () => {
   const handleOpenModal = (group?: AddonGroup) => {
     if (group) {
       setEditingGroup(group);
-      setFormData({ ...group });
+      setFormData({ 
+        ...group, 
+        priceRule: group.priceRule || 'higher' 
+      });
     } else {
       setEditingGroup(null);
-      setFormData({ name: '', type: 'multiple', isRequired: false, isFlavorGroup: false, minQuantity: 0, maxQuantity: 1, order: 0, saiposIntegrationCode: '', addons: [] });
+      setFormData({ name: '', type: 'multiple', isRequired: false, isFlavorGroup: false, priceRule: 'higher', minQuantity: 0, maxQuantity: 1, order: 0, saiposIntegrationCode: '', addons: [] });
     }
     setIsModalOpen(true);
   };
@@ -483,6 +486,24 @@ const AddonManagement: React.FC = () => {
                         </Card>
                     </div>
                 </div>
+
+                {formData.isFlavorGroup && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-amber-50 border border-amber-100 rounded-2xl space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Info size={14} className="text-amber-600" />
+                            <h4 className="text-[10px] font-black uppercase text-amber-900 tracking-widest italic">Regra de Preço para Sabores</h4>
+                        </div>
+                        <div className="flex p-1 bg-white/50 rounded-xl gap-1 max-w-xs border border-amber-200">
+                            {[
+                                { id: 'higher', label: 'Maior Valor' },
+                                { id: 'average', label: 'Valor Médio' }
+                            ].map(rule => (
+                                <button key={rule.id} type="button" onClick={() => setFormData({ ...formData, priceRule: rule.id as any })} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all", formData.priceRule === rule.id ? "bg-amber-500 text-white shadow-sm" : "text-amber-400 hover:bg-amber-100")}>{rule.label}</button>
+                            ))}
+                        </div>
+                        <p className="text-[8px] font-bold text-amber-600/70 uppercase leading-relaxed">Esta regra define como o sistema cobrará quando múltiplos itens deste grupo forem selecionados.</p>
+                    </motion.div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                     <div className="md:col-span-1">

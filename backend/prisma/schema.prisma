@@ -563,9 +563,6 @@ model Category {
   order       Int      @default(0)
   saiposIntegrationCode String?
   
-  // Regras para Pizzas
-  halfAndHalfRule String? @default("NONE") // "NONE", "HIGHER_VALUE", "AVERAGE_VALUE"
-  
   // Disponibilidade
   availableDays String? @default("1,2,3,4,5,6,7") // Dias da semana separados por vírgula
   startTime     String? // Formato HH:mm
@@ -683,6 +680,7 @@ model AddonGroup {
   type      String  @default("multiple") // "single" ou "multiple"
   isRequired Boolean @default(false) 
   isFlavorGroup Boolean @default(false) // Define se o grupo contém Sabores (Pizzas)
+  priceRule     String? @default("higher") // "higher" or "average"
   
   // Novos campos para limites do GRUPO (Combo)
   minQuantity Int     @default(0) // Mínimo total de itens que devem ser selecionados no grupo
