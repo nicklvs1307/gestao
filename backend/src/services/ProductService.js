@@ -76,7 +76,13 @@ class ProductService {
     }
 
     // Preparar dados para criação (tratando relacionamentos)
-    const { categoryIds, sizes, addonGroups, ...productData } = data;
+    const { 
+      categoryIds = [], 
+      sizes = [], 
+      addonGroups = [], 
+      ingredients = [],
+      ...productData 
+    } = data;
 
     const product = await prisma.product.create({
       data: {
@@ -89,12 +95,18 @@ class ProductService {
           create: sizes, // Cria tamanhos aninhados
         },
         addonGroups: {
-          create: addonGroups?.map((group) => ({
+          create: (addonGroups || []).map((group) => ({
             ...group,
             restaurantId, // Garante vínculo com o restaurante
             addons: {
-              create: group.addons,
+              create: group.addons || [],
             },
+          })),
+        },
+        ingredients: {
+          create: (ingredients || []).map((ing) => ({
+            quantity: ing.quantity,
+            ingredient: { connect: { id: ing.ingredientId } }
           })),
         },
       },
@@ -112,7 +124,13 @@ class ProductService {
     // Verificar se existe
     await this.getProductById(id, restaurantId);
 
-    const { categoryIds, sizes, addonGroups, ...productData } = data;
+    const { 
+      categoryIds, 
+      sizes, 
+      addonGroups, 
+      ingredients, // Extrair para evitar erro de validação Prisma
+      ...productData 
+    } = data;
 
     // Atualização Complexa (Prisma transaction implícita)
     const product = await prisma.product.update({
@@ -124,9 +142,7 @@ class ProductService {
             set: categoryIds.map((cid) => ({ id: cid })), // Substitui todas as categorias
           },
         }),
-        // Nota: Atualizar nested relations (sizes, addons) requer lógica mais complexa (deleteMany + create ou upsert)
-        // Por simplicidade neste exemplo, focamos nos dados base. 
-        // Para produção, recomendaria endpoints específicos para gerenciar tamanhos/adicionais ou uma lógica de diff mais robusta aqui.
+        // Nota: Atualizar nested relations (sizes, addons, ingredients) requer lógica de diff
       },
     });
 
