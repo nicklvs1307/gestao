@@ -160,43 +160,57 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const calculateCurrentPrice = () => {
     if (!product) return 0;
+    
+    // 1. Determinar o Preço Base (Baseado no Tamanho ou no Produto)
     let basePrice = product.price;
-
-    // Lógica de Preço para Múltiplos Sabores (Pizza ou Grupos de Sabores)
-    if ((product.pizzaConfig && selectedFlavors.length > 0)) {
-      // Prioridade de Regra de Preço: 1. Categoria, 2. PizzaConfig, 3. 'higher' (default)
-      const categoryRule = product.categories?.[0]?.halfAndHalfRule;
-      const rule = categoryRule !== 'NONE' && categoryRule ? 
-                  (categoryRule === 'HIGHER_VALUE' ? 'higher' : 'average') : 
-                  (product.pizzaConfig?.priceRule || 'higher');
-
-      const flavorPrices = selectedFlavors.map(f => {
-        if (selectedSize) {
-          // Busca o preço do sabor no tamanho selecionado
-          const s = (f.sizes || []).find(sz => sz.name === selectedSize.name || sz.globalSizeId === selectedSize.globalSizeId);
-          return s ? s.price : f.price;
-        }
-        return f.price;
-      });
-
-      if (flavorPrices.length > 0) {
-        const calculatedFlavorPrice = rule === 'higher' ? 
-            Math.max(...flavorPrices) : 
-            flavorPrices.reduce((a, b) => a + b, 0) / flavorPrices.length;
-        
-        if (calculatedFlavorPrice > 0) {
-            basePrice = calculatedFlavorPrice;
-        } else if (selectedSize) {
-            basePrice = selectedSize.price;
-        }
-      } else if (selectedSize) {
-          basePrice = selectedSize.price;
-      }
-    } else if (selectedSize) {
+    if (selectedSize) {
       basePrice = selectedSize.price;
     }
 
-    // Aplicar Promoção se houver
+    // 2. Lógica Especial para Pizzas (Múltiplos Sabores)
+    if (product.pizzaConfig && selectedFlavors.length > 0) {
+      // Prioridade de Regra de Preço: 
+      // 1. Categoria (halfAndHalfRule)
+      // 2. Configuração do Produto (pizzaConfig.priceRule)
+      // 3. Padrão: Maior Valor (higher)
+      
+      const categoryRule = product.categories?.[0]?.halfAndHalfRule;
+      let rule = 'higher'; // Default
+      
+      if (categoryRule === 'HIGHER_VALUE') rule = 'higher';
+      else if (categoryRule === 'AVERAGE_VALUE') rule = 'average';
+      else if (product.pizzaConfig.priceRule) rule = product.pizzaConfig.priceRule;
+
+      // Mapear o preço de cada sabor NO TAMANHO SELECIONADO
+      const flavorPrices = selectedFlavors.map(flavor => {
+        if (selectedSize) {
+          // Busca o preço deste sabor específico para o tamanho que o usuário escolheu (ex: "Grande")
+          // Compara por nome ou globalSizeId para garantir compatibilidade
+          const sizeInFlavor = (flavor.sizes || []).find(s => 
+            s.name === selectedSize.name || 
+            (s.globalSizeId && s.globalSizeId === selectedSize.globalSizeId)
+          );
+          
+          // Se o sabor tiver preço para esse tamanho, usa ele. 
+          // Se não, usa o preço base do sabor.
+          // Se o sabor for R$ 0 (comum em cadastros de sabores), usa o preço do tamanho da pizza principal.
+          return (sizeInFlavor && sizeInFlavor.price > 0) ? sizeInFlavor.price : (flavor.price > 0 ? flavor.price : selectedSize.price);
+        }
+        return flavor.price > 0 ? flavor.price : basePrice;
+      });
+
+      // Aplicar a regra (Maior Valor ou Média)
+      if (flavorPrices.length > 0) {
+        if (rule === 'higher') {
+          basePrice = Math.max(...flavorPrices);
+        } else {
+          const sum = flavorPrices.reduce((a, b) => a + b, 0);
+          basePrice = sum / flavorPrices.length;
+        }
+      }
+    }
+
+    // 3. Aplicar Promoção sobre o preço base calculado
     const activePromotion = product.promotions?.find(p => p.isActive);
     if (activePromotion) {
         if (activePromotion.discountType === 'percentage') {
@@ -206,8 +220,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         }
     }
 
+    // 4. Somar Adicionais e Multiplicar pela Quantidade
     let total = basePrice;
     total += selectedAddons.reduce((acc, addon) => acc + (addon.price * (addon.quantity || 1)), 0);
+    
     return total * quantity;
   };
 
