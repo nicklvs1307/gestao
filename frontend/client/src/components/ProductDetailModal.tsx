@@ -254,8 +254,9 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const FlavorCard = ({ item, isSelected, onToggle, price }: { item: any, isSelected: boolean, onToggle: () => void, price?: number }) => (
     <Card 
         onClick={onToggle} 
+        noPadding
         className={cn(
-            "flex h-36 overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2", 
+            "flex h-36 overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2 group", 
             isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 scale-[1.02] z-10" : "border-slate-100 bg-white hover:border-slate-200"
         )}
     >
@@ -274,17 +275,18 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       </AnimatePresence>
 
       {/* Imagem Estilo Borda Infinita (Esquerda) */}
-      <div className="w-32 md:w-36 h-full shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
+      <div className="w-36 h-full shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
         {item.imageUrl ? (
           <>
             <img 
               src={item.imageUrl} 
               alt={item.name} 
               className={cn(
-                "w-full h-full object-cover transition-transform duration-700",
-                isSelected ? "scale-110" : "group-hover:scale-110"
+                "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+                isSelected && "scale-110"
               )} 
             />
+            {/* Overlay sutil para integração da imagem */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
           </>
         ) : (
@@ -297,15 +299,15 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       </div>
       
       {/* Conteúdo à Direita */}
-      <div className="flex flex-col flex-grow p-3 md:p-4 min-w-0 justify-between">
+      <div className="flex flex-col flex-grow p-4 min-w-0 justify-between">
           <div className="space-y-1">
               <h3 className={cn(
-                "text-[11px] md:text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
+                "text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
                 isSelected ? "text-primary" : "text-slate-900"
               )}>
                 {item.name}
               </h3>
-              <p className="text-[9px] md:text-[10px] text-slate-500 line-clamp-2 leading-relaxed font-medium uppercase tracking-tight opacity-80">
+              <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed font-medium uppercase tracking-tight opacity-80">
                 {item.description}
               </p>
           </div>
@@ -314,8 +316,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             <div className="flex flex-col">
                  {price !== undefined && price > 0 && (
                    <div className="flex items-baseline gap-1">
-                      <span className="text-[9px] md:text-xs font-black text-primary">R$</span>
-                      <span className="text-sm md:text-xl font-black text-slate-900 tracking-tighter italic">
+                      <span className="text-xs font-black text-primary">R$</span>
+                      <span className="text-xl font-black text-slate-900 tracking-tighter italic">
                           {price.toFixed(2).replace('.', ',')}
                       </span>
                    </div>
