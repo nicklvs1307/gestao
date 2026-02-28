@@ -336,7 +336,6 @@ class OrderService {
         addonsJson: item.addonsJson || (calculation.addonsObjects.length ? JSON.stringify(calculation.addonsObjects) : null),
         observations: item.observations || ''
       });
-      });
     }
 
     const result = await prisma.$transaction(async (tx) => {
