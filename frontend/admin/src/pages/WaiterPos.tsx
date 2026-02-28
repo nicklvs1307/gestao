@@ -130,6 +130,16 @@ const WaiterPos: React.FC = () => {
         if (!productWithOptions) return;
         const product = productWithOptions;
         const size = product.sizes?.find(s => s.id === selectedSizeId);
+
+        // Validação de Grupos (Min/Max)
+        for (const group of (product.addonGroups || [])) {
+            const selectedInGroup = selectedAddonIds.filter(id => group.addons.some(a => a.id === id)).length;
+            if ((group.isRequired || group.minQuantity > 0) && selectedInGroup < (group.minQuantity || 1)) {
+                toast.warning(`Por favor, selecione pelo menos ${(group.minQuantity || 1)} item(ns) em "${group.name}"`);
+                return;
+            }
+        }
+
         const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => selectedAddonIds.includes(a.id)) || [];
 
         let itemName = product.name;
@@ -387,8 +397,21 @@ const WaiterPos: React.FC = () => {
                                                             const newIds = selectedAddonIds.filter(id => !othersInGroup.includes(id));
                                                             setSelectedAddonIds([...newIds, addon.id]);
                                                         } else {
-                                                            if (isSelected) setSelectedAddonIds(prev => prev.filter(id => id !== addon.id));
-                                                            else setSelectedAddonIds(prev => [...prev, addon.id]);
+                                                            if (isSelected) {
+                                                                setSelectedAddonIds(prev => prev.filter(id => id !== addon.id));
+                                                            } else {
+                                                                // Validar limite máximo do grupo
+                                                                if (group.maxQuantity > 0) {
+                                                                    const currentInGroup = selectedAddonIds.filter(id => 
+                                                                        group.addons.some(a => a.id === id)
+                                                                    ).length;
+                                                                    if (currentInGroup >= group.maxQuantity) {
+                                                                        toast.warning(`Limite de ${group.maxQuantity} itens atingido em "${group.name}"`);
+                                                                        return;
+                                                                    }
+                                                                }
+                                                                setSelectedAddonIds(prev => [...prev, addon.id]);
+                                                            }
                                                         }
                                                     }} className={cn("p-5 rounded-3xl border-2 flex justify-between items-center transition-all", isSelected ? "border-purple-500 bg-purple-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
                                                         <span className="font-black text-sm uppercase italic tracking-tight">{addon.name}</span>

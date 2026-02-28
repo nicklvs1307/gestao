@@ -75,6 +75,41 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       setQuantity(prev => Math.max(1, prev + val));
   };
 
+  const handleAddonQuantityChange = (addon: AddonOption, delta: number, group: any) => {
+    if (isAdded) return;
+    
+    const currentAddon = selectedAddons.find(a => a.id === addon.id);
+    const currentQty = currentAddon?.quantity || 0;
+    const newQty = Math.max(0, currentQty + delta);
+    
+    // 1. Verificar limite INDIVIDUAL do adicional
+    const maxQty = addon.maxQuantity || 1;
+    if (newQty > maxQty && delta > 0) return;
+
+    // 2. Verificar limite TOTAL do GRUPO (Combo/Pizza)
+    if (delta > 0 && group.maxQuantity > 0) {
+        const groupAddonIds = group.addons.map((a: any) => a.id);
+        const currentGroupTotal = selectedAddons
+            .filter(a => groupAddonIds.includes(a.id))
+            .reduce((sum, a) => sum + (a.quantity || 0), 0);
+        
+        if (currentGroupTotal + delta > group.maxQuantity) {
+            toast.warning(`O limite total para "${group.name}" é de ${group.maxQuantity} itens.`);
+            return;
+        }
+    }
+
+    if (newQty === 0) {
+      setSelectedAddons(prev => prev.filter(a => a.id !== addon.id));
+    } else {
+      if (currentAddon) {
+        setSelectedAddons(prev => prev.map(a => a.id === addon.id ? { ...a, quantity: newQty } : a));
+      } else {
+        setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
+      }
+    }
+  };
+
   const calculateCurrentPrice = () => {
     if (!product) return 0;
     
