@@ -250,51 +250,79 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const sizes = product?.sizes || [];
 
-  // Componente de Card de Sabor para Reuso
+  // Componente de Card de Sabor para Reuso (Estilo Industrial/Premium)
   const FlavorCard = ({ item, isSelected, onToggle, price }: { item: any, isSelected: boolean, onToggle: () => void, price?: number }) => (
     <Card 
         onClick={onToggle} 
         className={cn(
-            "flex flex-col p-0 border-2 transition-all duration-300 overflow-hidden relative group cursor-pointer h-full", 
-            isSelected ? "border-primary bg-white shadow-lg shadow-primary/5 scale-[1.01]" : "border-transparent bg-white hover:border-slate-200"
+            "flex flex-col p-0 border-2 transition-all duration-500 overflow-hidden relative group cursor-pointer h-full rounded-[2rem]", 
+            isSelected ? "border-primary bg-white shadow-2xl shadow-primary/20 scale-[1.02] z-10" : "border-slate-100 bg-white hover:border-slate-300"
         )}
     >
-      {isSelected && (
-          <div className="absolute top-2 right-2 z-10 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
-              <Check size={14} strokeWidth={4} />
-          </div>
-      )}
+      {/* Badge de Seleção com Blur */}
+      <AnimatePresence mode="wait">
+        {isSelected && (
+            <motion.div 
+              initial={{ scale: 0, opacity: 0, rotate: -45 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              exit={{ scale: 0, opacity: 0, rotate: 45 }}
+              className="absolute top-4 right-4 z-20 bg-primary text-white p-2 rounded-full shadow-2xl border-2 border-white"
+            >
+                <Check size={18} strokeWidth={4} />
+            </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="flex items-center gap-3 p-2.5">
-         <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 shadow-sm relative">
+      <div className="flex flex-col h-full">
+         {/* Imagem Gigante e Sangrada (Edge-to-Edge) */}
+         <div className="w-full aspect-[16/11] overflow-hidden bg-slate-100 shrink-0 relative">
             {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <img 
+                  src={item.imageUrl} 
+                  alt={item.name} 
+                  className={cn(
+                    "w-full h-full object-cover transition-all duration-1000",
+                    isSelected ? "scale-110 rotate-1" : "group-hover:scale-105"
+                  )} 
+                />
             ) : (
                 <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-                    <PizzaIcon size={24} strokeWidth={1} />
+                    <PizzaIcon size={40} strokeWidth={1} />
                 </div>
             )}
-            {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
+            
+            {/* Overlay sutil para destacar o nome se necessário */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            
+            {/* Preço flutuante no card com estilo mais forte */}
+            {price !== undefined && price > 0 && (
+                <div className="absolute bottom-3 right-3 bg-slate-900 text-white px-3 py-1.5 rounded-xl font-black text-[11px] italic shadow-2xl tracking-tighter border border-white/10">
+                    + R$ {price.toFixed(2).replace('.', ',')}
+                </div>
+            )}
          </div>
 
-         <div className="flex-1 min-w-0 pr-2">
-            <div className="flex flex-col gap-0.5">
-                <span className={cn("font-black text-xs md:text-sm uppercase italic tracking-tighter block leading-tight truncate", isSelected ? "text-primary" : "text-slate-900")}>
+         <div className="p-5 flex-1 flex flex-col justify-between bg-white">
+            <div className="space-y-1.5">
+                <span className={cn(
+                  "font-black text-sm md:text-base uppercase italic tracking-tighter block leading-none", 
+                  isSelected ? "text-primary" : "text-slate-900"
+                )}>
                     {item.name}
                 </span>
                 {item.description && (
-                    <span className="text-[10px] text-slate-400 font-medium line-clamp-2 leading-tight min-h-[24px]">
+                    <p className="text-[10px] text-slate-400 font-bold leading-tight line-clamp-2 uppercase tracking-tight opacity-80">
                         {item.description}
-                    </span>
-                )}
-                {price !== undefined && price > 0 && (
-                    <div className="mt-1">
-                        <span className="text-[10px] md:text-xs font-black text-slate-900 italic">
-                            + R$ {price.toFixed(2).replace('.', ',')}
-                        </span>
-                    </div>
+                    </p>
                 )}
             </div>
+            
+            {isSelected && (
+              <div className="mt-4 flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em] italic">Selecionado</span>
+              </div>
+            )}
          </div>
       </div>
     </Card>
@@ -309,50 +337,51 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-[6px]" 
+            className="absolute inset-0 bg-black/80 backdrop-blur-[8px]" 
           />
           
           <motion.div 
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-5xl bg-slate-50 rounded-t-[2.5rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[96vh] md:h-auto md:max-h-[92vh]"
+            transition={{ type: "spring", damping: 30, stiffness: 250 }}
+            className="relative w-full max-w-6xl bg-slate-50 rounded-t-[2.5rem] md:rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[98vh] md:h-auto md:max-h-[94vh] border-t md:border border-white/20"
           >
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-slate-200 rounded-full z-50 md:hidden" />
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-14 h-1.5 bg-slate-200/50 rounded-full z-50 md:hidden" />
             
             <Button 
                 variant="ghost"
                 size="icon"
                 onClick={onClose} 
-                className="absolute top-4 right-4 z-50 rounded-full bg-white/20 backdrop-blur-xl text-white md:text-slate-900 md:bg-white md:shadow-md"
+                className="absolute top-6 right-6 z-50 rounded-2xl bg-white/10 backdrop-blur-2xl text-white md:text-slate-900 md:bg-white md:shadow-2xl md:border md:border-slate-100 hover:scale-110 transition-all active:scale-95"
             >
-                <X size={20} strokeWidth={3} />
+                <X size={24} strokeWidth={3} />
             </Button>
 
-            <div className="w-full md:w-5/12 h-48 md:h-auto relative shrink-0">
+            <div className="w-full md:w-5/12 h-40 md:h-auto relative shrink-0">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400">
-                  <ShoppingBag size={64} strokeWidth={1} />
+                  <ShoppingBag size={80} strokeWidth={1} />
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden" />
-              <div className="absolute bottom-4 left-6 text-white md:hidden">
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter drop-shadow-md">{product.name}</h3>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent md:hidden" />
+              <div className="absolute bottom-6 left-8 text-white md:hidden">
+                  <h3 className="text-3xl font-black italic uppercase tracking-tighter drop-shadow-2xl">{product.name}</h3>
               </div>
             </div>
 
             <div className="w-full md:w-7/12 flex flex-col min-h-0 flex-1 bg-slate-50 relative">
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar pb-10">
-                <div className="space-y-2 hidden md:block">
-                  <h3 className="text-3xl md:text-4xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{product.name}</h3>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-2xl">{product.description}</p>
+              <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-10 custom-scrollbar pb-20">
+                <div className="space-y-3 hidden md:block">
+                  <h3 className="text-4xl md:text-5xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{product.name}</h3>
+                  <div className="h-1.5 w-20 bg-primary rounded-full" />
+                  <p className="text-slate-500 text-sm font-bold leading-relaxed max-w-2xl uppercase tracking-tight">{product.description}</p>
                 </div>
 
                 <div className="space-y-2 md:hidden">
-                   <p className="text-slate-500 text-xs font-medium leading-relaxed">{product.description}</p>
+                   <p className="text-slate-500 text-[10px] font-bold leading-relaxed uppercase tracking-tight">{product.description}</p>
                 </div>
 
                 {/* SEÇÃO DE TAMANHOS */}
