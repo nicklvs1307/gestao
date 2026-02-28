@@ -115,10 +115,13 @@ function ProductFormPage() {
         setIsLoading(true);
         try {
             const payload = { 
-                ...data, price: Number(data.price), stock: Number(data.stock), 
-                categoryIds: data.categoryIds, addonGroups: data.addonGroups?.map((g: any) => ({ id: g.id })), 
-                sizes: data.sizes?.map((s: any) => ({ ...s, price: Number(s.price) })), 
-                ingredients: data.ingredients?.filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })),
+                ...data, 
+                price: Number(data.price), 
+                stock: Number(data.stock), 
+                categoryIds: data.categoryIds, 
+                addonGroups: (data.addonGroups || []).map((g: any) => ({ id: g.id })), 
+                sizes: (data.sizes || []).map((s: any) => ({ ...s, price: Number(s.price) })), 
+                ingredients: (data.ingredients || []).filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })),
                 pizzaConfig: null // Reset legacy pizza config in favor of the new Flavor Groups logic
             };
             if (id) await updateProduct(id, payload);

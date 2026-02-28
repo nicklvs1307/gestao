@@ -89,19 +89,13 @@ class ProductService {
         ...productData,
         restaurantId,
         categories: {
-          connect: categoryIds.map((id) => ({ id })), // Conecta categorias existentes
+          connect: (categoryIds || []).map((id) => ({ id })), // Conecta categorias existentes
         },
         sizes: {
-          create: sizes, // Cria tamanhos aninhados
+          create: sizes || [], // Cria tamanhos aninhados
         },
         addonGroups: {
-          create: (addonGroups || []).map((group) => ({
-            ...group,
-            restaurantId, // Garante vínculo com o restaurante
-            addons: {
-              create: group.addons || [],
-            },
-          })),
+          connect: (addonGroups || []).map((group) => ({ id: group.id })), // Conecta grupos existentes
         },
         ingredients: {
           create: (ingredients || []).map((ing) => ({
@@ -140,6 +134,11 @@ class ProductService {
         ...(categoryIds && {
           categories: {
             set: categoryIds.map((cid) => ({ id: cid })), // Substitui todas as categorias
+          },
+        }),
+        ...(addonGroups && {
+          addonGroups: {
+            set: addonGroups.map((g) => ({ id: g.id })), // Substitui todos os grupos de adicionais
           },
         }),
         // Nota: Atualizar nested relations (sizes, addons, ingredients) requer lógica de diff
