@@ -81,6 +81,7 @@ class ProductService {
       sizes = [], 
       addonGroups = [], 
       ingredients = [],
+      promotions, // Extrair para evitar erro de validação Prisma
       ...productData 
     } = data;
 
@@ -119,10 +120,14 @@ class ProductService {
     await this.getProductById(id, restaurantId);
 
     const { 
+      id: _id,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
       categoryIds, 
       sizes, 
       addonGroups, 
-      ingredients, // Extrair para evitar erro de validação Prisma
+      ingredients,
+      promotions, // Extrair para evitar erro de validação Prisma
       ...productData 
     } = data;
 
