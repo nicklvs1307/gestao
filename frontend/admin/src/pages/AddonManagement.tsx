@@ -5,6 +5,7 @@ import { getIngredients } from '../services/api';
 import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, GripVertical, Loader2, List, Settings, CheckCircle, Info, RefreshCw, Copy, Image as ImageIcon, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
   closestCenter,
