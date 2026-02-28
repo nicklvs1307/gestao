@@ -190,7 +190,7 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                             </td>
                             <td className="px-4 py-2.5 text-right">
                                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-lg border border-slate-100" onClick={() => navigate(`/products/edit/${product.id}`)}><Edit size={14}/></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-lg border border-slate-100" onClick={() => navigate(`/products/${product.id}`)}><Edit size={14}/></Button>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-lg border border-slate-100" onClick={() => handleDelete(product.id)}><Trash2 size={14}/></Button>
                                 </div>
                             </td>
