@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const UairangoService = require('../services/UairangoService');
 
 const getSaiposSettings = async (req, res) => {
     try {
@@ -90,16 +91,6 @@ const updateUairangoSettings = async (req, res) => {
         res.json(settings);
     } catch (error) {
         console.error('Erro ao atualizar configurações do UaiRango:', error);
-        res.status(500).json({ error: 'Erro ao atualizar configurações do UaiRango.' });
-    }
-};
-
-const UairangoService = require('../services/uairangoService');
-
-const getSaiposSettings = async (req, res) => {
-...
-const updateUairangoSettings = async (req, res) => {
-...
         res.status(500).json({ error: 'Erro ao atualizar configurações do UaiRango.' });
     }
 };
