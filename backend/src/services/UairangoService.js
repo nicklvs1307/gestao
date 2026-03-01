@@ -160,9 +160,9 @@ class UairangoService {
 
         for (const flavor of flavorsUai) {
             // No UaiRango, sabores podem ter variações (opcoes), pegamos a principal ou iteramos
-            const flavorName = flavor.nome;
-            const flavorPrice = flavor.opcoes?.[0]?.valor || 0;
-            const flavorId = flavor.opcoes?.[0]?.id_opcao || flavor.id_item;
+            const flavorName = flavor.nome || (flavor.opcoes?.[0]?.nome) || 'Sabor Indefinido';
+            const flavorPrice = flavor.opcoes?.[0]?.valor || flavor.valor || 0;
+            const flavorId = flavor.opcoes?.[0]?.id_opcao || flavor.id_item || Math.random().toString(36).substr(2, 9);
 
             await prisma.addon.upsert({
                 where: { id: `uai_flavor_${flavorId}` },
