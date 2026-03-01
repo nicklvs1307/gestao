@@ -99,10 +99,11 @@ class UairangoService {
 
     async processPizzaBase(restaurantId, category, sizeItem) {
         const process = async (name, code) => {
+            if (!name) return;
             const product = await prisma.product.upsert({
                 where: { name_restaurantId: { name, restaurantId } },
-                update: { isFlavor: false, showInMenu: true, categories: { connect: { id: category.id } }, saiposIntegrationCode: code.toString() },
-                create: { name, price: 0, restaurantId, isFlavor: false, showInMenu: true, categories: { connect: { id: category.id } }, saiposIntegrationCode: code.toString() }
+                update: { isFlavor: false, showInMenu: true, categories: { connect: { id: category.id } }, saiposIntegrationCode: code?.toString() || '' },
+                create: { name, price: 0, restaurantId, isFlavor: false, showInMenu: true, categories: { connect: { id: category.id } }, saiposIntegrationCode: code?.toString() || '' }
             });
             await prisma.addonGroup.update({
                 where: { id: `flavor_grp_${category.id}` },
@@ -112,29 +113,36 @@ class UairangoService {
 
         if (sizeItem.opcoes && sizeItem.opcoes.length > 0) {
             for (const opt of sizeItem.opcoes) {
-                await process(`${sizeItem.nome} ${opt.nome}`, opt.id_opcao);
+                const name = (sizeItem.nome || opt.nome) ? `${sizeItem.nome || ''} ${opt.nome || ''}`.trim() : `Pizza ${opt.id_opcao}`;
+                await process(name, opt.id_opcao);
             }
         } else {
-            await process(sizeItem.nome, sizeItem.id_item);
+            const name = sizeItem.nome || `Pizza ${sizeItem.id_item}`;
+            await process(name, sizeItem.id_item);
         }
     }
 
     async processNormalItem(restaurantId, categoryId, itemUai) {
         const upsertProd = async (name, price, code) => {
+            if (!name) return;
             await prisma.product.upsert({
                 where: { name_restaurantId: { name, restaurantId } },
-                update: { description: itemUai.descricao || '', price: parseFloat(price), imageUrl: itemUai.foto || null, saiposIntegrationCode: code.toString(), categories: { connect: { id: categoryId } } },
-                create: { name, description: itemUai.descricao || '', price: parseFloat(price), imageUrl: itemUai.foto || null, restaurantId, saiposIntegrationCode: code.toString(), categories: { connect: { id: categoryId } } }
+                update: { description: itemUai.descricao || '', price: parseFloat(price), imageUrl: itemUai.foto || null, saiposIntegrationCode: code?.toString() || '', categories: { connect: { id: categoryId } } },
+                create: { name, description: itemUai.descricao || '', price: parseFloat(price), imageUrl: itemUai.foto || null, restaurantId, saiposIntegrationCode: code?.toString() || '', categories: { connect: { id: categoryId } } }
             });
         };
 
         if (itemUai.opcoes && itemUai.opcoes.length > 0) {
             for (const opt of itemUai.opcoes) {
-                const name = itemUai.opcoes.length > 1 ? `${itemUai.nome} ${opt.nome}` : itemUai.nome;
+                let name = itemUai.nome || opt.nome || 'Produto';
+                if (itemUai.opcoes.length > 1 && opt.nome && itemUai.nome !== opt.nome) {
+                    name = `${itemUai.nome || ''} ${opt.nome}`.trim();
+                }
                 await upsertProd(name, opt.valor || itemUai.valor || 0, opt.id_opcao);
             }
         } else {
-            await upsertProd(itemUai.nome, itemUai.valor || 0, itemUai.id_item);
+            const name = itemUai.nome || `Item ${itemUai.id_item}`;
+            await upsertProd(name, itemUai.valor || 0, itemUai.id_item);
         }
     }
 
@@ -145,22 +153,26 @@ class UairangoService {
             for (const grpUai of groupsUai) {
                 const addonGroup = await prisma.addonGroup.upsert({
                     where: { id: `uai_grp_${grpUai.id_categoria}` },
-                    update: { name: grpUai.nome, minQuantity: parseInt(grpUai.minimo || 0), maxQuantity: parseInt(grpUai.maximo || 1), isFlavorGroup: false },
-                    create: { id: `uai_grp_${grpUai.id_categoria}`, name: grpUai.nome, restaurantId, minQuantity: parseInt(grpUai.minimo || 0), maxQuantity: parseInt(grpUai.maximo || 1), isFlavorGroup: false }
+                    update: { name: grpUai.nome || 'Complementos', minQuantity: parseInt(grpUai.minimo || 0), maxQuantity: parseInt(grpUai.maximo || 1), isFlavorGroup: false },
+                    create: { id: `uai_grp_${grpUai.id_categoria}`, name: grpUai.nome || 'Complementos', restaurantId, minQuantity: parseInt(grpUai.minimo || 0), maxQuantity: parseInt(grpUai.maximo || 1), isFlavorGroup: false }
                 });
                 if (grpUai.itens) {
                     for (const subItem of grpUai.itens) {
+                        const name = subItem.nome || `Adicional ${subItem.id_opcao}`;
                         await prisma.addon.upsert({
                             where: { id: `uai_addon_${subItem.id_opcao}` },
-                            update: { name: subItem.nome, price: parseFloat(subItem.valor || 0), saiposIntegrationCode: subItem.id_opcao.toString() },
-                            create: { id: `uai_addon_${subItem.id_opcao}`, name: subItem.nome, price: parseFloat(subItem.valor || 0), addonGroupId: addonGroup.id, saiposIntegrationCode: subItem.id_opcao.toString() }
+                            update: { name, price: parseFloat(subItem.valor || 0), saiposIntegrationCode: subItem.id_opcao.toString() },
+                            create: { id: `uai_addon_${subItem.id_opcao}`, name, price: parseFloat(subItem.valor || 0), addonGroupId: addonGroup.id, saiposIntegrationCode: subItem.id_opcao.toString() }
                         });
                     }
                 }
                 // Vincula grupo de adicionais aos produtos da categoria
-                const products = await prisma.product.findMany({ where: { categories: { some: { id: (await prisma.category.findFirst({ where: { saiposIntegrationCode: catId.toString(), restaurantId } })).id } } } });
-                for (const p of products) {
-                    await prisma.addonGroup.update({ where: { id: addonGroup.id }, data: { products: { connect: { id: p.id } } } });
+                const category = await prisma.category.findFirst({ where: { saiposIntegrationCode: catId.toString(), restaurantId } });
+                if (category) {
+                    const products = await prisma.product.findMany({ where: { categories: { some: { id: category.id } } } });
+                    for (const p of products) {
+                        await prisma.addonGroup.update({ where: { id: addonGroup.id }, data: { products: { connect: { id: p.id } } } });
+                    }
                 }
             }
         } catch (error) {}
