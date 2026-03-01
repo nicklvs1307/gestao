@@ -20,7 +20,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 const { 
     ArrowLeft, Plus, Trash2, CheckCircle, Pizza, 
     Layers, Settings2, Loader2, Image: ImageIcon, Package, 
-    Save, Check, List, DollarSign, ChevronRight, Star, AlertCircle
+    Save, Check, List, DollarSign, ChevronRight, Star, AlertCircle,
+    Truck, Utensils, Globe
 } = LucideIcons;
 
 function ProductFormPage() {
@@ -36,7 +37,9 @@ function ProductFormPage() {
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
         defaultValues: { 
             name: '', description: '', price: 0, imageUrl: '', categoryIds: [], 
-            isAvailable: true, isFeatured: false, stock: 0, addonGroups: [], 
+            isAvailable: true, isFeatured: false, 
+            allowDelivery: true, allowPos: true, allowOnline: true,
+            stock: 0, addonGroups: [], 
             sizes: [], ingredients: [], productionArea: 'Cozinha', measureUnit: 'UN',
             pizzaConfig: {
                 active: false,
@@ -182,6 +185,8 @@ function ProductFormPage() {
                     <AnimatePresence mode="wait">
                         {activeTab === 'geral' && (
                             <motion.div key="geral" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-4">
+                                
+                                {/* Status e Destaque */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className={cn("p-2.5 border rounded-xl flex items-center justify-between transition-all cursor-pointer", watch('isAvailable') ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200")} onClick={() => setValue('isAvailable', !watch('isAvailable'))}>
                                         <div className="flex items-center gap-2">
@@ -198,6 +203,68 @@ function ProductFormPage() {
                                         <div className={cn("w-8 h-4 rounded-full relative", watch('isFeatured') ? "bg-amber-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all", watch('isFeatured') ? "left-4.5" : "left-0.5")} /></div>
                                     </div>
                                 </div>
+
+                                {/* Flags de Visibilidade por Canal */}
+                                <Card className="p-3 border-slate-200 bg-slate-50/50">
+                                    <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 mb-3 italic flex items-center gap-2">
+                                        <Settings2 size={10} className="text-orange-500" /> Disponibilidade por Canal
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div 
+                                            className={cn(
+                                                "p-3 rounded-xl border flex flex-col gap-2 transition-all cursor-pointer", 
+                                                watch('allowDelivery') ? "bg-white border-blue-200 shadow-sm" : "bg-slate-100/50 border-slate-200 opacity-60"
+                                            )}
+                                            onClick={() => setValue('allowDelivery', !watch('allowDelivery'))}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('allowDelivery') ? "bg-blue-500 text-white" : "bg-slate-200 text-slate-400")}>
+                                                    <Truck size={16} />
+                                                </div>
+                                                <div className={cn("w-7 h-3.5 rounded-full relative transition-all", watch('allowDelivery') ? "bg-blue-500" : "bg-slate-300")}>
+                                                    <div className={cn("absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all", watch('allowDelivery') ? "left-4" : "left-0.5")} />
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase italic tracking-tighter">Delivery</span>
+                                        </div>
+
+                                        <div 
+                                            className={cn(
+                                                "p-3 rounded-xl border flex flex-col gap-2 transition-all cursor-pointer", 
+                                                watch('allowPos') ? "bg-white border-emerald-200 shadow-sm" : "bg-slate-100/50 border-slate-200 opacity-60"
+                                            )}
+                                            onClick={() => setValue('allowPos', !watch('allowPos'))}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('allowPos') ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400")}>
+                                                    <Utensils size={16} />
+                                                </div>
+                                                <div className={cn("w-7 h-3.5 rounded-full relative transition-all", watch('allowPos') ? "bg-emerald-500" : "bg-slate-300")}>
+                                                    <div className={cn("absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all", watch('allowPos') ? "left-4" : "left-0.5")} />
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase italic tracking-tighter">Salão / PDV</span>
+                                        </div>
+
+                                        <div 
+                                            className={cn(
+                                                "p-3 rounded-xl border flex flex-col gap-2 transition-all cursor-pointer", 
+                                                watch('allowOnline') ? "bg-white border-purple-200 shadow-sm" : "bg-slate-100/50 border-slate-200 opacity-60"
+                                            )}
+                                            onClick={() => setValue('allowOnline', !watch('allowOnline'))}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('allowOnline') ? "bg-purple-500 text-white" : "bg-slate-200 text-slate-400")}>
+                                                    <Globe size={16} />
+                                                </div>
+                                                <div className={cn("w-7 h-3.5 rounded-full relative transition-all", watch('allowOnline') ? "bg-purple-500" : "bg-slate-300")}>
+                                                    <div className={cn("absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all", watch('allowOnline') ? "left-4" : "left-0.5")} />
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase italic tracking-tighter">Pedido Online</span>
+                                        </div>
+                                    </div>
+                                </Card>
 
                                 <Card className="p-4 border-slate-200 bg-white space-y-4 shadow-sm">
                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">

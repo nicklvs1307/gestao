@@ -625,8 +625,13 @@ model Product {
   saiposIntegrationCode String?  // Código de integração da Saipos
   
   // === Campos de Visibilidade e Estrutura (Estilo Saipos/iFood) ===
-  showInMenu    Boolean  @default(true)  // Se deve aparecer na vitrine principal
+  showInMenu    Boolean  @default(true)  // Se deve aparecer na vitrine principal (Geral)
   isFlavor      Boolean  @default(false) // Se é um sabor que será usado dentro de outro produto
+  
+  // Visibilidade por Canal
+  allowDelivery Boolean  @default(true)
+  allowPos      Boolean  @default(true)  // Salão / PDV
+  allowOnline   Boolean  @default(true)  // Cardápio Digital / App
   
   // === Campo Legado (Manter como opcional para evitar quebra no banco) ===
   categoryId    String?

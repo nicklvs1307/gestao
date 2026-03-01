@@ -2,7 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { Product } from '@/types/index';
 import { getProducts, updateProduct, deleteProduct } from '../services/api/products';
 import { getCategories } from '../services/api/categories';
-import { Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, RefreshCw, Loader2, Package, Tag, ArrowUpRight, CheckCircle } from 'lucide-react';
+import { 
+  Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, 
+  RefreshCw, Loader2, Package, Tag, ArrowUpRight, CheckCircle,
+  Truck, Utensils, Globe
+} from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -117,15 +121,16 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
       {/* Listagem Industrial (Tabela Compacta) */}
       <Card className="p-0 overflow-hidden border border-slate-200 shadow-xl bg-white rounded-2xl" noPadding>
         <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200">
-            <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
+            <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
             <thead className="bg-slate-50/80 border-b border-slate-100">
                 <tr>
-                    <th className="w-[35%] px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produto / Descrição</th>
-                    <th className="w-[20%] px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Categorias</th>
-                    <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Estoque</th>
-                    <th className="w-[12%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Preço</th>
+                    <th className="w-[30%] px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produto / Descrição</th>
+                    <th className="w-[15%] px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Categorias</th>
+                    <th className="w-[12%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Canais</th>
+                    <th className="w-[8%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Estoque</th>
+                    <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Preço</th>
                     <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Status</th>
-                    <th className="w-[13%] px-4 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Ações</th>
+                    <th className="w-[15%] px-4 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Ações</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -161,6 +166,28 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                                     {product.categories?.length > 0 ? product.categories.map(cat => (
                                         <span key={cat.id} className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] font-black uppercase border border-slate-200">{cat.name}</span>
                                     )) : <span className="text-[8px] text-slate-300 italic uppercase font-bold tracking-widest">Geral</span>}
+                                </div>
+                            </td>
+                            <td className="px-4 py-2.5">
+                                <div className="flex items-center justify-center gap-1.5">
+                                    <div title="Delivery" className={cn(
+                                        "w-6 h-6 rounded-md flex items-center justify-center border transition-all",
+                                        product.allowDelivery ? "bg-blue-50 border-blue-100 text-blue-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40"
+                                    )}>
+                                        <Truck size={12} />
+                                    </div>
+                                    <div title="Salão / PDV" className={cn(
+                                        "w-6 h-6 rounded-md flex items-center justify-center border transition-all",
+                                        product.allowPos ? "bg-emerald-50 border-emerald-100 text-emerald-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40"
+                                    )}>
+                                        <Utensils size={12} />
+                                    </div>
+                                    <div title="Pedido Online" className={cn(
+                                        "w-6 h-6 rounded-md flex items-center justify-center border transition-all",
+                                        product.allowOnline ? "bg-purple-50 border-purple-100 text-purple-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40"
+                                    )}>
+                                        <Globe size={12} />
+                                    </div>
                                 </div>
                             </td>
                             <td className="px-4 py-2.5 text-center">
