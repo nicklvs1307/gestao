@@ -22,7 +22,7 @@ const {
     Layers, Settings2, Loader2, Image: ImageIcon, Package, 
     Save, Check, List, DollarSign, ChevronRight, Star, AlertCircle,
     Truck, Utensils, Globe, FileText, Search, GripVertical, Edit2, Eye,
-    Info
+    Info, X
 } = LucideIcons;
 
 import {

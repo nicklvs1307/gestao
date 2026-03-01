@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
-import { Plus, Edit2, Trash2, GripVertical, Loader2, List, Settings, RefreshCw, Copy, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, Loader2, List, Settings, RefreshCw, Copy, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
