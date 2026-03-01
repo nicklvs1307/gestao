@@ -22,6 +22,7 @@ class UairangoService {
         const establishmentId = settings.uairangoEstablishmentId;
 
         try {
+            console.log(`[UAIRANGO] Iniciando importação para o restaurante ${restaurantId}...`);
             const menuRes = await axios.get(`${this.baseUrl}/auth/cardapio/${establishmentId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -29,38 +30,39 @@ class UairangoService {
             const menuData = menuRes.data;
             let importedCount = 0;
 
+            // UaiRango retorna um objeto onde cada chave é o Nome da Categoria
             for (const categoryName in menuData) {
-                const catData = menuData[categoryName];
-                const catId = catData.id_categoria;
+                const catUai = menuData[categoryName];
+                const catId = catUai.id_categoria;
 
+                console.log(`[UAIRANGO] Importando Categoria: ${categoryName}`);
+
+                // 1. Upsert da Categoria
                 const category = await prisma.category.upsert({
                     where: { name_restaurantId: { name: categoryName, restaurantId } },
                     update: { saiposIntegrationCode: catId.toString(), cuisineType: categoryName.toLowerCase().includes('pizza') ? 'Pizza' : 'Geral' },
                     create: { name: categoryName, restaurantId, saiposIntegrationCode: catId.toString(), cuisineType: categoryName.toLowerCase().includes('pizza') ? 'Pizza' : 'Geral' }
                 });
 
+                // 2. Processar Itens 'Inteiros' (Produtos Normais ou Tamanhos de Pizza)
+                if (Array.isArray(catUai.inteira)) {
+                    for (const itemUai of catUai.inteira) {
+                        const count = await this.processUaiItem(restaurantId, category, itemUai);
+                        importedCount += count;
+                    }
+                }
+
+                // 3. Processar Itens 'Meio a Meio' (Sabores de Pizza)
                 const isFlavorCategory = categoryName.toLowerCase().includes('pizza') || 
                                        categoryName.toLowerCase().includes('esfiha') ||
                                        categoryName.toLowerCase().includes('sabor');
 
-                if (isFlavorCategory && catData.meio_a_meio) {
-                    const flavorsCount = await this.processFlavorsAsAddons(restaurantId, category, catData.meio_a_meio);
+                if (isFlavorCategory && Array.isArray(catUai.meio_a_meio)) {
+                    const flavorsCount = await this.processUaiFlavors(restaurantId, category, catUai.meio_a_meio);
                     importedCount += flavorsCount;
-
-                    if (catData.inteira) {
-                        for (const sizeItem of catData.inteira) {
-                            await this.processPizzaBase(restaurantId, category, sizeItem);
-                            importedCount++;
-                        }
-                    }
-                } else {
-                    if (catData.inteira) {
-                        for (const itemUai of catData.inteira) {
-                            await this.processNormalItem(restaurantId, category.id, itemUai);
-                            importedCount++;
-                        }
-                    }
                 }
+
+                // 4. Importar Adicionais da Categoria (Grupos de Complementos)
                 await this.importCategoryAddonGroups(restaurantId, establishmentId, catId, token);
             }
 
@@ -71,12 +73,92 @@ class UairangoService {
 
             return { success: true, importedCount };
         } catch (error) {
-            console.error(`[UAIRANGO] Erro:`, error.message);
+            console.error(`[UAIRANGO] Erro crítico na importação:`, error.message);
             throw error;
         }
     }
 
-    async processFlavorsAsAddons(restaurantId, category, flavorsUai) {
+    /**
+     * Processa um item do UaiRango (Pai) e suas opções (Filhos)
+     */
+    async processUaiItem(restaurantId, category, itemUai) {
+        let count = 0;
+        const itemName = itemUai.produto || itemUai.nome || 'Produto Sem Nome';
+        const itemDescription = itemUai.descricao || '';
+        const itemImage = itemUai.foto || null;
+
+        // Se o item tem opções (tamanhos/variações)
+        if (Array.isArray(itemUai.opcoes) && itemUai.opcoes.length > 0) {
+            for (const opt of itemUai.opcoes) {
+                // Nome composto: "Pizza Grande" ou "Coca-Cola 2L"
+                const finalName = itemUai.opcoes.length > 1 ? `${itemName} ${opt.descricao || opt.nome}` : itemName;
+                const price = parseFloat(opt.valor || opt.valorAtual || 0);
+                const code = opt.id_opcao || opt.codigo || itemUai.id_produto;
+
+                const product = await prisma.product.upsert({
+                    where: { name_restaurantId: { name: finalName, restaurantId } },
+                    update: {
+                        description: itemDescription,
+                        price: price,
+                        imageUrl: itemImage,
+                        saiposIntegrationCode: code.toString(),
+                        categories: { connect: { id: category.id } },
+                        isFlavor: false,
+                        showInMenu: true
+                    },
+                    create: {
+                        name: finalName,
+                        description: itemDescription,
+                        price: price,
+                        imageUrl: itemImage,
+                        restaurantId,
+                        saiposIntegrationCode: code.toString(),
+                        categories: { connect: { id: category.id } },
+                        isFlavor: false,
+                        showInMenu: true
+                    }
+                });
+
+                // Se for categoria de pizza, vincula o grupo de sabores
+                if (category.cuisineType === 'Pizza') {
+                    await this.linkFlavorGroup(category, product.id);
+                }
+                count++;
+            }
+        } else {
+            // Item sem opções
+            const price = parseFloat(itemUai.valor || itemUai.valorAtual || 0);
+            const code = itemUai.id_produto || itemUai.id_item;
+
+            await prisma.product.upsert({
+                where: { name_restaurantId: { name: itemName, restaurantId } },
+                update: {
+                    description: itemDescription,
+                    price: price,
+                    imageUrl: itemImage,
+                    saiposIntegrationCode: code.toString(),
+                    categories: { connect: { id: category.id } }
+                },
+                create: {
+                    name: itemName,
+                    description: itemDescription,
+                    price: price,
+                    imageUrl: itemImage,
+                    restaurantId,
+                    saiposIntegrationCode: code.toString(),
+                    categories: { connect: { id: category.id } }
+                }
+            });
+            count++;
+        }
+        return count;
+    }
+
+    /**
+     * Transforma itens 'meio_a_meio' em Sabores (Addons)
+     */
+    async processUaiFlavors(restaurantId, category, flavorsUai) {
+        // Cria/Garante o grupo de sabores
         const flavorGroup = await prisma.addonGroup.upsert({
             where: { id: `flavor_grp_${category.id}` },
             update: { name: `Sabores ${category.name}`, isFlavorGroup: true, priceRule: 'higher', minQuantity: 1, maxQuantity: 4 },
@@ -84,89 +166,81 @@ class UairangoService {
         });
 
         for (const flavor of flavorsUai) {
-            const flavorName = flavor.nome || (flavor.opcoes?.[0]?.nome) || 'Sabor Indefinido';
-            const flavorPrice = flavor.opcoes?.[0]?.valor || flavor.valor || 0;
-            const flavorId = flavor.opcoes?.[0]?.id_opcao || flavor.id_item || Math.random().toString(36).substr(2, 9);
+            const flavorName = flavor.produto || flavor.nome || 'Sabor';
+            const flavorImage = flavor.foto || null;
+            
+            // Sabores também podem ter opções de preço no UaiRango
+            const price = parseFloat(flavor.opcoes?.[0]?.valor || flavor.valor || 0);
+            const code = flavor.opcoes?.[0]?.id_opcao || flavor.id_produto || flavor.id_item;
 
             await prisma.addon.upsert({
-                where: { id: `uai_flavor_${flavorId}` },
-                update: { name: flavorName, price: parseFloat(flavorPrice), imageUrl: flavor.foto || null, saiposIntegrationCode: flavorId.toString() },
-                create: { id: `uai_flavor_${flavorId}`, name: flavorName, price: parseFloat(flavorPrice), imageUrl: flavor.foto || null, addonGroupId: flavorGroup.id, saiposIntegrationCode: flavorId.toString() }
+                where: { id: `uai_flavor_${code}` },
+                update: {
+                    name: flavorName,
+                    price: price,
+                    imageUrl: flavorImage,
+                    saiposIntegrationCode: code.toString()
+                },
+                create: {
+                    id: `uai_flavor_${code}`,
+                    name: flavorName,
+                    price: price,
+                    imageUrl: flavorImage,
+                    addonGroupId: flavorGroup.id,
+                    saiposIntegrationCode: code.toString()
+                }
             });
         }
         return flavorsUai.length;
     }
 
-    async processPizzaBase(restaurantId, category, sizeItem) {
-        const process = async (name, code) => {
-            if (!name) return;
-            const product = await prisma.product.upsert({
-                where: { name_restaurantId: { name, restaurantId } },
-                update: { isFlavor: false, showInMenu: true, categories: { connect: { id: category.id } }, saiposIntegrationCode: code?.toString() || '' },
-                create: { name, price: 0, restaurantId, isFlavor: false, showInMenu: true, categories: { connect: { id: category.id } }, saiposIntegrationCode: code?.toString() || '' }
-            });
+    async linkFlavorGroup(category, productId) {
+        try {
             await prisma.addonGroup.update({
                 where: { id: `flavor_grp_${category.id}` },
-                data: { products: { connect: { id: product.id } } }
+                data: { products: { connect: { id: productId } } }
             });
-        };
-
-        if (sizeItem.opcoes && sizeItem.opcoes.length > 0) {
-            for (const opt of sizeItem.opcoes) {
-                const name = (sizeItem.nome || opt.nome) ? `${sizeItem.nome || ''} ${opt.nome || ''}`.trim() : `Pizza ${opt.id_opcao}`;
-                await process(name, opt.id_opcao);
-            }
-        } else {
-            const name = sizeItem.nome || `Pizza ${sizeItem.id_item}`;
-            await process(name, sizeItem.id_item);
-        }
-    }
-
-    async processNormalItem(restaurantId, categoryId, itemUai) {
-        const upsertProd = async (name, price, code) => {
-            if (!name) return;
-            await prisma.product.upsert({
-                where: { name_restaurantId: { name, restaurantId } },
-                update: { description: itemUai.descricao || '', price: parseFloat(price), imageUrl: itemUai.foto || null, saiposIntegrationCode: code?.toString() || '', categories: { connect: { id: categoryId } } },
-                create: { name, description: itemUai.descricao || '', price: parseFloat(price), imageUrl: itemUai.foto || null, restaurantId, saiposIntegrationCode: code?.toString() || '', categories: { connect: { id: categoryId } } }
-            });
-        };
-
-        if (itemUai.opcoes && itemUai.opcoes.length > 0) {
-            for (const opt of itemUai.opcoes) {
-                let name = itemUai.nome || opt.nome || 'Produto';
-                if (itemUai.opcoes.length > 1 && opt.nome && itemUai.nome !== opt.nome) {
-                    name = `${itemUai.nome || ''} ${opt.nome}`.trim();
-                }
-                await upsertProd(name, opt.valor || itemUai.valor || 0, opt.id_opcao);
-            }
-        } else {
-            const name = itemUai.nome || `Item ${itemUai.id_item}`;
-            await upsertProd(name, itemUai.valor || 0, itemUai.id_item);
+        } catch (e) {
+            // Grupo pode não ter sido criado ainda se a categoria for mista
         }
     }
 
     async importCategoryAddonGroups(restaurantId, establishmentId, catId, token) {
         try {
-            const addonRes = await axios.get(`${this.baseUrl}/auth/cardapio/${establishmentId}/adicionais/${catId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const addonRes = await axios.get(`${this.baseUrl}/auth/cardapio/${establishmentId}/adicionais/${catId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
             const groupsUai = Array.isArray(addonRes.data) ? addonRes.data : [];
+
             for (const grpUai of groupsUai) {
                 const addonGroup = await prisma.addonGroup.upsert({
                     where: { id: `uai_grp_${grpUai.id_categoria}` },
-                    update: { name: grpUai.nome || 'Complementos', minQuantity: parseInt(grpUai.minimo || 0), maxQuantity: parseInt(grpUai.maximo || 1), isFlavorGroup: false },
-                    create: { id: `uai_grp_${grpUai.id_categoria}`, name: grpUai.nome || 'Complementos', restaurantId, minQuantity: parseInt(grpUai.minimo || 0), maxQuantity: parseInt(grpUai.maximo || 1), isFlavorGroup: false }
+                    update: {
+                        name: grpUai.nome || 'Complementos',
+                        minQuantity: parseInt(grpUai.minimo || 0),
+                        maxQuantity: parseInt(grpUai.maximo || 1)
+                    },
+                    create: {
+                        id: `uai_grp_${grpUai.id_categoria}`,
+                        name: grpUai.nome || 'Complementos',
+                        restaurantId,
+                        minQuantity: parseInt(grpUai.minimo || 0),
+                        maxQuantity: parseInt(grpUai.maximo || 1)
+                    }
                 });
-                if (grpUai.itens) {
+
+                if (Array.isArray(grpUai.itens)) {
                     for (const subItem of grpUai.itens) {
-                        const name = subItem.nome || `Adicional ${subItem.id_opcao}`;
                         await prisma.addon.upsert({
                             where: { id: `uai_addon_${subItem.id_opcao}` },
-                            update: { name, price: parseFloat(subItem.valor || 0), saiposIntegrationCode: subItem.id_opcao.toString() },
-                            create: { id: `uai_addon_${subItem.id_opcao}`, name, price: parseFloat(subItem.valor || 0), addonGroupId: addonGroup.id, saiposIntegrationCode: subItem.id_opcao.toString() }
+                            update: { name: subItem.nome, price: parseFloat(subItem.valor || 0), saiposIntegrationCode: subItem.id_opcao.toString() },
+                            create: { id: `uai_addon_${subItem.id_opcao}`, name: subItem.nome, price: parseFloat(subItem.valor || 0), addonGroupId: addonGroup.id, saiposIntegrationCode: subItem.id_opcao.toString() }
                         });
                     }
                 }
-                // Vincula grupo de adicionais aos produtos da categoria
+
+                // Vincula aos produtos da categoria
                 const category = await prisma.category.findFirst({ where: { saiposIntegrationCode: catId.toString(), restaurantId } });
                 if (category) {
                     const products = await prisma.product.findMany({ where: { categories: { some: { id: category.id } } } });
@@ -175,7 +249,9 @@ class UairangoService {
                     }
                 }
             }
-        } catch (error) {}
+        } catch (error) {
+            // Silencioso se a categoria não tiver adicionais
+        }
     }
 }
 
