@@ -34,14 +34,24 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
 
   useEffect(() => { fetchData(); }, [refetchTrigger]);
 
-  const handleAvailabilityChange = async (productId: string, isAvailable: boolean) => {
+  const handleToggleFlag = async (productId: string, field: 'isAvailable' | 'allowDelivery' | 'allowPos' | 'allowOnline', currentValue: boolean) => {
+    const newValue = !currentValue;
     const original = [...products];
-    setProducts(prev => prev.map(p => (p.id === productId ? { ...p, isAvailable } : p)));
+    
+    // Otimismo no UI
+    setProducts(prev => prev.map(p => (p.id === productId ? { ...p, [field]: newValue } : p)));
+    
     try {
-      await updateProduct(productId, { isAvailable });
-      toast.success(isAvailable ? "Item ativado!" : "Item pausado.");
+      await updateProduct(productId, { [field]: newValue });
+      const fieldLabels: any = {
+        isAvailable: newValue ? "Item ativado!" : "Item pausado.",
+        allowDelivery: newValue ? "Delivery ativado!" : "Delivery desativado.",
+        allowPos: newValue ? "Salão ativado!" : "Salão desativado.",
+        allowOnline: newValue ? "Online ativado!" : "Online desativado."
+      };
+      toast.success(fieldLabels[field]);
     } catch (err) {
-      toast.error('Erro ao atualizar.');
+      toast.error('Erro ao atualizar status.');
       setProducts(original);
     }
   };
@@ -170,22 +180,34 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                             </td>
                             <td className="px-4 py-2.5">
                                 <div className="flex items-center justify-center gap-1.5">
-                                    <div title="Delivery" className={cn(
-                                        "w-6 h-6 rounded-md flex items-center justify-center border transition-all",
-                                        product.allowDelivery ? "bg-blue-50 border-blue-100 text-blue-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40"
-                                    )}>
+                                    <div 
+                                        onClick={() => handleToggleFlag(product.id, 'allowDelivery', !!product.allowDelivery)}
+                                        title="Delivery" 
+                                        className={cn(
+                                            "w-6 h-6 rounded-md flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
+                                            product.allowDelivery ? "bg-blue-50 border-blue-100 text-blue-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
+                                        )}
+                                    >
                                         <Truck size={12} />
                                     </div>
-                                    <div title="Salão / PDV" className={cn(
-                                        "w-6 h-6 rounded-md flex items-center justify-center border transition-all",
-                                        product.allowPos ? "bg-emerald-50 border-emerald-100 text-emerald-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40"
-                                    )}>
+                                    <div 
+                                        onClick={() => handleToggleFlag(product.id, 'allowPos', !!product.allowPos)}
+                                        title="Salão / PDV" 
+                                        className={cn(
+                                            "w-6 h-6 rounded-md flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
+                                            product.allowPos ? "bg-emerald-50 border-emerald-100 text-emerald-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
+                                        )}
+                                    >
                                         <Utensils size={12} />
                                     </div>
-                                    <div title="Pedido Online" className={cn(
-                                        "w-6 h-6 rounded-md flex items-center justify-center border transition-all",
-                                        product.allowOnline ? "bg-purple-50 border-purple-100 text-purple-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40"
-                                    )}>
+                                    <div 
+                                        onClick={() => handleToggleFlag(product.id, 'allowOnline', !!product.allowOnline)}
+                                        title="Pedido Online" 
+                                        className={cn(
+                                            "w-6 h-6 rounded-md flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
+                                            product.allowOnline ? "bg-purple-50 border-purple-100 text-purple-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
+                                        )}
+                                    >
                                         <Globe size={12} />
                                     </div>
                                 </div>
@@ -207,7 +229,7 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                             <td className="px-4 py-2.5">
                                 <div className="flex flex-col items-center gap-1">
                                     <div 
-                                        onClick={() => handleAvailabilityChange(product.id, !product.isAvailable)}
+                                        onClick={() => handleToggleFlag(product.id, 'isAvailable', !!product.isAvailable)}
                                         className={cn("w-8 h-4 rounded-full relative transition-all cursor-pointer shadow-inner", product.isAvailable ? "bg-emerald-500" : "bg-slate-200")}
                                     >
                                         <div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-md", product.isAvailable ? "left-4.5" : "left-0.5")} />
@@ -216,9 +238,9 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                                 </div>
                             </td>
                             <td className="px-4 py-2.5 text-right">
-                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-lg border border-slate-100" onClick={() => navigate(`/products/${product.id}`)}><Edit size={14}/></Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-lg border border-slate-100" onClick={() => handleDelete(product.id)}><Trash2 size={14}/></Button>
+                                <div className="flex items-center justify-end gap-1.5 transition-all">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-lg border border-slate-200 shadow-sm" onClick={() => navigate(`/products/${product.id}`)}><Edit size={14}/></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-lg border border-slate-200 shadow-sm" onClick={() => handleDelete(product.id)}><Trash2 size={14}/></Button>
                                 </div>
                             </td>
                         </tr>
