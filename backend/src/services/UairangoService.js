@@ -60,13 +60,19 @@ class UairangoService {
 
             // A resposta do UaiRango para este endpoint é um objeto onde cada chave é uma categoria
             const menuData = menuRes.data;
+            console.log(`[UAIRANGO] Estrutura das chaves recebidas:`, Object.keys(menuData));
+
             let importedCount = 0;
 
             for (const categoryName in menuData) {
                 const catData = menuData[categoryName];
                 const catId = catData.id_categoria;
 
-                console.log(`[UAIRANGO] Processando categoria: ${categoryName} (ID: ${catId})`);
+                console.log(`[UAIRANGO] Categoria: ${categoryName} | Inteira: ${catData.inteira?.length || 0} | Meio-a-Meio: ${catData.meio_a_meio?.length || 0}`);
+                
+                if (!catData.inteira && !catData.meio_a_meio) {
+                    console.log(`[UAIRANGO] ALERTA: Categoria ${categoryName} não possui arrays 'inteira' ou 'meio_a_meio'. Estrutura encontrada:`, Object.keys(catData));
+                }
 
                 // A. Upsert da Categoria
                 const category = await prisma.category.upsert({
