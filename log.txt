@@ -1,58 +1,19 @@
-index-BaJuV94m.js:8605 [SSE] Conexão estabelecida com o servidor.
-cover-1772319108282-935572707.jpeg:1  GET https://kicardapio.towersfy.com/api/api/uploads/cover-1772319108282-935572707.jpeg 404 (Not Found)
-Image
-MH @ index-BaJuV94m.js:40
-jH @ index-BaJuV94m.js:40
-Yne @ index-BaJuV94m.js:40
-ese @ index-BaJuV94m.js:40
-Uu @ index-BaJuV94m.js:40
-SH @ index-BaJuV94m.js:40
-F @ index-BaJuV94m.js:25
-V @ index-BaJuV94m.js:25
-index-BaJuV94m.js:8605 SSE Error: Event {isTrusted: true, type: 'error', target: EventSource, currentTarget: EventSource, eventPhase: 2, …}
-te.onerror @ index-BaJuV94m.js:8605
-/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJpbnRlZ3JhdGlvbnM6bWFuYWdlIiwib3JkZXJzOnZpZXciLCJvcmRlcnM6bWFuYWdlIiwib3JkZXJzOmVkaXRfaXRlbXMiLCJvcmRlcnM6Y2FuY2VsIiwib3JkZXJzOnRyYW5zZmVyIiwib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsImZpbmFuY2lhbDp2aWV3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MjMxNDI2NSwiZXhwIjoxNzcyMzQzMDY1fQ.c7SV2dKEQBMnhT-HliY9rf7uzEzmhYfwmgHEO-G3exE&restaurantId=cmm6nas6m0001k801znx8seh8:1  GET https://kicardapio.towersfy.com/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJpbnRlZ3JhdGlvbnM6bWFuYWdlIiwib3JkZXJzOnZpZXciLCJvcmRlcnM6bWFuYWdlIiwib3JkZXJzOmVkaXRfaXRlbXMiLCJvcmRlcnM6Y2FuY2VsIiwib3JkZXJzOnRyYW5zZmVyIiwib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsImZpbmFuY2lhbDp2aWV3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MjMxNDI2NSwiZXhwIjoxNzcyMzQzMDY1fQ.c7SV2dKEQBMnhT-HliY9rf7uzEzmhYfwmgHEO-G3exE&restaurantId=cmm6nas6m0001k801znx8seh8 net::ERR_QUIC_PROTOCOL_ERROR 200 (OK)
-index-BaJuV94m.js:40 ReferenceError: motion is not defined
-    at LGe (index-BaJuV94m.js:8654:78131)
-    at Fu (index-BaJuV94m.js:38:17898)
-    at zO (index-BaJuV94m.js:40:3167)
-    at RH (index-BaJuV94m.js:40:45983)
-    at EH (index-BaJuV94m.js:40:40756)
-    at Jne (index-BaJuV94m.js:40:40683)
-    at Cy (index-BaJuV94m.js:40:40534)
-    at KO (index-BaJuV94m.js:40:36786)
-    at AH (index-BaJuV94m.js:40:37599)
-    at Z (index-BaJuV94m.js:38:3267)
-TO @ index-BaJuV94m.js:40
-QV.v.callback @ index-BaJuV94m.js:40
-Ao @ index-BaJuV94m.js:38
-MH @ index-BaJuV94m.js:40
-jH @ index-BaJuV94m.js:40
-Yne @ index-BaJuV94m.js:40
-ese @ index-BaJuV94m.js:40
-Uu @ index-BaJuV94m.js:40
-AH @ index-BaJuV94m.js:40
-Z @ index-BaJuV94m.js:38
-(anônimo) @ index-BaJuV94m.js:40
-index-BaJuV94m.js:8654 Uncaught ReferenceError: motion is not defined
-    at LGe (index-BaJuV94m.js:8654:78131)
-    at Fu (index-BaJuV94m.js:38:17898)
-    at zO (index-BaJuV94m.js:40:3167)
-    at RH (index-BaJuV94m.js:40:45983)
-    at EH (index-BaJuV94m.js:40:40756)
-    at Jne (index-BaJuV94m.js:40:40683)
-    at Cy (index-BaJuV94m.js:40:40534)
-    at KO (index-BaJuV94m.js:40:36786)
-    at AH (index-BaJuV94m.js:40:37599)
-    at Z (index-BaJuV94m.js:38:3267)
-LGe @ index-BaJuV94m.js:8654
-Fu @ index-BaJuV94m.js:38
-zO @ index-BaJuV94m.js:40
-RH @ index-BaJuV94m.js:40
-EH @ index-BaJuV94m.js:40
-Jne @ index-BaJuV94m.js:40
-Cy @ index-BaJuV94m.js:40
-KO @ index-BaJuV94m.js:40
-AH @ index-BaJuV94m.js:40
-Z @ index-BaJuV94m.js:38
-(anônimo) @ index-BaJuV94m.js:40
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+Erro na importação: PrismaClientKnownRequestError:
+Invalid `prisma.product.create()` invocation:
+
+
+Unique constraint failed on the fields: (`name`,`restaurantId`)
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async SaiposImportService.importFromExcel (/app/src/services/SaiposImportService.js:50:41)
+    at async importSaiposMenu (/app/src/controllers/IntegrationController.js:59:24) {
+  code: 'P2002',
+  meta: { modelName: 'Product', target: [ 'name', 'restaurantId' ] },
+  clientVersion: '6.16.3'
+}
+Erro ao importar cardápio da Saipos: Error: Falha ao processar o arquivo de importação.
+    at SaiposImportService.importFromExcel (/app/src/services/SaiposImportService.js:128:19)
+    at async importSaiposMenu (/app/src/controllers/IntegrationController.js:59:24)

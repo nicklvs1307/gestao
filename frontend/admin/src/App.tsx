@@ -22,6 +22,7 @@ import TableFormModal from './components/TableFormModal';
 import ReportManagement from './pages/ReportManagement';
 import SettingsManagement from './pages/SettingsManagement';
 import AddonManagement from './pages/AddonManagement';
+import AddonFormPage from './pages/AddonFormPage';
 import DeliveryAreaManagement from './components/DeliveryAreaManagement';
 import IntegrationManagement from './components/IntegrationManagement';
 import UserAndPermissions from './components/UserAndPermissions';
@@ -254,6 +255,8 @@ function AdminRoutes() {
       default:
         if (location.pathname.startsWith('/products/')) {
              setPageTitle('Editar Produto');
+        } else if (location.pathname.startsWith('/addons/')) {
+             setPageTitle('Editar Biblioteca');
         } else {
              setPageTitle('Painel Administrativo');
         }
@@ -286,6 +289,16 @@ function AdminRoutes() {
         <Route path="/addons" element={
           <ProtectedRoute permission="products:manage">
             <AddonManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/addons/new" element={
+          <ProtectedRoute permission="products:manage">
+            <AddonFormPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/addons/:id" element={
+          <ProtectedRoute permission="products:manage">
+            <AddonFormPage />
           </ProtectedRoute>
         } />
         <Route path="/ingredients" element={
