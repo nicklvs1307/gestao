@@ -53,16 +53,18 @@ class UairangoService {
         try {
             console.log(`[UAIRANGO] Iniciando importação para o restaurante ${restaurantId}...`);
             
-            // 1. Busca o cardápio completo
-            const response = await axios.get(`${this.baseUrl}/auth/cardapio/${establishmentId}`, {
+            // 1. Busca as Categorias primeiro
+            const categoriesRes = await axios.get(`${this.baseUrl}/auth/cardapio/${establishmentId}/categorias`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            const categoriesUai = response.data; // Array de categorias com produtos dentro
+            const categoriesUai = Array.isArray(categoriesRes.data) ? categoriesRes.data : [];
             let importedCount = 0;
 
             for (const catUai of categoriesUai) {
-                // 2. Processa a Categoria
+                console.log(`[UAIRANGO] Processando categoria: ${catUai.nome}`);
+                
+                // 2. Upsert da Categoria
                 const category = await prisma.category.upsert({
                     where: { 
                         name_restaurantId: { 
@@ -71,18 +73,25 @@ class UairangoService {
                         } 
                     },
                     update: {
-                        description: catUai.descricao,
+                        description: catUai.descricao || '',
                         saiposIntegrationCode: catUai.cod_externo || catUai.id_categoria.toString(),
                         cuisineType: catUai.nome.toLowerCase().includes('pizza') ? 'Pizza' : 'Geral'
                     },
                     create: {
                         name: catUai.nome,
-                        description: catUai.descricao,
+                        description: catUai.descricao || '',
                         restaurantId,
                         saiposIntegrationCode: catUai.cod_externo || catUai.id_categoria.toString(),
                         cuisineType: catUai.nome.toLowerCase().includes('pizza') ? 'Pizza' : 'Geral'
                     }
                 });
+
+                // 3. Busca as Opções (Produtos) desta categoria
+                const optionsRes = await axios.get(`${this.baseUrl}/auth/cardapio/${establishmentId}/opcoes/${catUai.id_categoria}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const optionsUai = Array.isArray(optionsRes.data) ? optionsRes.data : [];
 
                 // Lógica Especial para Pizzas/Esfihas/Sabores
                 const isFlavorCategory = catUai.nome.toLowerCase().includes('pizza') || 
@@ -90,11 +99,11 @@ class UairangoService {
                                        catUai.nome.toLowerCase().includes('sabor');
 
                 if (isFlavorCategory) {
-                    await this.processFlavorCategory(restaurantId, category, catUai.opcoes);
-                    importedCount += catUai.opcoes.length;
+                    await this.processFlavorCategory(restaurantId, category, optionsUai);
+                    importedCount += optionsUai.length;
                 } else {
                     // Processamento Normal de Produtos
-                    for (const prodUai of catUai.opcoes) {
+                    for (const prodUai of optionsUai) {
                         await this.processNormalProduct(restaurantId, category.id, prodUai);
                         importedCount++;
                     }
@@ -109,7 +118,7 @@ class UairangoService {
 
             return { success: true, importedCount };
         } catch (error) {
-            console.error(`[UAIRANGO] Erro na importação:`, error.response?.data || error.message);
+            console.error(`[UAIRANGO] Erro na importação (Restaurante ${restaurantId}):`, error.response?.data || error.message);
             throw error;
         }
     }
@@ -118,8 +127,6 @@ class UairangoService {
      * Processa categorias de sabores (Pizzas) transformando itens em Adicionais
      */
     async processFlavorCategory(restaurantId, category, optionsUai) {
-        // 1. Garante que existe um Produto Base (Container) para essa categoria
-        // Ex: "Pizza Grande" ou usa o nome da própria categoria
         const productName = category.name; 
         
         const productBase = await prisma.product.upsert({
@@ -127,7 +134,7 @@ class UairangoService {
             update: { isFlavor: false, showInMenu: true },
             create: {
                 name: productName,
-                price: 0, // Preço será definido pelos sabores (regra de maior valor)
+                price: 0,
                 restaurantId,
                 isFlavor: false,
                 showInMenu: true,
@@ -135,15 +142,15 @@ class UairangoService {
             }
         });
 
-        // 2. Garante que existe um Grupo de Adicionais (Sabores) para este produto
         const flavorGroup = await prisma.addonGroup.upsert({
-            where: { id: `flavor_group_${category.id}` }, // ID determinístico para evitar duplos
+            where: { id: `flavor_group_${category.id}` },
             update: {
                 name: `Sabores ${category.name}`,
                 isFlavorGroup: true,
                 priceRule: 'higher',
                 minQuantity: 1,
-                maxQuantity: 4
+                maxQuantity: 4,
+                restaurantId // Garantir restaurantId no update também
             },
             create: {
                 id: `flavor_group_${category.id}`,
@@ -157,23 +164,22 @@ class UairangoService {
             }
         });
 
-        // 3. Transforma cada "Opção" do UaiRango em um Adicional (Sabor)
         for (const optUai of optionsUai) {
             await prisma.addon.upsert({
                 where: { id: `addon_uai_${optUai.id_opcao}` },
                 update: {
                     name: optUai.nome,
-                    description: optUai.descricao,
+                    description: optUai.descricao || '',
                     price: parseFloat(optUai.valor || 0),
-                    imageUrl: optUai.foto,
+                    imageUrl: optUai.foto || null,
                     saiposIntegrationCode: optUai.codigo || optUai.id_opcao.toString()
                 },
                 create: {
                     id: `addon_uai_${optUai.id_opcao}`,
                     name: optUai.nome,
-                    description: optUai.descricao,
+                    description: optUai.descricao || '',
                     price: parseFloat(optUai.valor || 0),
-                    imageUrl: optUai.foto,
+                    imageUrl: optUai.foto || null,
                     addonGroupId: flavorGroup.id,
                     saiposIntegrationCode: optUai.codigo || optUai.id_opcao.toString()
                 }
@@ -188,17 +194,17 @@ class UairangoService {
         await prisma.product.upsert({
             where: { name_restaurantId: { name: prodUai.nome, restaurantId } },
             update: {
-                description: prodUai.descricao,
+                description: prodUai.descricao || '',
                 price: parseFloat(prodUai.valor || 0),
-                imageUrl: prodUai.foto,
+                imageUrl: prodUai.foto || null,
                 saiposIntegrationCode: prodUai.codigo || prodUai.id_opcao.toString(),
                 categories: { connect: { id: categoryId } }
             },
             create: {
                 name: prodUai.nome,
-                description: prodUai.descricao,
+                description: prodUai.descricao || '',
                 price: parseFloat(prodUai.valor || 0),
-                imageUrl: prodUai.foto,
+                imageUrl: prodUai.foto || null,
                 restaurantId,
                 saiposIntegrationCode: prodUai.codigo || prodUai.id_opcao.toString(),
                 categories: { connect: { id: categoryId } }
