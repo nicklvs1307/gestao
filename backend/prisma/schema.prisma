@@ -456,6 +456,13 @@ model IntegrationSettings {
   saiposEnv               String    @default("homologation") // "production" ou "homologation"
   saiposToken             String?   // Token de autenticação da Saipos
   saiposTokenExpiresAt    DateTime? // Data de expiração do token
+
+  // === CAMPOS UAIRANGO ===
+  uairangoToken           String?   // Token de Desenvolvedor
+  uairangoEstablishmentId String?   // ID do estabelecimento no UaiRango
+  uairangoActive          Boolean   @default(false)
+  uairangoImportedAt      DateTime? // Última importação realizada
+
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
