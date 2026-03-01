@@ -24,3 +24,14 @@ export const importUairangoMenu = async () => {
     const response = await apiClient.post('/integrations/uairango/import');
     return response.data;
 };
+
+export const importSaiposMenu = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/integrations/saipos/import', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data;
+};

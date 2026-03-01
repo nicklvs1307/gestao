@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { getSaiposSettings, updateSaiposSettings } from '../services/api';
-import { X, Save, Loader2, Info, ShieldCheck, RefreshCw, Globe, TestTube } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { getSaiposSettings, updateSaiposSettings, importSaiposMenu } from '../services/api';
+import { X, Save, Loader2, Info, ShieldCheck, RefreshCw, Globe, TestTube, DownloadCloud } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from './ui/Button';
@@ -12,6 +12,7 @@ interface SaiposConfigModalProps {
 }
 
 const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [partnerId, setPartnerId] = useState('');
   const [secret, setSecret] = useState('');
   const [codStore, setCodStore] = useState('');
@@ -19,6 +20,7 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -57,6 +59,34 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
       toast.error('Falha ao salvar configurações.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx')) {
+        toast.error('Por favor, selecione um arquivo .xlsx');
+        return;
+    }
+
+    setIsImporting(true);
+    try {
+      const result = await importSaiposMenu(file);
+      toast.success(result.message || 'Cardápio importado com sucesso!');
+      if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || 'Falha ao importar cardápio.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const triggerFileUpload = () => {
+    if (fileInputRef.current) {
+        fileInputRef.current.click();
     }
   };
 
@@ -150,11 +180,35 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                         <div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", isActive ? "left-6" : "left-1")} />
                     </div>
                 </Card>
+
+                {/* Seção de Importação */}
+                <div className="pt-4 border-t border-slate-100">
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange} 
+                        accept=".xlsx" 
+                        className="hidden" 
+                    />
+                    <Button 
+                        type="button" 
+                        onClick={triggerFileUpload} 
+                        isLoading={isImporting}
+                        variant="outline"
+                        className="w-full h-14 rounded-2xl border-2 border-orange-500/20 text-orange-600 hover:bg-orange-50 gap-3 font-black uppercase italic tracking-tighter"
+                    >
+                        <DownloadCloud size={20} />
+                        FAZER UPLOAD DA PLANILHA
+                    </Button>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center mt-3 leading-tight">
+                        Selecione a planilha Excel de códigos Saipos para cadastrar itens automaticamente.
+                    </p>
+                </div>
             </form>
 
             <footer className="px-6 py-4 bg-white border-t border-slate-100 flex gap-3 shrink-0">
-                <Button variant="ghost" onClick={onClose} className="flex-1 h-10 rounded-lg font-black uppercase text-[9px] tracking-widest text-slate-400" disabled={isSaving}>DESCARTAR</Button>
-                <Button type="submit" form="saipos-form" isLoading={isSaving} className="flex-[2] h-10 rounded-lg shadow-md uppercase tracking-widest italic font-black text-[10px]">
+                <Button variant="ghost" onClick={onClose} className="flex-1 h-10 rounded-lg font-black uppercase text-[9px] tracking-widest text-slate-400" disabled={isSaving || isImporting}>DESCARTAR</Button>
+                <Button type="submit" form="saipos-form" isLoading={isSaving} className="flex-[2] h-10 rounded-lg shadow-md uppercase tracking-widest italic font-black text-[10px]" disabled={isImporting}>
                     SALVAR CREDENCIAIS
                 </Button>
             </footer>

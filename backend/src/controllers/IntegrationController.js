@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const UairangoService = require('../services/UairangoService');
+const SaiposImportService = require('../services/SaiposImportService');
 
 const getSaiposSettings = async (req, res) => {
     try {
@@ -47,6 +48,19 @@ const updateSaiposSettings = async (req, res) => {
     } catch (error) {
         console.error('Erro ao atualizar configurações da Saipos:', error);
         res.status(500).json({ error: 'Erro ao atualizar configurações da Saipos.' });
+    }
+};
+
+const importSaiposMenu = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Por favor, envie um arquivo Excel (.xlsx).' });
+        }
+        const result = await SaiposImportService.importFromExcel(req.restaurantId, req.file.buffer);
+        res.json(result);
+    } catch (error) {
+        console.error('Erro ao importar cardápio da Saipos:', error);
+        res.status(500).json({ error: error.message || 'Erro ao importar cardápio da Saipos.' });
     }
 };
 
@@ -108,6 +122,7 @@ const importUairangoMenu = async (req, res) => {
 module.exports = {
     getSaiposSettings,
     updateSaiposSettings,
+    importSaiposMenu,
     getUairangoSettings,
     updateUairangoSettings,
     importUairangoMenu
