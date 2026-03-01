@@ -20,8 +20,10 @@ class SaiposImportService {
                 const tipo = String(row['Tipo'] || '').toUpperCase();
                 const categoriaName = String(row['Categoria'] || 'Geral').trim();
                 const saiposCode = String(row['Código Saipos'] || '').trim();
+                const productName = String(row['Descrição'] || 'Sem nome').trim();
 
                 if (tipo === 'PRATO' && saiposCode) {
+                    // Garantir Categoria
                     let categoryId;
                     if (categoryMap.has(categoriaName)) {
                         categoryId = categoryMap.get(categoriaName);
@@ -40,8 +42,15 @@ class SaiposImportService {
                         categoryMap.set(categoriaName, categoryId);
                     }
 
+                    // VERIFICAÇÃO DUPLA: Por Código Saipos OU por Nome (para evitar P2002)
                     const existingProduct = await prisma.product.findFirst({
-                        where: { saiposIntegrationCode: saiposCode, restaurantId }
+                        where: {
+                            restaurantId,
+                            OR: [
+                                { saiposIntegrationCode: saiposCode },
+                                { name: productName }
+                            ]
+                        }
                     });
 
                     if (!existingProduct) {
@@ -49,7 +58,7 @@ class SaiposImportService {
                         const price = parseFloat(priceStr) || 0;
                         const product = await prisma.product.create({
                             data: {
-                                name: String(row['Descrição'] || 'Sem nome').trim(),
+                                name: productName,
                                 price: price,
                                 saiposIntegrationCode: saiposCode,
                                 restaurantId,
@@ -59,6 +68,13 @@ class SaiposImportService {
                         productMap.set(saiposCode, product.id);
                         importedProducts++;
                     } else {
+                        // Se o produto já existe por nome mas não tem o código, vamos vincular
+                        if (!existingProduct.saiposIntegrationCode) {
+                            await prisma.product.update({
+                                where: { id: existingProduct.id },
+                                data: { saiposIntegrationCode: saiposCode }
+                            });
+                        }
                         productMap.set(saiposCode, existingProduct.id);
                     }
                 }
@@ -96,8 +112,15 @@ class SaiposImportService {
                             });
                         }
 
+                        // Verifica se o adicional já existe no grupo (pelo código ou nome)
                         const existingAddon = await prisma.addon.findFirst({
-                            where: { saiposIntegrationCode: saiposCode, addonGroupId: addonGroup.id }
+                            where: { 
+                                addonGroupId: addonGroup.id,
+                                OR: [
+                                    { saiposIntegrationCode: saiposCode },
+                                    { name: addonName }
+                                ]
+                            }
                         });
 
                         if (!existingAddon) {
@@ -112,6 +135,11 @@ class SaiposImportService {
                                 }
                             });
                             importedAddons++;
+                        } else if (!existingAddon.saiposIntegrationCode) {
+                            await prisma.addon.update({
+                                where: { id: existingAddon.id },
+                                data: { saiposIntegrationCode: saiposCode }
+                            });
                         }
                     }
                 }
@@ -125,7 +153,7 @@ class SaiposImportService {
 
         } catch (error) {
             console.error('Erro na importação:', error);
-            throw new Error('Falha ao processar o arquivo de importação.');
+            throw new Error('Falha ao processar o arquivo de importação: ' + error.message);
         }
     }
 }
