@@ -221,7 +221,14 @@ class UairangoService {
     async processNormalItem(restaurantId, categoryId, itemUai) {
         if (itemUai.opcoes && itemUai.opcoes.length > 0) {
             for (const opt of itemUai.opcoes) {
-                const productName = itemUai.opcoes.length > 1 ? `${itemUai.nome} ${opt.nome}` : itemUai.nome;
+                // Tenta pegar o nome mais completo possível
+                let productName = itemUai.nome || opt.nome || 'Produto Sem Nome';
+                
+                // Se houver mais de uma opção, anexa o nome da opção ao nome do produto (ex: Coca-Cola 2L)
+                if (itemUai.opcoes.length > 1 && opt.nome && itemUai.nome !== opt.nome) {
+                    productName = `${itemUai.nome} ${opt.nome}`;
+                }
+
                 await prisma.product.upsert({
                     where: { name_restaurantId: { name: productName, restaurantId } },
                     update: {
