@@ -36,6 +36,11 @@ export const addonService = {
     return response.data;
   },
 
+  getById: async (id: string) => {
+    const response = await api.get<AddonGroup>(`/addons/${id}`);
+    return response.data;
+  },
+
   create: async (data: AddonGroup) => {
     const response = await api.post<AddonGroup>('/addons', data);
     return response.data;

@@ -6,6 +6,7 @@ const { needsAuth } = require('../middlewares/auth');
 router.use(needsAuth);
 
 router.get('/', AddonGroupController.getAddonGroups);
+router.get('/:id', AddonGroupController.getAddonGroupById);
 router.patch('/reorder', AddonGroupController.reorderGroups);
 router.post('/', AddonGroupController.createAddonGroup);
 router.post('/:id/duplicate', AddonGroupController.duplicateAddonGroup);

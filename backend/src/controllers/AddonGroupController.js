@@ -25,6 +25,37 @@ const getAddonGroups = async (req, res) => {
     }
 };
 
+const getAddonGroupById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const group = await prisma.addonGroup.findUnique({
+            where: { id },
+            include: { 
+                addons: {
+                    include: {
+                        ingredients: {
+                            include: { ingredient: true }
+                        }
+                    },
+                    orderBy: { order: 'asc' }
+                },
+                products: {
+                    select: { id: true, name: true }
+                }
+            }
+        });
+
+        if (!group) {
+            return res.status(404).json({ error: 'Grupo de complementos não encontrado.' });
+        }
+
+        res.json(group);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao buscar grupo de complementos.' });
+    }
+};
+
 const createAddonGroup = async (req, res) => {
     const { name, type, isRequired, isFlavorGroup, priceRule, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
     
@@ -126,8 +157,6 @@ const updateAddonGroup = async (req, res) => {
     const { name, type, isRequired, isFlavorGroup, priceRule, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
 
     try {
-        // Para manter a integridade, vamos atualizar o grupo e reconstruir os addons
-        // (Similar ao padrão que você já usa em produtos, mas agora centralizado aqui)
         const updatedGroup = await prisma.addonGroup.update({
             where: { id },
             data: {
@@ -197,6 +226,7 @@ const reorderGroups = async (req, res) => {
 
 module.exports = {
     getAddonGroups,
+    getAddonGroupById,
     createAddonGroup,
     duplicateAddonGroup,
     updateAddonGroup,
