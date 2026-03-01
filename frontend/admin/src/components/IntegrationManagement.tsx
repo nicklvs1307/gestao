@@ -184,5 +184,3 @@ const IntegrationManagement: React.FC = () => {
 };
 
 export default IntegrationManagement;
-
-export default IntegrationManagement;
