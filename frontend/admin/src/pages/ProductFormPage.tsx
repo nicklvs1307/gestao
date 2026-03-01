@@ -21,7 +21,8 @@ const {
     ArrowLeft, Plus, Trash2, CheckCircle, Pizza, 
     Layers, Settings2, Loader2, Image: ImageIcon, Package, 
     Save, Check, List, DollarSign, ChevronRight, Star, AlertCircle,
-    Truck, Utensils, Globe, FileText, Search, GripVertical, Edit2, Eye
+    Truck, Utensils, Globe, FileText, Search, GripVertical, Edit2, Eye,
+    Info
 } = LucideIcons;
 
 import {
