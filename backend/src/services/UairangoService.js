@@ -5,7 +5,7 @@ class UairangoService {
     /**
      * URL Base da API do UaiRango
      */
-    baseUrl = 'https://www.uairango.com/developer/api';
+    baseUrl = 'https://www.uairango.com/api2';
 
     /**
      * Obtém o token Bearer usando o token de desenvolvedor do restaurante
