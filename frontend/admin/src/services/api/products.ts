@@ -30,6 +30,11 @@ export const deleteProduct = async (id: string) => {
   return response.data;
 };
 
+export const reorderProducts = async (products: { id: string, order: number }[]) => {
+  const response = await apiClient.patch('/products/reorder', { products });
+  return response.data;
+};
+
 export const uploadProductImage = async (file: File) => {
   const formData = new FormData();
   formData.append('image', file);

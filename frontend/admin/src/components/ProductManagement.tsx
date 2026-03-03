@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Product } from '@/types/index';
-import { getProducts, updateProduct, deleteProduct } from '../services/api/products';
+import { getProducts, updateProduct, deleteProduct, reorderProducts, reorderCategories } from '../services/api';
 import { getCategories } from '../services/api/categories';
 import { 
   Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, 
   RefreshCw, Loader2, Package, Tag, ArrowUpRight, CheckCircle,
-  Truck, Utensils, Globe, ChevronRight, Hash
+  Truck, Utensils, Globe, ChevronRight, Hash, GripVertical
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -13,21 +13,263 @@ import { toast } from 'sonner';
 import { getImageUrl } from '../utils/image';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface SortableCategoryItemProps {
+  cat: any;
+  categoryFilter: string;
+  categoryCount: number;
+  onSelect: (id: string) => void;
+}
+
+function SortableCategoryItem({ cat, categoryFilter, categoryCount, onSelect }: SortableCategoryItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: cat.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 0,
+    position: 'relative' as const,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(
+        "flex items-center gap-1 group",
+        isDragging && "z-50"
+      )}
+    >
+      <button 
+        {...attributes} 
+        {...listeners}
+        className="p-1 cursor-grab active:cursor-grabbing text-slate-200 hover:text-orange-500 transition-colors"
+      >
+        <GripVertical size={12} />
+      </button>
+      <button 
+          onClick={() => onSelect(cat.id)}
+          className={cn(
+              "flex-1 flex items-center justify-between px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-tighter italic group",
+              categoryFilter === cat.id 
+                  ? "bg-white border-2 border-orange-500 text-orange-600 shadow-sm translate-x-1" 
+                  : "text-slate-400 border-2 border-transparent hover:bg-white hover:border-slate-100"
+          )}
+      >
+          <div className="flex items-center gap-3">
+              <Hash size={14} className={categoryFilter === cat.id ? "text-orange-500" : "text-slate-200 group-hover:text-slate-400"} />
+              <span className="truncate max-w-[100px]">{cat.name}</span>
+          </div>
+          <span className={cn(
+              "text-[9px] font-black px-1.5 py-0.5 rounded-md", 
+              categoryFilter === cat.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-300 group-hover:bg-slate-200 group-hover:text-slate-500"
+          )}>
+              {categoryCount || 0}
+          </span>
+      </button>
+    </div>
+  );
+}
+
+interface SortableProductRowProps {
+  product: Product;
+  onToggleFlag: (productId: string, field: any, currentValue: boolean) => void;
+  onDelete: (productId: string) => void;
+  navigate: any;
+  isSortable: boolean;
+}
+
+function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSortable }: SortableProductRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: product.id, disabled: !isSortable });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 0,
+    position: 'relative' as const,
+  };
+
+  const lowestPrice = product.sizes && product.sizes.length > 0 
+      ? Math.min(...product.sizes.map(s => s.price)) 
+      : product.price;
+
+  return (
+    <tr 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(
+        "hover:bg-slate-50/50 transition-colors group",
+        isDragging && "bg-white shadow-2xl scale-[1.01] ring-1 ring-orange-500 z-50"
+      )}
+    >
+        <td className="px-4 py-3">
+            <div className="flex items-center gap-3">
+                {isSortable && (
+                  <button 
+                    {...attributes} 
+                    {...listeners}
+                    className="p-1 cursor-grab active:cursor-grabbing text-slate-200 hover:text-orange-500 transition-colors"
+                  >
+                    <GripVertical size={14} />
+                  </button>
+                )}
+                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-100 shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                    {product.imageUrl ? (
+                        <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                        <ImageIcon size={20} className="text-slate-300" />
+                    )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                        <span className="font-bold text-xs uppercase italic tracking-tight truncate">
+                            {product.name || <span className="text-rose-400 italic">S/ Nome</span>}
+                        </span>
+                        {product.isFeatured && <Star size={10} className="fill-amber-400 text-amber-400 shrink-0"/>}
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest italic truncate">
+                            Ref: {product.id.slice(-6).toUpperCase()}
+                        </span>
+                        {product.categories?.slice(0, 1).map(c => (
+                            <span key={c.id} className="text-[7px] font-black bg-orange-50 text-orange-400 px-1 rounded italic uppercase">
+                                {c.name}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </td>
+        <td className="px-4 py-3">
+            <div className="flex items-center justify-center gap-1.5">
+                <div 
+                    onClick={() => onToggleFlag(product.id, 'allowDelivery', !!product.allowDelivery)}
+                    title="Delivery" 
+                    className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
+                        product.allowDelivery ? "bg-blue-50 border-blue-100 text-blue-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
+                    )}
+                >
+                    <Truck size={12} />
+                </div>
+                <div 
+                    onClick={() => onToggleFlag(product.id, 'allowPos', !!product.allowPos)}
+                    title="Salão / PDV" 
+                    className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
+                        product.allowPos ? "bg-emerald-50 border-emerald-100 text-emerald-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
+                    )}
+                >
+                    <Utensils size={12} />
+                </div>
+                <div 
+                    onClick={() => onToggleFlag(product.id, 'allowOnline', !!product.allowOnline)}
+                    title="Pedido Online" 
+                    className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
+                        product.allowOnline ? "bg-purple-50 border-purple-100 text-purple-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
+                    )}
+                >
+                    <Globe size={12} />
+                </div>
+            </div>
+        </td>
+        <td className="px-4 py-3 text-center">
+            <span className={cn(
+                "inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase border",
+                product.stock < 10 ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
+            )}>
+                {product.stock} un
+            </span>
+        </td>
+        <td className="px-4 py-3 text-center">
+            <div className="flex flex-col items-center">
+                {product.sizes?.length > 0 && <span className="text-[7px] font-black text-orange-500 uppercase leading-none mb-0.5 tracking-tighter">Variantes</span>}
+                <span className="font-black text-xs italic tracking-tighter">R$ {lowestPrice.toFixed(2)}</span>
+            </div>
+        </td>
+        <td className="px-4 py-3">
+            <div className="flex flex-col items-center gap-1">
+                <div 
+                    onClick={() => onToggleFlag(product.id, 'isAvailable', !!product.isAvailable)}
+                    className={cn("w-8 h-4 rounded-full relative transition-all cursor-pointer shadow-inner", product.isAvailable ? "bg-emerald-500" : "bg-slate-200")}
+                >
+                    <div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-md", product.isAvailable ? "left-4.5" : "left-0.5")} />
+                </div>
+                <span className={cn("text-[7px] font-black uppercase tracking-widest leading-none", product.isAvailable ? "text-emerald-500" : "text-slate-400")}>{product.isAvailable ? 'ON' : 'OFF'}</span>
+            </div>
+        </td>
+        <td className="px-4 py-3 text-right">
+            <div className="flex items-center justify-end gap-1.5 px-2">
+                <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/products/${product.id}`)}><Edit size={16}/></Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => handleDelete(product.id)}><Trash2 size={16}/></Button>
+            </div>
+        </td>
+    </tr>
+  );
+}
 
 function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReordering, setIsReordering] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
       const [productsData, categoriesData] = await Promise.all([ getProducts(), getCategories(true) ]);
+      // Ordenar categorias pelo campo order
+      const sortedCategories = Array.isArray(categoriesData) 
+        ? [...categoriesData].sort((a, b) => (a.order || 0) - (b.order || 0))
+        : [];
       setProducts(productsData);
-      setCategories(categoriesData);
+      setCategories(sortedCategories);
     } catch (err) { toast.error("Erro ao carregar cardápio."); }
     finally { setIsLoading(false); }
   };
@@ -84,6 +326,62 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
     return counts;
   }, [products]);
 
+  const handleCategoryDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = categories.findIndex((c) => c.id === active.id);
+      const newIndex = categories.findIndex((c) => c.id === over.id);
+
+      const newOrder = arrayMove(categories, oldIndex, newIndex);
+      setCategories(newOrder);
+
+      try {
+        setIsReordering(true);
+        const updates = newOrder.map((cat, index) => ({
+          id: cat.id,
+          order: index
+        }));
+        await reorderCategories(updates);
+        toast.success("Ordem das categorias salva!");
+      } catch (error) {
+        console.error('Erro ao salvar nova ordem das categorias:', error);
+        toast.error('Erro ao salvar nova ordem das categorias.');
+        fetchData(); // Reverte
+      } finally {
+        setIsReordering(false);
+      }
+    }
+  };
+
+  const handleProductDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = products.findIndex((p) => p.id === active.id);
+      const newIndex = products.findIndex((p) => p.id === over.id);
+
+      const newOrder = arrayMove(products, oldIndex, newIndex);
+      setProducts(newOrder);
+
+      try {
+        setIsReordering(true);
+        const updates = newOrder.map((prod, index) => ({
+          id: prod.id,
+          order: index
+        }));
+        await reorderProducts(updates);
+        toast.success("Ordem dos produtos salva!");
+      } catch (error) {
+        console.error('Erro ao salvar nova ordem dos produtos:', error);
+        toast.error('Erro ao salvar nova ordem dos produtos.');
+        fetchData(); // Reverte
+      } finally {
+        setIsReordering(false);
+      }
+    }
+  };
+
   if (isLoading && products.length === 0) return (
     <div className="flex flex-col h-64 items-center justify-center opacity-30 gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
@@ -131,7 +429,7 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                         "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-tighter italic",
                         categoryFilter === 'all' 
                             ? "bg-slate-900 text-white shadow-md shadow-slate-900/20 translate-x-1" 
-                            : "text-slate-400 hover:bg-white hover:text-slate-600"
+                            : "text-slate-400 hover:bg-white hover:text-slate-600 ml-5"
                     )}
                 >
                     <div className="flex items-center gap-3">
@@ -146,29 +444,26 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                 <div className="h-px bg-slate-200/50 my-2 mx-2" />
 
                 <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
-                    {categories.map((cat) => (
-                        <button 
-                            key={cat.id}
-                            onClick={() => setCategoryFilter(cat.id)}
-                            className={cn(
-                                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-tighter italic group",
-                                categoryFilter === cat.id 
-                                    ? "bg-white border-2 border-orange-500 text-orange-600 shadow-sm translate-x-1" 
-                                    : "text-slate-400 border-2 border-transparent hover:bg-white hover:border-slate-100"
-                            )}
-                        >
-                            <div className="flex items-center gap-3">
-                                <Hash size={14} className={categoryFilter === cat.id ? "text-orange-500" : "text-slate-200 group-hover:text-slate-400"} />
-                                <span className="truncate">{cat.name}</span>
-                            </div>
-                            <span className={cn(
-                                "text-[9px] font-black px-1.5 py-0.5 rounded-md", 
-                                categoryFilter === cat.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-300 group-hover:bg-slate-200 group-hover:text-slate-500"
-                            )}>
-                                {categoryCounts[cat.id] || 0}
-                            </span>
-                        </button>
-                    ))}
+                    <DndContext 
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleCategoryDragEnd}
+                    >
+                      <SortableContext 
+                        items={categories.map(c => c.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {categories.map((cat) => (
+                            <SortableCategoryItem 
+                              key={cat.id}
+                              cat={cat}
+                              categoryFilter={categoryFilter}
+                              categoryCount={categoryCounts[cat.id]}
+                              onSelect={setCategoryFilter}
+                            />
+                        ))}
+                      </SortableContext>
+                    </DndContext>
                 </div>
             </div>
         </aside>
@@ -190,124 +485,41 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
 
             <Card className="p-0 overflow-hidden border border-slate-200 shadow-xl bg-white rounded-2xl" noPadding>
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200">
-                    <table className="w-full text-left border-collapse table-fixed min-w-[850px]">
-                    <thead className="bg-slate-50/80 border-b border-slate-100">
-                        <tr>
-                            <th className="w-[35%] px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produto / Descrição</th>
-                            <th className="w-[12%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Canais</th>
-                            <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Estoque</th>
-                            <th className="w-[12%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Preço</th>
-                            <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Status</th>
-                            <th className="w-[15%] px-4 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest px-6">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                        {filteredProducts.map(product => {
-                            const lowestPrice = product.sizes && product.sizes.length > 0 
-                                ? Math.min(...product.sizes.map(s => s.price)) 
-                                : product.price;
-
-                            return (
-                                <tr key={product.id} className="hover:bg-slate-50/50 transition-colors group">
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-100 shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                                                {product.imageUrl ? (
-                                                    <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <ImageIcon size={20} className="text-slate-300" />
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col min-w-0">
-                                                <div className="flex items-center gap-1.5 overflow-hidden">
-                                                    <span className="font-bold text-xs uppercase italic tracking-tight truncate">
-                                                        {product.name || <span className="text-rose-400 italic">S/ Nome</span>}
-                                                    </span>
-                                                    {product.isFeatured && <Star size={10} className="fill-amber-400 text-amber-400 shrink-0"/>}
-                                                </div>
-                                                <div className="flex items-center gap-1 mt-0.5">
-                                                    <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest italic truncate">
-                                                        Ref: {product.id.slice(-6).toUpperCase()}
-                                                    </span>
-                                                    {product.categories?.slice(0, 1).map(c => (
-                                                        <span key={c.id} className="text-[7px] font-black bg-orange-50 text-orange-400 px-1 rounded italic uppercase">
-                                                            {c.name}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center justify-center gap-1.5">
-                                            <div 
-                                                onClick={() => handleToggleFlag(product.id, 'allowDelivery', !!product.allowDelivery)}
-                                                title="Delivery" 
-                                                className={cn(
-                                                    "w-7 h-7 rounded-lg flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
-                                                    product.allowDelivery ? "bg-blue-50 border-blue-100 text-blue-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
-                                                )}
-                                            >
-                                                <Truck size={12} />
-                                            </div>
-                                            <div 
-                                                onClick={() => handleToggleFlag(product.id, 'allowPos', !!product.allowPos)}
-                                                title="Salão / PDV" 
-                                                className={cn(
-                                                    "w-7 h-7 rounded-lg flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
-                                                    product.allowPos ? "bg-emerald-50 border-emerald-100 text-emerald-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
-                                                )}
-                                            >
-                                                <Utensils size={12} />
-                                            </div>
-                                            <div 
-                                                onClick={() => handleToggleFlag(product.id, 'allowOnline', !!product.allowOnline)}
-                                                title="Pedido Online" 
-                                                className={cn(
-                                                    "w-7 h-7 rounded-lg flex items-center justify-center border transition-all cursor-pointer hover:scale-110 active:scale-95",
-                                                    product.allowOnline ? "bg-purple-50 border-purple-100 text-purple-500 shadow-sm" : "bg-slate-50 border-slate-100 text-slate-200 opacity-40 hover:opacity-100"
-                                                )}
-                                            >
-                                                <Globe size={12} />
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={cn(
-                                            "inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase border",
-                                            product.stock < 10 ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                        )}>
-                                            {product.stock} un
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <div className="flex flex-col items-center">
-                                            {product.sizes?.length > 0 && <span className="text-[7px] font-black text-orange-500 uppercase leading-none mb-0.5 tracking-tighter">Variantes</span>}
-                                            <span className="font-black text-xs italic tracking-tighter">R$ {lowestPrice.toFixed(2)}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex flex-col items-center gap-1">
-                                            <div 
-                                                onClick={() => handleToggleFlag(product.id, 'isAvailable', !!product.isAvailable)}
-                                                className={cn("w-8 h-4 rounded-full relative transition-all cursor-pointer shadow-inner", product.isAvailable ? "bg-emerald-500" : "bg-slate-200")}
-                                            >
-                                                <div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-md", product.isAvailable ? "left-4.5" : "left-0.5")} />
-                                            </div>
-                                            <span className={cn("text-[7px] font-black uppercase tracking-widest leading-none", product.isAvailable ? "text-emerald-500" : "text-slate-400")}>{product.isAvailable ? 'ON' : 'OFF'}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex items-center justify-end gap-1.5 px-2">
-                                            <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/products/${product.id}`)}><Edit size={16}/></Button>
-                                            <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => handleDelete(product.id)}><Trash2 size={16}/></Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                    </table>
+                    <DndContext 
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleProductDragEnd}
+                    >
+                      <table className="w-full text-left border-collapse table-fixed min-w-[850px]">
+                      <thead className="bg-slate-50/80 border-b border-slate-100">
+                          <tr>
+                              <th className="w-[35%] px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produto / Descrição</th>
+                              <th className="w-[12%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Canais</th>
+                              <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Estoque</th>
+                              <th className="w-[12%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Preço</th>
+                              <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Status</th>
+                              <th className="w-[15%] px-4 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest px-6">Ações</th>
+                          </tr>
+                      </thead>
+                      <SortableContext 
+                        items={filteredProducts.map(p => p.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <tbody className="divide-y divide-slate-50">
+                            {filteredProducts.map(product => (
+                                <SortableProductRow 
+                                  key={product.id}
+                                  product={product}
+                                  onToggleFlag={handleToggleFlag}
+                                  onDelete={handleDelete}
+                                  navigate={navigate}
+                                  isSortable={categoryFilter !== 'all'}
+                                />
+                            ))}
+                        </tbody>
+                      </SortableContext>
+                      </table>
+                    </DndContext>
                 </div>
                 {filteredProducts.length === 0 && (
                     <div className="p-16 text-center bg-slate-50/30">
@@ -320,6 +532,13 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
             </Card>
         </div>
       </div>
+      
+      {isReordering && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-10 duration-300 z-50 border border-white/10">
+          <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
+          <span className="text-[9px] font-black uppercase tracking-[0.1em] italic">Sincronizando nova ordem...</span>
+        </div>
+      )}
     </div>
   );
 };
