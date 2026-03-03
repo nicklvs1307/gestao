@@ -5,7 +5,7 @@ import * as LucideIcons from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getCategories } from '../services/api/categories';
 import { getProducts, createProduct, updateProduct, uploadProductImage, getProductById } from '../services/api/products';
-import { getAddonGroups } from '../services/api/addonService';
+import { addonService } from '../services/api/addonService';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -91,7 +91,7 @@ const ProductFormPage = () => {
         const loadData = async () => {
             try {
                 setIsLoading(true);
-                const [cats, addons] = await Promise.all([getCategories(true), getAddonGroups()]);
+                const [cats, addons] = await Promise.all([getCategories(true), addonService.getAll()]);
                 setCategories(cats);
                 setAllAddonGroups(addons);
 
