@@ -211,103 +211,114 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     onDecrement?: () => void,
     showQuantityControls?: boolean
   }) => (
-    <Card 
-        onClick={onToggle} 
-        noPadding
-        className={cn(
-            "flex min-h-[9rem] overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2 group", 
-            isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 scale-[1.02] z-10" : "border-slate-100 bg-white hover:border-slate-200"
-        )}
+    <motion.div
+        layout
+        initial={false}
+        animate={{ height: isSelected ? 'auto' : '9rem' }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="w-full"
     >
-      {/* Badge de Seleção com Blur */}
-      <AnimatePresence mode="wait">
-        {isSelected && (
-            <motion.div 
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              className="absolute top-2 right-2 z-20 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white"
-            >
-                <Check size={14} strokeWidth={4} />
-            </motion.div>
-        )}
-      </AnimatePresence>
+        <Card 
+            onClick={onToggle} 
+            noPadding
+            className={cn(
+                "flex h-full overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2 group", 
+                isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 z-10" : "border-slate-100 bg-white hover:border-slate-200"
+            )}
+        >
+          {/* Badge de Seleção com Blur */}
+          <AnimatePresence mode="wait">
+            {isSelected && (
+                <motion.div 
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  className="absolute top-2 right-2 z-20 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white"
+                >
+                    <Check size={14} strokeWidth={4} />
+                </motion.div>
+            )}
+          </AnimatePresence>
 
-      {/* Imagem Estilo Borda Infinita (Esquerda) */}
-      <div className="w-32 md:w-36 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
-        {item.imageUrl ? (
-          <>
-            <img 
-              src={getImageUrl(item.imageUrl)} 
-              alt={item.name} 
-              className={cn(
-                "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
-                isSelected && "scale-110"
-              )} 
-            />
-            {/* Overlay sutil para integração da imagem */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
-          </>
-        ) : (
-          <div className="flex items-center justify-center w-full h-full text-slate-200">
-             <ShoppingBag size={40} strokeWidth={1} />
-          </div>
-        )}
-        
-        {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
-      </div>
-      
-      {/* Conteúdo à Direita */}
-      <div className="flex flex-col flex-grow p-4 min-w-0 justify-between">
-          <div className="space-y-1">
-              <h3 className={cn(
-                "text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
-                isSelected ? "text-primary" : "text-slate-900"
-              )}>
-                {item.name}
-              </h3>
-              <p className="text-[10px] text-slate-500 leading-relaxed font-medium uppercase tracking-tight opacity-80">
-                {item.description}
-              </p>
-          </div>
-          
-          <div className="flex justify-between items-end mt-2">
-            <div className="flex flex-col">
-                 {price !== undefined && price > 0 && (
-                   <div className="flex items-baseline gap-1">
-                      <span className="text-xs font-black text-primary">R$</span>
-                      <span className="text-xl font-black text-slate-900 tracking-tighter italic">
-                          {price.toFixed(2).replace('.', ',')}
-                      </span>
-                   </div>
-                 )}
-            </div>
-            
-            {isSelected && showQuantityControls ? (
-              <div className="flex items-center bg-white rounded-xl p-0.5 border border-slate-100 shadow-sm" onClick={e => e.stopPropagation()}>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onDecrement?.(); }} 
-                  className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
-                >
-                  <Minus size={12} strokeWidth={3} />
-                </button>
-                <span className="w-5 text-center font-black text-xs text-slate-900 italic">{itemQty}</span>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onIncrement?.(); }} 
-                  className="w-7 h-7 flex items-center justify-center text-primary hover:text-primary/80 transition-colors"
-                >
-                  <Plus size={12} strokeWidth={3} />
-                </button>
-              </div>
-            ) : isSelected && (
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
-                <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] italic">Ok</span>
+          {/* Imagem Estilo Borda Infinita (Esquerda) */}
+          <div className="w-32 md:w-36 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50 h-full min-h-[9rem]">
+            {item.imageUrl ? (
+              <>
+                <img 
+                  src={getImageUrl(item.imageUrl)} 
+                  alt={item.name} 
+                  className={cn(
+                    "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+                    isSelected && "scale-110"
+                  )} 
+                />
+                {/* Overlay sutil para integração da imagem */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
+              </>
+            ) : (
+              <div className="flex items-center justify-center w-full h-full text-slate-200">
+                 <ShoppingBag size={40} strokeWidth={1} />
               </div>
             )}
+            
+            {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
           </div>
-      </div>
-    </Card>
+          
+          {/* Conteúdo à Direita */}
+          <div className="flex flex-col flex-grow p-4 min-w-0 justify-between">
+              <div className="space-y-1">
+                  <h3 className={cn(
+                    "text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
+                    isSelected ? "text-primary" : "text-slate-900"
+                  )}>
+                    {item.name}
+                  </h3>
+                  <p className={cn(
+                    "text-[10px] text-slate-500 leading-relaxed font-medium uppercase tracking-tight opacity-80",
+                    !isSelected && "line-clamp-2"
+                  )}>
+                    {item.description}
+                  </p>
+              </div>
+              
+              <div className="flex justify-between items-end mt-2">
+                <div className="flex flex-col">
+                     {price !== undefined && price > 0 && (
+                       <div className="flex items-baseline gap-1">
+                          <span className="text-xs font-black text-primary">R$</span>
+                          <span className="text-xl font-black text-slate-900 tracking-tighter italic">
+                              {price.toFixed(2).replace('.', ',')}
+                          </span>
+                       </div>
+                     )}
+                </div>
+                
+                {isSelected && showQuantityControls ? (
+                  <div className="flex items-center bg-white rounded-xl p-0.5 border border-slate-100 shadow-sm" onClick={e => e.stopPropagation()}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onDecrement?.(); }} 
+                      className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <Minus size={12} strokeWidth={3} />
+                    </button>
+                    <span className="w-5 text-center font-black text-xs text-slate-900 italic">{itemQty}</span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onIncrement?.(); }} 
+                      className="w-7 h-7 flex items-center justify-center text-primary hover:text-primary/80 transition-colors"
+                    >
+                      <Plus size={12} strokeWidth={3} />
+                    </button>
+                  </div>
+                ) : isSelected && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                    <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] italic">Ok</span>
+                  </div>
+                )}
+              </div>
+          </div>
+        </Card>
+    </motion.div>
   );
 
   return (
