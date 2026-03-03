@@ -1,29 +1,19 @@
 import React from 'react';
-import type { Product, Promotion } from '../types';
+import type { Product } from '../types';
 import { Plus, ShoppingBag } from 'lucide-react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { calculateDiscountedPrice, calculateStartingPrice, hasMultiplePrices } from '../utils/product';
+import { getImageUrl } from '../utils/image';
 
 interface DeliveryProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
 }
 
-const calculateDiscountedPrice = (price: number, promotion: Promotion) => {
-  if (promotion.discountType === 'percentage') {
-    return price * (1 - promotion.discountValue / 100);
-  }
-  if (promotion.discountType === 'fixed_amount') {
-    return price - promotion.discountValue;
-  }
-  return price;
-};
-
 const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAddToCart }) => {
-  const hasSizes = product.sizes && product.sizes.length > 0;
-  const basePrice = hasSizes 
-    ? Math.min(...product.sizes.map(s => s.price)) 
-    : product.price;
+  const showFromLabel = hasMultiplePrices(product);
+  const basePrice = calculateStartingPrice(product);
 
   const activePromotion = product.promotions?.find(p => p.isActive);
   const hasDiscount = !!activePromotion;
@@ -46,7 +36,7 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
         {product.imageUrl ? (
           <>
             <img 
-              src={product.imageUrl} 
+              src={getImageUrl(product.imageUrl)} 
               alt={product.name} 
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
             />
@@ -78,7 +68,7 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
           
           <div className="flex justify-between items-end">
             <div className="flex flex-col">
-                 {hasSizes && (
+                 {showFromLabel && (
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-0.5">A partir de</span>
                  )}
                  {hasDiscount && (

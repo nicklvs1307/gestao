@@ -1,6 +1,7 @@
 import React from 'react';
-import type { Product, Promotion } from '../types';
+import type { Product } from '../types';
 import { getImageUrl } from '../utils/image';
+import { calculateDiscountedPrice, calculateStartingPrice, hasMultiplePrices } from '../utils/product';
 
 interface ProductCardProps {
   product: Product;
@@ -8,25 +9,11 @@ interface ProductCardProps {
   onAddToCartFromCard: (product: Product) => void;
 }
 
-// Função para calcular o preço com desconto
-const calculateDiscountedPrice = (price: number, promotion: Promotion) => {
-  if (promotion.discountType === 'percentage') {
-    return price * (1 - promotion.discountValue / 100);
-  }
-  if (promotion.discountType === 'fixed_amount') {
-    return price - promotion.discountValue;
-  }
-  return price;
-};
-
 const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAddToCartFromCard }) => {
   const activePromotion = product.promotions?.find(p => p.isActive);
-  const hasSizes = product.sizes && product.sizes.length > 0;
+  const showFromLabel = hasMultiplePrices(product);
   
-  const basePrice = hasSizes 
-    ? Math.min(...product.sizes.map(s => s.price)) 
-    : product.price;
-
+  const basePrice = calculateStartingPrice(product);
   const finalPrice = activePromotion ? calculateDiscountedPrice(basePrice, activePromotion) : basePrice;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -75,7 +62,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAd
             {product.name}
           </h3>
           <div className="flex flex-col items-end shrink-0">
-             {hasSizes && (
+             {showFromLabel && (
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">A partir de</span>
              )}
              {activePromotion ? (
