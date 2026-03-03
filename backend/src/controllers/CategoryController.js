@@ -3,105 +3,122 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const { CreateCategorySchema, UpdateCategorySchema, ReorderCategoriesSchema } = require('../schemas/categorySchema');
 
 class CategoryController {
-  
-  // GET /api/categories (Flat)
-  getCategoriesFlat = asyncHandler(async (req, res) => {
-    const categories = await prisma.category.findMany({ 
-        where: { restaurantId: req.restaurantId }, 
-        orderBy: { name: 'asc' } 
+  // Buscar todas as categorias com produtos
+  getCategories = asyncHandler(async (req, res) => {
+    const categories = await prisma.category.findMany({
+      where: { restaurantId: req.restaurantId },
+      include: {
+        products: {
+            include: {
+                sizes: true,
+                addonGroups: {
+                    include: {
+                        addons: true
+                    }
+                },
+                promotions: true
+            },
+            orderBy: { order: 'asc' }
+        },
+        addonGroups: true
+      },
+      orderBy: { order: 'asc' }
     });
     res.json(categories);
   });
 
-  // GET /api/categories/hierarchy
-  getCategoriesHierarchy = asyncHandler(async (req, res) => {
-    const categories = await prisma.category.findMany({ 
-        where: { restaurantId: req.restaurantId, parentId: null }, 
-        include: { 
-            subCategories: { orderBy: { order: 'asc' } } 
-        }, 
-        orderBy: { order: 'asc' } 
+  // Buscar categorias "flat" (sem aninhamento profundo para seletores)
+  getFlatCategories = asyncHandler(async (req, res) => {
+    const categories = await prisma.category.findMany({
+      where: { restaurantId: req.restaurantId },
+      orderBy: { order: 'asc' }
     });
     res.json(categories);
   });
 
-  // GET /api/client/categories/:restaurantId
-  getClientCategories = asyncHandler(async (req, res) => {
-    const { restaurantId } = req.params;
-    const categories = await prisma.category.findMany({ 
-        where: { restaurantId }, 
-        orderBy: { order: 'asc' } 
-    }); 
-    res.json(categories);
-  });
-
-  // POST /api/categories
   createCategory = asyncHandler(async (req, res) => {
-    const validatedData = CreateCategorySchema.parse(req.body);
-    const { parentId, addonGroups, ...rest } = validatedData;
+    const { 
+        name, description, cuisineType, order, saiposIntegrationCode, 
+        isActive, allowDelivery, allowPos, allowOnline,
+        availableDays, startTime, endTime 
+    } = req.body;
 
-    const data = { 
-        ...rest, 
-        restaurant: { connect: { id: req.restaurantId } } 
-    };
-    
-    if (parentId) {
-        data.parent = { connect: { id: parentId } };
-    }
-
-    if (addonGroups && addonGroups.length > 0) {
-        data.addonGroups = {
-            connect: addonGroups.map(id => ({ id }))
-        };
-    }
-
-    const category = await prisma.category.create({ 
-      data,
-      include: { addonGroups: true }
+    const category = await prisma.category.create({
+      data: {
+        name,
+        description,
+        cuisineType,
+        order: order || 0,
+        saiposIntegrationCode,
+        isActive: isActive !== undefined ? isActive : true,
+        allowDelivery: allowDelivery !== undefined ? allowDelivery : true,
+        allowPos: allowPos !== undefined ? allowPos : true,
+        allowOnline: allowOnline !== undefined ? allowOnline : true,
+        availableDays,
+        startTime,
+        endTime,
+        restaurant: { connect: { id: req.restaurantId } }
+      }
     });
     res.status(201).json(category);
   });
 
-  // PUT /api/categories/:id
+  getCategoryById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        products: true,
+        addonGroups: true
+      }
+    });
+    if (!category) {
+      return res.status(404).json({ message: 'Categoria não encontrada' });
+    }
+    res.json(category);
+  });
+
   updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const validatedData = UpdateCategorySchema.parse(req.body);
-    const { parentId, addonGroups, ...rest } = validatedData;
+    const { 
+        name, description, cuisineType, order, saiposIntegrationCode, 
+        isActive, allowDelivery, allowPos, allowOnline,
+        availableDays, startTime, endTime 
+    } = req.body;
 
-    const data = { ...rest };
-    
-    // Se parentId vier null explicitamente, desconecta. Se vier string, conecta.
-    if (parentId !== undefined) {
-        data.parentId = parentId;
-    }
-
-    if (addonGroups !== undefined) {
-        data.addonGroups = {
-            set: addonGroups.map(groupId => ({ id: groupId }))
-        };
-    }
-
-    const category = await prisma.category.update({ 
-        where: { id }, 
-        data,
-        include: { addonGroups: true }
+    const category = await prisma.category.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        cuisineType,
+        order,
+        saiposIntegrationCode,
+        isActive,
+        allowDelivery,
+        allowPos,
+        allowOnline,
+        availableDays,
+        startTime,
+        endTime
+      }
     });
     res.json(category);
   });
 
-  // DELETE /api/categories/:id
   deleteCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    await prisma.category.delete({ where: { id } }); 
+    await prisma.category.delete({
+      where: { id }
+    });
     res.status(204).send();
   });
 
-  // PATCH /api/categories/reorder
   reorderCategories = asyncHandler(async (req, res) => {
-    const validatedData = ReorderCategoriesSchema.parse(req.body);
+    const { items } = req.body;
     
     await prisma.$transaction(
-        validatedData.items.map(item => 
+        items.map(item => 
             prisma.category.update({
                 where: { id: item.id },
                 data: { order: item.order }

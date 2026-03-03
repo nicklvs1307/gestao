@@ -179,8 +179,20 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   if (!restaurant) return <div className="flex items-center justify-center min-h-screen bg-background text-foreground font-bold">Restaurante não encontrado.</div>;
 
   const allCategories = restaurant.categories || [];
-  const categories = allCategories.filter(isCategoryAvailable);
+  // No DeliveryPage, filtramos categorias que estão ativas E permitem Delivery OU Online
+  const categories = allCategories.filter(cat => 
+    cat.isActive && 
+    (cat.allowDelivery || cat.allowOnline) && 
+    isCategoryAvailable(cat)
+  );
   const isStoreOpen = restaurant.settings?.isOpen ?? true;
+
+  // Função auxiliar para filtrar produtos válidos para Delivery/Online
+  const getVisibleProducts = (category: any) => {
+    return (category.products || []).filter((p: any) => 
+        p.isAvailable && (p.allowDelivery || p.allowOnline)
+    );
+  };
 
   return (
     <RestaurantProvider settings={restaurant.settings || null}>
@@ -310,8 +322,8 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-4">
-                    {categories.flatMap(cat => cat.products || [])
-                        .filter(p => p.isAvailable && p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    {categories.flatMap(cat => getVisibleProducts(cat))
+                        .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
                         .map(product => (
                             <DeliveryProductCard 
                                 key={product.id} 
@@ -321,8 +333,8 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                         ))
                     }
                 </div>
-                {categories.flatMap(cat => cat.products || [])
-                    .filter(p => p.isAvailable && p.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                {categories.flatMap(cat => getVisibleProducts(cat))
+                    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                         <div className="text-center py-12">
                             <p className="text-muted-foreground font-bold">Nenhum produto encontrado...</p>
                         </div>
@@ -367,9 +379,9 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 <main className="p-5 space-y-8">
                     {categories.map(category => {
                         if (activeCategory !== 'todos' && activeCategory !== category.id) return null;
-                        const products = category.products?.filter(p => p.isAvailable);
+                        const products = getVisibleProducts(category);
 
-                        if (!products || products.length === 0) return null;
+                        if (products.length === 0) return null;
 
                         return (
                             <section key={category.id}>

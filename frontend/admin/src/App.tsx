@@ -12,7 +12,7 @@ import Dashboard from './pages/Dashboard';
 import ProductManagement from './components/ProductManagement';
 import ProductFormPage from './pages/ProductFormPage';
 import CategoryManagement from './components/CategoryManagement';
-import CategoryFormModal from './components/CategoryFormModal';
+import CategoryFormPage from './pages/CategoryFormPage';
 import PromotionManagement from './components/PromotionManagement';
 import PromotionFormModal from './components/PromotionFormModal';
 import OrderManagement from './components/OrderManagement';
@@ -318,11 +318,17 @@ function AdminRoutes() {
         } />
         <Route path="/categories" element={
           <ProtectedRoute permission="categories:manage">
-            <CategoryManagement 
-              onAddCategoryClick={() => setCategoryModalOpen(true)}
-              onEditCategoryClick={handleEditCategoryClick}
-              refetchTrigger={refetchCategories}
-            />
+            <CategoryManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/categories/new" element={
+          <ProtectedRoute permission="categories:manage">
+            <CategoryFormPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/categories/:id" element={
+          <ProtectedRoute permission="categories:manage">
+            <CategoryFormPage />
           </ProtectedRoute>
         } />
         <Route path="/global-sizes" element={

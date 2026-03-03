@@ -107,7 +107,11 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   }, [showSplashScreen]);
 
   const availableCategories = useMemo(() => {
-    return categories.filter(isCategoryAvailable);
+    return categories.filter((cat: any) => 
+        cat.isActive && 
+        cat.allowPos && 
+        isCategoryAvailable(cat)
+    );
   }, [categories]);
 
   useEffect(() => {
@@ -170,11 +174,20 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   };
 
   const filteredProducts = useMemo(() => {
-    let products = allProducts;
+    // 1. Filtrar produtos que permitem Salão (allowPos) e estão disponíveis
+    let products = allProducts.filter((p: any) => p.isAvailable && p.allowPos);
     
-    // Filtro de Categorias corrigido para n:m
+    // 2. Filtrar produtos cujas categorias permitem Salão e estão ativas
+    const validCategoryIds = new Set(availableCategories.map((c: any) => c.id));
+    
+    products = products.filter((p: any) => {
+        const pCategories = p.categories || [];
+        return pCategories.some((c: any) => validCategoryIds.has(c.id));
+    });
+
+    // 3. Filtro por categoria selecionada (se não for "todos")
     if (activeCategory !== 'todos') {
-      products = products.filter(p => 
+      products = products.filter((p: any) => 
         p.categoryId === activeCategory || 
         (p.categories && p.categories.some((c: any) => c.id === activeCategory))
       );
@@ -182,10 +195,10 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
 
     if (searchTerm) {
       const low = searchTerm.toLowerCase();
-      products = products.filter(p => p.name.toLowerCase().includes(low) || p.description?.toLowerCase().includes(low));
+      products = products.filter((p: any) => p.name.toLowerCase().includes(low) || p.description?.toLowerCase().includes(low));
     }
-    return products.filter(p => p.isAvailable);
-  }, [allProducts, activeCategory, searchTerm]);
+    return products;
+  }, [allProducts, activeCategory, searchTerm, availableCategories]);
 
   return (
     <SplashScreenHandler
@@ -285,7 +298,7 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
             >
                 🔥 Tudo
             </button>
-            {availableCategories.map(cat => (
+            {availableCategories.map((cat: any) => (
                 <button 
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}

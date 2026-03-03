@@ -570,6 +570,12 @@ model Category {
   order       Int      @default(0)
   saiposIntegrationCode String?
   
+  // Visibilidade por Canal
+  isActive      Boolean  @default(true)
+  allowDelivery Boolean  @default(true)
+  allowPos      Boolean  @default(true)  // Salão / PDV
+  allowOnline   Boolean  @default(true)  // Cardápio Digital / App
+  
   // Disponibilidade
   availableDays String? @default("1,2,3,4,5,6,7") // Dias da semana separados por vírgula
   startTime     String? // Formato HH:mm

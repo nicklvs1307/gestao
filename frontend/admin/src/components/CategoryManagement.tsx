@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import type { Category } from '@/types/index';
 import { getCategories, deleteCategory, reorderCategories } from '../services/api';
-import { Plus, Edit, Trash2, Layers, Loader2, GripVertical, CheckCircle, RefreshCw, Clock } from 'lucide-react';
+import { Plus, Edit, Trash2, Layers, Loader2, GripVertical, RefreshCw, Truck, Utensils, Globe, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
   closestCenter,
@@ -25,14 +26,12 @@ import { Button } from './ui/Button';
 import { toast } from 'sonner';
 
 interface CategoryManagementProps {
-  onAddCategoryClick: () => void;
-  onEditCategoryClick: (category: Category) => void;
-  refetchTrigger: number;
+  refetchTrigger?: number;
 }
 
 interface SortableRowProps {
   category: Category;
-  onEdit: (category: Category) => void;
+  onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
@@ -53,18 +52,17 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
     position: 'relative' as const,
   };
 
-  const isSubcategory = !!category.parentId;
-
   return (
     <tr 
       ref={setNodeRef} 
       style={style}
       className={cn(
         "hover:bg-slate-50/80 transition-all group border-b border-slate-50 last:border-0",
-        isDragging && "bg-white shadow-2xl scale-[1.01] ring-1 ring-orange-500 z-50 rounded-lg"
+        isDragging && "bg-white shadow-2xl scale-[1.01] ring-1 ring-orange-500 z-50 rounded-lg",
+        !category.isActive && "opacity-60 bg-slate-50/30"
       )}
     >
-      <td className="px-4 py-2.5">
+      <td className="px-4 py-3">
         <div className="flex items-center gap-3">
            <button 
             {...attributes} 
@@ -75,56 +73,57 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
            </button>
            
            <div className={cn(
-             "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-all",
-             isSubcategory ? "bg-blue-50 text-blue-500 border border-blue-100" : "bg-orange-50 text-orange-500 border border-orange-100"
+             "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-all border",
+             category.isActive ? "bg-orange-50 text-orange-500 border-orange-100" : "bg-slate-100 text-slate-400 border-slate-200"
            )}>
-               <Layers size={18} />
+               <Layers size={20} />
            </div>
            
            <div className="flex flex-col">
-              <span className="font-bold text-xs text-slate-900 uppercase italic tracking-tight">{category.name}</span>
-              <div className="flex items-center gap-2 mt-0.5">
-                {isSubcategory ? (
-                  <span className="text-[7px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-widest leading-none">Sub</span>
-                ) : (
-                  <span className="text-[7px] bg-orange-500 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-widest leading-none">Main</span>
-                )}
+              <div className="flex items-center gap-2">
+                <span className="font-black text-xs text-slate-900 uppercase italic tracking-tight">{category.name}</span>
+                {!category.isActive && <span className="text-[7px] bg-slate-200 text-slate-500 px-1 py-0.5 rounded font-black uppercase">Oculto</span>}
+              </div>
+              <div className="flex items-center gap-2 mt-1">
                 {category.cuisineType && (
-                  <span className="text-[7px] text-slate-400 font-bold uppercase italic border-l border-slate-200 pl-2">{category.cuisineType}</span>
+                  <span className="text-[8px] text-slate-400 font-bold uppercase italic tracking-widest">{category.cuisineType}</span>
                 )}
               </div>
            </div>
         </div>
       </td>
       
-      <td className="px-4 py-2.5 text-center">
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex gap-0.5">
-            {category.availableDays?.split(',').map(d => (
-              <div key={d} className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Disponível" />
-            ))}
-          </div>
-          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Ativo</span>
+      <td className="px-4 py-3 text-center">
+        <div className="flex items-center justify-center gap-2">
+            <div title="Delivery" className={cn("p-1.5 rounded-lg border", category.allowDelivery ? "bg-blue-50 text-blue-500 border-blue-100" : "bg-slate-100 text-slate-300 border-slate-200 opacity-40")}>
+                <Truck size={12} />
+            </div>
+            <div title="Salão / PDV" className={cn("p-1.5 rounded-lg border", category.allowPos ? "bg-emerald-50 text-emerald-500 border-emerald-100" : "bg-slate-100 text-slate-300 border-slate-200 opacity-40")}>
+                <Utensils size={12} />
+            </div>
+            <div title="Cardápio Digital" className={cn("p-1.5 rounded-lg border", category.allowOnline ? "bg-purple-50 text-purple-500 border-purple-100" : "bg-slate-100 text-slate-300 border-slate-200 opacity-40")}>
+                <Globe size={12} />
+            </div>
         </div>
       </td>
 
-      <td className="px-4 py-2.5 text-right">
-        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1.5">
           <Button 
               variant="ghost"
               size="icon"
-              className="h-8 w-8 bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600 rounded-lg border border-slate-100" 
-              onClick={() => onEdit(category)}
+              className="h-9 w-9 bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-100" 
+              onClick={() => onEdit(category.id)}
           >
-            <Edit size={14} />
+            <Edit size={16} />
           </Button>
           <Button 
               variant="ghost"
               size="icon"
-              className="h-8 w-8 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg border border-slate-100" 
+              className="h-9 w-9 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-100" 
               onClick={() => onDelete(category.id)}
           >
-            <Trash2 size={14} />
+            <Trash2 size={16} />
           </Button>
         </div>
       </td>
@@ -132,7 +131,8 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
   );
 }
 
-function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTrigger }: CategoryManagementProps) {
+function CategoryManagement({ refetchTrigger }: CategoryManagementProps) {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +197,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
   };
 
   const handleDelete = async (categoryId: string) => {
-    if (!window.confirm('Excluir esta categoria permanentemente?')) return;
+    if (!window.confirm('Excluir esta categoria permanentemente? Isso pode afetar os produtos vinculados.')) return;
 
     try {
       await deleteCategory(categoryId);
@@ -221,16 +221,16 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
     <div className="space-y-4 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Categorias</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Categorias do Cardápio</h1>
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
-            <Layers size={12} className="text-orange-500" /> Estrutura do Cardápio Digital
+            <Layers size={12} className="text-orange-500" /> Estrutura e Visibilidade por Canais
           </p>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="bg-white rounded-lg h-10 w-10 p-0" onClick={fetchCategories}>
-                <RefreshCw size={16} />
+            <Button variant="outline" size="sm" className="bg-white rounded-xl h-10 w-10 p-0 border-slate-200" onClick={fetchCategories}>
+                <RefreshCw size={16} className={cn(isLoading && "animate-spin")} />
             </Button>
-            <Button onClick={onAddCategoryClick} className="rounded-lg px-6 h-10 italic font-black text-xs">
+            <Button onClick={() => navigate('/categories/new')} className="rounded-xl px-6 h-10 italic font-black text-xs shadow-lg">
                 <Plus size={16} className="mr-2" /> NOVA CATEGORIA
             </Button>
         </div>
@@ -253,7 +253,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
               <thead className="bg-slate-50/80 border-b border-slate-100">
                 <tr>
                   <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Nome e Organização</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Status Operacional</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Canais de Venda</th>
                   <th className="px-4 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Ações</th>
                 </tr>
               </thead>
@@ -266,7 +266,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
                     <SortableRow 
                       key={category.id} 
                       category={category} 
-                      onEdit={onEditCategoryClick}
+                      onEdit={(id) => navigate(`/categories/${id}`)}
                       onDelete={handleDelete}
                     />
                   ))}
@@ -289,7 +289,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
       {isReordering && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-10 duration-300 z-50 border border-white/10">
           <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
-          <span className="text-[9px] font-black uppercase tracking-[0.1em] italic">Salvando nova ordem...</span>
+          <span className="text-[9px] font-black uppercase tracking-[0.1em] italic">Sincronizando nova ordem...</span>
         </div>
       )}
     </div>

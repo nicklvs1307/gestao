@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Category" ADD COLUMN     "allowDelivery" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "allowOnline" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "allowPos" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "isActive" BOOLEAN NOT NULL DEFAULT true;
