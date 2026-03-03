@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getProducts } from '../services/api';
+import { getImageUrl } from '../utils/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
@@ -200,7 +201,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const sizes = product?.sizes || [];
 
   // Componente de Card de Sabor para Reuso (Réplica exata do DeliveryProductCard)
-  const FlavorCard = ({ item, isSelected, onToggle, price }: { item: any, isSelected: boolean, onToggle: () => void, price?: number }) => (
+  const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty = 0, onIncrement, onDecrement, showQuantityControls = false }: { 
+    item: any, 
+    isSelected: boolean, 
+    onToggle: () => void, 
+    price?: number,
+    quantity?: number,
+    onIncrement?: () => void,
+    onDecrement?: () => void,
+    showQuantityControls?: boolean
+  }) => (
     <Card 
         onClick={onToggle} 
         noPadding
@@ -228,7 +238,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         {item.imageUrl ? (
           <>
             <img 
-              src={item.imageUrl} 
+              src={getImageUrl(item.imageUrl)} 
               alt={item.name} 
               className={cn(
                 "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
@@ -273,7 +283,23 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                  )}
             </div>
             
-            {isSelected && (
+            {isSelected && showQuantityControls ? (
+              <div className="flex items-center bg-white rounded-xl p-0.5 border border-slate-100 shadow-sm" onClick={e => e.stopPropagation()}>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDecrement?.(); }} 
+                  className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  <Minus size={12} strokeWidth={3} />
+                </button>
+                <span className="w-5 text-center font-black text-xs text-slate-900 italic">{itemQty}</span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onIncrement?.(); }} 
+                  className="w-7 h-7 flex items-center justify-center text-primary hover:text-primary/80 transition-colors"
+                >
+                  <Plus size={12} strokeWidth={3} />
+                </button>
+              </div>
+            ) : isSelected && (
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
                 <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] italic">Ok</span>
@@ -316,7 +342,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
             <div className="w-full md:w-5/12 h-40 md:h-auto relative shrink-0">
               {product.imageUrl ? (
-                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400">
                   <ShoppingBag size={80} strokeWidth={1} />
@@ -371,6 +397,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 {/* ADICIONAIS / GRUPOS DE SABORES */}
                 {addonGroups.map((group) => {
                   const isFlavorType = group.isFlavorGroup;
+                  const hasImages = group.addons?.some(a => a.imageUrl);
+                  const useCardLayout = isFlavorType || hasImages;
                   
                   return (
                     <div key={group.id} className="space-y-4">
@@ -385,19 +413,28 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                           </div>
                       </div>
 
-                      {isFlavorType ? (
+                      {useCardLayout ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {(group.addons || []).map(addon => {
                             const selectedAddon = selectedAddons.find(a => a.id === addon.id);
                             const isSelected = !!selectedAddon;
+                            const currentQty = selectedAddon?.quantity || 0;
+                            const maxQty = addon.maxQuantity || 1;
                             
                             return (
                                 <FlavorCard 
                                     key={addon.id}
                                     item={addon}
                                     isSelected={isSelected}
-                                    onToggle={() => handleAddonQuantityChange(addon, isSelected ? -1 : 1, group)}
+                                    onToggle={() => {
+                                      if (isSelected && !isFlavorType && maxQty > 1) return; // Se for addon comum com qtd, não deseleciona no clique do card
+                                      handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)
+                                    }}
                                     price={addon.price}
+                                    quantity={currentQty}
+                                    showQuantityControls={!isFlavorType && (maxQty > 1 || (group.maxQuantity && group.maxQuantity > 1))}
+                                    onIncrement={() => handleAddonQuantityChange(addon, 1, group)}
+                                    onDecrement={() => handleAddonQuantityChange(addon, -1, group)}
                                 />
                             );
                           })}
