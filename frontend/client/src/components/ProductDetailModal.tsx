@@ -215,7 +215,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         onClick={onToggle} 
         noPadding
         className={cn(
-            "flex h-36 overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2 group", 
+            "flex min-h-[9rem] overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2 group", 
             isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 scale-[1.02] z-10" : "border-slate-100 bg-white hover:border-slate-200"
         )}
     >
@@ -234,7 +234,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       </AnimatePresence>
 
       {/* Imagem Estilo Borda Infinita (Esquerda) */}
-      <div className="w-36 h-full shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
+      <div className="w-32 md:w-36 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
         {item.imageUrl ? (
           <>
             <img 
@@ -266,12 +266,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
               )}>
                 {item.name}
               </h3>
-              <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed font-medium uppercase tracking-tight opacity-80">
+              <p className="text-[10px] text-slate-500 leading-relaxed font-medium uppercase tracking-tight opacity-80">
                 {item.description}
               </p>
           </div>
           
-          <div className="flex justify-between items-end">
+          <div className="flex justify-between items-end mt-2">
             <div className="flex flex-col">
                  {price !== undefined && price > 0 && (
                    <div className="flex items-baseline gap-1">
@@ -459,9 +459,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                    <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300", isSelected ? "border-primary bg-primary" : "border-slate-300")}>
                                       {isSelected && <Check size={12} className="text-white" strokeWidth={4} />}
                                    </div>
-                                   <div className="flex flex-col leading-tight">
+                                   <div className="flex flex-col leading-tight min-w-0 pr-2">
                                     <span className={cn("font-black text-xs uppercase italic tracking-tighter", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
-                                    {addon.price > 0 && <span className="text-[9px] font-black text-slate-400 mt-1 uppercase">+ R$ {addon.price.toFixed(2).replace('.', ',')}</span>}
+                                    {addon.description && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight mt-0.5 leading-tight">{addon.description}</p>}
+                                    {addon.price > 0 && <span className="text-[9px] font-black text-slate-500 mt-1 uppercase">+ R$ {addon.price.toFixed(2).replace('.', ',')}</span>}
                                    </div>
                                 </div>
                                 
