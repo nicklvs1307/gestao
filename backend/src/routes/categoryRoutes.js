@@ -5,6 +5,7 @@ const { needsAuth, checkPermission } = require('../middlewares/auth');
 
 // Admin routes
 router.get('/flat', needsAuth, CategoryController.getCategoriesFlat);
+router.get('/:id', needsAuth, CategoryController.getCategoryById);
 router.get('/', needsAuth, CategoryController.getCategoriesHierarchy);
 router.post('/', needsAuth, checkPermission('products:manage'), CategoryController.createCategory);
 router.patch('/reorder', needsAuth, checkPermission('products:manage'), CategoryController.reorderCategories);
