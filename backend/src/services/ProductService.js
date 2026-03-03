@@ -19,14 +19,16 @@ class ProductService {
       }),
     };
 
-    const products = await prisma.product.findMany({
+    let products = await prisma.product.findMany({
       where,
       include: {
         categories: true,
         sizes: true,
         addonGroups: {
           include: {
-            addons: true,
+            addons: {
+              orderBy: { order: 'asc' }
+            },
           },
         },
         promotions: {
@@ -40,6 +42,9 @@ class ProductService {
       orderBy: { order: 'asc' },
     });
 
+    // Aplicar ordenação personalizada de grupos se existir o campo addonGroupsOrder
+    products = products.map(p => this._applyAddonGroupOrder(p));
+
     return products;
   }
 
@@ -51,7 +56,9 @@ class ProductService {
         sizes: true,
         addonGroups: {
           include: {
-            addons: true,
+            addons: {
+              orderBy: { order: 'asc' }
+            },
           },
         },
         promotions: true,
@@ -62,11 +69,28 @@ class ProductService {
       throw new AppError('Product not found', 404);
     }
 
+    return this._applyAddonGroupOrder(product);
+  }
+
+  _applyAddonGroupOrder(product) {
+    if (!product.addonGroupsOrder || !Array.isArray(product.addonGroupsOrder)) {
+      return product;
+    }
+
+    const orderMap = new Map();
+    product.addonGroupsOrder.forEach((id, index) => orderMap.set(id, index));
+
+    product.addonGroups.sort((a, b) => {
+      const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
+      const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
+      return orderA - orderB;
+    });
+
     return product;
   }
 
   async createProduct(data, restaurantId) {
-    // Validação de Nome Único (Regra de Negócio)
+    // Validação de Nome Único
     const existingProduct = await prisma.product.findFirst({
       where: { name: data.name, restaurantId },
     });
@@ -75,28 +99,31 @@ class ProductService {
       throw new AppError('Product with this name already exists in this restaurant', 400);
     }
 
-    // Preparar dados para criação (tratando relacionamentos)
     const { 
       categoryIds = [], 
       sizes = [], 
       addonGroups = [], 
       ingredients = [],
-      promotions, // Extrair para evitar erro de validação Prisma
+      promotions,
       ...productData 
     } = data;
+
+    // Se addonGroups foi enviado, salvamos a ordem dos IDs
+    const addonGroupsOrder = (addonGroups || []).map(g => g.id);
 
     const product = await prisma.product.create({
       data: {
         ...productData,
+        addonGroupsOrder,
         restaurantId,
         categories: {
-          connect: (categoryIds || []).map((id) => ({ id })), // Conecta categorias existentes
+          connect: (categoryIds || []).map((id) => ({ id })),
         },
         sizes: {
-          create: sizes || [], // Cria tamanhos aninhados
+          create: sizes || [],
         },
         addonGroups: {
-          connect: (addonGroups || []).map((group) => ({ id: group.id })), // Conecta grupos existentes
+          connect: (addonGroups || []).map((group) => ({ id: group.id })),
         },
         ingredients: {
           create: (ingredients || []).map((ing) => ({
@@ -116,7 +143,6 @@ class ProductService {
   }
 
   async updateProduct(id, data, restaurantId) {
-    // Verificar se existe
     await this.getProductById(id, restaurantId);
 
     const { 
@@ -127,26 +153,31 @@ class ProductService {
       sizes, 
       addonGroups, 
       ingredients,
-      promotions, // Extrair para evitar erro de validação Prisma
+      promotions,
       ...productData 
     } = data;
 
-    // Atualização Complexa (Prisma transaction implícita)
+    // Se addonGroups foi enviado, capturamos a ordem exata enviada pelo frontend
+    let addonGroupsOrder = undefined;
+    if (addonGroups) {
+      addonGroupsOrder = addonGroups.map(g => g.id);
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {
         ...productData,
+        ...(addonGroupsOrder !== undefined && { addonGroupsOrder }),
         ...(categoryIds && {
           categories: {
-            set: categoryIds.map((cid) => ({ id: cid })), // Substitui todas as categorias
+            set: categoryIds.map((cid) => ({ id: cid })),
           },
         }),
         ...(addonGroups && {
           addonGroups: {
-            set: addonGroups.map((g) => ({ id: g.id })), // Substitui todos os grupos de adicionais
+            set: addonGroups.map((g) => ({ id: g.id })),
           },
         }),
-        // Nota: Atualizar nested relations (sizes, addons, ingredients) requer lógica de diff
       },
     });
 
@@ -155,13 +186,11 @@ class ProductService {
 
   async deleteProduct(id, restaurantId) {
     await this.getProductById(id, restaurantId);
-
     await prisma.product.delete({
       where: { id },
     });
   }
 
-  // Lógica de Reordenação de Produtos
   async reorderProducts(products, restaurantId) {
     const transactions = products.map((p) =>
       prisma.product.update({
@@ -172,7 +201,6 @@ class ProductService {
     return await prisma.$transaction(transactions);
   }
 
-  // Análise de Precificação Simples
   async getPricingAnalysis(restaurantId) {
     const products = await prisma.product.findMany({
       where: { restaurantId },

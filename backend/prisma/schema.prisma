@@ -645,6 +645,7 @@ model Product {
   taxPercentage Float?   @default(0)    // Carga tributária aproximada (Lei da Transparência)
 
   pizzaConfig   Json?            // Configuração específica para pizzas (preço, sabores, fatias)
+  addonGroupsOrder Json?         // Salva a ordem dos IDs dos grupos de adicionais [ID1, ID2, ...]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
