@@ -31,13 +31,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-
-const getImageUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = import.meta.env.VITE_API_URL || (window.location.origin.replace('5173', '3001'));
-    return `${baseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
-};
+import { getImageUrl } from '../utils/image';
 
 const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow }: {
     addon: Addon;

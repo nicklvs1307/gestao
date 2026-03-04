@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { getImageUrl } from '../utils/image';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const { 
@@ -92,13 +93,6 @@ function ProductFormPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'tamanhos' | 'complementos' | 'composição' | 'fiscal'>('geral');
     
-    const getImageUrl = (url: string) => {
-        if (!url) return '';
-        if (url.startsWith('http')) return url;
-        const baseUrl = import.meta.env.VITE_API_URL || (window.location.origin.replace('5173', '3001'));
-        return `${baseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
-    };
-
     const { fields: sizeFields, append: appendSize, remove: removeSize } = useFieldArray({ control, name: "sizes" });
     const watchAllFields = watch();
 

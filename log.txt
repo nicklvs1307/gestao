@@ -1,46 +1,27 @@
- => ERROR [builder 8/8] RUN npm run build                                                                                                      10.2s
-------
- > [builder 8/8] RUN npm run build:
-0.583
-0.583 > admin@0.0.0 build
-0.583 > vite build
-0.583
-0.917 vite v7.1.9 building for production...
-1.350 transforming...
-10.02 ✓ 3387 modules transformed.
-10.02 ✗ Build failed in 8.72s
-10.02 error during build:
-10.02 src/pages/CategoryFormPage.tsx (9:9): "getCategoryById" is not exported by "src/services/api/categories.ts", imported by "src/pages/CategoryFormPage.tsx".
-10.02 file: /app/frontend/admin/src/pages/CategoryFormPage.tsx:9:9
-10.02
-10.02  7: } from 'lucide-react';
-10.02  8: import { toast } from 'sonner';
-10.02  9: import { getCategoryById, createCategory, updateCategory } from '../services/api/categories';
-10.02              ^
-10.02 10: import { Button } from '../components/ui/Button';
-10.02 11: import { Card } from '../components/ui/Card';
-10.02
-10.02     at getRollupError (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
-10.02     at error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
-10.02     at Module.error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:16939:16)
-10.02     at Module.traceVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:17391:29)
-10.02     at ModuleScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:15061:39)
-10.02     at ReturnValueScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
-10.02     at FunctionBodyScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
-10.02     at ReturnValueScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
-10.02     at FunctionBodyScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
-10.02     at TrackingScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
-------
-
- 2 warnings found (use docker --debug to expand):
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 9)
- - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 10)
-Dockerfile:24
---------------------
-  22 |     WORKDIR /app/frontend/admin
-  23 |     RUN npm ci
-  24 | >>> RUN npm run build
-  25 |
-  26 |     # Stage 2: Serve com Nginx
---------------------
-ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+index-M39MK7tP.js:8605 [SSE] Conexão estabelecida com o servidor.
+index-M39MK7tP.js:8605 SSE Error: Event
+te.onerror @ index-M39MK7tP.js:8605
+/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsicHJvZHVjdHM6bWFuYWdlIiwiY2F0ZWdvcmllczptYW5hZ2UiLCJvcmRlcnM6dmlldyIsIm9yZGVyczptYW5hZ2UiLCJvcmRlcnM6ZWRpdF9pdGVtcyIsIm9yZGVyczpjYW5jZWwiLCJzdG9jazp2aWV3Iiwic3RvY2s6bWFuYWdlIiwic3VwcGxpZXJzOm1hbmFnZSIsInJlcG9ydHM6dmlldyIsInJlcG9ydHM6ZmluYW5jaWFsIiwicmVwb3J0czpwZXJmb3JtYW5jZSIsInJlcG9ydHM6YWJjIiwiY2hlY2tsaXN0czptYW5hZ2UiLCJjaGVja2xpc3RzOnZpZXciLCJzZWN0b3JzOm1hbmFnZSIsInNldHRpbmdzOnZpZXciLCJzZXR0aW5nczptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJpbnRlZ3JhdGlvbnM6bWFuYWdlIiwib3JkZXJzOnRyYW5zZmVyIiwib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsImZpbmFuY2lhbDp2aWV3IiwiZmluYW5jaWFsOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJkcml2ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJwcm9kdWN0czp2aWV3Il0sImlhdCI6MTc3MjY0ODUzMywiZXhwIjoxNzcyNjc3MzMzfQ.Kx8Z11haJYh8OHUOOCJLlOy3ZMpJnf6OWR5WDrRRRdk&restaurantId=cmm6nas6m0001k801znx8seh8:1  Failed to load resource: net::ERR_QUIC_PROTOCOL_ERROR
+index-M39MK7tP.js:40 ReferenceError: getImageUrl is not defined
+    at index-M39MK7tP.js:8631:116512
+    at Array.map (<anonymous>)
+    at rWe (index-M39MK7tP.js:8631:116291)
+    at Hu (index-M39MK7tP.js:38:17898)
+    at $O (index-M39MK7tP.js:40:3167)
+    at VH (index-M39MK7tP.js:40:45983)
+    at FH (index-M39MK7tP.js:40:40756)
+    at dae (index-M39MK7tP.js:40:40683)
+    at Ry (index-M39MK7tP.js:40:40534)
+    at sF (index-M39MK7tP.js:40:36786)
+FO @ index-M39MK7tP.js:40
+index-M39MK7tP.js:38 Uncaught ReferenceError: getImageUrl is not defined
+    at index-M39MK7tP.js:8631:116512
+    at Array.map (<anonymous>)
+    at rWe (index-M39MK7tP.js:8631:116291)
+    at Hu (index-M39MK7tP.js:38:17898)
+    at $O (index-M39MK7tP.js:40:3167)
+    at VH (index-M39MK7tP.js:40:45983)
+    at FH (index-M39MK7tP.js:40:40756)
+    at dae (index-M39MK7tP.js:40:40683)
+    at Ry (index-M39MK7tP.js:40:40534)
+    at sF (index-M39MK7tP.js:40:36786)

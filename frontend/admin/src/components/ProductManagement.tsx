@@ -261,7 +261,7 @@ function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSorta
         <td className="px-4 py-3 text-right">
             <div className="flex items-center justify-end gap-1.5 px-2">
                 <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/products/${product.id}`)}><Edit size={16}/></Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => handleDelete(product.id)}><Trash2 size={16}/></Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => onDelete(product.id)}><Trash2 size={16}/></Button>
             </div>
         </td>
     </tr>
