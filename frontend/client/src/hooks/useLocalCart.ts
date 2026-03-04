@@ -12,11 +12,26 @@ export const useLocalCart = () => {
     selectedFlavors?: Product[],
     observations?: string
   ) => {
-    // 1. Cálculo do Preço Base (considerando Pizzas)
+    // 1. Cálculo do Preço Base (considerando Pizzas Unificadas e Legado)
     let basePrice = selectedSize ? selectedSize.price : product.price;
     
-    if (product.pizzaConfig && selectedFlavors && selectedFlavors.length > 0) {
-      const rule = product.pizzaConfig.priceRule || 'higher';
+    const config = product.pizzaConfig;
+    const flavorGroup = product.addonGroups?.find(g => g.isFlavorGroup);
+
+    // Unificado: Procura por grupos de sabores em addonGroups se o produto for uma pizza ativa
+    if (config?.active && flavorGroup) {
+      const flavors = selectedAddons.filter(sa => flavorGroup.addons.some(ga => ga.id === sa.id));
+      if (flavors.length > 0) {
+        const prices = flavors.flatMap(f => Array(f.quantity || 1).fill(Number(f.price) > 0 ? Number(f.price) : basePrice));
+        const rule = config.priceRule || 'higher';
+        
+        if (rule === 'average') basePrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+        else basePrice = Math.max(...prices);
+      }
+    } 
+    // Legado: selectedFlavors (Produtos como sabores)
+    else if (config?.active && selectedFlavors && selectedFlavors.length > 0) {
+      const rule = config.priceRule || 'higher';
       const flavorPrices = selectedFlavors.map(f => {
         if (selectedSize) {
           const s = (f.sizes || []).find(sz => sz.name === selectedSize.name);
@@ -26,11 +41,7 @@ export const useLocalCart = () => {
       });
       
       const calculatedFlavorPrice = rule === 'higher' ? Math.max(...flavorPrices) : flavorPrices.reduce((a, b) => a + b, 0) / flavorPrices.length;
-      
-      // Se o preço calculado dos sabores for > 0, usa ele. Caso contrário, mantém o preço do tamanho.
-      if (calculatedFlavorPrice > 0) {
-        basePrice = calculatedFlavorPrice;
-      }
+      if (calculatedFlavorPrice > 0) basePrice = calculatedFlavorPrice;
     }
 
     // Aplicar Promoção se houver
@@ -43,7 +54,12 @@ export const useLocalCart = () => {
         }
     }
 
-    const addonsPrice = selectedAddons.reduce((acc, addon) => acc + (addon.price * (addon.quantity || 1)), 0);
+    const addonsPrice = selectedAddons.reduce((acc, addon) => {
+      const isFlavor = config?.active && flavorGroup?.addons.some(ga => ga.id === addon.id);
+      if (isFlavor) return acc;
+      return acc + (addon.price * (addon.quantity || 1));
+    }, 0);
+
     const priceAtTime = basePrice + addonsPrice;
 
     const newCartItem: LocalCartItem = {

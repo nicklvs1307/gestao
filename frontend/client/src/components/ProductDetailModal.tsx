@@ -83,6 +83,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     if (newQty > (addon.maxQuantity || 1) && delta > 0) return;
 
     if (delta > 0) {
+        // Unificado: Se o produto tem pizzaConfig.active, ele manda no limite de sabores.
+        // Se não for pizza, usa o limite do grupo.
         const isFlavor = group.isFlavorGroup && config.active;
         const limit = isFlavor ? (config.maxFlavors || 1) : (group.maxQuantity || 0);
 
@@ -114,17 +116,24 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         else basePrice = Math.max(0, basePrice - promo.discountValue);
     }
 
+    // Se a regra de pizza estiver ativa no PRODUTO, aplica o cálculo especial nos grupos de sabores
     if (config.active) {
-      const flavors = selectedAddons.filter(sa => addonGroups.find(g => g.isFlavorGroup && g.addons.some(ga => ga.id === sa.id)));
-      if (flavors.length > 0) {
-        const prices = flavors.flatMap(f => Array(f.quantity || 1).fill(Number(f.price) > 0 ? Number(f.price) : basePrice));
-        if (config.priceRule === 'average') basePrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-        else basePrice = Math.max(...prices);
+      const flavorGroup = addonGroups.find(g => g.isFlavorGroup);
+      if (flavorGroup) {
+        const flavors = selectedAddons.filter(sa => flavorGroup.addons.some(ga => ga.id === sa.id));
+        if (flavors.length > 0) {
+          const prices = flavors.flatMap(f => Array(f.quantity || 1).fill(Number(f.price) > 0 ? Number(f.price) : basePrice));
+          const rule = config.priceRule || 'higher';
+          
+          if (rule === 'average') basePrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+          else basePrice = Math.max(...prices);
+        }
       }
     }
 
     let total = basePrice;
     addonGroups.forEach(group => {
+      // Se for pizza ativa, o preço dos sabores já foi processado no basePrice
       if (group.isFlavorGroup && config.active) return;
       const selected = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
       total += selected.reduce((acc, sa) => acc + (Number(sa.price) * (sa.quantity || 1)), 0);
@@ -139,9 +148,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     for (const group of addonGroups) {
       const selected = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
       const total = selected.reduce((sum, a) => sum + (a.quantity || 0), 0);
-      if (group.isFlavorGroup && config.active) {
+      
+      const isFlavor = group.isFlavorGroup && config.active;
+      if (isFlavor) {
+        const limit = config.maxFlavors || 1;
         if (total === 0) return toast.warning("Selecione pelo menos 1 sabor.");
-        if (total > (config.maxFlavors || 1)) return toast.warning("Limite de sabores atingido.");
+        if (total > limit) return toast.warning(`Limite de ${limit} sabores atingido.`);
       } else if ((group.isRequired || group.minQuantity > 0) && total < (group.minQuantity || 1)) {
         return toast.warning(`Escolha no mínimo ${group.minQuantity || 1} em "${group.name}".`);
       }
@@ -215,15 +227,15 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                       {product.sizes.map((size: any) => (
                         <Card key={size.id} onClick={() => setSelectedSize(size)} className={cn("flex items-center justify-between p-4 border-2 transition-all duration-300", selectedSize?.id === size.id ? "border-primary bg-primary/5 shadow-md" : "border-transparent bg-white hover:border-slate-200 shadow-sm")}>
                           <span className={cn("font-black text-sm uppercase tracking-tight", selectedSize?.id === size.id ? "text-primary" : "text-slate-700")}>{size.name}</span>
-                          {!getPizzaConfig().active && <span className="font-black text-slate-900 text-sm italic">R$ {size.price.toFixed(2).replace('.', ',')}</span>}
+                          {!addonGroups.some(g => g.isFlavorGroup) && <span className="font-black text-slate-900 text-sm italic">R$ {size.price.toFixed(2).replace('.', ',')}</span>}
                         </Card>
                       ))}
                     </div>
                   </div>
                 )}
                 {addonGroups.map((group) => {
-                  const config = getPizzaConfig();
-                  const isFlavor = group.isFlavorGroup && config.active;
+                  const isFlavor = group.isFlavorGroup;
+                  const limit = isFlavor ? (group.maxQuantity || 1) : (group.maxQuantity || 0);
                   const selectedInGroup = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
                   const totalInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
                   const hasImages = group.addons.some(a => a.imageUrl);
@@ -232,7 +244,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                       <div className="flex items-center justify-between">
                         <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" /> {group.name}</h4>
                         <div className="flex gap-2">
-                          {isFlavor ? <span className={cn("text-[8px] px-2 py-1 rounded-md font-black uppercase tracking-widest border transition-all", totalInGroup === config.maxFlavors ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/20")}>Sabores: {totalInGroup}/{config.maxFlavors}</span> : <>
+                          {isFlavor ? <span className={cn("text-[8px] px-2 py-1 rounded-md font-black uppercase tracking-widest border transition-all", totalInGroup === limit ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/20")}>Sabores: {totalInGroup}/{limit}</span> : <>
                             {group.isRequired && <span className="text-[8px] bg-orange-500 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Obrigatório</span>}
                             {group.maxQuantity > 1 && <span className="text-[8px] bg-slate-900 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Até {group.maxQuantity} itens</span>}
                           </>}

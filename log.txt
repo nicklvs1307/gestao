@@ -1,19 +1,46 @@
-{"level":"info","message":"Servidor rodando em http://localhost:3001"}
-Erro na importação: PrismaClientKnownRequestError:
-Invalid `prisma.product.create()` invocation:
+ => ERROR [builder 8/8] RUN npm run build                                                                                                      10.2s
+------
+ > [builder 8/8] RUN npm run build:
+0.583
+0.583 > admin@0.0.0 build
+0.583 > vite build
+0.583
+0.917 vite v7.1.9 building for production...
+1.350 transforming...
+10.02 ✓ 3387 modules transformed.
+10.02 ✗ Build failed in 8.72s
+10.02 error during build:
+10.02 src/pages/CategoryFormPage.tsx (9:9): "getCategoryById" is not exported by "src/services/api/categories.ts", imported by "src/pages/CategoryFormPage.tsx".
+10.02 file: /app/frontend/admin/src/pages/CategoryFormPage.tsx:9:9
+10.02
+10.02  7: } from 'lucide-react';
+10.02  8: import { toast } from 'sonner';
+10.02  9: import { getCategoryById, createCategory, updateCategory } from '../services/api/categories';
+10.02              ^
+10.02 10: import { Button } from '../components/ui/Button';
+10.02 11: import { Card } from '../components/ui/Card';
+10.02
+10.02     at getRollupError (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+10.02     at error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+10.02     at Module.error (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:16939:16)
+10.02     at Module.traceVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:17391:29)
+10.02     at ModuleScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:15061:39)
+10.02     at ReturnValueScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+10.02     at FunctionBodyScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+10.02     at ReturnValueScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+10.02     at FunctionBodyScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+10.02     at TrackingScope.findVariable (file:///app/frontend/admin/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+------
 
-
-Unique constraint failed on the fields: (`name`,`restaurantId`)
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7268)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async SaiposImportService.importFromExcel (/app/src/services/SaiposImportService.js:50:41)
-    at async importSaiposMenu (/app/src/controllers/IntegrationController.js:59:24) {
-  code: 'P2002',
-  meta: { modelName: 'Product', target: [ 'name', 'restaurantId' ] },
-  clientVersion: '6.16.3'
-}
-Erro ao importar cardápio da Saipos: Error: Falha ao processar o arquivo de importação.
-    at SaiposImportService.importFromExcel (/app/src/services/SaiposImportService.js:128:19)
-    at async importSaiposMenu (/app/src/controllers/IntegrationController.js:59:24)
+ 2 warnings found (use docker --debug to expand):
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_OPENROUTE_KEY") (line 9)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_OPENROUTE_KEY") (line 10)
+Dockerfile:24
+--------------------
+  22 |     WORKDIR /app/frontend/admin
+  23 |     RUN npm ci
+  24 | >>> RUN npm run build
+  25 |
+  26 |     # Stage 2: Serve com Nginx
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1

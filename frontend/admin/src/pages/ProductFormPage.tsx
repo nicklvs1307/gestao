@@ -330,14 +330,14 @@ function ProductFormPage() {
                                             <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-xl flex gap-3">
                                                 <Info size={16} className="text-blue-500 shrink-0" />
                                                 <p className="text-[8px] font-bold text-blue-900 leading-tight uppercase italic">
-                                                    O CLIENTE PODERÁ COMBINAR ATÉ {watch('pizzaConfig.maxFlavors') || 1} SABORES. O SISTEMA EXIBIRÁ O SELETOR DE FRAÇÕES (1/2, 1/3, ETC) NO CARDÁPIO AUTOMATICAMENTE.
+                                                    O CLIENTE PODERÁ COMBINAR ATÉ {watch('pizzaConfig.maxFlavors') || 1} SABORES. O SISTEMA EXIBIRÁ O SELETOR DE FRAÇÕES NO CARDÁPIO AUTOMATICAMENTE.
                                                 </p>
                                             </div>
                                         </motion.div>
                                     )}
                                 </Card>
 
-                                <Card className="p-4 border-slate-200 bg-white">
+                                <Card className="p-4 border-slate-200 bg-white shadow-sm">
                                     <h4 className="text-[9px] font-black uppercase text-slate-400 mb-3 flex items-center gap-2 italic"><ImageIcon size={10} className="text-orange-500" /> Imagem Comercial</h4>
                                     <div className="flex gap-4 items-center">
                                         <div className="w-20 h-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden relative group hover:border-orange-500 cursor-pointer" onClick={() => (document.getElementById('img-upload') as any).click()}>

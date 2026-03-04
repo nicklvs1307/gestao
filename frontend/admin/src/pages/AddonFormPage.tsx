@@ -316,10 +316,15 @@ const AddonFormPage: React.FC = () => {
 
                             {formData.isFlavorGroup && (
                                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="p-3 bg-amber-50 border border-amber-100 rounded-xl flex gap-3">
-                                    <Info size={14} className="text-amber-600 shrink-0 mt-0.5" />
-                                    <p className="text-[8px] font-bold text-amber-900 leading-tight uppercase italic">
-                                        ESTE GRUPO SERÁ TRATADO COMO SABORES NO CARDÁPIO. A REGRA DE PREÇO (MAIOR VALOR OU MÉDIA) É DEFINIDA INDIVIDUALMENTE EM CADA PIZZA.
-                                    </p>
+                                    <div className="flex-1">
+                                        <div className="flex gap-2 items-center mb-1">
+                                            <Info size={14} className="text-amber-600 shrink-0" />
+                                            <p className="text-[8px] font-black text-amber-900 uppercase italic">Grupo de Sabores</p>
+                                        </div>
+                                        <p className="text-[8px] font-bold text-amber-700 leading-tight uppercase italic">
+                                            ESTE GRUPO SERÁ TRATADO COMO SABORES NO CARDÁPIO. A REGRA DE PREÇO E O LIMITE DE FRAÇÕES SÃO DEFINIDOS INDIVIDUALMENTE EM CADA PRODUTO (PIZZA).
+                                        </p>
+                                    </div>
                                 </motion.div>
                             )}
                         </div>
