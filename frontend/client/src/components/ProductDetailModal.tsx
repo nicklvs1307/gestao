@@ -130,36 +130,45 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         }
     }
 
-    // 3. Somar Adicionais e Grupos de Sabores (NOVO PADRÃO)
+    // 3. Lógica de Preço para Pizzas (Frações)
+    if (product.pizzaConfig?.active) {
+      const flavorGroups = addonGroups.filter(g => g.isFlavorGroup);
+      const selectedFlavors = selectedAddons.filter(sa => 
+        flavorGroups.some(g => g.addons.some(ga => ga.id === sa.id))
+      );
+
+      if (selectedFlavors.length > 0) {
+        const prices: number[] = [];
+        selectedFlavors.forEach(sf => {
+          for (let i = 0; i < (sf.quantity || 1); i++) {
+            prices.push(sf.price);
+          }
+        });
+
+        const rule = product.pizzaConfig.priceRule || 'higher';
+        if (rule === 'average') {
+          const sum = prices.reduce((a, b) => a + b, 0);
+          basePrice = (sum / prices.length);
+        } else {
+          basePrice = Math.max(...prices);
+        }
+      }
+    }
+
+    // 4. Somar Adicionais Comuns (Não-Sabores)
     let total = basePrice;
     
     addonGroups.forEach(group => {
+      // Ignora grupos de sabores no cálculo de adicionais, pois já foram processados no preço base da pizza
+      if (group.isFlavorGroup && product.pizzaConfig?.active) return;
+
       const selectedInGroup = selectedAddons.filter(sa => 
         group.addons.some(ga => ga.id === sa.id)
       );
       
       if (selectedInGroup.length === 0) return;
 
-      if (group.isFlavorGroup) {
-        // Regra de Sabores para Adicionais
-        const prices = [];
-        selectedInGroup.forEach(sa => {
-          for (let i = 0; i < (sa.quantity || 1); i++) {
-            prices.push(sa.price);
-          }
-        });
-
-        const rule = group.priceRule || 'higher';
-        if (rule === 'average') {
-          const sum = prices.reduce((a, b) => a + b, 0);
-          total += (sum / prices.length);
-        } else {
-          total += Math.max(...prices);
-        }
-      } else {
-        // Regra normal para adicionais comuns
-        total += selectedInGroup.reduce((acc, sa) => acc + (sa.price * (sa.quantity || 1)), 0);
-      }
+      total += selectedInGroup.reduce((acc, sa) => acc + (sa.price * (sa.quantity || 1)), 0);
     });
     
     return total * quantity;
@@ -175,6 +184,20 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       const selectedInGroup = selectedAddons.filter(sa => groupAddons.some(ga => ga.id === sa.id));
       const totalSelectedInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
 
+      // Validação Especial para Pizzas
+      if (group.isFlavorGroup && product.pizzaConfig?.active) {
+        const maxFlavors = product.pizzaConfig.maxFlavors || 1;
+        if (totalSelectedInGroup === 0) {
+            toast.warning(`Por favor, selecione pelo menos 1 sabor.`);
+            return;
+        }
+        if (totalSelectedInGroup > maxFlavors) {
+            toast.warning(`O limite para esta pizza é de ${maxFlavors} sabores.`);
+            return;
+        }
+        continue; // Pula validação padrão para sabores
+      }
+
       // Validação de Mínimo
       if (group.isRequired || (group.minQuantity && group.minQuantity > 0)) {
         const min = group.minQuantity || 1;
@@ -184,10 +207,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         }
       }
 
-      // Validação de Máximo (Segurança extra no clique)
+      // Validação de Máximo
       if (group.maxQuantity && group.maxQuantity > 0) {
         if (totalSelectedInGroup > group.maxQuantity) {
-          toast.warning(`Você selecionou itens demais em "${group.name}". O limite é ${group.maxQuantity}.`);
+          toast.warning(`O limite para "${group.name}" é de ${group.maxQuantity} itens.`);
           return;
         }
       }
@@ -200,8 +223,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const sizes = product?.sizes || [];
 
-  // Componente de Card de Sabor para Reuso (Réplica exata do DeliveryProductCard)
-  const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty = 0, onIncrement, onDecrement, showQuantityControls = false }: { 
+  // Componente de Card de Sabor para Reuso
+  const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty = 0, onIncrement, onDecrement, showQuantityControls = false, fractionText }: { 
     item: any, 
     isSelected: boolean, 
     onToggle: () => void, 
@@ -209,12 +232,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     quantity?: number,
     onIncrement?: () => void,
     onDecrement?: () => void,
-    showQuantityControls?: boolean
+    showQuantityControls?: boolean,
+    fractionText?: string
   }) => (
     <motion.div
         layout
         initial={false}
-        animate={{ height: isSelected ? 'auto' : '9rem' }}
+        animate={{ height: isSelected ? 'auto' : '9.5rem' }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="w-full"
     >
@@ -223,25 +247,29 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             noPadding
             className={cn(
                 "flex h-full overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2 group", 
-                isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 z-10" : "border-slate-100 bg-white hover:border-slate-200"
+                isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 z-10" : "border-slate-100 bg-white hover:border-slate-200 shadow-sm"
             )}
         >
-          {/* Badge de Seleção com Blur */}
+          {/* Badge de Seleção / Fração */}
           <AnimatePresence mode="wait">
             {isSelected && (
                 <motion.div 
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
-                  className="absolute top-2 right-2 z-20 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white"
+                  className="absolute top-2 right-2 z-20 bg-primary text-white px-2 py-1 rounded-lg shadow-lg border-2 border-white flex items-center gap-1.5"
                 >
-                    <Check size={14} strokeWidth={4} />
+                    {fractionText ? (
+                        <span className="text-[10px] font-black italic tracking-tighter">{fractionText}</span>
+                    ) : (
+                        <Check size={12} strokeWidth={4} />
+                    )}
                 </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Imagem Estilo Borda Infinita (Esquerda) */}
-          <div className="w-32 md:w-36 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50 h-full min-h-[9rem]">
+          {/* Imagem */}
+          <div className="w-32 md:w-36 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50 h-full min-h-[9.5rem]">
             {item.imageUrl ? (
               <>
                 <img 
@@ -252,29 +280,27 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                     isSelected && "scale-110"
                   )} 
                 />
-                {/* Overlay sutil para integração da imagem */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
               </>
             ) : (
               <div className="flex items-center justify-center w-full h-full text-slate-200">
-                 <ShoppingBag size={40} strokeWidth={1} />
+                 <PizzaIcon size={40} strokeWidth={1} />
               </div>
             )}
-            
             {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
           </div>
           
-          {/* Conteúdo à Direita */}
-          <div className="flex flex-col flex-grow p-4 min-w-0 justify-between">
+          {/* Conteúdo */}
+          <div className="flex flex-col flex-grow p-4 min-w-0 justify-between bg-white">
               <div className="space-y-1">
                   <h3 className={cn(
-                    "text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
+                    "text-xs md:text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
                     isSelected ? "text-primary" : "text-slate-900"
                   )}>
                     {item.name}
                   </h3>
                   <p className={cn(
-                    "text-[10px] text-slate-500 leading-relaxed font-medium uppercase tracking-tight opacity-80",
+                    "text-[9px] md:text-[10px] text-slate-500 leading-relaxed font-medium uppercase tracking-tight opacity-80",
                     !isSelected && "line-clamp-2"
                   )}>
                     {item.description}
@@ -284,17 +310,20 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
               <div className="flex justify-between items-end mt-2">
                 <div className="flex flex-col">
                      {price !== undefined && price > 0 && (
-                       <div className="flex items-baseline gap-1">
-                          <span className="text-xs font-black text-primary">R$</span>
-                          <span className="text-xl font-black text-slate-900 tracking-tighter italic">
-                              {price.toFixed(2).replace('.', ',')}
-                          </span>
+                       <div className="flex flex-col">
+                          <span className="text-[7px] font-black text-slate-400 uppercase italic tracking-widest leading-none mb-1">Preço Integral</span>
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-[9px] font-black text-primary">R$</span>
+                            <span className="text-lg font-black text-slate-900 tracking-tighter italic">
+                                {price.toFixed(2).replace('.', ',')}
+                            </span>
+                          </div>
                        </div>
                      )}
                 </div>
                 
                 {isSelected && showQuantityControls ? (
-                  <div className="flex items-center bg-white rounded-xl p-0.5 border border-slate-100 shadow-sm" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center bg-slate-50 rounded-xl p-0.5 border border-slate-100 shadow-inner" onClick={e => e.stopPropagation()}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); onDecrement?.(); }} 
                       className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
@@ -310,9 +339,9 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                     </button>
                   </div>
                 ) : isSelected && (
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
-                    <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] italic">Ok</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[7px] font-black text-primary uppercase tracking-[0.2em] italic">Selecionado</span>
+                    <div className="w-8 h-1 bg-primary rounded-full animate-pulse" />
                   </div>
                 )}
               </div>
@@ -407,9 +436,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
                 {/* ADICIONAIS / GRUPOS DE SABORES */}
                 {addonGroups.map((group) => {
-                  const isFlavorType = group.isFlavorGroup;
+                  const isFlavorType = group.isFlavorGroup && product.pizzaConfig?.active;
                   const hasImages = group.addons?.some(a => a.imageUrl);
                   const useCardLayout = isFlavorType || hasImages;
+                  
+                  // Lógica de Frações para Grupos de Sabores
+                  const maxFlavors = product.pizzaConfig?.maxFlavors || 1;
+                  const selectedInGroup = selectedAddons.filter(sa => group.addons?.some(ga => ga.id === sa.id));
+                  const totalSelectedInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
                   
                   return (
                     <div key={group.id} className="space-y-4">
@@ -419,8 +453,19 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                               <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{group.name}</h4>
                           </div>
                           <div className="flex gap-2">
-                            {group.isRequired && <span className="text-[8px] bg-orange-500 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Obrigatório</span>}
-                            {group.maxQuantity! > 1 && <span className="text-[8px] bg-slate-900 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Até {group.maxQuantity} itens</span>}
+                            {isFlavorType ? (
+                                <span className={cn(
+                                    "text-[8px] px-2 py-1 rounded-md font-black uppercase tracking-widest border transition-all",
+                                    totalSelectedInGroup === maxFlavors ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/20"
+                                )}>
+                                    Sabores: {totalSelectedInGroup}/{maxFlavors}
+                                </span>
+                            ) : (
+                                <>
+                                    {group.isRequired && <span className="text-[8px] bg-orange-500 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Obrigatório</span>}
+                                    {group.maxQuantity! > 1 && <span className="text-[8px] bg-slate-900 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Até {group.maxQuantity} itens</span>}
+                                </>
+                            )}
                           </div>
                       </div>
 
@@ -438,11 +483,20 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                     item={addon}
                                     isSelected={isSelected}
                                     onToggle={() => {
-                                      if (isSelected && !isFlavorType && maxQty > 1) return; // Se for addon comum com qtd, não deseleciona no clique do card
+                                      if (isSelected && isFlavorType) {
+                                          handleAddonQuantityChange(addon, -1, group);
+                                          return;
+                                      }
+                                      if (isFlavorType && totalSelectedInGroup >= maxFlavors) {
+                                          toast.warning(`Você já selecionou os ${maxFlavors} sabores.`);
+                                          return;
+                                      }
+                                      if (isSelected && !isFlavorType && maxQty > 1) return;
                                       handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)
                                     }}
                                     price={addon.price}
                                     quantity={currentQty}
+                                    fractionText={isFlavorType ? `1/${maxFlavors}` : undefined}
                                     showQuantityControls={!isFlavorType && (maxQty > 1 || (group.maxQuantity && group.maxQuantity > 1))}
                                     onIncrement={() => handleAddonQuantityChange(addon, 1, group)}
                                     onDecrement={() => handleAddonQuantityChange(addon, -1, group)}
@@ -463,21 +517,34 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                 key={addon.id} 
                                 className={cn(
                                     "flex items-center justify-between p-4 border-2 transition-all duration-300", 
-                                    isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200"
+                                    isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200 shadow-sm"
                                 )}
                               >
-                                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)}>
+                                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => {
+                                    if (isSelected && isFlavorType) {
+                                        handleAddonQuantityChange(addon, -1, group);
+                                        return;
+                                    }
+                                    if (isFlavorType && totalSelectedInGroup >= maxFlavors) {
+                                        toast.warning(`Limite de sabores atingido.`);
+                                        return;
+                                    }
+                                    handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)
+                                }}>
                                    <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300", isSelected ? "border-primary bg-primary" : "border-slate-300")}>
                                       {isSelected && <Check size={12} className="text-white" strokeWidth={4} />}
                                    </div>
                                    <div className="flex flex-col leading-tight min-w-0 pr-2">
-                                    <span className={cn("font-black text-xs uppercase italic tracking-tighter", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={cn("font-black text-xs uppercase italic tracking-tighter", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
+                                        {isSelected && isFlavorType && <span className="text-[8px] font-black bg-primary text-white px-1 rounded italic">1/{maxFlavors}</span>}
+                                    </div>
                                     {addon.description && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight mt-0.5 leading-tight">{addon.description}</p>}
                                     {addon.price > 0 && <span className="text-[9px] font-black text-slate-500 mt-1 uppercase">+ R$ {addon.price.toFixed(2).replace('.', ',')}</span>}
                                    </div>
                                 </div>
                                 
-                                {isSelected && (maxQty > 1 || (group.maxQuantity && group.maxQuantity > 1)) && (
+                                {isSelected && !isFlavorType && (maxQty > 1 || (group.maxQuantity && group.maxQuantity > 1)) && (
                                   <div className="flex items-center bg-white rounded-xl p-1 border border-slate-100 shadow-sm ml-2">
                                     <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={14} strokeWidth={3} /></button>
                                     <span className="w-6 text-center font-black text-sm text-slate-900 italic">{currentQty}</span>

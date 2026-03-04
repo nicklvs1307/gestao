@@ -295,8 +295,8 @@ function ProductFormPage() {
                                         <div className="flex items-center gap-2">
                                             <div className="bg-orange-500 text-white p-1.5 rounded-lg"><Pizza size={14} /></div>
                                             <div>
-                                                <h4 className="text-[10px] font-black uppercase text-slate-900 italic leading-none">Configuração de Pizza</h4>
-                                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Marcar este produto como Pizza</p>
+                                                <h4 className="text-[10px] font-black uppercase text-slate-900 italic leading-none">Venda por Frações (Pizzas)</h4>
+                                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Habilitar escolha de múltiplos sabores</p>
                                             </div>
                                         </div>
                                         <div className={cn("p-1.5 border rounded-lg flex items-center gap-3 transition-all cursor-pointer px-3", watch('pizzaConfig.active') ? "bg-orange-50 border-orange-200" : "bg-white border-slate-200")} onClick={() => setValue('pizzaConfig.active', !watch('pizzaConfig.active'))}>
@@ -308,19 +308,30 @@ function ProductFormPage() {
                                     {watch('pizzaConfig.active') && (
                                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                                             <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Regra de Preço Padrão</label>
+                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Regra de Valor (Cálculo)</label>
                                                 <div className="flex p-1 bg-slate-100 rounded-xl gap-1 border border-slate-200">
                                                     {[
-                                                        { id: 'higher', label: 'Maior Valor' },
-                                                        { id: 'average', label: 'Valor Médio' }
+                                                        { id: 'higher', label: 'Cobrar Maior' },
+                                                        { id: 'average', label: 'Cobrar Média' }
                                                     ].map(rule => (
                                                         <button key={rule.id} type="button" onClick={() => setValue('pizzaConfig.priceRule', rule.id)} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all", watch('pizzaConfig.priceRule') === rule.id ? "bg-white text-orange-600 shadow-sm" : "text-slate-400 hover:bg-slate-200")}>{rule.label}</button>
                                                     ))}
                                                 </div>
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Qtd. de Fatias</label>
-                                                <input type="number" {...register('pizzaConfig.sliceCount')} className="ui-input w-full h-10 italic uppercase text-[10px] font-black rounded-xl border border-slate-200 px-3" />
+                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Limite de Sabores (Frações)</label>
+                                                <div className="flex p-1 bg-slate-100 rounded-xl gap-1 border border-slate-200">
+                                                    {[1, 2, 3, 4].map(num => (
+                                                        <button key={num} type="button" onClick={() => setValue('pizzaConfig.maxFlavors', num)} className={cn("flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all", (watch('pizzaConfig.maxFlavors') || 1) === num ? "bg-orange-500 text-white shadow-sm" : "text-slate-400 hover:bg-slate-200")}>{num}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-xl flex gap-3">
+                                                <Info size={16} className="text-blue-500 shrink-0" />
+                                                <p className="text-[8px] font-bold text-blue-900 leading-tight uppercase italic">
+                                                    O CLIENTE PODERÁ COMBINAR ATÉ {watch('pizzaConfig.maxFlavors') || 1} SABORES. O SISTEMA EXIBIRÁ O SELETOR DE FRAÇÕES (1/2, 1/3, ETC) NO CARDÁPIO AUTOMATICAMENTE.
+                                                </p>
                                             </div>
                                         </motion.div>
                                     )}

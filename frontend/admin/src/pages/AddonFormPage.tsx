@@ -309,25 +309,17 @@ const AddonFormPage: React.FC = () => {
                                     <div className={cn("w-5 h-5 rounded border flex items-center justify-center transition-all", formData.isFlavorGroup ? "bg-amber-500 border-amber-500 shadow-sm shadow-amber-200" : "bg-white border-slate-300")}>{formData.isFlavorGroup && <CheckCircle size={12} className="text-white" />}</div>
                                     <div className="flex-1">
                                         <span className="block text-[10px] font-black uppercase tracking-wider text-slate-700 leading-none">Grupo de SABORES</span>
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic block">Ativa lógica de precificação de Pizzas</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic block">Identifica itens que compõem frações da Pizza</span>
                                     </div>
                                 </Card>
                             </div>
 
                             {formData.isFlavorGroup && (
-                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="p-4 bg-amber-100/30 border border-amber-200 rounded-2xl space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <Info size={14} className="text-amber-600" />
-                                        <h4 className="text-[10px] font-black uppercase text-amber-900 tracking-widest italic">Regra de Preço</h4>
-                                    </div>
-                                    <div className="flex p-1 bg-white rounded-xl gap-1 border border-amber-200">
-                                        {[
-                                            { id: 'higher', label: 'Maior Valor' },
-                                            { id: 'average', label: 'Valor Médio' }
-                                        ].map(rule => (
-                                            <button key={rule.id} type="button" onClick={() => setFormData({ ...formData, priceRule: rule.id as any })} className={cn("flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all", formData.priceRule === rule.id ? "bg-amber-500 text-white shadow-sm" : "text-amber-400 hover:bg-amber-50")}>{rule.label}</button>
-                                        ))}
-                                    </div>
+                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="p-3 bg-amber-50 border border-amber-100 rounded-xl flex gap-3">
+                                    <Info size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-[8px] font-bold text-amber-900 leading-tight uppercase italic">
+                                        ESTE GRUPO SERÁ TRATADO COMO SABORES NO CARDÁPIO. A REGRA DE PREÇO (MAIOR VALOR OU MÉDIA) É DEFINIDA INDIVIDUALMENTE EM CADA PIZZA.
+                                    </p>
                                 </motion.div>
                             )}
                         </div>
