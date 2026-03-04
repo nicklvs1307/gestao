@@ -88,15 +88,24 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     if (newQty > maxQty && delta > 0) return;
 
     // 2. Verificar limite TOTAL do GRUPO (Combo/Pizza)
-    if (delta > 0 && group.maxQuantity > 0) {
-        const groupAddonIds = group.addons.map((a: any) => a.id);
-        const currentGroupTotal = selectedAddons
-            .filter(a => groupAddonIds.includes(a.id))
-            .reduce((sum, a) => sum + (a.quantity || 0), 0);
-        
-        if (currentGroupTotal + delta > group.maxQuantity) {
-            toast.warning(`O limite total para "${group.name}" é de ${group.maxQuantity} itens.`);
-            return;
+    if (delta > 0) {
+        const isFlavorGroup = group.isFlavorGroup && product?.pizzaConfig?.active;
+        const maxLimit = isFlavorGroup ? (product?.pizzaConfig?.maxFlavors || 1) : (group.maxQuantity || 0);
+
+        if (maxLimit > 0) {
+            const groupAddonIds = group.addons.map((a: any) => a.id);
+            const currentGroupTotal = selectedAddons
+                .filter(a => groupAddonIds.includes(a.id))
+                .reduce((sum, a) => sum + (a.quantity || 0), 0);
+            
+            if (currentGroupTotal + delta > maxLimit) {
+                if (isFlavorGroup) {
+                    toast.warning(`Esta pizza permite no máximo ${maxLimit} sabores.`);
+                } else {
+                    toast.warning(`O limite total para "${group.name}" é de ${maxLimit} itens.`);
+                }
+                return;
+            }
         }
     }
 
