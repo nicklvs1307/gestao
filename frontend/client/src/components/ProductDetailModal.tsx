@@ -89,6 +89,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         const isFlavor = group.isFlavorGroup && config.active;
         const limit = isFlavor ? (config.maxFlavors || 1) : (group.maxQuantity || 0);
 
+        // Se limit for 0, tratamos como ilimitado
         if (limit > 0) {
             const currentTotal = selectedAddons
                 .filter(a => group.addons.some((ga: any) => ga.id === a.id))
@@ -260,7 +261,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                               if (isSelected && isFlavor) return handleAddonQuantityChange(addon, -1, group);
                               if (isFlavor && totalInGroup >= config.maxFlavors) return toast.warning(`Limite de ${config.maxFlavors} sabores atingido.`);
                               handleAddonQuantityChange(addon, 1, group);
-                            }} price={addon.price} quantity={currentQty} fractionText={fractionText} showControls={isFlavor && currentQty > 0} onIncrement={() => handleAddonQuantityChange(addon, 1, group)} onDecrement={() => handleAddonQuantityChange(addon, -1, group)} />;
+                            }} price={addon.price} quantity={currentQty} fractionText={fractionText} showControls={isSelected} onIncrement={() => handleAddonQuantityChange(addon, 1, group)} onDecrement={() => handleAddonQuantityChange(addon, -1, group)} />;
                           }
                           return (
                             <Card key={addon.id} onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)} className={cn("flex items-center justify-between p-4 border-2 transition-all duration-300", isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200 shadow-sm")}>
@@ -272,11 +273,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                   {addon.price > 0 && <span className="text-[9px] font-black text-slate-500 mt-1 uppercase">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>}
                                 </div>
                               </div>
-                              {isSelected && !isFlavor && (addon.maxQuantity > 1 || group.maxQuantity > 1) && (
+                              {isSelected && (
                                 <div className="flex items-center bg-white rounded-xl p-1 border border-slate-100 shadow-sm" onClick={e => e.stopPropagation()}>
                                   <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={12} strokeWidth={3} /></button>
                                   <span className="w-5 text-center font-black text-xs text-slate-900 italic">{currentQty}</span>
-                                  <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={currentQty >= (addon.maxQuantity || 1)} className={cn("w-7 h-7 flex items-center justify-center", currentQty >= (addon.maxQuantity || 1) ? "text-slate-200" : "text-primary")}><Plus size={12} strokeWidth={3} /></button>
+                                  <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={addon.maxQuantity > 0 && currentQty >= (addon.maxQuantity || 1)} className={cn("w-7 h-7 flex items-center justify-center", (addon.maxQuantity > 0 && currentQty >= (addon.maxQuantity || 1)) ? "text-slate-200" : "text-primary")}><Plus size={12} strokeWidth={3} /></button>
                                 </div>
                               )}
                             </Card>
