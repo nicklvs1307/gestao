@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import ProductManagement from './components/ProductManagement';
 import ProductFormPage from './pages/ProductFormPage';
 import CategoryManagement from './components/CategoryManagement';
+import CategoryFormPage from './pages/CategoryFormPage';
 import CategoryFormModal from './components/CategoryFormModal';
 import PromotionManagement from './components/PromotionManagement';
 import PromotionFormModal from './components/PromotionFormModal';
@@ -171,6 +172,9 @@ function AdminRoutes() {
       case '/categories':
         setPageTitle('Gestão de Categorias');
         break;
+      case '/categories/new':
+        setPageTitle('Nova Categoria');
+        break;
       case '/global-sizes':
         setPageTitle('Biblioteca de Tamanhos');
         break;
@@ -257,6 +261,8 @@ function AdminRoutes() {
              setPageTitle('Editar Produto');
         } else if (location.pathname.startsWith('/addons/')) {
              setPageTitle('Editar Biblioteca');
+        } else if (location.pathname.startsWith('/categories/')) {
+             setPageTitle('Editar Categoria');
         } else {
              setPageTitle('Painel Administrativo');
         }
@@ -319,10 +325,20 @@ function AdminRoutes() {
         <Route path="/categories" element={
           <ProtectedRoute permission="categories:manage">
             <CategoryManagement 
-              onAddCategoryClick={() => setCategoryModalOpen(true)}
-              onEditCategoryClick={handleEditCategoryClick}
+              onAddCategoryClick={() => {}}
+              onEditCategoryClick={() => {}}
               refetchTrigger={refetchCategories}
             />
+          </ProtectedRoute>
+        } />
+        <Route path="/categories/new" element={
+          <ProtectedRoute permission="categories:manage">
+            <CategoryFormPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/categories/:id" element={
+          <ProtectedRoute permission="categories:manage">
+            <CategoryFormPage />
           </ProtectedRoute>
         } />
         <Route path="/global-sizes" element={
