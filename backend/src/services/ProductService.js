@@ -22,7 +22,15 @@ class ProductService {
     let products = await prisma.product.findMany({
       where,
       include: {
-        categories: true,
+        categories: {
+          include: {
+            addonGroups: {
+              include: {
+                addons: { orderBy: { order: 'asc' } }
+              }
+            }
+          }
+        },
         sizes: true,
         addonGroups: {
           include: {
@@ -52,7 +60,15 @@ class ProductService {
     const product = await prisma.product.findFirst({
       where: { id, restaurantId },
       include: {
-        categories: true,
+        categories: {
+          include: {
+            addonGroups: {
+              include: {
+                addons: { orderBy: { order: 'asc' } }
+              }
+            }
+          }
+        },
         sizes: true,
         addonGroups: {
           include: {

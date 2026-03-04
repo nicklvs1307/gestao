@@ -11,7 +11,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getProducts } from '../services/api';
 import { getImageUrl } from '../utils/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
@@ -21,7 +20,6 @@ interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
-  allProducts?: Product[]; // Lista completa para busca local de sabores
   onAddToCart: (
     product: Product, 
     quantity: number, 
@@ -32,25 +30,29 @@ interface ProductDetailModalProps {
   ) => void;
 }
 
-const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, allProducts = [], onAddToCart }) => {
+const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, onAddToCart }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
   const [observations, setObservations] = useState('');
   const [isAdded, setIsAdded] = useState(false);
 
-  // LOGICA DE MERGE DE ADICIONAIS (Produto + Categorias)
   const addonGroups = React.useMemo(() => {
     if (!product) return [];
     
-    // Grupos do produto
-    const productGroups = product.addonGroups || [];
+    // 1. Grupos diretos do produto
+    const productGroups = (product.addonGroups || []).map(g => ({
+        ...g,
+        source: 'product'
+    }));
     
-    // Grupos herdados das categorias
+    // 2. Grupos herdados das categorias (Agora com addons garantidos pelo backend)
     const categoryGroups = (product.categories || [])
-        .flatMap(cat => cat.addonGroups || []);
+        .flatMap(cat => (cat.addonGroups || []).map(g => ({
+            ...g,
+            source: 'category'
+        })));
     
-    // Merge removendo duplicatas por ID
     const merged = [...productGroups, ...categoryGroups];
     const uniqueIds = new Set();
     
@@ -76,34 +78,35 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       setQuantity(prev => Math.max(1, prev + val));
   };
 
+  const getPizzaConfig = () => {
+    if (!product?.pizzaConfig) return { active: false, maxFlavors: 1, priceRule: 'higher' };
+    return typeof product.pizzaConfig === 'string' ? JSON.parse(product.pizzaConfig) : product.pizzaConfig;
+  };
+
   const handleAddonQuantityChange = (addon: AddonOption, delta: number, group: any) => {
     if (isAdded) return;
     
+    const config = getPizzaConfig();
     const currentAddon = selectedAddons.find(a => a.id === addon.id);
     const currentQty = currentAddon?.quantity || 0;
     const newQty = Math.max(0, currentQty + delta);
     
-    // 1. Verificar limite INDIVIDUAL do adicional
-    const maxQty = addon.maxQuantity || 1;
-    if (newQty > maxQty && delta > 0) return;
+    // Limite individual por item
+    const maxItemQty = addon.maxQuantity || 1;
+    if (newQty > maxItemQty && delta > 0) return;
 
-    // 2. Verificar limite TOTAL do GRUPO (Combo/Pizza)
+    // Limite total do grupo
     if (delta > 0) {
-        const isFlavorGroup = group.isFlavorGroup && product?.pizzaConfig?.active;
-        const maxLimit = isFlavorGroup ? (product?.pizzaConfig?.maxFlavors || 1) : (group.maxQuantity || 0);
+        const isFlavor = group.isFlavorGroup && config.active;
+        const limit = isFlavor ? (config.maxFlavors || 1) : (group.maxQuantity || 0);
 
-        if (maxLimit > 0) {
-            const groupAddonIds = group.addons.map((a: any) => a.id);
-            const currentGroupTotal = selectedAddons
-                .filter(a => groupAddonIds.includes(a.id))
+        if (limit > 0) {
+            const currentTotal = selectedAddons
+                .filter(a => group.addons.some((ga: any) => ga.id === a.id))
                 .reduce((sum, a) => sum + (a.quantity || 0), 0);
             
-            if (currentGroupTotal + delta > maxLimit) {
-                if (isFlavorGroup) {
-                    toast.warning(`Esta pizza permite no máximo ${maxLimit} sabores.`);
-                } else {
-                    toast.warning(`O limite total para "${group.name}" é de ${maxLimit} itens.`);
-                }
+            if (currentTotal + delta > limit) {
+                toast.warning(isFlavor ? `Limite de ${limit} sabores atingido.` : `Limite de ${limit} itens em "${group.name}".`);
                 return;
             }
         }
@@ -111,36 +114,29 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
     if (newQty === 0) {
       setSelectedAddons(prev => prev.filter(a => a.id !== addon.id));
+    } else if (currentAddon) {
+      setSelectedAddons(prev => prev.map(a => a.id === addon.id ? { ...a, quantity: newQty } : a));
     } else {
-      if (currentAddon) {
-        setSelectedAddons(prev => prev.map(a => a.id === addon.id ? { ...a, quantity: newQty } : a));
-      } else {
-        setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
-      }
+      setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
     }
   };
 
   const calculateCurrentPrice = () => {
     if (!product) return 0;
+    const config = getPizzaConfig();
     
-    // 1. Determinar o Preço Base (Baseado no Tamanho ou no Produto)
-    let basePrice = product.price;
-    if (selectedSize) {
-      basePrice = selectedSize.price;
+    // Preço Base do Tamanho (ou Produto)
+    let basePrice = selectedSize ? selectedSize.price : product.price;
+
+    // Aplicar Promoção
+    const promo = product.promotions?.find(p => p.isActive);
+    if (promo) {
+        if (promo.discountType === 'percentage') basePrice *= (1 - promo.discountValue / 100);
+        else basePrice = Math.max(0, basePrice - promo.discountValue);
     }
 
-    // 2. Aplicar Promoção sobre o preço base calculado
-    const activePromotion = product.promotions?.find(p => p.isActive);
-    if (activePromotion) {
-        if (activePromotion.discountType === 'percentage') {
-            basePrice = basePrice * (1 - activePromotion.discountValue / 100);
-        } else if (activePromotion.discountType === 'fixed_amount') {
-            basePrice = Math.max(0, basePrice - activePromotion.discountValue);
-        }
-    }
-
-    // 3. Lógica de Preço para Pizzas (Frações)
-    if (product.pizzaConfig?.active) {
+    // Lógica de Pizza (Frações)
+    if (config.active) {
       const flavorGroups = addonGroups.filter(g => g.isFlavorGroup);
       const selectedFlavors = selectedAddons.filter(sa => 
         flavorGroups.some(g => g.addons.some(ga => ga.id === sa.id))
@@ -149,35 +145,27 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       if (selectedFlavors.length > 0) {
         const prices: number[] = [];
         selectedFlavors.forEach(sf => {
+          // Se o sabor tiver preço > 0, usamos ele. Se for 0, usamos o preço base da pizza para compor a média/maior.
+          const p = Number(sf.price) > 0 ? Number(sf.price) : basePrice;
           for (let i = 0; i < (sf.quantity || 1); i++) {
-            prices.push(sf.price);
+            prices.push(p);
           }
         });
 
-        const rule = product.pizzaConfig.priceRule || 'higher';
-        if (rule === 'average') {
-          const sum = prices.reduce((a, b) => a + b, 0);
-          basePrice = (sum / prices.length);
+        if (config.priceRule === 'average') {
+          basePrice = prices.reduce((a, b) => a + b, 0) / prices.length;
         } else {
           basePrice = Math.max(...prices);
         }
       }
     }
 
-    // 4. Somar Adicionais Comuns (Não-Sabores)
+    // Somar Adicionais Comuns (Que não são Sabores)
     let total = basePrice;
-    
     addonGroups.forEach(group => {
-      // Ignora grupos de sabores no cálculo de adicionais, pois já foram processados no preço base da pizza
-      if (group.isFlavorGroup && product.pizzaConfig?.active) return;
-
-      const selectedInGroup = selectedAddons.filter(sa => 
-        group.addons.some(ga => ga.id === sa.id)
-      );
-      
-      if (selectedInGroup.length === 0) return;
-
-      total += selectedInGroup.reduce((acc, sa) => acc + (sa.price * (sa.quantity || 1)), 0);
+      if (group.isFlavorGroup && config.active) return;
+      const selected = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
+      total += selected.reduce((acc, sa) => acc + (Number(sa.price) * (sa.quantity || 1)), 0);
     });
     
     return total * quantity;
@@ -185,257 +173,90 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const handleAddToCartClick = () => {
     if (isAdded || !product) return;
+    const config = getPizzaConfig();
     
-    // Validação de Grupos de Adicionais e Sabores
-    const groups = addonGroups;
-    for (const group of groups) {
-      const groupAddons = group.addons || [];
-      const selectedInGroup = selectedAddons.filter(sa => groupAddons.some(ga => ga.id === sa.id));
-      const totalSelectedInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
+    for (const group of addonGroups) {
+      const selected = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
+      const totalInGroup = selected.reduce((sum, a) => sum + (a.quantity || 0), 0);
 
-      // Validação Especial para Pizzas
-      if (group.isFlavorGroup && product.pizzaConfig?.active) {
-        const maxFlavors = product.pizzaConfig.maxFlavors || 1;
-        if (totalSelectedInGroup === 0) {
-            toast.warning(`Por favor, selecione pelo menos 1 sabor.`);
-            return;
-        }
-        if (totalSelectedInGroup > maxFlavors) {
-            toast.warning(`O limite para esta pizza é de ${maxFlavors} sabores.`);
-            return;
-        }
-        continue; // Pula validação padrão para sabores
-      }
-
-      // Validação de Mínimo
-      if (group.isRequired || (group.minQuantity && group.minQuantity > 0)) {
-        const min = group.minQuantity || 1;
-        if (totalSelectedInGroup < min) {
-          toast.warning(`Por favor, selecione pelo menos ${min} item(ns) em "${group.name}"`);
-          return;
-        }
-      }
-
-      // Validação de Máximo
-      if (group.maxQuantity && group.maxQuantity > 0) {
-        if (totalSelectedInGroup > group.maxQuantity) {
-          toast.warning(`O limite para "${group.name}" é de ${group.maxQuantity} itens.`);
-          return;
-        }
+      if (group.isFlavorGroup && config.active) {
+        if (totalInGroup === 0) return toast.warning("Selecione pelo menos 1 sabor.");
+        if (totalInGroup > (config.maxFlavors || 1)) return toast.warning("Limite de sabores excedido.");
+      } else if ((group.isRequired || group.minQuantity > 0) && totalInGroup < (group.minQuantity || 1)) {
+        return toast.warning(`Selecione pelo menos ${group.minQuantity || 1} item(ns) em "${group.name}".`);
       }
     }
+
     onAddToCart(product, quantity, selectedSize, selectedAddons, [], observations);
     setIsAdded(true);
     toast.success("Adicionado ao pedido!");
     setTimeout(onClose, 800);
   };
 
-  const sizes = product?.sizes || [];
-
-  // Componente de Card de Sabor para Reuso
-  const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty = 0, onIncrement, onDecrement, showQuantityControls = false, fractionText }: { 
-    item: any, 
-    isSelected: boolean, 
-    onToggle: () => void, 
-    price?: number,
-    quantity?: number,
-    onIncrement?: () => void,
-    onDecrement?: () => void,
-    showQuantityControls?: boolean,
-    fractionText?: string
-  }) => (
-    <motion.div
-        layout
-        initial={false}
-        animate={{ height: isSelected ? 'auto' : '9.5rem' }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="w-full"
-    >
-        <Card 
-            onClick={onToggle} 
-            noPadding
-            className={cn(
-                "flex h-full overflow-hidden relative active:scale-[0.98] transition-all duration-300 border-2 group", 
-                isSelected ? "border-primary bg-white shadow-xl shadow-primary/10 z-10" : "border-slate-100 bg-white hover:border-slate-200 shadow-sm"
-            )}
-        >
-          {/* Badge de Seleção / Fração */}
-          <AnimatePresence mode="wait">
-            {isSelected && (
-                <motion.div 
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  className="absolute top-2 right-2 z-20 bg-primary text-white px-2 py-1 rounded-lg shadow-lg border-2 border-white flex items-center gap-1.5"
-                >
-                    {fractionText ? (
-                        <span className="text-[10px] font-black italic tracking-tighter">{fractionText}</span>
-                    ) : (
-                        <Check size={12} strokeWidth={4} />
-                    )}
-                </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Imagem */}
-          <div className="w-32 md:w-36 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50 h-full min-h-[9.5rem]">
-            {item.imageUrl ? (
-              <>
-                <img 
-                  src={getImageUrl(item.imageUrl)} 
-                  alt={item.name} 
-                  className={cn(
-                    "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
-                    isSelected && "scale-110"
-                  )} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
-              </>
-            ) : (
-              <div className="flex items-center justify-center w-full h-full text-slate-200">
-                 <PizzaIcon size={40} strokeWidth={1} />
-              </div>
-            )}
-            {isSelected && <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px]" />}
-          </div>
-          
-          {/* Conteúdo */}
-          <div className="flex flex-col flex-grow p-4 min-w-0 justify-between bg-white">
-              <div className="space-y-1">
-                  <h3 className={cn(
-                    "text-xs md:text-sm font-black leading-tight uppercase italic tracking-tighter truncate",
-                    isSelected ? "text-primary" : "text-slate-900"
-                  )}>
-                    {item.name}
-                  </h3>
-                  <p className={cn(
-                    "text-[9px] md:text-[10px] text-slate-500 leading-relaxed font-medium uppercase tracking-tight opacity-80",
-                    !isSelected && "line-clamp-2"
-                  )}>
-                    {item.description}
-                  </p>
-              </div>
-              
-              <div className="flex justify-between items-end mt-2">
-                <div className="flex flex-col">
-                     {price !== undefined && price > 0 && (
-                       <div className="flex flex-col">
-                          <span className="text-[7px] font-black text-slate-400 uppercase italic tracking-widest leading-none mb-1">Preço Integral</span>
-                          <div className="flex items-baseline gap-0.5">
-                            <span className="text-[9px] font-black text-primary">R$</span>
-                            <span className="text-lg font-black text-slate-900 tracking-tighter italic">
-                                {price.toFixed(2).replace('.', ',')}
-                            </span>
-                          </div>
-                       </div>
-                     )}
-                </div>
-                
-                {isSelected && showQuantityControls ? (
-                  <div className="flex items-center bg-slate-50 rounded-xl p-0.5 border border-slate-100 shadow-inner" onClick={e => e.stopPropagation()}>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onDecrement?.(); }} 
-                      className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
-                    >
-                      <Minus size={12} strokeWidth={3} />
-                    </button>
+  const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty, fractionText, showControls, onIncrement, onDecrement }: any) => (
+    <Card onClick={onToggle} noPadding className={cn("flex h-full overflow-hidden relative border-2 transition-all", isSelected ? "border-primary bg-white shadow-xl shadow-primary/10" : "border-slate-100 bg-white hover:border-slate-200 shadow-sm")}>
+      <AnimatePresence>
+        {isSelected && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-2 right-2 z-20 bg-primary text-white px-2 py-1 rounded-lg shadow-lg border-2 border-white text-[10px] font-black italic">
+            {fractionText || <Check size={12} strokeWidth={4} />}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="w-28 md:w-32 shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50 min-h-[8.5rem]">
+        {item.imageUrl ? <img src={getImageUrl(item.imageUrl)} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center w-full h-full text-slate-200"><PizzaIcon size={32} /></div>}
+      </div>
+      <div className="flex flex-col flex-grow p-3 min-w-0 justify-between">
+        <div className="space-y-1">
+          <h3 className={cn("text-xs font-black uppercase italic tracking-tighter truncate", isSelected ? "text-primary" : "text-slate-900")}>{item.name}</h3>
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight line-clamp-2">{item.description}</p>
+        </div>
+        
+        <div className="flex justify-between items-end">
+            <div className="flex flex-col">
+                <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-1">Preço Integral</span>
+                <div className="flex items-baseline gap-0.5"><span className="text-[9px] font-black text-primary">R$</span><span className="text-base font-black text-slate-900 tracking-tighter italic">{Number(price || 0).toFixed(2).replace('.', ',')}</span></div>
+            </div>
+            {isSelected && showControls && (
+                <div className="flex items-center bg-slate-50 rounded-xl p-0.5 border border-slate-100 shadow-inner" onClick={e => e.stopPropagation()}>
+                    <button onClick={(e) => { e.stopPropagation(); onDecrement(); }} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={12} strokeWidth={3} /></button>
                     <span className="w-5 text-center font-black text-xs text-slate-900 italic">{itemQty}</span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onIncrement?.(); }} 
-                      className="w-7 h-7 flex items-center justify-center text-primary hover:text-primary/80 transition-colors"
-                    >
-                      <Plus size={12} strokeWidth={3} />
-                    </button>
-                  </div>
-                ) : isSelected && (
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-[7px] font-black text-primary uppercase tracking-[0.2em] italic">Selecionado</span>
-                    <div className="w-8 h-1 bg-primary rounded-full animate-pulse" />
-                  </div>
-                )}
-              </div>
-          </div>
-        </Card>
-    </motion.div>
+                    <button onClick={(e) => { e.stopPropagation(); onIncrement(); }} className="w-7 h-7 flex items-center justify-center text-primary hover:text-primary/80 transition-colors"><Plus size={12} strokeWidth={3} /></button>
+                </div>
+            )}
+        </div>
+      </div>
+    </Card>
   );
 
   return (
     <AnimatePresence>
       {isOpen && product && (
         <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-[8px]" 
-          />
-          
-          <motion.div 
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 250 }}
-            className="relative w-full max-w-6xl bg-slate-50 rounded-t-[2.5rem] md:rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[98vh] md:h-auto md:max-h-[94vh] border-t md:border border-white/20"
-          >
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-14 h-1.5 bg-slate-200/50 rounded-full z-50 md:hidden" />
-            
-            <Button 
-                variant="ghost"
-                size="icon"
-                onClick={onClose} 
-                className="absolute top-6 right-6 z-50 rounded-2xl bg-white/10 backdrop-blur-2xl text-white md:text-slate-900 md:bg-white md:shadow-2xl md:border md:border-slate-100 hover:scale-110 transition-all active:scale-95"
-            >
-                <X size={24} strokeWidth={3} />
-            </Button>
-
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-[8px]" />
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30 }} className="relative w-full max-w-5xl bg-slate-50 rounded-t-[2.5rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[95vh] md:h-auto md:max-h-[90vh] border-t md:border border-white/20">
+            <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4 z-50 rounded-2xl bg-white/10 text-white md:text-slate-900 md:bg-white shadow-xl"><X size={20} strokeWidth={3} /></Button>
             <div className="w-full md:w-5/12 h-40 md:h-auto relative shrink-0">
-              {product.imageUrl ? (
-                <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400">
-                  <ShoppingBag size={80} strokeWidth={1} />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent md:hidden" />
-              <div className="absolute bottom-6 left-8 text-white md:hidden">
-                  <h3 className="text-3xl font-black italic uppercase tracking-tighter drop-shadow-2xl">{product.name}</h3>
-              </div>
+              {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400"><ShoppingBag size={64} /></div>}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden" />
+              <div className="absolute bottom-4 left-6 text-white md:hidden"><h3 className="text-2xl font-black italic uppercase tracking-tighter">{product.name}</h3></div>
             </div>
-
             <div className="w-full md:w-7/12 flex flex-col min-h-0 flex-1 bg-slate-50 relative">
-              <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-10 custom-scrollbar pb-20">
-                <div className="space-y-3 hidden md:block">
-                  <h3 className="text-4xl md:text-5xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{product.name}</h3>
-                  <div className="h-1.5 w-20 bg-primary rounded-full" />
-                  <p className="text-slate-500 text-sm font-bold leading-relaxed max-w-2xl uppercase tracking-tight">{product.description}</p>
+              <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar pb-24">
+                <div className="space-y-2 hidden md:block">
+                  <h3 className="text-3xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{product.name}</h3>
+                  <p className="text-slate-500 text-xs font-bold leading-relaxed uppercase tracking-tight">{product.description}</p>
                 </div>
-
-                <div className="space-y-2 md:hidden">
-                   <p className="text-slate-500 text-[10px] font-bold leading-relaxed uppercase tracking-tight">{product.description}</p>
-                </div>
-
-                {/* SEÇÃO DE TAMANHOS */}
-                {sizes.length > 0 && (
+                
+                {product.sizes?.length > 0 && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" />
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">1. Escolha o Tamanho</h4>
-                    </div>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-3 bg-primary rounded-full" /> 1. Escolha o Tamanho</h4>
                     <div className="grid grid-cols-1 gap-1.5">
-                      {sizes.map(size => {
+                      {product.sizes.map((size: any) => {
                         const isSelected = selectedSize?.id === size.id;
                         return (
-                          <Card 
-                            key={size.id} 
-                            onClick={() => setSelectedSize(size)} 
-                            className={cn(
-                                "flex items-center justify-between p-4 border-2 transition-all duration-300", 
-                                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-transparent bg-white hover:border-slate-200"
-                            )}
-                          >
-                            <span className={cn("font-black text-sm uppercase tracking-tight", isSelected ? "text-primary" : "text-slate-700")}>{size.name}</span>
-                            {!product.pizzaConfig && <span className="font-black text-slate-900 text-sm italic">R$ {size.price.toFixed(2).replace('.', ',')}</span>}
+                          <Card key={size.id} onClick={() => setSelectedSize(size)} className={cn("flex items-center justify-between p-4 border-2 transition-all", isSelected ? "border-primary bg-primary/5 shadow-md" : "border-transparent bg-white hover:border-slate-200 shadow-sm")}>
+                            <span className={cn("font-black text-sm uppercase", isSelected ? "text-primary" : "text-slate-700")}>{size.name}</span>
+                            {!getPizzaConfig().active && <span className="font-black text-slate-900 text-sm italic">R$ {size.price.toFixed(2).replace('.', ',')}</span>}
                           </Card>
                         );
                       })}
@@ -443,174 +264,85 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                   </div>
                 )}
 
-                {/* ADICIONAIS / GRUPOS DE SABORES */}
                 {addonGroups.map((group) => {
-                  const isFlavorType = group.isFlavorGroup && product.pizzaConfig?.active;
-                  const hasImages = group.addons?.some(a => a.imageUrl);
-                  const useCardLayout = isFlavorType || hasImages;
-                  
-                  // Lógica de Frações para Grupos de Sabores
-                  const maxFlavors = product.pizzaConfig?.maxFlavors || 1;
-                  const selectedInGroup = selectedAddons.filter(sa => group.addons?.some(ga => ga.id === sa.id));
-                  const totalSelectedInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
-                  
+                  const config = getPizzaConfig();
+                  const isFlavor = group.isFlavorGroup && config.active;
+                  const selectedInGroup = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
+                  const totalInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
+                  const hasImages = group.addons.some(a => a.imageUrl);
+
                   return (
                     <div key={group.id} className="space-y-4">
                       <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                              <div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" />
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{group.name}</h4>
-                          </div>
-                          <div className="flex gap-2">
-                            {isFlavorType ? (
-                                <span className={cn(
-                                    "text-[8px] px-2 py-1 rounded-md font-black uppercase tracking-widest border transition-all",
-                                    totalSelectedInGroup === maxFlavors ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/20"
-                                )}>
-                                    Sabores: {totalSelectedInGroup}/{maxFlavors}
-                                </span>
-                            ) : (
-                                <>
-                                    {group.isRequired && <span className="text-[8px] bg-orange-500 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Obrigatório</span>}
-                                    {group.maxQuantity! > 1 && <span className="text-[8px] bg-slate-900 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Até {group.maxQuantity} itens</span>}
-                                </>
-                            )}
-                          </div>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-3 bg-primary rounded-full" /> {group.name}</h4>
+                        <div className="flex gap-2">
+                          {isFlavor ? <span className={cn("text-[8px] px-2 py-1 rounded-md font-black uppercase tracking-widest border transition-all", totalInGroup === config.maxFlavors ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/20")}>Sabores: {totalInGroup}/{config.maxFlavors}</span> : <>
+                            {group.isRequired && <span className="text-[8px] bg-orange-500 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Obrigatório</span>}
+                            {group.maxQuantity > 1 && <span className="text-[8px] bg-slate-900 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Até {group.maxQuantity} itens</span>}
+                          </>}
+                        </div>
                       </div>
+                      
+                      <div className={cn("grid gap-3", (isFlavor || hasImages) ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
+                        {group.addons.map((addon: any) => {
+                          const selected = selectedAddons.find(a => a.id === addon.id);
+                          const isSelected = !!selected;
+                          const currentQty = selected?.quantity || 0;
+                          const fractionText = isFlavor ? `${currentQty}/${config.maxFlavors}` : undefined;
 
-                      {useCardLayout ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {(group.addons || []).map(addon => {
-                            const selectedAddon = selectedAddons.find(a => a.id === addon.id);
-                            const isSelected = !!selectedAddon;
-                            const currentQty = selectedAddon?.quantity || 0;
-                            const maxQty = addon.maxQuantity || 1;
-                            
-                            return (
-                                <FlavorCard 
-                                    key={addon.id}
-                                    item={addon}
-                                    isSelected={isSelected}
-                                    onToggle={() => {
-                                      if (isSelected && isFlavorType) {
-                                          handleAddonQuantityChange(addon, -1, group);
-                                          return;
-                                      }
-                                      if (isFlavorType && totalSelectedInGroup >= maxFlavors) {
-                                          toast.warning(`Você já selecionou os ${maxFlavors} sabores.`);
-                                          return;
-                                      }
-                                      if (isSelected && !isFlavorType && maxQty > 1) return;
-                                      handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)
-                                    }}
-                                    price={addon.price}
-                                    quantity={currentQty}
-                                    fractionText={isFlavorType ? `1/${maxFlavors}` : undefined}
-                                    showQuantityControls={!isFlavorType && (maxQty > 1 || (group.maxQuantity && group.maxQuantity > 1))}
-                                    onIncrement={() => handleAddonQuantityChange(addon, 1, group)}
-                                    onDecrement={() => handleAddonQuantityChange(addon, -1, group)}
-                                />
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-1.5">
-                          {(group.addons || []).map(addon => {
-                            const selectedAddon = selectedAddons.find(a => a.id === addon.id);
-                            const isSelected = !!selectedAddon;
-                            const currentQty = selectedAddon?.quantity || 0;
-                            const maxQty = addon.maxQuantity || 1;
+                          if (isFlavor || hasImages) {
+                            return <FlavorCard key={addon.id} item={addon} isSelected={isSelected} onToggle={() => {
+                              if (isSelected && isFlavor) return handleAddonQuantityChange(addon, -1, group);
+                              if (isFlavor && totalInGroup >= config.maxFlavors) return toast.warning(`Limite de ${config.maxFlavors} sabores atingido.`);
+                              handleAddonQuantityChange(addon, 1, group);
+                            }} price={addon.price} quantity={currentQty} fractionText={fractionText} showControls={isFlavor && currentQty > 0} onIncrement={() => handleAddonQuantityChange(addon, 1, group)} onDecrement={() => handleAddonQuantityChange(addon, -1, group)} />;
+                          }
 
-                            return (
-                              <Card 
-                                key={addon.id} 
-                                className={cn(
-                                    "flex items-center justify-between p-4 border-2 transition-all duration-300", 
-                                    isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200 shadow-sm"
-                                )}
-                              >
-                                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => {
-                                    if (isSelected && isFlavorType) {
-                                        handleAddonQuantityChange(addon, -1, group);
-                                        return;
-                                    }
-                                    if (isFlavorType && totalSelectedInGroup >= maxFlavors) {
-                                        toast.warning(`Limite de sabores atingido.`);
-                                        return;
-                                    }
-                                    handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)
-                                }}>
-                                   <div className={cn("w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300", isSelected ? "border-primary bg-primary" : "border-slate-300")}>
-                                      {isSelected && <Check size={12} className="text-white" strokeWidth={4} />}
-                                   </div>
-                                   <div className="flex flex-col leading-tight min-w-0 pr-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className={cn("font-black text-xs uppercase italic tracking-tighter", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
-                                        {isSelected && isFlavorType && <span className="text-[8px] font-black bg-primary text-white px-1 rounded italic">1/{maxFlavors}</span>}
-                                    </div>
-                                    {addon.description && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight mt-0.5 leading-tight">{addon.description}</p>}
-                                    {addon.price > 0 && <span className="text-[9px] font-black text-slate-500 mt-1 uppercase">+ R$ {addon.price.toFixed(2).replace('.', ',')}</span>}
-                                   </div>
+                          return (
+                            <Card key={addon.id} onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)} className={cn("flex items-center justify-between p-4 border-2 transition-all", isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200 shadow-sm")}>
+                              <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
+                                <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-all", isSelected ? "border-primary bg-primary" : "border-slate-300")}>{isSelected && <Check size={12} className="text-white" strokeWidth={4} />}</div>
+                                <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-2"><span className={cn("font-black text-xs uppercase italic tracking-tighter truncate", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>{isSelected && isFlavor && <span className="text-[8px] font-black bg-primary text-white px-1 rounded italic">{fractionText}</span>}</div>
+                                  {addon.description && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">{addon.description}</p>}
+                                  {addon.price > 0 && <span className="text-[9px] font-black text-slate-500 mt-1 uppercase">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>}
                                 </div>
-                                
-                                {isSelected && !isFlavorType && (maxQty > 1 || (group.maxQuantity && group.maxQuantity > 1)) && (
-                                  <div className="flex items-center bg-white rounded-xl p-1 border border-slate-100 shadow-sm ml-2">
-                                    <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={14} strokeWidth={3} /></button>
-                                    <span className="w-6 text-center font-black text-sm text-slate-900 italic">{currentQty}</span>
-                                    <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={currentQty >= maxQty} className={cn("w-8 h-8 flex items-center justify-center transition-colors", currentQty >= maxQty ? "text-slate-200" : "text-primary hover:text-primary/80")}><Plus size={14} strokeWidth={3} /></button>
-                                  </div>
-                                )}
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      )}
+                              </div>
+                              {isSelected && !isFlavor && (addon.maxQuantity > 1 || group.maxQuantity > 1) && (
+                                <div className="flex items-center bg-white rounded-xl p-1 border border-slate-100 shadow-sm" onClick={e => e.stopPropagation()}>
+                                  <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={12} strokeWidth={3} /></button>
+                                  <span className="w-5 text-center font-black text-xs text-slate-900 italic">{currentQty}</span>
+                                  <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={currentQty >= (addon.maxQuantity || 1)} className={cn("w-7 h-7 flex items-center justify-center", currentQty >= (addon.maxQuantity || 1) ? "text-slate-200" : "text-primary")}><Plus size={12} strokeWidth={3} /></button>
+                                </div>
+                              )}
+                            </Card>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
-
-                {/* CAMPO DE OBSERVAÇÕES */}
+                
                 <div className="space-y-2 pb-2">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-4 bg-amber-400 rounded-full shadow-lg shadow-amber-400/30" />
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Alguma observação?</h4>
-                    </div>
-                    <textarea 
-                        className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-xs font-medium text-slate-700 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm"
-                        placeholder="Ex: Tirar cebola, maionese à parte, ponto da carne, etc..."
-                        rows={3}
-                        value={observations}
-                        onChange={(e) => setObservations(e.target.value)}
-                    />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-3 bg-amber-400 rounded-full" /> Alguma observação?</h4>
+                    <textarea className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-xs font-medium text-slate-700 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm" placeholder="Ex: Tirar cebola, maionese à parte..." rows={3} value={observations} onChange={(e) => setObservations(e.target.value)} />
                 </div>
               </div>
 
-              {/* RODAPÉ FIXO */}
               <div className="p-4 md:p-6 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] sticky bottom-0">
-                 <div className="flex items-center gap-3">
-                    <div className="flex items-center bg-slate-100 rounded-[1rem] p-1 border border-slate-200 shadow-inner">
-                       <button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-white rounded-lg transition-all"><Minus size={18} strokeWidth={3} /></button>
-                       <span className="w-6 text-center font-black text-lg text-slate-900 italic">{quantity}</span>
-                       <button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 hover:bg-white rounded-lg transition-all"><Plus size={18} strokeWidth={3} /></button>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-slate-100 rounded-[1rem] p-1 border border-slate-200 shadow-inner">
+                    <button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all"><Minus size={18} strokeWidth={3} /></button>
+                    <span className="w-6 text-center font-black text-lg text-slate-900 italic">{quantity}</span>
+                    <button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 transition-all"><Plus size={18} strokeWidth={3} /></button>
+                  </div>
+                  <Button onClick={handleAddToCartClick} disabled={isAdded} className={cn("flex-1 h-12 md:h-14 rounded-[1.25rem] transition-all duration-500", isAdded ? "bg-emerald-500 shadow-emerald-100" : "bg-slate-900 shadow-slate-200")}>
+                    <div className="w-full flex items-center justify-between px-2">
+                      <div className="flex items-center gap-3">{isAdded ? <Check size={24} strokeWidth={3} /> : <ShoppingBag size={20} />}<span className="text-sm font-black uppercase tracking-widest italic">{isAdded ? 'ADICIONADO' : 'ADICIONAR'}</span></div>
+                      <span className="text-sm font-black italic bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm">R$ {calculateCurrentPrice().toFixed(2).replace('.', ',')}</span>
                     </div>
-                    
-                    <Button 
-                        onClick={handleAddToCartClick} 
-                        disabled={isAdded} 
-                        className={cn(
-                            "flex-1 h-12 md:h-14 rounded-[1.25rem] shadow-xl transition-all duration-500", 
-                            isAdded ? "bg-emerald-500 shadow-emerald-100" : "bg-slate-900 shadow-slate-200"
-                        )}
-                    >
-                      <div className="w-full flex items-center justify-between px-2">
-                        <div className="flex items-center gap-3">
-                          {isAdded ? <Check size={24} strokeWidth={3} /> : <ShoppingBag size={20} />}
-                          <span className="text-sm font-black uppercase tracking-widest italic">{isAdded ? 'ADICIONADO' : 'ADICIONAR'}</span>
-                        </div>
-                        <span className="text-sm font-black italic bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm">R$ {calculateCurrentPrice().toFixed(2).replace('.', ',')}</span>
-                      </div>
-                    </Button>
-                 </div>
+                  </Button>
+                </div>
               </div>
             </div>
           </motion.div>
