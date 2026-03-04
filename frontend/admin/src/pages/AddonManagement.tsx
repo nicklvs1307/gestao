@@ -1,131 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
-import { Plus, Edit2, Trash2, GripVertical, Loader2, List, Settings, RefreshCw, Copy, Search, X } from 'lucide-react';
+import { 
+  Plus, Edit2, Trash2, Loader2, List, Settings, 
+  RefreshCw, Copy, Search, Hash, ChevronRight,
+  Info, CheckCircle2, AlertCircle, Layers
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-  useSortable
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-
-interface SortableGroupProps {
-  group: AddonGroup;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  onDuplicate: (id: string) => void;
-}
-
-const SortableGroupCard = ({ group, onEdit, onDelete, onDuplicate }: SortableGroupProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: group.id! });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : 0,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className={cn("animate-in fade-in zoom-in-95 duration-300", isDragging && "z-50")}>
-      <Card 
-        className={cn(
-            "p-0 overflow-hidden border transition-all duration-300 group hover:shadow-lg bg-white",
-            isDragging ? "border-orange-500 scale-105 shadow-xl" : "border-slate-200"
-        )}
-        noPadding
-      >
-        <div className="p-4">
-            <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                    <button 
-                        {...attributes} 
-                        {...listeners}
-                        className="p-1.5 cursor-grab active:cursor-grabbing text-slate-400 hover:text-orange-500 transition-colors bg-slate-50 rounded-lg"
-                    >
-                        <GripVertical size={16} />
-                    </button>
-                    <div>
-                        <h3 className="font-bold text-sm text-slate-900 uppercase italic tracking-tight leading-none">{group.name}</h3>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                            <span className={cn(
-                                "text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border tracking-wider",
-                                group.type === 'single' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-purple-50 text-purple-600 border-purple-100"
-                            )}>
-                                {group.type === 'single' ? 'Única' : 'Múltipla'}
-                            </span>
-                            {group.isRequired && (
-                                <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100 tracking-wider">Obrigatório</span>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50" onClick={() => onDuplicate(group.id!)} title="Duplicar"><Copy size={14}/></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50" onClick={() => onEdit(group.id!)} title="Editar"><Edit2 size={14}/></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-rose-50 text-rose-500" onClick={() => onDelete(group.id!)} title="Excluir"><Trash2 size={14}/></Button>
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">Itens ({group.addons.length})</p>
-                <div className="flex flex-wrap gap-1.5">
-                    {group.addons.slice(0, 8).map((addon, i) => (
-                        <span key={i} className="text-[10px] font-medium bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md text-slate-600">
-                            {addon.name}
-                        </span>
-                    ))}
-                    {group.addons.length > 8 && (
-                        <span className="text-[10px] font-bold text-slate-400 uppercase px-1 py-0.5">+{group.addons.length - 8}</span>
-                    )}
-                </div>
-            </div>
-            
-            {group.saiposIntegrationCode && (
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cód: <b className="text-orange-500">{group.saiposIntegrationCode}</b></span>
-                    <Settings size={12} className="text-slate-300" />
-                </div>
-            )}
-        </div>
-      </Card>
-    </div>
-  );
-};
 
 const AddonManagement: React.FC = () => {
   const navigate = useNavigate();
   const [groups, setGroups] = useState<AddonGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isReordering, setIsReordering] = useState(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
 
   useEffect(() => { fetchData(); }, []);
 
@@ -134,7 +25,7 @@ const AddonManagement: React.FC = () => {
       setLoading(true);
       const groupsData = await addonService.getAll();
       setGroups(Array.isArray(groupsData) ? groupsData : []);
-    } catch (error) { toast.error('Erro ao carregar dados.'); }
+    } catch (error) { toast.error('Erro ao carregar biblioteca.'); }
     finally { setLoading(false); }
   };
 
@@ -142,118 +33,216 @@ const AddonManagement: React.FC = () => {
     try {
       setLoading(true);
       await addonService.duplicate(id);
-      toast.success('Grupo duplicado!');
+      toast.success('Grupo duplicado com sucesso!');
       fetchData();
-    } catch (error) { toast.error('Erro ao duplicar.'); }
+    } catch (error) { toast.error('Erro ao duplicar grupo.'); }
     finally { setLoading(false); }
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = groups.findIndex((g) => g.id === active.id);
-      const newIndex = groups.findIndex((g) => g.id === over.id);
-      const newOrder = arrayMove(groups, oldIndex, newIndex);
-      setGroups(newOrder);
-      try {
-        setIsReordering(true);
-        const updates = newOrder.map((g, index) => ({ id: g.id!, order: index }));
-        await addonService.reorder(updates);
-        toast.success("Ordem atualizada!");
-      } catch (error) { toast.error('Falha ao salvar ordem.'); fetchData(); }
-      finally { setIsReordering(false); }
-    }
-  };
-
   const handleDelete = async (id: string) => {
-    if (!confirm('Excluir este grupo permanentemente?')) return;
+    if (!confirm('Deseja excluir este grupo permanentemente? Todos os vínculos com produtos serão removidos.')) return;
     try {
       await addonService.delete(id);
-      toast.success('Grupo removido.');
+      toast.success('Grupo removido da biblioteca.');
       fetchData();
-    } catch (error) { toast.error('Erro ao excluir.'); }
+    } catch (error) { toast.error('Erro ao excluir grupo.'); }
   };
 
   const filteredGroups = useMemo(() => {
-    return groups.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.saiposIntegrationCode?.toLowerCase().includes(searchTerm.toLowerCase()));
+    return groups.filter(g => 
+      g.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      g.saiposIntegrationCode?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   }, [groups, searchTerm]);
 
-  if (loading && !isReordering) return (
+  if (loading && groups.length === 0) return (
       <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
-        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando Biblioteca...</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] italic">Sincronizando Biblioteca...</span>
       </div>
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10 max-w-[1600px] mx-auto">
+      {/* Header Industrial */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Complementos</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Biblioteca de Complementos</h1>
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-            <List size={12} className="text-orange-500" /> Biblioteca de Adicionais e Personalização
+            <Layers size={12} className="text-orange-500" /> Gestão Centralizada de Adicionais e Sabores
           </p>
         </div>
-        <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="bg-white rounded-lg h-10 w-10 p-0" onClick={fetchData}>
-                <RefreshCw size={16} />
+        <div className="flex gap-2 w-full md:w-auto">
+            <Button variant="outline" className="bg-white rounded-xl h-11 px-4 border-slate-200 text-slate-400 hover:text-orange-500 transition-all" onClick={fetchData}>
+                <RefreshCw size={16} className={cn(loading && "animate-spin")} />
             </Button>
-            <Button onClick={() => navigate('/addons/new')} className="rounded-lg px-4 italic h-10 text-xs">
-                <Plus size={16} /> NOVO GRUPO
+            <Button onClick={() => navigate('/addons/new')} className="flex-1 md:flex-none rounded-xl px-6 italic font-black h-11 shadow-lg shadow-orange-900/10 text-xs gap-2 uppercase">
+                <Plus size={18} /> NOVO GRUPO
             </Button>
         </div>
       </div>
 
-      <div className="relative group">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
-        <input 
-            type="text" 
-            placeholder="Buscar por nome ou código..." 
-            className="w-full h-11 pl-11 pr-4 rounded-xl bg-white border border-slate-200 focus:border-orange-500 outline-none transition-all font-bold text-xs uppercase italic shadow-sm"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-        />
+      {/* Barra de Ferramentas */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
+            <input 
+                type="text" 
+                placeholder="Pesquisar por nome ou código de integração..." 
+                className="w-full h-12 pl-12 pr-4 rounded-2xl bg-white border border-slate-200 focus:border-orange-500 outline-none transition-all font-bold text-xs uppercase italic tracking-tight shadow-sm"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+            />
+        </div>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={groups.map(g => g.id!)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredGroups.map((group) => (
-              <SortableGroupCard 
-                key={group.id} 
-                group={group} 
-                onEdit={(id) => navigate(`/addons/${id}`)} 
-                onDelete={handleDelete}
-                onDuplicate={handleDuplicate}
-              />
-            ))}
-            <button 
-                onClick={() => navigate('/addons/new')}
-                className="p-4 border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center gap-2 group cursor-pointer hover:border-orange-500/50 hover:bg-orange-50/30 transition-all duration-300 min-h-[140px] rounded-xl"
-            >
-                <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-orange-500 group-hover:border-orange-500 transition-all">
-                    <Plus size={20} />
-                </div>
-                <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.1em] group-hover:text-orange-600 transition-colors">Novo Grupo</p>
-            </button>
+      {/* Tabela de Gestão */}
+      <Card className="p-0 overflow-hidden border border-slate-200 shadow-xl bg-white rounded-2xl" noPadding>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
+            <thead className="bg-slate-50/80 border-b border-slate-100">
+              <tr>
+                <th className="w-[30%] px-6 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Grupo / Identificação</th>
+                <th className="w-[15%] px-4 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Regras Técnicas</th>
+                <th className="w-[12%] px-4 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Seleção Mín/Máx</th>
+                <th className="w-[20%] px-4 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Mix de Itens</th>
+                <th className="w-[10%] px-4 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Cód. Integração</th>
+                <th className="w-[13%] px-6 py-4 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filteredGroups.map((group) => (
+                <tr key={group.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-110",
+                        group.isFlavorGroup ? "bg-amber-50 border-amber-100 text-amber-500" : "bg-slate-50 border-slate-100 text-slate-400"
+                      )}>
+                        {group.isFlavorGroup ? <Layers size={20} /> : <List size={20} />}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-black text-xs uppercase italic tracking-tighter truncate group-hover:text-orange-600 transition-colors">
+                          {group.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {group.isFlavorGroup && (
+                            <span className="text-[7px] font-black bg-amber-500 text-white px-1 rounded italic uppercase tracking-widest">SABORES</span>
+                          )}
+                          <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest italic truncate">
+                            ID: {group.id?.slice(-8).toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Badge label="OBRIG" active={group.isRequired} variant="rose" />
+                      <Badge label={group.type === 'single' ? "ÚNICA" : "MÚLTIP"} active={true} variant={group.type === 'single' ? "blue" : "purple"} />
+                      {group.priceRule === 'higher' && <Badge label="MAIOR" active={true} variant="amber" />}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <div className="flex flex-col items-center">
+                      <span className="font-black text-xs italic tracking-tighter text-slate-700">
+                        {group.minQuantity} <span className="text-[8px] text-slate-300 mx-1">A</span> {group.maxQuantity}
+                      </span>
+                      <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Escolhas Permitidas</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-wrap gap-1">
+                        {group.addons.slice(0, 3).map((a, i) => (
+                          <span key={i} className="text-[8px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase italic border border-slate-200/50">
+                            {a.name}
+                          </span>
+                        ))}
+                        {group.addons.length > 3 && (
+                          <span className="text-[8px] font-black text-slate-400 px-1 py-0.5 uppercase italic">+{group.addons.length - 3} itens</span>
+                        )}
+                      </div>
+                      <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                        <div className="bg-orange-400 h-full rounded-full" style={{ width: `${Math.min(100, (group.addons.length / 10) * 100)}%` }} />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <span className="text-[9px] font-black bg-slate-50 border border-slate-200 text-slate-400 px-2 py-1 rounded italic uppercase">
+                      {group.saiposIntegrationCode || '---'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                      <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => handleDuplicate(group.id!)} title="Duplicar"><Copy size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/addons/${group.id}`)} title="Editar"><Edit2 size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => handleDelete(group.id!)} title="Excluir"><Trash2 size={16}/></Button>
+                      <div className="w-1 h-8 bg-slate-100 rounded-full mx-1" />
+                      <ChevronRight size={16} className="text-slate-200 group-hover:text-orange-400 transition-colors" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredGroups.length === 0 && (
+          <div className="p-20 text-center bg-slate-50/30">
+            <div className="flex flex-col items-center justify-center opacity-20">
+              <Layers size={48} strokeWidth={1} className="mb-4" />
+              <p className="font-black text-[10px] uppercase tracking-[0.3em] italic leading-none">Biblioteca Vazia</p>
+              <p className="text-[8px] font-bold uppercase tracking-widest mt-2">Nenhum grupo de complementos foi configurado até o momento.</p>
+            </div>
           </div>
-        </SortableContext>
-      </DndContext>
+        )}
+      </Card>
 
-      {filteredGroups.length === 0 && (
-        <Card className="p-12 flex flex-col items-center justify-center text-slate-300 opacity-20 border-dashed border-2">
-            <List size={48} strokeWidth={1} className="mb-4" />
-            <p className="font-black text-[10px] uppercase tracking-[0.3em] italic">Nenhuma configuração encontrada</p>
-        </Card>
-      )}
-
-      {isReordering && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-10 duration-300 z-50 border border-white/10">
-          <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
-          <span className="text-[9px] font-black uppercase tracking-[0.1em] italic text-orange-400">Sincronizando sequência...</span>
+      {/* Footer Informativo */}
+      <div className="flex flex-col md:flex-row justify-between items-center px-4 py-4 bg-slate-50/50 rounded-2xl border border-slate-100 gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Info size={14} className="text-blue-400" />
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Total de Grupos: <b className="text-slate-900">{groups.length}</b></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-400" />
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Sincronizados: <b className="text-slate-900">{groups.filter(g => g.saiposIntegrationCode).length}</b></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <AlertCircle size={14} className="text-rose-400" />
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Pendentes: <b className="text-slate-900">{groups.filter(g => !g.saiposIntegrationCode).length}</b></span>
+          </div>
         </div>
-      )}
+        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Sistema de Gestão Industrial v2.0</p>
+      </div>
     </div>
+  );
+};
+
+interface BadgeProps {
+  label: string;
+  active: boolean;
+  variant: 'rose' | 'blue' | 'purple' | 'amber' | 'slate';
+}
+
+const Badge: React.FC<BadgeProps> = ({ label, active, variant }) => {
+  const variants = {
+    rose: active ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-slate-50 text-slate-200 border-slate-100 opacity-30",
+    blue: active ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-slate-50 text-slate-200 border-slate-100 opacity-30",
+    purple: active ? "bg-purple-50 text-purple-600 border-purple-100" : "bg-slate-50 text-slate-200 border-slate-100 opacity-30",
+    amber: active ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-slate-50 text-slate-200 border-slate-100 opacity-30",
+    slate: active ? "bg-slate-100 text-slate-600 border-slate-200" : "bg-slate-50 text-slate-200 border-slate-100 opacity-30"
+  };
+
+  return (
+    <span className={cn(
+      "px-1.5 py-0.5 rounded text-[7px] font-black border tracking-wider uppercase italic",
+      variants[variant]
+    )}>
+      {label}
+    </span>
   );
 };
 
