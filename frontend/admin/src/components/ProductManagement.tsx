@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Product } from '@/types/index';
 import { getProducts, updateProduct, deleteProduct, reorderProducts, reorderCategories } from '../services/api';
-import { getCategories, updateCategory } from '../services/api/categories';
+import { getCategories } from '../services/api/categories';
 import { 
   Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, 
   RefreshCw, Loader2, Package, Tag, ArrowUpRight, CheckCircle,
-  Truck, Utensils, Globe, ChevronRight, Hash, GripVertical,
-  Power, Edit2
+  Truck, Utensils, Globe, ChevronRight, Hash, GripVertical
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -37,11 +36,9 @@ interface SortableCategoryItemProps {
   categoryFilter: string;
   categoryCount: number;
   onSelect: (id: string) => void;
-  onToggleStatus: (id: string, currentStatus: boolean) => void;
 }
 
-function SortableCategoryItem({ cat, categoryFilter, categoryCount, onSelect, onToggleStatus }: SortableCategoryItemProps) {
-  const navigate = useNavigate();
+function SortableCategoryItem({ cat, categoryFilter, categoryCount, onSelect }: SortableCategoryItemProps) {
   const {
     attributes,
     listeners,
@@ -74,51 +71,26 @@ function SortableCategoryItem({ cat, categoryFilter, categoryCount, onSelect, on
       >
         <GripVertical size={12} />
       </button>
-      
-      <div className="flex-1 flex items-center gap-1">
-          <button 
-              onClick={() => onSelect(cat.id)}
-              className={cn(
-                  "flex-1 flex items-center justify-between px-3 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-tighter italic",
-                  categoryFilter === cat.id 
-                      ? "bg-white border-2 border-orange-500 text-orange-600 shadow-sm translate-x-1" 
-                      : "text-slate-400 border-2 border-transparent hover:bg-white hover:border-slate-100",
-                  !cat.isActive && "opacity-50 grayscale bg-slate-50/50"
-              )}
-          >
-              <div className="flex items-center gap-2 overflow-hidden">
-                  <Hash size={12} className={categoryFilter === cat.id ? "text-orange-500" : "text-slate-200 group-hover:text-slate-400"} />
-                  <span className="truncate max-w-[80px]">{cat.name}</span>
-              </div>
-              <span className={cn(
-                  "text-[8px] font-black px-1.5 py-0.5 rounded-md", 
-                  categoryFilter === cat.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-300 group-hover:bg-slate-200 group-hover:text-slate-500"
-              )}>
-                  {categoryCount || 0}
-              </span>
-          </button>
-
-          {/* Ações Rápidas da Categoria */}
-          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
-              <button 
-                onClick={(e) => { e.stopPropagation(); onToggleStatus(cat.id, !!cat.isActive); }}
-                className={cn(
-                    "w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-sm border",
-                    cat.isActive ? "bg-emerald-50 text-emerald-500 border-emerald-100" : "bg-slate-100 text-slate-400 border-slate-200"
-                )}
-                title={cat.isActive ? "Desativar Categoria" : "Ativar Categoria"}
-              >
-                  <Power size={10} />
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); navigate(`/categories/${cat.id}`); }}
-                className="w-6 h-6 rounded-lg flex items-center justify-center bg-white text-slate-400 border border-slate-100 hover:text-orange-500 shadow-sm"
-                title="Editar Categoria"
-              >
-                  <Edit2 size={10} />
-              </button>
+      <button 
+          onClick={() => onSelect(cat.id)}
+          className={cn(
+              "flex-1 flex items-center justify-between px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-tighter italic group",
+              categoryFilter === cat.id 
+                  ? "bg-white border-2 border-orange-500 text-orange-600 shadow-sm translate-x-1" 
+                  : "text-slate-400 border-2 border-transparent hover:bg-white hover:border-slate-100"
+          )}
+      >
+          <div className="flex items-center gap-3">
+              <Hash size={14} className={categoryFilter === cat.id ? "text-orange-500" : "text-slate-200 group-hover:text-slate-400"} />
+              <span className="truncate max-w-[100px]">{cat.name}</span>
           </div>
-      </div>
+          <span className={cn(
+              "text-[9px] font-black px-1.5 py-0.5 rounded-md", 
+              categoryFilter === cat.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-300 group-hover:bg-slate-200 group-hover:text-slate-500"
+          )}>
+              {categoryCount || 0}
+          </span>
+      </button>
     </div>
   );
 }
@@ -167,7 +139,7 @@ function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSorta
                   <button 
                     {...attributes} 
                     {...listeners}
-                    className="p-1.5 cursor-grab active:cursor-grabbing text-slate-200 hover:text-orange-500 transition-colors"
+                    className="p-1 cursor-grab active:cursor-grabbing text-slate-200 hover:text-orange-500 transition-colors"
                   >
                     <GripVertical size={14} />
                   </button>
@@ -303,21 +275,6 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
   };
 
   useEffect(() => { fetchData(); }, [refetchTrigger]);
-
-  const handleToggleCategoryStatus = async (id: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
-    const original = [...categories];
-    
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, isActive: newStatus } : c));
-    
-    try {
-      await updateCategory(id, { isActive: newStatus });
-      toast.success(newStatus ? "Categoria ativada!" : "Categoria pausada.");
-    } catch (err) {
-      toast.error("Erro ao atualizar categoria.");
-      setCategories(original);
-    }
-  };
 
   const handleToggleFlag = async (productId: string, field: 'isAvailable' | 'allowDelivery' | 'allowPos' | 'allowOnline', currentValue: boolean) => {
     const newValue = !currentValue;
@@ -503,7 +460,6 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                               categoryFilter={categoryFilter}
                               categoryCount={categoryCounts[cat.id]}
                               onSelect={setCategoryFilter}
-                              onToggleStatus={handleToggleCategoryStatus}
                             />
                         ))}
                       </SortableContext>

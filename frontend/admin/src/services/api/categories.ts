@@ -6,11 +6,6 @@ export const getCategories = async (flat = false) => {
     return response.data;
 };
 
-export const getCategoryById = async (id: string) => {
-  const response = await apiClient.get(`/categories/${id}`);
-  return response.data;
-};
-
 export const createCategory = async (categoryData: any) => {
   const response = await apiClient.post('/categories', categoryData);
   return response.data;

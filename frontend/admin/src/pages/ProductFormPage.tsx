@@ -16,14 +16,13 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ImageCropperModal } from '../components/ui/ImageCropperModal';
 
-const {
-    ArrowLeft, Plus, Trash2, CheckCircle, Pizza,
-    Layers, Settings2, Loader2, Image: ImageIcon, Package,
+const { 
+    ArrowLeft, Plus, Trash2, CheckCircle, Pizza, 
+    Layers, Settings2, Loader2, Image: ImageIcon, Package, 
     Save, Check, List, DollarSign, ChevronRight, Star, AlertCircle,
     Truck, Utensils, Globe, FileText, Search, GripVertical, Edit2, Eye,
-    Info, X, Hash
+    Info, X
 } = LucideIcons;
 
 import {
@@ -53,14 +52,13 @@ function ProductFormPage() {
     const [globalSizes, setGlobalSizes] = useState<GlobalSize[]>([]);
     const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
     const [productData, setProductData] = useState<any>(null);
-    const [cropper, setCropper] = useState<{ isOpen: boolean, src: string } | null>(null);
 
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
-        defaultValues: {
-            name: '', description: '', price: 0, imageUrl: '', categoryIds: [],
-            isAvailable: true, isFeatured: false,
+        defaultValues: { 
+            name: '', description: '', price: 0, imageUrl: '', categoryIds: [], 
+            isAvailable: true, isFeatured: false, 
             allowDelivery: true, allowPos: true, allowOnline: true,
-            stock: 0, addonGroups: [],
+            stock: 0, addonGroups: [], 
             sizes: [], ingredients: [], productionArea: 'Cozinha', measureUnit: 'UN',
             ncm: '', cfop: '', saiposIntegrationCode: '', origin: 0, taxPercentage: 0,
             pizzaConfig: {
@@ -93,7 +91,7 @@ function ProductFormPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'tamanhos' | 'complementos' | 'composição' | 'fiscal'>('geral');
-
+    
     const getImageUrl = (url: string) => {
         if (!url) return '';
         if (url.startsWith('http')) return url;
@@ -108,18 +106,18 @@ function ProductFormPage() {
         const loadData = async () => {
             try {
                 setIsLoading(true);
-                const [cats, ings, library, gSizes] = await Promise.all([
+                const [cats, ings, library, gSizes] = await Promise.all([ 
                     getCategories(true), getIngredients(), addonService.getAll(), globalSizeService.getAll()
                 ]);
                 setCategories(cats); setAvailableIngredients(ings); setLibraryGroups(library); setGlobalSizes(gSizes);
-
+                
                 if (id && id !== 'new') {
                     const product = await getProductById(id);
                     if (product) {
                         let initialCategoryIds = Array.isArray(product.categories) ? product.categories.map((c: any) => c.id) : (product.categoryId ? [product.categoryId] : []);
                         const formattedData = {
                             ...product,
-                            categoryIds: initialCategoryIds,
+                            categoryIds: initialCategoryIds, 
                             ingredients: product.ingredients?.map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) || 0 })) || [],
                             sizes: product.sizes?.map((s: any) => ({ ...s, price: Number(s.price) || 0, globalSizeId: s.globalSizeId || '', name: s.name || '' })) || [],
                             stock: Number(product.stock) || 0,
@@ -137,44 +135,24 @@ function ProductFormPage() {
         loadData();
     }, [id, navigate, reset]);
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = () => {
-            setCropper({ isOpen: true, src: reader.result as string });
-        };
-        reader.readAsDataURL(file);
-        e.target.value = '';
-    };
-
-    const handleCropComplete = async (blob: Blob) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]; if (!file) return;
         setIsUploading(true);
-        try {
-            const optimizedFile = new File([blob], `product-${Date.now()}.webp`, { type: 'image/webp' });
-            const data = await uploadProductImage(optimizedFile);
-            setValue('imageUrl', data.imageUrl);
-            toast.success("Imagem otimizada e carregada!");
-        } catch (error) {
-            toast.error("Erro no upload da imagem.");
-        } finally {
-            setIsUploading(false);
-            setCropper(null);
-        }
+        try { const data = await uploadProductImage(file); setValue('imageUrl', data.imageUrl); toast.success("Imagem atualizada!"); }
+        catch (e) { toast.error("Erro no upload."); } finally { setIsUploading(false); }
     };
 
     const onSubmit = async (data: any) => {
         setIsLoading(true);
         try {
-            const payload = {
-                ...data,
-                price: Number(data.price),
-                stock: Number(data.stock),
+            const payload = { 
+                ...data, 
+                price: Number(data.price), 
+                stock: Number(data.stock), 
                 taxPercentage: Number(data.taxPercentage || 0),
-                categoryIds: data.categoryIds,
-                addonGroups: (data.addonGroups || []).map((g: any) => ({ id: g.id })),
-                sizes: (data.sizes || []).map((s: any) => ({ ...s, price: Number(s.price) })),
+                categoryIds: data.categoryIds, 
+                addonGroups: (data.addonGroups || []).map((g: any) => ({ id: g.id })), 
+                sizes: (data.sizes || []).map((s: any) => ({ ...s, price: Number(s.price) })), 
                 ingredients: (data.ingredients || []).filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })),
                 pizzaConfig: data.pizzaConfig?.active ? data.pizzaConfig : null
             };
@@ -189,140 +167,141 @@ function ProductFormPage() {
     if (isLoading && !productData && id && id !== 'new') return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-orange-500" size={40} /></div>;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10 text-slate-900">
-            {cropper && (
-                <ImageCropperModal 
-                    isOpen={cropper.isOpen}
-                    imageSrc={cropper.src}
-                    onClose={() => setCropper(null)}
-                    onCropComplete={handleCropComplete}
-                />
-            )}
+        <div className="space-y-4 animate-in fade-in duration-500 pb-10 text-slate-900">
             {/* Header Super Compacto */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-4 border-b border-slate-200">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" type="button" onClick={() => navigate('/products')} className="rounded-xl bg-white h-10 w-10 border border-slate-200 shadow-sm">
-                        <ArrowLeft size={20}/>
-                    </Button>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-2 border-b border-slate-200">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" type="button" onClick={() => navigate('/products')} className="rounded-lg bg-white h-9 w-9 border border-slate-200 shadow-sm"><ArrowLeft size={18}/></Button>
                     <div>
-                        <h1 className="text-xl font-black tracking-tighter uppercase italic leading-none">{id && id !== 'new' ? 'Editar Produto' : 'Novo Produto'}</h1>
-                        <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.2em] mt-1 italic flex items-center gap-2">
-                            <Hash size={10} className="text-orange-500" /> {id && id !== 'new' ? `Ref: ${id.slice(-6).toUpperCase()}` : 'Criação de novo item'}
-                        </p>
+                        <h1 className="text-lg font-black tracking-tighter uppercase italic leading-none">{id && id !== 'new' ? 'Editar Ficha' : 'Novo Cadastro'}</h1>
+                        <p className="text-slate-400 text-[8px] font-bold uppercase tracking-[0.2em] mt-0.5 italic">Gestão Técnica de Produto</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 w-full lg:w-auto">
-                    <Button variant="ghost" type="button" className="flex-1 lg:flex-none h-10 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400" onClick={() => navigate('/products')}>CANCELAR</Button>
-                    <Button onClick={handleSubmit(onSubmit)} isLoading={isLoading} className="flex-1 lg:flex-none h-10 rounded-xl px-8 shadow-lg font-black italic uppercase tracking-widest gap-2 text-xs">
-                        <Save size={18} /> {id && id !== 'new' ? 'SALVAR ALTERAÇÕES' : 'CRIAR PRODUTO'}
+                    <Button variant="ghost" type="button" className="flex-1 lg:flex-none h-9 rounded-lg font-black uppercase text-[9px] text-slate-400" onClick={() => navigate('/products')}>CANCELAR</Button>
+                    <Button onClick={handleSubmit(onSubmit)} isLoading={isLoading} className="flex-1 lg:flex-none h-9 rounded-lg px-6 shadow-md font-black italic uppercase tracking-widest gap-2 text-[10px]">
+                        <Save size={16} /> {id && id !== 'new' ? 'SALVAR' : 'CADASTRAR'}
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-                {/* Coluna do Formulário */}
-                <div className="xl:col-span-8 space-y-6">
-                    {/* Navegação por Abas */}
-                    <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 overflow-x-auto no-scrollbar sticky top-[88px] z-30">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                
+                {/* Coluna Principal */}
+                <div className="xl:col-span-8 space-y-4">
+                    
+                    {/* Tabs Estilo Industrial */}
+                    <div className="flex bg-slate-100 p-1 rounded-xl gap-1 w-full overflow-x-auto no-scrollbar">
                         {[
-                            { id: 'geral', label: 'Dados Gerais', icon: Package },
-                            { id: 'tamanhos', label: 'Preços & Tamanhos', icon: Settings2 },
-                            { id: 'complementos', label: 'Complementos', icon: Layers },
-                            { id: 'composição', label: 'Ficha Técnica', icon: List },
-                            { id: 'fiscal', label: 'Fiscal & Integr.', icon: FileText }
+                            { id: 'geral', label: 'Básico', icon: Package },
+                            { id: 'tamanhos', label: 'Preços', icon: DollarSign },
+                            { id: 'complementos', label: 'Opções', icon: List },
+                            { id: 'composição', label: 'Produção', icon: Layers },
+                            { id: 'fiscal', label: 'Fiscal', icon: FileText }
                         ].map(tab => (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                onClick={() => setActiveTab(tab.id as any)}
-                                className={cn(
-                                    "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase italic tracking-wider transition-all whitespace-nowrap",
-                                    activeTab === tab.id ? "bg-white text-orange-600 shadow-sm ring-1 ring-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                                )}
-                            >
-                                <tab.icon size={14} /> {tab.label}
+                            <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 min-w-[80px] py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5", activeTab === tab.id ? "bg-white text-slate-900 shadow-sm border border-slate-200" : "text-slate-400 hover:text-slate-600")}>
+                                <tab.icon size={12} /> {tab.label}
                             </button>
                         ))}
                     </div>
 
                     <AnimatePresence mode="wait">
                         {activeTab === 'geral' && (
-                            <motion.div key="geral" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-                                <Card className="p-6 border-slate-200 bg-white space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                                        <div className="md:col-span-8">
-                                            <Input label="Nome do Produto" {...register('name', { required: true })} className="h-11 font-black text-sm uppercase italic" placeholder="Ex: Pizza Calabresa Gourmet" />
+                            <motion.div key="geral" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-4">
+                                
+                                {/* Status e Destaque */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className={cn("p-2.5 border rounded-xl flex items-center justify-between transition-all cursor-pointer", watch('isAvailable') ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200")} onClick={() => setValue('isAvailable', !watch('isAvailable'))}>
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('isAvailable') ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400")}><CheckCircle size={16} /></div>
+                                            <span className="text-[10px] font-black uppercase italic">Item Ativo</span>
                                         </div>
-                                        <div className="md:col-span-4">
-                                            <Input label="Preço Base" type="number" step="0.01" {...register('price')} className="h-11 font-black text-sm" prefix="R$" />
+                                        <div className={cn("w-8 h-4 rounded-full relative", watch('isAvailable') ? "bg-emerald-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all", watch('isAvailable') ? "left-4.5" : "left-0.5")} /></div>
+                                    </div>
+                                    <div className={cn("p-2.5 border rounded-xl flex items-center justify-between transition-all cursor-pointer", watch('isFeatured') ? "bg-amber-50/50 border-amber-200" : "bg-white border-slate-200")} onClick={() => setValue('isFeatured', !watch('isFeatured'))}>
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('isFeatured') ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-400")}><Star size={16} fill={watch('isFeatured') ? "currentColor" : "none"} /></div>
+                                            <span className="text-[10px] font-black uppercase italic">Destaque</span>
                                         </div>
-                                        <div className="md:col-span-12">
-                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic block mb-1.5">Descrição Curta</label>
-                                            <textarea {...register('description')} rows={3} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-medium outline-none focus:border-orange-500 transition-all" placeholder="Destaque os principais diferenciais do produto..." />
+                                        <div className={cn("w-8 h-4 rounded-full relative", watch('isFeatured') ? "bg-amber-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all", watch('isFeatured') ? "left-4.5" : "left-0.5")} /></div>
+                                    </div>
+                                </div>
+
+                                {/* Flags de Visibilidade por Canal */}
+                                <Card className="p-3 border-slate-200 bg-slate-50/50">
+                                    <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 mb-3 italic flex items-center gap-2">
+                                        <Settings2 size={10} className="text-orange-500" /> Disponibilidade por Canal
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div className={cn("p-3 rounded-xl border flex flex-col gap-2 transition-all cursor-pointer", watch('allowDelivery') ? "bg-white border-blue-200 shadow-sm" : "bg-slate-100/50 border-slate-200 opacity-60")} onClick={() => setValue('allowDelivery', !watch('allowDelivery'))}>
+                                            <div className="flex justify-between items-start"><div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('allowDelivery') ? "bg-blue-500 text-white" : "bg-slate-200 text-slate-400")}><Truck size={16} /></div><div className={cn("w-7 h-3.5 rounded-full relative transition-all", watch('allowDelivery') ? "bg-blue-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all", watch('allowDelivery') ? "left-4" : "left-0.5")} /></div></div>
+                                            <span className="text-[10px] font-black uppercase italic tracking-tighter">Delivery</span>
+                                        </div>
+                                        <div className={cn("p-3 rounded-xl border flex flex-col gap-2 transition-all cursor-pointer", watch('allowPos') ? "bg-white border-emerald-200 shadow-sm" : "bg-slate-100/50 border-slate-200 opacity-60")} onClick={() => setValue('allowPos', !watch('allowPos'))}>
+                                            <div className="flex justify-between items-start"><div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('allowPos') ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400")}><Utensils size={16} /></div><div className={cn("w-7 h-3.5 rounded-full relative transition-all", watch('allowPos') ? "bg-emerald-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all", watch('allowPos') ? "left-4" : "left-0.5")} /></div></div>
+                                            <span className="text-[10px] font-black uppercase italic tracking-tighter">Salão / PDV</span>
+                                        </div>
+                                        <div className={cn("p-3 rounded-xl border flex flex-col gap-2 transition-all cursor-pointer", watch('allowOnline') ? "bg-white border-purple-200 shadow-sm" : "bg-slate-100/50 border-slate-200 opacity-60")} onClick={() => setValue('allowOnline', !watch('allowOnline'))}>
+                                            <div className="flex justify-between items-start"><div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", watch('allowOnline') ? "bg-purple-500 text-white" : "bg-slate-200 text-slate-400")}><Globe size={16} /></div><div className={cn("w-7 h-3.5 rounded-full relative transition-all", watch('allowOnline') ? "bg-purple-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all", watch('allowOnline') ? "left-4" : "left-0.5")} /></div></div>
+                                            <span className="text-[10px] font-black uppercase italic tracking-tighter">Pedido Online</span>
                                         </div>
                                     </div>
                                 </Card>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <Card className="p-6 border-slate-200 bg-white space-y-4">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2 italic"><Layers size={14} className="text-orange-500" /> Categorização</h4>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {categories.map(cat => (
-                                                <label key={cat.id} className={cn("flex items-center gap-2 p-2.5 rounded-xl border transition-all cursor-pointer", watch('categoryIds')?.includes(cat.id) ? "bg-orange-50 border-orange-200" : "bg-slate-50 border-transparent")}>
-                                                    <input type="checkbox" value={cat.id} checked={watch('categoryIds')?.includes(cat.id)} onChange={(e) => {
-                                                        const current = watch('categoryIds') || [];
-                                                        const next = e.target.checked ? [...current, cat.id] : current.filter((id: string) => id !== cat.id);
-                                                        setValue('categoryIds', next);
-                                                    }} className="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
-                                                    <span className={cn("text-[9px] font-black uppercase italic truncate", watch('categoryIds')?.includes(cat.id) ? "text-orange-600" : "text-slate-500")}>{cat.name}</span>
-                                                </label>
-                                            ))}
+                                <Card className="p-4 border-slate-200 bg-white space-y-4 shadow-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                        <div className="md:col-span-8">
+                                            <Input label="Nome Comercial do Item" {...register('name', { required: true })} className="h-10 text-xs font-bold" required placeholder="Ex: Pizza Grande de Calabresa" />
                                         </div>
-                                    </Card>
-
-                                    <div className="space-y-6">
-                                        <Card className="p-6 border-slate-200 bg-white space-y-4">
-                                            <h4 className="text-[10px] font-black uppercase text-slate-400 mb-2 italic">Status & Destaque</h4>
-                                            <div className="flex gap-4">
-                                                <label className={cn("flex-1 flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer", watch('isAvailable') ? "bg-emerald-50 border-emerald-500 shadow-sm" : "bg-slate-50 border-transparent opacity-40")}>
-                                                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", watch('isAvailable') ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400")}><Check size={24} strokeWidth={3} /></div>
-                                                    <span className="text-[9px] font-black uppercase italic">Disponível</span>
-                                                    <input type="checkbox" {...register('isAvailable')} className="hidden" />
-                                                </label>
-                                                <label className={cn("flex-1 flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer", watch('isFeatured') ? "bg-amber-50 border-amber-500 shadow-sm" : "bg-slate-50 border-transparent opacity-40")}>
-                                                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", watch('isFeatured') ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-400")}><Star size={24} strokeWidth={3} className="fill-current" /></div>
-                                                    <span className="text-[9px] font-black uppercase italic">Destaque</span>
-                                                    <input type="checkbox" {...register('isFeatured')} className="hidden" />
-                                                </label>
+                                        <div className="md:col-span-4">
+                                            <Input label="Preço de Venda (R$)" type="number" step="0.01" {...register('price', { valueAsNumber: true })} className="h-10 text-xs font-black text-orange-600" icon={DollarSign} disabled={watch('sizes')?.length > 0} />
+                                        </div>
+                                        
+                                        <div className="md:col-span-12 space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic flex items-center gap-2"><Layers size={10} className="text-orange-500" /> Categorias Vinculadas</label>
+                                            <div className="flex flex-wrap gap-1 p-2 bg-slate-50 border border-slate-100 rounded-xl max-h-24 overflow-y-auto custom-scrollbar">
+                                                {categories.map(cat => {
+                                                    const currentIds = watch('categoryIds') || [];
+                                                    const isSelected = currentIds.includes(cat.id);
+                                                    return (
+                                                        <button key={cat.id} type="button" onClick={() => isSelected ? setValue('categoryIds', currentIds.filter((id: string) => id !== cat.id)) : setValue('categoryIds', [...currentIds, cat.id])}
+                                                            className={cn("px-2 py-1 rounded-md text-[8px] font-black uppercase transition-all border", isSelected ? "bg-slate-900 border-slate-900 text-white" : "bg-white border-slate-200 text-slate-400 hover:border-slate-300")}>
+                                                            {cat.name}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
-                                        </Card>
+                                        </div>
 
-                                        <Card className="p-6 border-slate-200 bg-white">
-                                            <h4 className="text-[10px] font-black uppercase text-slate-400 mb-4 italic">Canais de Venda</h4>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                {[
-                                                    { id: 'allowDelivery', icon: Truck, label: 'Delivery', color: 'blue' },
-                                                    { id: 'allowPos', icon: Utensils, label: 'Salão', color: 'emerald' },
-                                                    { id: 'allowOnline', icon: Globe, label: 'Online', color: 'purple' }
-                                                ].map(canal => (
-                                                    <button key={canal.id} type="button" onClick={() => setValue(canal.id, !watch(canal.id))} className={cn("flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all", watch(canal.id) ? `bg-${canal.color}-50 border-${canal.color}-500 shadow-sm` : "bg-slate-50 border-transparent opacity-40")}>
-                                                        <canal.icon size={18} className={cn(watch(canal.id) ? `text-${canal.color}-600` : "text-slate-400")} />
-                                                        <span className="text-[8px] font-black uppercase italic">{canal.label}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </Card>
+                                        <div className="md:col-span-8">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Descrição Comercial</label>
+                                            <textarea {...register('description')} rows={2} className="ui-input w-full h-auto py-2 px-3 font-bold text-[11px] italic rounded-xl border border-slate-200" placeholder="Ex: Calabresa fatiada, cebola roxa e orégano..." />
+                                        </div>
+                                        
+                                        <div className="md:col-span-4">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Setor de Produção</label>
+                                            <select {...register('productionArea')} className="ui-input w-full h-10 italic uppercase text-[10px] font-black rounded-xl border border-slate-200 px-3">
+                                                <option value="Cozinha">Cozinha</option>
+                                                <option value="Bar">Bar</option>
+                                                <option value="Pizzaria">Pizzaria</option>
+                                                <option value="Copa">Copa</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                </div>
+                                </Card>
 
-                                <Card className="p-6 border-slate-200 bg-white space-y-6">
-                                    <div className="flex items-center justify-between">
+                                <Card className="p-4 border-slate-200 bg-white space-y-4 shadow-sm">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                         <div className="flex items-center gap-2">
-                                            <Pizza size={18} className="text-orange-500" />
-                                            <h3 className="text-xs font-black uppercase italic text-slate-900">Configuração de Pizza</h3>
+                                            <div className="bg-orange-500 text-white p-1.5 rounded-lg"><Pizza size={14} /></div>
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase text-slate-900 italic leading-none">Configuração de Pizza</h4>
+                                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Marcar este produto como Pizza</p>
+                                            </div>
                                         </div>
-                                        <div className={cn("w-10 h-5 rounded-full relative transition-all cursor-pointer", watch('pizzaConfig.active') ? "bg-orange-500" : "bg-slate-300")} onClick={() => setValue('pizzaConfig.active', !watch('pizzaConfig.active'))}>
-                                            <div className={cn("absolute top-1 w-3 h-3 bg-white rounded-full transition-all", watch('pizzaConfig.active') ? "left-6" : "left-1")} />
+                                        <div className={cn("p-1.5 border rounded-lg flex items-center gap-3 transition-all cursor-pointer px-3", watch('pizzaConfig.active') ? "bg-orange-50 border-orange-200" : "bg-white border-slate-200")} onClick={() => setValue('pizzaConfig.active', !watch('pizzaConfig.active'))}>
+                                            <span className="text-[9px] font-black uppercase italic text-slate-600">{watch('pizzaConfig.active') ? 'ATIVADO' : 'DESATIVADO'}</span>
+                                            <div className={cn("w-8 h-4 rounded-full relative", watch('pizzaConfig.active') ? "bg-orange-500" : "bg-slate-300")}><div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all", watch('pizzaConfig.active') ? "left-4.5" : "left-0.5")} /></div>
                                         </div>
                                     </div>
 
@@ -354,10 +333,10 @@ function ProductFormPage() {
                                             {watch('imageUrl') ? <img src={getImageUrl(watch('imageUrl'))} className="w-full h-full object-cover" alt="" /> : <ImageIcon size={20} className="text-slate-300"/>}
                                             {isUploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><Loader2 className="animate-spin text-orange-500" size={16}/></div>}
                                         </div>
-                                        <input type="file" id="img-upload" className="hidden" onChange={handleImageSelect} accept="image/*" />
+                                        <input type="file" id="img-upload" className="hidden" onChange={handleImageUpload} accept="image/*" />
                                         <div className="flex-1 space-y-2">
                                             <Input label="Caminho do Arquivo" {...register('imageUrl')} className="h-9 text-[10px]" />
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase italic leading-tight">Ideal: 1000x1000px, fundo branco ou transparente para o App. Será otimizado ao fazer upload.</p>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase italic leading-tight">Ideal: 1000x1000px, fundo branco ou transparente para o App.</p>
                                         </div>
                                     </div>
                                 </Card>
@@ -395,10 +374,10 @@ function ProductFormPage() {
 
                         {activeTab === 'complementos' && (
                             <motion.div key="complementos" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                                <AddonGroupSelector
-                                    availableGroups={libraryGroups}
-                                    selectedGroups={watch('addonGroups') || []}
-                                    onUpdate={(newGroups) => setValue('addonGroups', newGroups)}
+                                <AddonGroupSelector 
+                                    availableGroups={libraryGroups} 
+                                    selectedGroups={watch('addonGroups') || []} 
+                                    onUpdate={(newGroups) => setValue('addonGroups', newGroups)} 
                                     inheritedGroups={inheritedAddonGroups}
                                 />
                             </motion.div>
@@ -515,8 +494,8 @@ function AddonGroupSelector({ availableGroups, selectedGroups, onUpdate, inherit
     const [isSearching, setIsSearch] = useState(false);
     const [viewingItems, setViewingItems] = useState<AddonGroup | null>(null);
 
-    const filteredAvailable = availableGroups.filter(g =>
-        !selectedGroups.find(sg => sg.id === g.id) &&
+    const filteredAvailable = availableGroups.filter(g => 
+        !selectedGroups.find(sg => sg.id === g.id) && 
         !inheritedGroups.find(ig => ig.id === g.id) &&
         g.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -653,7 +632,7 @@ function ProductMobilePreview({ watchFields, getImageUrl }: { watchFields: any, 
     const { name, description, price, imageUrl, addonGroups, sizes } = watchFields;
     const [selectedSizePreview, setSelectedSizePreview] = useState<any>(null);
     useEffect(() => { if (sizes && sizes.length > 0 && !selectedSizePreview) setSelectedSizePreview(sizes[0]); }, [sizes, selectedSizePreview]);
-
+    
     const lowestPrice = sizes?.length > 0 ? Math.min(...sizes.map((s: any) => Number(s.price) || 0)) : price;
 
     return (
