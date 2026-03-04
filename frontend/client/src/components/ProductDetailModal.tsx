@@ -37,6 +37,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const [observations, setObservations] = useState('');
   const [isAdded, setIsAdded] = useState(false);
 
+  const getPizzaConfig = () => {
+    if (!product?.pizzaConfig) return { active: false, maxFlavors: 1, priceRule: 'higher' };
+    return typeof product.pizzaConfig === 'string' ? JSON.parse(product.pizzaConfig) : product.pizzaConfig;
+  };
+
+  const config = getPizzaConfig();
+
   const addonGroups = React.useMemo(() => {
     if (!product) return [];
     
@@ -68,14 +75,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       setQuantity(prev => Math.max(1, prev + val));
   };
 
-  const getPizzaConfig = () => {
-    if (!product?.pizzaConfig) return { active: false, maxFlavors: 1, priceRule: 'higher' };
-    return typeof product.pizzaConfig === 'string' ? JSON.parse(product.pizzaConfig) : product.pizzaConfig;
-  };
-
   const handleAddonQuantityChange = (addon: AddonOption, delta: number, group: any) => {
     if (isAdded) return;
-    const config = getPizzaConfig();
     const currentAddon = selectedAddons.find(a => a.id === addon.id);
     const currentQty = currentAddon?.quantity || 0;
     const newQty = Math.max(0, currentQty + delta);
@@ -107,7 +108,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const calculateCurrentPrice = () => {
     if (!product) return 0;
-    const config = getPizzaConfig();
     let basePrice = selectedSize ? selectedSize.price : product.price;
 
     const promo = product.promotions?.find(p => p.isActive);
@@ -144,7 +144,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const handleAddToCartClick = () => {
     if (isAdded || !product) return;
-    const config = getPizzaConfig();
     for (const group of addonGroups) {
       const selected = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
       const total = selected.reduce((sum, a) => sum + (a.quantity || 0), 0);

@@ -1,32 +1,32 @@
 import apiClient from './client';
 
-export const getCategories = async (flat = false) => {
+export async function getCategories(flat = false) {
     const url = flat ? '/categories/flat' : '/categories';
     const response = await apiClient.get(url);
     return response.data;
-};
+}
 
-export const getCategoryById = async (id: string) => {
+export async function getCategoryById(id: string) {
   const response = await apiClient.get(`/categories/${id}`);
   return response.data;
-};
+}
 
-export const createCategory = async (categoryData: any) => {
+export async function createCategory(categoryData: any) {
   const response = await apiClient.post('/categories', categoryData);
   return response.data;
-};
+}
 
-export const updateCategory = async (id: string, categoryData: any) => {
+export async function updateCategory(id: string, categoryData: any) {
   const response = await apiClient.put(`/categories/${id}`, categoryData);
   return response.data;
-};
+}
 
-export const deleteCategory = async (id: string) => {
+export async function deleteCategory(id: string) {
   const response = await apiClient.delete(`/categories/${id}`);
   return response.data;
-};
+}
 
-export const reorderCategories = async (items: { id: string, order: number }[]) => {
+export async function reorderCategories(items: { id: string, order: number }[]) {
   const response = await apiClient.patch('/categories/reorder', { items });
   return response.data;
-};
+}
