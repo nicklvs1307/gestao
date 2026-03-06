@@ -22,6 +22,11 @@ class ProductService {
     let products = await prisma.product.findMany({
       where,
       include: {
+        ingredients: {
+          include: {
+            ingredient: true
+          }
+        },
         categories: {
           include: {
             addonGroups: {
@@ -61,6 +66,11 @@ class ProductService {
     const product = await prisma.product.findFirst({
       where: { id, restaurantId },
       include: {
+        ingredients: {
+          include: {
+            ingredient: true
+          }
+        },
         categories: {
           include: {
             addonGroups: {
@@ -196,6 +206,15 @@ class ProductService {
             set: addonGroups.map((g) => ({ id: g.id })),
           },
         }),
+        ...(ingredients && {
+          ingredients: {
+            deleteMany: {},
+            create: ingredients.map((ing) => ({
+              quantity: ing.quantity,
+              ingredient: { connect: { id: ing.ingredientId } }
+            }))
+          }
+        })
       },
     });
 

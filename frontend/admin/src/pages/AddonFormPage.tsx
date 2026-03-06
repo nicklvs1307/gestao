@@ -6,7 +6,7 @@ import { uploadProductImage } from '../services/api/products';
 import { 
     ArrowLeft, Plus, Trash2, Save, X, GripVertical, 
     Loader2, Settings, CheckCircle, Info, Copy, 
-    Image as ImageIcon, Upload, List, Hash
+    Image as ImageIcon, Upload, List, Hash, ChefHat
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -32,15 +32,31 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { getImageUrl } from '../utils/image';
+import { getIngredients } from '../services/api/stock';
 
-const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow }: {
+const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, availableIngredients, navigate }: {
     addon: Addon;
     index: number;
     updateAddon: (index: number, field: keyof Addon, value: any) => void;
     removeAddonRow: (index: number) => void;
+    availableIngredients: any[];
+    navigate: any;
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const calculatedCost = React.useMemo(() => {
+    return (addon.ingredients || []).reduce((acc: number, item: any) => {
+        const ing = availableIngredients.find(i => i.id === item.ingredientId);
+        return acc + (Number(item.quantity) * (ing?.averageCost || ing?.lastUnitCost || 0));
+    }, 0);
+  }, [addon.ingredients, availableIngredients]);
+
+  useEffect(() => {
+    if (calculatedCost !== addon.costPrice && calculatedCost > 0) {
+        updateAddon(index, 'costPrice', calculatedCost);
+    }
+  }, [calculatedCost]);
 
   const {
     attributes,
@@ -107,14 +123,24 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow }: {
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-rose-400 ml-1 italic">Preço de Custo</label>
-                        <Input 
-                            type="number" 
-                            step="0.01" 
-                            value={addon.costPrice || 0} 
-                            onChange={(e) => updateAddon(index, 'costPrice', parseFloat(e.target.value) || 0)} 
-                            className="h-9 text-xs font-bold border-rose-100 bg-rose-50/20"
-                        />
+                        <label className="text-[9px] font-black uppercase text-rose-400 ml-1 italic">Custo Real</label>
+                        <div className="relative group">
+                            <Input 
+                                type="number" 
+                                step="0.01" 
+                                value={addon.costPrice || 0} 
+                                className="h-9 text-xs font-bold border-rose-100 bg-rose-50/20 pr-8"
+                                readOnly
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => navigate('/production/technical-sheets')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 hover:text-rose-600 transition-colors"
+                                title="Ver na Central de Fichas"
+                            >
+                                <ChefHat size={14} />
+                            </button>
+                        </div>
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-[9px] font-black uppercase text-amber-500 ml-1 italic font-black">Preço Promo</label>
@@ -133,15 +159,6 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow }: {
                             placeholder="SKU Saipos" 
                             value={addon.saiposIntegrationCode || ''} 
                             onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} 
-                            className="h-9 text-xs"
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Qtd Máx</label>
-                        <Input 
-                            type="number" 
-                            value={addon.maxQuantity} 
-                            onChange={(e) => updateAddon(index, 'maxQuantity', parseInt(e.target.value) || 1)} 
                             className="h-9 text-xs"
                         />
                     </div>
@@ -230,6 +247,8 @@ const AddonFormPage: React.FC = () => {
         addons: []
     });
 
+    const [availableIngredients, setAvailableIngredients] = useState<any[]>([]);
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -237,8 +256,11 @@ const AddonFormPage: React.FC = () => {
 
     useEffect(() => {
         const loadData = async () => {
-            if (id && id !== 'new') {
-                try {
+            try {
+                const ings = await getIngredients();
+                setAvailableIngredients(ings);
+
+                if (id && id !== 'new') {
                     setIsLoading(true);
                     const group = await addonService.getById(id);
                     if (group) {
@@ -250,12 +272,12 @@ const AddonFormPage: React.FC = () => {
                         toast.error("Grupo não encontrado.");
                         navigate('/addons');
                     }
-                } catch (error) {
-                    toast.error("Erro ao carregar dados.");
-                } finally {
+                } else {
                     setIsLoading(false);
                 }
-            } else {
+            } catch (error) {
+                toast.error("Erro ao carregar dados.");
+            } finally {
                 setIsLoading(false);
             }
         };
@@ -283,7 +305,7 @@ const AddonFormPage: React.FC = () => {
             addons: [...formData.addons, { 
                 name: '', 
                 price: 0, 
-                costPrice: 0, // Novo
+                costPrice: 0,
                 maxQuantity: 1, 
                 order: formData.addons.length, 
                 ingredients: [], 
@@ -308,13 +330,12 @@ const AddonFormPage: React.FC = () => {
     if (isLoading) return (
         <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Carregando Ficha Técnica...</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Carregando...</span>
         </div>
     );
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            {/* Header Técnico */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-4 border-b border-slate-200">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/addons')} className="rounded-xl bg-white border border-slate-200 h-10 w-10 shadow-sm"><ArrowLeft size={20}/></Button>
@@ -334,7 +355,6 @@ const AddonFormPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                {/* Coluna Principal: Regras e Configuração */}
                 <div className="xl:col-span-4 space-y-6">
                     <Card className="p-6 border-slate-200 bg-white space-y-6 shadow-sm">
                         <div className="space-y-4">
@@ -399,7 +419,6 @@ const AddonFormPage: React.FC = () => {
                     </Card>
                 </div>
 
-                {/* Coluna de Itens (Addons) */}
                 <div className="xl:col-span-8 space-y-4">
                     <div className="flex justify-between items-center px-2">
                         <div className="flex items-center gap-2">
@@ -433,6 +452,8 @@ const AddonFormPage: React.FC = () => {
                                         index={index}
                                         updateAddon={updateAddon}
                                         removeAddonRow={removeAddonRow}
+                                        availableIngredients={availableIngredients}
+                                        navigate={navigate}
                                     />
                                 ))}
                                 {formData.addons.length === 0 && (

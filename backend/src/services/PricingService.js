@@ -2,10 +2,54 @@ const prisma = require('../lib/prisma');
 
 class PricingService {
   /**
-   * Calcula o preço unitário e total de um item, considerando regras de negócio,
-   * tamanhos, pizzas (sabores) e adicionais.
+   * Calcula o custo real de um produto baseado na sua ficha técnica (ingredientes).
    */
-  async calculateItemPrice(productId, quantity, sizeId, addonsIds = []) {
+  async calculateProductCost(productId) {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        ingredients: {
+          include: { ingredient: true }
+        }
+      }
+    });
+
+    if (!product) return 0;
+
+    // Soma o custo de cada ingrediente (Quantidade * Custo Médio)
+    const cost = product.ingredients.reduce((acc, pi) => {
+      const ingredientCost = pi.ingredient.averageCost || 0;
+      return acc + (pi.quantity * ingredientCost);
+    }, 0);
+
+    return cost;
+  }
+
+  /**
+   * Calcula o custo real de um adicional baseado na sua ficha técnica.
+   */
+  async calculateAddonCost(addonId) {
+    const addon = await prisma.addon.findUnique({
+      where: { id: addonId },
+      include: {
+        ingredients: {
+          include: { ingredient: true }
+        }
+      }
+    });
+
+    if (!addon) return 0;
+
+    const cost = addon.ingredients.reduce((acc, ai) => {
+      const ingredientCost = ai.ingredient.averageCost || 0;
+      return acc + (ai.quantity * ingredientCost);
+    }, 0);
+
+    return cost;
+  }
+
+  /**
+   * Calcula o preço unitário e total de um item...
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: { 

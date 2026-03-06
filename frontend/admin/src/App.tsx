@@ -53,6 +53,7 @@ import ChecklistFill from './pages/ChecklistFill';
 import TableCheckout from './pages/TableCheckout';
 import WhatsAppManagement from './pages/WhatsAppManagement';
 import WhatsAppChat from './pages/WhatsAppChat';
+import TechnicalSheetManagement from './pages/TechnicalSheetManagement';
 import { Toaster } from 'sonner';
 
 import GlobalModals from './components/GlobalModals';
@@ -255,6 +256,9 @@ function AdminRoutes() {
         break;
       case '/whatsapp/chat':
         setPageTitle('Central de Atendimento');
+        break;
+      case '/production/technical-sheets':
+        setPageTitle('Mestra de Produção (Fichas Técnicas)');
         break;
       default:
         if (location.pathname.startsWith('/products/')) {
@@ -489,6 +493,11 @@ function AdminRoutes() {
         } />
         <Route path="/ingredients" element={<StockManagement />} />
         <Route path="/ingredients/*" element={<StockManagement />} />
+        <Route path="/production/technical-sheets" element={
+          <ProtectedRoute permission="products:manage">
+            <TechnicalSheetManagement />
+          </ProtectedRoute>
+        } />
         <Route path="/fiscal" element={
           <ProtectedRoute permission="settings:manage">
             <FiscalManagement />

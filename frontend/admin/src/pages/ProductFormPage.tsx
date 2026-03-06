@@ -95,6 +95,21 @@ function ProductFormPage() {
     
     const { fields: sizeFields, append: appendSize, remove: removeSize } = useFieldArray({ control, name: "sizes" });
     const watchAllFields = watch();
+    const watchedIngredients = watch('ingredients') || [];
+
+    // Cálculo dinâmico de custo baseado na ficha técnica
+    const calculatedCost = React.useMemo(() => {
+        return watchedIngredients.reduce((acc: number, item: any) => {
+            const ing = availableIngredients.find(i => i.id === item.ingredientId);
+            const unitCost = ing?.averageCost || ing?.lastUnitCost || 0;
+            return acc + (Number(item.quantity) * unitCost);
+        }, 0);
+    }, [watchedIngredients, availableIngredients]);
+
+    // Atualiza o costPrice no formulário sempre que o calculado mudar
+    useEffect(() => {
+        setValue('costPrice', calculatedCost);
+    }, [calculatedCost, setValue]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -256,7 +271,15 @@ function ProductFormPage() {
                                         </div>
 
                                         <div className="md:col-span-4">
-                                            <Input label="Preço de Custo (R$)" type="number" step="0.01" {...register('costPrice', { valueAsNumber: true })} className="h-10 text-xs font-black text-rose-500 border-rose-100 bg-rose-50/20" icon={AlertCircle} />
+                                            <div className="relative">
+                                                <Input label="Preço de Custo (R$)" type="number" step="0.01" {...register('costPrice')} className="h-10 text-xs font-black text-rose-500 border-rose-100 bg-rose-50/20 pr-10" icon={AlertCircle} readOnly />
+                                                <div className="absolute right-3 top-[26px] group cursor-help">
+                                                    <div className="bg-rose-500 text-white p-0.5 rounded-full"><Info size={10} /></div>
+                                                    <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-900 text-white text-[8px] font-bold uppercase rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                                        Este valor é calculado automaticamente com base nos insumos da aba "Produção".
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="md:col-span-4">
@@ -408,7 +431,7 @@ function ProductFormPage() {
 
                         {activeTab === 'composição' && (
                             <motion.div key="composição" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                                <Card className="p-4 border-slate-200 bg-white"><CompositionList control={control} register={register} availableIngredients={availableIngredients} /></Card>
+                                <Card className="p-4 border-slate-200 bg-white"><CompositionList watch={watch} availableIngredients={availableIngredients} navigate={navigate} /></Card>
                             </motion.div>
                         )}
 
@@ -630,21 +653,46 @@ function AddonGroupSelector({ availableGroups, selectedGroups, onUpdate, inherit
     );
 };
 
-function CompositionList({ control, register, availableIngredients }: { control: any, register: any, availableIngredients: any[] }) {
-    const { fields, append, remove } = useFieldArray({ control, name: "ingredients" });
+function CompositionList({ watch, availableIngredients, navigate }: { watch: any, availableIngredients: any[], navigate: any }) {
+    const ingredients = watch('ingredients') || [];
     return (
-        <div className="space-y-3">
-            <div className="flex justify-between items-center mb-2 px-1"><h3 className="text-[10px] font-black uppercase text-slate-400 italic">Ficha Técnica / Insumos</h3><Button type="button" variant="outline" size="sm" onClick={() => append({ ingredientId: '', quantity: 0 })} className="h-7 rounded-lg border-orange-500 text-orange-600 font-black italic text-[9px]"><Plus size={12} className="mr-1" /> VINCULAR INSUMO</Button></div>
-            <div className="space-y-1.5">
-                {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                        <div className="flex-1"><select {...register(`ingredients.${index}.ingredientId`, { required: true })} className="ui-input w-full h-8 text-[10px] font-black italic border border-slate-200 rounded-lg px-2 bg-white"><option value="">Insumo...</option>{availableIngredients.map(ing => <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>)}</select></div>
-                        <div className="w-20 relative"><input type="number" step="0.001" {...register(`ingredients.${index}.quantity`, { required: true, valueAsNumber: true })} className="ui-input w-full h-8 font-black text-orange-600 text-[10px] pr-6 italic border border-slate-200 rounded-lg px-2 bg-white" /><span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[7px] font-black text-slate-300 uppercase">Qtd</span></div>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-8 w-8 text-rose-400 hover:bg-rose-50"><Trash2 size={14} /></Button>
+        <div className="space-y-4">
+            <div className="flex justify-between items-center bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                <div className="flex items-center gap-3">
+                    <div className="bg-orange-500 text-white p-2 rounded-xl shadow-lg shadow-orange-200">
+                        <LucideIcons.ChefHat size={20} />
                     </div>
-                ))}
-                {fields.length === 0 && (
-                    <div className="p-6 border-2 border-dashed border-slate-100 rounded-xl text-center opacity-20"><p className="text-[9px] font-black uppercase italic">Sem ficha técnica</p></div>
+                    <div>
+                        <h4 className="text-[10px] font-black uppercase text-slate-900 italic leading-none">Ficha Técnica Mestra</h4>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão centralizada de insumos e CMV</p>
+                    </div>
+                </div>
+                <Button 
+                    type="button"
+                    onClick={() => navigate('/production/technical-sheets')}
+                    className="h-8 rounded-lg bg-slate-900 text-white font-black italic uppercase text-[9px] px-4 gap-2"
+                >
+                    <LucideIcons.Settings size={14} /> EDITAR NA CENTRAL
+                </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ingredients.map((item: any, index: number) => {
+                    const ing = availableIngredients.find(i => i.id === item.ingredientId);
+                    return (
+                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase italic text-slate-900">{ing?.name || 'Insumo'}</span>
+                                <span className="text-[8px] font-bold text-slate-400 uppercase italic">{ing?.unit}</span>
+                            </div>
+                            <span className="text-xs font-black text-orange-600 italic">{item.quantity}</span>
+                        </div>
+                    );
+                })}
+                {ingredients.length === 0 && (
+                    <div className="col-span-full p-8 border-2 border-dashed border-slate-100 rounded-2xl text-center bg-slate-50/30">
+                        <p className="text-[9px] font-black uppercase italic text-slate-400">Nenhum insumo vinculado na central.</p>
+                    </div>
                 )}
             </div>
         </div>

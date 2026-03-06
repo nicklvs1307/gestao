@@ -127,7 +127,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                             icon: Warehouse,
                             items: [
                                 { label: "Análise e Simulação de CMV", path: "/stock/cmv", icon: Calculator, permission: 'reports:abc' },
-                                { label: "Ficha Técnica", path: "/products", icon: FileText, permission: 'products:manage' },
+                                { label: "Ficha Técnica (Mestra)", path: "/production/technical-sheets", icon: ChefHat, permission: 'products:manage' },
                                 { label: "Grupos de Ingrediente", path: "/ingredients/groups", icon: Layers, permission: 'stock:manage' },
                                 { label: "Histórico de Posição de Estoque", path: "/stock/history", icon: History, permission: 'stock:view' },
                                 { label: "Ingredientes e Insumos", path: "/ingredients", icon: Package, permission: 'stock:manage' },
