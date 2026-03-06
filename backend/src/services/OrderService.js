@@ -47,22 +47,34 @@ class OrderService {
     // 1. Preparação dos Itens
     for (const item of items) {
       console.log(`[ORDER] Calculando preço do item: ${item.productId}`);
+      
+      // Combina addonsIds e flavorIds (alguns sistemas mandam separado, outros juntos)
+      const allOptionsIds = [
+          ...(item.addonsIds || []),
+          ...(item.flavorIds || [])
+      ];
+
       const calculation = await PricingService.calculateItemPrice(
         item.productId, 
         item.quantity, 
         item.sizeId, 
-        item.addonsIds
+        allOptionsIds
       );
       console.log(`[ORDER] Item calculado: ${item.productId} - Preço: ${calculation.totalPrice}`);
 
       orderTotal += calculation.totalPrice;
+
+      // Separa o que é adicional comum do que é sabor (isFlavor)
+      const flavorsList = calculation.addonsObjects.filter(a => a.isFlavor);
+      const addonsList = calculation.addonsObjects.filter(a => !a.isFlavor);
 
       processedItems.push({
         productId: item.productId,
         quantity: item.quantity,
         priceAtTime: calculation.unitPrice,
         sizeJson: calculation.sizeObj ? JSON.stringify(calculation.sizeObj) : null,
-        addonsJson: calculation.addonsObjects.length ? JSON.stringify(calculation.addonsObjects) : null,
+        addonsJson: addonsList.length ? JSON.stringify(addonsList) : null,
+        flavorsJson: flavorsList.length ? JSON.stringify(flavorsList) : null,
         observations: item.observations || ''
       });
     }
@@ -333,7 +345,7 @@ class OrderService {
    * Adiciona itens a um pedido existente
    */
   async addItemsToOrder(orderId, items, userId = null) {
-    // ... (lógica original)
+    console.log(`[ORDER] Adicionando itens ao pedido: ${orderId}`);
     let additionalTotal = 0;
     const processedItems = [];
 
@@ -345,16 +357,31 @@ class OrderService {
     if (!originalOrder) throw new Error("Pedido não encontrado.");
 
     for (const item of items) {
+       console.log(`[ORDER] Calculando preço para item adicional: ${item.productId}`);
+       
+       const allOptionsIds = [
+           ...(item.addonsIds || []),
+           ...(item.flavorIds || [])
+       ];
+
        const calculation = await PricingService.calculateItemPrice(
-        item.productId, item.quantity, item.sizeId, item.addonsIds
+        item.productId, item.quantity, item.sizeId, allOptionsIds
       );
+      
+      console.log(`[ORDER] Item adicional calculado: ${item.productId} - Preço: ${calculation.totalPrice}`);
       additionalTotal += calculation.totalPrice;
       
+      const flavorsList = calculation.addonsObjects.filter(a => a.isFlavor);
+      const addonsList = calculation.addonsObjects.filter(a => !a.isFlavor);
+
       processedItems.push({
-        orderId: orderId, productId: item.productId, quantity: item.quantity,
+        orderId: orderId, 
+        productId: item.productId, 
+        quantity: item.quantity,
         priceAtTime: calculation.unitPrice,
-        sizeJson: item.sizeJson || (calculation.sizeObj ? JSON.stringify(calculation.sizeObj) : null),
-        addonsJson: item.addonsJson || (calculation.addonsObjects.length ? JSON.stringify(calculation.addonsObjects) : null),
+        sizeJson: calculation.sizeObj ? JSON.stringify(calculation.sizeObj) : null,
+        addonsJson: addonsList.length ? JSON.stringify(addonsList) : null,
+        flavorsJson: flavorsList.length ? JSON.stringify(flavorsList) : null,
         observations: item.observations || ''
       });
     }
