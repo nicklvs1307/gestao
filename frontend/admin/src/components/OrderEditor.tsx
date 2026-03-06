@@ -308,9 +308,23 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         <div className="col-span-2 font-black text-slate-900 italic">{item.quantity}</div>
                         <div className="col-span-7">
                             <p className="text-[11px] font-black text-slate-800 uppercase italic leading-none">{item.product.name}</p>
-                            {item.sizeJson && <p className="text-[8px] text-blue-500 font-bold mt-0.5">+ {JSON.parse(item.sizeJson).name}</p>}
+                            {/* Exibição de Tamanho */}
+                            {item.sizeJson && (
+                                <p className="text-[8px] text-blue-600 font-bold mt-1 bg-blue-50 px-1.5 py-0.5 rounded-md inline-block mr-1">
+                                    TAM: {JSON.parse(item.sizeJson).name}
+                                </p>
+                            )}
+                            {/* Exibição de Sabores */}
                             {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, i: number) => (
-                                <p key={i} className="text-[8px] text-orange-500 font-bold mt-0.5">+ {f.name}</p>
+                                <p key={`flavor-${i}`} className="text-[8px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded-md inline-block mr-1">
+                                    SABOR: {f.name}
+                                </p>
+                            ))}
+                            {/* Exibição de Adicionais/Complementos */}
+                            {item.addonsJson && JSON.parse(item.addonsJson).map((a: any, i: number) => (
+                                <p key={`addon-${i}`} className="text-[8px] text-slate-500 font-bold mt-1 bg-slate-100 px-1.5 py-0.5 rounded-md inline-block mr-1">
+                                    + {a.quantity || 1}x {a.name}
+                                </p>
                             ))}
                         </div>
                         <div className="col-span-3 text-right font-black text-slate-900 italic text-[11px]">
