@@ -4,7 +4,7 @@ import { getProducts, updateProduct, deleteProduct, reorderProducts, reorderCate
 import { getCategories, updateCategory } from '../services/api/categories';
 import { 
   Plus, Search, Edit, Trash2, Image as ImageIcon, Filter, Star, 
-  RefreshCw, Loader2, Package, Tag, ArrowUpRight, CheckCircle,
+  RefreshCw, Loader2, Package, CheckCircle,
   Truck, Utensils, Globe, ChevronRight, Hash, GripVertical,
   Power, Edit2
 } from 'lucide-react';
@@ -126,12 +126,16 @@ function SortableCategoryItem({ cat, categoryFilter, categoryCount, onSelect, on
 interface SortableProductRowProps {
   product: Product;
   onToggleFlag: (productId: string, field: any, currentValue: boolean) => void;
+  onUpdatePrice: (productId: string, newPrice: number) => void;
   onDelete: (productId: string) => void;
   navigate: any;
   isSortable: boolean;
 }
 
-function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSortable }: SortableProductRowProps) {
+function SortableProductRow({ product, onToggleFlag, onUpdatePrice, onDelete, navigate, isSortable }: SortableProductRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [localPrice, setLocalPrice] = useState(product.price.toString());
+
   const {
     attributes,
     listeners,
@@ -148,21 +152,44 @@ function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSorta
     position: 'relative' as const,
   };
 
+  useEffect(() => {
+      setLocalPrice(product.price.toString());
+  }, [product.price]);
+
+  const handlePriceBlur = () => {
+      const newPrice = parseFloat(localPrice);
+      if (!isNaN(newPrice) && newPrice !== product.price) {
+          onUpdatePrice(product.id, newPrice);
+      }
+  };
+
   const lowestPrice = product.sizes && product.sizes.length > 0 
       ? Math.min(...product.sizes.map(s => s.price)) 
       : product.price;
 
   return (
+    <>
     <tr 
       ref={setNodeRef} 
       style={style}
       className={cn(
         "hover:bg-slate-50/50 transition-colors group",
-        isDragging && "bg-white shadow-2xl scale-[1.01] ring-1 ring-orange-500 z-50"
+        isDragging && "bg-white shadow-2xl scale-[1.01] ring-1 ring-orange-500 z-50",
+        !product.isAvailable && "opacity-60 bg-slate-50/30 text-slate-400"
       )}
     >
         <td className="px-4 py-3">
             <div className="flex items-center gap-3">
+                <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className={cn(
+                        "p-1 rounded-lg transition-all hover:bg-slate-100 text-slate-400",
+                        isExpanded && "rotate-90 text-orange-500 bg-orange-50"
+                    )}
+                >
+                    <ChevronRight size={16} />
+                </button>
+
                 {isSortable && (
                   <button 
                     {...attributes} 
@@ -190,11 +217,6 @@ function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSorta
                         <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest italic truncate">
                             Ref: {product.id.slice(-6).toUpperCase()}
                         </span>
-                        {product.categories?.slice(0, 1).map(c => (
-                            <span key={c.id} className="text-[7px] font-black bg-orange-50 text-orange-400 px-1 rounded italic uppercase">
-                                {c.name}
-                            </span>
-                        ))}
                     </div>
                 </div>
             </div>
@@ -242,10 +264,28 @@ function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSorta
             </span>
         </td>
         <td className="px-4 py-3 text-center">
-            <div className="flex flex-col items-center">
-                {product.sizes?.length > 0 && <span className="text-[7px] font-black text-orange-500 uppercase leading-none mb-0.5 tracking-tighter">Variantes</span>}
-                <span className="font-black text-xs italic tracking-tighter">R$ {lowestPrice.toFixed(2)}</span>
-            </div>
+            {product.sizes?.length > 0 ? (
+                <div className="flex flex-col items-center">
+                    <span className="text-[7px] font-black text-orange-500 uppercase leading-none mb-0.5 tracking-tighter">Variantes</span>
+                    <span className="font-black text-xs italic tracking-tighter">R$ {lowestPrice.toFixed(2)}</span>
+                </div>
+            ) : (
+                <div className="relative flex justify-center group/price">
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-300">R$</span>
+                    <input 
+                        type="number"
+                        step="0.01"
+                        className={cn(
+                            "w-20 h-8 pl-6 pr-1 bg-transparent border-b-2 border-transparent text-xs font-black italic outline-none transition-all text-center",
+                            "focus:border-orange-500 focus:bg-white focus:shadow-sm group-hover/price:border-slate-200"
+                        )}
+                        value={localPrice}
+                        onChange={(e) => setLocalPrice(e.target.value)}
+                        onBlur={handlePriceBlur}
+                        onKeyDown={(e) => e.key === 'Enter' && handlePriceBlur()}
+                    />
+                </div>
+            )}
         </td>
         <td className="px-4 py-3">
             <div className="flex flex-col items-center gap-1">
@@ -255,7 +295,7 @@ function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSorta
                 >
                     <div className={cn("absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-md", product.isAvailable ? "left-4.5" : "left-0.5")} />
                 </div>
-                <span className={cn("text-[7px] font-black uppercase tracking-widest leading-none", product.isAvailable ? "text-emerald-500" : "text-slate-400")}>{product.isAvailable ? 'ON' : 'OFF'}</span>
+                <span className={cn("text-[7px] font-black uppercase tracking-widest leading-none", product.isAvailable ? "text-emerald-500" : "text-slate-400")}>{product.isAvailable ? 'ATIVO' : 'PAUSADO'}</span>
             </div>
         </td>
         <td className="px-4 py-3 text-right">
@@ -265,6 +305,67 @@ function SortableProductRow({ product, onToggleFlag, onDelete, navigate, isSorta
             </div>
         </td>
     </tr>
+    
+    {/* LINHA EXPANSÍVEL */}
+    {isExpanded && (
+        <tr className="bg-slate-50/80 animate-in slide-in-from-top-2 duration-300">
+            <td colSpan={6} className="px-10 py-6 border-b border-slate-200">
+                <div className="flex gap-8 items-start text-slate-900">
+                    <div className="w-32 h-32 rounded-3xl bg-white p-1 shadow-xl rotate-2 border border-slate-100 flex-shrink-0">
+                        {product.imageUrl ? (
+                            <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover rounded-[1.5rem]" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-200"><ImageIcon size={40} /></div>
+                        )}
+                    </div>
+                    <div className="flex-1 space-y-4">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h3 className="text-lg font-black uppercase italic tracking-tighter text-slate-900 leading-none">{product.name}</h3>
+                                <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mt-1">Ref: {product.id}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                {product.categories?.map(c => (
+                                    <span key={c.id} className="px-3 py-1 bg-slate-900 text-white rounded-full text-[8px] font-black uppercase tracking-widest">{c.name}</span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-6">
+                            <div className="space-y-1">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Descrição do Produto</span>
+                                <p className="text-xs font-medium text-slate-600 leading-relaxed italic">
+                                    {product.description || "Nenhuma descrição informada para este item."}
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Configuração de Venda</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    <span className={cn("px-2 py-1 rounded-lg text-[8px] font-black uppercase border", product.allowDelivery ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-slate-100 text-slate-300")}>Delivery</span>
+                                    <span className={cn("px-2 py-1 rounded-lg text-[8px] font-black uppercase border", product.allowPos ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-300")}>Balcão/Mesa</span>
+                                    <span className={cn("px-2 py-1 rounded-lg text-[8px] font-black uppercase border", product.allowOnline ? "bg-purple-50 border-purple-100 text-purple-600" : "bg-slate-100 text-slate-300")}>Online</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Financeiro</span>
+                                <div className="p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-[9px] font-bold text-slate-400">Preço Atual</span>
+                                        <span className="text-xs font-black text-slate-900">R$ {product.price.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between mt-1">
+                                        <span className="text-[9px] font-bold text-slate-400">Custo Base</span>
+                                        <span className="text-xs font-black text-slate-400 italic">R$ {product.costPrice?.toFixed(2) || '0,00'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    )}
+    </>
   );
 }
 
@@ -278,21 +379,14 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
   const [categoryFilter, setCategoryFilter] = useState('all');
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
       const [productsData, categoriesData] = await Promise.all([ getProducts(), getCategories(true) ]);
-      // Ordenar categorias pelo campo order
       const sortedCategories = Array.isArray(categoriesData) 
         ? [...categoriesData].sort((a, b) => (a.order || 0) - (b.order || 0))
         : [];
@@ -307,9 +401,7 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
   const handleToggleCategoryStatus = async (id: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
     const original = [...categories];
-    
     setCategories(prev => prev.map(c => c.id === id ? { ...c, isActive: newStatus } : c));
-    
     try {
       await updateCategory(id, { isActive: newStatus });
       toast.success(newStatus ? "Categoria ativada!" : "Categoria pausada.");
@@ -319,12 +411,22 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
     }
   };
 
+  const handleUpdatePrice = async (productId: string, newPrice: number) => {
+      const original = [...products];
+      setProducts(prev => prev.map(p => p.id === productId ? { ...p, price: newPrice } : p));
+      try {
+          await updateProduct(productId, { price: newPrice });
+          toast.success("Preço atualizado!");
+      } catch (err) {
+          toast.error("Erro ao salvar preço.");
+          setProducts(original);
+      }
+  };
+
   const handleToggleFlag = async (productId: string, field: 'isAvailable' | 'allowDelivery' | 'allowPos' | 'allowOnline', currentValue: boolean) => {
     const newValue = !currentValue;
     const original = [...products];
-    
     setProducts(prev => prev.map(p => (p.id === productId ? { ...p, [field]: newValue } : p)));
-    
     try {
       await updateProduct(productId, { [field]: newValue });
       const fieldLabels: any = {
@@ -358,70 +460,49 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
       .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())));
   }, [products, searchTerm, categoryFilter]);
 
-  // Contagem de produtos por categoria para a sidebar
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: products.length };
     products.forEach(p => {
-      p.categories?.forEach(c => {
-        counts[c.id] = (counts[c.id] || 0) + 1;
-      });
+      p.categories?.forEach(c => { counts[c.id] = (counts[c.id] || 0) + 1; });
     });
     return counts;
   }, [products]);
 
   const handleCategoryDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       const oldIndex = categories.findIndex((c) => c.id === active.id);
       const newIndex = categories.findIndex((c) => c.id === over.id);
-
       const newOrder = arrayMove(categories, oldIndex, newIndex);
       setCategories(newOrder);
-
       try {
         setIsReordering(true);
-        const updates = newOrder.map((cat, index) => ({
-          id: cat.id,
-          order: index
-        }));
+        const updates = newOrder.map((cat, index) => ({ id: cat.id, order: index }));
         await reorderCategories(updates);
         toast.success("Ordem das categorias salva!");
       } catch (error) {
-        console.error('Erro ao salvar nova ordem das categorias:', error);
-        toast.error('Erro ao salvar nova ordem das categorias.');
-        fetchData(); // Reverte
-      } finally {
-        setIsReordering(false);
-      }
+        toast.error('Erro ao salvar nova ordem.');
+        fetchData();
+      } finally { setIsReordering(false); }
     }
   };
 
   const handleProductDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       const oldIndex = products.findIndex((p) => p.id === active.id);
       const newIndex = products.findIndex((p) => p.id === over.id);
-
       const newOrder = arrayMove(products, oldIndex, newIndex);
       setProducts(newOrder);
-
       try {
         setIsReordering(true);
-        const updates = newOrder.map((prod, index) => ({
-          id: prod.id,
-          order: index
-        }));
+        const updates = newOrder.map((prod, index) => ({ id: prod.id, order: index }));
         await reorderProducts(updates);
         toast.success("Ordem dos produtos salva!");
       } catch (error) {
-        console.error('Erro ao salvar nova ordem dos produtos:', error);
-        toast.error('Erro ao salvar nova ordem dos produtos.');
-        fetchData(); // Reverte
-      } finally {
-        setIsReordering(false);
-      }
+        toast.error('Erro ao salvar nova ordem.');
+        fetchData();
+      } finally { setIsReordering(false); }
     }
   };
 
@@ -434,7 +515,6 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10 text-slate-900">
-      {/* Header Compacto */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tighter uppercase italic leading-none">Cardápio Industrial</h1>
@@ -453,58 +533,24 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        
-        {/* Sidebar de Categorias Industrial */}
         <aside className="w-full lg:w-64 shrink-0 space-y-2">
             <div className="flex items-center justify-between px-2 mb-2">
                 <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest italic flex items-center gap-2">
                     <Filter size={10} className="text-orange-500" /> Navegação
                 </h3>
-                <span className="text-[8px] font-black bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded italic uppercase">
-                    {categories.length} Grupos
-                </span>
+                <span className="text-[8px] font-black bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded italic uppercase">{categories.length} Grupos</span>
             </div>
-            
             <div className="space-y-1 bg-slate-50/50 p-2 rounded-2xl border border-slate-100">
-                <button 
-                    onClick={() => setCategoryFilter('all')}
-                    className={cn(
-                        "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-tighter italic",
-                        categoryFilter === 'all' 
-                            ? "bg-slate-900 text-white shadow-md shadow-slate-900/20 translate-x-1" 
-                            : "text-slate-400 hover:bg-white hover:text-slate-600 ml-5"
-                    )}
-                >
-                    <div className="flex items-center gap-3">
-                        <Package size={14} />
-                        <span>TODOS PRODUTOS</span>
-                    </div>
-                    <span className={cn("text-[9px] font-black", categoryFilter === 'all' ? "text-orange-400" : "text-slate-300")}>
-                        {categoryCounts.all}
-                    </span>
+                <button onClick={() => setCategoryFilter('all')} className={cn("w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-tighter italic", categoryFilter === 'all' ? "bg-slate-900 text-white shadow-md translate-x-1" : "text-slate-400 hover:bg-white hover:text-slate-600 ml-5")}>
+                    <div className="flex items-center gap-3"><Package size={14} /><span>TODOS PRODUTOS</span></div>
+                    <span className={cn("text-[9px] font-black", categoryFilter === 'all' ? "text-orange-400" : "text-slate-300")}>{categoryCounts.all}</span>
                 </button>
-
                 <div className="h-px bg-slate-200/50 my-2 mx-2" />
-
                 <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
-                    <DndContext 
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleCategoryDragEnd}
-                    >
-                      <SortableContext 
-                        items={categories.map(c => c.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                      <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
                         {categories.map((cat) => (
-                            <SortableCategoryItem 
-                              key={cat.id}
-                              cat={cat}
-                              categoryFilter={categoryFilter}
-                              categoryCount={categoryCounts[cat.id]}
-                              onSelect={setCategoryFilter}
-                              onToggleStatus={handleToggleCategoryStatus}
-                            />
+                            <SortableCategoryItem key={cat.id} cat={cat} categoryFilter={categoryFilter} categoryCount={categoryCounts[cat.id]} onSelect={setCategoryFilter} onToggleStatus={handleToggleCategoryStatus} />
                         ))}
                       </SortableContext>
                     </DndContext>
@@ -512,28 +558,15 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
             </div>
         </aside>
 
-        {/* Listagem Principal */}
         <div className="flex-1 space-y-4">
-            
-            {/* Barra de Pesquisa */}
             <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
-                <input 
-                    type="text" 
-                    placeholder="Pesquisar por nome ou SKU..." 
-                    className="w-full h-12 pl-12 pr-4 rounded-2xl bg-white border border-slate-200 focus:border-orange-500 outline-none transition-all font-bold text-xs uppercase italic tracking-tight shadow-sm"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                />
+                <input type="text" placeholder="Pesquisar por nome ou SKU..." className="w-full h-12 pl-12 pr-4 rounded-2xl bg-white border border-slate-200 focus:border-orange-500 outline-none transition-all font-bold text-xs uppercase italic tracking-tight shadow-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
 
-            <Card className="p-0 overflow-hidden border border-slate-200 shadow-xl bg-white rounded-2xl" noPadding>
-                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200">
-                    <DndContext 
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleProductDragEnd}
-                    >
+            <Card className="p-0 overflow-hidden border border-slate-200 shadow-xl bg-white rounded-2xl">
+                <div className="overflow-x-auto">
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
                       <table className="w-full text-left border-collapse table-fixed min-w-[850px]">
                       <thead className="bg-slate-50/80 border-b border-slate-100">
                           <tr>
@@ -545,20 +578,10 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
                               <th className="w-[15%] px-4 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest px-6">Ações</th>
                           </tr>
                       </thead>
-                      <SortableContext 
-                        items={filteredProducts.map(p => p.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
+                      <SortableContext items={filteredProducts.map(p => p.id)} strategy={verticalListSortingStrategy}>
                         <tbody className="divide-y divide-slate-50">
                             {filteredProducts.map(product => (
-                                <SortableProductRow 
-                                  key={product.id}
-                                  product={product}
-                                  onToggleFlag={handleToggleFlag}
-                                  onDelete={handleDelete}
-                                  navigate={navigate}
-                                  isSortable={categoryFilter !== 'all'}
-                                />
+                                <SortableProductRow key={product.id} product={product} onToggleFlag={handleToggleFlag} onUpdatePrice={handleUpdatePrice} onDelete={handleDelete} navigate={navigate} isSortable={categoryFilter !== 'all'} />
                             ))}
                         </tbody>
                       </SortableContext>
