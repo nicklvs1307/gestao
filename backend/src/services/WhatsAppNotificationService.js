@@ -77,6 +77,27 @@ class WhatsAppNotificationService {
               itemsTotal += subtotal;
 
               message += `${item.quantity}x ${item.product.name}${size ? ` ${size.name}` : ''} (R$ ${item.priceAtTime.toFixed(2).replace('.', ',')})\n`;
+              
+              // Inclui Sabores
+              if (item.flavorsJson) {
+                const flavors = JSON.parse(item.flavorsJson);
+                flavors.forEach(f => {
+                   message += `   └ Sabor: ${f.name}\n`;
+                });
+              }
+
+              // Inclui Adicionais/Complementos
+              if (item.addonsJson) {
+                const addons = JSON.parse(item.addonsJson);
+                addons.forEach(a => {
+                   message += `   └ + ${a.quantity || 1}x ${a.name} (R$ ${a.price.toFixed(2).replace('.', ',')})\n`;
+                });
+              }
+
+              if (item.observations) {
+                  message += `   └ OBS: ${item.observations}\n`;
+              }
+
               message += `Subtotal do item: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
               message += `- - - - - - - - - - - - - -\n`;
           });
