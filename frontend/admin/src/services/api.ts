@@ -20,6 +20,7 @@ export * from './api/superAdmin';
 export * from './api/globalSizes';
 export * from './api/checklists';
 export * from './api/fiscal';
+export * from './api/addonService';
 
 // Funções que ainda não foram movidas para arquivos específicos podem ficar aqui ou ser movidas conforme necessário
 

@@ -1,16 +1,162 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { addonService } from '../services/api/addonService';
+import { addonService, updateAddon } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
 import { 
   Plus, Edit2, Trash2, Loader2, List, Settings, 
   RefreshCw, Copy, Search, Hash, ChevronRight,
-  Info, CheckCircle2, AlertCircle, Layers
+  Info, CheckCircle2, AlertCircle, Layers, ListTree, Tag, DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+
+interface AddonGroupRowProps {
+    group: AddonGroup;
+    onDuplicate: (id: string) => void;
+    onDelete: (id: string) => void;
+    navigate: any;
+}
+
+const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDelete, navigate }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [addonEdits, setAddonEdits] = useState<Record<string, {name: string, price: string}>>({});
+
+    const handleAddonBlur = async (addonId: string) => {
+        const edit = addonEdits[addonId];
+        if (!edit) return;
+        const newPrice = parseFloat(edit.price);
+        if (isNaN(newPrice)) return;
+        
+        try {
+            await updateAddon(addonId, { name: edit.name, price: newPrice });
+            toast.success("Item atualizado!");
+        } catch (e) {
+            toast.error("Erro ao atualizar item.");
+        }
+    };
+
+    return (
+        <>
+        <tr className={cn("hover:bg-slate-50/50 transition-colors group", isExpanded && "bg-slate-50/80")}>
+            <td className="px-6 py-4">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setIsExpanded(!isExpanded)} className={cn("p-1.5 rounded-xl transition-all hover:bg-slate-100 text-slate-400", isExpanded && "rotate-90 text-orange-500 bg-orange-50")}>
+                        <ChevronRight size={18} />
+                    </button>
+                    <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-110",
+                        group.isFlavorGroup ? "bg-amber-50 border-amber-100 text-amber-500" : "bg-slate-50 border-slate-100 text-slate-400"
+                    )}>
+                        {group.isFlavorGroup ? <Layers size={20} /> : <List size={20} />}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                        <span className="font-black text-xs uppercase italic tracking-tighter truncate group-hover:text-orange-600 transition-colors">
+                            {group.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            {group.isFlavorGroup && (
+                                <span className="text-[7px] font-black bg-amber-500 text-white px-1 rounded italic uppercase tracking-widest">SABORES</span>
+                            )}
+                            <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest italic truncate">
+                                ID: {group.id?.slice(-8).toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td className="px-4 py-4">
+                <div className="flex items-center justify-center gap-1.5">
+                    <Badge label="OBRIG" active={group.isRequired} variant="rose" />
+                    <Badge label={group.type === 'single' ? "ÚNICA" : "MÚLTIP"} active={true} variant={group.type === 'single' ? "blue" : "purple"} />
+                    {group.priceRule === 'higher' && <Badge label="MAIOR" active={true} variant="amber" />}
+                </div>
+            </td>
+            <td className="px-4 py-4 text-center">
+                <div className="flex flex-col items-center">
+                    <span className="font-black text-xs italic tracking-tighter text-slate-700">
+                        {group.minQuantity} <span className="text-[8px] text-slate-300 mx-1">A</span> {group.maxQuantity}
+                    </span>
+                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Escolhas Permitidas</span>
+                </div>
+            </td>
+            <td className="px-4 py-4">
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-wrap gap-1">
+                        {group.addons.slice(0, 3).map((a, i) => (
+                            <span key={i} className="text-[8px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase italic border border-slate-200/50">
+                                {a.name}
+                            </span>
+                        ))}
+                        {group.addons.length > 3 && (
+                            <span className="text-[8px] font-black text-slate-400 px-1 py-0.5 uppercase italic">+{group.addons.length - 3} itens</span>
+                        )}
+                    </div>
+                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                        <div className="bg-orange-400 h-full rounded-full" style={{ width: `${Math.min(100, (group.addons.length / 10) * 100)}%` }} />
+                    </div>
+                </div>
+            </td>
+            <td className="px-4 py-4 text-center">
+                <span className="text-[9px] font-black bg-slate-50 border border-slate-200 text-slate-400 px-2 py-1 rounded italic uppercase">
+                    {group.saiposIntegrationCode || '---'}
+                </span>
+            </td>
+            <td className="px-6 py-4 text-right">
+                <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => onDuplicate(group.id!)} title="Duplicar"><Copy size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/addons/${group.id}`)} title="Editar"><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => onDelete(group.id!)} title="Excluir"><Trash2 size={16}/></Button>
+                </div>
+            </td>
+        </tr>
+        {isExpanded && (
+            <tr className="bg-slate-50/80 animate-in slide-in-from-top-2 duration-300">
+                <td colSpan={6} className="px-12 py-6 border-b border-slate-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {group.addons.map(addon => (
+                            <div key={addon.id} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2 hover:border-orange-200 transition-all group/addon">
+                                <div className="flex-1">
+                                    <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest block mb-1">Nome do Item</span>
+                                    <input 
+                                        className="w-full bg-transparent border-none text-[11px] font-black uppercase italic text-slate-700 focus:ring-0 p-0 h-auto"
+                                        value={addonEdits[addon.id!]?.name ?? addon.name}
+                                        onChange={e => setAddonEdits({...addonEdits, [addon.id!]: { ...(addonEdits[addon.id!] || {price: addon.price.toString()}), name: e.target.value }})}
+                                        onBlur={() => handleAddonBlur(addon.id!)}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[9px] font-black text-slate-300">R$</span>
+                                        <input 
+                                            type="number" step="0.01"
+                                            className="w-20 bg-slate-50 border-none rounded-lg text-xs font-black text-slate-900 focus:bg-white focus:ring-1 focus:ring-orange-500/20 px-2 py-1"
+                                            value={addonEdits[addon.id!]?.price ?? addon.price}
+                                            onChange={e => setAddonEdits({...addonEdits, [addon.id!]: { ...(addonEdits[addon.id!] || {name: addon.name}), price: e.target.value }})}
+                                            onBlur={() => handleAddonBlur(addon.id!)}
+                                        />
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <span className={cn("px-1.5 py-0.5 rounded text-[7px] font-black uppercase italic border", addon.saiposIntegrationCode ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-400 border-slate-200")}>
+                                            {addon.saiposIntegrationCode ? 'SYNC' : 'LOCAL'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {group.addons.length === 0 && (
+                            <div className="col-span-full py-8 text-center border-2 border-dashed border-slate-200 rounded-3xl">
+                                <p className="text-[10px] font-black uppercase text-slate-300 italic">Nenhum item cadastrado neste grupo</p>
+                            </div>
+                        )}
+                    </div>
+                </td>
+            </tr>
+        )}
+        </>
+    );
+};
 
 const AddonManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -64,7 +210,6 @@ const AddonManagement: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10 max-w-[1600px] mx-auto">
-      {/* Header Industrial */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Biblioteca de Complementos</h1>
@@ -82,7 +227,6 @@ const AddonManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Barra de Ferramentas */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
@@ -96,7 +240,6 @@ const AddonManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela de Gestão */}
       <Card className="p-0 overflow-hidden border border-slate-200 shadow-xl bg-white rounded-2xl" noPadding>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
@@ -112,77 +255,7 @@ const AddonManagement: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {filteredGroups.map((group) => (
-                <tr key={group.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-110",
-                        group.isFlavorGroup ? "bg-amber-50 border-amber-100 text-amber-500" : "bg-slate-50 border-slate-100 text-slate-400"
-                      )}>
-                        {group.isFlavorGroup ? <Layers size={20} /> : <List size={20} />}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-black text-xs uppercase italic tracking-tighter truncate group-hover:text-orange-600 transition-colors">
-                          {group.name}
-                        </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {group.isFlavorGroup && (
-                            <span className="text-[7px] font-black bg-amber-500 text-white px-1 rounded italic uppercase tracking-widest">SABORES</span>
-                          )}
-                          <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest italic truncate">
-                            ID: {group.id?.slice(-8).toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <Badge label="OBRIG" active={group.isRequired} variant="rose" />
-                      <Badge label={group.type === 'single' ? "ÚNICA" : "MÚLTIP"} active={true} variant={group.type === 'single' ? "blue" : "purple"} />
-                      {group.priceRule === 'higher' && <Badge label="MAIOR" active={true} variant="amber" />}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <div className="flex flex-col items-center">
-                      <span className="font-black text-xs italic tracking-tighter text-slate-700">
-                        {group.minQuantity} <span className="text-[8px] text-slate-300 mx-1">A</span> {group.maxQuantity}
-                      </span>
-                      <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Escolhas Permitidas</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex flex-wrap gap-1">
-                        {group.addons.slice(0, 3).map((a, i) => (
-                          <span key={i} className="text-[8px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase italic border border-slate-200/50">
-                            {a.name}
-                          </span>
-                        ))}
-                        {group.addons.length > 3 && (
-                          <span className="text-[8px] font-black text-slate-400 px-1 py-0.5 uppercase italic">+{group.addons.length - 3} itens</span>
-                        )}
-                      </div>
-                      <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-                        <div className="bg-orange-400 h-full rounded-full" style={{ width: `${Math.min(100, (group.addons.length / 10) * 100)}%` }} />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <span className="text-[9px] font-black bg-slate-50 border border-slate-200 text-slate-400 px-2 py-1 rounded italic uppercase">
-                      {group.saiposIntegrationCode || '---'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                      <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => handleDuplicate(group.id!)} title="Duplicar"><Copy size={16}/></Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/addons/${group.id}`)} title="Editar"><Edit2 size={16}/></Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => handleDelete(group.id!)} title="Excluir"><Trash2 size={16}/></Button>
-                      <div className="w-1 h-8 bg-slate-100 rounded-full mx-1" />
-                      <ChevronRight size={16} className="text-slate-200 group-hover:text-orange-400 transition-colors" />
-                    </div>
-                  </td>
-                </tr>
+                <AddonGroupRow key={group.id} group={group} onDuplicate={handleDuplicate} onDelete={handleDelete} navigate={navigate} />
               ))}
             </tbody>
           </table>
@@ -199,7 +272,6 @@ const AddonManagement: React.FC = () => {
         )}
       </Card>
 
-      {/* Footer Informativo */}
       <div className="flex flex-col md:flex-row justify-between items-center px-4 py-4 bg-slate-50/50 rounded-2xl border border-slate-100 gap-4">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
@@ -237,10 +309,7 @@ const Badge: React.FC<BadgeProps> = ({ label, active, variant }) => {
   };
 
   return (
-    <span className={cn(
-      "px-1.5 py-0.5 rounded text-[7px] font-black border tracking-wider uppercase italic",
-      variants[variant]
-    )}>
+    <span className={cn("px-1.5 py-0.5 rounded text-[7px] font-black border tracking-wider uppercase italic", variants[variant])}>
       {label}
     </span>
   );

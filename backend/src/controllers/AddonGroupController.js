@@ -224,6 +224,27 @@ const reorderGroups = async (req, res) => {
     }
 };
 
+const updateAddon = async (req, res) => {
+    const { id } = req.params;
+    const { name, price, order, maxQuantity } = req.body;
+    
+    try {
+        const updated = await prisma.addon.update({
+            where: { id },
+            data: {
+                name,
+                price: price !== undefined ? parseFloat(price) : undefined,
+                order: order !== undefined ? parseInt(order) : undefined,
+                maxQuantity: maxQuantity !== undefined ? parseInt(maxQuantity) : undefined,
+            }
+        });
+        res.json(updated);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao atualizar adicional individual.' });
+    }
+};
+
 module.exports = {
     getAddonGroups,
     getAddonGroupById,
@@ -231,5 +252,6 @@ module.exports = {
     duplicateAddonGroup,
     updateAddonGroup,
     deleteAddonGroup,
-    reorderGroups
+    reorderGroups,
+    updateAddon
 };
