@@ -610,6 +610,7 @@ model GlobalSize {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   sizes        Size[]   // Vínculo com os preços nos produtos
+  products     Product[] @relation("ProductToGlobalSize") // Novo: Vinculo direto com SKU único
 
   @@unique([name, restaurantId])
   @@index([restaurantId])
@@ -620,7 +621,8 @@ model Product {
   id            String   @id @default(cuid())
   name          String
   description   String?
-  price         Float
+  price         Float    @default(0)
+  costPrice     Float    @default(0)     // Novo: Essencial para calcular margem de lucro (ERP)
   imageUrl      String?
   isFeatured    Boolean  @default(false) // Destaque
   isAvailable   Boolean  @default(true)  // Disponibilidade
@@ -658,6 +660,10 @@ model Product {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
+  // Relacionamento com GlobalSize como Atributo do SKU
+  globalSizeId  String?
+  globalSize    GlobalSize? @relation("ProductToGlobalSize", fields: [globalSizeId], references: [id])
+
   // Relação com as Categorias (Muitos-para-Muitos)
   categories    Category[] 
 
@@ -670,6 +676,7 @@ model Product {
 
   @@unique([name, restaurantId])
   @@index([restaurantId])
+  @@index([globalSizeId])
 }
 
 // Novo: Tabela de Tamanhos (P, M, G de uma pizza)
@@ -727,6 +734,13 @@ model Addon {
   description  String?
   imageUrl     String?
   price        Float
+  costPrice    Float   @default(0) // Novo: Custo do adicional (ERP)
+  
+  // Promoção Específica de Componente
+  promoPrice      Float?    // Preço promocional do adicional
+  promoStartDate  DateTime? // Início da oferta
+  promoEndDate    DateTime? // Fim da oferta
+
   maxQuantity  Int     @default(1) // Novo: Quantidade máxima permitida para este adicional
   order     Int     @default(0)
   saiposIntegrationCode String?  // Código de integração da Saipos

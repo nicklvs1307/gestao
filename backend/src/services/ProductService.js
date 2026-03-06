@@ -25,6 +25,7 @@ class ProductService {
         categories: {
           include: {
             addonGroups: {
+              orderBy: { order: 'asc' },
               include: {
                 addons: { orderBy: { order: 'asc' } }
               }
@@ -63,6 +64,7 @@ class ProductService {
         categories: {
           include: {
             addonGroups: {
+              orderBy: { order: 'asc' },
               include: {
                 addons: { orderBy: { order: 'asc' } }
               }

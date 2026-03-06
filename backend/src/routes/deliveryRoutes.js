@@ -44,6 +44,12 @@ router.get('/restaurant/:slug', async (req, res) => {
                 categories: {
                     orderBy: { order: 'asc' },
                     include: {
+                        addonGroups: {
+                            orderBy: { order: 'asc' },
+                            include: {
+                                addons: { orderBy: { order: 'asc' } },
+                            },
+                        },
                         products: {
                             where: { isAvailable: true },
                             orderBy: { order: 'asc' },
@@ -72,6 +78,26 @@ router.get('/restaurant/:slug', async (req, res) => {
       if (!restaurant) {
         return res.status(404).json({ error: 'Restaurante não encontrado.' });
       }
+
+      // Aplicar ordenação personalizada de grupos se existir o campo addonGroupsOrder
+      // (Mesma lógica do ProductService para manter consistência no cardápio de delivery)
+      restaurant.categories.forEach(category => {
+          if (category.products) {
+              category.products = category.products.map(product => {
+                  if (product.addonGroupsOrder && Array.isArray(product.addonGroupsOrder) && product.addonGroupsOrder.length > 0) {
+                      const orderMap = new Map();
+                      product.addonGroupsOrder.forEach((id, index) => orderMap.set(id, index));
+
+                      product.addonGroups.sort((a, b) => {
+                          const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
+                          const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
+                          return orderA - orderB;
+                      });
+                  }
+                  return product;
+              });
+          }
+      });
 
       // Se não houver formas de pagamento, cria as padrões para não travar o cardápio
       if (restaurant.paymentMethods.length === 0) {

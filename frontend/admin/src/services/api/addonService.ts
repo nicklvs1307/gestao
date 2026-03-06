@@ -11,6 +11,10 @@ export interface Addon {
   description?: string;
   imageUrl?: string;
   price: number;
+  costPrice: number; // Novo: Custo do adicional
+  promoPrice?: number; // Novo: Preço promocional
+  promoStartDate?: string | Date; // Novo: Início da oferta
+  promoEndDate?: string | Date; // Novo: Fim da oferta
   maxQuantity: number;
   order: number;
   saiposIntegrationCode?: string;

@@ -95,34 +95,80 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow }: {
                         className="h-9 text-xs"
                     />
                 </div>
-                <div className="md:col-span-2">
-                    <Input 
-                        type="number" 
-                        placeholder="Preço R$" 
-                        step="0.01" 
-                        value={addon.price} 
-                        onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value) || 0)} 
-                        className="h-9 text-xs"
-                    />
+                <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Preço Venda</label>
+                        <Input 
+                            type="number" 
+                            step="0.01" 
+                            value={addon.price} 
+                            onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value) || 0)} 
+                            className="h-9 text-xs font-bold"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-black uppercase text-rose-400 ml-1 italic">Preço de Custo</label>
+                        <Input 
+                            type="number" 
+                            step="0.01" 
+                            value={addon.costPrice || 0} 
+                            onChange={(e) => updateAddon(index, 'costPrice', parseFloat(e.target.value) || 0)} 
+                            className="h-9 text-xs font-bold border-rose-100 bg-rose-50/20"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-black uppercase text-amber-500 ml-1 italic font-black">Preço Promo</label>
+                        <Input 
+                            type="number" 
+                            step="0.01" 
+                            value={addon.promoPrice || ''} 
+                            onChange={(e) => updateAddon(index, 'promoPrice', e.target.value ? parseFloat(e.target.value) : undefined)} 
+                            className="h-9 text-xs font-black border-amber-200 bg-amber-50/20 text-amber-600"
+                            placeholder="R$ (Opcional)"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Cód Integração</label>
+                        <Input 
+                            placeholder="SKU Saipos" 
+                            value={addon.saiposIntegrationCode || ''} 
+                            onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} 
+                            className="h-9 text-xs"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Qtd Máx</label>
+                        <Input 
+                            type="number" 
+                            value={addon.maxQuantity} 
+                            onChange={(e) => updateAddon(index, 'maxQuantity', parseInt(e.target.value) || 1)} 
+                            className="h-9 text-xs"
+                        />
+                    </div>
                 </div>
-                <div className="md:col-span-2">
-                    <Input 
-                        placeholder="Cód Integração" 
-                        value={addon.saiposIntegrationCode || ''} 
-                        onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} 
-                        className="h-9 text-xs"
-                    />
+
+                <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Início da Promo</label>
+                        <Input 
+                            type="date" 
+                            value={addon.promoStartDate ? new Date(addon.promoStartDate).toISOString().split('T')[0] : ''} 
+                            onChange={(e) => updateAddon(index, 'promoStartDate', e.target.value)} 
+                            className="h-9 text-xs"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Fim da Promo</label>
+                        <Input 
+                            type="date" 
+                            value={addon.promoEndDate ? new Date(addon.promoEndDate).toISOString().split('T')[0] : ''} 
+                            onChange={(e) => updateAddon(index, 'promoEndDate', e.target.value)} 
+                            className="h-9 text-xs"
+                        />
+                    </div>
                 </div>
-                <div className="md:col-span-1">
-                    <Input 
-                        type="number" 
-                        placeholder="Qtd Máx" 
-                        value={addon.maxQuantity} 
-                        onChange={(e) => updateAddon(index, 'maxQuantity', parseInt(e.target.value) || 1)} 
-                        className="h-9 text-xs"
-                    />
-                </div>
-                <div className="md:col-span-3 flex items-center gap-2">
+
+                <div className="md:col-span-9 flex items-center gap-2">
                     <div className="relative flex-1">
                         <button 
                             type="button"
@@ -237,6 +283,7 @@ const AddonFormPage: React.FC = () => {
             addons: [...formData.addons, { 
                 name: '', 
                 price: 0, 
+                costPrice: 0, // Novo
                 maxQuantity: 1, 
                 order: formData.addons.length, 
                 ingredients: [], 

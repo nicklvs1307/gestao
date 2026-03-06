@@ -56,8 +56,8 @@ function ProductFormPage() {
 
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
         defaultValues: { 
-            name: '', description: '', price: 0, imageUrl: '', categoryIds: [], 
-            isAvailable: true, isFeatured: false, 
+            name: '', description: '', price: 0, costPrice: 0, imageUrl: '', categoryIds: [], 
+            isAvailable: true, isFeatured: false, globalSizeId: '',
             allowDelivery: true, allowPos: true, allowOnline: true,
             stock: 0, addonGroups: [], 
             sizes: [], ingredients: [], productionArea: 'Cozinha', measureUnit: 'UN',
@@ -116,6 +116,7 @@ function ProductFormPage() {
                             sizes: product.sizes?.map((s: any) => ({ ...s, price: Number(s.price) || 0, globalSizeId: s.globalSizeId || '', name: s.name || '' })) || [],
                             stock: Number(product.stock) || 0,
                             price: Number(product.price) || 0,
+                            costPrice: Number(product.costPrice) || 0,
                             taxPercentage: Number(product.taxPercentage) || 0,
                             pizzaConfig: product.pizzaConfig || { active: false, priceRule: 'higher', maxFlavors: 1, flavorCategoryId: '' }
                         };
@@ -142,9 +143,11 @@ function ProductFormPage() {
             const payload = { 
                 ...data, 
                 price: Number(data.price), 
+                costPrice: Number(data.costPrice || 0),
                 stock: Number(data.stock), 
                 taxPercentage: Number(data.taxPercentage || 0),
                 categoryIds: data.categoryIds, 
+                globalSizeId: data.globalSizeId || null,
                 addonGroups: (data.addonGroups || []).map((g: any) => ({ id: g.id })), 
                 sizes: (data.sizes || []).map((s: any) => ({ ...s, price: Number(s.price) })), 
                 ingredients: (data.ingredients || []).filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })),
@@ -244,11 +247,26 @@ function ProductFormPage() {
 
                                 <Card className="p-4 border-slate-200 bg-white space-y-4 shadow-sm">
                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                        <div className="md:col-span-8">
+                                        <div className="md:col-span-12">
                                             <Input label="Nome Comercial do Item" {...register('name', { required: true })} className="h-10 text-xs font-bold" required placeholder="Ex: Pizza Grande de Calabresa" />
                                         </div>
+                                        
                                         <div className="md:col-span-4">
                                             <Input label="Preço de Venda (R$)" type="number" step="0.01" {...register('price', { valueAsNumber: true })} className="h-10 text-xs font-black text-orange-600" icon={DollarSign} disabled={watch('sizes')?.length > 0} />
+                                        </div>
+
+                                        <div className="md:col-span-4">
+                                            <Input label="Preço de Custo (R$)" type="number" step="0.01" {...register('costPrice', { valueAsNumber: true })} className="h-10 text-xs font-black text-rose-500 border-rose-100 bg-rose-50/20" icon={AlertCircle} />
+                                        </div>
+
+                                        <div className="md:col-span-4">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Tamanho de Referência</label>
+                                            <select {...register('globalSizeId')} className="ui-input w-full h-10 italic uppercase text-[10px] font-black rounded-xl border border-slate-200 px-3 bg-white">
+                                                <option value="">Nenhum / Único</option>
+                                                {globalSizes.map(gs => (
+                                                    <option key={gs.id} value={gs.id}>{gs.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         
                                         <div className="md:col-span-12 space-y-1.5">

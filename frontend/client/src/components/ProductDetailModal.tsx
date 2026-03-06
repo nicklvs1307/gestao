@@ -47,17 +47,21 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const addonGroups = React.useMemo(() => {
     if (!product) return [];
     
-    // Merge de grupos direto do produto + categorias herdadas
+    // Merge de grupos: Categorias herdadas primeiro, depois grupos diretos do produto
+    // para manter a consistência com o admin que mostra herdados no topo.
     const productGroups = product.addonGroups || [];
     const categoryGroups = (product.categories || []).flatMap(cat => cat.addonGroups || []);
-    const merged = [...productGroups, ...categoryGroups];
+    
+    // Removemos o .sort() final para respeitar a ordem que vem do backend
+    // O backend já deve vir ordenado pelo addonGroupsOrder (no caso dos grupos diretos)
+    const merged = [...categoryGroups, ...productGroups];
     const uniqueIds = new Set();
     
     return merged.filter(group => {
         if (!group || uniqueIds.has(group.id)) return false;
         uniqueIds.add(group.id);
         return true;
-    }).sort((a, b) => (a.order || 0) - (b.order || 0));
+    });
   }, [product]);
 
   useEffect(() => {
@@ -107,6 +111,22 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     else setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
   };
 
+  const isPromoActive = (addon: any) => {
+    if (!addon.promoPrice) return false;
+    const now = new Date();
+    const start = addon.promoStartDate ? new Date(addon.promoStartDate) : null;
+    const end = addon.promoEndDate ? new Date(addon.promoEndDate) : null;
+    
+    if (start && now < start) return false;
+    if (end && now > end) return false;
+    
+    return true;
+  };
+
+  const getAddonPrice = (addon: any) => {
+    return isPromoActive(addon) ? Number(addon.promoPrice) : Number(addon.price);
+  };
+
   const calculateCurrentPrice = () => {
     if (!product) return 0;
     let basePrice = selectedSize ? selectedSize.price : product.price;
@@ -123,7 +143,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       if (flavorGroup) {
         const flavors = selectedAddons.filter(sa => flavorGroup.addons.some(ga => ga.id === sa.id));
         if (flavors.length > 0) {
-          const prices = flavors.flatMap(f => Array(f.quantity || 1).fill(Number(f.price) > 0 ? Number(f.price) : basePrice));
+          const prices = flavors.flatMap(f => Array(f.quantity || 1).fill(getAddonPrice(f) > 0 ? getAddonPrice(f) : basePrice));
           const rule = config.priceRule || 'higher';
           
           if (rule === 'average') basePrice = prices.reduce((a, b) => a + b, 0) / prices.length;
@@ -137,7 +157,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
       // Se for pizza ativa, o preço dos sabores já foi processado no basePrice
       if (group.isFlavorGroup && config.active) return;
       const selected = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
-      total += selected.reduce((acc, sa) => acc + (Number(sa.price) * (sa.quantity || 1)), 0);
+      total += selected.reduce((acc, sa) => acc + (getAddonPrice(sa) * (sa.quantity || 1)), 0);
     });
     
     return total * quantity;
@@ -164,7 +184,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     setTimeout(onClose, 800);
   };
 
-  const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty, fractionText, showControls, onIncrement, onDecrement }: any) => (
+  const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty, fractionText, showControls, onIncrement, onDecrement }: any) => {
+    const activePromo = isPromoActive(item);
+    const displayPrice = activePromo ? item.promoPrice : price;
+
+    return (
     <motion.div layout initial={false} animate={{ height: isSelected ? 'auto' : '9.5rem' }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="w-full">
         <Card onClick={onToggle} noPadding className={cn("flex h-full overflow-hidden relative border-2 active:scale-[0.98] transition-all", isSelected ? "border-primary bg-white shadow-xl shadow-primary/10" : "border-slate-100 bg-white hover:border-slate-200")}>
           <AnimatePresence>
@@ -185,8 +209,20 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             </div>
             <div className="flex justify-between items-end mt-2">
                 <div className="flex flex-col">
-                    <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-1">Preço Integral</span>
-                    <div className="flex items-baseline gap-0.5"><span className="text-[9px] font-black text-primary">R$</span><span className="text-lg font-black text-slate-900 tracking-tighter italic">{Number(price || 0).toFixed(2).replace('.', ',')}</span></div>
+                    <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-1">Preço Unitário</span>
+                    <div className="flex flex-col items-start gap-0">
+                        {activePromo && (
+                            <span className="text-[9px] font-bold text-slate-400 line-through decoration-rose-500/50 leading-none mb-0.5">
+                                R$ {Number(price || 0).toFixed(2).replace('.', ',')}
+                            </span>
+                        )}
+                        <div className="flex items-baseline gap-0.5">
+                            <span className={cn("text-[9px] font-black", activePromo ? "text-emerald-600" : "text-primary")}>R$</span>
+                            <span className={cn("text-lg font-black tracking-tighter italic", activePromo ? "text-emerald-600" : "text-slate-900")}>
+                                {Number(displayPrice || 0).toFixed(2).replace('.', ',')}
+                            </span>
+                        </div>
+                    </div>
                 </div>
                 {isSelected && showControls ? (
                   <div className="flex items-center bg-slate-50 rounded-xl p-0.5 border border-slate-100 shadow-inner" onClick={e => e.stopPropagation()}>
@@ -199,7 +235,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
           </div>
         </Card>
     </motion.div>
-  );
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -268,9 +305,23 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                               <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
                                 <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-all", isSelected ? "border-primary bg-primary" : "border-slate-300")}>{isSelected && <Check size={12} className="text-white" strokeWidth={4} />}</div>
                                 <div className="flex flex-col min-w-0">
-                                  <div className="flex items-center gap-2"><span className={cn("font-black text-xs uppercase italic tracking-tighter truncate", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>{isSelected && isFlavor && <span className="text-[8px] font-black bg-primary text-white px-1 rounded italic">{fractionText}</span>}</div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={cn("font-black text-xs uppercase italic tracking-tighter truncate", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
+                                    {isSelected && isFlavor && <span className="text-[8px] font-black bg-primary text-white px-1 rounded italic">{fractionText}</span>}
+                                  </div>
                                   {addon.description && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">{addon.description}</p>}
-                                  {addon.price > 0 && <span className="text-[9px] font-black text-slate-500 mt-1 uppercase">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>}
+                                  {addon.price > 0 && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {isPromoActive(addon) ? (
+                                        <>
+                                          <span className="text-[9px] font-bold text-slate-400 line-through decoration-rose-500/50 uppercase italic">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>
+                                          <span className="text-[10px] font-black text-emerald-600 uppercase italic">+ R$ {Number(addon.promoPrice).toFixed(2).replace('.', ',')}</span>
+                                        </>
+                                      ) : (
+                                        <span className="text-[9px] font-black text-slate-500 uppercase italic">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               {isSelected && (

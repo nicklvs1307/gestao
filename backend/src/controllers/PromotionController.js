@@ -21,6 +21,23 @@ const getActivePromotions = async (req, res) => {
             include: { 
                 product: {
                     include: {
+                        sizes: { orderBy: { order: 'asc' } },
+                        addonGroups: {
+                            orderBy: { order: 'asc' },
+                            include: {
+                                addons: { orderBy: { order: 'asc' } }
+                            }
+                        },
+                        categories: {
+                            include: {
+                                addonGroups: {
+                                    orderBy: { order: 'asc' },
+                                    include: {
+                                        addons: { orderBy: { order: 'asc' } }
+                                    }
+                                }
+                            }
+                        },
                         promotions: {
                             where: { isActive: true }
                         }
@@ -29,8 +46,26 @@ const getActivePromotions = async (req, res) => {
             },
             orderBy: { createdAt: 'desc' }
         });
+
+        // Aplicar ordenação personalizada de grupos se existir o campo addonGroupsOrder
+        const sortedPromotions = promotions.map(promo => {
+            if (promo.product) {
+                const product = promo.product;
+                if (product.addonGroupsOrder && Array.isArray(product.addonGroupsOrder) && product.addonGroupsOrder.length > 0) {
+                    const orderMap = new Map();
+                    product.addonGroupsOrder.forEach((id, index) => orderMap.set(id, index));
+
+                    product.addonGroups.sort((a, b) => {
+                        const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
+                        const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
+                        return orderA - orderB;
+                    });
+                }
+            }
+            return promo;
+        });
         
-        res.json(promotions);
+        res.json(sortedPromotions);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Erro ao buscar promoções.' });

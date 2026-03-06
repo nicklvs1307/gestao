@@ -2,6 +2,9 @@ export interface AddonOption {
   id: string;
   name: string;
   price: number;
+  promoPrice?: number;
+  promoStartDate?: string | Date;
+  promoEndDate?: string | Date;
   quantity?: number;
   maxQuantity?: number;
 }
@@ -11,6 +14,10 @@ export interface Addon {
   name: string;
   description?: string;
   price: number;
+  costPrice?: number;
+  promoPrice?: number;
+  promoStartDate?: string | Date;
+  promoEndDate?: string | Date;
   maxQuantity: number;
   order: number;
   addonGroupId: string;

@@ -11,15 +11,16 @@ class CategoryController {
             include: {
                 sizes: true,
                 addonGroups: {
+                    orderBy: { order: 'asc' },
                     include: {
-                        addons: true
+                        addons: { orderBy: { order: 'asc' } }
                     }
                 },
                 promotions: true
             },
             orderBy: { order: 'asc' }
         },
-        addonGroups: true
+        addonGroups: { orderBy: { order: 'asc' } }
       },
       orderBy: { order: 'asc' }
     });
@@ -44,13 +45,30 @@ class CategoryController {
         isActive: true
       },
       include: {
+        addonGroups: {
+          orderBy: { order: 'asc' },
+          include: {
+            addons: { orderBy: { order: 'asc' } }
+          }
+        },
         products: {
           where: { isAvailable: true },
           include: {
-            sizes: true,
+            sizes: { orderBy: { order: 'asc' } },
             addonGroups: {
+              orderBy: { order: 'asc' },
               include: {
-                addons: true
+                addons: { orderBy: { order: 'asc' } }
+              }
+            },
+            categories: {
+              include: {
+                addonGroups: {
+                  orderBy: { order: 'asc' },
+                  include: {
+                    addons: { orderBy: { order: 'asc' } }
+                  }
+                }
               }
             },
             promotions: {
@@ -66,7 +84,28 @@ class CategoryController {
       },
       orderBy: { order: 'asc' }
     });
-    res.json(categories);
+
+    // Aplicar ordenação personalizada de grupos se existir o campo addonGroupsOrder
+    const sortedCategories = categories.map(category => {
+        if (category.products) {
+            category.products = category.products.map(product => {
+                if (product.addonGroupsOrder && Array.isArray(product.addonGroupsOrder) && product.addonGroupsOrder.length > 0) {
+                    const orderMap = new Map();
+                    product.addonGroupsOrder.forEach((id, index) => orderMap.set(id, index));
+
+                    product.addonGroups.sort((a, b) => {
+                        const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
+                        const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
+                        return orderA - orderB;
+                    });
+                }
+                return product;
+            });
+        }
+        return category;
+    });
+
+    res.json(sortedCategories);
   });
 
   getCategoryById = asyncHandler(async (req, res) => {
