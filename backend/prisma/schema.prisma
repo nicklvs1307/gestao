@@ -848,6 +848,7 @@ model DeliveryOrder {
   paymentMethod           String?             
   changeFor               Float?              
   deliveryFee             Float
+  notes                   String?             // Observações do pedido
   estimatedDeliveryTime   String?
   status                  DeliveryOrderStatus @default(PENDING)
   latitude                Float?
