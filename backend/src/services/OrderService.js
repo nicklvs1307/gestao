@@ -40,17 +40,20 @@ class OrderService {
    * Cria um pedido completo de forma transacional.
    */
   async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName }) {
+    console.log(`[ORDER] Iniciando criação de pedido para restaurante: ${restaurantId}`);
     let orderTotal = 0;
     const processedItems = [];
 
     // 1. Preparação dos Itens
     for (const item of items) {
+      console.log(`[ORDER] Calculando preço do item: ${item.productId}`);
       const calculation = await PricingService.calculateItemPrice(
         item.productId, 
         item.quantity, 
         item.sizeId, 
         item.addonsIds
       );
+      console.log(`[ORDER] Item calculado: ${item.productId} - Preço: ${calculation.totalPrice}`);
 
       orderTotal += calculation.totalPrice;
 
@@ -69,7 +72,10 @@ class OrderService {
         include: { settings: true }
     });
 
-    if (!restaurant) throw new Error(`Restaurante não encontrado: ${restaurantId}`);
+    if (!restaurant) {
+        console.error(`[ORDER ERROR] Restaurante não encontrado: ${restaurantId}`);
+        throw new Error(`Restaurante não encontrado: ${restaurantId}`);
+    }
     
     const realRestaurantId = restaurant.id;
     const isAutoAccept = restaurant.settings?.autoAcceptOrders || false;
@@ -92,7 +98,9 @@ class OrderService {
                 fullAddress = deliveryInfo.address || 'Endereço não informado';
             }
             // Busca Coordenadas FORA DA TRANSAÇÃO
+            console.log(`[ORDER] Buscando coordenadas para: ${fullAddress}`);
             coords = await GeocodingService.getCoordinates(fullAddress);
+            console.log(`[ORDER] Coordenadas obtidas: ${JSON.stringify(coords)}`);
         }
     }
 
@@ -131,6 +139,7 @@ class OrderService {
     }
 
     // 2. Transação de Criação
+    console.log(`[ORDER] Iniciando transação do banco de dados...`);
     const newOrder = await prisma.$transaction(async (tx) => {
         // Gerar número diário sequencial apenas para DELIVERY
         if (finalOrderType === 'DELIVERY') {
@@ -172,6 +181,7 @@ class OrderService {
              const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
              const cleanPhone = normalizePhone(deliveryInfo.phone);
 
+             console.log(`[ORDER TX] Upserting customer: ${cleanPhone}`);
              const customer = await tx.customer.upsert({
                  where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
                  update: {
@@ -206,6 +216,7 @@ class OrderService {
                  }
              });
  
+             console.log(`[ORDER TX] Creating deliveryOrder for customer: ${customer.id}`);
              await tx.deliveryOrder.create({
                  data: {
                      orderId: createdOrder.id, 
@@ -246,7 +257,8 @@ class OrderService {
 
         // Registrar Pagamento Inicial (se houver)
         if (paymentMethod) {
-            const finalFee = (orderType === 'DELIVERY' && deliveryInfo?.deliveryFee) ? deliveryInfo.deliveryFee : 0;
+            console.log(`[ORDER TX] Creating payment record: ${paymentMethod}`);
+            const finalFee = (finalOrderType === 'DELIVERY' && deliveryInfo?.deliveryFee) ? deliveryInfo.deliveryFee : 0;
             const totalToPay = orderTotal + finalFee;
 
             await tx.payment.create({
@@ -290,23 +302,29 @@ class OrderService {
             });
         }
 
+        console.log(`[ORDER TX] Finalizing transaction for order: ${createdOrder.id}`);
         return await tx.order.findUnique({
             where: { id: createdOrder.id },
             include: { deliveryOrder: true }
         });
-    });
+    }, { timeout: 30000 }); // Timeout aumentado para nuvem
+
+    console.log(`[ORDER] Transação concluída com sucesso: ${newOrder.id}`);
 
     // 3. Integrações Pós-Commit (Fire & Forget)
-    SaiposService.sendOrderToSaipos(newOrder.id).catch(err => console.error('[SAIPOS] Erro ao enviar pedido:', err));
+    SaiposService.sendOrderToSaipos(newOrder.id).catch(err => console.error('[SAIPOS ERROR] Erro ao enviar pedido:', err));
     
+    console.log(`[ORDER] Buscando pedido final para retorno...`);
     const finalOrder = await prisma.order.findUnique({ where: { id: newOrder.id }, include: fullOrderInclude });
     
     // Notifica via WhatsApp o recebimento (PENDING)
-    if (finalOrder.orderType === 'DELIVERY' && finalOrder.deliveryOrder?.phone) {
-        WhatsAppNotificationService.notifyOrderUpdate(finalOrder.id, finalOrder.status).catch(err => console.error('[WhatsApp Notification] Error:', err));
+    if (finalOrder && finalOrder.orderType === 'DELIVERY' && finalOrder.deliveryOrder?.phone) {
+        console.log(`[ORDER] Disparando notificação WhatsApp...`);
+        WhatsAppNotificationService.notifyOrderUpdate(finalOrder.id, finalOrder.status).catch(err => console.error('[WhatsApp Notification ERROR]:', err));
     }
 
     emitOrderUpdate(finalOrder.id, 'ORDER_CREATED');
+    console.log(`[ORDER SUCCESS] Pedido finalizado: ${finalOrder.id}`);
     
     return finalOrder;
   }

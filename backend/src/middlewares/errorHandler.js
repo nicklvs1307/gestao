@@ -57,6 +57,13 @@ const sendErrorProd = (err, req, res) => {
 
     // B) Programming or other unknown error: don't leak error details
     // 1) Log error
+    logger.error('CRITICAL ERROR 💥', {
+        message: err.message,
+        stack: err.stack,
+        url: req.originalUrl,
+        method: req.method,
+        body: req.body
+    });
     console.error('ERROR 💥', err);
 
     // 2) Send generic message
