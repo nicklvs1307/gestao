@@ -89,138 +89,139 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={cn("relative", isDragging && "z-50")}>
-      <div className="bg-white border border-slate-200 rounded-xl p-3 hover:border-orange-500/30 transition-all shadow-sm group">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <button 
-                type="button"
-                {...attributes} 
-                {...listeners}
-                className="p-1.5 cursor-grab active:cursor-grabbing text-slate-300 hover:text-orange-500 transition-colors bg-slate-50 rounded-lg shrink-0"
-            >
-                <GripVertical size={16} />
-            </button>
+    <div ref={setNodeRef} style={style} className={cn("relative group", isDragging && "z-50")}>
+      <div className="bg-white border-b border-x border-slate-100 first:border-t first:rounded-t-xl last:rounded-b-xl hover:bg-slate-50/50 transition-colors">
+        <div className="flex items-center gap-2 p-1.5">
+          <button 
+              type="button"
+              {...attributes} 
+              {...listeners}
+              className="p-1 cursor-grab active:cursor-grabbing text-slate-300 hover:text-orange-500 transition-colors shrink-0"
+          >
+              <GripVertical size={14} />
+          </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 flex-1">
-                <div className="md:col-span-4">
-                    <Input 
-                        placeholder="Nome do Item (ex: Bacon)" 
-                        value={addon.name} 
-                        onChange={(e) => updateAddon(index, 'name', e.target.value)} 
-                        className="h-9 text-xs"
-                    />
-                </div>
-                <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Preço Venda</label>
-                        <Input 
-                            type="number" 
-                            step="0.01" 
-                            value={addon.price} 
-                            onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value) || 0)} 
-                            className="h-9 text-xs font-bold"
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-rose-400 ml-1 italic">Custo Real</label>
-                        <div className="relative group">
-                            <Input 
-                                type="number" 
-                                step="0.01" 
-                                value={addon.costPrice || 0} 
-                                className="h-9 text-xs font-bold border-rose-100 bg-rose-50/20 pr-8"
-                                readOnly
-                            />
-                            <button 
-                                type="button"
-                                onClick={() => navigate('/production/technical-sheets')}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-400 hover:text-rose-600 transition-colors"
-                                title="Ver na Central de Fichas"
-                            >
-                                <ChefHat size={14} />
-                            </button>
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-amber-500 ml-1 italic font-black">Preço Promo</label>
-                        <Input 
-                            type="number" 
-                            step="0.01" 
-                            value={addon.promoPrice || ''} 
-                            onChange={(e) => updateAddon(index, 'promoPrice', e.target.value ? parseFloat(e.target.value) : undefined)} 
-                            className="h-9 text-xs font-black border-amber-200 bg-amber-50/20 text-amber-600"
-                            placeholder="R$ (Opcional)"
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Cód Integração</label>
-                        <Input 
-                            placeholder="SKU Saipos" 
-                            value={addon.saiposIntegrationCode || ''} 
-                            onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} 
-                            className="h-9 text-xs"
-                        />
-                    </div>
-                </div>
-
-                <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Início da Promo</label>
-                        <Input 
-                            type="date" 
-                            value={addon.promoStartDate ? new Date(addon.promoStartDate).toISOString().split('T')[0] : ''} 
-                            onChange={(e) => updateAddon(index, 'promoStartDate', e.target.value)} 
-                            className="h-9 text-xs"
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Fim da Promo</label>
-                        <Input 
-                            type="date" 
-                            value={addon.promoEndDate ? new Date(addon.promoEndDate).toISOString().split('T')[0] : ''} 
-                            onChange={(e) => updateAddon(index, 'promoEndDate', e.target.value)} 
-                            className="h-9 text-xs"
-                        />
-                    </div>
-                </div>
-
-                <div className="md:col-span-9 flex items-center gap-2">
-                    <div className="relative flex-1">
-                        <button 
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className={cn(
-                                "w-full h-9 rounded-lg border-2 border-dashed flex items-center justify-center gap-2 text-[10px] font-black uppercase transition-all",
-                                addon.imageUrl ? "border-orange-500/30 text-orange-600 bg-orange-50/30" : "border-slate-200 text-slate-400 hover:border-slate-300"
-                            )}
-                            disabled={isUploading}
-                        >
-                            {isUploading ? <Loader2 size={12} className="animate-spin" /> : <ImageIcon size={12} />}
-                            {addon.imageUrl ? 'Alterar Foto' : 'Subir Foto'}
-                        </button>
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                    </div>
-
-                    {addon.imageUrl && (
-                        <div className="w-9 h-9 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0">
-                            <img src={getImageUrl(addon.imageUrl)} alt="" className="w-full h-full object-cover" />
-                        </div>
-                    )}
-                    <Button variant="ghost" size="icon" onClick={() => removeAddonRow(index)} className="h-9 w-9 bg-rose-50 text-rose-500 rounded-lg shrink-0"><Trash2 size={16} /></Button>
-                </div>
+          <div className="flex-1 grid grid-cols-12 gap-2 items-center">
+            {/* Nome */}
+            <div className="col-span-3">
+              <Input 
+                  placeholder="Nome do Item" 
+                  value={addon.name} 
+                  onChange={(e) => updateAddon(index, 'name', e.target.value)} 
+                  className="h-8 text-[11px] px-2 bg-transparent border-transparent hover:border-slate-200 focus:bg-white focus:border-orange-500 transition-all font-medium"
+                  noMargin
+              />
             </div>
-          </div>
-          
-          <div className="pl-11 grid grid-cols-1 md:grid-cols-12 gap-3">
-             <div className="md:col-span-12">
-                 <Input 
-                    placeholder="Descrição curta do item (aparece no cardápio)" 
+
+            {/* Preço Venda */}
+            <div className="col-span-1">
+              <Input 
+                  type="number" 
+                  step="0.01" 
+                  value={addon.price} 
+                  onChange={(e) => updateAddon(index, 'price', parseFloat(e.target.value) || 0)} 
+                  className="h-8 text-[11px] px-1 text-center font-bold"
+                  noMargin
+              />
+            </div>
+
+            {/* Custo Real */}
+            <div className="col-span-1 relative group/cost">
+              <Input 
+                  type="number" 
+                  value={addon.costPrice || 0} 
+                  className="h-8 text-[11px] px-1 text-center border-rose-50 bg-rose-50/20 text-rose-600 font-bold"
+                  readOnly
+                  noMargin
+              />
+              <button 
+                  type="button"
+                  onClick={() => navigate('/production/technical-sheets')}
+                  className="absolute -right-1 -top-1 opacity-0 group-hover/cost:opacity-100 text-rose-400 hover:text-rose-600 transition-all bg-white rounded-full shadow-sm p-0.5"
+              >
+                  <ChefHat size={10} />
+              </button>
+            </div>
+
+            {/* Preço Promo */}
+            <div className="col-span-1">
+              <Input 
+                  type="number" 
+                  step="0.01" 
+                  value={addon.promoPrice || ''} 
+                  onChange={(e) => updateAddon(index, 'promoPrice', e.target.value ? parseFloat(e.target.value) : undefined)} 
+                  className="h-8 text-[11px] px-1 text-center border-amber-100 bg-amber-50/20 text-amber-700 font-black"
+                  placeholder="-"
+                  noMargin
+              />
+            </div>
+
+            {/* Datas Promo */}
+            <div className="col-span-2 flex gap-1">
+              <Input 
+                  type="date" 
+                  value={addon.promoStartDate ? new Date(addon.promoStartDate).toISOString().split('T')[0] : ''} 
+                  onChange={(e) => updateAddon(index, 'promoStartDate', e.target.value)} 
+                  className="h-8 text-[9px] px-1 leading-none"
+                  noMargin
+              />
+              <Input 
+                  type="date" 
+                  value={addon.promoEndDate ? new Date(addon.promoEndDate).toISOString().split('T')[0] : ''} 
+                  onChange={(e) => updateAddon(index, 'promoEndDate', e.target.value)} 
+                  className="h-8 text-[9px] px-1 leading-none"
+                  noMargin
+              />
+            </div>
+
+            {/* SKU */}
+            <div className="col-span-1">
+              <Input 
+                  placeholder="SKU" 
+                  value={addon.saiposIntegrationCode || ''} 
+                  onChange={(e) => updateAddon(index, 'saiposIntegrationCode', e.target.value)} 
+                  className="h-8 text-[10px] px-1 text-center uppercase"
+                  noMargin
+              />
+            </div>
+
+            {/* Foto e Desc */}
+            <div className="col-span-2 flex items-center gap-1.5 justify-end pr-1">
+              <div className="relative group/photo">
+                <button 
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "w-8 h-8 rounded-lg border flex items-center justify-center transition-all overflow-hidden",
+                    addon.imageUrl ? "border-orange-200 bg-orange-50" : "border-slate-200 hover:border-slate-300 bg-white"
+                  )}
+                  disabled={isUploading}
+                >
+                  {isUploading ? <Loader2 size={12} className="animate-spin" /> : 
+                    addon.imageUrl ? (
+                      <img src={getImageUrl(addon.imageUrl)} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon size={14} className="text-slate-400" />
+                    )
+                  }
+                </button>
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <Input 
+                    placeholder="Descrição..." 
                     value={addon.description || ''} 
                     onChange={(e) => updateAddon(index, 'description', e.target.value)} 
-                    className="h-8 text-[10px] italic font-medium"
+                    className="h-8 text-[10px] italic border-transparent hover:border-slate-200 focus:bg-white focus:border-orange-500 bg-transparent"
+                    noMargin
                 />
-             </div>
+              </div>
+
+              <Button variant="ghost" size="icon" onClick={() => removeAddonRow(index)} className="h-7 w-7 text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all shrink-0">
+                <Trash2 size={14} />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -443,8 +444,20 @@ const AddonFormPage: React.FC = () => {
                             }
                         }}
                     >
+                        <div className="bg-slate-100/50 rounded-t-xl border border-slate-200 p-1.5 flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-slate-500">
+                            <div className="w-6 shrink-0"></div>
+                            <div className="flex-1 grid grid-cols-12 gap-2">
+                                <div className="col-span-3 pl-2">Nome do Item</div>
+                                <div className="col-span-1 text-center">Venda</div>
+                                <div className="col-span-1 text-center">Custo</div>
+                                <div className="col-span-1 text-center">Promo</div>
+                                <div className="col-span-2 text-center">Vigência Promo</div>
+                                <div className="col-span-1 text-center">SKU</div>
+                                <div className="col-span-2 text-right pr-4">Ações / Descrição</div>
+                            </div>
+                        </div>
                         <SortableContext items={formData.addons.map((_, i) => `addon-${i}`)} strategy={rectSortingStrategy}>
-                            <div className="space-y-2">
+                            <div className="space-y-0 shadow-sm rounded-b-xl overflow-hidden border-x border-b border-slate-200">
                                 {formData.addons.map((addon, index) => (
                                     <SortableAddonRow 
                                         key={`addon-${index}`}

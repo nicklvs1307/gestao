@@ -107,7 +107,7 @@ interface SortableProductRowProps {
 function SortableProductRow({ product, onToggleFlag, onUpdatePrice, onDelete, navigate, isSortable }: SortableProductRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localPrice, setLocalPrice] = useState(product.price.toString());
-  const [addonEdits, setAddonEdits] = useState<Record<string, {name: string, price: string}>>({});
+  const [addonEdits, setAddonEdits] = useState<Record<string, {name: string, price: string, promoPrice: string}>>({});
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id, disabled: !isSortable });
 
@@ -126,10 +126,14 @@ function SortableProductRow({ product, onToggleFlag, onUpdatePrice, onDelete, na
       const edit = addonEdits[addonId];
       if (!edit) return;
       const newPrice = parseFloat(edit.price);
-      if (isNaN(newPrice)) return;
+      const newPromoPrice = edit.promoPrice !== "" ? parseFloat(edit.promoPrice) : null;
       
       try {
-          await updateAddon(addonId, { name: edit.name, price: newPrice });
+          await updateAddon(addonId, { 
+              name: edit.name, 
+              price: isNaN(newPrice) ? undefined : newPrice,
+              promoPrice: newPromoPrice
+          });
           toast.success("Adicional atualizado!");
       } catch (e) {
           toast.error("Erro ao atualizar adicional.");
@@ -229,24 +233,43 @@ function SortableProductRow({ product, onToggleFlag, onUpdatePrice, onDelete, na
                                         <p className="text-center py-4 text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">Nenhum adicional neste grupo</p>
                                     ) : (
                                         group.addons.map(addon => (
-                                            <div key={addon.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-all group/addon">
+                                            <div key={addon.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-xl transition-all group/addon">
                                                 <div className="flex-1">
                                                     <input 
                                                         className="w-full bg-transparent border-none text-[11px] font-black uppercase italic text-slate-700 focus:ring-0 p-0 h-auto"
                                                         value={addonEdits[addon.id]?.name ?? addon.name}
-                                                        onChange={e => setAddonEdits({...addonEdits, [addon.id]: { ...(addonEdits[addon.id] || {price: addon.price.toString()}), name: e.target.value }})}
+                                                        onChange={e => setAddonEdits({...addonEdits, [addon.id]: { ...(addonEdits[addon.id] || {price: addon.price.toString(), promoPrice: (addon.promoPrice ?? "").toString()}), name: e.target.value }})}
                                                         onBlur={() => handleAddonBlur(addon.id)}
                                                     />
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[9px] font-black text-slate-300">R$</span>
-                                                    <input 
-                                                        type="number" step="0.01"
-                                                        className="w-16 bg-slate-100/50 border-none rounded-lg text-[10px] font-black text-slate-900 text-right focus:bg-white focus:ring-1 focus:ring-orange-500/20 px-2 py-1"
-                                                        value={addonEdits[addon.id]?.price ?? addon.price}
-                                                        onChange={e => setAddonEdits({...addonEdits, [addon.id]: { ...(addonEdits[addon.id] || {name: addon.name}), price: e.target.value }})}
-                                                        onBlur={() => handleAddonBlur(addon.id)}
-                                                    />
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5 ml-1">Venda</span>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[8px] font-black text-slate-300">R$</span>
+                                                            <input 
+                                                                type="number" step="0.01"
+                                                                className="w-14 bg-slate-100/50 border-none rounded-lg text-[10px] font-black text-slate-900 text-right focus:bg-white focus:ring-1 focus:ring-orange-500/20 px-1.5 py-0.5"
+                                                                value={addonEdits[addon.id]?.price ?? addon.price}
+                                                                onChange={e => setAddonEdits({...addonEdits, [addon.id]: { ...(addonEdits[addon.id] || {name: addon.name, promoPrice: (addon.promoPrice ?? "").toString()}), price: e.target.value }})}
+                                                                onBlur={() => handleAddonBlur(addon.id)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[7px] font-black text-amber-500 uppercase leading-none mb-0.5 ml-1">Promo</span>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[8px] font-black text-amber-400 italic">R$</span>
+                                                            <input 
+                                                                type="number" step="0.01"
+                                                                className="w-14 bg-amber-50 border border-amber-100 rounded-lg text-[10px] font-black text-amber-700 text-right focus:bg-white focus:ring-1 focus:ring-amber-500/20 px-1.5 py-0.5"
+                                                                placeholder="-"
+                                                                value={addonEdits[addon.id]?.promoPrice ?? addon.promoPrice ?? ''}
+                                                                onChange={e => setAddonEdits({...addonEdits, [addon.id]: { ...(addonEdits[addon.id] || {name: addon.name, price: addon.price.toString()}), promoPrice: e.target.value }})}
+                                                                onBlur={() => handleAddonBlur(addon.id)}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))

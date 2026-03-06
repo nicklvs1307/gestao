@@ -5,6 +5,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   fullWidth?: boolean;
   icon?: React.ElementType;
+  noMargin?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({ 
@@ -14,12 +15,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   className = '', 
   id,
   icon: Icon,
+  noMargin = false,
   ...props 
 }, ref) => {
   const inputId = id || props.name || `input-${Math.random().toString(36).substr(2, 9)}`;
   
   return (
-    <div className={`${fullWidth ? 'w-full' : ''} mb-4`}>
+    <div className={`${fullWidth ? 'w-full' : ''} ${noMargin ? '' : 'mb-4'}`}>
       {label && (
         <label 
           htmlFor={inputId} 
@@ -43,7 +45,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
             disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium text-slate-900
             ${error ? 'border-red-500 focus:ring-red-500/10' : ''}
             ${Icon ? 'pl-12' : ''}
-            ${className}
+            ${className.includes('h-') ? className : `h-12 ${className}`}
           `}
           {...props}
         />

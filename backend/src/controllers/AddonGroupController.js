@@ -78,6 +78,10 @@ const createAddonGroup = async (req, res) => {
                         description: addon.description,
                         imageUrl: addon.imageUrl,
                         price: addon.price,
+                        costPrice: addon.costPrice || 0,
+                        promoPrice: addon.promoPrice,
+                        promoStartDate: addon.promoStartDate ? new Date(addon.promoStartDate) : null,
+                        promoEndDate: addon.promoEndDate ? new Date(addon.promoEndDate) : null,
                         maxQuantity: addon.maxQuantity || 1,
                         order: addon.order || 0,
                         saiposIntegrationCode: addon.saiposIntegrationCode,
@@ -131,6 +135,10 @@ const duplicateAddonGroup = async (req, res) => {
                         description: addon.description,
                         imageUrl: addon.imageUrl,
                         price: addon.price,
+                        costPrice: addon.costPrice || 0,
+                        promoPrice: addon.promoPrice,
+                        promoStartDate: addon.promoStartDate,
+                        promoEndDate: addon.promoEndDate,
                         maxQuantity: addon.maxQuantity,
                         order: addon.order,
                         ingredients: {
@@ -226,7 +234,7 @@ const reorderGroups = async (req, res) => {
 
 const updateAddon = async (req, res) => {
     const { id } = req.params;
-    const { name, price, order, maxQuantity } = req.body;
+    const { name, price, order, maxQuantity, costPrice, promoPrice, promoStartDate, promoEndDate, description, imageUrl, saiposIntegrationCode } = req.body;
     
     try {
         const updated = await prisma.addon.update({
@@ -234,8 +242,15 @@ const updateAddon = async (req, res) => {
             data: {
                 name,
                 price: price !== undefined ? parseFloat(price) : undefined,
+                costPrice: costPrice !== undefined ? parseFloat(costPrice) : undefined,
+                promoPrice: promoPrice !== undefined ? parseFloat(promoPrice) : undefined,
+                promoStartDate: promoStartDate ? new Date(promoStartDate) : undefined,
+                promoEndDate: promoEndDate ? new Date(promoEndDate) : undefined,
                 order: order !== undefined ? parseInt(order) : undefined,
                 maxQuantity: maxQuantity !== undefined ? parseInt(maxQuantity) : undefined,
+                description,
+                imageUrl,
+                saiposIntegrationCode
             }
         });
         res.json(updated);
