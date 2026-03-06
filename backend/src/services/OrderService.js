@@ -9,7 +9,16 @@ const { normalizePhone } = require('../lib/phoneUtils');
 const socketLib = require('../lib/socket');
 
 const fullOrderInclude = {
-  items: { include: { product: { include: { categories: true } } } },
+  items: { 
+    include: { 
+      product: { 
+        include: { 
+          categories: true,
+          addonGroups: { include: { addons: true } }
+        } 
+      } 
+    } 
+  },
   deliveryOrder: { include: { customer: true, driver: { select: { id: true, name: true } } } },
   user: { select: { name: true } },
   payments: true,
