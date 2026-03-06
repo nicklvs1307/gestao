@@ -50,6 +50,8 @@ class PricingService {
 
   /**
    * Calcula o preço unitário e total de um item...
+   */
+  async calculateItemPrice(productId, quantity, sizeId, addonsIds) {
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: { 

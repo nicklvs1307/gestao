@@ -78,6 +78,24 @@ class OrderService {
     // Determinar OrderType Real: Se tem deliveryInfo, É DELIVERY obrigatoriamente
     const finalOrderType = (deliveryInfo || orderType === 'DELIVERY' || orderType === 'PICKUP') ? 'DELIVERY' : 'TABLE';
 
+    let coords = null;
+    let fullAddress = 'Retirada no Balcão';
+
+    if (finalOrderType === 'DELIVERY' && deliveryInfo) {
+        const isDelivery = deliveryInfo.deliveryType === 'delivery';
+        const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
+        
+        if (isDelivery) {
+            if (typeof deliveryInfo.address === 'object') {
+                fullAddress = `${addr.street || ''}, ${addr.number || 'S/N'}${addr.complement ? ' (' + addr.complement + ')' : ''} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
+            } else {
+                fullAddress = deliveryInfo.address || 'Endereço não informado';
+            }
+            // Busca Coordenadas FORA DA TRANSAÇÃO
+            coords = await GeocodingService.getCoordinates(fullAddress);
+        }
+    }
+
     // Lógica para adicionar itens em pedido existente de mesa
     if (finalOrderType === 'TABLE' && tableNumber) {
         const existingOrder = await prisma.order.findFirst({
@@ -151,23 +169,8 @@ class OrderService {
         // Processar Delivery Info
         if (finalOrderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
-             let fullAddress = 'Retirada no Balcão';
-             
-             // Extração segura dos campos de endereço
              const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
-             
-             if (isDelivery) {
-                 if (typeof deliveryInfo.address === 'object') {
-                     fullAddress = `${addr.street || ''}, ${addr.number || 'S/N'}${addr.complement ? ' (' + addr.complement + ')' : ''} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
-                 } else {
-                     fullAddress = deliveryInfo.address || 'Endereço não informado';
-                 }
-             }
-             
              const cleanPhone = normalizePhone(deliveryInfo.phone);
-             
-             // Busca Coordenadas Automaticamente para o Mapa de Calor
-             const coords = await GeocodingService.getCoordinates(fullAddress);
 
              const customer = await tx.customer.upsert({
                  where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
@@ -215,14 +218,14 @@ class OrderService {
                      changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
                      deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
                      notes: deliveryInfo.notes || null,
-                     latitude: coords?.lat || deliveryInfo.latitude ? parseFloat(coords?.lat || deliveryInfo.latitude) : null,
-                     longitude: coords?.lng || deliveryInfo.longitude ? parseFloat(coords?.lng || deliveryInfo.longitude) : null,
+                     latitude: coords?.lat || (deliveryInfo.latitude && !isNaN(parseFloat(deliveryInfo.latitude)) ? parseFloat(deliveryInfo.latitude) : null),
+                     longitude: coords?.lng || (deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.longitude)) ? parseFloat(deliveryInfo.longitude) : null),
                      status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
                  }
              });
 
-             // Opcional: Atualizar a localização padrão do cliente
-             if (deliveryInfo.latitude && deliveryInfo.longitude) {
+             // Opcional: Atualizar a localização padrão do cliente se vier do GPS
+             if (deliveryInfo.latitude && deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.latitude))) {
                  await tx.customer.update({
                      where: { id: customer.id },
                      data: { 
