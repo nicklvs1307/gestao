@@ -39,52 +39,34 @@ class TableController {
         throw new Error("Dados incompletos para pagamento parcial.");
     }
 
-    await prisma.$transaction(async (tx) => {
-        // 1. Marcar itens como pagos
-        await tx.orderItem.updateMany({
-            where: { id: { in: itemIds }, orderId: orderId },
-            data: { isPaid: true }
-        });
-
-        // 2. Registrar os pagamentos
-        for (const p of payments) {
-            await tx.payment.create({
-                data: { orderId, amount: p.amount, method: p.method }
-            });
-        }
-
-        // 3. Registrar no financeiro (Receita)
-        const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
-        const openSession = await tx.cashierSession.findFirst({
-            where: { restaurantId, status: 'OPEN' }
-        });
-
-        await tx.financialTransaction.create({
-            data: {
-                restaurantId,
-                cashierId: openSession?.id || null,
-                orderId,
-                description: `Pagto Parcial Mesa (Simplificado)`,
-                amount: totalPaid,
-                type: 'INCOME',
-                status: 'PAID',
-                dueDate: new Date(),
-                paymentDate: new Date(),
-                paymentMethod: payments[0]?.method || 'cash'
-            }
-        });
-
-        // 4. Verificar se o pedido foi totalmente pago para finalizar
-        const allItems = await tx.orderItem.findMany({ where: { orderId } });
-        const allPaid = allItems.every(i => i.isPaid);
-        
-        if (allPaid) {
-            // Se tudo pago, podemos mudar o status do pedido para COMPLETED se desejar, 
-            // mas aqui apenas mantemos a integridade dos itens.
-        }
+    // Busca o pedido para descobrir a mesa
+    const order = await prisma.order.findUnique({
+        where: { id: orderId }
     });
 
-    res.json({ success: true });
+    if (!order) {
+        res.status(404);
+        throw new Error("Pedido não encontrado.");
+    }
+
+    const table = await prisma.table.findFirst({
+        where: { restaurantId, number: order.tableNumber }
+    });
+
+    if (!table) {
+        res.status(404);
+        throw new Error("Mesa não encontrada para este pedido.");
+    }
+
+    const result = await TableService.processPartialItemPayment(table.id, restaurantId, {
+        orderId,
+        itemIds,
+        payments,
+        discount,
+        surcharge
+    });
+
+    res.json(result);
   });
 
   // POST /api/tables/:tableId/checkout

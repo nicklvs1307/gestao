@@ -165,14 +165,20 @@ const TableCheckout: React.FC = () => {
         if (amountPaid < totalWithFees) return toast.error("O valor pago é insuficiente");
 
         try {
-            await api.post(`/admin/tables/partial-payment-simple`, {
+            const res = await api.post(`/admin/tables/partial-payment-simple`, {
                 orderId: order?.id,
                 itemIds: payingItems.map(i => i.itemId),
                 payments: currentPayments,
                 discount, surcharge
             });
 
-            toast.success("Pagamento processado!");
+            if (res.data.finished) {
+                toast.success("Mesa finalizada e liberada com sucesso!");
+                navigate('/pos?tab=tables');
+                return;
+            }
+
+            toast.success("Pagamento parcial processado!");
             setPayingItems([]);
             setCurrentPayments([]);
             setDiscount(0);
