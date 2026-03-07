@@ -355,79 +355,110 @@ const AddonFormPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                <div className="xl:col-span-4 space-y-6">
-                    <Card className="p-6 border-slate-200 bg-white space-y-6 shadow-sm">
-                        <div className="space-y-4">
-                            <h3 className="text-xs font-black uppercase italic text-slate-900 flex items-center gap-2 border-b border-slate-50 pb-3">
-                                <Settings size={16} className="text-orange-500" /> Definições de Regra
-                            </h3>
-                            
-                            <Input label="Nome do Grupo" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Ex: Escolha o Sabor" required className="h-11 font-bold" />
-                            <Input label="Código de Integração (SKU)" value={formData.saiposIntegrationCode || ''} onChange={e => setFormData({ ...formData, saiposIntegrationCode: e.target.value })} placeholder="Ex: ADIC_TOPPING" className="h-11" />
-                            
-                            <div className="pt-2">
-                                <Card className={cn("p-3 border transition-all cursor-pointer flex items-center gap-3", formData.isFlavorGroup ? "border-amber-500 bg-amber-50" : "border-slate-100 bg-slate-50/50 hover:bg-white")} onClick={() => setFormData({...formData, isFlavorGroup: !formData.isFlavorGroup})}>
-                                    <div className={cn("w-5 h-5 rounded border flex items-center justify-center transition-all", formData.isFlavorGroup ? "bg-amber-500 border-amber-500 shadow-sm shadow-amber-200" : "bg-white border-slate-300")}>{formData.isFlavorGroup && <CheckCircle size={12} className="text-white" />}</div>
-                                    <div className="flex-1">
-                                        <span className="block text-[10px] font-black uppercase tracking-wider text-slate-700 leading-none">Grupo de SABORES</span>
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic block">Identifica itens que compõem frações da Pizza</span>
-                                    </div>
-                                </Card>
+            <div className="space-y-4">
+                {/* CONFIGURAÇÕES DO GRUPO - TOPO COMPACTO */}
+                <Card className="p-4 border-slate-200 bg-white shadow-sm">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-6 gap-4 items-end">
+                        <div className="lg:col-span-2">
+                            <Input 
+                                label="Nome da Biblioteca / Grupo" 
+                                value={formData.name} 
+                                onChange={e => setFormData({ ...formData, name: e.target.value })} 
+                                placeholder="Ex: Escolha o Sabor" 
+                                required 
+                                className="h-9 font-bold text-xs" 
+                                noMargin
+                            />
+                        </div>
+                        <div>
+                            <Input 
+                                label="Código ERP (SKU)" 
+                                value={formData.saiposIntegrationCode || ''} 
+                                onChange={e => setFormData({ ...formData, saiposIntegrationCode: e.target.value })} 
+                                placeholder="Opcional" 
+                                className="h-9 text-xs" 
+                                noMargin
+                            />
+                        </div>
+                        
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1 block leading-none">Tipo / Obrigatório</label>
+                            <div className="flex gap-1 h-9 bg-slate-50 border border-slate-200 rounded-xl p-1">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setFormData({...formData, type: formData.type === 'single' ? 'multiple' : 'single'})} 
+                                    className={cn(
+                                        "flex-1 rounded-lg text-[9px] font-black uppercase transition-all", 
+                                        formData.type === 'single' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400 hover:bg-white"
+                                    )}
+                                >
+                                    {formData.type === 'single' ? 'Única' : 'Múltipla'}
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setFormData({...formData, isRequired: !formData.isRequired})} 
+                                    className={cn(
+                                        "flex-1 rounded-lg text-[9px] font-black uppercase transition-all border", 
+                                        formData.isRequired ? "bg-rose-500 border-rose-500 text-white shadow-sm" : "bg-white border-slate-100 text-slate-300"
+                                    )}
+                                >
+                                    {formData.isRequired ? 'Obrigatório' : 'Opcional'}
+                                </button>
                             </div>
-
-                            {formData.isFlavorGroup && (
-                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="p-3 bg-amber-50 border border-amber-100 rounded-xl flex gap-3">
-                                    <div className="flex-1">
-                                        <div className="flex gap-2 items-center mb-1">
-                                            <Info size={14} className="text-amber-600 shrink-0" />
-                                            <p className="text-[8px] font-black text-amber-900 uppercase italic">Grupo de Sabores</p>
-                                        </div>
-                                        <p className="text-[8px] font-bold text-amber-700 leading-tight uppercase italic">
-                                            ESTE GRUPO SERÁ TRATADO COMO SABORES NO CARDÁPIO. A REGRA DE PREÇO E O LIMITE DE FRAÇÕES SÃO DEFINIDOS INDIVIDUALMENTE EM CADA PRODUTO (PIZZA).
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            )}
                         </div>
 
-                        <div className="space-y-4 pt-6 border-t border-slate-50">
-                            <h3 className="text-xs font-black uppercase italic text-slate-900 flex items-center gap-2">
-                                <List size={16} className="text-orange-500" /> Limites de Seleção
-                            </h3>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1 block">Modo de Seleção</label>
-                                <div className="grid grid-cols-2 p-1 bg-slate-50 border border-slate-200 rounded-xl gap-1">
-                                    <button type="button" onClick={() => setFormData({...formData, type: 'single'})} className={cn("py-2.5 rounded-lg text-[10px] font-black uppercase transition-all", formData.type === 'single' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-white")}>Única</button>
-                                    <button type="button" onClick={() => setFormData({...formData, type: 'multiple'})} className={cn("py-2.5 rounded-lg text-[10px] font-black uppercase transition-all", formData.type === 'multiple' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-white")}>Múltipla</button>
-                                </div>
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <Input 
+                                    label="Mín" 
+                                    type="number" 
+                                    value={formData.minQuantity} 
+                                    onChange={e => setFormData({ ...formData, minQuantity: parseInt(e.target.value) || 0 })} 
+                                    className="h-9 font-black text-blue-600 text-center" 
+                                    noMargin
+                                />
                             </div>
-
-                            <Card className={cn("p-3 border transition-all cursor-pointer flex items-center gap-3", formData.isRequired ? "border-rose-500 bg-rose-50" : "border-slate-100 bg-slate-50/50 hover:bg-white")} onClick={() => setFormData({...formData, isRequired: !formData.isRequired})}>
-                                <div className={cn("w-5 h-5 rounded border flex items-center justify-center transition-all", formData.isRequired ? "bg-rose-500 border-rose-500 shadow-sm shadow-rose-200" : "bg-white border-slate-300")}>{formData.isRequired && <CheckCircle size={12} className="text-white" />}</div>
-                                <div className="flex-1">
-                                    <span className="block text-[10px] font-black uppercase tracking-wider text-slate-700 leading-none">Obrigatório</span>
-                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic block">O cliente precisa escolher ao menos um item</span>
-                                </div>
-                            </Card>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input label="Mínimo Total" type="number" value={formData.minQuantity} onChange={e => setFormData({ ...formData, minQuantity: parseInt(e.target.value) || 0 })} className="h-11 font-black text-blue-600" />
-                                <Input label="Máximo Total" type="number" value={formData.maxQuantity} onChange={e => setFormData({ ...formData, maxQuantity: parseInt(e.target.value) || 1 })} className="h-11 font-black text-purple-600" />
+                            <div className="flex-1">
+                                <Input 
+                                    label="Máx" 
+                                    type="number" 
+                                    value={formData.maxQuantity} 
+                                    onChange={e => setFormData({ ...formData, maxQuantity: parseInt(e.target.value) || 1 })} 
+                                    className="h-9 font-black text-purple-600 text-center" 
+                                    noMargin
+                                />
                             </div>
                         </div>
-                    </Card>
-                </div>
 
-                <div className="xl:col-span-8 space-y-4">
-                    <div className="flex justify-between items-center px-2">
+                        <div className="flex items-center">
+                            <button 
+                                type="button"
+                                onClick={() => setFormData({...formData, isFlavorGroup: !formData.isFlavorGroup})}
+                                className={cn(
+                                    "w-full h-9 rounded-xl border flex items-center justify-center gap-2 transition-all px-3",
+                                    formData.isFlavorGroup ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-slate-50 border-slate-200 text-slate-400 hover:bg-white"
+                                )}
+                            >
+                                <div className={cn("w-3 h-3 rounded-full border flex items-center justify-center", formData.isFlavorGroup ? "bg-white border-white" : "bg-white border-slate-300")}>
+                                    {formData.isFlavorGroup && <CheckCircle size={8} className="text-amber-500" />}
+                                </div>
+                                <span className="text-[9px] font-black uppercase italic">Grupo de Sabores</span>
+                            </button>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* LISTAGEM DE ADICIONAIS - LARGURA TOTAL */}
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center px-1">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-black uppercase italic text-slate-900">Itens e Preços da Lista</h3>
-                            <span className="text-[10px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-full">{formData.addons.length}</span>
+                            <h3 className="text-xs font-black uppercase italic text-slate-900 tracking-widest flex items-center gap-2">
+                                <List size={14} className="text-orange-500" /> Itens da Biblioteca
+                            </h3>
+                            <span className="text-[9px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-full shadow-sm">{formData.addons.length}</span>
                         </div>
-                        <Button onClick={addAddonRow} className="rounded-xl bg-orange-500 text-white shadow-lg shadow-orange-500/20 gap-2 font-black italic h-10 text-[11px] px-6 transition-all hover:scale-105 active:scale-95">
-                            <Plus size={18} /> ADICIONAR NOVO ITEM
+                        <Button onClick={addAddonRow} className="rounded-xl bg-orange-500 text-white shadow-lg shadow-orange-500/20 gap-2 font-black italic h-9 text-[10px] px-6 transition-all hover:scale-105 active:scale-95">
+                            <Plus size={16} /> ADICIONAR NOVO ITEM
                         </Button>
                     </div>
 
@@ -473,8 +504,7 @@ const AddonFormPage: React.FC = () => {
                                     <div className="p-20 border-4 border-dashed border-slate-100 rounded-[2rem] text-center bg-slate-50/30">
                                         <div className="flex flex-col items-center justify-center opacity-20">
                                             <Hash size={64} strokeWidth={1} className="mb-4" />
-                                            <p className="font-black text-sm uppercase tracking-[0.3em] italic">Lista Vazia</p>
-                                            <p className="text-xs font-bold uppercase tracking-widest mt-2 leading-relaxed">Clique em Adicionar Item para começar a preencher<br/>esta biblioteca de complementos.</p>
+                                            <p className="font-black text-sm uppercase tracking-[0.3em] italic">Biblioteca Vazia</p>
                                         </div>
                                     </div>
                                 )}
