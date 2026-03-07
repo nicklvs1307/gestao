@@ -20,9 +20,15 @@ class CashierController {
 
   // POST /api/cashier/close
   close = asyncHandler(async (req, res) => {
-    const validatedData = CloseCashierSchema.parse(req.body);
-    const session = await CashierService.closeSession(req.restaurantId, validatedData);
-    res.json(session);
+    console.log('[CASHIER_CONTROLLER] Recebendo pedido de fechamento:', req.body);
+    try {
+        const validatedData = CloseCashierSchema.parse(req.body);
+        const session = await CashierService.closeSession(req.restaurantId, validatedData);
+        res.json(session);
+    } catch (error) {
+        console.error('[CASHIER_CONTROLLER] Erro no fechamento:', error);
+        throw error; // Repassa para o errorHandler, mas agora logamos no console do servidor
+    }
   });
 
   // GET /api/cashier/summary

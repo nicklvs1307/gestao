@@ -127,15 +127,24 @@ const CashierManagement: React.FC = () => {
         if(!confirm('Deseja encerrar o turno com os valores informados?')) return;
         
         try {
-            const totalInformed = Object.values(closingValues).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
-            await closeCashier(totalInformed, notes, closingValues);
+            // Garante que o objeto closingDetails tenha valores padrão de "0" para campos vazios
+            const sanitizedDetails: Record<string, string> = {};
+            Object.entries(closingValues).forEach(([method, val]) => {
+                sanitizedDetails[method] = val || "0";
+            });
+
+            const totalInformed = Object.values(sanitizedDetails).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
+            
+            await closeCashier(totalInformed, notes, sanitizedDetails);
             toast.success('Caixa fechado com sucesso!');
             setIsClosingProcess(false);
             setNotes('');
             setClosingValues({ cash: '', pix: '', credit_card: '', debit_card: '', other: '' });
             fetchData();
-        } catch (error) { 
-            toast.error(error.response?.data?.message || 'Erro ao fechar o caixa.'); 
+        } catch (error: any) { 
+            const msg = error.response?.data?.message || 'Erro ao fechar o caixa.';
+            toast.error(msg);
+            console.error('[CASHIER_FRONTEND_ERROR]:', error);
         }
     };
 
