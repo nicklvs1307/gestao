@@ -1,7 +1,8 @@
 const prisma = require('../lib/prisma');
 const CashierService = require('../services/CashierService');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { OpenCashierSchema, CloseCashierSchema, CashierTransactionSchema } = require('../schemas/cashierSchema');
+const AppError = require('../utils/AppError');
+const { CloseCashierSchema, OpenCashierSchema, CashierTransactionSchema } = require('../schemas/cashierSchema');
 
 class CashierController {
 
@@ -13,13 +14,31 @@ class CashierController {
 
   // POST /api/cashier/open
   open = asyncHandler(async (req, res) => {
-    const session = await CashierService.openSession(req.restaurantId, req.user.id, req.body.initialAmount);
+    // Validação Manual para evitar erro de middleware
+    const result = OpenCashierSchema.safeParse(req.body);
+    if (!result.success) {
+        throw new AppError(`Dados de abertura inválidos: ${result.error.issues.map(i => i.message).join(', ')}`, 400);
+    }
+    
+    const session = await CashierService.openSession(req.restaurantId, req.user.id, result.data.initialAmount);
     res.status(201).json(session);
   });
 
   // POST /api/cashier/close
   close = asyncHandler(async (req, res) => {
-    const session = await CashierService.closeSession(req.restaurantId, req.body);
+    console.log('[CASHIER_CONTROLLER] Tentativa de fechamento:', req.body);
+    
+    // Validação Manual e Segura
+    const result = CloseCashierSchema.safeParse(req.body);
+    
+    if (!result.success) {
+        console.error('[CASHIER_CONTROLLER] Erro de Validação Zod:', result.error.format());
+        const errorMsg = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(' | ');
+        throw new AppError(`Erro nos dados enviados: ${errorMsg}`, 400);
+    }
+
+    // Se validou, chama o serviço
+    const session = await CashierService.closeSession(req.restaurantId, result.data);
     res.json(session);
   });
 
@@ -32,10 +51,9 @@ class CashierController {
 
     if (!session) {
       res.status(404);
-      throw new Error("Nenhum caixa aberto.");
+      throw new AppError("Nenhum caixa aberto.", 404);
     }
 
-    // Busca formas de pagamento cadastradas
     const restaurantPaymentMethods = await prisma.paymentMethod.findMany({
         where: { restaurantId, isActive: true }
     });
@@ -45,16 +63,14 @@ class CashierController {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Filtra apenas vendas
     const salesTransactions = transactions.filter(t => 
       t.type === 'INCOME' && !t.description.includes('[REFORÇO]') && !t.description.includes('[SANGRIA]')
     );
 
-    // Função auxiliar para normalização de strings (remove acentos e espaços)
     const normalize = (str) => {
       if (!str) return '';
       return str.toString().toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         .trim();
     };
 
@@ -64,27 +80,11 @@ class CashierController {
       const matchedMethod = restaurantPaymentMethods.find(m => {
         const normName = normalize(m.name);
         const normType = normalize(m.type);
-        
-        return normName === rawMethod || 
-               normType === rawMethod ||
-               (m.type === 'DEBIT_CARD' && (rawMethod.includes('debito') || rawMethod === 'deb')) ||
-               (m.type === 'CREDIT_CARD' && (rawMethod.includes('credito') || rawMethod === 'cre')) ||
-               (m.type === 'CASH' && (rawMethod.includes('dinheiro') || rawMethod === 'din')) ||
-               (m.type === 'PIX' && rawMethod === 'pix') ||
-               (m.type === 'OTHER' && (rawMethod.includes('outro') || rawMethod === 'other'));
+        return normName === rawMethod || normType === rawMethod;
       });
 
-      const nameKey = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
-      const typeKey = matchedMethod ? normalize(matchedMethod.type) : rawMethod;
-      
-      if (!acc[nameKey]) acc[nameKey] = 0;
-      acc[nameKey] += curr.amount;
-
-      if (typeKey !== nameKey) {
-        if (!acc[typeKey]) acc[typeKey] = 0;
-        acc[typeKey] += curr.amount;
-      }
-
+      const key = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
+      acc[key] = (acc[key] || 0) + curr.amount;
       return acc;
     }, {});
 
@@ -110,19 +110,19 @@ class CashierController {
 
   // POST /api/cashier/transaction (Sangria/Reforço)
   addTransaction = asyncHandler(async (req, res) => {
-    const validatedData = CashierTransactionSchema.parse(req.body);
+    const result = CashierTransactionSchema.safeParse(req.body);
+    if (!result.success) {
+        throw new AppError("Dados de movimentação inválidos.", 400);
+    }
+    const { amount, type, description } = result.data;
     
     const session = await prisma.cashierSession.findFirst({
       where: { restaurantId: req.restaurantId, status: 'OPEN' }
     });
 
-    if (!session) {
-      res.status(400);
-      throw new Error("Nenhum caixa aberto para esta operação.");
-    }
+    if (!session) throw new AppError("Nenhum caixa aberto.", 400);
 
-    // Busca ou cria categoria para ajustes de caixa
-    const categoryName = validatedData.type === 'INCOME' ? 'Reforço de Caixa' : 'Sangria de Caixa';
+    const categoryName = type === 'INCOME' ? 'Reforço de Caixa' : 'Sangria de Caixa';
     let category = await prisma.transactionCategory.findFirst({
         where: { restaurantId: req.restaurantId, name: categoryName }
     });
@@ -131,7 +131,7 @@ class CashierController {
         category = await prisma.transactionCategory.create({
             data: {
                 name: categoryName,
-                type: validatedData.type,
+                type: type,
                 isSystem: true,
                 restaurantId: req.restaurantId
             }
@@ -143,9 +143,9 @@ class CashierController {
         restaurantId: req.restaurantId,
         cashierId: session.id,
         categoryId: category.id,
-        description: validatedData.type === 'INCOME' ? `[REFORÇO] ${validatedData.description}` : `[SANGRIA] ${validatedData.description}`,
-        amount: validatedData.amount,
-        type: validatedData.type,
+        description: type === 'INCOME' ? `[REFORÇO] ${description}` : `[SANGRIA] ${description}`,
+        amount: amount,
+        type: type,
         status: 'PAID',
         dueDate: new Date(),
         paymentDate: new Date(),
@@ -173,14 +173,8 @@ class CashierController {
       where: { restaurantId: req.restaurantId, status: 'OPEN' }
     });
 
-    if (!session) {
-      res.status(404);
-      throw new Error("Nenhum caixa aberto.");
-    }
+    if (!session) throw new AppError("Nenhum caixa aberto.", 404);
 
-    // Busca pedidos que possuem transações financeiras vinculadas a este caixa
-    // OU pedidos criados durante esta sessão
-    // OU pedidos que foram atualizados (ex: finalizados) durante esta sessão
     const orders = await prisma.order.findMany({
       where: { 
         restaurantId: req.restaurantId,
