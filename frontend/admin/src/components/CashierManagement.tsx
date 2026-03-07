@@ -13,7 +13,7 @@ import {
     Wallet, Lock, Unlock, DollarSign, History, 
     ArrowUpCircle, ArrowDownCircle, AlertCircle, CheckCircle, HelpCircle,
     Calendar, Clock, User, Receipt, Plus, Minus, X, Info, Edit2, ChevronDown, Check, RefreshCw, Loader2, ArrowUpRight, Smartphone, Banknote, Search, ChevronRight, Filter,
-    FileText, ShoppingBag, Truck
+    FileText, ShoppingBag, Truck, Calculator, Printer, ShieldCheck
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import MoneyCounter from './MoneyCounter';
 
 const CashierManagement: React.FC = () => {
     const { user: authUser } = useAuth();
@@ -35,6 +36,7 @@ const CashierManagement: React.FC = () => {
     // View States
     const [selectedMethod, setSelectedMethod] = useState<string>('cash');
     const [isClosingProcess, setIsClosingProcess] = useState(false);
+    const [step, setStep] = useState<'COUNT' | 'REVIEW'>('COUNT'); // Passos do fechamento
 
     // Form States
     const [initialAmount, setInitialAmount] = useState('');
@@ -42,6 +44,11 @@ const CashierManagement: React.FC = () => {
     const [closingValues, setClosingValues] = useState<Record<string, string>>({
         cash: '', pix: '', credit_card: '', debit_card: '', other: ''
     });
+    
+    // ERP Features
+    const [showMoneyCounter, setShowMoneyCounter] = useState(false);
+    const [moneyCountDetails, setMoneyCountDetails] = useState<Record<string, number>>({});
+    const [cashLeftover, setCashLeftover] = useState<string>('0'); // Fundo de troco para amanhã
 
     const [showTransactionModal, setShowTransactionModal] = useState<'none' | 'INCOME' | 'EXPENSE'>('none');
     const [transAmount, setTransAmount] = useState('');
@@ -117,14 +124,42 @@ const CashierManagement: React.FC = () => {
         } catch (error) { toast.error('Erro ao abrir.'); }
     };
 
+    const handleMoneyCountConfirm = (total: number, details: Record<string, number>) => {
+        setClosingValues(prev => ({ ...prev, cash: total.toFixed(2) }));
+        setMoneyCountDetails(details);
+    };
+
+    const getExpectedValue = (methodId: string) => {
+        if (!summary) return 0;
+        
+        // Lógica de cálculo esperado (ESCONDIDA NA INTERFACE, MAS USADA PARA AUDITORIA NO FRONT)
+        const m = paymentMethods.find(pm => pm.id === methodId);
+        const normLabel = normalize(m?.label || '');
+        const normId = normalize(methodId);
+        const normType = normalize((m as any)?.type || '');
+
+        if (methodId === 'cash') {
+            const sales = summary.salesByMethod?.cash || summary.salesByMethod?.dinheiro || 0;
+            const ref = summary.adjustments?.reforco || 0;
+            const sang = summary.adjustments?.sangria || 0;
+            const init = cashierData?.session?.initialAmount || 0;
+            return init + sales + ref - sang;
+        }
+
+        return (
+            summary?.salesByMethod?.[normLabel] || 
+            summary?.salesByMethod?.[normId] || 
+            (normType ? summary?.salesByMethod?.[normType] : 0) ||
+            0
+        );
+    };
+
     const handleClose = async () => {
         // Validação estrita antes de fechar
         if (session?.pendingDriverSettlementsCount > 0) {
             toast.error(`Existem ${session.pendingDriverSettlementsCount} acertos de motoboy pendentes.`);
             return;
         }
-
-        if(!confirm('Deseja encerrar o turno com os valores informados?')) return;
         
         try {
             // Garante que o objeto closingDetails tenha valores padrão de "0" para campos vazios
@@ -135,40 +170,27 @@ const CashierManagement: React.FC = () => {
 
             const totalInformed = Object.values(sanitizedDetails).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
             
-            await closeCashier(totalInformed, notes, sanitizedDetails);
-            toast.success('Caixa fechado com sucesso!');
+            // Payload ERP completo
+            const payload = {
+                finalAmount: totalInformed,
+                notes,
+                closingDetails: sanitizedDetails,
+                cashLeftover: parseFloat(cashLeftover) || 0,
+                moneyCountJson: moneyCountDetails
+            };
+
+            await apiClient.post('/cashier/close', payload); // Usando endpoint direto para custom payload
+            
+            toast.success('Turno encerrado e auditado com sucesso!');
             setIsClosingProcess(false);
+            setStep('COUNT');
             setNotes('');
             setClosingValues({ cash: '', pix: '', credit_card: '', debit_card: '', other: '' });
             fetchData();
         } catch (error: any) { 
-            console.error('[CASHIER_FRONTEND_ERROR_DETAILED]:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
-
-            const serverMsg = error.response?.data?.message;
-            const status = error.response?.status;
-            
-            if (serverMsg) {
-                toast.error(serverMsg);
-            } else if (status === 404) {
-                toast.error("Serviço de caixa não encontrado (404).");
-            } else if (status === 500) {
-                toast.error("Erro interno no servidor (500). Verifique os logs.");
-            } else {
-                toast.error(`Falha na comunicação: ${error.message}`);
-            }
+            console.error('[CASHIER_FRONTEND_ERROR]:', error);
+            toast.error(error.response?.data?.message || "Erro ao fechar caixa.");
         }
-    };
-
-    const handleUpdatePayment = async (orderId: string, newMethod: string) => {
-        try {
-            await updateOrderPaymentMethod(orderId, newMethod);
-            toast.success('Pagamento corrigido!');
-            fetchData();
-        } catch (error) { toast.error('Erro ao atualizar.'); }
     };
 
     const handleTransaction = async (e: React.FormEvent) => {
@@ -179,6 +201,11 @@ const CashierManagement: React.FC = () => {
             setShowTransactionModal('none'); setTransAmount(''); setTransDesc(''); fetchData();
         } catch (error) { toast.error('Erro na movimentação.'); }
     };
+    
+    // Cálculos para o Review Step
+    const cashInHand = parseFloat(closingValues['cash'] || '0');
+    const floatNext = parseFloat(cashLeftover || '0');
+    const safeDeposit = Math.max(0, cashInHand - floatNext);
 
     if (loading && !cashierData) return (
         <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
@@ -189,16 +216,6 @@ const CashierManagement: React.FC = () => {
 
     const isOpen = cashierData?.isOpen;
     const session = cashierData?.session;
-
-    const getExpectedCash = () => {
-        if (!summary || !session) return 0;
-        const salesByMethod = summary.salesByMethod || {};
-        const cashSales = salesByMethod['cash'] || salesByMethod['dinheiro'] || 0;
-        const reinforcements = summary.adjustments?.reforco || 0;
-        const withdraws = summary.adjustments?.sangria || 0;
-        const initial = session.initialAmount || 0;
-        return initial + cashSales + reinforcements - withdraws;
-    };
 
     return (
         <div className="space-y-4 animate-in fade-in duration-300 pb-10">
@@ -264,43 +281,26 @@ const CashierManagement: React.FC = () => {
                         </form>
                     </Card>
                 </div>
-            ) : (
-                /* PAINEL OPERACIONAL */
+            ) : step === 'COUNT' ? (
+                /* PAINEL OPERACIONAL - CONFERÊNCIA CEGA */
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
                     
-                    {/* COLUNA ESQUERDA (3): RESUMO FINANCEIRO */}
+                    {/* COLUNA ESQUERDA: CONFERÊNCIA (BLIND) */}
                     <div className="xl:col-span-4 space-y-4">
                         <Card className="p-0 border-slate-200 shadow-md overflow-hidden bg-white" noPadding>
                             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Conferência de Turno</h3>
+                                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Conferência de Valores</h3>
                                 <div className="flex gap-1">
-                                    {session?.pendingDriverSettlementsCount > 0 && (
-                                        <div className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[9px] font-bold animate-pulse">
-                                            <AlertCircle size={10}/> {session.pendingDriverSettlementsCount} ACERTOS
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-1 bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-[9px] font-bold">
+                                        <ShieldCheck size={10}/> MODO CEGO
+                                    </div>
                                 </div>
                             </div>
                             
                             <div className="divide-y divide-slate-100">
                                 {paymentMethods.map(m => {
-                                    const normLabel = normalize(m.label);
-                                    const normId = normalize((m as any).id);
-                                    const normType = normalize((m as any).type);
-
-                                    const expected = m.id === 'cash' 
-                                        ? getExpectedCash() 
-                                        : (
-                                            summary?.salesByMethod?.[normLabel] || 
-                                            summary?.salesByMethod?.[normId] || 
-                                            (normType ? summary?.salesByMethod?.[normType] : 0) ||
-                                            0
-                                        );
-                                    
-                                    const informedValue = closingValues[m.id] || closingValues[m.label] || '';
-                                    const informed = parseFloat(informedValue || '0');
-                                    const diff = informed - expected;
                                     const isSelected = selectedMethod === m.id;
+                                    const informedValue = closingValues[m.id] || '';
 
                                     return (
                                         <div 
@@ -318,18 +318,8 @@ const CashierManagement: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <p className="text-xs font-bold text-slate-800 uppercase tracking-tight">{m.label}</p>
-                                                        <p className="text-[10px] font-medium text-slate-400 uppercase">SISTEMA: R$ {(expected || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                                        <p className="text-[10px] font-medium text-slate-400 uppercase">Informe o valor total</p>
                                                     </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    {informedValue && (
-                                                        <span className={cn(
-                                                            "text-[10px] font-bold px-1.5 py-0.5 rounded",
-                                                            Math.abs(diff) < 0.01 ? "bg-emerald-100 text-emerald-700" : diff < 0 ? "bg-rose-100 text-rose-700" : "bg-blue-100 text-blue-700"
-                                                        )}>
-                                                            {Math.abs(diff) < 0.01 ? 'FECHOU' : `DIF: R$ ${diff.toFixed(2)}`}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
 
@@ -338,33 +328,31 @@ const CashierManagement: React.FC = () => {
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">R$</span>
                                                     <input 
                                                         type="number"
+                                                        readOnly={m.id === 'cash'} // Cash is read-only if counted
                                                         value={closingValues[m.id]}
                                                         onChange={(e) => setClosingValues(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                                        className="w-full h-9 bg-white border border-slate-200 rounded-md pl-8 pr-3 text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
-                                                        placeholder="Informar valor contado..."
-                                                        onClick={(e) => e.stopPropagation()}
+                                                        className={cn(
+                                                            "w-full h-9 bg-white border border-slate-200 rounded-md pl-8 pr-3 text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm",
+                                                            m.id === 'cash' && "bg-slate-50 text-slate-500 cursor-not-allowed"
+                                                        )}
+                                                        placeholder="0,00"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (m.id === 'cash') setShowMoneyCounter(true);
+                                                        }}
                                                     />
                                                 </div>
-                                                <div className={cn(
-                                                    "w-7 h-7 rounded-md flex items-center justify-center transition-all",
-                                                    isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300"
-                                                )}>
-                                                    <ChevronRight size={14} />
-                                                </div>
+                                                
+                                                {m.id === 'cash' ? (
+                                                    <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowMoneyCounter(true); }} className="h-9 px-3 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200">
+                                                        <Calculator size={16} />
+                                                    </Button>
+                                                ) : (
+                                                    <div className={cn("w-7 h-7 rounded-md flex items-center justify-center transition-all", isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300")}>
+                                                        <ChevronRight size={14} />
+                                                    </div>
+                                                )}
                                             </div>
-
-                                            {m.id === 'cash' && isSelected && (
-                                                <div className="mt-3 grid grid-cols-2 gap-2 animate-in slide-in-from-top-2 duration-200">
-                                                    <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
-                                                        <p className="text-[9px] font-bold text-emerald-700 uppercase leading-none mb-1">Entradas (+)</p>
-                                                        <p className="text-xs font-bold text-emerald-700 italic">R$ {( (session?.initialAmount || 0) + (summary?.salesByMethod?.cash || 0) + (summary?.adjustments?.reforco || 0) ).toFixed(2)}</p>
-                                                    </div>
-                                                    <div className="bg-rose-50/50 p-2 rounded-lg border border-rose-100">
-                                                        <p className="text-[9px] font-bold text-rose-700 uppercase leading-none mb-1">Saídas (-)</p>
-                                                        <p className="text-xs font-bold text-rose-700 italic">R$ {(summary?.adjustments?.sangria || 0).toFixed(2)}</p>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     )
                                 })}
@@ -372,35 +360,21 @@ const CashierManagement: React.FC = () => {
 
                             <div className="p-4 bg-slate-900 space-y-3">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total em Mãos</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Informado</span>
                                     <span className="text-xl font-bold text-white tracking-tight">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                 </div>
-                                <textarea 
-                                    className="w-full bg-white/10 border border-white/10 rounded-lg p-3 text-xs font-medium text-white placeholder:text-slate-500 focus:border-blue-500 outline-none h-16 resize-none transition-all" 
-                                    placeholder="OBSERVAÇÕES DO FECHAMENTO..." 
-                                    value={notes} 
-                                    onChange={e => setNotes(e.target.value)} 
-                                />
-                                <div className="space-y-2">
-                                    {/* Checklist de Segurança Visual */}
-                                    <div className="grid grid-cols-1 gap-1 py-1">
-                                        <div className={cn("flex items-center gap-2 text-[9px] font-bold px-2 py-1 rounded", session?.pendingDriverSettlementsCount === 0 ? "text-emerald-400" : "bg-rose-500/20 text-rose-300")}>
-                                            {session?.pendingDriverSettlementsCount === 0 ? <Check size={10}/> : <X size={10}/>} ACERTOS MOTOBOY: {session?.pendingDriverSettlementsCount || 0}
-                                        </div>
-                                    </div>
-
-                                    <Button 
-                                        fullWidth 
-                                        onClick={handleClose} 
-                                        disabled={session?.pendingDriverSettlementsCount > 0}
-                                        className={cn(
-                                            "h-10 rounded-lg font-bold uppercase tracking-widest text-xs transition-all shadow-lg",
-                                            session?.pendingDriverSettlementsCount > 0 ? "bg-slate-700 cursor-not-allowed opacity-50" : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/20"
-                                        )}
-                                    >
-                                        FINALIZAR TURNO
-                                    </Button>
-                                </div>
+                                
+                                <Button 
+                                    fullWidth 
+                                    onClick={() => setStep('REVIEW')} 
+                                    disabled={session?.pendingDriverSettlementsCount > 0}
+                                    className={cn(
+                                        "h-10 rounded-lg font-bold uppercase tracking-widest text-xs transition-all shadow-lg",
+                                        session?.pendingDriverSettlementsCount > 0 ? "bg-slate-700 cursor-not-allowed opacity-50" : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/20"
+                                    )}
+                                >
+                                    AVANÇAR PARA AUDITORIA <ArrowRight size={14} className="ml-2"/>
+                                </Button>
                             </div>
                         </Card>
                     </div>
@@ -487,20 +461,109 @@ const CashierManagement: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-
-                            <div className="px-5 py-3 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subtotal Acumulado</span>
-                                </div>
-                                <span className="text-sm font-bold text-slate-900 tracking-tight">R$ {(summary?.salesByMethod?.[selectedMethod] || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                            </div>
                         </Card>
                     </div>
                 </div>
+            ) : (
+                /* REVIEW STEP - AUDITORIA E COFRE */
+                <div className="max-w-2xl mx-auto space-y-6">
+                    <Card className="p-0 border-slate-200 shadow-xl bg-white overflow-hidden">
+                        <header className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-slate-900">Auditoria e Fechamento</h3>
+                            <Button variant="ghost" size="sm" onClick={() => setStep('COUNT')}>Voltar</Button>
+                        </header>
+                        
+                        <div className="p-6 space-y-6">
+                            {/* 1. Diferenças */}
+                            <div className="space-y-3">
+                                <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">Conferência de Quebra</h4>
+                                <div className="space-y-2">
+                                    {paymentMethods.map(m => {
+                                        const informed = parseFloat(closingValues[m.id] || '0');
+                                        const expected = getExpectedValue(m.id);
+                                        const diff = informed - expected;
+                                        
+                                        if (Math.abs(diff) < 0.01 && informed === 0) return null; // Skip empty
+
+                                        return (
+                                            <div key={m.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                                <div className="flex items-center gap-2">
+                                                    <m.icon size={16} className="text-slate-400"/>
+                                                    <span className="text-sm font-bold text-slate-700">{m.label}</span>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-right">
+                                                        <span className="block text-[10px] text-slate-400 uppercase">Informado</span>
+                                                        <span className="font-bold text-slate-900">R$ {informed.toFixed(2)}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="block text-[10px] text-slate-400 uppercase">Sistema</span>
+                                                        <span className="font-bold text-slate-500">R$ {expected.toFixed(2)}</span>
+                                                    </div>
+                                                    <div className={cn("px-2 py-1 rounded text-xs font-bold w-24 text-center", diff < 0 ? "bg-rose-100 text-rose-700" : diff > 0 ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700")}>
+                                                        {Math.abs(diff) < 0.01 ? "OK" : `${diff > 0 ? '+' : ''}${diff.toFixed(2)}`}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 2. Destino do Dinheiro */}
+                            <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl space-y-4">
+                                <h4 className="text-xs font-bold uppercase text-blue-700 tracking-wider flex items-center gap-2">
+                                    <ShieldCheck size={14}/> Gestão do Numerário
+                                </h4>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Dinheiro em Mãos</label>
+                                        <div className="text-xl font-bold text-slate-900 mt-1">R$ {cashInHand.toFixed(2)}</div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Fundo de Troco (Amanhã)</label>
+                                        <div className="relative mt-1">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">R$</span>
+                                            <input 
+                                                type="number" 
+                                                className="w-full h-10 pl-8 pr-3 border border-slate-300 rounded-lg font-bold text-slate-900 focus:border-blue-500 outline-none"
+                                                value={cashLeftover}
+                                                onChange={e => setCashLeftover(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-blue-200 mt-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-bold text-blue-800">Transferir para Cofre (Automático)</span>
+                                        <span className="text-xl font-bold text-blue-800">R$ {safeDeposit.toFixed(2)}</span>
+                                    </div>
+                                    <p className="text-[10px] text-blue-600 mt-1">Este valor será lançado como saída do caixa e entrada no cofre.</p>
+                                </div>
+                            </div>
+
+                            {/* 3. Observações */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Observações Finais</label>
+                                <textarea 
+                                    className="w-full h-20 bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none resize-none"
+                                    placeholder="Justificativa de quebra ou observações gerais..."
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                />
+                            </div>
+
+                            <Button fullWidth size="lg" onClick={handleClose} className="h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase tracking-wider text-sm shadow-xl shadow-emerald-100">
+                                <CheckCircle size={20} className="mr-2"/> CONFIRMAR FECHAMENTO E IMPRIMIR
+                            </Button>
+                        </div>
+                    </Card>
+                </div>
             )}
 
-            {/* MODAL SANGREIA / REFORÇO - REDESIGN PARA DENSIDADE */}
+            {/* MODAL SANGREIA / REFORÇO */}
             <AnimatePresence>
                 {showTransactionModal !== 'none' && (
                     <div className="ui-modal-overlay">
@@ -538,6 +601,14 @@ const CashierManagement: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Money Counter Modal */}
+            <MoneyCounter 
+                isOpen={showMoneyCounter} 
+                onClose={() => setShowMoneyCounter(false)} 
+                onConfirm={handleMoneyCountConfirm}
+                initialDetails={moneyCountDetails}
+            />
         </div>
     );
 };

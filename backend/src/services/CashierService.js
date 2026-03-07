@@ -93,67 +93,136 @@ class CashierService {
   }
 
   /**
-   * Fecha a sessão atual.
+   * Fecha a sessão atual com lógica ERP (Snapshot, Cofre, Auditoria).
    */
-  async closeSession(restaurantId, { finalAmount, notes, closingDetails }) {
+  async closeSession(restaurantId, { finalAmount, notes, closingDetails, cashLeftover, moneyCountJson }) {
     const session = await prisma.cashierSession.findFirst({
       where: { restaurantId, status: 'OPEN' }
     });
 
     if (!session) throw new AppError("Nenhum caixa aberto encontrado.", 404);
 
-    // --- BLOQUEIOS DE SEGURANÇA (ESTRITO ERP) ---
-    console.log(`[CASHIER_CLOSE_DEBUG] Iniciando verificações para restaurante: ${restaurantId}`);
-
-    // 1. Verificar Pedidos em Aberto (Cozinha/Produção/Entrega em curso)
+    // --- 1. BLOQUEIOS DE SEGURANÇA (ESTRITO ERP) ---
     const activeOrders = await prisma.order.count({
-        where: {
-            restaurantId,
-            status: { in: ['BUILDING', 'PENDING', 'PREPARING', 'READY', 'SHIPPED'] }
-        }
+        where: { restaurantId, status: { in: ['BUILDING', 'PENDING', 'PREPARING', 'READY', 'SHIPPED'] } }
     });
-    console.log(`[CASHIER_CLOSE_DEBUG] Pedidos Ativos: ${activeOrders}`);
+    if (activeOrders > 0) throw new AppError(`Existem ${activeOrders} pedidos ativos. Finalize-os antes de fechar.`, 400);
 
-    if (activeOrders > 0) {
-        throw new AppError(`Não é possível fechar o caixa: Existem ${activeOrders} pedidos ainda em produção ou em trânsito.`, 400);
-    }
-
-    // 2. Verificar Acertos de Motoboy Pendentes (Pedidos entregues mas não liquidados)
     const pendingDrivers = await prisma.deliveryOrder.count({
-        where: {
-            order: { restaurantId, isSettled: false },
-            status: 'DELIVERED'
-        }
+        where: { order: { restaurantId, isSettled: false }, status: 'DELIVERED' }
     });
-    console.log(`[CASHIER_CLOSE_DEBUG] Acertos Motoboy Pendentes: ${pendingDrivers}`);
+    if (pendingDrivers > 0) throw new AppError(`Existem ${pendingDrivers} acertos de motoboy pendentes.`, 400);
 
-    if (pendingDrivers > 0) {
-        throw new AppError(`Não é possível fechar o caixa: Existem ${pendingDrivers} acertos de motoboy pendentes.`, 400);
-    }
-
-    // 3. Verificar Mesas Abertas (Pedidos de mesa não finalizados)
     const openTables = await prisma.order.count({
-        where: {
-            restaurantId,
-            orderType: 'TABLE',
-            status: { notIn: ['COMPLETED', 'CANCELED'] }
+        where: { restaurantId, orderType: 'TABLE', status: { notIn: ['COMPLETED', 'CANCELED'] } }
+    });
+    if (openTables > 0) throw new AppError(`Existem ${openTables} mesas abertas.`, 400);
+
+
+    // --- 2. CÁLCULO DO SNAPSHOT (O que o sistema esperava) ---
+    // Recalcula tudo do zero para garantir integridade (Audit Trail)
+    const transactions = await prisma.financialTransaction.findMany({
+        where: { cashierId: session.id, status: 'PAID' }
+    });
+
+    // Totais do Sistema
+    let systemTotal = session.initialAmount;
+    let systemCash = session.initialAmount;
+
+    transactions.forEach(t => {
+        if (t.type === 'INCOME') {
+            systemTotal += t.amount;
+            if (t.paymentMethod === 'cash') systemCash += t.amount;
+        } else {
+            systemTotal -= t.amount;
+            if (t.paymentMethod === 'cash') systemCash -= t.amount;
         }
     });
-    console.log(`[CASHIER_CLOSE_DEBUG] Mesas Abertas: ${openTables}`);
 
-    if (openTables > 0) {
-        throw new AppError(`Não é possível fechar o caixa: Existem ${openTables} mesas ainda abertas.`, 400);
+    const expectedAmount = systemTotal; // Valor total esperado (soma de todos os métodos)
+    const difference = (parseFloat(finalAmount) || 0) - expectedAmount;
+
+    // --- 3. LÓGICA DE TRANSFERÊNCIA PARA O COFRE (SAFE DROP) ---
+    const informedCash = parseFloat(closingDetails?.cash || closingDetails?.dinheiro || 0);
+    const nextShiftFloat = parseFloat(cashLeftover || 0);
+    
+    // O que vai para o cofre = (Dinheiro Informado) - (Fundo de Troco Próximo Turno)
+    // Se o operador informou menos dinheiro do que o fundo, não tem o que mandar pro cofre.
+    let safeDepositAmount = 0;
+    
+    if (informedCash > nextShiftFloat) {
+        safeDepositAmount = informedCash - nextShiftFloat;
     }
 
-    return await prisma.cashierSession.update({
-      where: { id: session.id },
-      data: {
-        status: 'CLOSED',
-        closedAt: new Date(),
-        finalAmount: parseFloat(finalAmount) || 0,
-        notes: notes || '',
-        closingDetails: closingDetails || {}
-      }
+    // Executa tudo numa transação atômica
+    return await prisma.$transaction(async (tx) => {
+        // A. Se houver sangria para cofre, cria as transações
+        if (safeDepositAmount > 0) {
+            // Busca ou cria a conta Cofre
+            let safeAccount = await tx.bankAccount.findFirst({
+                where: { restaurantId, name: 'Cofre Loja' }
+            });
+
+            if (!safeAccount) {
+                safeAccount = await tx.bankAccount.create({
+                    data: { restaurantId, name: 'Cofre Loja', type: 'SAFE', balance: 0 }
+                });
+            }
+
+            // 1. Sai do Caixa
+            await tx.financialTransaction.create({
+                data: {
+                    restaurantId,
+                    cashierId: session.id, // Vincula a esta sessão que está fechando
+                    description: `[FECHAMENTO] Sangria automática para Cofre`,
+                    amount: safeDepositAmount,
+                    type: 'EXPENSE',
+                    status: 'PAID',
+                    paymentMethod: 'cash',
+                    dueDate: new Date(),
+                    paymentDate: new Date(),
+                }
+            });
+
+            // 2. Entra no Cofre
+            await tx.financialTransaction.create({
+                data: {
+                    restaurantId,
+                    bankAccountId: safeAccount.id,
+                    description: `[FECHAMENTO] Entrada do Caixa (Sessão ${session.id.slice(-4)})`,
+                    amount: safeDepositAmount,
+                    type: 'INCOME',
+                    status: 'PAID',
+                    dueDate: new Date(),
+                    paymentDate: new Date(),
+                }
+            });
+
+            // Atualiza saldo do cofre
+            await tx.bankAccount.update({
+                where: { id: safeAccount.id },
+                data: { balance: { increment: safeDepositAmount } }
+            });
+        }
+
+        // B. Fecha o Caixa com os dados de Auditoria
+        return await tx.cashierSession.update({
+            where: { id: session.id },
+            data: {
+                status: 'CLOSED',
+                closedAt: new Date(),
+                finalAmount: parseFloat(finalAmount) || 0,
+                notes: notes || '',
+                closingDetails: closingDetails || {},
+                
+                // Novos Campos ERP
+                expectedAmount: expectedAmount,
+                difference: difference,
+                cashLeftover: nextShiftFloat,
+                safeEntryAmount: safeDepositAmount,
+                moneyCountJson: moneyCountJson || {}
+            }
+        });
     });
   }
 }

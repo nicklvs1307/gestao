@@ -430,10 +430,18 @@ model CashierSession {
   openedAt      DateTime  @default(now())
   closedAt      DateTime?
   initialAmount Float     // Fundo de caixa inicial
-  finalAmount   Float?    // Valor conferido no fechamento
+  finalAmount   Float?    // Valor conferido (informado pelo operador)
   status        String    @default("OPEN") // OPEN, CLOSED
   notes         String?
-  closingDetails Json?    // Novo: Conferência detalhada por forma de pagamento (JSON)
+  closingDetails Json?    // Resumo dos totais por método (JSON)
+  
+  // === NOVOS CAMPOS ERP (AUDITORIA & FECHAMENTO) ===
+  expectedAmount  Float?   // Snapshot: Valor que o sistema calculou no momento do fechamento
+  difference      Float?   // Calculado: finalAmount - expectedAmount
+  cashLeftover    Float?   // Fundo de Troco: Valor deixado para o próximo turno
+  safeEntryAmount Float?   // Sangria Automática: Valor enviado para o Cofre/Banco
+  closingProofUrl String?  // Foto do comprovante da maquininha (URL)
+  moneyCountJson  Json?    // Detalhe da contagem (Ex: { "50": 5, "20": 10 })
   
   // Quem abriu o caixa
   userId        String
