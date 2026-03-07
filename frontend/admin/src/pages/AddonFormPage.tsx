@@ -6,7 +6,8 @@ import { uploadProductImage } from '../services/api/products';
 import { 
     ArrowLeft, Plus, Trash2, Save, X, GripVertical, 
     Loader2, Settings, CheckCircle, Info, Copy, 
-    Image as ImageIcon, Upload, List, Hash, ChefHat
+    Image as ImageIcon, Upload, List, Hash, ChefHat,
+    ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -521,11 +522,10 @@ const AddonFormPage: React.FC = () => {
                             <div className="flex-1 grid grid-cols-12 gap-2">
                                 <div className="col-span-3 pl-2">Nome do Item</div>
                                 <div className="col-span-1 text-center">Venda</div>
-                                <div className="col-span-1 text-center">Custo</div>
                                 <div className="col-span-1 text-center">Promo</div>
-                                <div className="col-span-2 text-center">Vigência Promo</div>
-                                <div className="col-span-1 text-center">SKU</div>
-                                <div className="col-span-2 text-right pr-4">Ações / Descrição</div>
+                                <div className="col-span-5 pl-2">Descrição (Visível no Cardápio)</div>
+                                <div className="col-span-1 text-center">Foto</div>
+                                <div className="col-span-1 text-right pr-4">Ações</div>
                             </div>
                         </div>
                         <SortableContext items={formData.addons.map((_, i) => `addon-${i}`)} strategy={rectSortingStrategy}>
