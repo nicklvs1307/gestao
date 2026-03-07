@@ -433,6 +433,7 @@ model CashierSession {
   finalAmount   Float?    // Valor conferido no fechamento
   status        String    @default("OPEN") // OPEN, CLOSED
   notes         String?
+  closingDetails Json?    // Novo: Conferência detalhada por forma de pagamento (JSON)
   
   // Quem abriu o caixa
   userId        String

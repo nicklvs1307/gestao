@@ -7,6 +7,7 @@ const OpenCashierSchema = z.object({
 const CloseCashierSchema = z.object({
   finalAmount: z.number().min(0),
   notes: z.string().optional().nullable(),
+  closingDetails: z.record(z.string()).optional().nullable(),
 });
 
 const CashierTransactionSchema = z.object({

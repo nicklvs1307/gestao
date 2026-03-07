@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, ArrowRight, Plus, Banknote, Loader2 } from 'lucide-react';
+import { X, ArrowRight, Plus, Banknote, Loader2, CheckCircle, DollarSign } from 'lucide-react';
 import { cn } from '../lib/utils';
 import apiClient from '../services/api/client';
 import { toast } from 'sonner';
+import { Button } from './ui/Button';
 
 interface CashierActionModalProps {
     isOpen: boolean;
@@ -43,36 +44,36 @@ const CashierActionModal: React.FC<CashierActionModalProps> = ({ isOpen, onClose
 
     return (
         <div className="ui-modal-overlay">
-            <div className="ui-modal-content w-full max-w-md">
-                <div className="px-8 py-6 border-b bg-slate-50/50 flex justify-between items-center">
+            <div className="ui-modal-content w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+                <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div className="flex items-center gap-3">
                         <div className={cn(
-                            "p-2.5 rounded-xl text-white shadow-lg",
-                            type === 'INCOME' ? "bg-emerald-600 shadow-emerald-500/20" : "bg-rose-600 shadow-rose-500/20"
+                            "p-2 rounded-lg text-white shadow-sm",
+                            type === 'INCOME' ? "bg-emerald-600" : "bg-rose-600"
                         )}>
-                            {type === 'INCOME' ? <Plus size={20} /> : <ArrowRight size={20} className="rotate-180" />}
+                            {type === 'INCOME' ? <Plus size={18} /> : <ArrowRight size={18} className="rotate-180" />}
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">
-                                {type === 'INCOME' ? 'Reforço de Caixa' : 'Retirada (Sangria)'}
+                            <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight leading-none">
+                                {type === 'INCOME' ? 'Reforço de Caixa' : 'Sangria de Caixa'}
                             </h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Lançamento Avulso</p>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-1">Lançamento Avulso</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 text-slate-400 rounded-full transition-all"><X size={24} /></button>
-                </div>
+                    <button onClick={onClose} className="p-1.5 hover:bg-slate-200 text-slate-400 rounded-full transition-all outline-none"><X size={20} /></button>
+                </header>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Lançamento (R$)</label>
-                        <div className="relative group">
-                            <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={24} />
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Valor da Operação (R$)</label>
+                        <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-lg">R$</div>
                             <input 
                                 type="number" 
                                 step="0.01"
                                 required
                                 autoFocus
-                                className="w-full h-16 pl-14 pr-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-4xl text-slate-900 focus:border-primary focus:bg-white outline-none transition-all placeholder:text-slate-200"
+                                className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-lg font-bold text-xl text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-200"
                                 placeholder="0,00"
                                 value={amount} 
                                 onChange={e => setAmount(e.target.value)} 
@@ -80,28 +81,31 @@ const CashierActionModal: React.FC<CashierActionModalProps> = ({ isOpen, onClose
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-black text-slate-400 uppercase tracking-widest ml-1">Descrição / Motivo</label>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Descrição / Motivo</label>
                         <textarea 
                             required
-                            className="ui-input w-full h-24 py-3 resize-none text-base"
+                            className="w-full h-20 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-400 resize-none"
                             placeholder="Ex: Troco inicial, Pagamento de frete..."
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                         />
                     </div>
 
-                    <button 
-                        type="submit"
-                        disabled={isSaving}
-                        className={cn(
-                            "w-full h-14 text-white rounded-2xl font-black uppercase text-base tracking-widest shadow-xl transition-all flex items-center justify-center gap-2",
-                            type === 'INCOME' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" : "bg-rose-600 hover:bg-rose-700 shadow-rose-500/20"
-                        )}
-                    >
-                        {isSaving ? <Loader2 className="animate-spin" /> : <CheckCircle size={18} />}
-                        Confirmar Lançamento
-                    </button>
+                    <div className="pt-2">
+                        <Button 
+                            type="submit"
+                            fullWidth
+                            disabled={isSaving}
+                            className={cn(
+                                "h-11 rounded-lg font-bold uppercase tracking-widest text-xs shadow-lg transition-all",
+                                type === 'INCOME' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20" : "bg-rose-600 hover:bg-rose-700 shadow-rose-900/20"
+                            )}
+                        >
+                            {isSaving ? <Loader2 className="animate-spin" /> : <CheckCircle size={16} className="mr-2" />}
+                            CONFIRMAR LANÇAMENTO
+                        </Button>
+                    </div>
                 </form>
             </div>
         </div>

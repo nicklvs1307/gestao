@@ -140,23 +140,14 @@ class CashierService {
         throw new Error(`Não é possível fechar o caixa: Existem ${openTables} mesas ainda abertas.`);
     }
 
-    // Se houver detalhes, podemos salvar como JSON nas notas ou em um novo campo.
-    // Como não quero mudar o schema agora, vou concatenar nas notas de forma estruturada
-    let finalNotes = notes || '';
-    if (closingDetails) {
-        finalNotes += `\n\n[CONFERÊNCIA DETALHADA]:\n` + 
-            Object.entries(closingDetails)
-                .map(([method, value]) => `${method.toUpperCase()}: R$ ${parseFloat(value || 0).toFixed(2)}`)
-                .join('\n');
-    }
-
     return await prisma.cashierSession.update({
       where: { id: session.id },
       data: {
         status: 'CLOSED',
         closedAt: new Date(),
         finalAmount: parseFloat(finalAmount) || 0,
-        notes: finalNotes
+        notes: notes || '',
+        closingDetails: closingDetails || {}
       }
     });
   }
