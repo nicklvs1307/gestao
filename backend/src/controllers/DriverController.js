@@ -102,30 +102,46 @@ class DriverController {
     const driverId = req.user.id;
 
     try {
-      const orders = await prisma.order.findMany({
+      // 1. Buscar Meus Pedidos (Já vinculados a mim e não finalizados)
+      const myOrders = await prisma.order.findMany({
         where: {
           restaurantId,
           orderType: 'DELIVERY',
-          OR: [
-            { status: 'READY' }, // Prontos na cozinha esperando motoboy
-            { 
-              status: { in: ['SHIPPED', 'READY'] }, 
-              deliveryOrder: { driverId: driverId } // Meus pedidos atuais
-            }
-          ]
+          status: { in: ['READY', 'SHIPPED'] },
+          deliveryOrder: { 
+            driverId: driverId,
+            deliveryType: 'delivery' // Filtra apenas entregas reais
+          }
         },
         include: {
-          deliveryOrder: {
-            include: { customer: true }
-          },
-          items: {
-            include: { product: true }
-          }
+          deliveryOrder: { include: { customer: true } },
+          items: { include: { product: true } }
         },
         orderBy: { createdAt: 'asc' }
       });
 
-      res.json(orders);
+      // 2. Buscar Pedidos Disponíveis (Prontos e sem motoboy vinculado)
+      const availableOrders = await prisma.order.findMany({
+        where: {
+          restaurantId,
+          orderType: 'DELIVERY',
+          status: 'READY',
+          deliveryOrder: { 
+            driverId: null, // Sem dono
+            deliveryType: 'delivery' // Filtra apenas entregas reais
+          }
+        },
+        include: {
+          deliveryOrder: { include: { customer: true } },
+          items: { include: { product: true } }
+        },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      res.json({
+          myOrders,
+          availableOrders
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Erro ao buscar pedidos para o entregador.' });
