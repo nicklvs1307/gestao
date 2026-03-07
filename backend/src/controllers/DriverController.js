@@ -7,9 +7,51 @@ class DriverController {
     this.updateOrderStatus = this.updateOrderStatus.bind(this);
     this.getHistory = this.getHistory.bind(this); // Novo
     this.updatePaymentMethod = this.updatePaymentMethod.bind(this); // Novo
+    this.geocode = this.geocode.bind(this); // Novo: Geolocalização centralizada
+    this.getRoute = this.getRoute.bind(this); // Novo: Roteirização centralizada
   }
 
-  // ... (getAvailableOrders mantida igual)
+  // POST /driver/geocode
+  async geocode(req, res) {
+      const { address } = req.body;
+      const GeocodingService = require('../services/GeocodingService');
+      const coords = await GeocodingService.getCoordinates(address);
+      if (!coords) return res.status(404).json({ error: 'Endereço não localizado.' });
+      res.json(coords);
+  }
+
+  // POST /driver/route
+  async getRoute(req, res) {
+      const { start, end } = req.body; // [lat, lng]
+      const axios = require('axios');
+      const apiKey = process.env.VITE_OPENROUTE_KEY || process.env.OPENROUTE_KEY;
+      
+      try {
+          // Tentar ORS
+          if (apiKey) {
+              const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}`;
+              const response = await axios.get(url);
+              if (response.data.features?.length > 0) {
+                  const coords = response.data.features[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                  return res.json({ route: coords });
+              }
+          }
+          
+          // Fallback OSRM
+          const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+          const response = await axios.get(osrmUrl);
+          if (response.data.routes?.length > 0) {
+              const coords = response.data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+              return res.json({ route: coords });
+          }
+          
+          res.status(404).json({ error: 'Rota não encontrada.' });
+      } catch (e) {
+          res.status(500).json({ error: 'Erro ao calcular rota.' });
+      }
+  }
+
+  // ... (restante dos métodos)
 
   // Histórico de entregas do motoboy (Apenas as concluídas por ele hoje)
   async getHistory(req, res) {

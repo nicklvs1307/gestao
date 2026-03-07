@@ -9,4 +9,8 @@ router.get('/history', needsAuth, checkPermission('delivery:manage'), DriverCont
 router.patch('/orders/:orderId/status', needsAuth, checkPermission('delivery:manage'), DriverController.updateOrderStatus);
 router.patch('/orders/:orderId/payment-method', needsAuth, checkPermission('delivery:manage'), DriverController.updatePaymentMethod);
 
+// Novas: Mapas centralizados no backend
+router.post('/geocode', needsAuth, checkPermission('delivery:manage'), DriverController.geocode);
+router.post('/route', needsAuth, checkPermission('delivery:manage'), DriverController.getRoute);
+
 module.exports = router;
