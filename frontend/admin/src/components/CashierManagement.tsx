@@ -142,9 +142,24 @@ const CashierManagement: React.FC = () => {
             setClosingValues({ cash: '', pix: '', credit_card: '', debit_card: '', other: '' });
             fetchData();
         } catch (error: any) { 
-            const msg = error.response?.data?.message || 'Erro ao fechar o caixa.';
-            toast.error(msg);
-            console.error('[CASHIER_FRONTEND_ERROR]:', error);
+            console.error('[CASHIER_FRONTEND_ERROR_DETAILED]:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+
+            const serverMsg = error.response?.data?.message;
+            const status = error.response?.status;
+            
+            if (serverMsg) {
+                toast.error(serverMsg);
+            } else if (status === 404) {
+                toast.error("Serviço de caixa não encontrado (404).");
+            } else if (status === 500) {
+                toast.error("Erro interno no servidor (500). Verifique os logs.");
+            } else {
+                toast.error(`Falha na comunicação: ${error.message}`);
+            }
         }
     };
 

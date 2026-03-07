@@ -13,22 +13,14 @@ class CashierController {
 
   // POST /api/cashier/open
   open = asyncHandler(async (req, res) => {
-    const validatedData = OpenCashierSchema.parse(req.body);
-    const session = await CashierService.openSession(req.restaurantId, req.user.id, validatedData.initialAmount);
+    const session = await CashierService.openSession(req.restaurantId, req.user.id, req.body.initialAmount);
     res.status(201).json(session);
   });
 
   // POST /api/cashier/close
   close = asyncHandler(async (req, res) => {
-    console.log('[CASHIER_CONTROLLER] Recebendo pedido de fechamento:', req.body);
-    try {
-        const validatedData = CloseCashierSchema.parse(req.body);
-        const session = await CashierService.closeSession(req.restaurantId, validatedData);
-        res.json(session);
-    } catch (error) {
-        console.error('[CASHIER_CONTROLLER] Erro no fechamento:', error);
-        throw error; // Repassa para o errorHandler, mas agora logamos no console do servidor
-    }
+    const session = await CashierService.closeSession(req.restaurantId, req.body);
+    res.json(session);
   });
 
   // GET /api/cashier/summary
