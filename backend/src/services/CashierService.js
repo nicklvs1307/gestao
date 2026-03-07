@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const AppError = require('../utils/AppError');
 
 class CashierService {
   /**
@@ -99,7 +100,7 @@ class CashierService {
       where: { restaurantId, status: 'OPEN' }
     });
 
-    if (!session) throw new Error("Nenhum caixa aberto encontrado.");
+    if (!session) throw new AppError("Nenhum caixa aberto encontrado.", 404);
 
     // --- BLOQUEIOS DE SEGURANÇA (ESTRITO ERP) ---
 
@@ -112,7 +113,7 @@ class CashierService {
     });
 
     if (activeOrders > 0) {
-        throw new Error(`Não é possível fechar o caixa: Existem ${activeOrders} pedidos ainda em produção ou em trânsito.`);
+        throw new AppError(`Não é possível fechar o caixa: Existem ${activeOrders} pedidos ainda em produção ou em trânsito.`, 400);
     }
 
     // 2. Verificar Acertos de Motoboy Pendentes (Pedidos entregues mas não liquidados)
@@ -124,7 +125,7 @@ class CashierService {
     });
 
     if (pendingDrivers > 0) {
-        throw new Error(`Não é possível fechar o caixa: Existem ${pendingDrivers} acertos de motoboy pendentes.`);
+        throw new AppError(`Não é possível fechar o caixa: Existem ${pendingDrivers} acertos de motoboy pendentes.`, 400);
     }
 
     // 3. Verificar Mesas Abertas (Pedidos de mesa não finalizados)
@@ -137,7 +138,7 @@ class CashierService {
     });
 
     if (openTables > 0) {
-        throw new Error(`Não é possível fechar o caixa: Existem ${openTables} mesas ainda abertas.`);
+        throw new AppError(`Não é possível fechar o caixa: Existem ${openTables} mesas ainda abertas.`, 400);
     }
 
     return await prisma.cashierSession.update({
