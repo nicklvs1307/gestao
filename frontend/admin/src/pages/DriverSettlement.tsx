@@ -3,7 +3,7 @@ import { api, payDriverSettlement } from '../services/api';
 import { 
   Truck, DollarSign, CreditCard, Building2, 
   Calendar, RefreshCw, User, Package, Wallet, CheckCircle, 
-  Clock, ArrowRightLeft, FileDown, Printer, Filter
+  Clock, ArrowRightLeft, FileDown, Printer, Filter, TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
