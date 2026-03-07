@@ -103,6 +103,7 @@ class CashierService {
     if (!session) throw new AppError("Nenhum caixa aberto encontrado.", 404);
 
     // --- BLOQUEIOS DE SEGURANÇA (ESTRITO ERP) ---
+    console.log(`[CASHIER_CLOSE_DEBUG] Iniciando verificações para restaurante: ${restaurantId}`);
 
     // 1. Verificar Pedidos em Aberto (Cozinha/Produção/Entrega em curso)
     const activeOrders = await prisma.order.count({
@@ -111,6 +112,7 @@ class CashierService {
             status: { in: ['BUILDING', 'PENDING', 'PREPARING', 'READY', 'SHIPPED'] }
         }
     });
+    console.log(`[CASHIER_CLOSE_DEBUG] Pedidos Ativos: ${activeOrders}`);
 
     if (activeOrders > 0) {
         throw new AppError(`Não é possível fechar o caixa: Existem ${activeOrders} pedidos ainda em produção ou em trânsito.`, 400);
@@ -123,6 +125,7 @@ class CashierService {
             status: 'DELIVERED'
         }
     });
+    console.log(`[CASHIER_CLOSE_DEBUG] Acertos Motoboy Pendentes: ${pendingDrivers}`);
 
     if (pendingDrivers > 0) {
         throw new AppError(`Não é possível fechar o caixa: Existem ${pendingDrivers} acertos de motoboy pendentes.`, 400);
@@ -136,6 +139,7 @@ class CashierService {
             status: { notIn: ['COMPLETED', 'CANCELED'] }
         }
     });
+    console.log(`[CASHIER_CLOSE_DEBUG] Mesas Abertas: ${openTables}`);
 
     if (openTables > 0) {
         throw new AppError(`Não é possível fechar o caixa: Existem ${openTables} mesas ainda abertas.`, 400);

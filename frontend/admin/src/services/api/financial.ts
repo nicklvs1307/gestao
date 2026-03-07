@@ -60,8 +60,8 @@ export const openCashier = async (initialAmount: number) => {
     return response.data;
 };
 
-export const closeCashier = async (finalAmount: number, notes?: string) => {
-    const response = await apiClient.post('/cashier/close', { finalAmount, notes });
+export const closeCashier = async (finalAmount: number, notes?: string, closingDetails?: Record<string, string>) => {
+    const response = await apiClient.post('/cashier/close', { finalAmount, notes, closingDetails });
     return response.data;
 };
 
