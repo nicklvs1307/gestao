@@ -372,7 +372,7 @@ const DriverDashboard: React.FC = () => {
                                         </div>
                                     </div>
                                     <span className="text-sm font-black italic tracking-tighter text-emerald-400">R$ {order.total.toFixed(2)}</span>
-                                </tr>
+                                </div>
                             ))}
                         </div>
                     </div>
