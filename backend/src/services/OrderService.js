@@ -753,12 +753,25 @@ class OrderService {
     });
   }
 
-  async getDriverSettlement(restaurantId, date) {
+  async getDriverSettlement(restaurantId, date, startTime, endTime) {
     const queryDate = date ? new Date(date) : new Date();
+    
+    // Configura o início e fim baseado na data E nos horários fornecidos (ou 00:00 e 23:59)
     const start = new Date(queryDate);
-    start.setHours(0, 0, 0, 0);
+    if (startTime) {
+        const [h, m] = startTime.split(':');
+        start.setHours(parseInt(h), parseInt(m), 0, 0);
+    } else {
+        start.setHours(0, 0, 0, 0);
+    }
+
     const end = new Date(queryDate);
-    end.setHours(23, 59, 59, 999);
+    if (endTime) {
+        const [h, m] = endTime.split(':');
+        end.setHours(parseInt(h), parseInt(m), 59, 999);
+    } else {
+        end.setHours(23, 59, 59, 999);
+    }
 
     const drivers = await prisma.user.findMany({
         where: { 
@@ -773,6 +786,7 @@ class OrderService {
             deliveries: {
                 where: {
                     status: 'DELIVERED',
+                    order: { isSettled: false }, // APENAS pedidos não acertados
                     updatedAt: { gte: start, lte: end }
                 },
                 include: { 
@@ -839,35 +853,107 @@ class OrderService {
   }
 
   async payDriverSettlement(restaurantId, driverName, amount, date, driverId = null) {
-      // Busca ou cria a categoria para pagamento de entregadores
-      let category = await prisma.transactionCategory.findFirst({
-          where: { restaurantId, name: 'Pagamento de Entregador' }
+      // 1. Buscar caixa aberto para o restaurante
+      const activeCashier = await prisma.cashierSession.findFirst({
+          where: { restaurantId, status: 'OPEN' }
       });
 
-      if (!category) {
-          category = await prisma.transactionCategory.create({
-              data: {
-                  name: 'Pagamento de Entregador',
-                  type: 'EXPENSE',
-                  isSystem: true,
-                  restaurantId
-              }
-          });
+      if (!activeCashier) {
+          throw new Error("Não é possível realizar acerto: Não há caixa aberto.");
       }
 
-      return await prisma.financialTransaction.create({
-          data: {
-              restaurantId,
-              description: `FECHAMENTO MOTOBOY: ${driverName}`,
-              amount,
-              type: 'EXPENSE',
-              status: 'PAID',
-              dueDate: new Date(),
-              paymentDate: new Date(),
-              paymentMethod: 'cash',
-              recipientUserId: driverId,
-              categoryId: category.id
+      // 2. Buscar pedidos do entregador que ainda não foram acertados
+      const queryDate = date ? new Date(date) : new Date();
+      const start = new Date(queryDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(queryDate);
+      end.setHours(23, 59, 59, 999);
+
+      const deliveries = await prisma.deliveryOrder.findMany({
+          where: {
+              driverId: driverId,
+              status: 'DELIVERED',
+              order: { restaurantId, isSettled: false },
+              updatedAt: { gte: start, lte: end }
+          },
+          include: { order: true }
+      });
+
+      if (deliveries.length === 0) {
+          throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
+      }
+
+      // Cálculo de quanto o entregador coletou em dinheiro (Cash Income)
+      const cashCollected = deliveries.reduce((acc, del) => {
+          const method = del.paymentMethod?.toLowerCase() || '';
+          if (method.includes('dinheiro') || method.includes('cash')) {
+              return acc + (del.order?.total || 0);
           }
+          return acc;
+      }, 0);
+
+      // 3. Executar Transação Atômica
+      return await prisma.$transaction(async (tx) => {
+          // A. Marcar pedidos como acertados
+          const orderIds = deliveries.map(d => d.orderId);
+          await tx.order.updateMany({
+              where: { id: { in: orderIds } },
+              data: { isSettled: true, settledAt: new Date() }
+          });
+
+          // B. Buscar/Criar categorias de transação
+          let feeCategory = await tx.transactionCategory.findFirst({
+              where: { restaurantId, name: 'Pagamento de Entregador' }
+          });
+          if (!feeCategory) {
+              feeCategory = await tx.transactionCategory.create({
+                  data: { name: 'Pagamento de Entregador', type: 'EXPENSE', isSystem: true, restaurantId }
+              });
+          }
+
+          let salesCategory = await tx.transactionCategory.findFirst({
+              where: { restaurantId, name: 'Venda de Delivery' }
+          });
+          if (!salesCategory) {
+              salesCategory = await tx.transactionCategory.create({
+                  data: { name: 'Venda de Delivery', type: 'INCOME', isSystem: true, restaurantId }
+              });
+          }
+
+          // C. Registrar ENTRADA do dinheiro que o motoboy trouxe (se houver)
+          if (cashCollected > 0) {
+              await tx.financialTransaction.create({
+                  data: {
+                      restaurantId,
+                      cashierId: activeCashier.id,
+                      description: `ENTRADA ACERTO [MOTOBOY: ${driverName}]: Dinheiro coletado em entregas`,
+                      amount: cashCollected,
+                      type: 'INCOME',
+                      status: 'PAID',
+                      paymentMethod: 'cash',
+                      categoryId: salesCategory.id,
+                      dueDate: new Date(),
+                      paymentDate: new Date()
+                  }
+              });
+          }
+
+          // D. Registrar SAÍDA do pagamento do motoboy (Taxas/Comissões)
+          return await tx.financialTransaction.create({
+              data: {
+                  restaurantId,
+                  cashierId: activeCashier.id,
+                  description: `PAGAMENTO ACERTO [MOTOBOY: ${driverName}]: Taxas de entrega/Comissões`,
+                  amount,
+                  type: 'EXPENSE',
+                  status: 'PAID',
+                  paymentMethod: 'cash',
+                  recipientUserId: driverId,
+                  categoryId: feeCategory.id,
+                  dueDate: new Date(),
+                  paymentDate: new Date()
+              }
+          });
       });
   }
 

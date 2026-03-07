@@ -791,6 +791,9 @@ model Order {
   updatedAt    DateTime    @updatedAt
   saiposOrderId String?
 
+  isSettled    Boolean     @default(false) // Novo: Controle de acerto financeiro (Motoboy/Garçom)
+  settledAt    DateTime?
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 

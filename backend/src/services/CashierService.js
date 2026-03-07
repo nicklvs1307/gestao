@@ -50,11 +50,12 @@ class CashierService {
 
     const pendingDriverSettlements = await prisma.deliveryOrder.findMany({
         where: {
-            order: { restaurantId, createdAt: { gte: today, lte: endOfDay } },
+            order: { 
+              restaurantId, 
+              isSettled: false // FILTRO CORRETO AGORA
+            },
             status: 'DELIVERED'
-            // Assumindo que o acerto cria uma FinancialTransaction, poderíamos filtrar aqui
-        },
-        include: { order: true }
+        }
     });
 
     return {
@@ -99,6 +100,45 @@ class CashierService {
     });
 
     if (!session) throw new Error("Nenhum caixa aberto encontrado.");
+
+    // --- BLOQUEIOS DE SEGURANÇA (ESTRITO ERP) ---
+
+    // 1. Verificar Pedidos em Aberto (Cozinha/Produção/Entrega em curso)
+    const activeOrders = await prisma.order.count({
+        where: {
+            restaurantId,
+            status: { in: ['BUILDING', 'PENDING', 'PREPARING', 'READY', 'SHIPPED'] }
+        }
+    });
+
+    if (activeOrders > 0) {
+        throw new Error(`Não é possível fechar o caixa: Existem ${activeOrders} pedidos ainda em produção ou em trânsito.`);
+    }
+
+    // 2. Verificar Acertos de Motoboy Pendentes (Pedidos entregues mas não liquidados)
+    const pendingDrivers = await prisma.deliveryOrder.count({
+        where: {
+            order: { restaurantId, isSettled: false },
+            status: 'DELIVERED'
+        }
+    });
+
+    if (pendingDrivers > 0) {
+        throw new Error(`Não é possível fechar o caixa: Existem ${pendingDrivers} acertos de motoboy pendentes.`);
+    }
+
+    // 3. Verificar Mesas Abertas (Pedidos de mesa não finalizados)
+    const openTables = await prisma.order.count({
+        where: {
+            restaurantId,
+            orderType: 'TABLE',
+            status: { notIn: ['COMPLETED', 'CANCELED'] }
+        }
+    });
+
+    if (openTables > 0) {
+        throw new Error(`Não é possível fechar o caixa: Existem ${openTables} mesas ainda abertas.`);
+    }
 
     // Se houver detalhes, podemos salvar como JSON nas notas ou em um novo campo.
     // Como não quero mudar o schema agora, vou concatenar nas notas de forma estruturada

@@ -160,15 +160,15 @@ class OrderController {
 
   // GET /api/admin/orders/drivers/settlement
   getDriverSettlement = asyncHandler(async (req, res) => {
-    const { date } = req.query;
+    const { date, startTime, endTime } = req.query;
     const restaurantId = req.restaurantId || req.user?.restaurantId; 
-    
+
     if (!restaurantId) {
         res.status(403);
         throw new Error('Restaurante não identificado.');
     }
 
-    const settlement = await OrderService.getDriverSettlement(restaurantId, date);
+    const settlement = await OrderService.getDriverSettlement(restaurantId, date, startTime, endTime);
     res.json(settlement);
   });
 
