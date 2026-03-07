@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getActivePromotions, getProducts } from '../services/api';
 import type { Promotion, Product } from '../types';
-import { Star, Flame, Award } from 'lucide-react';
+import { Star, Flame, Award, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface BannerProps {
@@ -81,12 +81,18 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
           : product.price;
 
         let title = 'Destaque da Casa';
+        let discountBadge = null;
         let priceElement = (
              <div className="flex flex-col items-end">
                 {hasSizes && <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 leading-none drop-shadow-md">A partir de</span>}
-                <span className="text-2xl font-black italic tracking-tighter drop-shadow-lg">
-                    R$ {basePrice.toFixed(2).replace('.', ',')}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black italic tracking-tighter drop-shadow-lg text-white">
+                        R$ {basePrice.toFixed(2).replace('.', ',')}
+                    </span>
+                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-xl border border-white/30 group-hover:bg-primary group-hover:border-primary transition-all duration-300">
+                        <ChevronRight size={20} className="text-white" />
+                    </div>
+                </div>
              </div>
         );
 
@@ -94,11 +100,34 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
           const promo = item.data;
           const discountedPrice = calculateDiscountedPrice(basePrice, promo);
           title = promo.name;
+          
+          let discountText = '';
+          if (promo.discountType === 'percentage') {
+            discountText = `${promo.discountValue}% OFF`;
+          } else {
+            const savings = basePrice - discountedPrice;
+            discountText = `R$ ${savings.toFixed(0)} OFF`;
+          }
+
+          discountBadge = (
+            <div className="absolute top-6 left-6 z-30 animate-bounce">
+                <div className="bg-red-600 text-white px-4 py-2 rounded-2xl font-black italic text-sm shadow-2xl border-2 border-white/20 flex flex-col items-center justify-center leading-none">
+                    <span className="text-[10px] uppercase tracking-tighter mb-1 opacity-80">Economize</span>
+                    {discountText}
+                </div>
+            </div>
+          );
+
           priceElement = (
             <div className="flex flex-col items-end">
               {hasSizes && <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 leading-none drop-shadow-md">A partir de</span>}
-              <span className="text-[12px] line-through opacity-60 font-bold drop-shadow-md">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
-              <span className="text-3xl font-black italic text-white tracking-tighter drop-shadow-2xl">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
+              <div className="flex flex-col items-end -space-y-1 mb-2">
+                <span className="text-[12px] line-through opacity-60 font-bold drop-shadow-md text-white">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
+                <span className="text-4xl font-black italic text-white tracking-tighter drop-shadow-2xl">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
+              </div>
+              <div className="bg-white text-slate-900 px-6 py-2.5 rounded-2xl font-black italic text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 shadow-xl active:scale-95">
+                  Pedir Agora <ChevronRight size={14} strokeWidth={4} />
+              </div>
             </div>
           );
         }
@@ -112,6 +141,7 @@ const Banner: React.FC<BannerProps> = ({ onProductClick, restaurantId }) => {
             )}
             onClick={() => onProductClick(product)}
           >
+            {discountBadge}
             {/* Imagem de Fundo com Zoom Lento e Opacidade Realista */}
             <div 
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-[10000ms] ease-linear"

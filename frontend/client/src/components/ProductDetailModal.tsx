@@ -190,11 +190,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
     return (
     <motion.div layout initial={false} animate={{ height: isSelected ? 'auto' : '9.5rem' }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="w-full">
-        <Card onClick={onToggle} noPadding className={cn("flex h-full overflow-hidden relative border-2 active:scale-[0.98] transition-all", isSelected ? "border-primary bg-white shadow-xl shadow-primary/10" : "border-slate-100 bg-white hover:border-slate-200")}>
+        <Card onClick={onToggle} noPadding className={cn("flex h-full overflow-hidden relative border-2 active:scale-[0.98] transition-all", isSelected ? "border-primary bg-white shadow-xl shadow-primary/10" : "border-slate-100 bg-white hover:border-slate-200", activePromo && "promo-glowing-border")}>
           <AnimatePresence>
             {isSelected && (
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-2 right-2 z-20 bg-primary text-white px-2 py-1 rounded-lg shadow-lg border-2 border-white text-[10px] font-black italic">
                 {fractionText || <Check size={12} strokeWidth={4} />}
+              </motion.div>
+            )}
+            {activePromo && (
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="absolute top-2 left-2 z-20 bg-emerald-500 text-white px-2 py-0.5 rounded-md shadow-lg text-[8px] font-black uppercase tracking-tighter italic animate-pulse">
+                Oferta
               </motion.div>
             )}
           </AnimatePresence>
@@ -209,7 +214,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             </div>
             <div className="flex justify-between items-end mt-2">
                 <div className="flex flex-col">
-                    <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-1">Preço Unitário</span>
+                    <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-1">Por apenas</span>
                     <div className="flex flex-col items-start gap-0">
                         {activePromo && (
                             <span className="text-[9px] font-bold text-slate-400 line-through decoration-rose-500/50 leading-none mb-0.5">
@@ -293,6 +298,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                           const isSelected = !!selected;
                           const currentQty = selected?.quantity || 0;
                           const fractionText = isFlavor ? `${currentQty}/${config.maxFlavors}` : undefined;
+                          const activePromo = isPromoActive(addon);
+                          
                           if (isFlavor || hasImages) {
                             return <FlavorCard key={addon.id} item={addon} isSelected={isSelected} onToggle={() => {
                               if (isSelected && isFlavor) return handleAddonQuantityChange(addon, -1, group);
@@ -301,7 +308,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                             }} price={addon.price} quantity={currentQty} fractionText={fractionText} showControls={isSelected} onIncrement={() => handleAddonQuantityChange(addon, 1, group)} onDecrement={() => handleAddonQuantityChange(addon, -1, group)} />;
                           }
                           return (
-                            <Card key={addon.id} onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)} className={cn("flex items-center justify-between p-4 border-2 transition-all duration-300", isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200 shadow-sm")}>
+                            <Card key={addon.id} onClick={() => handleAddonQuantityChange(addon, isSelected ? -currentQty : 1, group)} className={cn("flex items-center justify-between p-4 border-2 transition-all duration-300 relative", isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-white hover:border-slate-200 shadow-sm", activePromo && "promo-glowing-border")}>
+                              {activePromo && (
+                                <div className="absolute -top-1 -left-1 z-20 bg-emerald-500 text-white px-1.5 py-0.5 rounded-md shadow-lg text-[7px] font-black uppercase tracking-tighter italic animate-bounce">
+                                  Oferta
+                                </div>
+                              )}
                               <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
                                 <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-all", isSelected ? "border-primary bg-primary" : "border-slate-300")}>{isSelected && <Check size={12} className="text-white" strokeWidth={4} />}</div>
                                 <div className="flex flex-col min-w-0">

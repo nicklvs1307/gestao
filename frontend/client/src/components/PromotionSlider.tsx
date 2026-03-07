@@ -80,13 +80,26 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
             : product.price;
           
           const discountedPrice = calculateDiscountedPrice(basePrice, promo);
+          
+          let discountText = '';
+          if (promo.discountType === 'percentage') {
+            discountText = `${promo.discountValue}% OFF`;
+          } else {
+            const savings = basePrice - discountedPrice;
+            discountText = `R$ ${savings.toFixed(0)} OFF`;
+          }
 
           return (
             <div 
               key={promo.id}
               onClick={() => onProductClick(product)}
-              className="min-w-[280px] md:min-w-[320px] bg-white rounded-3xl p-3 border border-slate-100 shadow-xl shadow-slate-200/50 flex gap-4 active:scale-[0.98] transition-all cursor-pointer group"
+              className="min-w-[280px] md:min-w-[320px] bg-white rounded-3xl p-3 border border-slate-100 shadow-xl shadow-slate-200/50 flex gap-4 active:scale-[0.98] transition-all cursor-pointer group relative overflow-hidden"
             >
+              <div className="absolute top-0 right-0 z-10">
+                <div className="bg-red-600 text-white px-3 py-1 rounded-bl-2xl font-black italic text-[8px] uppercase tracking-tighter shadow-lg">
+                    {discountText}
+                </div>
+              </div>
               <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-50 shadow-inner">
                   <img src={product.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={product.name} />
               </div>

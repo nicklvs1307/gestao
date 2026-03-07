@@ -87,3 +87,43 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.5);
 }
+
+/* Animação de Ponto Brilhoso para Promoções */
+@keyframes border-glow-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.promo-glowing-border {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.promo-glowing-border::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent 0deg,
+    transparent 120deg,
+    hsl(var(--primary)) 180deg,
+    transparent 240deg,
+    transparent 360deg
+  );
+  animation: border-glow-rotate 4s linear infinite;
+  z-index: -1;
+}
+
+/* Camada interna para manter o fundo do card e esconder o centro da animação */
+.promo-glowing-border::after {
+  content: "";
+  position: absolute;
+  inset: 2px; /* Espessura da borda */
+  background: white;
+  border-radius: inherit;
+  z-index: -1;
+}
