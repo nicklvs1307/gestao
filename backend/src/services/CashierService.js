@@ -139,20 +139,26 @@ class CashierService {
         }
     });
 
-    const expectedAmount = systemTotal; // Valor total esperado (soma de todos os métodos)
-    const difference = (parseFloat(finalAmount) || 0) - expectedAmount;
+    const expectedAmount = Math.round(systemTotal * 100) / 100; // Snapshot arredondado
+    const difference = Math.round(((parseFloat(finalAmount) || 0) - expectedAmount) * 100) / 100;
 
     // --- 3. LÓGICA DE TRANSFERÊNCIA PARA O COFRE (SAFE DROP) ---
     const informedCash = parseFloat(closingDetails?.cash || closingDetails?.dinheiro || 0);
     const nextShiftFloat = parseFloat(cashLeftover || 0);
     
     // O que vai para o cofre = (Dinheiro Informado) - (Fundo de Troco Próximo Turno)
-    // Se o operador informou menos dinheiro do que o fundo, não tem o que mandar pro cofre.
     let safeDepositAmount = 0;
-    
     if (informedCash > nextShiftFloat) {
-        safeDepositAmount = informedCash - nextShiftFloat;
+        safeDepositAmount = Math.round((informedCash - nextShiftFloat) * 100) / 100;
     }
+
+    console.log(`[CASHIER_SERVICE] Calculando fechamento: 
+        Esperado: ${expectedAmount}
+        Informado: ${finalAmount}
+        Diferença: ${difference}
+        Dinheiro Informado: ${informedCash}
+        Fundo Troco (prox): ${nextShiftFloat}
+        Sangria Cofre: ${safeDepositAmount}`);
 
     // Executa tudo numa transação atômica
     return await prisma.$transaction(async (tx) => {

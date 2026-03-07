@@ -26,8 +26,16 @@ class CashierController {
 
   // POST /api/cashier/close
   close = asyncHandler(async (req, res) => {
-    console.log('[CASHIER_CONTROLLER] Tentativa de fechamento:', req.body);
+    console.log('[CASHIER_CONTROLLER] Iniciando fechamento:', req.body);
     
+    // Importação dinâmica para evitar dependência circular ou erro de carregamento
+    const { CloseCashierSchema } = require('../schemas/cashierSchema');
+    
+    if (!CloseCashierSchema) {
+        console.error('[CASHIER_CONTROLLER] ERRO: CloseCashierSchema está undefined!');
+        throw new AppError("Erro interno ao carregar validador de caixa.", 500);
+    }
+
     // Validação Manual e Segura
     const result = CloseCashierSchema.safeParse(req.body);
     
@@ -37,9 +45,15 @@ class CashierController {
         throw new AppError(`Erro nos dados enviados: ${errorMsg}`, 400);
     }
 
-    // Se validou, chama o serviço
-    const session = await CashierService.closeSession(req.restaurantId, result.data);
-    res.json(session);
+    try {
+        // Se validou, chama o serviço
+        const session = await CashierService.closeSession(req.restaurantId, result.data);
+        console.log('[CASHIER_CONTROLLER] Fechamento realizado com sucesso:', session.id);
+        res.json(session);
+    } catch (error) {
+        console.error('[CASHIER_CONTROLLER] Erro no CashierService.closeSession:', error);
+        throw error;
+    }
   });
 
   // GET /api/cashier/summary
