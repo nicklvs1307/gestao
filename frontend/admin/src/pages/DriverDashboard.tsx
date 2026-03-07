@@ -359,19 +359,44 @@ const DriverDashboard: React.FC = () => {
                 {activeTab === 'history' && (
                     <div className="space-y-4">
                         <div className="flex justify-between items-center px-2">
-                            <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] italic">Relatório de Turno</h3>
+                            <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] italic">Relatório de Turno (Concluídos)</h3>
+                            <span className="text-[10px] font-black text-slate-300 uppercase">{history.length} entregas</span>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {history.map(order => (
-                                <div key={order.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><CheckCircle size={14}/></div>
-                                        <div>
-                                            <h4 className="text-[11px] font-black uppercase italic tracking-tighter">#{order.dailyOrderNumber} • {order.deliveryOrder?.name}</h4>
-                                            <p className="text-[8px] font-bold text-slate-500 uppercase">{order.deliveryOrder?.paymentMethod}</p>
+                                <div key={order.id} className="p-5 bg-white/5 rounded-[2rem] border border-white/5 flex flex-col gap-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20"><CheckCircle size={18}/></div>
+                                            <div>
+                                                <h4 className="text-xs font-black uppercase italic tracking-tighter text-white">#{order.dailyOrderNumber} • {order.deliveryOrder?.name || 'Cliente'}</h4>
+                                                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{new Date(order.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                            </div>
                                         </div>
+                                        <span className="text-base font-black italic tracking-tighter text-emerald-400">R$ {order.total.toFixed(2)}</span>
                                     </div>
-                                    <span className="text-sm font-black italic tracking-tighter text-emerald-400">R$ {order.total.toFixed(2)}</span>
+
+                                    {/* Ajuste de Pagamento ERP Standard */}
+                                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
+                                        {['Dinheiro', 'Pix', 'Cartão'].map(method => {
+                                            const currentMethod = order.deliveryOrder?.paymentMethod || '';
+                                            const isActive = currentMethod === method || (currentMethod.toLowerCase().includes('cart') && method === 'Cartão');
+                                            return (
+                                                <button 
+                                                    key={method}
+                                                    onClick={() => handleUpdatePayment(order.id, method)}
+                                                    className={cn(
+                                                        "h-9 rounded-xl text-[8px] font-black uppercase transition-all border", 
+                                                        isActive 
+                                                            ? "bg-white border-white text-slate-950 shadow-lg scale-[1.02]" 
+                                                            : "bg-white/5 border-white/5 text-slate-500 hover:border-white/20"
+                                                    )}
+                                                >
+                                                    {method}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             ))}
                         </div>
