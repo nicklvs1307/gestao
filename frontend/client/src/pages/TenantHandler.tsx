@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { getTenantSlug } from '../utils/tenant';
 import { getRestaurantBySlug } from '../services/api';
 import TableMenuWrapper from './TableMenuWrapper';
 import DeliveryPage from './DeliveryPage';
 import { Restaurant } from '../types';
 import { Button } from '../components/ui/Button';
+import { getImageUrl } from '../utils/image';
 
 const TenantHandler = () => {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -54,9 +56,17 @@ const TenantHandler = () => {
     </div>
   );
 
+  const fullUrl = window.location.href;
+  const restaurantLogo = restaurant?.logo ? getImageUrl(restaurant.logo) : '/logo.png';
+  const restaurantName = restaurant?.name || 'KiCardápio';
+  const restaurantDescription = restaurant?.description || 'Confira nosso cardápio completo e faça seu pedido online!';
+
   if (error || !restaurant) {
     return (
       <div className="flex h-screen flex-col items-center justify-center p-6 text-center bg-gray-50">
+        <Helmet>
+          <title>Loja não encontrada | KiCardápio</title>
+        </Helmet>
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 max-w-md w-full">
           <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -83,13 +93,36 @@ const TenantHandler = () => {
     );
   }
 
-  // Se houver número da mesa na URL (ex: /mesa/5)
-  if (tableNumber) {
-    return <TableMenuWrapper restaurantId={restaurant.id} tableNumber={tableNumber} />;
-  }
+  return (
+    <>
+      <Helmet>
+        <title>{restaurantName} | Cardápio Digital</title>
+        <link rel="icon" type="image/png" href={restaurantLogo} />
+        
+        {/* Open Graph / Facebook / WhatsApp */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={fullUrl} />
+        <meta property="og:title" content={`${restaurantName} - Peça Online`} />
+        <meta property="og:description" content={restaurantDescription} />
+        <meta property="og:image" content={restaurantLogo} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
 
-  // Caso contrário, mostra a página de Delivery/Catálogo
-  return <DeliveryPage restaurantSlug={restaurant.slug} />;
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={fullUrl} />
+        <meta property="twitter:title" content={`${restaurantName} - Peça Online`} />
+        <meta property="twitter:description" content={restaurantDescription} />
+        <meta property="twitter:image" content={restaurantLogo} />
+      </Helmet>
+
+      {tableNumber ? (
+        <TableMenuWrapper restaurantId={restaurant.id} tableNumber={tableNumber} />
+      ) : (
+        <DeliveryPage restaurantSlug={restaurant.slug} />
+      )}
+    </>
+  );
 };
 
 export default TenantHandler;
