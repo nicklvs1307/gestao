@@ -12,7 +12,7 @@ import {
 import { 
     Wallet, Lock, Unlock, DollarSign, History, 
     ArrowUpCircle, ArrowDownCircle, AlertCircle, CheckCircle, HelpCircle,
-    Calendar, Clock, User, Receipt, Plus, Minus, X, Info, Edit2, ChevronDown, Check, RefreshCw, Loader2, ArrowUpRight, Smartphone, Banknote, Search, ChevronRight, Filter,
+    Calendar, Clock, User, Receipt, Plus, Minus, X, Info, Edit2, ChevronDown, Check, RefreshCw, Loader2, ArrowUpRight, ArrowRight, Smartphone, Banknote, Search, ChevronRight, Filter,
     FileText, ShoppingBag, Truck, Calculator, Printer, ShieldCheck
 } from 'lucide-react';
 import { cn } from '../lib/utils';
