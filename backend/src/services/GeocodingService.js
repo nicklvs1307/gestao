@@ -7,7 +7,7 @@ class GeocodingService {
         // 1. Limpeza e Normalização
         let searchAddress = address.replace(/\/+$/, '').trim();
         
-        // Se temos restaurantId, podemos tentar enriquecer o endereço com Cidade/Estado
+        // Se temos restaurantId, podemos tentar enriquecer o endereço sem duplicar
         if (restaurantId) {
             try {
                 const prisma = require('../lib/prisma');
@@ -16,9 +16,11 @@ class GeocodingService {
                     select: { city: true, state: true }
                 });
                 
-                if (restaurant?.city) {
+                if (restaurant?.city && !searchAddress.toLowerCase().includes(restaurant.city.toLowerCase())) {
                     searchAddress += `, ${restaurant.city}`;
-                    if (restaurant.state) searchAddress += ` - ${restaurant.state}`;
+                }
+                if (restaurant?.state && !searchAddress.toLowerCase().includes(restaurant.state.toLowerCase())) {
+                    searchAddress += ` - ${restaurant.state}`;
                 }
             } catch (e) {
                 console.warn("[GEOCODE] Falha ao buscar contexto do restaurante.");
@@ -26,6 +28,7 @@ class GeocodingService {
         }
 
         const apiKey = process.env.VITE_OPENROUTE_KEY || process.env.OPENROUTE_KEY;
+        console.log(`[GEOCODE DEBUG] Chave ORS presente: ${apiKey ? 'SIM' : 'NÃO'}`);
 
         // 2. Tentar OpenRouteService (se tiver chave)
         if (apiKey) {
@@ -38,6 +41,8 @@ class GeocodingService {
                     const [lng, lat] = response.data.features[0].geometry.coordinates;
                     console.log(`[GEOCODE] Sucesso ORS: ${lat}, ${lng}`);
                     return { lat, lng };
+                } else {
+                    console.log(`[GEOCODE] ORS retornou zero resultados para: ${searchAddress}`);
                 }
             } catch (error) {
                 console.warn(`[GEOCODE WARNING] Falha no ORS (${error.message}). Tentando fallback...`);
@@ -58,6 +63,8 @@ class GeocodingService {
                 const lng = parseFloat(response.data[0].lon);
                 console.log(`[GEOCODE] Sucesso OSM: ${lat}, ${lng}`);
                 return { lat, lng };
+            } else {
+                console.log(`[GEOCODE] OSM retornou zero resultados para: ${searchAddress}`);
             }
         } catch (error) {
             console.error(`[GEOCODE ERROR] Falha total ao localizar: ${searchAddress}`, error.message);
