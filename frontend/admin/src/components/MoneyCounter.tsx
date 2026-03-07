@@ -47,93 +47,115 @@ const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm,
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-slate-900/60 backdrop-blur-sm">
                 <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                    className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col border border-slate-200"
                 >
-                    <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <header className="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                                <Calculator size={20} />
+                            <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-sm">
+                                <Calculator size={18} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-900">Contagem de Cédulas</h3>
-                                <p className="text-xs text-slate-500 font-medium">Insira a quantidade de notas e moedas</p>
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Contagem de Numerário</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Conferência Física de Caixa</p>
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"><X size={20}/></button>
+                        <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-all"><X size={20}/></button>
                     </header>
 
-                    <div className="flex-1 overflow-y-auto p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="flex-1 overflow-y-auto p-5 bg-slate-50/50">
+                        <div className="space-y-6">
                             {/* CÉDULAS */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Banknote size={16} className="text-slate-400"/>
-                                    <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">Cédulas</h4>
+                            <section>
+                                <div className="flex items-center gap-2 mb-3 px-1">
+                                    <Banknote size={14} className="text-emerald-600 font-bold"/>
+                                    <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Cédulas (Papel Moeda)</h4>
+                                    <div className="flex-1 h-px bg-slate-200 ml-2"></div>
                                 </div>
-                                {BILLS.map(bill => (
-                                    <div key={bill} className="flex items-center justify-between gap-4 p-3 rounded-lg border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all">
-                                        <span className="font-bold text-slate-700 w-24">R$ {bill},00</span>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs text-slate-400">x</span>
-                                            <input 
-                                                type="number" 
-                                                min="0"
-                                                className="w-20 h-9 border border-slate-200 rounded-md text-center font-bold text-slate-900 focus:border-emerald-500 outline-none"
-                                                value={counts[bill.toString()] || ''}
-                                                onChange={(e) => handleCountChange(bill, e.target.value)}
-                                                placeholder="0"
-                                            />
-                                            <span className="text-xs font-bold text-emerald-600 w-20 text-right">
-                                                = R$ {((counts[bill.toString()] || 0) * bill).toFixed(2)}
-                                            </span>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    {BILLS.map(bill => (
+                                        <div key={bill} className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm hover:border-emerald-500 transition-all flex flex-col gap-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter">Valor</span>
+                                                <span className="text-xs font-bold text-slate-900">R$ {bill},00</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    min="0"
+                                                    className="flex-1 h-8 bg-slate-50 border border-slate-200 rounded text-center text-xs font-bold text-slate-900 focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                                                    value={counts[bill.toString()] || ''}
+                                                    onChange={(e) => handleCountChange(bill, e.target.value)}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div className="pt-1.5 border-t border-slate-100 flex justify-between items-center">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Subtotal</span>
+                                                <span className="text-[11px] font-bold text-emerald-600">
+                                                    R$ {((counts[bill.toString()] || 0) * bill).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            </section>
 
                             {/* MOEDAS */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Coins size={16} className="text-slate-400"/>
-                                    <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">Moedas</h4>
+                            <section>
+                                <div className="flex items-center gap-2 mb-3 px-1">
+                                    <Coins size={14} className="text-amber-600 font-bold"/>
+                                    <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Moedas (Metálicas)</h4>
+                                    <div className="flex-1 h-px bg-slate-200 ml-2"></div>
                                 </div>
-                                {COINS.map(coin => (
-                                    <div key={coin} className="flex items-center justify-between gap-4 p-3 rounded-lg border border-slate-100 hover:border-amber-200 hover:bg-amber-50/30 transition-all">
-                                        <span className="font-bold text-slate-700 w-24">R$ {coin.toFixed(2)}</span>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs text-slate-400">x</span>
-                                            <input 
-                                                type="number" 
-                                                min="0"
-                                                className="w-20 h-9 border border-slate-200 rounded-md text-center font-bold text-slate-900 focus:border-amber-500 outline-none"
-                                                value={counts[coin.toString()] || ''}
-                                                onChange={(e) => handleCountChange(coin, e.target.value)}
-                                                placeholder="0"
-                                            />
-                                            <span className="text-xs font-bold text-amber-600 w-20 text-right">
-                                                = R$ {((counts[coin.toString()] || 0) * coin).toFixed(2)}
-                                            </span>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    {COINS.map(coin => (
+                                        <div key={coin} className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm hover:border-amber-500 transition-all flex flex-col gap-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter">Valor</span>
+                                                <span className="text-xs font-bold text-slate-900">R$ {coin.toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    min="0"
+                                                    className="flex-1 h-8 bg-slate-50 border border-slate-200 rounded text-center text-xs font-bold text-slate-900 focus:bg-white focus:border-amber-500 outline-none transition-all"
+                                                    value={counts[coin.toString()] || ''}
+                                                    onChange={(e) => handleCountChange(coin, e.target.value)}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div className="pt-1.5 border-t border-slate-100 flex justify-between items-center">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Subtotal</span>
+                                                <span className="text-[11px] font-bold text-amber-600">
+                                                    R$ {((counts[coin.toString()] || 0) * coin).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            </section>
                         </div>
                     </div>
 
-                    <footer className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Contado</p>
-                            <p className="text-2xl font-bold text-emerald-600">R$ {getTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <footer className="p-4 border-t border-slate-100 bg-white shrink-0 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-100">
+                                <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest leading-none mb-1">Total em Espécie</p>
+                                <p className="text-2xl font-black text-emerald-600 leading-none">R$ {getTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div className="hidden md:block">
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total de Itens</p>
+                                <p className="text-sm font-bold text-slate-600">{Object.values(counts).reduce((a, b) => a + (b || 0), 0)} unidades</p>
+                            </div>
                         </div>
-                        <div className="flex gap-3">
-                            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-                            <Button onClick={handleConfirm} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8">
-                                <Check size={18} className="mr-2"/> Confirmar Valor
+                        <div className="flex gap-3 w-full sm:w-auto">
+                            <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-none h-11 px-6 font-bold text-slate-500 uppercase text-[10px] tracking-widest">Cancelar</Button>
+                            <Button onClick={handleConfirm} className="flex-1 sm:flex-none h-11 px-8 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-slate-200">
+                                <Check size={16} className="mr-2"/> Confirmar Contagem
                             </Button>
                         </div>
                     </footer>

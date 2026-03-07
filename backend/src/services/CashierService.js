@@ -59,6 +59,15 @@ class CashierService {
         }
     });
 
+    // Novos contadores para feedback de fechamento
+    const activeOrdersCount = await prisma.order.count({
+        where: { restaurantId, status: { in: ['BUILDING', 'PENDING', 'PREPARING', 'READY', 'SHIPPED'] } }
+    });
+
+    const openTablesCount = await prisma.order.count({
+        where: { restaurantId, orderType: 'TABLE', status: { notIn: ['COMPLETED', 'CANCELED'] } }
+    });
+
     return {
       isOpen: true,
       session: { 
@@ -66,7 +75,9 @@ class CashierService {
         cashInHand, 
         salesByMethod, 
         adjustments,
-        pendingDriverSettlementsCount: pendingDriverSettlements.length
+        pendingDriverSettlementsCount: pendingDriverSettlements.length,
+        activeOrdersCount,
+        openTablesCount
       }
     };
   }

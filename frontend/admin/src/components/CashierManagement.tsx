@@ -160,6 +160,16 @@ const CashierManagement: React.FC = () => {
             toast.error(`Existem ${session.pendingDriverSettlementsCount} acertos de motoboy pendentes.`);
             return;
         }
+
+        if (session?.activeOrdersCount > 0) {
+            toast.error(`Existem ${session.activeOrdersCount} pedidos ativos.`);
+            return;
+        }
+
+        if (session?.openTablesCount > 0) {
+            toast.error(`Existem ${session.openTablesCount} mesas abertas.`);
+            return;
+        }
         
         try {
             // Garante que o objeto closingDetails tenha valores padrão de "0" para campos vazios
@@ -217,21 +227,23 @@ const CashierManagement: React.FC = () => {
     const isOpen = cashierData?.isOpen;
     const session = cashierData?.session;
 
+    const hasBlocks = (session?.activeOrdersCount > 0) || (session?.pendingDriverSettlementsCount > 0) || (session?.openTablesCount > 0);
+
     return (
         <div className="space-y-4 animate-in fade-in duration-300 pb-10">
             {/* Header Profissional e Denso */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white px-5 py-3 rounded-xl shadow-sm border border-slate-200 sticky top-0 z-[40]">
                 <div className="flex items-center gap-4">
-                    <div className="p-2 bg-slate-100 text-slate-600 rounded-lg"><Wallet size={18} /></div>
+                    <div className="p-2 bg-slate-900 text-white rounded-lg"><Wallet size={18} /></div>
                     <div className="flex flex-col">
-                        <h2 className="text-base font-bold text-slate-900 leading-none">Gestão de Caixa</h2>
+                        <h2 className="text-base font-bold text-slate-900 leading-none tracking-tight">Gestão de Caixa</h2>
                         {isOpen && (
                             <div className="flex items-center gap-3 mt-1">
-                                <span className="text-[10px] font-semibold text-slate-500 uppercase flex items-center gap-1">
-                                    <Clock size={12}/> Aberto às {session?.openedAt ? format(new Date(session.openedAt), 'HH:mm') : '--:--'}
+                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                                    <Clock size={12} className="text-slate-300"/> Aberto às {session?.openedAt ? format(new Date(session.openedAt), 'HH:mm') : '--:--'}
                                 </span>
-                                <span className="text-[10px] font-semibold text-slate-500 uppercase flex items-center gap-1">
-                                    <User size={12}/> {authUser?.name || 'Operador'}
+                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                                    <User size={12} className="text-slate-300"/> {authUser?.name || 'Operador'}
                                 </span>
                             </div>
                         )}
@@ -250,7 +262,7 @@ const CashierManagement: React.FC = () => {
                         </div>
                     )}
                     <div className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-lg border font-bold uppercase text-[10px] tracking-wider",
+                        "flex items-center gap-2 px-3 py-1.5 rounded-lg border font-black uppercase text-[10px] tracking-widest",
                         isOpen ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"
                     )}>
                         <div className={cn("w-1.5 h-1.5 rounded-full", isOpen ? "bg-emerald-500 animate-pulse" : "bg-rose-500")} />
@@ -260,24 +272,56 @@ const CashierManagement: React.FC = () => {
                 </div>
             </div>
 
+            {isOpen && hasBlocks && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {session.activeOrdersCount > 0 && (
+                        <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg animate-in slide-in-from-top-2">
+                            <AlertCircle size={18} className="text-amber-600 shrink-0"/>
+                            <div>
+                                <p className="text-[11px] font-bold text-amber-900 uppercase tracking-tight leading-none mb-1">Pedidos Ativos</p>
+                                <p className="text-[10px] text-amber-600 font-bold uppercase">{session.activeOrdersCount} pendentes. Finalize-os para fechar.</p>
+                            </div>
+                        </div>
+                    )}
+                    {session.openTablesCount > 0 && (
+                        <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg animate-in slide-in-from-top-2">
+                            <HelpCircle size={18} className="text-indigo-600 shrink-0"/>
+                            <div>
+                                <p className="text-[11px] font-bold text-indigo-900 uppercase tracking-tight leading-none mb-1">Mesas Abertas</p>
+                                <p className="text-[10px] text-indigo-600 font-bold uppercase">{session.openTablesCount} mesas ocupadas.</p>
+                            </div>
+                        </div>
+                    )}
+                    {session.pendingDriverSettlementsCount > 0 && (
+                        <div className="flex items-center gap-3 p-3 bg-rose-50 border border-rose-200 rounded-lg animate-in slide-in-from-top-2">
+                            <Truck size={18} className="text-rose-600 shrink-0"/>
+                            <div>
+                                <p className="text-[11px] font-bold text-rose-900 uppercase tracking-tight leading-none mb-1">Acertos Pendentes</p>
+                                <p className="text-[10px] text-rose-600 font-bold uppercase">{session.pendingDriverSettlementsCount} motoboys sem acerto.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {!isOpen ? (
                 /* TELA DE ABERTURA - MAIS PROFISSIONAL */
                 <div className="max-w-md mx-auto py-12">
                     <Card className="p-8 border-slate-200 shadow-xl bg-white relative">
                         <div className="text-center space-y-3 mb-8">
-                            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2"><Unlock size={28} /></div>
-                            <h3 className="text-xl font-bold text-slate-900">Iniciar Novo Turno</h3>
-                            <p className="text-xs text-slate-500 font-medium">Informe o fundo de caixa inicial para troco.</p>
+                            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-inner"><Unlock size={28} /></div>
+                            <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">Iniciar Turno</h3>
+                            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">Informe o fundo inicial para troco</p>
                         </div>
                         <form onSubmit={handleOpen} className="space-y-6">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider ml-1">Fundo de Reserva (R$)</label>
+                                <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest ml-1">Fundo de Reserva (R$)</label>
                                 <div className="relative">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">R$</div>
-                                    <input type="number" step="0.01" value={initialAmount} onChange={e => setInitialAmount(e.target.value)} required placeholder="0,00" className="w-full h-12 bg-slate-50 border border-slate-200 rounded-lg pl-12 pr-4 text-xl font-bold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" />
+                                    <input type="number" step="0.01" value={initialAmount} onChange={e => setInitialAmount(e.target.value)} required placeholder="0,00" className="w-full h-12 bg-slate-50 border border-slate-200 rounded-lg pl-12 pr-4 text-xl font-bold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-sm" />
                                 </div>
                             </div>
-                            <Button fullWidth size="lg" className="h-12 rounded-lg font-bold uppercase tracking-wider bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100">ABRIR CAIXA AGORA</Button>
+                            <Button fullWidth size="lg" className="h-12 rounded-lg font-bold uppercase tracking-widest text-xs bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-200">ABRIR CAIXA AGORA</Button>
                         </form>
                     </Card>
                 </div>
@@ -289,15 +333,15 @@ const CashierManagement: React.FC = () => {
                     <div className="xl:col-span-4 space-y-4">
                         <Card className="p-0 border-slate-200 shadow-md overflow-hidden bg-white" noPadding>
                             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Conferência de Valores</h3>
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">Conferência de Valores</h3>
                                 <div className="flex gap-1">
-                                    <div className="flex items-center gap-1 bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-[9px] font-bold">
-                                        <ShieldCheck size={10}/> MODO CEGO
+                                    <div className="flex items-center gap-1 bg-slate-900 text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">
+                                        <ShieldCheck size={10}/> MODO AUDITORIA
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="divide-y divide-slate-100">
+                            <div className="divide-y divide-slate-100 max-h-[420px] overflow-y-auto">
                                 {paymentMethods.map(m => {
                                     const isSelected = selectedMethod === m.id;
                                     const informedValue = closingValues[m.id] || '';
@@ -307,33 +351,33 @@ const CashierManagement: React.FC = () => {
                                             key={m.id} 
                                             onClick={() => setSelectedMethod(m.id)}
                                             className={cn(
-                                                "p-3.5 transition-all cursor-pointer group hover:bg-slate-50 relative border-l-4",
-                                                isSelected ? "bg-blue-50/40 border-blue-500" : "border-transparent"
+                                                "p-3 transition-all cursor-pointer group hover:bg-slate-50 relative border-l-4",
+                                                isSelected ? "bg-slate-50 border-slate-900" : "border-transparent"
                                             )}
                                         >
-                                            <div className="flex justify-between items-start mb-3">
+                                            <div className="flex justify-between items-start mb-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={cn("p-1.5 rounded-lg", isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-white border border-slate-200")}>
-                                                        <m.icon size={16} />
+                                                    <div className={cn("p-1.5 rounded-lg transition-all", isSelected ? "bg-slate-900 text-white shadow-md" : "bg-slate-100 text-slate-400 group-hover:bg-white border border-slate-200")}>
+                                                        <m.icon size={14} />
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs font-bold text-slate-800 uppercase tracking-tight">{m.label}</p>
-                                                        <p className="text-[10px] font-medium text-slate-400 uppercase">Informe o valor total</p>
+                                                        <p className="text-[10px] font-bold text-slate-800 uppercase tracking-tight leading-none">{m.label}</p>
+                                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Informe o total</p>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex gap-2 items-center">
                                                 <div className="flex-1 relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">R$</span>
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-300">R$</span>
                                                     <input 
                                                         type="number"
                                                         readOnly={m.id === 'cash'} // Cash is read-only if counted
                                                         value={closingValues[m.id]}
                                                         onChange={(e) => setClosingValues(prev => ({ ...prev, [m.id]: e.target.value }))}
                                                         className={cn(
-                                                            "w-full h-9 bg-white border border-slate-200 rounded-md pl-8 pr-3 text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm",
-                                                            m.id === 'cash' && "bg-slate-50 text-slate-500 cursor-not-allowed"
+                                                            "w-full h-8 bg-white border border-slate-200 rounded-md pl-7 pr-2 text-xs font-bold focus:border-slate-900 outline-none shadow-sm transition-all",
+                                                            m.id === 'cash' && "bg-slate-50 text-slate-600 cursor-not-allowed"
                                                         )}
                                                         placeholder="0,00"
                                                         onClick={(e) => {
@@ -344,12 +388,12 @@ const CashierManagement: React.FC = () => {
                                                 </div>
                                                 
                                                 {m.id === 'cash' ? (
-                                                    <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowMoneyCounter(true); }} className="h-9 px-3 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200">
-                                                        <Calculator size={16} />
-                                                    </Button>
+                                                    <button onClick={(e) => { e.stopPropagation(); setShowMoneyCounter(true); }} className="h-8 px-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-100 rounded-md transition-all shadow-sm">
+                                                        <Calculator size={14} />
+                                                    </button>
                                                 ) : (
-                                                    <div className={cn("w-7 h-7 rounded-md flex items-center justify-center transition-all", isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300")}>
-                                                        <ChevronRight size={14} />
+                                                    <div className={cn("w-6 h-6 rounded-md flex items-center justify-center transition-all", isSelected ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-300")}>
+                                                        <ChevronRight size={12} />
                                                     </div>
                                                 )}
                                             </div>
@@ -358,47 +402,47 @@ const CashierManagement: React.FC = () => {
                                 })}
                             </div>
 
-                            <div className="p-4 bg-slate-900 space-y-3">
+                            <div className="p-4 bg-slate-900 space-y-3 shrink-0">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Informado</span>
-                                    <span className="text-xl font-bold text-white tracking-tight">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Informado</span>
+                                    <span className="text-lg font-black text-white tracking-tighter">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 
                                 <Button 
                                     fullWidth 
                                     onClick={() => setStep('REVIEW')} 
-                                    disabled={session?.pendingDriverSettlementsCount > 0}
+                                    disabled={hasBlocks}
                                     className={cn(
-                                        "h-10 rounded-lg font-bold uppercase tracking-widest text-xs transition-all shadow-lg",
-                                        session?.pendingDriverSettlementsCount > 0 ? "bg-slate-700 cursor-not-allowed opacity-50" : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/20"
+                                        "h-10 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all shadow-lg",
+                                        hasBlocks ? "bg-slate-700 cursor-not-allowed opacity-50" : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/20"
                                     )}
                                 >
-                                    AVANÇAR PARA AUDITORIA <ArrowRight size={14} className="ml-2"/>
+                                    AUDITAR E FINALIZAR <ArrowRight size={14} className="ml-2"/>
                                 </Button>
                             </div>
                         </Card>
                     </div>
 
-                    {/* COLUNA DIREITA (9): DETALHE DE VENDAS E HISTÓRICO */}
+                    {/* COLUNA DIREITA (8): DETALHE DE VENDAS E HISTÓRICO */}
                     <div className="xl:col-span-8 space-y-4">
                         <Card className="p-0 border-slate-200 shadow-md overflow-hidden bg-white h-full flex flex-col" noPadding>
-                            <div className="px-5 py-4 border-b border-slate-100 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
+                            <div className="px-5 py-3 border-b border-slate-100 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-lg border border-slate-200 flex items-center justify-center">
-                                        {React.createElement(paymentMethods.find(m => m.id === selectedMethod)?.icon || HelpCircle, { size: 20 })}
+                                    <div className="w-8 h-8 bg-slate-50 text-slate-600 rounded border border-slate-200 flex items-center justify-center">
+                                        {React.createElement(paymentMethods.find(m => m.id === selectedMethod)?.icon || HelpCircle, { size: 16 })}
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold text-slate-900 uppercase">Detalhamento: {paymentMethods.find(m => m.id === selectedMethod)?.label}</h3>
-                                        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Histórico de movimentações da sessão atual</p>
+                                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-tight">Detalhamento: {paymentMethods.find(m => m.id === selectedMethod)?.label}</h3>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Movimentações da sessão</p>
                                     </div>
                                 </div>
-                                <div className="relative w-full md:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                                    <input type="text" placeholder="Filtrar pedido ou mesa..." className="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 text-xs font-semibold outline-none focus:border-blue-500 transition-all" />
+                                <div className="relative w-full md:w-56">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+                                    <input type="text" placeholder="Filtrar lançamento..." className="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-4 text-[10px] font-bold uppercase outline-none focus:border-slate-900 transition-all" />
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto max-h-[600px] p-4 space-y-2 bg-slate-50/50">
+                            <div className="flex-1 overflow-y-auto max-h-[500px] p-4 space-y-1.5 bg-slate-50/30">
                                 {sessionOrders.filter(o => {
                                     const method = normalize(o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other');
                                     const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
@@ -407,7 +451,7 @@ const CashierManagement: React.FC = () => {
                                     const selType = normalize((currentDisplayMethod as any)?.type || '');
                                     return method === selId || method === selLabel || method === selType;
                                 }).length > 0 ? (
-                                    <div className="space-y-2">
+                                    <div className="grid grid-cols-1 gap-1.5">
                                         {sessionOrders
                                             .filter(o => {
                                                 const method = normalize(o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other');
@@ -418,32 +462,28 @@ const CashierManagement: React.FC = () => {
                                                 return method === selId || method === selLabel || method === selType;
                                             })
                                             .map((order: any) => (
-                                                <div key={order.id} className="bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 hover:border-blue-300 transition-all group">
-                                                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                                                        <div className="h-9 w-9 bg-slate-100 rounded-md flex items-center justify-center shrink-0 border border-slate-200 group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
-                                                            <span className="text-sm font-bold text-slate-700 italic tracking-tighter">{order.dailyOrderNumber || order.id.slice(-3)}</span>
+                                                <div key={order.id} className="bg-white px-3 py-2 rounded-lg border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3 hover:border-slate-300 transition-all group">
+                                                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                        <div className="h-8 w-8 bg-slate-50 rounded flex items-center justify-center shrink-0 border border-slate-100 text-[10px] font-black text-slate-400 uppercase group-hover:bg-slate-900 group-hover:text-white transition-all">
+                                                            #{order.dailyOrderNumber || order.id.slice(-3)}
                                                         </div>
-                                                        <div className="min-w-[120px]">
-                                                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
-                                                                {order.orderType === 'DELIVERY' ? <Truck size={12} className="text-blue-500"/> : <ShoppingBag size={12} className="text-indigo-500"/>}
+                                                        <div>
+                                                            <h4 className="text-[10px] font-bold text-slate-800 uppercase tracking-tight flex items-center gap-1.5">
+                                                                {order.orderType === 'DELIVERY' ? <Truck size={10} className="text-blue-500"/> : <ShoppingBag size={10} className="text-indigo-500"/>}
                                                                 {order.tableNumber ? `MESA ${order.tableNumber}` : order.deliveryOrder?.name || 'BALCÃO'}
                                                             </h4>
-                                                            <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">{format(new Date(order.createdAt), 'HH:mm')} • {order.user?.name || 'ADMIN'}</p>
+                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{format(new Date(order.createdAt), 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}</p>
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                                                         <div className="text-right">
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Lançamento</p>
-                                                            <p className="text-sm font-bold text-slate-900">R$ {order.total.toFixed(2)}</p>
+                                                            <p className="text-xs font-black text-slate-900 leading-none">R$ {order.total.toFixed(2)}</p>
                                                         </div>
                                                         
-                                                        <div className="h-8 w-px bg-slate-100 hidden sm:block" />
-
-                                                        <div className="w-[140px]">
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 ml-0.5">Forma:</p>
+                                                        <div className="w-[120px]">
                                                             <select 
-                                                                className="w-full h-8 bg-slate-50 border border-slate-200 rounded-md px-2 text-[10px] font-bold uppercase outline-none focus:border-blue-500"
+                                                                className="w-full h-7 bg-slate-50 border border-slate-200 rounded px-2 text-[9px] font-bold uppercase outline-none focus:border-slate-900"
                                                                 value={selectedMethod}
                                                                 onChange={(e) => handleUpdatePayment(order.id, e.target.value)}
                                                             >
@@ -455,9 +495,9 @@ const CashierManagement: React.FC = () => {
                                             ))}
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center h-48 opacity-25">
-                                        <Filter size={40} strokeWidth={1.5} className="mb-2 text-slate-400" />
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nenhum registro encontrado</p>
+                                    <div className="flex flex-col items-center justify-center h-48 opacity-20">
+                                        <Filter size={32} strokeWidth={1.5} className="mb-2 text-slate-400" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center px-10 leading-tight">Nenhuma transação registrada nesta modalidade</p>
                                     </div>
                                 )}
                             </div>
@@ -466,18 +506,23 @@ const CashierManagement: React.FC = () => {
                 </div>
             ) : (
                 /* REVIEW STEP - AUDITORIA E COFRE */
-                <div className="max-w-2xl mx-auto space-y-6">
+                <div className="max-w-3xl mx-auto space-y-4">
                     <Card className="p-0 border-slate-200 shadow-xl bg-white overflow-hidden">
-                        <header className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-900">Auditoria e Fechamento</h3>
-                            <Button variant="ghost" size="sm" onClick={() => setStep('COUNT')}>Voltar</Button>
+                        <header className="px-5 py-3 bg-slate-900 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <ShieldCheck size={18} className="text-emerald-400" />
+                                <h3 className="text-sm font-bold uppercase tracking-widest">Relatório de Auditoria</h3>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => setStep('COUNT')} className="text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest h-7">Voltar</Button>
                         </header>
                         
-                        <div className="p-6 space-y-6">
+                        <div className="p-5 space-y-6">
                             {/* 1. Diferenças */}
                             <div className="space-y-3">
-                                <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">Conferência de Quebra</h4>
-                                <div className="space-y-2">
+                                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 px-1">
+                                    <Receipt size={14} /> Balanço por Modalidade
+                                </h4>
+                                <div className="grid grid-cols-1 gap-1.5">
                                     {paymentMethods.map(m => {
                                         const informed = parseFloat(closingValues[m.id] || '0');
                                         const expected = getExpectedValue(m.id);
@@ -486,22 +531,22 @@ const CashierManagement: React.FC = () => {
                                         if (Math.abs(diff) < 0.01 && informed === 0) return null; // Skip empty
 
                                         return (
-                                            <div key={m.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                <div className="flex items-center gap-2">
-                                                    <m.icon size={16} className="text-slate-400"/>
-                                                    <span className="text-sm font-bold text-slate-700">{m.label}</span>
+                                            <div key={m.id} className="flex justify-between items-center p-2.5 bg-slate-50 rounded border border-slate-100 hover:border-slate-200 transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 bg-white border border-slate-200 rounded text-slate-400"><m.icon size={14}/></div>
+                                                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">{m.label}</span>
                                                 </div>
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-6">
                                                     <div className="text-right">
-                                                        <span className="block text-[10px] text-slate-400 uppercase">Informado</span>
-                                                        <span className="font-bold text-slate-900">R$ {informed.toFixed(2)}</span>
+                                                        <span className="block text-[8px] text-slate-400 uppercase font-black">Informado</span>
+                                                        <span className="text-[11px] font-black text-slate-900">R$ {informed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <span className="block text-[10px] text-slate-400 uppercase">Sistema</span>
-                                                        <span className="font-bold text-slate-500">R$ {expected.toFixed(2)}</span>
+                                                    <div className="text-right hidden sm:block">
+                                                        <span className="block text-[8px] text-slate-400 uppercase font-black">Sistema</span>
+                                                        <span className="text-[11px] font-bold text-slate-500">R$ {expected.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                                     </div>
-                                                    <div className={cn("px-2 py-1 rounded text-xs font-bold w-24 text-center", diff < 0 ? "bg-rose-100 text-rose-700" : diff > 0 ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700")}>
-                                                        {Math.abs(diff) < 0.01 ? "OK" : `${diff > 0 ? '+' : ''}${diff.toFixed(2)}`}
+                                                    <div className={cn("px-2 py-1 rounded text-[10px] font-black w-20 text-center shadow-sm", diff < -0.01 ? "bg-rose-500 text-white" : diff > 0.01 ? "bg-blue-500 text-white" : "bg-emerald-500 text-white")}>
+                                                        {Math.abs(diff) < 0.01 ? "OK" : `${diff > 0 ? '+' : ''}${diff.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                                                     </div>
                                                 </div>
                                             </div>
@@ -511,52 +556,56 @@ const CashierManagement: React.FC = () => {
                             </div>
 
                             {/* 2. Destino do Dinheiro */}
-                            <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl space-y-4">
-                                <h4 className="text-xs font-bold uppercase text-blue-700 tracking-wider flex items-center gap-2">
-                                    <ShieldCheck size={14}/> Gestão do Numerário
-                                </h4>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Dinheiro em Mãos</label>
-                                        <div className="text-xl font-bold text-slate-900 mt-1">R$ {cashInHand.toFixed(2)}</div>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Fundo de Troco (Amanhã)</label>
-                                        <div className="relative mt-1">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">R$</span>
-                                            <input 
-                                                type="number" 
-                                                className="w-full h-10 pl-8 pr-3 border border-slate-300 rounded-lg font-bold text-slate-900 focus:border-blue-500 outline-none"
-                                                value={cashLeftover}
-                                                onChange={e => setCashLeftover(e.target.value)}
-                                            />
+                            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-6 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 opacity-5"><DollarSign size={80} /></div>
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                                        <Wallet size={14} /> Numerário em Espécie
+                                    </h4>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Dinheiro Total em Mãos</label>
+                                            <div className="text-xl font-black text-slate-900 mt-0.5 tracking-tighter">R$ {cashInHand.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                                        </div>
+                                        <div className="relative">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-0.5">Fundo de Troco (Próx. Turno)</label>
+                                            <div className="relative mt-1">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xs">R$</span>
+                                                <input 
+                                                    type="number" 
+                                                    className="w-full h-10 pl-8 pr-3 bg-white border border-slate-200 rounded-lg font-black text-slate-900 focus:border-slate-900 outline-none shadow-sm transition-all"
+                                                    value={cashLeftover}
+                                                    onChange={e => setCashLeftover(e.target.value)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="pt-2 border-t border-blue-200 mt-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-bold text-blue-800">Transferir para Cofre (Automático)</span>
-                                        <span className="text-xl font-bold text-blue-800">R$ {safeDeposit.toFixed(2)}</span>
+                                <div className="flex flex-col justify-end bg-emerald-600 p-4 rounded-lg text-white shadow-xl shadow-emerald-100">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Depósito em Cofre</span>
+                                        <ArrowUpRight size={20} className="opacity-80" />
                                     </div>
-                                    <p className="text-[10px] text-blue-600 mt-1">Este valor será lançado como saída do caixa e entrada no cofre.</p>
+                                    <div className="text-3xl font-black tracking-tighter">R$ {safeDeposit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                                    <p className="text-[9px] font-bold uppercase opacity-80 mt-2 tracking-widest">Lançamento automático de saída para cofre da loja.</p>
                                 </div>
                             </div>
 
                             {/* 3. Observações */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Observações Finais</label>
+                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Notas de Auditoria</label>
                                 <textarea 
-                                    className="w-full h-20 bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none resize-none"
-                                    placeholder="Justificativa de quebra ou observações gerais..."
+                                    className="w-full h-20 bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11px] font-bold focus:border-slate-900 outline-none resize-none transition-all placeholder:text-slate-300"
+                                    placeholder="Justificativa para quebras de caixa ou observações operacionais..."
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
                                 />
                             </div>
 
-                            <Button fullWidth size="lg" onClick={handleClose} className="h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase tracking-wider text-sm shadow-xl shadow-emerald-100">
-                                <CheckCircle size={20} className="mr-2"/> CONFIRMAR FECHAMENTO E IMPRIMIR
+                            <Button fullWidth size="lg" onClick={handleClose} className="h-14 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-slate-200 border-b-4 border-slate-700 active:border-b-0 active:mt-1 transition-all">
+                                <CheckCircle size={18} className="mr-2 text-emerald-400"/> FINALIZAR TURNO E IMPRIMIR RELATÓRIO
                             </Button>
                         </div>
                     </Card>
