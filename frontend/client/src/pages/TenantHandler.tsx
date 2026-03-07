@@ -99,7 +99,6 @@ const TenantHandler = () => {
         <title>{restaurantName} | Cardápio Digital</title>
         <link rel="icon" type="image/png" href={restaurantLogo} />
         
-        {/* Open Graph / Facebook / WhatsApp */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content={fullUrl} />
         <meta property="og:title" content={`${restaurantName} - Peça Online`} />
@@ -108,7 +107,6 @@ const TenantHandler = () => {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
 
-        {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content={fullUrl} />
         <meta property="twitter:title" content={`${restaurantName} - Peça Online`} />
