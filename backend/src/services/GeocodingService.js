@@ -1,18 +1,37 @@
 const axios = require('axios');
 
 class GeocodingService {
-    async getCoordinates(address) {
+    async getCoordinates(address, restaurantId = null) {
         if (!address || address === 'Retirada no Balcão') return null;
         
-        // Limpeza básica do endereço
-        const cleanAddress = address.replace(/\/+$/, '').trim();
+        // 1. Limpeza e Normalização
+        let searchAddress = address.replace(/\/+$/, '').trim();
+        
+        // Se temos restaurantId, podemos tentar enriquecer o endereço com Cidade/Estado
+        if (restaurantId) {
+            try {
+                const prisma = require('../lib/prisma');
+                const restaurant = await prisma.restaurant.findUnique({
+                    where: { id: restaurantId },
+                    select: { city: true, state: true }
+                });
+                
+                if (restaurant?.city) {
+                    searchAddress += `, ${restaurant.city}`;
+                    if (restaurant.state) searchAddress += ` - ${restaurant.state}`;
+                }
+            } catch (e) {
+                console.warn("[GEOCODE] Falha ao buscar contexto do restaurante.");
+            }
+        }
+
         const apiKey = process.env.VITE_OPENROUTE_KEY || process.env.OPENROUTE_KEY;
 
-        // 1. Tentar OpenRouteService (se tiver chave)
+        // 2. Tentar OpenRouteService (se tiver chave)
         if (apiKey) {
             try {
-                console.log(`[GEOCODE] Tentando ORS: ${cleanAddress}`);
-                const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(cleanAddress)}&boundary.country=BR&size=1`;
+                console.log(`[GEOCODE] Tentando ORS: ${searchAddress}`);
+                const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(searchAddress)}&boundary.country=BR&size=1`;
                 const response = await axios.get(url, { timeout: 5000 });
                 
                 if (response.data.features && response.data.features.length > 0) {
@@ -21,14 +40,14 @@ class GeocodingService {
                     return { lat, lng };
                 }
             } catch (error) {
-                console.warn(`[GEOCODE WARNING] Falha no ORS: ${error.message}. Tentando fallback...`);
+                console.warn(`[GEOCODE WARNING] Falha no ORS (${error.message}). Tentando fallback...`);
             }
         }
 
-        // 2. Fallback para Nominatim (OSM)
+        // 3. Fallback para Nominatim (OSM)
         try {
-            console.log(`[GEOCODE] Tentando Fallback OSM: ${cleanAddress}`);
-            const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1&countrycodes=br`;
+            console.log(`[GEOCODE] Tentando Fallback OSM: ${searchAddress}`);
+            const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchAddress)}&format=json&limit=1&countrycodes=br`;
             const response = await axios.get(osmUrl, { 
                 headers: { 'User-Agent': 'Kicardapio-Smart-Delivery' },
                 timeout: 5000 
@@ -41,7 +60,7 @@ class GeocodingService {
                 return { lat, lng };
             }
         } catch (error) {
-            console.error(`[GEOCODE ERROR] Falha total ao localizar: ${cleanAddress}`, error.message);
+            console.error(`[GEOCODE ERROR] Falha total ao localizar: ${searchAddress}`, error.message);
         }
         
         return null;

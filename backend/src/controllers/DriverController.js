@@ -14,8 +14,9 @@ class DriverController {
   // POST /driver/geocode
   async geocode(req, res) {
       const { address } = req.body;
+      const { restaurantId } = req; // Pegar do middleware de auth
       const GeocodingService = require('../services/GeocodingService');
-      const coords = await GeocodingService.getCoordinates(address);
+      const coords = await GeocodingService.getCoordinates(address, restaurantId);
       if (!coords) return res.status(404).json({ error: 'Endereço não localizado.' });
       res.json(coords);
   }
