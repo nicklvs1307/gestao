@@ -424,23 +424,20 @@ const PosPage: React.FC = () => {
     return (
         <div className="flex h-[calc(100vh-4rem)] bg-[#f8fafc] overflow-hidden -m-8">
             {/* BARRA LATERAL: CARRINHO */}
-            <aside className="w-[380px] bg-white border-r border-slate-200 flex flex-col shadow-2xl z-20">
-                <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                    <div className="flex items-center justify-between mb-4">
+            <aside className="w-[320px] bg-white border-r border-slate-200 flex flex-col shadow-xl z-20">
+                <div className="p-3 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center justify-between mb-3">
                         <div className="flex flex-col">
                             <h3 className={cn(
-                                "text-lg font-black uppercase italic tracking-tighter leading-none",
+                                "text-sm font-black uppercase italic tracking-tighter leading-none",
                                 orderMode === 'table' ? "text-emerald-600" : "text-blue-600"
                             )}>
-                                {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Balcão / Entrega'}
+                                {orderMode === 'table' ? `Mesa ${selectedTable || '?'}` : 'Venda Direta'}
                             </h3>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                                {orderMode === 'table' ? 'Lançamento em Mesa' : 'Venda Direta'}
-                            </span>
                         </div>
-                        <div className="flex bg-slate-200/50 p-0.5 rounded-lg">
-                            <button onClick={() => { setOrderMode('table'); setSelectedTable(''); }} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}><Utensils size={12} className="inline mr-1"/>Mesa</button>
-                            <button onClick={() => { setOrderMode('delivery'); setSelectedTable(''); }} className={cn("px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}><Truck size={12} className="inline mr-1"/>Balcão</button>
+                        <div className="flex bg-slate-200/50 p-0.5 rounded-md border border-slate-200">
+                            <button onClick={() => { setOrderMode('table'); setSelectedTable(''); }} className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}>Mesa</button>
+                            <button onClick={() => { setOrderMode('delivery'); setSelectedTable(''); }} className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}>Direta</button>
                         </div>
                     </div>
 
@@ -449,14 +446,13 @@ const PosPage: React.FC = () => {
                             const tableInfo = tablesSummary.find(t => t.number === parseInt(selectedTable));
                             if (tableInfo && tableInfo.status !== 'free') {
                                 return (
-                                    <div className="mb-4 p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex items-center justify-between animate-in zoom-in-95">
+                                    <div className="mb-3 p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-between animate-in zoom-in-95">
                                         <div>
-                                            <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Conta em Aberto</p>
-                                            <p className="text-sm font-black text-emerald-900 italic">R$ {tableInfo.totalAmount.toFixed(2)}</p>
+                                            <p className="text-[7px] font-black text-emerald-600 uppercase tracking-widest">Conta Aberta</p>
+                                            <p className="text-xs font-black text-emerald-900 italic">R$ {tableInfo.totalAmount.toFixed(2)}</p>
                                         </div>
-                                        <Button 
-                                            size="sm" 
-                                            className="bg-emerald-600 hover:bg-emerald-700 text-[9px] font-black uppercase italic h-9 px-4 rounded-xl shadow-lg shadow-emerald-200"
+                                        <button 
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[8px] font-black uppercase italic h-7 px-3 rounded-md shadow-md"
                                             onClick={() => {
                                                 const orderId = tableInfo.tabs?.[0]?.orderId;
                                                 if (orderId) navigate(`/pos/checkout/${orderId}`);
@@ -464,7 +460,7 @@ const PosPage: React.FC = () => {
                                             }}
                                         >
                                             FECHAR MESA
-                                        </Button>
+                                        </button>
                                     </div>
                                 );
                             }
@@ -473,146 +469,139 @@ const PosPage: React.FC = () => {
                     )}
 
                     {orderMode === 'table' ? (
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-1 gap-1.5">
                             <div className="relative">
                                 <select 
                                     value={selectedTable} 
                                     onChange={e => setSelectedTable(e.target.value)} 
-                                    className="w-full h-10 px-3 rounded-lg bg-white border-2 border-slate-100 text-slate-700 text-xs font-bold outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
+                                    className="w-full h-8 px-2 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-bold outline-none focus:border-orange-500 appearance-none cursor-pointer"
                                 >
-                                    <option value="">Selecionar Mesa...</option>
+                                    <option value="">Mesa...</option>
                                     {tables.map(t => <option key={t.id} value={t.number}>Mesa {t.number}</option>)}
                                 </select>
-                                <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 rotate-90" size={14} />
+                                <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 rotate-90" size={10} />
                             </div>
                             <input 
-                                placeholder="Identificação / Cliente" 
+                                placeholder="Identificação / Comanda" 
                                 value={customerName} 
                                 onChange={e => setCustomerName(e.target.value)}
-                                className="w-full h-10 px-3 rounded-lg bg-white border-2 border-slate-100 text-xs font-bold outline-none focus:border-orange-500 transition-all"
+                                className="w-full h-8 px-2 rounded border border-slate-200 text-[10px] font-bold outline-none focus:border-orange-500"
                             />
                         </div>
                     ) : (
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => setDeliverySubType('delivery')} className={cn("flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-1", deliverySubType === 'delivery' ? "bg-orange-50 border-orange-500 text-orange-700 shadow-sm" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200")}>
-                                    <Bike size={20} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest">Entrega</span>
+                        <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-1.5">
+                                <button onClick={() => setDeliverySubType('delivery')} className={cn("flex items-center justify-center h-8 rounded border transition-all gap-1.5", deliverySubType === 'delivery' ? "bg-orange-50 border-orange-400 text-orange-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}>
+                                    <Bike size={14} />
+                                    <span className="text-[8px] font-black uppercase">Entrega</span>
                                 </button>
-                                <button onClick={() => { setDeliverySubType('pickup'); setDeliveryInfo(prev => ({ ...prev, address: '' })); }} className={cn("flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all gap-1", deliverySubType === 'pickup' ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200")}>
-                                    <ShoppingBag size={20} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest">Retirada</span>
+                                <button onClick={() => { setDeliverySubType('pickup'); setDeliveryInfo(prev => ({ ...prev, address: '' })); }} className={cn("flex items-center justify-center h-8 rounded border transition-all gap-1.5", deliverySubType === 'pickup' ? "bg-blue-50 border-blue-400 text-blue-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}>
+                                    <ShoppingBag size={14} />
+                                    <span className="text-[8px] font-black uppercase">Balcão</span>
                                 </button>
                             </div>
 
-                            <div className="flex gap-2">
-                                <button onClick={() => setActiveModal('delivery_info')} className="flex-1 h-12 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-between px-4 hover:border-orange-500 hover:bg-orange-50/30 transition-all text-left bg-white">
-                                    <div className="min-w-0 flex flex-col">
-                                        <span className="text-[8px] font-black text-orange-600 uppercase tracking-widest leading-none mb-0.5">{deliverySubType === 'delivery' ? 'Cliente & Endereço' : 'Cliente (Opcional)'}</span>
-                                        <span className="text-xs font-bold text-slate-700 truncate">{deliveryInfo.name || 'Selecionar...'}</span>
+                            <div className="flex gap-1">
+                                <button onClick={() => setActiveModal('delivery_info')} className="flex-1 h-9 border border-slate-200 rounded px-3 flex items-center justify-between hover:border-orange-500 hover:bg-orange-50/30 transition-all bg-white overflow-hidden">
+                                    <div className="min-w-0 flex flex-col items-start">
+                                        <span className="text-[7px] font-black text-orange-600 uppercase tracking-widest leading-none mb-0.5">{deliverySubType === 'delivery' ? 'Endereço' : 'Cliente'}</span>
+                                        <span className="text-[10px] font-bold text-slate-700 truncate w-full text-left">{deliveryInfo.name || 'Vincular Cliente...'}</span>
                                     </div>
-                                    <User size={18} className="text-orange-400" />
+                                    <User size={14} className="text-orange-400 shrink-0" />
                                 </button>
                                 {deliveryInfo.name && (
-                                    <button onClick={() => { setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'delivery' }); setCustomerAddresses([]); }} className="w-12 h-12 rounded-xl border-2 border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all bg-white">
-                                        <X size={18} />
+                                    <button onClick={() => { setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'delivery' }); setCustomerAddresses([]); }} className="w-9 h-9 rounded border border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center bg-white transition-all">
+                                        <X size={14} />
                                     </button>
                                 )}
                             </div>
-                            
-                            {deliverySubType === 'delivery' && deliveryInfo.address && (
-                                <div className="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 flex gap-2 animate-in fade-in slide-in-from-top-1">
-                                    <MapPin size={12} className="shrink-0 mt-0.5 text-orange-500"/>
-                                    <span className="line-clamp-2 font-medium leading-tight">{deliveryInfo.address}</span>
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-slate-50/20">
+                <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar bg-slate-50/30">
                     {cart.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-40 space-y-2">
-                            <div className="w-16 h-16 bg-slate-100 rounded-[2rem] flex items-center justify-center shadow-inner">
-                                <ShoppingCart size={32} />
-                            </div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-center italic">Carrinho Vazio</p>
+                        <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-30 space-y-1">
+                            <ShoppingCart size={24} />
+                            <p className="text-[7px] font-black uppercase tracking-widest italic">Vazio</p>
                         </div>
                     ) : cart.map(item => (
-                        <Card key={item.cartItemId} className="p-3 border-slate-100 shadow-sm animate-in slide-in-from-left-2 duration-300">
-                            <div className="flex justify-between items-start gap-2">
+                        <div key={item.cartItemId} className="p-2 bg-white border border-slate-200 rounded shadow-sm animate-in slide-in-from-left-1">
+                            <div className="flex justify-between items-start gap-1">
                                 <div className="min-w-0">
-                                    <span className="font-black text-[10px] text-slate-900 block uppercase italic leading-tight truncate">{item.name}</span>
+                                    <span className="font-black text-[9px] text-slate-900 block uppercase italic leading-none truncate">{item.name}</span>
                                     {item.observation && (
-                                        <span className="inline-block mt-0.5 text-[8px] bg-amber-50 text-amber-600 px-1 py-0.5 rounded font-bold uppercase">Obs: {item.observation}</span>
+                                        <span className="inline-block mt-0.5 text-[7px] text-amber-600 font-bold uppercase truncate max-w-full">[{item.observation}]</span>
                                     )}
                                 </div>
-                                <span className="font-black text-[10px] text-slate-900 italic shrink-0">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="font-black text-[9px] text-slate-900 italic shrink-0">R$ {(item.price * item.quantity).toFixed(2)}</span>
                             </div>
-                            <div className="flex items-center justify-between mt-2">
-                                <span className="text-[9px] font-black text-slate-400 italic">R$ {item.price.toFixed(2)} un</span>
-                                <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-inner">
-                                    <button onClick={() => updateCartItemQty(item.cartItemId, -1)} className="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm hover:text-rose-500 transition-all active:scale-90"><Minus size={12} strokeWidth={3} /></button>
-                                    <span className="text-xs font-black w-4 text-center italic">{item.quantity}</span>
-                                    <button onClick={() => updateCartItemQty(item.cartItemId, 1)} className="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm hover:text-emerald-500 transition-all active:scale-90"><Plus size={12} strokeWidth={3} /></button>
+                            <div className="flex items-center justify-between mt-1.5">
+                                <span className="text-[8px] font-bold text-slate-400 italic">R$ {item.price.toFixed(2)}/un</span>
+                                <div className="flex items-center gap-1.5 bg-slate-50 p-0.5 rounded border border-slate-100">
+                                    <button onClick={() => updateCartItemQty(item.cartItemId, -1)} className="w-5 h-5 flex items-center justify-center rounded bg-white border border-slate-200 hover:text-rose-500 transition-all"><Minus size={10} strokeWidth={3} /></button>
+                                    <span className="text-[10px] font-black w-4 text-center italic">{item.quantity}</span>
+                                    <button onClick={() => updateCartItemQty(item.cartItemId, 1)} className="w-5 h-5 flex items-center justify-center rounded bg-white border border-slate-200 hover:text-emerald-500 transition-all"><Plus size={10} strokeWidth={3} /></button>
                                 </div>
                             </div>
-                        </Card>
+                        </div>
                     ))}
                 </div>
 
-                <div className="p-4 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
-                    <div className="flex justify-between items-end mb-4">
+                <div className="p-3 bg-white border-t border-slate-100">
+                    <div className="flex justify-between items-center mb-3">
                         <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em] mb-0.5 leading-none">Subtotal</span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{cart.length} itens</span>
+                            <span className="text-[7px] font-black uppercase text-slate-400 tracking-widest leading-none mb-0.5">Total Carrinho</span>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{cart.length} registro(s)</span>
                         </div>
-                        <div className="text-2xl font-black italic text-slate-900 tracking-tighter leading-none">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
+                        <div className="text-xl font-black italic text-slate-900 tracking-tighter leading-none">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
                     </div>
-                    <Button onClick={handleOpenCheckout} disabled={cart.length === 0} fullWidth size="lg" className="h-12 rounded-xl text-[10px] uppercase tracking-widest font-black italic gap-2 shadow-lg">
-                        Finalizar Pedido <CheckCircle size={16} strokeWidth={3} />
+                    <Button onClick={handleOpenCheckout} disabled={cart.length === 0} fullWidth size="lg" className="h-10 rounded-lg text-[9px] uppercase tracking-widest font-black italic gap-2 shadow-md">
+                        PAGAMENTO <CheckCircle size={14} strokeWidth={3} />
                     </Button>
                 </div>
             </aside>
 
             {/* ÁREA PRINCIPAL: CATÁLOGO */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <div className="px-4 py-2 bg-white border-b border-slate-200 flex items-center justify-between gap-4 z-10">
-                    <div className="flex items-center gap-2">
-                        <button onClick={handleToggleStore} className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border-2 transition-all", isStoreOpen ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100")}>{isStoreOpen ? "LOJA ON" : "LOJA OFF"}</button>
-                        <div className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase border-2 flex items-center gap-1.5", isCashierOpen ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-50 text-slate-400 border-slate-100")}><div className={cn("w-1 h-1 rounded-full", isCashierOpen ? "bg-blue-500 animate-pulse" : "bg-slate-300")} />Caixa {isCashierOpen ? 'Aberto' : 'Fechado'}</div>
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-100/50">
+                <div className="px-4 py-2 bg-white border-b border-slate-200 flex items-center justify-between gap-4 z-10 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                        <button onClick={handleToggleStore} className={cn("px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-wider border transition-all", isStoreOpen ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200")}>{isStoreOpen ? "LOJA ONLINE" : "LOJA FECHADA"}</button>
+                        <div className={cn("px-2 py-1 rounded-md text-[8px] font-black uppercase border flex items-center gap-1.5", isCashierOpen ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-100 text-slate-400 border-slate-200")}><div className={cn("w-1 h-1 rounded-full", isCashierOpen ? "bg-blue-500 animate-pulse" : "bg-slate-300")} />{isCashierOpen ? 'CAIXA ABERTO' : 'CAIXA FECHADO'}</div>
                     </div>
-                    <div className="flex bg-slate-100 p-1 rounded-xl gap-1 w-full max-w-[280px] shadow-inner">
-                        <button onClick={() => setActiveTab('pos')} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all", activeTab === 'pos' ? "bg-white text-slate-900 shadow-sm scale-[1.02]" : "text-slate-400")}>Catálogo</button>
-                        <button onClick={() => { setActiveTab('tables'); loadTableSummary(); }} className={cn("flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all", activeTab === 'tables' ? "bg-white text-slate-900 shadow-sm scale-[1.02]" : "text-slate-400")}>Mesas</button>
+                    <div className="flex bg-slate-100 p-0.5 rounded-lg gap-0.5 w-full max-w-[220px] border border-slate-200">
+                        <button onClick={() => setActiveTab('pos')} className={cn("flex-1 py-1 rounded-md text-[8px] font-black uppercase tracking-wider transition-all", activeTab === 'pos' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400")}>Catálogo</button>
+                        <button onClick={() => { setActiveTab('tables'); loadTableSummary(); }} className={cn("flex-1 py-1 rounded-md text-[8px] font-black uppercase tracking-wider transition-all", activeTab === 'tables' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400")}>Mesas</button>
                     </div>
-                    <div className="flex gap-2">
-                        {!isCashierOpen ? <Button size="sm" className="rounded-lg px-4 h-9 text-[9px] bg-slate-900" onClick={() => setActiveModal('cashier_open')}>Abrir Caixa</Button> : <Button variant="danger" size="sm" className="rounded-lg px-4 h-9 text-[9px]" onClick={() => navigate('/cashier')}>Fechar Caixa</Button>}
+                    <div className="flex gap-1.5">
+                        {!isCashierOpen ? <Button size="sm" className="rounded-md px-3 h-7 text-[8px] font-black uppercase bg-slate-900" onClick={() => setActiveModal('cashier_open')}>Abrir Caixa</Button> : <Button variant="danger" size="sm" className="rounded-md px-3 h-7 text-[8px] font-black uppercase" onClick={() => navigate('/cashier')}>Encerrar Turno</Button>}
                     </div>
                 </div>
 
                 {activeTab === 'pos' ? (
                     <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="p-4 bg-white border-b border-slate-100 flex flex-col gap-4">
-                            <div className="relative group w-full max-w-2xl mx-auto">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
-                                <input ref={searchInputRef} type="text" className="w-full h-10 pl-12 pr-4 rounded-xl bg-slate-50 border-2 border-slate-100 focus:border-orange-500 focus:bg-white outline-none font-bold text-xs transition-all shadow-inner" placeholder="Pesquisar produto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                        <div className="p-3 bg-white border-b border-slate-100 flex flex-col gap-3 shrink-0">
+                            <div className="relative group w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={14} />
+                                <input ref={searchInputRef} type="text" className="w-full h-9 pl-10 pr-4 rounded-lg bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white outline-none font-bold text-[11px] transition-all" placeholder="Buscar produto pelo nome ou código..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                             </div>
-                            <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                                <button className={cn("px-4 h-8 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap", selectedCategory === 'all' ? "bg-slate-900 text-white shadow-md" : "bg-slate-50 text-slate-400 border border-slate-100")} onClick={() => setSelectedCategory('all')}>Todos</button>
-                                {categories.map(cat => <button key={cat.id} className={cn("px-4 h-8 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-2", selectedCategory === cat.id ? "bg-orange-500 border-orange-500 text-white shadow-md" : "bg-white border-slate-50 text-slate-400 hover:border-slate-200")} onClick={() => setSelectedCategory(cat.id)}>{cat.name}</button>)}
+                            <div className="flex gap-1 overflow-x-auto no-scrollbar pb-0.5">
+                                <button className={cn("px-3 h-7 rounded-md text-[8px] font-black uppercase tracking-wider transition-all whitespace-nowrap", selectedCategory === 'all' ? "bg-slate-900 text-white shadow-md" : "bg-slate-50 text-slate-500 border border-slate-200")} onClick={() => setSelectedCategory('all')}>Todos</button>
+                                {categories.map(cat => <button key={cat.id} className={cn("px-3 h-7 rounded-md text-[8px] font-black uppercase tracking-wider transition-all whitespace-nowrap border", selectedCategory === cat.id ? "bg-orange-500 border-orange-500 text-white shadow-sm" : "bg-white border-slate-200 text-slate-500 hover:border-slate-300")} onClick={() => setSelectedCategory(cat.id)}>{cat.name}</button>)}
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
+                        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-10 gap-2">
                                 {filteredProducts.map(p => (
-                                    <button key={p.id} className="group flex flex-col bg-white border border-slate-100 rounded-2xl overflow-hidden hover:border-orange-500 hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm p-0.5" onClick={() => handleProductClick(p)}>
-                                        <div className="aspect-square bg-slate-50 rounded-[0.9rem] overflow-hidden border border-slate-50 shrink-0">
-                                            {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><ShoppingCart size={20} /></div>}
+                                    <button key={p.id} className="group flex flex-col bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-orange-500 hover:shadow-md transition-all active:scale-[0.98] shadow-sm relative" onClick={() => handleProductClick(p)}>
+                                        <div className="aspect-square bg-slate-50 border-b border-slate-100 overflow-hidden relative">
+                                            {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity scale-105 group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><ShoppingCart size={16} /></div>}
+                                            <div className="absolute bottom-0 right-0 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-tl-md border-t border-l border-slate-100">
+                                                <span className="font-black text-[9px] text-orange-600">R$ {p.price.toFixed(2)}</span>
+                                            </div>
                                         </div>
-                                        <div className="p-2 flex flex-col flex-1 gap-1 text-center items-center justify-center min-h-[60px]">
-                                            <h3 className="font-black text-[9px] uppercase leading-tight text-slate-800 italic line-clamp-2">{p.name}</h3>
-                                            <div className="mt-1"><span className="font-black text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md">R$ {p.price.toFixed(2)}</span></div>
+                                        <div className="p-1.5 flex flex-col flex-1 justify-center min-h-[40px] bg-white">
+                                            <h3 className="font-bold text-[8px] uppercase leading-[1.2] text-slate-700 group-hover:text-slate-900 line-clamp-2 text-center">{p.name}</h3>
                                         </div>
                                     </button>
                                 ))}
@@ -620,22 +609,22 @@ const PosPage: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
+                    <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-12 gap-3">
                             {tablesSummary.map(t => (
-                                <button key={t.id} onClick={() => handleTableClick(t)} className={cn("flex flex-col rounded-2xl border-2 p-4 transition-all hover:scale-105 active:scale-95 shadow-md min-h-[120px] relative overflow-hidden group", t.status === 'free' ? "bg-white border-slate-50 hover:border-emerald-400" : "bg-rose-50 border-rose-100 hover:border-rose-400")}>
-                                    <div className={cn("absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-10 transition-transform group-hover:scale-150", t.status === 'free' ? "bg-emerald-500" : "bg-rose-500")} />
-                                    <span className={cn("text-2xl font-black italic tracking-tighter", t.status === 'free' ? "text-slate-200" : "text-rose-600")}>0{t.number}</span>
-                                                                            <div className="mt-auto flex flex-col items-start">
-                                                                            <span className={cn("text-[8px] font-black uppercase tracking-widest", t.status === 'free' ? "text-slate-300" : "text-rose-400")}>{t.status === 'free' ? 'Livre' : 'Ocupada'}</span>
-                                                                            {t.status !== 'free' && <span className="font-black text-sm text-rose-900 tracking-tighter italic leading-none">R$ {(t.totalAmount || 0).toFixed(2)}</span>}
-                                                                        </div>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </main>
+                                <button key={t.id} onClick={() => handleTableClick(t)} className={cn("flex flex-col rounded-xl border p-3 transition-all hover:scale-105 active:scale-95 shadow-sm min-h-[90px] relative overflow-hidden group", t.status === 'free' ? "bg-white border-slate-200 hover:border-emerald-400" : "bg-rose-50 border-rose-200 hover:border-rose-400")}>
+                                    <div className={cn("absolute -top-2 -right-2 w-10 h-10 rounded-full opacity-5 transition-transform group-hover:scale-150", t.status === 'free' ? "bg-emerald-500" : "bg-rose-500")} />
+                                    <span className={cn("text-xl font-black italic tracking-tighter", t.status === 'free' ? "text-slate-200" : "text-rose-600")}>{t.number < 10 ? `0${t.number}` : t.number}</span>
+                                    <div className="mt-auto flex flex-col items-start">
+                                        <span className={cn("text-[7px] font-black uppercase tracking-widest", t.status === 'free' ? "text-slate-300" : "text-rose-400")}>{t.status === 'free' ? 'Livre' : 'Ocupada'}</span>
+                                        {t.status !== 'free' && <span className="font-black text-[11px] text-rose-900 tracking-tighter italic leading-none">R$ {(t.totalAmount || 0).toFixed(2)}</span>}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </main>
                                     
                                                 {/* --- MODAIS DE NEGÓCIO --- */}
                                                 <AnimatePresence>
@@ -1109,187 +1098,186 @@ const PosPage: React.FC = () => {
                                     
                                                                     )}
                                     
-                                                    {/* Modal de Checkout PDV (Balcão / Entrega) - NOVO */}
-                                                    {activeModal === 'pos_checkout' && (
-                                                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-0">
-                                                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
-                                                            <motion.div 
-                                                                initial={{ x: '100%' }} 
-                                                                animate={{ x: 0 }} 
-                                                                exit={{ x: '100%' }} 
-                                                                transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                                                                className="relative w-full h-full bg-slate-50 flex flex-col overflow-hidden"
-                                                            >
-                                                                <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 shadow-sm">
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className="p-3 bg-orange-500 text-white rounded-2xl shadow-lg shadow-orange-100">
-                                                                            <ShoppingBag size={24} />
-                                                                        </div>
-                                                                        <div>
-                                                                            <h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Pagamento e Entrega</h3>
-                                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Finalização de Venda</p>
-                                                                        </div>
-                                                                    </div>
-                                                                    <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="bg-slate-100 rounded-full h-12 w-12 hover:bg-rose-50 hover:text-rose-500 transition-all">
-                                                                        <X size={28} />
-                                                                    </Button>
-                                                                </header>
+                    {/* Modal de Checkout PDV (Balcão / Entrega) - REFORMULADO INDUSTRIAL */}
+                    {activeModal === 'pos_checkout' && (
+                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" />
+                            <motion.div 
+                                initial={{ scale: 0.98, opacity: 0, y: 10 }} 
+                                animate={{ scale: 1, opacity: 1, y: 0 }} 
+                                exit={{ scale: 0.98, opacity: 0, y: 10 }} 
+                                className="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] border border-slate-200"
+                            >
+                                <header className="h-14 bg-slate-900 text-white px-6 flex items-center justify-between shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-1.5 bg-orange-500 rounded-lg"><ShoppingBag size={18} /></div>
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-widest italic">Finalização de Venda</h3>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">{orderMode === 'table' ? `Mesa ${selectedTable}` : 'Venda Direta / Delivery'}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setActiveModal('none')} className="p-2 hover:bg-white/10 rounded-full transition-all text-slate-400 hover:text-white"><X size={20} /></button>
+                                </header>
                                     
-                                                                <div className="flex-1 flex overflow-hidden">
-                                                                    {/* Coluna Esquerda: Resumo e Ajustes */}
-                                                                    <div className="w-[450px] bg-white border-r border-slate-200 p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8 shadow-xl z-10">
-                                                                        <div className="space-y-6">
-                                                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
-                                                                                <Calculator size={14} className="text-orange-500" /> Resumo do Pedido
-                                                                            </h4>
-                                                                            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-                                                                                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
-                                                                                <div className="space-y-4 relative z-10">
-                                                                                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                                                                        <span>Quantidade de itens:</span>
-                                                                                        <span className="text-white">{(cart.reduce((a, b) => a + b.quantity, 0) || 0).toFixed(3).replace('.', ',')}</span>
-                                                                                    </div>
-                                                                                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                                                                        <span>Total itens:</span>
-                                                                                        <span className="text-white text-sm">R$ {(cartTotal || 0).toFixed(2).replace('.', ',')}</span>
-                                                                                    </div>
-                                                                                    <div className="pt-4 border-t border-white/10 space-y-3">
-                                                                                        <div className="flex justify-between items-center">
-                                                                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Entrega:</span>
-                                                                                            <span className="text-blue-400 font-black italic">R$ {(parseFloat(posDeliveryFee || '0') || 0).toFixed(2).replace('.', ',')}</span>
-                                                                                        </div>
-                                                                                        <div className="flex justify-between items-center">
-                                                                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Acréscimo:</span>
-                                                                                            <span className="text-rose-400 font-black italic">R$ {(parseFloat(posExtraCharge || '0') || 0).toFixed(2).replace('.', ',')}</span>
-                                                                                        </div>
-                                                                                        <div className="flex justify-between items-center">
-                                                                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Desconto:</span>
-                                                                                            <span className="text-emerald-400 font-black italic">- R$ {(parseFloat(posDiscountValue || '0') || 0).toFixed(2).replace('.', ',')}</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div className="pt-6 border-t border-white/20">
-                                                                                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">VALOR TOTAL</span>
-                                                                                        <span className="text-5xl font-black italic text-white tracking-tighter">
-                                                                                            R$ {(cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')).toFixed(2).replace('.', ',')}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
+                                <div className="flex-1 flex overflow-hidden">
+                                    {/* Coluna Esquerda: Ajustes Financeiros */}
+                                    <div className="w-[380px] bg-slate-50 border-r border-slate-200 p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                                                <Calculator size={14} className="text-orange-500" /> Resumo Financeiro
+                                            </h4>
+                                            
+                                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
+                                                    <span>Subtotal</span>
+                                                    <span className="text-slate-900">R$ {cartTotal.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-blue-600 uppercase">
+                                                    <span>Taxa Entrega</span>
+                                                    <span>+ R$ {parseFloat(posDeliveryFee || '0').toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-rose-500 uppercase">
+                                                    <span>Acréscimo</span>
+                                                    <span>+ R$ {parseFloat(posExtraCharge || '0').toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-emerald-600 uppercase border-b border-slate-100 pb-3">
+                                                    <span>Desconto</span>
+                                                    <span>- R$ {parseFloat(posDiscountValue || '0').toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-end pt-2">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
+                                                    <span className="text-2xl font-black text-slate-900 italic tracking-tighter leading-none">
+                                                        R$ {(cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Entrega (R$)</label>
+                                                <input type="number" step="0.01" value={posDeliveryFee} onChange={e => setPosDeliveryFee(e.target.value)} className="w-full h-9 bg-white border border-slate-200 rounded-lg px-3 font-bold text-xs text-blue-600 outline-none focus:border-blue-500 shadow-sm" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Acréscimo (R$)</label>
+                                                <input type="number" step="0.01" value={posExtraCharge} onChange={e => setPosExtraCharge(e.target.value)} className="w-full h-9 bg-white border border-slate-200 rounded-lg px-3 font-bold text-xs text-rose-500 outline-none focus:border-rose-500 shadow-sm" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Desconto Aplicado</label>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-[10px]">R$</span>
+                                                    <input 
+                                                        type="number" step="0.01" value={posDiscountValue} 
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            setPosDiscountValue(val);
+                                                            const numVal = parseFloat(val) || 0;
+                                                            const perc = cartTotal > 0 ? ((numVal / cartTotal) * 100).toFixed(2) : '0';
+                                                            setPosDiscountPercentage(perc === 'Infinity' || perc === 'NaN' ? '0' : perc);
+                                                        }}
+                                                        className="w-full h-9 bg-white border border-slate-200 rounded-lg pl-7 pr-3 font-bold text-xs text-emerald-600 outline-none focus:border-emerald-500 shadow-sm"
+                                                    />
+                                                </div>
+                                                <div className="relative w-20">
+                                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-[10px]">%</span>
+                                                    <input 
+                                                        type="number" step="0.01" value={posDiscountPercentage}
+                                                        onChange={e => {
+                                                            const perc = e.target.value;
+                                                            setPosDiscountPercentage(perc);
+                                                            const numPerc = parseFloat(perc) || 0;
+                                                            const val = ((numPerc / 100) * cartTotal).toFixed(2);
+                                                            setPosDiscountValue(val);
+                                                        }}
+                                                        className="w-full h-9 bg-white border border-slate-200 rounded-lg px-3 font-bold text-xs text-emerald-600 outline-none focus:border-emerald-500 shadow-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5 mt-auto">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Observações do Pedido</label>
+                                            <textarea 
+                                                value={posObservations} onChange={e => setPosObservations(e.target.value)}
+                                                className="w-full h-20 bg-white border border-slate-200 rounded-lg p-3 font-medium text-[11px] outline-none focus:border-orange-500 shadow-sm resize-none"
+                                                placeholder="Instruções de entrega ou preparo..."
+                                            />
+                                        </div>
+                                    </div>
                                     
-                                                                        <div className="space-y-4">
-                                                                            <div className="grid grid-cols-2 gap-4">
-                                                                                <div className="space-y-1.5">
-                                                                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Entrega (R$)</label>
-                                                                                    <input 
-                                                                                        type="number" step="0.01" value={posDeliveryFee} onChange={e => setPosDeliveryFee(e.target.value)}
-                                                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-blue-600 focus:border-blue-500 outline-none transition-all"
-                                                                                    />
-                                                                                </div>
-                                                                                <div className="space-y-1.5">
-                                                                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Acréscimo (R$)</label>
-                                                                                    <input 
-                                                                                        type="number" step="0.01" value={posExtraCharge} onChange={e => setPosExtraCharge(e.target.value)}
-                                                                                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-rose-600 focus:border-rose-500 outline-none transition-all"
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
-                                    
-                                                                            <div className="space-y-1.5">
-                                                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Desconto</label>
-                                                                                <div className="flex gap-2">
-                                                                                    <div className="relative flex-1">
-                                                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">R$</span>
-                                                                                        <input 
-                                                                                            type="number" step="0.01" value={posDiscountValue} 
-                                                                                            onChange={e => {
-                                                                                                const val = e.target.value;
-                                                                                                setPosDiscountValue(val);
-                                                                                                const numVal = parseFloat(val) || 0;
-                                                                                                const perc = cartTotal > 0 ? ((numVal / cartTotal) * 100).toFixed(2) : '0';
-                                                                                                setPosDiscountPercentage(perc === 'Infinity' || perc === 'NaN' ? '0' : perc);
-                                                                                            }}
-                                                                                            className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl pl-8 pr-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
-                                                                                        />
-                                                                                    </div>
-                                                                                    <div className="relative w-28">
-                                                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs italic">%</span>
-                                                                                        <input 
-                                                                                            type="number" step="0.01" value={posDiscountPercentage}
-                                                                                            onChange={e => {
-                                                                                                const perc = e.target.value;
-                                                                                                setPosDiscountPercentage(perc);
-                                                                                                const numPerc = parseFloat(perc) || 0;
-                                                                                                const val = ((numPerc / 100) * cartTotal).toFixed(2);
-                                                                                                setPosDiscountValue(val);
-                                                                                            }}
-                                                                                            className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 font-black italic text-emerald-600 focus:border-emerald-500 outline-none transition-all"
-                                                                                        />
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                    
-                                                                        <div className="space-y-1.5 mt-auto">
-                                                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Observações para entrega</label>
-                                                                            <textarea 
-                                                                                value={posObservations} onChange={e => setPosObservations(e.target.value)}
-                                                                                className="w-full h-24 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] p-4 font-bold text-xs outline-none focus:border-orange-500 transition-all resize-none shadow-inner"
-                                                                                placeholder="Ex: Portão azul, interfone 201..."
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                    
-                                                                    {/* Coluna Direita: Meios de Pagamento */}
-                                                                    <div className="flex-1 p-10 flex flex-col gap-10">
-                                                                        <div className="flex-1 space-y-8">
-                                                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] flex items-center gap-2 italic">
-                                                                                <Wallet size={14} className="text-orange-500" /> Formas de pagamento
-                                                                            </h4>
-                                                                            
-                                                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                                                                {paymentMethods.map(m => (
-                                                                                    <button 
-                                                                                        key={m.id} 
-                                                                                        onClick={() => setPosPaymentMethodId(m.id)}
-                                                                                        className={cn(
-                                                                                            "h-20 flex flex-col items-center justify-center gap-1 rounded-[1.5rem] border-2 transition-all shadow-sm group",
-                                                                                            posPaymentMethodId === m.id 
-                                                                                                ? "bg-blue-500 border-blue-500 text-white shadow-blue-200 shadow-xl scale-[1.02]" 
-                                                                                                : "bg-white border-slate-100 text-slate-600 hover:border-blue-400"
-                                                                                        )}
-                                                                                    >
-                                                                                        <span className={cn("text-[10px] font-black uppercase tracking-widest", posPaymentMethodId === m.id ? "text-white/80" : "text-slate-400 group-hover:text-blue-500")}>{m.name}</span>
-                                                                                    </button>
-                                                                                ))}
-                                                                            </div>
-                                                                        </div>
-                                    
-                                                                        <div className="bg-orange-500 rounded-[2.5rem] p-8 text-white shadow-2xl flex items-center justify-between">
-                                                                            <div>
-                                                                                <span className="text-[12px] font-black uppercase tracking-widest text-orange-200 block mb-1">Valor Restante:</span>
-                                                                                <span className="text-4xl font-black italic tracking-tighter">
-                                                                                    R$ {(!posPaymentMethodId ? (cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0')) : 0).toFixed(2).replace('.', ',')}
-                                                                                </span>
-                                                                            </div>
-                                                                            <div className="flex gap-4">
-                                                                                <Button variant="ghost" onClick={() => setActiveModal('none')} className="h-16 px-8 rounded-2xl bg-white/10 hover:bg-white/20 text-white uppercase font-black italic tracking-widest text-[11px]">
-                                                                                    VOLTAR
-                                                                                </Button>
-                                                                                <Button 
-                                                                                    onClick={submitOrder} 
-                                                                                    disabled={!posPaymentMethodId}
-                                                                                    className="h-16 px-12 rounded-2xl bg-white text-orange-600 hover:bg-slate-50 font-black italic tracking-widest text-[11px] shadow-xl disabled:opacity-50"
-                                                                                >
-                                                                                    FECHAR PEDIDO
-                                                                                </Button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </motion.div>
+                                    {/* Coluna Direita: Métodos de Pagamento */}
+                                    <div className="flex-1 bg-white p-8 flex flex-col overflow-y-auto custom-scrollbar">
+                                        <div className="flex-1 space-y-6">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                                                    <Wallet size={14} className="text-orange-500" /> Métodos de Recebimento
+                                                </h4>
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
+                                                    <Info size={12} />
+                                                    <span className="text-[9px] font-bold uppercase tracking-tight">Escolha 01 forma de pagamento</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {paymentMethods.map(m => (
+                                                    <button 
+                                                        key={m.id} 
+                                                        onClick={() => setPosPaymentMethodId(m.id)}
+                                                        className={cn(
+                                                            "h-14 flex items-center px-4 gap-3 rounded-xl border-2 transition-all group relative overflow-hidden",
+                                                            posPaymentMethodId === m.id 
+                                                                ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200 scale-[1.02]" 
+                                                                : "bg-white border-slate-100 text-slate-600 hover:border-slate-300"
+                                                        )}
+                                                    >
+                                                        <div className={cn(
+                                                            "w-8 h-8 rounded-lg flex items-center justify-center text-lg",
+                                                            posPaymentMethodId === m.id ? "bg-white/10" : "bg-slate-50 group-hover:bg-slate-100"
+                                                        )}>
+                                                            {m.type === 'CASH' ? '💵' : m.type === 'PIX' ? '📱' : '💳'}
                                                         </div>
-                                                    )}
+                                                        <span className="text-[10px] font-black uppercase tracking-widest truncate">{m.name}</span>
+                                                        {posPaymentMethodId === m.id && (
+                                                            <div className="absolute top-1 right-1">
+                                                                <CheckCircle size={10} className="text-emerald-400" />
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between bg-slate-50 -mx-8 -mb-8 p-8">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status do Pagamento</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={cn("w-2 h-2 rounded-full", posPaymentMethodId ? "bg-emerald-500" : "bg-rose-500 animate-pulse")} />
+                                                    <span className={cn("text-xs font-black uppercase italic", posPaymentMethodId ? "text-emerald-600" : "text-rose-500")}>
+                                                        {posPaymentMethodId ? 'Aguardando Confirmação' : 'Selecione o Meio de Pagamento'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <Button variant="outline" onClick={() => setActiveModal('none')} className="h-12 px-6 rounded-xl border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-widest">
+                                                    Cancelar
+                                                </Button>
+                                                <Button 
+                                                    onClick={submitOrder} 
+                                                    disabled={!posPaymentMethodId}
+                                                    className="h-12 px-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-widest shadow-xl disabled:opacity-30 disabled:grayscale transition-all"
+                                                >
+                                                    Confirmar e Enviar <MoveRight size={16} className="ml-2" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
                 {/* Modal de Transferência */}
                 {activeModal === 'transfer_table' && viewingTable && (
                     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">

@@ -53,7 +53,9 @@ class OrderController {
       paymentMethod,
       tableNumber: validatedData.tableNumber,
       customerName: req.body.customerName || validatedData.deliveryInfo?.name,
-      userId: validatedData.userId || req.user?.id
+      userId: validatedData.userId || req.user?.id,
+      discount: req.body.discount,
+      extraCharge: req.body.extraCharge
     });
 
     res.status(201).json(order);
