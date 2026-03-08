@@ -70,8 +70,15 @@ const TableCheckout: React.FC = () => {
             setOrder(res.data);
             
             // Busca configurações do restaurante para taxa de serviço
-            const restRes = await api.get(`/admin/settings/restaurant`);
-            setServiceTaxRate(restRes.data.serviceTaxPercentage || 10);
+            try {
+                const restRes = await api.get(`/admin/settings`);
+                // Assume que as configurações podem vir em restRes.data ou restRes.data.settings
+                const settings = restRes.data.settings || restRes.data;
+                setServiceTaxRate(settings.serviceTaxPercentage || 10);
+            } catch (err) {
+                console.error("[Settings] Erro ao buscar taxa de serviço:", err);
+                setServiceTaxRate(10); // Fallback padrão 10%
+            }
             
             fetchPaymentMethods(res.data.restaurantId);
         } catch (err) {
