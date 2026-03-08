@@ -1,39 +1,16 @@
-{"level":"info","message":"Servidor rodando em http://localhost:3001"}
-[CASHIER_CONTROLLER] Tentativa de fechamento: {
-  finalAmount: 1193,
-  notes: '',
-  closingDetails: {
-    cash: '421.80',
-    pix: '125.99',
-    credit_card: '0',
-    debit_card: '0',
-    other: '0',
-    'cartão de crédito': '0',
-    'cartão de débito': '645.21'
-  }
-}
-{"body":{"closingDetails":{"cartão de crédito":"0","cartão de débito":"645.21","cash":"421.80","credit_card":"0","debit_card":"0","other":"0","pix":"125.99"},"finalAmount":1193,"notes":""},"level":"error","message":"CRITICAL ERROR 💥 Cannot read properties of undefined (reading '_zod')","method":"POST","url":"/api/cashier/close"}
-ERROR 💥 {
-  statusCode: 500,
-  status: 'error',
-  message: "Cannot read properties of undefined (reading '_zod')"
-}
-[CASHIER_CONTROLLER] Tentativa de fechamento: {
-  finalAmount: 1193,
-  notes: 'ss',
-  closingDetails: {
-    cash: '421.80',
-    pix: '125.99',
-    credit_card: '0',
-    debit_card: '0',
-    other: '0',
-    'cartão de crédito': '0',
-    'cartão de débito': '645.21'
-  }
-}
-{"body":{"closingDetails":{"cartão de crédito":"0","cartão de débito":"645.21","cash":"421.80","credit_card":"0","debit_card":"0","other":"0","pix":"125.99"},"finalAmount":1193,"notes":"ss"},"level":"error","message":"CRITICAL ERROR 💥 Cannot read properties of undefined (reading '_zod')","method":"POST","url":"/api/cashier/close"}
-ERROR 💥 {
-  statusCode: 500,
-  status: 'error',
-  message: "Cannot read properties of undefined (reading '_zod')"
-}
+URL da solicitação
+https://kicardapio.towersfy.com/api/admin/settings/restaurant
+Método da solicitação
+GET
+Código de status
+404 Not Found
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /api/admin/settings/restaurant</pre>
+</body>
+</html>

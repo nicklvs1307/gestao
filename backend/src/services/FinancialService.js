@@ -1,6 +1,41 @@
 const prisma = require('../lib/prisma');
 
 class FinancialService {
+
+  /**
+   * Processa o lançamento financeiro de uma venda.
+   * Centraliza a lógica de categorias e sessões de caixa.
+   */
+  async processOrderPayment(restaurantId, { order, paymentMethod, cashierId = null, tx = prisma }) {
+    let category = await tx.transactionCategory.findFirst({
+        where: { restaurantId, name: 'Vendas' }
+    });
+
+    if (!category) {
+        category = await tx.transactionCategory.create({
+            data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId }
+        });
+    }
+
+    const description = `VENDA #${order.dailyOrderNumber || order.id.slice(-4)}`;
+    
+    return await tx.financialTransaction.create({
+        data: {
+            restaurantId,
+            cashierId,
+            orderId: order.id,
+            categoryId: category.id,
+            description,
+            amount: order.total,
+            type: 'INCOME',
+            status: 'PAID',
+            dueDate: new Date(),
+            paymentDate: new Date(),
+            paymentMethod
+        }
+    });
+  }
+
   /**
    * Cria uma transação financeira e atualiza o saldo bancário se necessário.
    */

@@ -47,9 +47,13 @@ class ProductionController {
         const { id } = req.params;
         const validatedData = SaveRecipeSchema.parse(req.body);
 
+        const restaurantId = req.restaurantId;
         await prisma.$transaction(async (tx) => {
             await tx.ingredientRecipe.deleteMany({
-                where: { producedIngredientId: id }
+                where: { 
+                    producedIngredientId: id,
+                    producedIngredient: { restaurantId }
+                }
             });
 
             await tx.ingredientRecipe.createMany({

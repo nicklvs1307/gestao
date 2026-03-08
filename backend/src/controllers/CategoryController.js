@@ -1,8 +1,8 @@
 const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
+const { PUBLIC_PRODUCT_SELECT, applyAddonGroupOrder } = require('../utils/productUtils');
 
 class CategoryController {
-  // Chamado por router.get('/', ...)
   getCategoriesHierarchy = asyncHandler(async (req, res) => {
     const categories = await prisma.category.findMany({
       where: { restaurantId: req.restaurantId },
@@ -27,7 +27,6 @@ class CategoryController {
     res.json(categories);
   });
 
-  // Chamado por router.get('/flat', ...)
   getCategoriesFlat = asyncHandler(async (req, res) => {
     const categories = await prisma.category.findMany({
       where: { restaurantId: req.restaurantId },
@@ -36,7 +35,7 @@ class CategoryController {
     res.json(categories);
   });
 
-  // Chamado por router.get('/:restaurantId', ...) (Client)
+  // ROTA CLIENTE (Segura)
   getClientCategories = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
     const categories = await prisma.category.findMany({
@@ -48,59 +47,27 @@ class CategoryController {
         addonGroups: {
           orderBy: { order: 'asc' },
           include: {
-            addons: { orderBy: { order: 'asc' } }
+            addons: { 
+              select: {
+                id: true, name: true, price: true, maxQuantity: true, order: true
+              },
+              orderBy: { order: 'asc' } 
+            }
           }
         },
         products: {
-          where: { isAvailable: true },
-          include: {
-            sizes: { orderBy: { order: 'asc' } },
-            addonGroups: {
-              orderBy: { order: 'asc' },
-              include: {
-                addons: { orderBy: { order: 'asc' } }
-              }
-            },
-            categories: {
-              include: {
-                addonGroups: {
-                  orderBy: { order: 'asc' },
-                  include: {
-                    addons: { orderBy: { order: 'asc' } }
-                  }
-                }
-              }
-            },
-            promotions: {
-              where: {
-                isActive: true,
-                startDate: { lte: new Date() },
-                endDate: { gte: new Date() },
-              }
-            }
-          },
+          where: { isAvailable: true, showInMenu: true },
+          select: PUBLIC_PRODUCT_SELECT, // Segurança: Não vaza custos/NCM
           orderBy: { order: 'asc' }
         }
       },
       orderBy: { order: 'asc' }
     });
 
-    // Aplicar ordenação personalizada de grupos se existir o campo addonGroupsOrder
+    // Usa o utilitário centralizado para ordenação
     const sortedCategories = categories.map(category => {
         if (category.products) {
-            category.products = category.products.map(product => {
-                if (product.addonGroupsOrder && Array.isArray(product.addonGroupsOrder) && product.addonGroupsOrder.length > 0) {
-                    const orderMap = new Map();
-                    product.addonGroupsOrder.forEach((id, index) => orderMap.set(id, index));
-
-                    product.addonGroups.sort((a, b) => {
-                        const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
-                        const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
-                        return orderA - orderB;
-                    });
-                }
-                return product;
-            });
+            category.products = category.products.map(product => applyAddonGroupOrder(product));
         }
         return category;
     });
@@ -118,32 +85,16 @@ class CategoryController {
       }
     });
     if (!category) {
-      return res.status(404).json({ message: 'Categoria não encontrada' });
+      res.status(404);
+      throw new Error('Categoria não encontrada');
     }
     res.json(category);
   });
 
   createCategory = asyncHandler(async (req, res) => {
-    const { 
-        name, description, cuisineType, order, saiposIntegrationCode, 
-        isActive, allowDelivery, allowPos, allowOnline,
-        availableDays, startTime, endTime 
-    } = req.body;
-
     const category = await prisma.category.create({
       data: {
-        name,
-        description,
-        cuisineType,
-        order: order || 0,
-        saiposIntegrationCode,
-        isActive: isActive !== undefined ? isActive : true,
-        allowDelivery: allowDelivery !== undefined ? allowDelivery : true,
-        allowPos: allowPos !== undefined ? allowPos : true,
-        allowOnline: allowOnline !== undefined ? allowOnline : true,
-        availableDays,
-        startTime,
-        endTime,
+        ...req.body,
         restaurant: { connect: { id: req.restaurantId } }
       }
     });
@@ -152,43 +103,21 @@ class CategoryController {
 
   updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { 
-        name, description, cuisineType, order, saiposIntegrationCode, 
-        isActive, allowDelivery, allowPos, allowOnline,
-        availableDays, startTime, endTime 
-    } = req.body;
-
     const category = await prisma.category.update({
       where: { id },
-      data: {
-        name,
-        description,
-        cuisineType,
-        order,
-        saiposIntegrationCode,
-        isActive,
-        allowDelivery,
-        allowPos,
-        allowOnline,
-        availableDays,
-        startTime,
-        endTime
-      }
+      data: req.body
     });
     res.json(category);
   });
 
   deleteCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    await prisma.category.delete({
-      where: { id }
-    });
+    await prisma.category.delete({ where: { id } });
     res.status(204).send();
   });
 
   reorderCategories = asyncHandler(async (req, res) => {
     const { items } = req.body;
-    
     await prisma.$transaction(
         items.map(item => 
             prisma.category.update({

@@ -8,13 +8,20 @@ class JobService {
 
   init() {
     console.log('[JobService] Inicializando agendador de tarefas...');
+    let isRunningChecklist = false;
 
-    // 1. Cron Job para Relatórios de Checklist (Verifica a cada minuto)
-    const checklistReportJob = cron.schedule('* * * * *', async () => {
+    // 1. Cron Job para Relatórios de Checklist (Verifica a cada hora)
+    const checklistReportJob = cron.schedule('0 * * * *', async () => {
+      if (isRunningChecklist) return; // Trava contra sobreposição
+      
       try {
+        isRunningChecklist = true;
+        console.log('[JobService] Iniciando processamento de relatórios agendados...');
         await checklistReportService.runAllScheduledReports();
       } catch (error) {
         console.error('[JobService] Erro ao processar relatórios de checklist:', error);
+      } finally {
+        isRunningChecklist = false;
       }
     });
 

@@ -128,16 +128,19 @@ class WhatsAppAIService {
         const categories = await prisma.category.findMany({
           where: { 
             restaurantId,
+            isActive: true, // Apenas categorias ativas
             ...(args.category ? { name: { contains: args.category, mode: 'insensitive' } } : {})
           },
-          include: { 
-            products: { 
-              where: { isAvailable: true },
-              include: {
-                sizes: { include: { globalSize: true } },
-                addonGroups: { include: { addons: true } }
+          select: { // SELECT em vez de include para performance
+            name: true,
+            products: {
+              where: { isAvailable: true, showInMenu: true },
+              select: {
+                id: true, name: true, price: true, description: true,
+                sizes: { select: { name: true, price: true, globalSize: { select: { name: true } } } },
+                addonGroups: { select: { name: true, addons: { select: { name: true, price: true } } } }
               }
-            } 
+            }
           },
           orderBy: { order: 'asc' }
         });
@@ -146,12 +149,12 @@ class WhatsAppAIService {
 
         let menuText = "CARDÁPIO E PREÇOS (NUNCA INVENTE VALORES):\n";
         categories.forEach(cat => {
-          if (cat.products.length > 0) {
+          if (cat.products && cat.products.length > 0) {
             menuText += `\n[${cat.name.toUpperCase()}]\n`;
             cat.products.forEach(p => {
               menuText += `- ${p.name}`;
               
-              if (p.sizes.length > 0) {
+              if (p.sizes && p.sizes.length > 0) {
                 const sizesStr = p.sizes.map(s => `${s.name || s.globalSize?.name}: R$ ${s.price.toFixed(2)}`).join(' | ');
                 menuText += ` (${sizesStr})\n`;
               } else {
@@ -160,7 +163,7 @@ class WhatsAppAIService {
 
               if (p.description) menuText += `  Desc: ${p.description}\n`;
               
-              if (p.addonGroups.length > 0) {
+              if (p.addonGroups && p.addonGroups.length > 0) {
                 p.addonGroups.forEach(group => {
                   const addonsStr = group.addons.map(a => `${a.name}(R$ ${a.price.toFixed(2)})`).join(', ');
                   menuText += `  * ${group.name}: ${addonsStr}\n`;
@@ -398,82 +401,56 @@ class WhatsAppAIService {
     try {
       if (!process.env.OPENAI_API_KEY) return "Erro: API Key não configurada.";
 
+      // --- 1. RATE LIMITING SIMPLES (Memória) ---
+      if (!this.rateLimits) this.rateLimits = new Map();
+      const now = Date.now();
+      const userLimit = this.rateLimits.get(customerPhone) || { count: 0, firstMsg: now };
+      
+      if (now - userLimit.firstMsg > 60000) { // Reseta a cada 1 minuto
+        userLimit.count = 0;
+        userLimit.firstMsg = now;
+      }
+      
+      userLimit.count++;
+      this.rateLimits.set(customerPhone, userLimit);
+
+      if (userLimit.count > 10) { // Máximo 10 mensagens por minuto
+        return "Você está enviando mensagens muito rápido. Por favor, aguarde um minuto.";
+      }
+
       const settings = await prisma.whatsAppSettings.findUnique({ where: { restaurantId } });
       if (!settings || !settings.agentEnabled) return null;
 
       const history = await prisma.whatsAppChatMessage.findMany({
         where: { restaurantId, customerPhone },
         orderBy: { timestamp: 'desc' },
-        take: 20
+        take: 15 // Reduzido de 20 para 15 para economizar tokens de contexto
       });
-
-      // Inverte para ficar cronológico (mais antiga para mais recente)
-      const chatContext = history.reverse().map(msg => ({ role: msg.role, content: msg.content }));
 
       const restaurant = await prisma.restaurant.findUnique({ 
         where: { id: restaurantId },
-        include: { 
-          settings: true,
-          categories: {
-            include: {
-              products: {
-                where: { isAvailable: true },
-                include: {
-                  sizes: { include: { globalSize: true } },
-                  addonGroups: { include: { addons: true } }
-                }
-              }
-            }
-          }
-        }
+        select: { name: true, address: true, settings: { select: { deliveryFee: true, deliveryTime: true } } }
       });
 
-      // Constrói uma representação compacta do cardápio para o prompt
-      let menuContext = "";
-      restaurant.categories.forEach(cat => {
-        if (cat.products.length > 0) {
-          menuContext += `\nCategoria: ${cat.name}\n`;
-          cat.products.forEach(p => {
-            const sizes = p.sizes.map(s => `${s.name || s.globalSize?.name} (R$${s.price})`).join(", ");
-            menuContext += `- [ID: ${p.id}] ${p.name}: R$ ${p.price}${sizes ? ` | Tamanhos: ${sizes}` : ""}\n`;
-            if (p.addonGroups.length > 0) {
-              p.addonGroups.forEach(g => {
-                const addons = g.addons.map(a => `${a.name} (R$${a.price})`).join(", ");
-                menuContext += `  * Adicionais (${g.name}): ${addons}\n`;
-              });
-            }
-          });
-        }
-      });
-
-      const systemPrompt = `Você é o ${settings.agentName || 'Atendente'}, o assistente virtual inteligente do restaurante ${restaurant.name}.
+      const systemPrompt = `Você é o ${settings.agentName || 'Atendente'}, o assistente virtual do restaurante ${restaurant.name}.
 
 ${settings.agentPersona || ''}
 
-OBJETIVO: Realizar pedidos sem erros. Você tem acesso TOTAL ao cardápio abaixo.
+OBJETIVO: Realizar pedidos sem erros. 
 
-CARDÁPIO REAL (USE APENAS ESTES ITENS):
-${menuContext}
-
-REGRAS CRÍTICAS:
-1. MAPEAMENTO DE ITENS: Quando o cliente pedir algo, identifique o ID correspondente no cardápio acima. 
-2. VALIDAÇÃO: Se o cliente pedir algo vagamente (ex: "uma pizza"), pergunte o sabor e tamanho baseado nas opções da categoria "Pizzas" acima.
-3. RESUMO OBRIGATÓRIO: Antes de 'create_order', envie um resumo:
-   *Item 1* (Tamanho) - R$ XX
-   *Adicionais:* Item A, Item B
-   *Total:* R$ XX
-   "Posso confirmar?"
-4. CRIAÇÃO DE PEDIDO: Ao chamar 'create_order', use os nomes EXATOS do cardápio.
-5. PAGAMENTO: Pergunte a forma de pagamento (Dinheiro, PIX, Cartão) e se precisa de troco.
-6. ENDEREÇO: Peça o endereço completo para entrega ou informe se é para retirada.
+DIRETRIZES DE CUSTO E SEGURANÇA:
+1. CONSULTA OBRIGATÓRIA: Você NÃO conhece o cardápio de cor. Antes de falar de qualquer produto ou preço, você DEVE usar as ferramentas 'get_menu' ou 'search_products'.
+2. PREÇOS REAIS: Nunca invente preços. Se a ferramenta não retornar um preço, diga que não localizou o item.
+3. RESUMO ANTES DE FINALIZAR: Sempre apresente um resumo com valores e peça confirmação antes de chamar 'create_order'.
+4. PAGAMENTO E ENDEREÇO: Sempre confirme o método de pagamento e o endereço/tipo de entrega (Delivery ou Retirada).
 
 DADOS DO RESTAURANTE:
-- Endereço: ${restaurant.address || 'Não informado'}
+- Nome: ${restaurant.name}
 - Taxa de Entrega: R$ ${restaurant.settings?.deliveryFee || 0}
 - Tempo Estimado: ${restaurant.settings?.deliveryTime || '30-40 min'}`;
 
-      // Formata o histórico para a API da OpenAI
-      const formattedHistory = history.map(msg => ({ 
+      // Formata o histórico cronológico
+      const formattedHistory = history.reverse().map(msg => ({ 
         role: msg.role === 'assistant' ? 'assistant' : 'user', 
         content: msg.content 
       }));

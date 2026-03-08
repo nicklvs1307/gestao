@@ -2,134 +2,111 @@ const ProductService = require('../services/ProductService');
 const AppError = require('../utils/AppError');
 
 class ProductController {
-  constructor(service) {
-    this.service = service;
-    
-    // Bind explicito para Express
-    this.getAll = this.getAll.bind(this);
-    this.getOne = this.getOne.bind(this);
-    this.create = this.create.bind(this);
-    this.update = this.update.bind(this);
-    this.delete = this.delete.bind(this);
-    this.getPricingAnalysis = this.getPricingAnalysis.bind(this);
-    this.reorderProducts = this.reorderProducts.bind(this);
-    this.uploadImage = this.uploadImage.bind(this);
-    this.getClientProducts = this.getClientProducts.bind(this);
-
-    // Aliases (vão herdar o bind porque chamam as funções já bindadas)
-    this.getProducts = this.getAll;
-    this.getProductById = this.getOne;
-    this.createProduct = this.create;
-    this.updateProduct = this.update;
-    this.deleteProduct = this.delete;
-  }
-
-  // MÉTODOS ORIGINAIS REFATORADOS
-  async getAll(req, res, next) {
+  // GET /api/products
+  getAll = async (req, res, next) => {
     try {
       const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
-      const products = await this.service.getAllProducts(restaurantId, req.query);
-      
-      // DEVOLVER O ARRAY DIRETAMENTE (Compatibilidade Frontend)
+      const products = await ProductService.getAllProducts(restaurantId, req.query, false);
       res.json(products);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async getOne(req, res, next) {
+  // GET /api/products/:id
+  getOne = async (req, res, next) => {
     try {
       const { id } = req.params;
       const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
-      
-      const product = await this.service.getProductById(id, restaurantId);
-
+      const product = await ProductService.getProductById(id, restaurantId, false);
       res.json(product);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async create(req, res, next) {
+  create = async (req, res, next) => {
     try {
       const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
-      const product = await this.service.createProduct(req.body, restaurantId);
-
+      const product = await ProductService.createProduct(req.body, restaurantId);
       res.status(201).json(product);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async update(req, res, next) {
+  update = async (req, res, next) => {
     try {
       const { id } = req.params;
       const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
-      
-      const product = await this.service.updateProduct(id, req.body, restaurantId);
-
+      const product = await ProductService.updateProduct(id, req.body, restaurantId);
       res.json(product);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async delete(req, res, next) {
+  delete = async (req, res, next) => {
     try {
       const { id } = req.params;
       const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
-      
-      await this.service.deleteProduct(id, restaurantId);
-
+      await ProductService.deleteProduct(id, restaurantId);
       res.status(204).end();
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  // MÉTODOS ADICIONAIS NECESSÁRIOS
-  async getPricingAnalysis(req, res, next) {
+  getPricingAnalysis = async (req, res, next) => {
     try {
       const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
-      const analysis = await this.service.getPricingAnalysis(restaurantId);
+      const analysis = await ProductService.getPricingAnalysis(restaurantId);
       res.json(analysis);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async reorderProducts(req, res, next) {
+  reorderProducts = async (req, res, next) => {
     try {
-      const { restaurantId } = req.user;
+      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
       const { products } = req.body;
-      await this.service.reorderProducts(products, restaurantId);
+      await ProductService.reorderProducts(products, restaurantId);
       res.status(200).json({ status: 'success', message: 'Products reordered successfully' });
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async uploadImage(req, res, next) {
+  uploadImage = async (req, res, next) => {
     try {
       if (!req.file) {
         throw new AppError('No image uploaded', 400);
       }
       const imageUrl = `/uploads/${req.file.filename}`;
-      res.json({ imageUrl }); // Devolve o objeto com imageUrl direto
+      res.json({ imageUrl });
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async getClientProducts(req, res, next) {
+  // ROTA PÚBLICA (Cardápio Digital) - Aplica DTO de segurança
+  getClientProducts = async (req, res, next) => {
     try {
       const { restaurantId } = req.params;
-      const products = await this.service.getAllProducts(restaurantId, req.query);
-      res.json(products); // Devolve o array direto
+      const products = await ProductService.getAllProducts(restaurantId, req.query, true);
+      res.json(products);
     } catch (error) {
       next(error);
     }
-  }
+  };
+
+  // Aliases para compatibilidade
+  getProducts = this.getAll;
+  getProductById = this.getOne;
+  createProduct = this.create;
+  updateProduct = this.update;
+  deleteProduct = this.delete;
 }
 
-module.exports = new ProductController(ProductService);
+module.exports = new ProductController();

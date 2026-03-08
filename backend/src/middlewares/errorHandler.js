@@ -25,6 +25,20 @@ const handleJWTError = () =>
 const handleJWTExpiredError = () =>
   new AppError('Your token has expired! Please log in again.', 401);
 
+const handlePrismaError = (err) => {
+  if (err.code === 'P2002') {
+    const field = err.meta?.target?.[0] || 'field';
+    return new AppError(`A record with this ${field} already exists.`, 400);
+  }
+  if (err.code === 'P2025') {
+    return new AppError('Record not found or already deleted.', 404);
+  }
+  if (err.code === 'P2003') {
+    return new AppError('Cannot delete or update because of a related record.', 400);
+  }
+  return new AppError(`Database error: ${err.message}`, 500);
+};
+
 const sendErrorDev = (err, req, res) => {
   // A) API
   if (req.originalUrl.startsWith('/api')) {
@@ -108,6 +122,9 @@ module.exports = (err, req, res, next) => {
     if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
     if (error.name === 'JsonWebTokenError') error = handleJWTError();
     if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+    
+    // Prisma Client Errors
+    if (err.code && err.code.startsWith('P')) error = handlePrismaError(err);
 
     sendErrorProd(error, req, res);
   }

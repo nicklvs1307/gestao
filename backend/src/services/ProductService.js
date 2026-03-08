@@ -1,14 +1,19 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const AppError = require('../utils/AppError');
+const { PUBLIC_PRODUCT_SELECT, applyAddonGroupOrder } = require('../utils/productUtils');
 
 class ProductService {
-  async getAllProducts(restaurantId, query) {
-    const { categoryId, isAvailable, showInMenu, search } = query;
+  /**
+   * Busca todos os produtos com suporte a filtros, paginação e segurança (isPublic)
+   */
+  async getAllProducts(restaurantId, query, isPublic = false) {
+    const { categoryId, isAvailable, showInMenu, search, page = 1, limit = 50 } = query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
 
     const where = {
       restaurantId,
-      ...(categoryId && { categories: { some: { id: categoryId } } }), // Filtro Many-to-Many
+      ...(categoryId && { categories: { some: { id: categoryId } } }),
       ...(isAvailable !== undefined && { isAvailable: isAvailable === 'true' }),
       ...(showInMenu !== undefined && { showInMenu: showInMenu === 'true' }),
       ...(search && {
@@ -19,32 +24,22 @@ class ProductService {
       }),
     };
 
-    let products = await prisma.product.findMany({
+    const findOptions = {
       where,
-      include: {
-        ingredients: {
-          include: {
-            ingredient: true
-          }
-        },
-        categories: {
-          include: {
-            addonGroups: {
-              orderBy: { order: 'asc' },
-              include: {
-                addons: { orderBy: { order: 'asc' } }
-              }
-            }
-          }
-        },
+      orderBy: { order: 'asc' },
+      skip,
+      take,
+    };
+
+    // Se for público (Cardápio Digital), usa o select seguro para evitar vazamento de custos
+    if (isPublic) {
+      findOptions.select = PUBLIC_PRODUCT_SELECT;
+    } else {
+      findOptions.include = {
+        ingredients: { include: { ingredient: true } },
+        categories: { include: { addonGroups: { include: { addons: true } } } },
         sizes: true,
-        addonGroups: {
-          include: {
-            addons: {
-              orderBy: { order: 'asc' }
-            },
-          },
-        },
+        addonGroups: { include: { addons: { orderBy: { order: 'asc' } } } },
         promotions: {
           where: {
             isActive: true,
@@ -52,69 +47,41 @@ class ProductService {
             endDate: { gte: new Date() },
           },
         },
-      },
-      orderBy: { order: 'asc' },
-    });
+      };
+    }
 
-    // Aplicar ordenação personalizada de grupos se existir o campo addonGroupsOrder
-    products = products.map(p => this._applyAddonGroupOrder(p));
+    let products = await prisma.product.findMany(findOptions);
+
+    // Aplicar ordenação personalizada de grupos usando o utilitário central
+    products = products.map(p => applyAddonGroupOrder(p));
 
     return products;
   }
 
-  async getProductById(id, restaurantId) {
-    const product = await prisma.product.findFirst({
-      where: { id, restaurantId },
-      include: {
-        ingredients: {
-          include: {
-            ingredient: true
-          }
-        },
-        categories: {
-          include: {
-            addonGroups: {
-              orderBy: { order: 'asc' },
-              include: {
-                addons: { orderBy: { order: 'asc' } }
-              }
-            }
-          }
-        },
+  async getProductById(id, restaurantId, isPublic = false) {
+    const findOptions = {
+      where: { id, restaurantId }
+    };
+
+    if (isPublic) {
+      findOptions.select = PUBLIC_PRODUCT_SELECT;
+    } else {
+      findOptions.include = {
+        ingredients: { include: { ingredient: true } },
+        categories: { include: { addonGroups: { include: { addons: true } } } },
         sizes: true,
-        addonGroups: {
-          include: {
-            addons: {
-              orderBy: { order: 'asc' }
-            },
-          },
-        },
+        addonGroups: { include: { addons: { orderBy: { order: 'asc' } } } },
         promotions: true,
-      },
-    });
+      };
+    }
+
+    const product = await prisma.product.findFirst(findOptions);
 
     if (!product) {
-      throw new AppError('Product not found', 404);
+      throw new AppError('Produto não encontrado', 404);
     }
 
-    return this._applyAddonGroupOrder(product);
-  }
-
-  _applyAddonGroupOrder(product) {
-    if (!product.addonGroupsOrder || !Array.isArray(product.addonGroupsOrder)) {
-      return product;
-    }
-
-    const orderMap = new Map();
-    product.addonGroupsOrder.forEach((id, index) => orderMap.set(id, index));
-
-    product.addonGroups.sort((a, b) => {
-      const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
-      const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
-      return orderA - orderB;
-    });
-
-    return product;
+    return applyAddonGroupOrder(product);
   }
 
   async createProduct(data, restaurantId) {

@@ -5,7 +5,7 @@ const { needsAuth, checkPermission } = require('../middlewares/auth');
 const upload = require('../config/multer');
 
 // Admin routes (Protected)
-router.get('/', needsAuth, ProductController.getProducts);
+router.get('/', needsAuth, checkPermission('products:view'), ProductController.getProducts);
 router.get('/pricing-analysis', needsAuth, checkPermission('products:manage'), ProductController.getPricingAnalysis);
 router.get('/:id', needsAuth, checkPermission('products:manage'), ProductController.getProductById);
 router.patch('/reorder', needsAuth, checkPermission('products:manage'), ProductController.reorderProducts);

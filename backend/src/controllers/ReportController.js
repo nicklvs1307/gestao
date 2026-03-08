@@ -15,19 +15,35 @@ const ReportController = {
             const start = startOfDay(new Date(startDate));
             const end = endOfDay(new Date(endDate));
 
+            // 1. Agregação de Receita Bruta (Rápido)
+            const revenueStats = await prisma.order.aggregate({
+                where: {
+                    restaurantId,
+                    status: 'COMPLETED',
+                    createdAt: { gte: start, lte: end }
+                },
+                _sum: { total: true }
+            });
+            const grossRevenue = revenueStats._sum.total || 0;
+
+            // 2. Cálculo de CMV (Otimizado: Traz apenas o necessário para o cálculo)
             const orders = await prisma.order.findMany({
                 where: {
                     restaurantId,
                     status: 'COMPLETED',
                     createdAt: { gte: start, lte: end }
                 },
-                include: {
+                select: {
                     items: {
-                        include: {
+                        select: {
+                            quantity: true,
                             product: {
-                                include: {
+                                select: {
                                     ingredients: {
-                                        include: { ingredient: true }
+                                        select: {
+                                            quantity: true,
+                                            ingredient: { select: { lastUnitCost: true, averageCost: true } }
+                                        }
                                     }
                                 }
                             }
@@ -36,53 +52,62 @@ const ReportController = {
                 }
             });
 
-            const grossRevenue = orders.reduce((acc, order) => acc + order.total, 0);
-
             let totalCmv = 0;
             orders.forEach(order => {
                 order.items.forEach(item => {
                     let itemCost = 0;
-                    if (item.product.ingredients && item.product.ingredients.length > 0) {
+                    if (item.product?.ingredients?.length > 0) {
                         itemCost = item.product.ingredients.reduce((sum, link) => {
-                            return sum + ((link.ingredient.lastUnitCost || 0) * link.quantity);
+                            // Prioriza Custo Médio (mais preciso para DRE)
+                            const cost = link.ingredient.averageCost || link.ingredient.lastUnitCost || 0;
+                            return sum + (cost * link.quantity);
                         }, 0);
                     }
                     totalCmv += (itemCost * item.quantity);
                 });
             });
 
-            const expenses = await prisma.financialTransaction.findMany({
+            // 3. Agregação de Despesas por Categoria (GroupBy direto no Banco)
+            const expenseStats = await prisma.financialTransaction.groupBy({
+                by: ['categoryId'],
                 where: {
                     restaurantId,
                     type: 'EXPENSE',
                     status: 'PAID',
                     paymentDate: { gte: start, lte: end }
                 },
-                include: {
-                    category: true
-                }
+                _sum: { amount: true }
             });
 
-            const expensesByCategory = expenses.reduce((acc, exp) => {
-                const catName = exp.category?.name || 'Diversos';
-                if (!acc[catName]) acc[catName] = 0;
-                acc[catName] += exp.amount;
-                return acc;
-            }, {});
+            // Busca nomes das categorias para o breakdown
+            const categoryIds = expenseStats.map(s => s.categoryId).filter(Boolean);
+            const categories = await prisma.transactionCategory.findMany({
+                where: { id: { in: categoryIds } },
+                select: { id: true, name: true }
+            });
 
-            const totalOperatingExpenses = expenses.reduce((acc, exp) => acc + exp.amount, 0);
+            const categoryMap = Object.fromEntries(categories.map(c => [c.id, c.name]));
+            const expensesByCategory = {};
+            let totalOperatingExpenses = 0;
 
-            const otherIncomes = await prisma.financialTransaction.findMany({
+            expenseStats.forEach(s => {
+                const name = categoryMap[s.categoryId] || 'Diversos';
+                expensesByCategory[name] = s._sum.amount || 0;
+                totalOperatingExpenses += (s._sum.amount || 0);
+            });
+
+            // 4. Outras Receitas (Agregação)
+            const otherIncomeStats = await prisma.financialTransaction.aggregate({
                 where: {
                     restaurantId,
                     type: 'INCOME',
                     status: 'PAID',
                     paymentDate: { gte: start, lte: end },
                     orderId: null
-                }
+                },
+                _sum: { amount: true }
             });
-
-            const totalOtherIncomes = otherIncomes.reduce((acc, inc) => acc + inc.amount, 0);
+            const totalOtherIncomes = otherIncomeStats._sum.amount || 0;
 
             const grossProfit = grossRevenue - totalCmv;
             const netProfit = grossProfit - totalOperatingExpenses + totalOtherIncomes;
@@ -90,7 +115,7 @@ const ReportController = {
             res.json({
                 period: { start, end },
                 grossRevenue,
-                totalCmv,
+                totalCmv: Math.round(totalCmv * 100) / 100,
                 cmvPercentage: grossRevenue > 0 ? (totalCmv / grossRevenue) * 100 : 0,
                 grossProfit,
                 grossMargin: grossRevenue > 0 ? (grossProfit / grossRevenue) * 100 : 0,
@@ -497,8 +522,13 @@ const ReportController = {
         try {
             const { restaurantId } = req;
             const { startDate, endDate } = req.query;
-            const start = startDate ? new Date(startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
-            const end = endDate ? new Date(endDate) : new Date();
+
+            if (!startDate || !endDate) {
+                return res.status(400).json({ error: 'Datas são obrigatórias' });
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
 
             const payments = await prisma.payment.findMany({
                 where: {
@@ -508,9 +538,18 @@ const ReportController = {
                         createdAt: { gte: start, lte: end }
                     }
                 },
-                include: {
+                select: {
+                    id: true,
+                    amount: true,
+                    method: true,
+                    createdAt: true,
                     order: {
-                        select: { dailyOrderNumber: true, tableNumber: true, customerName: true }
+                        select: { 
+                            dailyOrderNumber: true, 
+                            tableNumber: true, 
+                            customerName: true,
+                            total: true 
+                        }
                     }
                 },
                 orderBy: { createdAt: 'desc' }
@@ -518,6 +557,7 @@ const ReportController = {
 
             res.json(payments);
         } catch (error) {
+            console.error('Erro em getDetailedPayments:', error);
             res.status(500).json({ error: 'Erro ao buscar detalhamento de pagamentos.' });
         }
     },

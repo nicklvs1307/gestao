@@ -101,9 +101,12 @@ class IngredientController {
     const { items, yieldAmount } = req.body;
 
     const result = await prisma.$transaction(async (tx) => {
-      // Limpa receita anterior
+      // Limpa receita anterior (Garante que só deleta se o ingrediente pertencer ao restaurante do usuário)
       await tx.ingredientRecipe.deleteMany({
-        where: { producedIngredientId: id }
+        where: { 
+            producedIngredientId: id,
+            producedIngredient: { restaurantId }
+        }
       });
 
       // Cria nova receita

@@ -5,6 +5,18 @@ const eventEmitter = require('../lib/eventEmitter');
 
 class OrderController {
 
+  // GET /api/admin/orders
+  getOrders = asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const { status, type, startDate, endDate, limit } = req.query;
+
+    const orders = await OrderService.getOrders(restaurantId, { 
+      status, type, startDate, endDate, limit: limit ? parseInt(limit) : 100 
+    });
+    
+    res.json(orders);
+  });
+
   streamOrderEvents = (req, res) => {
     const restaurantId = req.restaurantId;
 

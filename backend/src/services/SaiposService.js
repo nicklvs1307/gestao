@@ -1,5 +1,6 @@
 const axios = require('axios');
 const prisma = require('../lib/prisma');
+const socketLib = require('../lib/socket');
 
 class SaiposService {
   /**
@@ -12,8 +13,20 @@ class SaiposService {
   }
 
   /**
+   * Notifica falha na sincronização para o PDV
+   */
+  _notifySyncError(restaurantId, orderId, message) {
+      console.error(`[SAIPOS SYNC ERROR] Order ${orderId}: ${message}`);
+      socketLib.emitToRestaurant(restaurantId, 'sync_error', {
+          orderId,
+          service: 'SAIPOS',
+          message: message || 'Falha desconhecida na integração'
+      });
+  }
+
+  /**
    * Obtém ou renova o token de acesso da Saipos
-   * Endpoint: POST /auth
+   */
    */
   async getAccessToken(restaurantId, settings) {
     if (settings.saiposToken && settings.saiposTokenExpiresAt > new Date()) {
@@ -279,7 +292,8 @@ class SaiposService {
         headers: {
           'Authorization': token,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 10000 // Timeout de 10 segundos
       });
 
       if (response.data) {
@@ -291,8 +305,9 @@ class SaiposService {
       }
 
     } catch (error) {
-      console.error(`[SAIPOS] Erro no envio (Pedido ${orderId}):`, error.response?.data || error.message);
-      // Se houver erro, logamos o payload para você conferir os dados enviados
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
+      this._notifySyncError(orderId ? (await prisma.order.findUnique({ where: { id: orderId }, select: { restaurantId: true } }))?.restaurantId : null, orderId, errorMsg);
+      
       if (error.response?.data) {
           console.log(`[SAIPOS] Payload que falhou:`, JSON.stringify(error.config?.data ? JSON.parse(error.config.data) : 'N/A', null, 2));
       }

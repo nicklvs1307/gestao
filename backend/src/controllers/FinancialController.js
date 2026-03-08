@@ -63,40 +63,65 @@ class FinancialController {
   // === TRANSACTIONS ===
 
   getTransactions = asyncHandler(async (req, res) => {
-    const { startDate, endDate, status, type } = req.query;
+    const { startDate, endDate, status, type, page = 1, limit = 50 } = req.query;
     const where = { restaurantId: req.restaurantId };
-    
+
     if (startDate && endDate) {
       where.dueDate = { gte: new Date(startDate), lte: new Date(endDate) };
     }
-    
+
     if (status) where.status = status;
     if (type) where.type = type;
 
-    const transactions = await prisma.financialTransaction.findMany({
-      where,
-      include: {
-        category: true,
-        supplier: true,
-        order: { include: { invoice: true } }
-      },
-      orderBy: { dueDate: 'asc' }
+    const [transactions, totalCount] = await Promise.all([
+      prisma.financialTransaction.findMany({
+        where,
+        include: {
+          category: true,
+          supplier: true,
+          order: { include: { invoice: true } }
+        },
+        orderBy: { dueDate: 'asc' },
+        skip: (parseInt(page) - 1) * parseInt(limit),
+        take: parseInt(limit)
+      }),
+      prisma.financialTransaction.count({ where })
+    ]);
+
+    const summary = await prisma.financialTransaction.aggregate({
+        where,
+        _sum: { amount: true }
     });
-    
-    const summary = transactions.reduce((acc, t) => {
-        if (t.type === 'INCOME') acc.totalIncome += t.amount;
-        if (t.type === 'EXPENSE') acc.totalExpense += t.amount;
-        return acc;
-    }, { totalIncome: 0, totalExpense: 0 });
 
-    res.json({ transactions, summary });
+    res.json({ 
+        transactions, 
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: parseInt(page),
+        summary 
+    });
   });
 
-  createTransaction = asyncHandler(async (req, res) => {
-    const validatedData = CreateTransactionSchema.parse(req.body);
-    const transaction = await FinancialService.createTransaction(req.restaurantId, validatedData);
-    res.status(201).json(transaction);
+  createTransfer = asyncHandler(async (req, res) => {
+    const validatedData = TransferSchema.parse(req.body);
+
+    // Validação de Segurança (IDOR): Verificar se as contas pertencem ao restaurante logado
+    const accounts = await prisma.bankAccount.findMany({
+        where: {
+            id: { in: [validatedData.fromAccountId, validatedData.toAccountId] },
+            restaurantId: req.restaurantId
+        }
+    });
+
+    if (accounts.length !== 2) {
+        res.status(403);
+        throw new Error('Acesso negado: Uma ou ambas as contas não pertencem ao seu restaurante.');
+    }
+
+    const result = await FinancialService.createTransfer(req.restaurantId, validatedData);
+    res.status(201).json(result);
   });
+
 
   updateTransaction = asyncHandler(async (req, res) => {
     const { id } = req.params;

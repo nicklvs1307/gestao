@@ -63,8 +63,14 @@ class ChecklistController {
     const { title, description, frequency, sectorId, tasks, isActive } = req.body;
 
     const checklist = await prisma.$transaction(async (tx) => {
+      const restaurantId = req.restaurantId;
       if (tasks) {
-        await tx.checklistTask.deleteMany({ where: { checklistId: id } });
+        await tx.checklistTask.deleteMany({ 
+            where: { 
+                checklistId: id,
+                checklist: { restaurantId } // Valida se o pai pertence ao restaurante do usuário
+            } 
+        });
       }
 
       return await tx.checklist.update({

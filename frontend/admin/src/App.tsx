@@ -1,580 +1,180 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ModalProvider, useModals } from './context/ModalContext';
 import ProtectedRoute from './components/ProtectedRoute';
-
-// Importar as páginas de Login e Registro
-import LoginPage from './pages/LoginPage';
-
-// Importar Layout e Componentes
-import AdminLayout from './components/AdminLayout';
-import Dashboard from './pages/Dashboard';
-import ProductManagement from './components/ProductManagement';
-import ProductFormPage from './pages/ProductFormPage';
-import CategoryManagement from './components/CategoryManagement';
-import CategoryFormPage from './pages/CategoryFormPage';
-import CategoryFormModal from './components/CategoryFormModal';
-import PromotionManagement from './components/PromotionManagement';
-import PromotionFormModal from './components/PromotionFormModal';
-import OrderManagement from './components/OrderManagement';
-import OrderDetailModal from './components/OrderDetailModal';
-import TableManagement from './components/TableManagement';
-import TableFormModal from './components/TableFormModal';
-import ReportManagement from './pages/ReportManagement';
-import SettingsManagement from './pages/SettingsManagement';
-import AddonManagement from './pages/AddonManagement';
-import AddonFormPage from './pages/AddonFormPage';
-import DeliveryAreaManagement from './components/DeliveryAreaManagement';
-import IntegrationManagement from './components/IntegrationManagement';
-import UserAndPermissions from './components/UserAndPermissions';
-import DriverManagement from './components/DriverManagement';
-import WaiterManagement from './pages/WaiterManagement';
-import WaiterPos from './pages/WaiterPos'; 
-import PosPage from './pages/PosPage';
-import FinancialManagement from './pages/FinancialManagement';
-import CashierManagement from './components/CashierManagement';
-import StockManagement from './pages/StockManagement';
-import FiscalManagement from './components/FiscalManagement';
-import CustomerManagement from './components/CustomerManagement';
-import PaymentMethodManagement from './components/PaymentMethodManagement';
-import PaymentMethodFormModal from './components/PaymentMethodFormModal';
-import KdsPage from './pages/KdsPage';
-import DriverDashboard from './pages/DriverDashboard';
-import DriverSettlement from './pages/DriverSettlement';
-import WaiterSettlement from './pages/WaiterSettlement';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import IngredientManagement from './components/IngredientManagement';
-import CmvAnalysis from './pages/CmvAnalysis';
-import DreManagement from './components/DreManagement';
-import StaffPerformance from './components/StaffPerformance';
-import GlobalSizesPage from './pages/GlobalSizesPage';
-import ChecklistManagement from './pages/ChecklistManagement';
-import ChecklistFill from './pages/ChecklistFill';
-import TableCheckout from './pages/TableCheckout';
-import WhatsAppManagement from './pages/WhatsAppManagement';
-import WhatsAppChat from './pages/WhatsAppChat';
-import TechnicalSheetManagement from './pages/TechnicalSheetManagement';
 import { Toaster } from 'sonner';
 
+// Componentes Estáticos (Leves)
+import AdminLayout from './components/AdminLayout';
 import GlobalModals from './components/GlobalModals';
 
-// Componente Wrapper para injetar o layout
+// Lazy Loading das Páginas (Só carregam quando acessadas)
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const ProductManagement = lazy(() => import('./components/ProductManagement'));
+const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
+const CategoryManagement = lazy(() => import('./components/CategoryManagement'));
+const CategoryFormPage = lazy(() => import('./pages/CategoryFormPage'));
+const PromotionManagement = lazy(() => import('./components/PromotionManagement'));
+const OrderManagement = lazy(() => import('./components/OrderManagement'));
+const TableManagement = lazy(() => import('./components/TableManagement'));
+const ReportManagement = lazy(() => import('./pages/ReportManagement'));
+const SettingsManagement = lazy(() => import('./pages/SettingsManagement'));
+const AddonManagement = lazy(() => import('./pages/AddonManagement'));
+const AddonFormPage = lazy(() => import('./pages/AddonFormPage'));
+const DeliveryAreaManagement = lazy(() => import('./components/DeliveryAreaManagement'));
+const IntegrationManagement = lazy(() => import('./components/IntegrationManagement'));
+const UserAndPermissions = lazy(() => import('./components/UserAndPermissions'));
+const DriverManagement = lazy(() => import('./components/DriverManagement'));
+const WaiterManagement = lazy(() => import('./pages/WaiterManagement'));
+const WaiterPos = lazy(() => import('./pages/WaiterPos')); 
+const PosPage = lazy(() => import('./pages/PosPage'));
+const FinancialManagement = lazy(() => import('./pages/FinancialManagement'));
+const CashierManagement = lazy(() => import('./components/CashierManagement'));
+const StockManagement = lazy(() => import('./pages/StockManagement'));
+const FiscalManagement = lazy(() => import('./components/FiscalManagement'));
+const CustomerManagement = lazy(() => import('./components/CustomerManagement'));
+const PaymentMethodManagement = lazy(() => import('./components/PaymentMethodManagement'));
+const KdsPage = lazy(() => import('./pages/KdsPage'));
+const DriverDashboard = lazy(() => import('./pages/DriverDashboard'));
+const DriverSettlement = lazy(() => import('./pages/DriverSettlement'));
+const WaiterSettlement = lazy(() => import('./pages/WaiterSettlement'));
+const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
+const CmvAnalysis = lazy(() => import('./pages/CmvAnalysis'));
+const GlobalSizesPage = lazy(() => import('./pages/GlobalSizesPage'));
+const ChecklistManagement = lazy(() => import('./pages/ChecklistManagement'));
+const ChecklistFill = lazy(() => import('./pages/ChecklistFill'));
+const TableCheckout = lazy(() => import('./pages/TableCheckout'));
+const WhatsAppManagement = lazy(() => import('./pages/WhatsAppManagement'));
+const WhatsAppChat = lazy(() => import('./pages/WhatsAppChat'));
+const TechnicalSheetManagement = lazy(() => import('./pages/TechnicalSheetManagement'));
+
+// Loading Fallback
+const PageLoader = () => (
+  <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+    <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Carregando módulo...</p>
+  </div>
+);
+
 function AdminRoutes() {
   const [pageTitle, setPageTitle] = useState('Dashboard');
   const location = useLocation();
-
-  // State for Table Modal
-  const [isTableModalOpen, setTableModalOpen] = useState(false);
-  const [tableToEdit, setTableToEdit] = useState<any | null>(null);
-  const [refetchTables, setRefetchTables] = useState(0);
-
-  // State for Category Modal
-  const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [categoryToEdit, setCategoryToEdit] = useState<any | null>(null);
-  const [refetchCategories, setRefetchCategories] = useState(0);
-
-  // State for Promotion Modal
-  const [isPromotionModalOpen, setPromotionModalOpen] = useState(false);
-  const [promotionToEdit, setPromotionToEdit] = useState<any | null>(null);
-  const [refetchPromotions, setRefetchPromotions] = useState(0);
-
-  // State for Order Detail Modal
-  const [isOrderDetailModalOpen, setOrderDetailModalOpen] = useState(false);
-  const [orderToView, setOrderToView] = useState<any | null>(null);
-
-  // State for Payment Method Modal
-  const [isPaymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
-  const [paymentMethodToEdit, setPaymentMethodToEdit] = useState<any | null>(null);
-  const [refetchPaymentMethods, setRefetchPaymentMethods] = useState(0);
-
-  // Handlers for Payment Method Modal
-  const handleEditPaymentMethodClick = (method: any) => {
-    setPaymentMethodToEdit(method);
-    setPaymentMethodModalOpen(true);
-  };
-  const handlePaymentMethodModalClose = () => {
-    setPaymentMethodModalOpen(false);
-    setPaymentMethodToEdit(null);
-  };
-  const handlePaymentMethodSave = () => {
-    handlePaymentMethodModalClose();
-    setRefetchPaymentMethods(p => p + 1);
-  };
-
-  // Handlers for Table Modal
-  const handleEditTableClick = (table: any) => {
-    setTableToEdit(table);
-    setTableModalOpen(true);
-  };
-  const handleTableModalClose = () => {
-    setTableModalOpen(false);
-    setTableToEdit(null);
-  };
-  const handleTableSave = () => {
-    handleTableModalClose();
-    setRefetchTables(t => t + 1);
-  };
-
-  // Handlers for Category Modal
-  const handleEditCategoryClick = (category: any) => {
-    setCategoryToEdit(category);
-    setCategoryModalOpen(true);
-  };
-  const handleCategoryModalClose = () => {
-    setCategoryModalOpen(false);
-    setCategoryToEdit(null);
-  };
-  const handleCategorySave = () => {
-    handleCategoryModalClose();
-    setRefetchCategories(t => t + 1);
-  };
-
-  // Handlers for Promotion Modal
-  const handleEditPromotionClick = (promotion: any) => {
-    setPromotionToEdit(promotion);
-    setPromotionModalOpen(true);
-  };
-  const handlePromotionModalClose = () => {
-    setPromotionModalOpen(false);
-    setPromotionToEdit(null);
-  };
-  const handlePromotionSave = () => {
-    handlePromotionModalClose();
-    setRefetchPromotions(p => p + 1);
-  };
-
-  // Handlers for Order Detail Modal
-  const handleViewOrderDetails = (order: any) => {
-    setOrderToView(order);
-    setOrderDetailModalOpen(true);
-  };
-  const handleOrderDetailModalClose = () => {
-    setOrderDetailModalOpen(false);
-    setOrderToView(null);
-  };
+  const { openPromotionModal, openTableModal, openPaymentMethodModal } = useModals();
 
   useEffect(() => {
-    switch (location.pathname) {
-      case '/dashboard':
-        setPageTitle('Dashboard');
-        break;
-      case '/products':
-        setPageTitle('Gestão de Produtos');
-        break;
-      case '/addons':
-        setPageTitle('Biblioteca de Complementos');
-        break;
-      case '/ingredients':
-        setPageTitle('Estoque de Insumos');
-        break;
-      case '/products/new':
-        setPageTitle('Novo Produto');
-        break;
-      case '/categories':
-        setPageTitle('Gestão de Categorias');
-        break;
-      case '/categories/new':
-        setPageTitle('Nova Categoria');
-        break;
-      case '/global-sizes':
-        setPageTitle('Biblioteca de Tamanhos');
-        break;
-      case '/promotions':
-        setPageTitle('Gestão de Promoções');
-        break;
-      case '/customers':
-        setPageTitle('Cadastro de Clientes');
-        break;
-      case '/orders':
-        setPageTitle('Gestão de Pedidos');
-        break;
-      case '/tables':
-        setPageTitle('Gestão de Mesas');
-        break;
-      case '/pos/checkout':
-        setPageTitle('Fechamento de Mesa');
-        break;
-      case '/reports':
-        setPageTitle('Relatórios');
-        break;
-      case '/reports/dre':
-        setPageTitle('DRE Gerencial');
-        break;
-      case '/reports/sales-map':
-        setPageTitle('Mapa Geográfico de Vendas');
-        break;
-      case '/reports/staff':
-        setPageTitle('Desempenho da Equipe');
-        break;
-      case '/settings':
-        setPageTitle('Configurações');
-        break;
-      case '/users':
-        setPageTitle('Gerenciamento de Usuários');
-        break;
-      case '/drivers':
-        setPageTitle('Equipe de Entregadores');
-        break;
-      case '/drivers/settlement':
-        setPageTitle('Acerto de Motoboys');
-        break;
-      case '/waiters/settlement':
-        setPageTitle('Comissão de Garçons');
-        break;
-      case '/stock/cmv':
-        setPageTitle('Análise de CMV');
-        break;
-      case '/pos':
-        setPageTitle('PDV - Ponto de Venda');
-        break;
-      case '/cashier':
-        setPageTitle('Gestão de Caixa');
-        break;
-      case '/kds':
-        setPageTitle('Monitor de Produção (KDS)');
-        break;
-      case '/financial':
-        setPageTitle('Fluxo de Caixa');
-        break;
-      case '/financial/entries':
-        setPageTitle('Lançamentos Financeiros');
-        break;
-      case '/financial/bank-accounts':
-        setPageTitle('Contas Bancárias');
-        break;
-      case '/payment-methods':
-        setPageTitle('Formas de Pagamento');
-        break;
-      case '/fiscal':
-        setPageTitle('Fiscal & Notas (NFC-e)');
-        break;
-      case '/checklists':
-        setPageTitle('Checklists & Rotinas');
-        break;
-      case '/whatsapp':
-        setPageTitle('WhatsApp & IA');
-        break;
-      case '/whatsapp/chat':
-        setPageTitle('Central de Atendimento');
-        break;
-      case '/production/technical-sheets':
-        setPageTitle('Mestra de Produção (Fichas Técnicas)');
-        break;
-      default:
-        if (location.pathname.startsWith('/products/')) {
-             setPageTitle('Editar Produto');
-        } else if (location.pathname.startsWith('/addons/')) {
-             setPageTitle('Editar Biblioteca');
-        } else if (location.pathname.startsWith('/categories/')) {
-             setPageTitle('Editar Categoria');
-        } else {
-             setPageTitle('Painel Administrativo');
-        }
-    }
+    const path = location.pathname;
+    if (path === '/dashboard') setPageTitle('Dashboard');
+    else if (path === '/products') setPageTitle('Gestão de Produtos');
+    else if (path === '/addons') setPageTitle('Biblioteca de Complementos');
+    else if (path === '/ingredients') setPageTitle('Estoque de Insumos');
+    else if (path === '/categories') setPageTitle('Gestão de Categorias');
+    else if (path === '/global-sizes') setPageTitle('Biblioteca de Tamanhos');
+    else if (path === '/promotions') setPageTitle('Gestão de Promoções');
+    else if (path === '/customers') setPageTitle('Cadastro de Clientes');
+    else if (path === '/orders') setPageTitle('Gestão de Pedidos');
+    else if (path === '/tables') setPageTitle('Gestão de Mesas');
+    else if (path === '/reports') setPageTitle('Relatórios');
+    else if (path === '/settings') setPageTitle('Configurações');
+    else if (path === '/users') setPageTitle('Gerenciamento de Usuários');
+    else if (path === '/drivers') setPageTitle('Equipe de Entregadores');
+    else if (path === '/financial') setPageTitle('Fluxo de Caixa');
+    else if (path === '/payment-methods') setPageTitle('Formas de Pagamento');
+    else if (path === '/whatsapp') setPageTitle('WhatsApp & IA');
+    else setPageTitle('Painel Administrativo');
   }, [location.pathname]);
 
   return (
     <AdminLayout title={pageTitle}>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/super-admin" element={<SuperAdminDashboard />} />
-        <Route path="/super-admin/franchises" element={<SuperAdminDashboard />} />
-        <Route path="/super-admin/restaurants" element={<SuperAdminDashboard />} />
-        <Route path="/super-admin/subscriptions" element={<SuperAdminDashboard />} />
-        <Route path="/super-admin/permissions" element={<SuperAdminDashboard />} />
-        <Route path="/franchise/my-restaurants" element={<SuperAdminDashboard />} />
-        <Route path="/franchise/reports" element={<SuperAdminDashboard />} />
-        <Route path="/dashboard/*" element={<Dashboard />} />
-        <Route path="/waiters/settlement" element={<WaiterSettlement />} />
-        <Route path="/products" element={
-          <ProtectedRoute permission="products:view">
-            <ProductManagement 
-              onAddProductClick={() => {}} 
-              onEditProductClick={() => {}} 
-              refetchTrigger={0}
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="/addons" element={
-          <ProtectedRoute permission="products:manage">
-            <AddonManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/addons/new" element={
-          <ProtectedRoute permission="products:manage">
-            <AddonFormPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/addons/:id" element={
-          <ProtectedRoute permission="products:manage">
-            <AddonFormPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/ingredients" element={
-          <ProtectedRoute permission="stock:manage">
-            <StockManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/products/new" element={
-          <ProtectedRoute permission="products:manage">
-            <ProductFormPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/products/:id" element={
-          <ProtectedRoute permission="products:manage">
-            <ProductFormPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/categories" element={
-          <ProtectedRoute permission="categories:manage">
-            <CategoryManagement 
-              onAddCategoryClick={() => {}}
-              onEditCategoryClick={() => {}}
-              refetchTrigger={refetchCategories}
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="/categories/new" element={
-          <ProtectedRoute permission="categories:manage">
-            <CategoryFormPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/categories/:id" element={
-          <ProtectedRoute permission="categories:manage">
-            <CategoryFormPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/global-sizes" element={
-          <ProtectedRoute permission="products:manage">
-            <GlobalSizesPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/promotions" element={
-          <ProtectedRoute permission="products:manage">
-            <PromotionManagement 
-              onAddPromotionClick={() => setPromotionModalOpen(true)}
-              onEditPromotionClick={handleEditPromotionClick}
-              refetchTrigger={refetchPromotions}
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="/coupons" element={
-          <ProtectedRoute permission="products:manage">
-            <PromotionManagement 
-              onAddPromotionClick={() => setPromotionModalOpen(true)}
-              onEditPromotionClick={handleEditPromotionClick}
-              refetchTrigger={refetchPromotions}
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="/customers" element={
-          <ProtectedRoute permission="orders:view">
-            <CustomerManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/orders" element={
-          <ProtectedRoute permission="orders:view">
-            <OrderManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/tables" element={
-          <ProtectedRoute permission="table:manage">
-            <TableManagement 
-              onAddTableClick={() => setTableModalOpen(true)} 
-              onEditTableClick={handleEditTableClick}
-              refetchTrigger={refetchTables}
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="/pos/checkout/:orderId" element={
-          <ProtectedRoute permission="table:manage">
-            <TableCheckout />
-          </ProtectedRoute>
-        } />
-        <Route path="/drivers" element={
-          <ProtectedRoute permission="driver_settlement:manage">
-            <DriverManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/drivers/settlement" element={
-          <ProtectedRoute permission="driver_settlement:manage">
-            <DriverSettlement />
-          </ProtectedRoute>
-        } />
-        <Route path="/auth/waiters" element={
-          <ProtectedRoute permission="waiter_settlement:manage">
-            <WaiterManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/reports" element={
-          <ProtectedRoute permission="reports:view">
-            <ReportManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/reports/*" element={
-          <ProtectedRoute permission="reports:view">
-            <ReportManagement />
-          </ProtectedRoute>
-        } /> 
-        <Route path="/settings" element={
-          <ProtectedRoute permission="settings:view">
-            <SettingsManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/settings/*" element={
-          <ProtectedRoute permission="settings:view">
-            <SettingsManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/settings/delivery-zones" element={
-          <ProtectedRoute permission="settings:manage">
-            <DeliveryAreaManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/integrations" element={
-          <ProtectedRoute permission="integrations:manage">
-            <IntegrationManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/users" element={
-          <ProtectedRoute permission="users:manage">
-            <UserAndPermissions />
-          </ProtectedRoute>
-        } />
-        <Route path="/pos" element={
-          <ProtectedRoute permission="pos:access">
-            <PosPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/cashier" element={
-          <ProtectedRoute permission="cashier:manage">
-            <CashierManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/kds" element={
-          <ProtectedRoute permission="kds:view">
-            <KdsPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/financial" element={
-          <ProtectedRoute permission="financial:view">
-            <FinancialManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/financial/*" element={
-          <ProtectedRoute permission="financial:view">
-            <FinancialManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/payment-methods" element={
-          <ProtectedRoute permission="financial:manage">
-            <PaymentMethodManagement 
-              onAddClick={() => setPaymentMethodModalOpen(true)}
-              onEditClick={handleEditPaymentMethodClick}
-              refetchTrigger={refetchPaymentMethods}
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="/stock/cmv" element={
-          <ProtectedRoute permission="reports:abc">
-            <CmvAnalysis />
-          </ProtectedRoute>
-        } />
-        <Route path="/stock" element={
-          <ProtectedRoute permission="stock:view">
-            <StockManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/stock/*" element={
-          <ProtectedRoute permission="stock:view">
-            <StockManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/ingredients" element={<StockManagement />} />
-        <Route path="/ingredients/*" element={<StockManagement />} />
-        <Route path="/production/technical-sheets" element={
-          <ProtectedRoute permission="products:manage">
-            <TechnicalSheetManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/fiscal" element={
-          <ProtectedRoute permission="settings:manage">
-            <FiscalManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/checklists" element={
-          <ProtectedRoute permission="orders:view">
-            <ChecklistManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/whatsapp" element={
-          <ProtectedRoute permission="settings:manage">
-            <WhatsAppManagement />
-          </ProtectedRoute>
-        } />
-        <Route path="/whatsapp/chat" element={
-          <ProtectedRoute permission="orders:view">
-            <WhatsAppChat />
-          </ProtectedRoute>
-        } />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-
-      {/* Modais Globais Extraídos */}
-      <GlobalModals 
-        isTableModalOpen={isTableModalOpen}
-        closeTableModal={handleTableModalClose}
-        saveTableModal={handleTableSave}
-        tableToEdit={tableToEdit}
-
-        isCategoryModalOpen={isCategoryModalOpen}
-        closeCategoryModal={handleCategoryModalClose}
-        saveCategoryModal={handleCategorySave}
-        categoryToEdit={categoryToEdit}
-
-        isPromotionModalOpen={isPromotionModalOpen}
-        closePromotionModal={handlePromotionModalClose}
-        savePromotionModal={handlePromotionSave}
-        promotionToEdit={promotionToEdit}
-
-        isOrderDetailModalOpen={isOrderDetailModalOpen}
-        closeOrderDetailModal={handleOrderDetailModalClose}
-        orderToView={orderToView}
-
-        isPaymentMethodModalOpen={isPaymentMethodModalOpen}
-        closePaymentMethodModal={handlePaymentMethodModalClose}
-        savePaymentMethodModal={handlePaymentMethodSave}
-        paymentMethodToEdit={paymentMethodToEdit}
-      />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/super-admin/*" element={<SuperAdminDashboard />} />
+          <Route path="/franchise/*" element={<SuperAdminDashboard />} />
+          <Route path="/waiters/settlement" element={<WaiterSettlement />} />
+          
+          <Route path="/products" element={<ProtectedRoute permission="products:view"><ProductManagement /></ProtectedRoute>} />
+          <Route path="/products/new" element={<ProtectedRoute permission="products:manage"><ProductFormPage /></ProtectedRoute>} />
+          <Route path="/products/:id" element={<ProtectedRoute permission="products:manage"><ProductFormPage /></ProtectedRoute>} />
+          
+          <Route path="/addons/*" element={<ProtectedRoute permission="products:manage"><AddonManagement /></ProtectedRoute>} />
+          <Route path="/addons/new" element={<ProtectedRoute permission="products:manage"><AddonFormPage /></ProtectedRoute>} />
+          <Route path="/addons/:id" element={<ProtectedRoute permission="products:manage"><AddonFormPage /></ProtectedRoute>} />
+          
+          <Route path="/categories" element={<ProtectedRoute permission="categories:manage"><CategoryManagement /></ProtectedRoute>} />
+          <Route path="/categories/new" element={<ProtectedRoute permission="categories:manage"><CategoryFormPage /></ProtectedRoute>} />
+          <Route path="/categories/:id" element={<ProtectedRoute permission="categories:manage"><CategoryFormPage /></ProtectedRoute>} />
+          
+          <Route path="/global-sizes" element={<ProtectedRoute permission="products:manage"><GlobalSizesPage /></ProtectedRoute>} />
+          
+          <Route path="/promotions" element={
+            <ProtectedRoute permission="products:manage">
+              <PromotionManagement onAddPromotionClick={() => openPromotionModal()} />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/customers" element={<ProtectedRoute permission="orders:view"><CustomerManagement /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute permission="orders:view"><OrderManagement /></ProtectedRoute>} />
+          
+          <Route path="/tables" element={
+            <ProtectedRoute permission="table:manage">
+              <TableManagement onAddTableClick={() => openTableModal()} />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/pos/checkout/:orderId" element={<ProtectedRoute permission="table:manage"><TableCheckout /></ProtectedRoute>} />
+          <Route path="/drivers/*" element={<ProtectedRoute permission="driver_settlement:manage"><DriverManagement /></ProtectedRoute>} />
+          <Route path="/auth/waiters" element={<ProtectedRoute permission="waiter_settlement:manage"><WaiterManagement /></ProtectedRoute>} />
+          
+          <Route path="/reports/*" element={<ProtectedRoute permission="reports:view"><ReportManagement /></ProtectedRoute>} />
+          <Route path="/settings/*" element={<ProtectedRoute permission="settings:view"><SettingsManagement /></ProtectedRoute>} />
+          <Route path="/integrations" element={<ProtectedRoute permission="integrations:manage"><IntegrationManagement /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute permission="users:manage"><UserAndPermissions /></ProtectedRoute>} />
+          
+          <Route path="/pos" element={<ProtectedRoute permission="pos:access"><PosPage /></ProtectedRoute>} />
+          <Route path="/cashier" element={<ProtectedRoute permission="cashier:manage"><CashierManagement /></ProtectedRoute>} />
+          <Route path="/kds" element={<ProtectedRoute permission="kds:view"><KdsPage /></ProtectedRoute>} />
+          
+          <Route path="/financial/*" element={<ProtectedRoute permission="financial:view"><FinancialManagement /></ProtectedRoute>} />
+          
+          <Route path="/payment-methods" element={
+            <ProtectedRoute permission="financial:manage">
+              <PaymentMethodManagement onAddClick={() => openPaymentMethodModal()} />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/stock/*" element={<ProtectedRoute permission="stock:view"><StockManagement /></ProtectedRoute>} />
+          <Route path="/production/technical-sheets" element={<ProtectedRoute permission="products:manage"><TechnicalSheetManagement /></ProtectedRoute>} />
+          <Route path="/fiscal" element={<ProtectedRoute permission="settings:manage"><FiscalManagement /></ProtectedRoute>} />
+          <Route path="/checklists" element={<ProtectedRoute permission="orders:view"><ChecklistManagement /></ProtectedRoute>} />
+          <Route path="/whatsapp/*" element={<ProtectedRoute permission="settings:manage"><WhatsAppManagement /></ProtectedRoute>} />
+          
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Suspense>
+      <GlobalModals />
     </AdminLayout>
   );
-};
+}
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <Toaster position="top-right" richColors closeButton />
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/waiter" element={
-            <ProtectedRoute permission="waiter:pos">
-              <WaiterPos />
-            </ProtectedRoute>
-          } />
-          <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
-          <Route path="/driver/dashboard" element={
-            <ProtectedRoute permission="delivery:manage">
-              <DriverDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <AdminRoutes />
-            </ProtectedRoute>
-          } />
-        </Routes>
+        <ModalProvider>
+          <Toaster position="top-right" richColors closeButton />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/waiter" element={<ProtectedRoute permission="waiter:pos"><WaiterPos /></ProtectedRoute>} />
+              <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
+              <Route path="/driver/dashboard" element={<ProtectedRoute permission="delivery:manage"><DriverDashboard /></ProtectedRoute>} />
+              <Route path="/*" element={<ProtectedRoute><AdminRoutes /></ProtectedRoute>} />
+            </Routes>
+          </Suspense>
+        </ModalProvider>
       </AuthProvider>
     </Router>
   );

@@ -41,23 +41,9 @@ const login = async (req, res) => {
         // Junta as permissões do Cargo + Permissões Diretas do Usuário
         const rolePermissions = user.roleRef?.permissions?.map(p => p.name) || [];
         const directPermissions = user.permissions?.map(p => p.name) || [];
-        const allPermissions = [...new Set([...rolePermissions, ...directPermissions])];
+        const finalPermissions = [...new Set([...rolePermissions, ...directPermissions])];
 
         const normalizedRole = normalizeRole(user.roleRef?.name || null, user.isSuperAdmin);
-        
-        // Compatibilidade: Se não tem permissões explícitas mas é admin
-        let finalPermissions = allPermissions;
-        if (finalPermissions.length === 0 && (normalizedRole === 'admin' || user.isSuperAdmin)) {
-            finalPermissions = [
-                'all:manage', 'orders:view', 'orders:manage', 'orders:edit_items', 'orders:cancel', 
-                'orders:transfer', 'orders:payment_change', 'orders:discount', 'waiter:pos', 'kds:view', 
-                'table:manage', 'financial:view', 'financial:manage', 'cashier:manage', 'bank_accounts:manage', 
-                'financial_categories:manage', 'waiter_settlement:manage', 'driver_settlement:manage', 
-                'products:view', 'products:manage', 'categories:manage', 'stock:view', 'stock:manage', 
-                'suppliers:manage', 'reports:view', 'reports:financial', 'reports:performance', 
-                'reports:abc', 'settings:view', 'settings:manage', 'users:manage', 'integrations:manage'
-            ];
-        }
         
         const tokenData = { 
             id: user.id, 

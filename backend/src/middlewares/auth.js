@@ -43,7 +43,7 @@ const checkAdmin = (req, res, next) => {
   }
 };
 
-const setRestaurantId = (req, res, next) => {
+const setRestaurantId = async (req, res, next) => {
   const requestedRestaurantId = req.headers['x-restaurant-id'] || req.query.restaurantId;
 
   // 1. SuperAdmin tem acesso irrestrito
@@ -54,12 +54,19 @@ const setRestaurantId = (req, res, next) => {
     return next();
   }
 
-  // 2. Franqueador (Pode acessar lojas da sua franquia)
-  // Nota: A validação profunda de propriedade será feita nos controllers específicos 
-  // ou via middleware adicional assíncrono onde for necessário.
+  // 2. Franqueador (Pode acessar APENAS lojas da sua franquia)
   if (req.user && req.user.franchiseId && (req.user.permissions?.includes('franchise:manage') || req.user.role === 'franchisor')) {
     if (requestedRestaurantId) {
-      req.restaurantId = requestedRestaurantId;
+        // Validação Assíncrona: Verifica se o restaurante pertence à franquia
+        const restaurant = await prisma.restaurant.findFirst({
+            where: { id: requestedRestaurantId, franchiseId: req.user.franchiseId }
+        });
+        
+        if (!restaurant) {
+            return res.status(403).json({ error: 'Acesso negado. Este restaurante não pertence à sua franquia.' });
+        }
+        
+        req.restaurantId = requestedRestaurantId;
     }
     return next();
   }

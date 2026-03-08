@@ -1,16 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const IntegrationController = require('../controllers/IntegrationController');
-const { needsAuth } = require('../middlewares/auth');
+const { needsAuth, checkPermission } = require('../middlewares/auth');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.get('/saipos', needsAuth, IntegrationController.getSaiposSettings);
-router.put('/saipos', needsAuth, IntegrationController.updateSaiposSettings);
-router.post('/saipos/import', needsAuth, upload.single('file'), IntegrationController.importSaiposMenu);
+router.use(needsAuth);
+router.use(checkPermission('integrations:manage'));
 
-router.get('/uairango', needsAuth, IntegrationController.getUairangoSettings);
-router.put('/uairango', needsAuth, IntegrationController.updateUairangoSettings);
-router.post('/uairango/import', needsAuth, IntegrationController.importUairangoMenu);
+router.get('/saipos', IntegrationController.getSaiposSettings);
+router.put('/saipos', IntegrationController.updateSaiposSettings);
+router.post('/saipos/import', upload.single('file'), IntegrationController.importSaiposMenu);
+
+router.get('/uairango', IntegrationController.getUairangoSettings);
+router.put('/uairango', IntegrationController.updateUairangoSettings);
+router.post('/uairango/import', IntegrationController.importUairangoMenu);
 
 module.exports = router;

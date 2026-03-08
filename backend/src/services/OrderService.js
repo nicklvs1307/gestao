@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const SaiposService = require('./SaiposService');
 const PricingService = require('./PricingService');
 const InventoryService = require('./InventoryService');
+const FinancialService = require('./FinancialService');
 const LoyaltyService = require('./LoyaltyService');
 const GeocodingService = require('./GeocodingService'); // Novo
 const WhatsAppNotificationService = require('./WhatsAppNotificationService');
@@ -22,6 +23,29 @@ const fullOrderInclude = {
   deliveryOrder: { include: { customer: true, driver: { select: { id: true, name: true } } } },
   user: { select: { name: true } },
   payments: true,
+};
+
+const summaryOrderSelect = {
+  id: true,
+  dailyOrderNumber: true,
+  tableNumber: true,
+  status: true,
+  total: true,
+  orderType: true,
+  createdAt: true,
+  customerName: true,
+  isPrinted: true,
+  deliveryOrder: {
+    select: {
+      name: true,
+      phone: true,
+      deliveryType: true,
+      status: true,
+      driver: { select: { name: true } }
+    }
+  },
+  user: { select: { name: true } },
+  _count: { select: { items: true } }
 };
 
 async function emitOrderUpdate(orderId, eventType = 'ORDER_UPDATED') {
@@ -46,17 +70,43 @@ async function emitOrderUpdate(orderId, eventType = 'ORDER_UPDATED') {
 class OrderService {
   
   /**
-   * Cria um pedido completo de forma transacional.
+   * Busca pedidos com seleção otimizada para listagem (Dashboard/Monitor).
    */
-  async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName, discount = 0, extraCharge = 0 }) {
-    console.log(`[ORDER] Iniciando criação de pedido para restaurante: ${restaurantId}`);
-    let orderTotal = 0;
+  async getOrders(restaurantId, filters = {}) {
+    const { status, type, startDate, endDate, page = 1, limit = 100 } = filters;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
+
+    const where = {
+      restaurantId,
+      ...(status && { status }),
+      ...(type && { orderType: type }),
+      ...(startDate && endDate && {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      }),
+    };
+
+    return await prisma.order.findMany({
+      where,
+      select: summaryOrderSelect,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    });
+  }
+
+  /**
+   * Método Privado: Processa itens do pedido (Preço + JSON)
+   * Centraliza a lógica para evitar furos de cálculo entre criação e adição de itens.
+   */
+  async _processOrderItems(items) {
+    let subtotal = 0;
     const processedItems = [];
 
-    // 1. Preparação dos Itens
     for (const item of items) {
-      console.log(`[ORDER] Calculando preço do item: ${item.productId}`);
-      
       const allOptionsIds = [
           ...(item.addonsIds || []),
           ...(item.flavorIds || [])
@@ -69,7 +119,7 @@ class OrderService {
         allOptionsIds
       );
       
-      orderTotal += calculation.totalPrice;
+      subtotal += calculation.totalPrice;
 
       const flavorsList = calculation.addonsObjects.filter(a => a.isFlavor);
       const addonsList = calculation.addonsObjects.filter(a => !a.isFlavor);
@@ -84,6 +134,18 @@ class OrderService {
         observations: item.observations || ''
       });
     }
+
+    return { processedItems, subtotal };
+  }
+
+  /**
+   * Cria um pedido completo de forma transacional.
+   */
+  async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName, discount = 0, extraCharge = 0 }) {
+    console.log(`[ORDER] Iniciando criação de pedido para restaurante: ${restaurantId}`);
+    
+    // 1. Preparação dos Itens (Utiliza método unificado)
+    const { processedItems, subtotal: orderTotal } = await this._processOrderItems(items);
 
     const restaurant = await prisma.restaurant.findFirst({
         where: { OR: [{ id: restaurantId }, { slug: restaurantId }] },
@@ -161,17 +223,20 @@ class OrderService {
             const startTime = openSession ? openSession.openedAt : new Date();
             if (!openSession) startTime.setHours(0, 0, 0, 0);
 
-            const lastOrder = await tx.order.findFirst({
-                where: { 
-                    restaurantId: realRestaurantId, 
-                    orderType: 'DELIVERY',
-                    createdAt: { gte: startTime } 
-                },
-                orderBy: { dailyOrderNumber: 'desc' },
-                select: { dailyOrderNumber: true }
-            });
+            // SELECT FOR UPDATE: Trava a linha do último pedido para evitar race conditions
+            // Como o Prisma não suporta nativamente FOR UPDATE em findFirst, usamos queryRaw
+            const lastOrders = await tx.$queryRaw`
+                SELECT "dailyOrderNumber" FROM "Order" 
+                WHERE "restaurantId" = ${realRestaurantId} 
+                AND "orderType" = 'DELIVERY'
+                AND "createdAt" >= ${startTime}
+                ORDER BY "dailyOrderNumber" DESC 
+                LIMIT 1 
+                FOR UPDATE
+            `;
 
-            orderData.dailyOrderNumber = (lastOrder?.dailyOrderNumber || 0) + 1;
+            const lastOrderNumber = lastOrders[0]?.dailyOrderNumber || 0;
+            orderData.dailyOrderNumber = lastOrderNumber + 1;
         }
 
         const createdOrder = await tx.order.create({ data: orderData });
@@ -256,34 +321,15 @@ class OrderService {
                 data: { orderId: createdOrder.id, amount: totalToPay, method: paymentMethod }
             });
 
-            let category = await tx.transactionCategory.findFirst({
-                where: { restaurantId: realRestaurantId, name: 'Vendas' }
-            });
-
-            if (!category) {
-                category = await tx.transactionCategory.create({
-                    data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId: realRestaurantId }
-                });
-            }
-
             const openSession = await tx.cashierSession.findFirst({
                 where: { restaurantId: realRestaurantId, status: 'OPEN' }
             });
 
-            await tx.financialTransaction.create({
-                data: {
-                    restaurantId: realRestaurantId,
-                    cashierId: openSession?.id || null,
-                    orderId: createdOrder.id,
-                    categoryId: category.id,
-                    description: `VENDA #${orderData.dailyOrderNumber || createdOrder.id.slice(-4)}`,
-                    amount: totalToPay,
-                    type: 'INCOME',
-                    status: 'PAID',
-                    dueDate: new Date(),
-                    paymentDate: new Date(),
-                    paymentMethod: paymentMethod
-                }
+            await FinancialService.processOrderPayment(realRestaurantId, {
+                order: { ...createdOrder, total: totalToPay },
+                paymentMethod,
+                cashierId: openSession?.id,
+                tx
             });
         }
 
@@ -309,8 +355,6 @@ class OrderService {
    */
   async addItemsToOrder(orderId, items, userId = null) {
     console.log(`[ORDER] Adicionando itens ao pedido: ${orderId}`);
-    let additionalTotal = 0;
-    const processedItems = [];
 
     const originalOrder = await prisma.order.findUnique({
         where: { id: orderId },
@@ -319,35 +363,14 @@ class OrderService {
 
     if (!originalOrder) throw new Error("Pedido não encontrado.");
 
-    for (const item of items) {
-       const allOptionsIds = [
-           ...(item.addonsIds || []),
-           ...(item.flavorIds || [])
-       ];
-
-       const calculation = await PricingService.calculateItemPrice(
-        item.productId, item.quantity, item.sizeId, allOptionsIds
-      );
-      
-      additionalTotal += calculation.totalPrice;
-      
-      const flavorsList = calculation.addonsObjects.filter(a => a.isFlavor);
-      const addonsList = calculation.addonsObjects.filter(a => !a.isFlavor);
-
-      processedItems.push({
-        orderId: orderId, 
-        productId: item.productId, 
-        quantity: item.quantity,
-        priceAtTime: calculation.unitPrice,
-        sizeJson: calculation.sizeObj ? JSON.stringify(calculation.sizeObj) : null,
-        addonsJson: addonsList.length ? JSON.stringify(addonsList) : null,
-        flavorsJson: flavorsList.length ? JSON.stringify(flavorsList) : null,
-        observations: item.observations || ''
-      });
-    }
+    // Utiliza método unificado de processamento de itens
+    const { processedItems, subtotal: additionalTotal } = await this._processOrderItems(items);
 
     const result = await prisma.$transaction(async (tx) => {
-        await tx.orderItem.createMany({ data: processedItems });
+        // Vincula o orderId aos itens processados
+        const itemsWithOrderId = processedItems.map(item => ({ ...item, orderId }));
+        
+        await tx.orderItem.createMany({ data: itemsWithOrderId });
         
         const isAutoAccept = originalOrder.restaurant.settings?.autoAcceptOrders || false;
         const newStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
@@ -409,16 +432,6 @@ class OrderService {
         if (status === 'COMPLETED') {
             await LoyaltyService.processLoyaltyRewards(order, tx);
             
-            let category = await tx.transactionCategory.findFirst({
-                where: { restaurantId: order.restaurantId, name: 'Vendas' }
-            });
-
-            if (!category) {
-                category = await tx.transactionCategory.create({
-                    data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId: order.restaurantId }
-                });
-            }
-
             const openSession = await tx.cashierSession.findFirst({ 
                 where: { restaurantId: order.restaurantId, status: 'OPEN' } 
             });
@@ -427,20 +440,11 @@ class OrderService {
             const existingTrans = await tx.financialTransaction.findFirst({ where: { orderId: order.id } });
             
             if (!existingTrans) {
-                await tx.financialTransaction.create({
-                    data: {
-                        restaurantId: order.restaurantId,
-                        cashierId: openSession?.id || null,
-                        orderId: order.id,
-                        categoryId: category.id,
-                        description: `VENDA #${order.dailyOrderNumber || order.id.slice(-4)}`,
-                        amount: order.total,
-                        type: 'INCOME',
-                        status: 'PAID',
-                        dueDate: new Date(),
-                        paymentDate: new Date(),
-                        paymentMethod: method
-                    }
+                await FinancialService.processOrderPayment(order.restaurantId, {
+                    order,
+                    paymentMethod: method,
+                    cashierId: openSession?.id,
+                    tx
                 });
             }
             await InventoryService.processOrderStockDeduction(orderId, tx);
