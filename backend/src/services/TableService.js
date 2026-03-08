@@ -5,6 +5,12 @@ class TableService {
    * Gera um resumo detalhado das mesas com pedidos ativos e saldos.
    */
   async getTablesSummary(restaurantId) {
+    const restaurant = await prisma.restaurant.findUnique({
+        where: { id: restaurantId },
+        select: { serviceTaxPercentage: true }
+    });
+    const serviceTaxRate = (restaurant?.serviceTaxPercentage || 0) / 100;
+
     const tables = await prisma.table.findMany({ 
         where: { restaurantId }, 
         orderBy: { number: 'asc' } 
@@ -30,15 +36,20 @@ class TableService {
         const tableOrders = activeOrders.filter(o => o.tableNumber === t.number);
         
         const tabs = tableOrders.map(order => {
-            const itemsTotal = order.items.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
+            const itemsSubtotal = order.items.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
+            const serviceTax = Number((itemsSubtotal * serviceTaxRate).toFixed(2));
+            const totalWithTax = itemsSubtotal + serviceTax + (order.extraCharge || 0) - (order.discount || 0);
+            
             const paymentsTotal = order.payments.reduce((acc, p) => acc + p.amount, 0);
-            const balanceDue = Math.max(0, itemsTotal - paymentsTotal);
+            const balanceDue = Math.max(0, totalWithTax - paymentsTotal);
 
             return {
                 orderId: order.id,
                 customerName: order.customerName || `Mesa ${t.number}`,
                 waiterName: order.user?.name,
-                totalAmount: itemsTotal,
+                subtotal: itemsSubtotal,
+                serviceTax,
+                totalAmount: totalWithTax,
                 balanceDue,
                 items: order.items,
                 createdAt: order.createdAt
