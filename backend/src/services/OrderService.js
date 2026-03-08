@@ -55,7 +55,8 @@ class OrderService {
 
     // 1. Preparação dos Itens
     for (const item of items) {
-      // ... (código de cálculo de item permanece igual)
+      console.log(`[ORDER] Calculando preço do item: ${item.productId}`);
+      
       const allOptionsIds = [
           ...(item.addonsIds || []),
           ...(item.flavorIds || [])
@@ -84,7 +85,53 @@ class OrderService {
       });
     }
 
-    // ... (restante do código até a definição de orderData)
+    const restaurant = await prisma.restaurant.findFirst({
+        where: { OR: [{ id: restaurantId }, { slug: restaurantId }] },
+        include: { settings: true }
+    });
+
+    if (!restaurant) {
+        console.error(`[ORDER ERROR] Restaurante não encontrado: ${restaurantId}`);
+        throw new Error(`Restaurante não encontrado: ${restaurantId}`);
+    }
+    
+    const realRestaurantId = restaurant.id;
+    const isAutoAccept = restaurant.settings?.autoAcceptOrders || false;
+    const initialStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
+
+    const finalOrderType = (deliveryInfo || orderType === 'DELIVERY' || orderType === 'PICKUP') ? 'DELIVERY' : 'TABLE';
+
+    let coords = null;
+    let fullAddress = 'Retirada no Balcão';
+
+    if (finalOrderType === 'DELIVERY' && deliveryInfo) {
+        const isDelivery = deliveryInfo.deliveryType === 'delivery';
+        const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
+        
+        if (isDelivery) {
+            if (typeof deliveryInfo.address === 'object') {
+                fullAddress = `${addr.street || ''}, ${addr.number || 'S/N'}${addr.complement ? ' (' + addr.complement + ')' : ''} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
+            } else {
+                fullAddress = deliveryInfo.address || 'Endereço não informado';
+            }
+            console.log(`[ORDER] Buscando coordenadas para: ${fullAddress}`);
+            coords = await GeocodingService.getCoordinates(fullAddress);
+        }
+    }
+
+    if (finalOrderType === 'TABLE' && tableNumber) {
+        const existingOrder = await prisma.order.findFirst({
+            where: {
+                restaurantId: realRestaurantId,
+                tableNumber: parseInt(tableNumber),
+                status: { notIn: ['COMPLETED', 'CANCELED'] }
+            }
+        });
+
+        if (existingOrder) {
+            return await this.addItemsToOrder(existingOrder.id, items, userId);
+        }
+    }
 
     const orderData = {
       restaurantId: realRestaurantId,
@@ -97,19 +144,12 @@ class OrderService {
       preparingAt: initialStatus === 'PREPARING' ? new Date() : null,
       userId: userId || null, 
       customerName: customerName || null,
-      items: { create: processedItems }
+      items: { create: processedItems },
+      tableNumber: (finalOrderType === 'TABLE' && tableNumber) ? parseInt(tableNumber) : null
     };
 
-    if (finalOrderType === 'TABLE' && tableNumber) {
-        orderData.tableNumber = parseInt(tableNumber);
-    } else {
-        orderData.tableNumber = null; 
-    }
-
-    // 2. Transação de Criação
     console.log(`[ORDER] Iniciando transação do banco de dados...`);
     const newOrder = await prisma.$transaction(async (tx) => {
-        // Gerar número diário sequencial apenas para DELIVERY
         if (finalOrderType === 'DELIVERY') {
             const openSession = await tx.cashierSession.findFirst({
                 where: { restaurantId: realRestaurantId, status: 'OPEN' },
@@ -130,8 +170,6 @@ class OrderService {
             });
 
             orderData.dailyOrderNumber = (lastOrder?.dailyOrderNumber || 0) + 1;
-        } else {
-            orderData.dailyOrderNumber = null;
         }
 
         const createdOrder = await tx.order.create({ data: orderData });
@@ -143,13 +181,11 @@ class OrderService {
             });
         }
 
-        // Processar Delivery Info
         if (finalOrderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
              const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
              const cleanPhone = normalizePhone(deliveryInfo.phone);
 
-             console.log(`[ORDER TX] Upserting customer: ${cleanPhone}`);
              const customer = await tx.customer.upsert({
                  where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
                  update: {
@@ -184,7 +220,6 @@ class OrderService {
                  }
              });
  
-             console.log(`[ORDER TX] Creating deliveryOrder for customer: ${customer.id}`);
              await tx.deliveryOrder.create({
                  data: {
                      orderId: createdOrder.id, 
@@ -203,18 +238,6 @@ class OrderService {
                  }
              });
 
-             // Opcional: Atualizar a localização padrão do cliente se vier do GPS
-             if (deliveryInfo.latitude && deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.latitude))) {
-                 await tx.customer.update({
-                     where: { id: customer.id },
-                     data: { 
-                         latitude: parseFloat(deliveryInfo.latitude),
-                         longitude: parseFloat(deliveryInfo.longitude)
-                     }
-                 });
-             }
-
-             // Atualiza o TOTAL do pedido incluindo a taxa de entrega
              if (isDelivery && deliveryInfo.deliveryFee > 0) {
                  await tx.order.update({
                      where: { id: createdOrder.id },
@@ -223,22 +246,14 @@ class OrderService {
              }
         }
 
-        // Registrar Pagamento Inicial (se houver)
         if (paymentMethod) {
-            console.log(`[ORDER TX] Creating payment record: ${paymentMethod}`);
             const finalFee = (finalOrderType === 'DELIVERY' && deliveryInfo?.deliveryFee) ? deliveryInfo.deliveryFee : 0;
-            const totalToPay = orderTotal + finalFee;
+            const totalToPay = orderTotal + finalFee + extraCharge - discount;
 
             await tx.payment.create({
-                data: {
-                    orderId: createdOrder.id,
-                    amount: totalToPay,
-                    method: paymentMethod
-                }
+                data: { orderId: createdOrder.id, amount: totalToPay, method: paymentMethod }
             });
 
-            // Registrar transação financeira (Receita)
-            // Busca ou cria categoria de vendas
             let category = await tx.transactionCategory.findFirst({
                 where: { restaurantId: realRestaurantId, name: 'Vendas' }
             });
@@ -270,30 +285,20 @@ class OrderService {
             });
         }
 
-        console.log(`[ORDER TX] Finalizing transaction for order: ${createdOrder.id}`);
         return await tx.order.findUnique({
             where: { id: createdOrder.id },
             include: { deliveryOrder: true }
         });
-    }, { timeout: 30000 }); // Timeout aumentado para nuvem
+    }, { timeout: 30000 });
 
-    console.log(`[ORDER] Transação concluída com sucesso: ${newOrder.id}`);
-
-    // 3. Integrações Pós-Commit (Fire & Forget)
     SaiposService.sendOrderToSaipos(newOrder.id).catch(err => console.error('[SAIPOS ERROR] Erro ao enviar pedido:', err));
-    
-    console.log(`[ORDER] Buscando pedido final para retorno...`);
     const finalOrder = await prisma.order.findUnique({ where: { id: newOrder.id }, include: fullOrderInclude });
     
-    // Notifica via WhatsApp o recebimento (PENDING)
     if (finalOrder && finalOrder.orderType === 'DELIVERY' && finalOrder.deliveryOrder?.phone) {
-        console.log(`[ORDER] Disparando notificação WhatsApp...`);
         WhatsAppNotificationService.notifyOrderUpdate(finalOrder.id, finalOrder.status).catch(err => console.error('[WhatsApp Notification ERROR]:', err));
     }
 
     emitOrderUpdate(finalOrder.id, 'ORDER_CREATED');
-    console.log(`[ORDER SUCCESS] Pedido finalizado: ${finalOrder.id}`);
-    
     return finalOrder;
   }
 
@@ -313,8 +318,6 @@ class OrderService {
     if (!originalOrder) throw new Error("Pedido não encontrado.");
 
     for (const item of items) {
-       console.log(`[ORDER] Calculando preço para item adicional: ${item.productId}`);
-       
        const allOptionsIds = [
            ...(item.addonsIds || []),
            ...(item.flavorIds || [])
@@ -324,7 +327,6 @@ class OrderService {
         item.productId, item.quantity, item.sizeId, allOptionsIds
       );
       
-      console.log(`[ORDER] Item adicional calculado: ${item.productId} - Preço: ${calculation.totalPrice}`);
       additionalTotal += calculation.totalPrice;
       
       const flavorsList = calculation.addonsObjects.filter(a => a.isFlavor);
@@ -354,7 +356,6 @@ class OrderService {
             userId 
         };
 
-        // Se o status mudou de algo para PENDING/PREPARING, marca o timestamp
         if (originalOrder.status !== 'COMPLETED') {
             if (newStatus === 'PENDING') updateData.pendingAt = new Date();
             if (newStatus === 'PREPARING') updateData.preparingAt = new Date();
@@ -368,9 +369,7 @@ class OrderService {
     });
 
     SaiposService.sendOrderToSaipos(orderId).catch(err => console.error('[SAIPOS] AddItems Error:', err));
-    
     emitOrderUpdate(result.id);
-
     return result;
   }
 
@@ -408,7 +407,6 @@ class OrderService {
         if (status === 'COMPLETED') {
             await LoyaltyService.processLoyaltyRewards(order, tx);
             
-            // Busca ou cria categoria de vendas
             let category = await tx.transactionCategory.findFirst({
                 where: { restaurantId: order.restaurantId, name: 'Vendas' }
             });
@@ -423,10 +421,7 @@ class OrderService {
                 where: { restaurantId: order.restaurantId, status: 'OPEN' } 
             });
 
-            // Cria a transação financeira vinculada ao caixa (se houver) e à categoria
             const method = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
-            
-            // Verifica se já não existe transação para este pedido (evitar duplicidade)
             const existingTrans = await tx.financialTransaction.findFirst({ where: { orderId: order.id } });
             
             if (!existingTrans) {
@@ -456,12 +451,8 @@ class OrderService {
     }
     
     emitOrderUpdate(updatedOrder.id);
-    
-    // Notifica via WhatsApp o novo status
     WhatsAppNotificationService.notifyOrderUpdate(updatedOrder.id, status).catch(err => console.error('[WhatsApp Notification] Error:', err));
-    
-    const finalOrder = await prisma.order.findUnique({ where: { id: updatedOrder.id }, include: fullOrderInclude });
-    return finalOrder;
+    return await prisma.order.findUnique({ where: { id: updatedOrder.id }, include: fullOrderInclude });
   }
 
   async transferTable(currentTableNumber, targetTableNumber, restaurantId) {
@@ -491,7 +482,6 @@ class OrderService {
 
     emitOrderUpdate(currentOrder.id);
     emitOrderUpdate(result.id);
-
     return result;
   }
 
@@ -524,7 +514,6 @@ class OrderService {
 
     emitOrderUpdate(sourceOrderId);
     emitOrderUpdate(result.id);
-    
     return result;
   }
 
@@ -542,7 +531,6 @@ class OrderService {
     });
     
     emitOrderUpdate(orderId);
-
     return result;
   }
 
@@ -577,7 +565,7 @@ class OrderService {
   }
 
   async updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge }) {
-    // ... (existing code remains)
+    // ...
   }
 
   async addPaymentToOrder(orderId, { amount, method }) {
@@ -638,7 +626,6 @@ class OrderService {
     });
     if (!order?.deliveryOrder) throw new Error('Pedido não encontrado.');
     
-    // Se manualFee for passado, usa ele. Senão usa o padrão ou 0.
     let deliveryFee = manualFee !== null ? parseFloat(manualFee) : 0;
     
     if (manualFee === null && deliveryType === 'delivery') {
@@ -651,8 +638,6 @@ class OrderService {
     
     const result = await prisma.$transaction(async (tx) => {
         await tx.deliveryOrder.update({ where: { id: order.deliveryOrder.id }, data: updateData });
-        
-        // Ajusta o total do pedido baseado na diferença de taxas
         return await tx.order.update({
             where: { id: orderId },
             data: { total: { increment: deliveryFee - oldFee } },
@@ -660,9 +645,7 @@ class OrderService {
         });
     });
 
-    // Sincroniza com Saipos após alteração de tipo/taxa
     SaiposService.sendOrderToSaipos(orderId).catch(err => console.error('[SAIPOS] UpdateDeliveryType Sync Error:', err));
-
     emitOrderUpdate(orderId);
     return result;
   }
@@ -702,8 +685,6 @@ class OrderService {
 
   async getDriverSettlement(restaurantId, date, startTime, endTime) {
     const queryDate = date ? new Date(date) : new Date();
-    
-    // Configura o início e fim baseado na data E nos horários fornecidos (ou 00:00 e 23:59)
     const start = new Date(queryDate);
     if (startTime) {
         const [h, m] = startTime.split(':');
@@ -723,189 +704,72 @@ class OrderService {
     const drivers = await prisma.user.findMany({
         where: { 
             restaurantId, 
-            roleRef: { 
-                permissions: { 
-                    some: { name: 'delivery:manage' } 
-                } 
-            } 
+            roleRef: { permissions: { some: { name: 'delivery:manage' } } } 
         },
         include: {
             deliveries: {
                 where: {
                     status: 'DELIVERED',
-                    order: { isSettled: false }, // APENAS pedidos não acertados
+                    order: { isSettled: false },
                     updatedAt: { gte: start, lte: end }
                 },
-                include: { 
-                    order: {
-                        include: { payments: true }
-                    } 
-                }
+                include: { order: { include: { payments: true } } }
             }
         }
     });
 
     return drivers.map(d => {
-        let cash = 0;
-        let card = 0;
-        let pix = 0;
-        let deliveryFees = 0;
-        let totalOrdersValue = 0;
-
+        let cash = 0; let card = 0; let pix = 0; let deliveryFees = 0; let totalOrdersValue = 0;
         d.deliveries.forEach(del => {
-            const order = del.order;
-            if (!order) return;
-
+            const order = del.order; if (!order) return;
             deliveryFees += del.deliveryFee || 0;
             totalOrdersValue += order.total;
-
             const method = del.paymentMethod?.toLowerCase() || '';
-            if (method.includes('dinheiro') || method.includes('cash')) {
-                cash += order.total;
-            } else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) {
-                card += order.total;
-            } else if (method.includes('pix')) {
-                pix += order.total;
-            } else {
-                // Fallback para outros métodos ou se não identificado
-                cash += order.total; 
-            }
+            if (method.includes('dinheiro') || method.includes('cash')) cash += order.total;
+            else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card += order.total;
+            else if (method.includes('pix')) pix += order.total;
+            else cash += order.total; 
         });
-
         const totalDeliveries = d.deliveries.length;
         const baseRate = d.baseRate || 0;
         const totalCommission = d.deliveries.reduce((acc, curr) => acc + (d.bonusPerDelivery || 0), 0);
-        
-        // O que a loja deve ao entregador
         const totalToPay = baseRate + totalCommission;
-
-        // Saldo líquido da loja para esse entregador: 
-        // (Total de Vendas) - (O que pagou ao entregador)
         const storeNet = totalOrdersValue - totalToPay;
-
-        return {
-            driverId: d.id,
-            driverName: d.name || d.email,
-            totalOrders: totalDeliveries,
-            cash,
-            card,
-            pix,
-            deliveryFees,
-            totalToPay,
-            storeNet,
-            baseRate,
-            totalCommission
-        };
+        return { driverId: d.id, driverName: d.name || d.email, totalOrders: totalDeliveries, cash, card, pix, deliveryFees, totalToPay, storeNet, baseRate, totalCommission };
     });
   }
 
   async payDriverSettlement(restaurantId, driverName, amount, date, driverId = null) {
-      // 1. Buscar caixa aberto para o restaurante
-      const activeCashier = await prisma.cashierSession.findFirst({
-          where: { restaurantId, status: 'OPEN' }
-      });
-
-      if (!activeCashier) {
-          throw new Error("Não é possível realizar acerto: Não há caixa aberto.");
-      }
-
-      // 2. Buscar pedidos do entregador que ainda não foram acertados
+      const activeCashier = await prisma.cashierSession.findFirst({ where: { restaurantId, status: 'OPEN' } });
+      if (!activeCashier) throw new Error("Não é possível realizar acerto: Não há caixa aberto.");
       const queryDate = date ? new Date(date) : new Date();
-      const start = new Date(queryDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(queryDate);
-      end.setHours(23, 59, 59, 999);
-
+      const start = new Date(queryDate); start.setHours(0, 0, 0, 0);
+      const end = new Date(queryDate); end.setHours(23, 59, 59, 999);
       const deliveries = await prisma.deliveryOrder.findMany({
-          where: {
-              driverId: driverId,
-              status: 'DELIVERED',
-              order: { restaurantId, isSettled: false },
-              updatedAt: { gte: start, lte: end }
-          },
+          where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, updatedAt: { gte: start, lte: end } },
           include: { order: true }
       });
-
-      if (deliveries.length === 0) {
-          throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
-      }
-
-      // Cálculo de quanto o entregador coletou em dinheiro (Cash Income)
+      if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
       const cashCollected = deliveries.reduce((acc, del) => {
           const method = del.paymentMethod?.toLowerCase() || '';
-          if (method.includes('dinheiro') || method.includes('cash')) {
-              return acc + (del.order?.total || 0);
-          }
+          if (method.includes('dinheiro') || method.includes('cash')) return acc + (del.order?.total || 0);
           return acc;
       }, 0);
-
-      // 3. Executar Transação Atômica
       return await prisma.$transaction(async (tx) => {
-          // A. Marcar pedidos como acertados
           const orderIds = deliveries.map(d => d.orderId);
-          await tx.order.updateMany({
-              where: { id: { in: orderIds } },
-              data: { isSettled: true, settledAt: new Date() }
-          });
-
-          // B. Buscar/Criar categorias de transação
-          let feeCategory = await tx.transactionCategory.findFirst({
-              where: { restaurantId, name: 'Pagamento de Entregador' }
-          });
-          if (!feeCategory) {
-              feeCategory = await tx.transactionCategory.create({
-                  data: { name: 'Pagamento de Entregador', type: 'EXPENSE', isSystem: true, restaurantId }
-              });
-          }
-
-          let salesCategory = await tx.transactionCategory.findFirst({
-              where: { restaurantId, name: 'Venda de Delivery' }
-          });
-          if (!salesCategory) {
-              salesCategory = await tx.transactionCategory.create({
-                  data: { name: 'Venda de Delivery', type: 'INCOME', isSystem: true, restaurantId }
-              });
-          }
-
-          // C. Registrar ENTRADA do dinheiro que o motoboy trouxe (se houver)
+          await tx.order.updateMany({ where: { id: { in: orderIds } }, data: { isSettled: true, settledAt: new Date() } });
+          let feeCategory = await tx.transactionCategory.findFirst({ where: { restaurantId, name: 'Pagamento de Entregador' } });
+          if (!feeCategory) feeCategory = await tx.transactionCategory.create({ data: { name: 'Pagamento de Entregador', type: 'EXPENSE', isSystem: true, restaurantId } });
+          let salesCategory = await tx.transactionCategory.findFirst({ where: { restaurantId, name: 'Venda de Delivery' } });
+          if (!salesCategory) salesCategory = await tx.transactionCategory.create({ data: { name: 'Venda de Delivery', type: 'INCOME', isSystem: true, restaurantId } });
           if (cashCollected > 0) {
-              await tx.financialTransaction.create({
-                  data: {
-                      restaurantId,
-                      cashierId: activeCashier.id,
-                      description: `ENTRADA ACERTO [MOTOBOY: ${driverName}]: Dinheiro coletado em entregas`,
-                      amount: cashCollected,
-                      type: 'INCOME',
-                      status: 'PAID',
-                      paymentMethod: 'cash',
-                      categoryId: salesCategory.id,
-                      dueDate: new Date(),
-                      paymentDate: new Date()
-                  }
-              });
+              await tx.financialTransaction.create({ data: { restaurantId, cashierId: activeCashier.id, description: `ENTRADA ACERTO [MOTOBOY: ${driverName}]: Dinheiro coletado em entregas`, amount: cashCollected, type: 'INCOME', status: 'PAID', paymentMethod: 'cash', categoryId: salesCategory.id, dueDate: new Date(), paymentDate: new Date() } });
           }
-
-          // D. Registrar SAÍDA do pagamento do motoboy (Taxas/Comissões)
-          return await tx.financialTransaction.create({
-              data: {
-                  restaurantId,
-                  cashierId: activeCashier.id,
-                  description: `PAGAMENTO ACERTO [MOTOBOY: ${driverName}]: Taxas de entrega/Comissões`,
-                  amount,
-                  type: 'EXPENSE',
-                  status: 'PAID',
-                  paymentMethod: 'cash',
-                  recipientUserId: driverId,
-                  categoryId: feeCategory.id,
-                  dueDate: new Date(),
-                  paymentDate: new Date()
-              }
-          });
+          return await tx.financialTransaction.create({ data: { restaurantId, cashierId: activeCashier.id, description: `PAGAMENTO ACERTO [MOTOBOY: ${driverName}]: Taxas de entrega/Comissões`, amount, type: 'EXPENSE', status: 'PAID', paymentMethod: 'cash', recipientUserId: driverId, categoryId: feeCategory.id, dueDate: new Date(), paymentDate: new Date() } });
       });
   }
 
   async _triggerAutomaticInvoice(order) {
-      // Implementação futura ou via hook
       console.log(`[FISCAL] Analisando pedido #${order.id} para emissão automática...`);
   }
 }
