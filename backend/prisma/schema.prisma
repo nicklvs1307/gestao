@@ -784,6 +784,8 @@ model Order {
   tableNumber  Int?        // Opcional para acomodar pedidos de delivery
   status       OrderStatus @default(BUILDING)
   total        Float
+  discount     Float       @default(0) // Novo: Persistência de desconto
+  extraCharge  Float       @default(0) // Novo: Persistência de acréscimo/taxa
   orderType    OrderType   @default(TABLE) // Novo campo para diferenciar o tipo de pedido
   isPrinted    Boolean     @default(false) // Controle definitivo de impressão
   
