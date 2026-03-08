@@ -97,7 +97,9 @@ class OrderService {
     
     const realRestaurantId = restaurant.id;
     const isAutoAccept = restaurant.settings?.autoAcceptOrders || false;
-    const initialStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
+    
+    // Se tem userId (operador logado), vai direto para PREPARING
+    const initialStatus = (userId || isAutoAccept) ? 'PREPARING' : 'PENDING';
 
     const finalOrderType = (deliveryInfo || orderType === 'DELIVERY' || orderType === 'PICKUP') ? 'DELIVERY' : 'TABLE';
 

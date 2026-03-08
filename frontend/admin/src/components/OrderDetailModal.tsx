@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Order } from '@/types/index.ts';
+import { useNavigate } from 'react-router-dom';
 import { 
     getDrivers, assignDriver, getSettings, updateDeliveryType, 
     markOrderAsPrinted, emitInvoice 
@@ -10,12 +11,12 @@ import {
   X, Clock, MapPin, CheckCircle, 
   Circle, PlayCircle, XCircle, Printer, Phone, 
   ExternalLink, Package, CreditCard, Loader2, FileText,
-  ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck, List
+  ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck, List,
+  DollarSign, Receipt, ArrowRight, ShieldCheck, Hash
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from './ui/Button';
-import { Card } from './ui/Card';
 
 interface OrderDetailModalProps {
   onClose: () => void;
@@ -25,13 +26,16 @@ interface OrderDetailModalProps {
 
 const STATUS_OPTIONS = [
     { value: 'PENDING', label: 'Pendente', icon: Circle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-    { value: 'PREPARING', label: 'Cozinha', icon: PlayCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+    { value: 'PREPARING', label: 'Produção', icon: PlayCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
     { value: 'READY', label: 'Pronto', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { value: 'COMPLETED', label: 'Finalizado', icon: CheckCircle, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
-    { value: 'CANCELED', label: 'Cancelado', icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
+    { value: 'SHIPPED', label: 'Em Rota', icon: Truck, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+    { value: 'DELIVERED', label: 'Entregue', icon: Package, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
+    { value: 'COMPLETED', label: 'Finalizado', icon: ShieldCheck, color: 'text-slate-900', bg: 'bg-slate-100', border: 'border-slate-200' },
+    { value: 'CANCELED', label: 'Cancelado', icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
 ];
 
 const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onStatusChange }) => {
+  const navigate = useNavigate();
   
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -108,197 +112,243 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
   const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
+  const isPaid = order.status === 'COMPLETED' || (order.payments && order.payments.length > 0);
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center p-2 animate-in fade-in duration-300 overflow-hidden">
-      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-2 animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-4xl h-[90vh] lg:h-auto lg:max-h-[85vh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 border border-slate-200">
+      <div className="relative w-full max-w-5xl h-[95vh] lg:h-auto lg:max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
         
-        {/* HEADER ULTRA COMPACTO */}
-        <div className="flex items-center justify-between px-5 py-2.5 border-b bg-white shrink-0 relative">
-          <div className="flex items-center gap-3">
-            <div className={cn("p-1.5 rounded-lg border shadow-sm", currentStatus.bg, currentStatus.border, currentStatus.color)}>
-                <currentStatus.icon size={16} strokeWidth={3} />
+        {/* BARRA DE TÍTULO INDUSTRIAL */}
+        <header className="h-14 bg-slate-900 text-white px-6 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <div className={cn("p-2 rounded-lg border", currentStatus.bg, currentStatus.border, currentStatus.color)}>
+                <currentStatus.icon size={18} strokeWidth={3} />
             </div>
             <div>
-                <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter">
-                        Pedido <span className="text-orange-600">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</span>
+                <div className="flex items-center gap-3">
+                    <h2 className="text-base font-black text-white uppercase italic tracking-tighter flex items-center gap-2">
+                        <Hash size={14} className="text-slate-500" /> {order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}
                     </h2>
-                    <span className={cn("px-1.5 py-0.5 rounded-md text-[7px] font-black border uppercase tracking-widest", currentStatus.bg, currentStatus.color, currentStatus.border)}>
+                    <span className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border shadow-sm", currentStatus.bg, currentStatus.color, currentStatus.border)}>
                         {currentStatus.label}
                     </span>
                 </div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5 flex items-center gap-1.5">
+                    <Clock size={10} /> Registrado às {format(new Date(order.createdAt), 'HH:mm')} • {format(new Date(order.createdAt), 'dd/MM')}
+                </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button 
                 onClick={handlePrint} 
                 disabled={isPrinting} 
-                className="flex items-center gap-1.5 bg-slate-900 text-white h-8 px-3 rounded-xl hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
+                className="flex items-center gap-2 bg-white/10 text-white h-9 px-4 rounded-lg hover:bg-white/20 transition-all active:scale-95 border border-white/10"
             >
-                {isPrinting ? <Loader2 className="animate-spin" size={12} /> : <Printer size={12} />} 
-                <span className="italic font-black text-[8px] uppercase tracking-widest">Imprimir</span>
+                {isPrinting ? <Loader2 className="animate-spin" size={14} /> : <Printer size={14} />} 
+                <span className="italic font-black text-[9px] uppercase tracking-widest">Imprimir</span>
             </button>
-            <button 
-                onClick={onClose} 
-                className="w-8 h-8 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-            >
-                <X size={16} />
-            </button>
+            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-all text-slate-400 hover:text-white"><X size={24} /></button>
           </div>
-        </div>
+        </header>
 
-        <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 bg-slate-50/30">
-            {/* COLUNA ESQUERDA: CLIENTE, LOGÍSTICA E FINANCEIRO */}
-            <div className="lg:col-span-4 p-4 space-y-3 border-r border-slate-100 overflow-y-auto custom-scrollbar">
-                {/* DADOS DO CLIENTE */}
-                <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-                    <h3 className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-1.5 italic">
-                        <User size={10} className="text-orange-500"/> Identificação
-                    </h3>
-                    {isDelivery ? (
-                        <div className="space-y-2">
-                            <p className="text-xs font-black text-slate-900 uppercase italic leading-none truncate">
-                                {order.deliveryOrder?.name || 'Cliente Geral'}
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <a href={`tel:${order.deliveryOrder?.phone}`} className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">
-                                    <Phone size={10} /> {order.deliveryOrder?.phone || 'N/A'}
-                                </a>
-                            </div>
-                            {order.deliveryOrder?.address && (
-                                <div className="mt-1 pt-1.5 border-t border-slate-50 relative group">
-                                    <p className="text-[7px] font-black text-slate-400 uppercase mb-1">Endereço</p>
-                                    <p className="text-[9px] font-bold text-slate-600 uppercase italic leading-tight pr-6">
-                                        {order.deliveryOrder.address}
-                                    </p>
-                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryOrder.address)}`} target="_blank" className="absolute right-0 bottom-0 text-blue-500 hover:text-blue-700 p-1">
-                                        <ExternalLink size={10} />
-                                    </a>
+        <div className="flex-1 flex overflow-hidden bg-slate-100/50">
+            {/* PAINEL LATERAL: LOGÍSTICA E PAGAMENTO */}
+            <aside className="w-[340px] border-r border-slate-200 bg-white flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+                    {/* SEÇÃO: CLIENTE / MESA */}
+                    <div className="space-y-3">
+                        <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                            <User size={12} className="text-orange-500" /> Origem do Pedido
+                        </h3>
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-inner">
+                            {isDelivery ? (
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-orange-500 shadow-sm"><User size={18}/></div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-black text-slate-900 uppercase italic truncate">{order.deliveryOrder?.name || 'Cliente Geral'}</p>
+                                            <p className="text-[10px] font-bold text-emerald-600 flex items-center gap-1"><Phone size={10}/> {order.deliveryOrder?.phone || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    {order.deliveryOrder?.address && (
+                                        <div className="pt-3 border-t border-slate-200">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-1 flex items-center gap-1"><MapPin size={8}/> Local de Entrega</p>
+                                            <p className="text-[10px] font-bold text-slate-600 uppercase italic leading-tight bg-white p-2 rounded-lg border border-slate-100 shadow-sm">{order.deliveryOrder.address}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-100"><Utensils size={24} /></div>
+                                    <div>
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Serviço de Mesa</p>
+                                        <p className="text-2xl font-black text-slate-900 italic tracking-tighter leading-none">MESA {order.tableNumber}</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="flex items-center gap-3">
-                            <div className="bg-orange-500 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-md">
-                                <Utensils size={16} />
-                            </div>
-                            <div>
-                                <p className="text-[7px] font-black text-slate-400 uppercase">Localização</p>
-                                <p className="text-lg font-black text-slate-900 italic leading-none">MESA {order.tableNumber}</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* LOGÍSTICA COMPACTA */}
-                {isDelivery && (
-                    <div className="bg-blue-50/50 border border-blue-100 p-3 rounded-2xl space-y-2">
-                        <div className="flex gap-1 p-0.5 bg-blue-100/50 rounded-xl">
-                            <button onClick={() => handleUpdateDeliveryType('pickup')} className={cn("flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all", deliveryType === 'pickup' ? "bg-white text-blue-600 shadow-sm" : "text-blue-400")}>Balcão</button>
-                            <button onClick={() => handleUpdateDeliveryType('delivery')} className={cn("flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all", deliveryType === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-blue-400")}>Entrega</button>
-                        </div>
-                        {deliveryType === 'delivery' && (
-                            <select className="w-full bg-white border border-blue-100 rounded-lg h-8 px-2 text-[9px] font-black text-blue-900 outline-none italic shadow-sm" value={selectedDriver} onChange={(e) => handleAssignDriver(e.target.value)}>
-                                <option value="">MOTOBOY...</option>
-                                {drivers.map(d => <option key={d.id} value={d.id}>{d.name.toUpperCase()}</option>)}
-                            </select>
-                        )}
                     </div>
-                )}
 
-                {/* FINANCEIRO DENSO */}
-                <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
-                    <div className="space-y-1.5 relative z-10">
-                        <div className="flex justify-between items-center text-[8px] font-black text-slate-500 uppercase tracking-widest">
-                            <span>Produtos / Taxa</span>
-                            <span className="text-slate-300">R$ {order.total.toFixed(2)} {isDelivery && `+ ${order.deliveryOrder?.deliveryFee || 0}`}</span>
-                        </div>
-                        <div className="pt-2 mt-1 border-t border-white/10 flex justify-between items-center">
-                            <div>
-                                <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                                    <CreditCard size={8} className="text-slate-400" />
-                                    <span className="text-[7px] font-black text-white uppercase italic">{order.deliveryOrder?.paymentMethod || 'A PAGAR'}</span>
+                    {/* SEÇÃO: LOGÍSTICA (ENTREGA) */}
+                    {isDelivery && (
+                        <div className="space-y-3">
+                            <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                                <Truck size={12} className="text-blue-500" /> Gestão de Entrega
+                            </h3>
+                            <div className="bg-blue-50/30 border border-blue-100 p-3 rounded-xl space-y-3">
+                                <div className="flex gap-1 p-1 bg-white border border-blue-100 rounded-lg">
+                                    <button onClick={() => handleUpdateDeliveryType('pickup')} className={cn("flex-1 h-8 rounded-md text-[9px] font-black uppercase transition-all", deliveryType === 'pickup' ? "bg-blue-600 text-white shadow-md" : "text-blue-400 hover:bg-blue-50")}>Balcão</button>
+                                    <button onClick={() => handleUpdateDeliveryType('delivery')} className={cn("flex-1 h-8 rounded-md text-[9px] font-black uppercase transition-all", deliveryType === 'delivery' ? "bg-blue-600 text-white shadow-md" : "text-blue-400 hover:bg-blue-50")}>Entrega</button>
                                 </div>
-                            </div>
-                            <span className="text-xl font-black text-emerald-400 italic tracking-tighter leading-none">
-                                R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2)}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    {order.status === 'COMPLETED' && (
-                        <button onClick={handleEmitInvoice} disabled={isEmitting} className="w-full mt-3 h-8 bg-emerald-500 hover:bg-emerald-400 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95">
-                            {isEmitting ? <Loader2 size={12} className="animate-spin text-white" /> : <FileText size={12} className="text-white" />}
-                            <span className="text-[8px] font-black uppercase tracking-widest text-white">{order.invoice ? 'Ver NFC-e' : 'Emitir Nota'}</span>
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* COLUNA DIREITA: LISTA DE ITENS COM SCROLL INTERNO */}
-            <div className="lg:col-span-8 flex flex-col min-h-0 bg-white">
-                <div className="px-5 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between shrink-0">
-                  <h3 className="text-[10px] font-black text-slate-900 uppercase italic tracking-tighter flex items-center gap-2">
-                      <List size={14} className="text-orange-500" /> Itens do Pedido
-                  </h3>
-                  <span className="text-[8px] font-black text-slate-400">{order.items.length} UN</span>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-                    {order.items.map((item: any) => (
-                        <div key={item.id} className="p-2.5 flex items-start gap-3 border border-slate-100 rounded-2xl bg-white hover:bg-slate-50 transition-colors group relative">
-                            <div className="absolute top-2.5 right-3 font-black text-slate-900 text-[10px] italic tracking-tighter">
-                                R$ {(item.quantity * item.priceAtTime).toFixed(2)}
-                            </div>
-                            <div className="bg-slate-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm italic shrink-0">
-                                {item.quantity}
-                            </div>
-                            <div className="flex-1 min-w-0 pr-16">
-                                <h4 className="font-black text-slate-900 uppercase italic text-[10px] tracking-tight leading-none mb-1">
-                                    {item.product.name}
-                                </h4>
-                                <div className="flex flex-wrap gap-1">
-                                    {item.sizeJson && <span className="text-[7px] bg-blue-50 text-blue-600 px-1 py-0.2 rounded font-black uppercase italic">T: {JSON.parse(item.sizeJson).name}</span>}
-                                    {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, i: number) => <span key={i} className="text-[7px] bg-orange-50 text-orange-600 px-1 py-0.2 rounded font-black uppercase italic">{f.name}</span>)}
-                                    {item.addonsJson && JSON.parse(item.addonsJson).map((a: any, i: number) => <span key={i} className="text-[7px] bg-slate-50 text-slate-400 px-1 py-0.2 rounded font-black uppercase italic">+ {a.name}</span>)}
-                                </div>
-                                {item.observations && (
-                                    <div className="mt-1.5 p-1.5 bg-orange-50 rounded-lg border-l-2 border-orange-500">
-                                        <p className="text-[8px] font-bold text-orange-600 italic">OBS: {item.observations.toUpperCase()}</p>
+                                {deliveryType === 'delivery' && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-[8px] font-black text-blue-600 uppercase ml-1">Entregador Responsável</label>
+                                        <select className="w-full bg-white border border-blue-200 rounded-lg h-10 px-3 text-[10px] font-black text-slate-700 outline-none shadow-sm focus:border-blue-500 appearance-none cursor-pointer" value={selectedDriver} onChange={(e) => handleAssignDriver(e.target.value)}>
+                                            <option value="">AGUARDANDO...</option>
+                                            {drivers.map(d => <option key={d.id} value={d.id}>{d.name.toUpperCase()}</option>)}
+                                        </select>
                                     </div>
                                 )}
                             </div>
                         </div>
-                    ))}
-                </div>
-            </div>
-        </div>
+                    )}
 
-        {/* FOOTER DE STATUS SLIM */}
-        <div className="p-3 bg-white border-t border-slate-100 flex flex-wrap justify-center items-center gap-1.5 shrink-0">
-            {onStatusChange && STATUS_OPTIONS.map((status) => {
-                const isActive = order.status === status.value;
-                return (
-                    <button 
-                        key={status.value} 
-                        onClick={() => onStatusChange(order.id, status.value)} 
-                        disabled={isActive}
-                        className={cn(
-                            "flex items-center gap-1.5 h-8 px-3 rounded-xl text-[7px] uppercase tracking-widest italic font-black transition-all border shadow-sm",
-                            isActive 
-                                ? cn(status.bg, status.color, status.border, "scale-105 z-10") 
-                                : "bg-white border-slate-100 text-slate-400 hover:bg-slate-50"
-                        )}
-                    >
-                        <status.icon size={10} strokeWidth={isActive ? 3 : 2} /> 
-                        {status.label}
-                    </button>
-                );
-            })}
+                    {/* SEÇÃO: FINANCEIRO ROBUSTO */}
+                    <div className="space-y-3">
+                        <h3 className="text-[9px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                            <Receipt size={12} className="text-emerald-600" /> Balanço Financeiro
+                        </h3>
+                        <div className="bg-slate-900 rounded-xl p-5 text-white shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform"><DollarSign size={60} /></div>
+                            <div className="space-y-4 relative z-10">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                        <span>Consumo Itens</span>
+                                        <span className="text-slate-300">R$ {order.total.toFixed(2)}</span>
+                                    </div>
+                                    {isDelivery && (
+                                        <div className="flex justify-between items-center text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>Taxa Logística</span>
+                                            <span className="text-blue-400">+ R$ {order.deliveryOrder?.deliveryFee || '0,00'}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+                                    <div>
+                                        <p className="text-[8px] font-black text-slate-500 uppercase mb-1">Total Geral</p>
+                                        <p className="text-3xl font-black text-white italic tracking-tighter leading-none">
+                                            R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className={cn("px-2 py-1 rounded text-[8px] font-black uppercase shadow-sm border", isPaid ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-rose-500/20 text-rose-400 border-rose-500/30 animate-pulse")}>
+                                            {isPaid ? 'LIQUIDADO' : 'PENDENTE'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* BOTÃO DE AÇÃO DE PAGAMENTO DESTAQUE */}
+                {!isPaid && (
+                    <div className="p-5 bg-slate-50 border-t border-slate-200">
+                        <Button 
+                            onClick={() => navigate(`/pos/checkout/${order.id}`)}
+                            fullWidth 
+                            size="lg" 
+                            className="h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase italic tracking-widest text-[11px] shadow-lg shadow-emerald-900/20 group"
+                        >
+                            RECEBER E FINALIZAR <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                    </div>
+                )}
+                {order.status === 'COMPLETED' && (
+                    <div className="p-5 bg-slate-50 border-t border-slate-200">
+                        <button onClick={handleEmitInvoice} disabled={isEmitting} className="w-full h-12 bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white rounded-xl flex items-center justify-center gap-3 transition-all font-black uppercase tracking-widest text-[10px] shadow-sm">
+                            {isEmitting ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                            {order.invoice ? 'Visualizar NFC-e' : 'Emitir Nota Fiscal'}
+                        </button>
+                    </div>
+                )}
+            </aside>
+
+            {/* ÁREA PRINCIPAL: ITENS E DETALHES TÉCNICOS */}
+            <main className="flex-1 flex flex-col min-w-0 bg-white">
+                <div className="h-12 border-b border-slate-200 flex items-center justify-between px-6 bg-white shrink-0">
+                    <h3 className="text-[10px] font-black text-slate-900 uppercase italic tracking-widest flex items-center gap-2">
+                        <List size={14} className="text-orange-500" /> Detalhamento do Pedido
+                    </h3>
+                    <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter">
+                        {order.items.reduce((acc, i) => acc + i.quantity, 0)} Unidades • {order.items.length} SKUs
+                    </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50/20">
+                    <div className="grid grid-cols-1 gap-3">
+                        {order.items.map((item: any) => (
+                            <div key={item.id} className="bg-white border border-slate-200 rounded-2xl p-4 flex items-start gap-4 hover:border-orange-500/50 hover:shadow-md transition-all group relative overflow-hidden shadow-sm">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-slate-900 group-hover:bg-orange-500 transition-colors" />
+                                <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-lg italic shadow-lg shrink-0 scale-90 group-hover:scale-100 transition-transform">
+                                    {item.quantity}
+                                </div>
+                                <div className="flex-1 min-w-0 pr-24">
+                                    <h4 className="text-sm font-black text-slate-900 uppercase italic tracking-tight leading-none mb-2 group-hover:text-orange-600 transition-colors">
+                                        {item.product.name}
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {item.sizeJson && <span className="text-[8px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg font-black uppercase border border-blue-100">TAM: {JSON.parse(item.sizeJson).name}</span>}
+                                        {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: any, i: number) => <span key={i} className="text-[8px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-lg font-black uppercase border border-orange-100">{f.name}</span>)}
+                                        {item.addonsJson && JSON.parse(item.addonsJson).map((a: any, i: number) => <span key={i} className="text-[8px] bg-slate-50 text-slate-500 px-2 py-0.5 rounded-lg font-black uppercase border border-slate-100 shadow-sm">+ {a.name}</span>)}
+                                    </div>
+                                    {item.observations && (
+                                        <div className="mt-3 p-2.5 bg-orange-50 rounded-lg border border-orange-100">
+                                            <p className="text-[9px] font-bold text-orange-700 italic flex items-center gap-1.5 uppercase leading-tight">
+                                                <Info size={12} /> {item.observations}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Subtotal</p>
+                                    <p className="text-lg font-black text-slate-900 italic tracking-tighter">R$ {(item.quantity * item.priceAtTime).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* CONTROLES DE STATUS INDUSTRIAL NO RODAPÉ */}
+                <footer className="p-4 bg-white border-t border-slate-200 flex flex-wrap justify-center items-center gap-2 shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+                    {onStatusChange && STATUS_OPTIONS.map((status) => {
+                        const isActive = order.status === status.value;
+                        const isDisabled = (status.value === 'COMPLETED' && !isPaid);
+                        
+                        return (
+                            <button 
+                                key={status.value} 
+                                onClick={() => onStatusChange(order.id, status.value)} 
+                                disabled={isActive || isDisabled}
+                                className={cn(
+                                    "flex items-center gap-2 h-10 px-4 rounded-xl text-[9px] uppercase tracking-widest italic font-black transition-all border shadow-sm",
+                                    isActive 
+                                        ? cn(status.bg, status.color, status.border, "scale-105 z-10 shadow-md ring-2 ring-offset-2", status.value === 'CANCELED' ? "ring-rose-100" : "ring-slate-100") 
+                                        : isDisabled
+                                            ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed grayscale"
+                                            : "bg-white border-slate-200 text-slate-500 hover:border-slate-900 hover:text-slate-900 hover:shadow-md active:scale-95"
+                                )}
+                            >
+                                <status.icon size={14} strokeWidth={isActive ? 3 : 2} /> 
+                                {status.label}
+                            </button>
+                        );
+                    })}
+                </footer>
+            </main>
         </div>
       </div>
     </div>
