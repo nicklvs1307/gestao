@@ -1,19 +1,86 @@
-Iniciando a aplicação...
-[dotenv@17.2.3] injecting env (1) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
-/app/node_modules/router/lib/route.js:228
-        throw new TypeError('argument handler must be a function')
-        ^
-
-TypeError: argument handler must be a function
-    at Route.<computed> [as post] (/app/node_modules/router/lib/route.js:228:15)
-    at Router.<computed> [as post] (/app/node_modules/router/index.js:448:19)
-    at Object.<anonymous> (/app/src/routes/financialRoutes.js:23:8)
-    at Module._compile (node:internal/modules/cjs/loader:1521:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-    at Module.load (node:internal/modules/cjs/loader:1266:32)
-    at Module._load (node:internal/modules/cjs/loader:1091:12)
-    at Module.require (node:internal/modules/cjs/loader:1289:19)
-    at require (node:internal/modules/helpers:182:18)
-    at Object.<anonymous> (/app/index.js:77:25)
-
-Node.js v20.20.1
+index-DMJUKD-3.js:549 [SSE] Conexão estabelecida com o servidor.
+cover-1772319108282-935572707.jpeg:1  GET https://kicardapio.towersfy.com/api/api/api/api/uploads/cover-1772319108282-935572707.jpeg 404 (Not Found)
+Image
+cg @ index-DMJUKD-3.js:41
+ug @ index-DMJUKD-3.js:41
+ug @ index-DMJUKD-3.js:41
+ug @ index-DMJUKD-3.js:41
+b4 @ index-DMJUKD-3.js:41
+_4 @ index-DMJUKD-3.js:41
+Ql @ index-DMJUKD-3.js:41
+hg @ index-DMJUKD-3.js:41
+z @ index-DMJUKD-3.js:26
+H @ index-DMJUKD-3.js:26
+index-DMJUKD-3.js:549 SSE Error: Event {isTrusted: true, type: 'error', target: EventSource, currentTarget: EventSource, eventPhase: 2, …}
+oe.onerror @ index-DMJUKD-3.js:549
+/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJpbnRlZ3JhdGlvbnM6bWFuYWdlIiwib3JkZXJzOnZpZXciLCJvcmRlcnM6bWFuYWdlIiwib3JkZXJzOmVkaXRfaXRlbXMiLCJvcmRlcnM6Y2FuY2VsIiwib3JkZXJzOnRyYW5zZmVyIiwib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsImZpbmFuY2lhbDp2aWV3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MzAwNjI3OCwiZXhwIjoxNzczMDM1MDc4fQ.i5jvvl1ORK7dG8uBjhXrUM2pPMh12QuqBUC6YUyYKCY&restaurantId=cmm6nas6m0001k801znx8seh8:1  GET https://kicardapio.towersfy.com/api/admin/orders/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczptYW5hZ2UiLCJ3YWl0ZXJfc2V0dGxlbWVudDptYW5hZ2UiLCJpbnRlZ3JhdGlvbnM6bWFuYWdlIiwib3JkZXJzOnZpZXciLCJvcmRlcnM6bWFuYWdlIiwib3JkZXJzOmVkaXRfaXRlbXMiLCJvcmRlcnM6Y2FuY2VsIiwib3JkZXJzOnRyYW5zZmVyIiwib3JkZXJzOnBheW1lbnRfY2hhbmdlIiwib3JkZXJzOmRpc2NvdW50Iiwid2FpdGVyOnBvcyIsInBvczphY2Nlc3MiLCJrZHM6dmlldyIsInRhYmxlOm1hbmFnZSIsImRlbGl2ZXJ5Om1hbmFnZSIsImZpbmFuY2lhbDp2aWV3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MzAwNjI3OCwiZXhwIjoxNzczMDM1MDc4fQ.i5jvvl1ORK7dG8uBjhXrUM2pPMh12QuqBUC6YUyYKCY&restaurantId=cmm6nas6m0001k801znx8seh8 net::ERR_QUIC_PROTOCOL_ERROR 200 (OK)
+index-CL3SdtP1.js:1 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cmm6nas6m0001k801znx8seh8&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczpt...V3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MzAwNjI3OCwiZXhwIjoxNzczMDM1MDc4fQ.i5jvvl1ORK7dG8uBjhXrUM2pPMh12QuqBUC6YUyYKCY&timestamp=1773006524385&EIO=4&transport=websocket' failed: 
+createSocket @ index-CL3SdtP1.js:1
+doOpen @ index-CL3SdtP1.js:1
+open @ index-CL3SdtP1.js:1
+_open @ index-CL3SdtP1.js:1
+_ @ index-CL3SdtP1.js:1
+He @ index-CL3SdtP1.js:1
+Ke @ index-CL3SdtP1.js:1
+open @ index-CL3SdtP1.js:1
+F @ index-CL3SdtP1.js:1
+P @ index-CL3SdtP1.js:1
+(anônimo) @ useSocket-qNM9pWyK.js:1
+lf @ index-DMJUKD-3.js:41
+Yu @ index-DMJUKD-3.js:41
+(anônimo) @ index-DMJUKD-3.js:41
+z @ index-DMJUKD-3.js:26
+H @ index-DMJUKD-3.js:26
+index-CL3SdtP1.js:1 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cmm6nas6m0001k801znx8seh8&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczpt...V3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MzAwNjI3OCwiZXhwIjoxNzczMDM1MDc4fQ.i5jvvl1ORK7dG8uBjhXrUM2pPMh12QuqBUC6YUyYKCY&timestamp=1773006524385&EIO=4&transport=websocket' failed: 
+createSocket @ index-CL3SdtP1.js:1
+doOpen @ index-CL3SdtP1.js:1
+open @ index-CL3SdtP1.js:1
+_open @ index-CL3SdtP1.js:1
+_ @ index-CL3SdtP1.js:1
+He @ index-CL3SdtP1.js:1
+Ke @ index-CL3SdtP1.js:1
+open @ index-CL3SdtP1.js:1
+(anônimo) @ index-CL3SdtP1.js:1
+index-DMJUKD-3.js:41 TypeError: Cannot read properties of undefined (reading 'reduce')
+    at jt (OrderManagement-hi5mW87l.js:1:15884)
+    at Wl (index-DMJUKD-3.js:39:17828)
+    at bg (index-DMJUKD-3.js:41:44965)
+    at yg (index-DMJUKD-3.js:41:40536)
+    at N4 (index-DMJUKD-3.js:41:40464)
+    at gf (index-DMJUKD-3.js:41:40317)
+    at yp (index-DMJUKD-3.js:41:36578)
+    at pg (index-DMJUKD-3.js:41:37390)
+    at P (index-DMJUKD-3.js:39:3267)
+    at index-DMJUKD-3.js:41:34888
+ep @ index-DMJUKD-3.js:41
+D1.c.callback @ index-DMJUKD-3.js:41
+Hi @ index-DMJUKD-3.js:39
+cg @ index-DMJUKD-3.js:41
+ug @ index-DMJUKD-3.js:41
+b4 @ index-DMJUKD-3.js:41
+_4 @ index-DMJUKD-3.js:41
+Ql @ index-DMJUKD-3.js:41
+pg @ index-DMJUKD-3.js:41
+P @ index-DMJUKD-3.js:39
+(anônimo) @ index-DMJUKD-3.js:41
+index-DMJUKD-3.js:39 Uncaught TypeError: Cannot read properties of undefined (reading 'reduce')
+    at jt (OrderManagement-hi5mW87l.js:1:15884)
+    at Wl (index-DMJUKD-3.js:39:17828)
+    at bg (index-DMJUKD-3.js:41:44965)
+    at yg (index-DMJUKD-3.js:41:40536)
+    at N4 (index-DMJUKD-3.js:41:40464)
+    at gf (index-DMJUKD-3.js:41:40317)
+    at yp (index-DMJUKD-3.js:41:36578)
+    at pg (index-DMJUKD-3.js:41:37390)
+    at P (index-DMJUKD-3.js:39:3267)
+    at index-DMJUKD-3.js:41:34888
+jt @ OrderManagement-hi5mW87l.js:1
+Wl @ index-DMJUKD-3.js:39
+bg @ index-DMJUKD-3.js:41
+yg @ index-DMJUKD-3.js:41
+N4 @ index-DMJUKD-3.js:41
+gf @ index-DMJUKD-3.js:41
+yp @ index-DMJUKD-3.js:41
+pg @ index-DMJUKD-3.js:41
+P @ index-DMJUKD-3.js:39
+(anônimo) @ index-DMJUKD-3.js:41

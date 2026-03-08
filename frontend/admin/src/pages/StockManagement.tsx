@@ -126,7 +126,7 @@ const StockManagement: React.FC = () => {
                             <div className="relative z-10">
                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Valor Total em Estoque</p>
                                 <h2 className="text-3xl font-black italic tracking-tighter">
-                                    R$ {ingredients.reduce((acc, i) => acc + (i.stock * (i.averageCost || 0)), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    R$ {(Array.isArray(ingredients) ? ingredients : []).reduce((acc, i) => acc + (i.stock * (i.averageCost || 0)), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </h2>
                                 <div className="mt-4 flex gap-4">
                                     <div className="flex flex-col">

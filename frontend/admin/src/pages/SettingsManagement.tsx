@@ -116,8 +116,8 @@ const SettingsManagement: React.FC = () => {
         primary: settingsData.settings?.primaryColor || '#f97316',
         secondary: settingsData.settings?.secondaryColor || '#0f172a',
         background: settingsData.settings?.backgroundColor || '#f8fafc',
-        logo: settingsData.logoUrl ? `/api${settingsData.logoUrl}` : initialLogo,
-        cover: settingsData.settings?.backgroundImageUrl ? `/api${settingsData.settings.backgroundImageUrl}` : initialBgImage
+        logo: settingsData.logoUrl ? `/api${settingsData.logoUrl.replace(/^\/api/, '')}` : initialLogo,
+        cover: settingsData.settings?.backgroundImageUrl ? `/api${settingsData.settings.backgroundImageUrl.replace(/^\/api/, '')}` : initialBgImage
       });
 
       setOriginalSlug(settingsData.slug || '');
@@ -166,7 +166,7 @@ const SettingsManagement: React.FC = () => {
         city: general.city, state: general.state, serviceTaxPercentage: general.serviceTax,
         openingHours: general.openingHours, latitude: general.latitude, longitude: general.longitude,
         primaryColor: appearance.primary, secondaryColor: appearance.secondary, backgroundColor: appearance.background,
-        backgroundImageUrl: appearance.cover.replace('/api', ''), 
+        backgroundImageUrl: appearance.cover.replace(/^\/api/, ''), 
         isOpen: operation.isOpen, deliveryFee: general.deliveryFee, deliveryTime: general.deliveryTime,
         autoAcceptOrders: operation.autoAccept, autoPrintEnabled: operation.autoPrint,
         loyaltyEnabled: loyalty.enabled, pointsPerReal: loyalty.pointsPerReal, cashbackPercentage: loyalty.cashback

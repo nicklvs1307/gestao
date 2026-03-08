@@ -14,7 +14,7 @@ class OrderController {
       status, type, startDate, endDate, limit: limit ? parseInt(limit) : 100 
     });
     
-    res.json(orders);
+    res.json(Array.isArray(orders) ? orders : []);
   });
 
   streamOrderEvents = (req, res) => {
