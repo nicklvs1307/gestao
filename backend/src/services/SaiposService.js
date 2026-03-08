@@ -27,7 +27,6 @@ class SaiposService {
   /**
    * Obtém ou renova o token de acesso da Saipos
    */
-   */
   async getAccessToken(restaurantId, settings) {
     if (settings.saiposToken && settings.saiposTokenExpiresAt > new Date()) {
       return settings.saiposToken;

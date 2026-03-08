@@ -1,16 +1,30 @@
-URL da solicitação
-https://kicardapio.towersfy.com/api/admin/settings/restaurant
-Método da solicitação
-GET
-Código de status
-404 Not Found
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Error</title>
-</head>
-<body>
-<pre>Cannot GET /api/admin/settings/restaurant</pre>
-</body>
-</html>
+Aguardando banco de dados responder em postgresql://postgres:b74996144735db08d6e091f460df4184@postgres:5432/gestao_sistema?schema=public...
+Sincronizando Banco de Dados com o Schema...
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "gestao_sistema", schema "public" at "postgres:5432"
+
+12 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+Executando Seed de Permissões...
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (1) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+/app/src/services/SaiposService.js:30
+   */
+    ^
+
+SyntaxError: Unexpected token '/'
+    at wrapSafe (node:internal/modules/cjs/loader:1464:18)
+    at Module._compile (node:internal/modules/cjs/loader:1495:20)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/app/src/services/OrderService.js:2:23)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+
+Node.js v20.20.1

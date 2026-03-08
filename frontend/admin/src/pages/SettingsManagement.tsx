@@ -6,7 +6,7 @@ import {
   Save, Copy, ExternalLink, Palette, Store, 
   Clock, MapPin, Phone, Link as LinkIcon, Image as ImageIcon,
   CheckCircle, Loader2, Printer as PrinterIcon, RefreshCw, LayoutTemplate, Plus, Trash2,
-  XCircle, Smartphone, MousePointer2, CreditCard, DollarSign, ChefHat, Beer, Settings, Globe, Navigation
+  XCircle, Smartphone, MousePointer2, CreditCard, DollarSign, ChefHat, Beer, Settings, Globe, Navigation, TrendingUp
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
