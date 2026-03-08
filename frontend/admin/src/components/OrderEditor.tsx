@@ -170,7 +170,8 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const handleSaveFinancials = async () => {
       try {
           setIsSaving(true);
-          const subtotal = order.items.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
+          const currentItems = Array.isArray(order.items) ? order.items : [];
+          const subtotal = currentItems.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
           const newTotal = subtotal + deliveryFee + surcharge - discount;
           
           await updateOrderFinancials(order.id, {
@@ -195,9 +196,9 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       return matchesSearch && matchesCategory;
   });
 
-  const subtotal = order.items.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
+  const subtotal = (Array.isArray(order.items) ? order.items : []).reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
   const totalGeral = subtotal + deliveryFee + surcharge - discount;
-  const totalPaid = order.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
+  const totalPaid = (Array.isArray(order.payments) ? order.payments : []).reduce((acc, p) => acc + p.amount, 0) || 0;
   const remainingToPay = totalGeral - totalPaid;
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];

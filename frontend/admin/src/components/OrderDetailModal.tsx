@@ -303,7 +303,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                     </h3>
                     <div className="flex items-center gap-3">
                         <span className="bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic shadow-lg">
-                            {order.items.reduce((acc, i) => acc + i.quantity, 0)} ITENS
+                            {(Array.isArray(order.items) ? order.items : []).reduce((acc, i) => acc + i.quantity, 0)} ITENS
                         </span>
                     </div>
                 </div>
