@@ -102,26 +102,11 @@ class FinancialController {
     });
   });
 
-  createTransfer = asyncHandler(async (req, res) => {
-    const validatedData = TransferSchema.parse(req.body);
-
-    // Validação de Segurança (IDOR): Verificar se as contas pertencem ao restaurante logado
-    const accounts = await prisma.bankAccount.findMany({
-        where: {
-            id: { in: [validatedData.fromAccountId, validatedData.toAccountId] },
-            restaurantId: req.restaurantId
-        }
-    });
-
-    if (accounts.length !== 2) {
-        res.status(403);
-        throw new Error('Acesso negado: Uma ou ambas as contas não pertencem ao seu restaurante.');
-    }
-
-    const result = await FinancialService.createTransfer(req.restaurantId, validatedData);
-    res.status(201).json(result);
+  createTransaction = asyncHandler(async (req, res) => {
+    const validatedData = CreateTransactionSchema.parse(req.body);
+    const transaction = await FinancialService.createTransaction(req.restaurantId, validatedData);
+    res.status(201).json(transaction);
   });
-
 
   updateTransaction = asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -148,13 +133,25 @@ class FinancialController {
 
   createTransfer = asyncHandler(async (req, res) => {
     const validatedData = TransferSchema.parse(req.body);
+
+    // Validação de Segurança (IDOR): Verificar se as contas pertencem ao restaurante logado
+    const accounts = await prisma.bankAccount.findMany({
+        where: {
+            id: { in: [validatedData.fromAccountId, validatedData.toAccountId] },
+            restaurantId: req.restaurantId
+        }
+    });
+
+    if (accounts.length !== 2) {
+        res.status(403);
+        throw new Error('Acesso negado: Uma ou ambas as contas não pertencem ao seu restaurante.');
+    }
+
     const result = await FinancialService.createTransfer(req.restaurantId, validatedData);
     res.status(201).json(result);
   });
 
-  // Mantido aqui para simplicidade, mas delegando a lógica para o Service se necessário no futuro
   syncRecurring = asyncHandler(async (req, res) => {
-    // Logica de sync mantida conforme original, mas agora sob asyncHandler
     const restaurantId = req.restaurantId;
     const activeRecurring = await prisma.financialTransaction.findMany({
         where: {
