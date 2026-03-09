@@ -12,8 +12,12 @@ export const useSocket = () => {
 
     if (!restaurantId) return;
 
+    const socketUrl = window.location.hostname === 'localhost' 
+      ? window.location.origin 
+      : 'https://apikicardapio.towersfy.com';
+
     // Conecta ao servidor socket
-    const socket = io(window.location.origin, {
+    const socket = io(socketUrl, {
       query: { 
         restaurantId, 
         token,

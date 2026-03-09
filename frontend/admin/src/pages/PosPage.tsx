@@ -4,7 +4,7 @@ import {
     toggleStoreStatus, getCashierStatus, openCashier, closeCashier, getSettings,
     getPosTableSummary, checkoutTable, getCashierSummary, searchCustomers,
     transferTable, transferItems, removeOrderItem, partialTablePayment,
-    getPaymentMethods, partialValuePayment, markOrderAsPrinted
+    getPaymentMethods, partialValuePayment, markOrderAsPrinted, addItemsToOrder, updateOrderFinancials
 } from '../services/api';
 import { CustomerSelectionModal } from '../components/CustomerSelectionModal';
 import { printOrder } from '../services/printing';
@@ -18,6 +18,7 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSocket } from '../hooks/useSocket';
 
 import type { Product, Category, CartItem, TableSummary, PaymentMethod } from '../types';
 import { Card } from '../components/ui/Card';
@@ -103,10 +104,21 @@ const PosPage: React.FC = () => {
 
     const searchInputRef = useRef<HTMLInputElement>(null);
 
+    const { on, off } = useSocket();
+
     // --- CARREGAMENTO INICIAL ---
     useEffect(() => {
         loadInitialData();
-    }, []);
+
+        // Socket listener para atualizações em tempo real
+        on('order_update', () => {
+            loadTableSummary();
+        });
+
+        return () => {
+            off('order_update');
+        };
+    }, [on, off]);
 
     const loadInitialData = async () => {
         try {
@@ -323,8 +335,36 @@ const PosPage: React.FC = () => {
                 extraCharge: finalExtra,
                 totalAmount: Number((cartTotal + finalExtra + finalDelivery - finalDiscount).toFixed(2))
             };
-            await createOrder(orderPayload);
-            toast.success("Pedido enviado!");
+
+            // VERIFICAÇÃO DE DUPLICIDADE: Se for mesa, checar se já tem pedido aberto
+            if (orderMode === 'table') {
+                const tableInfo = tablesSummary.find(t => t.number === parseInt(selectedTable));
+                const activeOrderId = tableInfo?.tabs?.[0]?.orderId;
+
+                if (activeOrderId && tableInfo.status !== 'free') {
+                    // Já existe pedido, apenas adicionar itens
+                    await addItemsToOrder(activeOrderId, orderPayload.items);
+                    
+                    // Se houver alteração de taxas/descontos, atualizar financeiros
+                    if (finalDiscount > 0 || finalExtra > 0) {
+                        const newTotal = tableInfo.totalAmount + orderPayload.totalAmount;
+                        await updateOrderFinancials(activeOrderId, {
+                            discount: finalDiscount,
+                            surcharge: finalExtra,
+                            total: newTotal
+                        });
+                    }
+                    
+                    toast.success("Itens adicionados ao pedido!");
+                } else {
+                    await createOrder(orderPayload);
+                    toast.success("Pedido enviado!");
+                }
+            } else {
+                await createOrder(orderPayload);
+                toast.success("Pedido enviado!");
+            }
+
             setCart([]);
             setSelectedTable('');
             setCustomerName('');
