@@ -4,7 +4,7 @@ import OrderKanbanBoard from './OrderKanbanBoard';
 import OrderListView from './OrderListView';
 import OrderDetailModal from './OrderDetailModal';
 import OrderEditor from './OrderEditor';
-import { getAdminOrders, updateOrderStatus } from '../services/api';
+import { getAdminOrders, updateOrderStatus, getOrder } from '../services/api';
 import type { Order } from '@/types/index.ts';
 import { Kanban, List, Search, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -27,6 +27,20 @@ const OrderManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+
+  const handleOpenOrder = async (order: Order) => {
+    try {
+      // Se já tiver items (ex: veio via Socket), não precisa buscar
+      if (Array.isArray(order.items) && order.items.length > 0) {
+        setSelectedOrder(order);
+        return;
+      }
+      const fullOrder = await getOrder(order.id);
+      setSelectedOrder(fullOrder);
+    } catch (error) {
+      toast.error("Erro ao carregar detalhes do pedido.");
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -206,14 +220,14 @@ const OrderManagement: React.FC = () => {
           <OrderKanbanBoard 
             orders={filteredOrders} 
             onStatusChange={handleStatusChange} 
-            onOpenDetails={setSelectedOrder}
+            onOpenDetails={handleOpenOrder}
             selectedOrderIds={selectedOrderIds}
             toggleSelectOrder={toggleSelectOrder}
           />
         ) : (
           <OrderListView 
             orders={allOrders} 
-            onOpenDetails={setSelectedOrder}
+            onOpenDetails={handleOpenOrder}
             selectedOrderIds={selectedOrderIds}
             toggleSelectOrder={toggleSelectOrder}
           />

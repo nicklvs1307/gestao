@@ -310,7 +310,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
 
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/30">
                     <div className="grid grid-cols-1 gap-4 max-w-4xl mx-auto">
-                        {order.items.map((item: any) => (
+                        {order.items?.map((item: any) => (
                             <div key={item.id} className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-start gap-6 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all group relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-200 group-hover:bg-blue-600 transition-colors" />
                                 

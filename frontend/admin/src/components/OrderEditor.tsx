@@ -304,7 +304,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                     <div className="col-span-7">Item</div>
                     <div className="col-span-3 text-right">Valor</div>
                 </div>
-                {order.items.map((item: any) => (
+                {order.items?.map((item: any) => (
                     <div key={item.id} className="grid grid-cols-12 items-start p-2 rounded-xl hover:bg-slate-50 transition-colors group relative">
                         <div className="col-span-2 font-black text-slate-900 italic">{item.quantity}</div>
                         <div className="col-span-7">
