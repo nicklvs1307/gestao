@@ -64,7 +64,7 @@ const DriverSettlement: React.FC = () => {
 
     useEffect(() => {
         fetchSettlement();
-    }, [date]);
+    }, [date, startTime, endTime]);
 
     const totals = data.reduce((acc, curr) => ({
         toPay: acc.toPay + curr.totalToPay,

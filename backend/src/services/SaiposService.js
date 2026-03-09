@@ -122,10 +122,11 @@ class SaiposService {
         
         const choiceItems = [];
         
-        // Calcula o total apenas dos adicionais para subtrair do unitPrice (pois o sistema salva o total no unitPrice)
-        const addonsTotalPrice = addons.reduce((sum, a) => sum + (parseFloat(a.price || 0) * (a.quantity || 1)), 0);
+        // O unitPrice na Saipos deve ser o preço base (com tamanho/promoção) sem os adicionais que tem valor
+        // Filtramos apenas adicionais com preço > 0 para não subtrair erradamente de pizzas/sabores
+        const addonsWithPrice = addons.filter(a => parseFloat(a.price || 0) > 0);
+        const addonsTotalPrice = addonsWithPrice.reduce((sum, a) => sum + (parseFloat(a.price || 0) * (a.quantity || 1)), 0);
         
-        // O unitPrice na Saipos deve ser o preço base (com tamanho/promoção) sem os adicionais
         const baseUnitPrice = Math.max(0, parseFloat(item.priceAtTime) - addonsTotalPrice);
 
         // Adiciona Tamanho (Geralmente no sistema o tamanho já define o preço base, 
@@ -249,9 +250,16 @@ class SaiposService {
           // Se tiver um código configurado, usa ele. Senão tenta mapear pelo nome/tipo.
           const methodToMap = dbPaymentMethod?.saiposIntegrationCode || dbPaymentMethod?.type || methodName;
           
-          // Fix: order.total already includes deliveryFee in this system. Force 2 decimal places.
-          const finalAmount = Math.round(order.total * 100) / 100;
-          const paymentData = this.mapPaymentMethod(methodToMap, finalAmount, order.deliveryOrder?.changeFor || 0);
+          // O total final do pedido para a Saipos deve ser: total (itens + acréscimo - desconto) + taxa de entrega
+          const deliveryFee = parseFloat(order.deliveryOrder?.deliveryFee || 0);
+          const finalAmount = Math.round((order.total + deliveryFee) * 100) / 100;
+          
+          // Troco: Só envia se changeFor for maior que o total do pedido (total com entrega)
+          const changeFor = (order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > finalAmount) 
+              ? order.deliveryOrder.changeFor 
+              : 0;
+
+          const paymentData = this.mapPaymentMethod(methodToMap, finalAmount, changeFor);
           paymentTypes.push(paymentData);
       }
 
@@ -262,9 +270,9 @@ class SaiposService {
         cod_store: settings.saiposCodStore,
         created_at: order.createdAt.toISOString(),
         notes: normalize(order.deliveryOrder?.notes || ''),
-        total_increase: 0,
-        total_discount: 0,
-        total_amount: Math.round(order.total * 100) / 100,
+        total_increase: parseFloat(order.extraCharge || 0),
+        total_discount: parseFloat(order.discount || 0),
+        total_amount: Math.round((order.total + (order.deliveryOrder?.deliveryFee || 0)) * 100) / 100,
         customer: {
           id: order.deliveryOrder?.customer?.id || 'GUEST',
           name: normalize(order.deliveryOrder?.name || order.customerName || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Cliente Balcao')),

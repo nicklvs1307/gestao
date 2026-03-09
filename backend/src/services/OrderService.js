@@ -424,7 +424,8 @@ class OrderService {
         if (order.orderType === 'DELIVERY' && order.deliveryOrder) {
             let deliveryStatus = 'PENDING';
             if (status === 'PREPARING' || status === 'READY') deliveryStatus = 'CONFIRMED';
-            if (status === 'COMPLETED') deliveryStatus = 'DELIVERED';
+            if (status === 'SHIPPED') deliveryStatus = 'OUT_FOR_DELIVERY';
+            if (status === 'DELIVERED' || status === 'COMPLETED') deliveryStatus = 'DELIVERED';
             if (status === 'CANCELED') deliveryStatus = 'CANCELED';
             await tx.deliveryOrder.update({ where: { orderId }, data: { status: deliveryStatus } });
         }
@@ -571,7 +572,32 @@ class OrderService {
   }
 
   async updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge }) {
-    // ...
+    console.log(`[ORDER] Atualizando dados financeiros do pedido ${orderId}`);
+    
+    const result = await prisma.$transaction(async (tx) => {
+        // 1. Atualiza o pedido principal (Order)
+        const updatedOrder = await tx.order.update({
+            where: { id: orderId },
+            data: {
+                total: parseFloat(total),
+                discount: parseFloat(discount || 0),
+                extraCharge: parseFloat(surcharge || 0)
+            }
+        });
+
+        // 2. Se for um pedido de delivery, atualiza a taxa de entrega no DeliveryOrder
+        await tx.deliveryOrder.updateMany({
+            where: { orderId },
+            data: {
+                deliveryFee: parseFloat(deliveryFee || 0)
+            }
+        });
+
+        return updatedOrder;
+    });
+
+    await emitOrderUpdate(orderId);
+    return result;
   }
 
   async addPaymentToOrder(orderId, { amount, method }) {
@@ -710,7 +736,10 @@ class OrderService {
     const drivers = await prisma.user.findMany({
         where: { 
             restaurantId, 
-            roleRef: { permissions: { some: { name: 'delivery:manage' } } } 
+            OR: [
+                { roleRef: { permissions: { some: { name: 'delivery:manage' } } } },
+                { permissions: { some: { name: 'delivery:manage' } } }
+            ]
         },
         include: {
             deliveries: {
@@ -724,7 +753,7 @@ class OrderService {
         }
     });
 
-    return drivers.map(d => {
+    return drivers.filter(d => d.deliveries.length > 0).map(d => {
         let cash = 0; let card = 0; let pix = 0; let deliveryFees = 0; let totalOrdersValue = 0;
         d.deliveries.forEach(del => {
             const order = del.order; if (!order) return;

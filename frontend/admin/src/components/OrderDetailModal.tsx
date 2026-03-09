@@ -240,10 +240,34 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                         <span>Consumo Base</span>
                                         <span className="text-white">R$ {order.total.toFixed(2)}</span>
                                     </div>
-                                    {isDelivery && (
+                                    {isDelivery && order.deliveryOrder?.deliveryFee && order.deliveryOrder.deliveryFee > 0 && (
                                         <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                            <span>Frete Logístico</span>
-                                            <span className="text-blue-400">+ R$ {order.deliveryOrder?.deliveryFee || '0,00'}</span>
+                                            <span>Taxa de Entrega</span>
+                                            <span className="text-blue-400">+ R$ {order.deliveryOrder.deliveryFee.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {order.discount && order.discount > 0 && (
+                                        <div className="flex justify-between items-center text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                                            <span>Desconto</span>
+                                            <span>- R$ {order.discount.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {order.extraCharge && order.extraCharge > 0 && (
+                                        <div className="flex justify-between items-center text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                                            <span>Acréscimo</span>
+                                            <span>+ R$ {order.extraCharge.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {order.deliveryOrder?.paymentMethod && (
+                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest pt-2 border-t border-white/5">
+                                            <span>Pagamento</span>
+                                            <span className="text-emerald-400 italic">{order.deliveryOrder.paymentMethod}</span>
+                                        </div>
+                                    )}
+                                    {order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > 0 && (
+                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>Troco Para</span>
+                                            <span className="text-amber-400 italic">R$ {order.deliveryOrder.changeFor.toFixed(2)}</span>
                                         </div>
                                     )}
                                 </div>

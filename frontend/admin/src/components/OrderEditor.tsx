@@ -647,6 +647,25 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                             </div>
                                         </div>
 
+                                        {/* Pagamento e Troco */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="p-3 bg-white border border-slate-100 rounded-xl space-y-1">
+                                                <span className="text-[8px] font-black text-slate-400 uppercase italic">Pagamento</span>
+                                                <p className="text-[10px] font-black text-emerald-600 uppercase italic truncate">{order.deliveryOrder?.paymentMethod || 'Não informado'}</p>
+                                            </div>
+                                            {order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > 0 ? (
+                                                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl space-y-1">
+                                                    <span className="text-[8px] font-black text-amber-600 uppercase italic">Troco Para</span>
+                                                    <p className="text-[10px] font-black text-amber-700 italic">R$ {order.deliveryOrder.changeFor.toFixed(2).replace('.', ',')}</p>
+                                                </div>
+                                            ) : (
+                                                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1 opacity-50">
+                                                    <span className="text-[8px] font-black text-slate-400 uppercase italic">Troco</span>
+                                                    <p className="text-[10px] font-black text-slate-400 italic">Sem Troco</p>
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <div className="p-4 bg-blue-50/50 border border-blue-100/50 rounded-2xl space-y-2">
                                             <span className="text-[8px] font-black text-blue-400 uppercase italic tracking-widest flex items-center gap-1">
                                                 <MapPin size={10} /> Endereço de Entrega
