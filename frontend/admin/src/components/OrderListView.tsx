@@ -66,10 +66,10 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails }) 
                         </span>
                     </td>
                     <td className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-                        {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
+                        {(order.items?.length || (order as any)._count?.items || 0)} {(order.items?.length || (order as any)._count?.items || 0) === 1 ? 'item' : 'itens'}
                     </td>
                     <td className="px-4 py-3 font-black text-xs italic text-foreground/80">
-                        R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
+                        R$ {((order.total || 0) + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
                     </td>
                     <td className="px-4 py-3">
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
