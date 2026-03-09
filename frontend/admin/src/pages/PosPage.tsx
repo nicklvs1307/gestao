@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-    getProducts, getCategories, createOrder, getTables, 
+    getProducts, getCategories, createOrder, getTables, getAdminOrders,
     toggleStoreStatus, getCashierStatus, openCashier, closeCashier, getSettings,
     getPosTableSummary, checkoutTable, getCashierSummary, searchCustomers,
     transferTable, transferItems, removeOrderItem, partialTablePayment,
@@ -35,7 +35,8 @@ const PosPage: React.FC = () => {
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
     const [tables, setTables] = useState<any[]>([]);
     const [tablesSummary, setTablesSummary] = useState<TableSummary[]>([]);
-    
+    const [deliveryOrders, setDeliveryOrders] = useState<Order[]>([]);
+
     // --- ESTADOS DE SISTEMA ---
     const [isStoreOpen, setIsStoreOpen] = useState(false);
     const [deliveryFee, setDeliveryFee] = useState(0);
@@ -101,6 +102,7 @@ const PosPage: React.FC = () => {
     const [selectedSizeId, setSelectedSizeId] = useState<string>('');
     const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
     const [cashierAmount, setCashierAmount] = useState('');
+    const [activeDeliveryOrderId, setActiveDeliveryOrderId] = useState<string | null>(null);
 
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,7 +114,7 @@ const PosPage: React.FC = () => {
 
         // Socket listener para atualizações em tempo real
         on('order_update', () => {
-            loadTableSummary();
+            loadInitialData();
         });
 
         return () => {
@@ -127,19 +129,21 @@ const PosPage: React.FC = () => {
             const user = userStr ? JSON.parse(userStr) : null;
             const restaurantId = user?.restaurantId;
 
-            const [productsData, categoriesData, tablesData, settingsData, cashierData, paymentMethodsData] = await Promise.all([
+            const [productsData, categoriesData, tablesData, settingsData, cashierData, paymentMethodsData, ordersData] = await Promise.all([
                 getProducts(),
                 getCategories(),
                 getTables(),
                 getSettings(),
                 getCashierStatus(),
-                restaurantId ? getPaymentMethods(restaurantId) : Promise.resolve([])
+                restaurantId ? getPaymentMethods(restaurantId) : Promise.resolve([]),
+                getAdminOrders()
             ]);
 
             setProducts(productsData || []);
             setCategories(categoriesData || []);
             setTables(tablesData || []);
             setPaymentMethods(paymentMethodsData || []);
+            setDeliveryOrders(ordersData.filter((o: any) => o.orderType === 'DELIVERY') || []);
             
             if (settingsData?.settings) {
                 setIsStoreOpen(settingsData.settings.isOpen);
@@ -190,6 +194,20 @@ const PosPage: React.FC = () => {
             phone: customer.phone,
             address: customer.address || ''
         });
+
+        // VERIFICAÇÃO DE PEDIDO ATIVO: Buscar se já existe pedido para esse telefone
+        const activeOrder = deliveryOrders.find(o => 
+            (o.deliveryOrder?.phone === customer.phone || o.deliveryOrder?.name === customer.name) &&
+            ['PENDING', 'PREPARING', 'READY'].includes(o.status)
+        );
+
+        if (activeOrder) {
+            setActiveDeliveryOrderId(activeOrder.id);
+            toast.info(`Cliente possui pedido em aberto (#${activeOrder.dailyOrderNumber}). Itens serão adicionados a ele.`);
+        } else {
+            setActiveDeliveryOrderId(null);
+        }
+
         // Extrair endereços únicos dos pedidos anteriores
         const historyAddresses = customer.deliveryOrders
             ?.map((o: any) => o.address)
@@ -336,30 +354,37 @@ const PosPage: React.FC = () => {
                 totalAmount: Number((cartTotal + finalExtra + finalDelivery - finalDiscount).toFixed(2))
             };
 
-            // VERIFICAÇÃO DE DUPLICIDADE: Se for mesa, checar se já tem pedido aberto
+            // VERIFICAÇÃO DE DUPLICIDADE
             if (orderMode === 'table') {
                 const tableInfo = tablesSummary.find(t => t.number === parseInt(selectedTable));
                 const activeOrderId = tableInfo?.tabs?.[0]?.orderId;
 
                 if (activeOrderId && tableInfo.status !== 'free') {
-                    // Já existe pedido, apenas adicionar itens
                     await addItemsToOrder(activeOrderId, orderPayload.items);
-                    
-                    // Se houver alteração de taxas/descontos, atualizar financeiros
                     if (finalDiscount > 0 || finalExtra > 0) {
                         const newTotal = tableInfo.totalAmount + orderPayload.totalAmount;
-                        await updateOrderFinancials(activeOrderId, {
-                            discount: finalDiscount,
-                            surcharge: finalExtra,
-                            total: newTotal
-                        });
+                        await updateOrderFinancials(activeOrderId, { discount: finalDiscount, surcharge: finalExtra, total: newTotal });
                     }
-                    
                     toast.success("Itens adicionados ao pedido!");
                 } else {
                     await createOrder(orderPayload);
                     toast.success("Pedido enviado!");
                 }
+            } else if (orderMode === 'delivery' && activeDeliveryOrderId) {
+                // Já existe pedido ativo para este cliente no Delivery
+                await addItemsToOrder(activeDeliveryOrderId, orderPayload.items);
+                
+                // Buscar pedido atual para calcular novo total
+                const currentOrder = deliveryOrders.find(o => o.id === activeDeliveryOrderId);
+                if (currentOrder && (finalDiscount > 0 || finalExtra > 0)) {
+                    const newTotal = currentOrder.total + orderPayload.totalAmount;
+                    await updateOrderFinancials(activeDeliveryOrderId, {
+                        discount: finalDiscount,
+                        surcharge: finalExtra,
+                        total: newTotal
+                    });
+                }
+                toast.success("Itens adicionados ao pedido existente!");
             } else {
                 await createOrder(orderPayload);
                 toast.success("Pedido enviado!");
@@ -369,8 +394,10 @@ const PosPage: React.FC = () => {
             setSelectedTable('');
             setCustomerName('');
             setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' });
+            setActiveDeliveryOrderId(null);
             setActiveModal('none');
             loadTableSummary();
+            loadInitialData(); // Recarregar ordens para atualizar o cache de ordens ativas
         } catch (e) {
             toast.error("Erro ao enviar pedido");
         }
@@ -476,8 +503,8 @@ const PosPage: React.FC = () => {
                             </h3>
                         </div>
                         <div className="flex bg-slate-200/50 p-0.5 rounded-md border border-slate-200">
-                            <button onClick={() => { setOrderMode('table'); setSelectedTable(''); }} className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}>Mesa</button>
-                            <button onClick={() => { setOrderMode('delivery'); setSelectedTable(''); }} className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}>Direta</button>
+                            <button onClick={() => { setOrderMode('table'); setSelectedTable(''); setActiveDeliveryOrderId(null); }} className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}>Mesa</button>
+                            <button onClick={() => { setOrderMode('delivery'); setSelectedTable(''); setActiveDeliveryOrderId(null); }} className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}>Direta</button>
                         </div>
                     </div>
 
