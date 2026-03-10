@@ -1262,6 +1262,8 @@ model ChecklistTask {
   checklistId  String
   checklist    Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
 
+  responses    ChecklistResponse[]
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -1277,6 +1279,8 @@ model ChecklistExecution {
   userId       String?   // Quem executou (opcional para QR Code)
   user         User?     @relation(fields: [userId], references: [id])
 
+  externalUserName String? // Nome de quem preencheu via QR Code
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
@@ -1287,6 +1291,7 @@ model ChecklistExecution {
 
   startedAt    DateTime @default(now())
   completedAt  DateTime @default(now())
+  durationSeconds Int?   // Tempo levado para preencher
 
   @@index([checklistId])
   @@index([userId])
@@ -1300,6 +1305,7 @@ model ChecklistResponse {
   execution    ChecklistExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
 
   taskId       String
+  task         ChecklistTask @relation(fields: [taskId], references: [id]) // Relacionamento formal
   
   value        String   // Resposta: "true", "caminho/foto.jpg", "texto livre", "25.5"
   isOk         Boolean  @default(true) // Se a tarefa foi cumprida conforme esperado
@@ -1308,6 +1314,7 @@ model ChecklistResponse {
   createdAt    DateTime @default(now())
 
   @@index([executionId])
+  @@index([taskId])
 }
 
 model ChecklistReportSettings {

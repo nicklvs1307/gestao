@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
+const { differenceInSeconds } = require('date-fns');
 
 class ChecklistController {
   index = asyncHandler(async (req, res) => {
@@ -60,35 +61,65 @@ class ChecklistController {
 
   update = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const { restaurantId } = req;
     const { title, description, frequency, sectorId, tasks, isActive } = req.body;
 
+    // Garante que o checklist pertence ao restaurante
+    const existingChecklist = await prisma.checklist.findFirst({
+      where: { id, restaurantId }
+    });
+
+    if (!existingChecklist) {
+      res.status(404);
+      throw new Error("Checklist não encontrado ou acesso negado");
+    }
+
     const checklist = await prisma.$transaction(async (tx) => {
-      const restaurantId = req.restaurantId;
       if (tasks) {
-        await tx.checklistTask.deleteMany({ 
-            where: { 
-                checklistId: id,
-                checklist: { restaurantId } // Valida se o pai pertence ao restaurante do usuário
-            } 
+        // Obter IDs das tarefas enviadas que já existem
+        const sentTaskIds = tasks.filter(t => t.id).map(t => t.id);
+        
+        // Deletar tarefas que NÃO estão na nova lista
+        await tx.checklistTask.deleteMany({
+          where: {
+            checklistId: id,
+            id: { notIn: sentTaskIds }
+          }
         });
+
+        // Upsert das tarefas (preserva IDs e histórico)
+        for (let i = 0; i < tasks.length; i++) {
+          const t = tasks[i];
+          if (t.id) {
+            await tx.checklistTask.update({
+              where: { id: t.id },
+              data: {
+                content: t.content,
+                isRequired: t.isRequired,
+                type: t.type,
+                order: i
+              }
+            });
+          } else {
+            await tx.checklistTask.create({
+              data: {
+                checklistId: id,
+                content: t.content,
+                isRequired: t.isRequired,
+                type: t.type,
+                order: i
+              }
+            });
+          }
+        }
       }
 
       return await tx.checklist.update({
         where: { id },
         data: {
-          title, description, frequency, sectorId, isActive,
-          ...(tasks && {
-            tasks: {
-              create: tasks.map((t, idx) => ({
-                content: t.content,
-                isRequired: t.isRequired ?? true,
-                type: t.type || 'CHECKBOX',
-                order: idx
-              }))
-            }
-          })
+          title, description, frequency, sectorId, isActive
         },
-        include: { tasks: true }
+        include: { tasks: { orderBy: { order: 'asc' } } }
       });
     });
 
@@ -97,6 +128,17 @@ class ChecklistController {
 
   delete = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const { restaurantId } = req;
+
+    const checklist = await prisma.checklist.findFirst({
+        where: { id, restaurantId }
+    });
+
+    if (!checklist) {
+        res.status(404);
+        throw new Error("Checklist não encontrado");
+    }
+
     await prisma.checklist.delete({ where: { id } });
     res.json({ message: 'Checklist excluído.' });
   });
@@ -104,29 +146,46 @@ class ChecklistController {
   // Execuções e Respostas
   submitExecution = asyncHandler(async (req, res) => {
     const { user } = req;
-    const { checklistId, notes, responses, userName } = req.body;
+    const { checklistId, notes, responses, userName, startedAt } = req.body;
 
-    // Busca o restaurantId do checklist se não estiver no req (acesso público)
-    let restaurantId = req.restaurantId;
-    if (!restaurantId) {
-      const checklist = await prisma.checklist.findUnique({ 
-        where: { id: checklistId },
-        select: { restaurantId: true }
-      });
-      if (!checklist) {
-        res.status(404);
-        throw new Error("Checklist não encontrado");
-      }
-      restaurantId = checklist.restaurantId;
+    // 1. Validar existência do checklist e obter restaurantId
+    const checklist = await prisma.checklist.findUnique({ 
+      where: { id: checklistId },
+      include: { tasks: { select: { id: true } } }
+    });
+
+    if (!checklist) {
+      res.status(404);
+      throw new Error("Checklist não encontrado");
+    }
+
+    // 2. Validar se todos os taskIds pertencem a este checklist (Segurança)
+    const validTaskIds = checklist.tasks.map(t => t.id);
+    const invalidResponses = responses.filter(r => !validTaskIds.includes(r.taskId));
+    
+    if (invalidResponses.length > 0) {
+      res.status(400);
+      throw new Error("Uma ou mais tarefas não pertencem a este checklist");
+    }
+
+    // 3. Calcular duração se startedAt for fornecido
+    let durationSeconds = null;
+    const completedAt = new Date();
+    if (startedAt) {
+      durationSeconds = differenceInSeconds(completedAt, new Date(startedAt));
     }
 
     const execution = await prisma.checklistExecution.create({
       data: {
         checklistId,
         userId: user?.id || undefined, 
-        restaurantId: restaurantId,
-        notes: userName ? `[Executado por: ${userName}] ${notes || ''}` : notes,
+        externalUserName: userName,
+        restaurantId: checklist.restaurantId,
+        notes,
         status: 'COMPLETED',
+        startedAt: startedAt ? new Date(startedAt) : undefined,
+        completedAt,
+        durationSeconds,
         responses: {
           create: responses.map(r => ({
             taskId: r.taskId,
@@ -160,7 +219,9 @@ class ChecklistController {
       include: {
         checklist: true,
         user: { select: { name: true } },
-        responses: true
+        responses: {
+            include: { task: true }
+        }
       },
       orderBy: { completedAt: 'desc' }
     });

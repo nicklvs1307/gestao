@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
     ClipboardCheck, CheckCircle2, XCircle,
-    Loader2, Send, User as UserIcon, Camera, Image as ImageIcon, 
-    Type, Hash, ChevronLeft, ChevronRight, MessageSquare
+    Loader2, Send, User as UserIcon, Camera,
+    Type, Hash, MessageSquare, AlertCircle,
+    ChevronDown, ChevronUp, Check, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -19,9 +20,9 @@ const ChecklistFill: React.FC = () => {
     const [responses, setResponses] = useState<any[]>([]);
     const [notes, setNotes] = useState('');
     const [userName, setUserName] = useState('');
-    const [step, setStep] = useState<'info' | 'tasks' | 'notes' | 'success'>('info');
-    const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
+    const [step, setStep] = useState<'info' | 'filling' | 'success'>('info');
     const [uploadingTask, setUploadingTask] = useState<string | null>(null);
+    const [startedAt] = useState(new Date().toISOString());
 
     const API_URL = import.meta.env.VITE_API_URL || '/api';
     const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -39,13 +40,14 @@ const ChecklistFill: React.FC = () => {
             const initialResponses = data.tasks.map((task: any) => ({
                 taskId: task.id,
                 value: '',
-                isOk: null, // Alterado para null: força o usuário a escolher
+                isOk: null,
                 type: task.type,
-                itemNotes: '' // Nova observação por item
+                itemNotes: '',
+                isExpanded: false
             }));
             setResponses(initialResponses);
         } catch (error) {
-            toast.error("Checklist não encontrado");
+            toast.error("Link de checklist inválido ou expirado");
         } finally {
             setLoading(false);
         }
@@ -68,54 +70,36 @@ const ChecklistFill: React.FC = () => {
             });
             handleUpdateResponse(taskId, 'value', response.data.url);
             handleUpdateResponse(taskId, 'isOk', true);
-            toast.success("Foto enviada!");
+            toast.success("Foto anexada com sucesso");
         } catch (error) {
-            toast.error("Erro ao enviar foto");
+            toast.error("Falha no upload da imagem");
         } finally {
             setUploadingTask(null);
         }
     };
 
-    const validateCurrentTask = () => {
-        const task = checklist.tasks[currentTaskIndex];
-        const resp = responses[currentTaskIndex];
-        
-        if (task.type === 'CHECKBOX' && resp.isOk === null) {
-            toast.error("Selecione se o item está Conforme ou Irregular");
-            return false;
-        }
-        
-        if (resp.isOk === false && !resp.itemNotes) {
-            toast.error("Por favor, descreva o motivo da irregularidade");
-            return false;
-        }
-
-        if (task.isRequired && !resp.value && task.type !== 'CHECKBOX') {
-            toast.error("Este item é obrigatório");
-            return false;
-        }
-        return true;
-    };
-
-    const nextTask = () => {
-        if (validateCurrentTask()) {
-            if (currentTaskIndex < checklist.tasks.length - 1) {
-                setCurrentTaskIndex(prev => prev + 1);
-            } else {
-                setStep('notes');
-            }
-        }
-    };
-
-    const prevTask = () => {
-        if (currentTaskIndex > 0) {
-            setCurrentTaskIndex(prev => prev - 1);
-        }
+    const toggleExpand = (taskId: string) => {
+        setResponses(prev => prev.map(r => 
+            r.taskId === taskId ? { ...r, isExpanded: !r.isExpanded } : r
+        ));
     };
 
     const handleSubmit = async () => {
-        if (!validateCurrentTask()) return;
-        if (!userName) return toast.error("Informe seu nome");
+        if (!userName) return toast.error("Por favor, identifique-se antes de enviar");
+        
+        // Validação de itens obrigatórios
+        const incomplete = responses.find((r, idx) => {
+            const task = checklist.tasks[idx];
+            if (task.type === 'CHECKBOX' && r.isOk === null) return true;
+            if (task.isRequired && !r.value && task.type !== 'CHECKBOX') return true;
+            if (r.isOk === false && !r.itemNotes) return true;
+            return false;
+        });
+
+        if (incomplete) {
+            toast.error("Existem itens pendentes ou irregularidades sem justificativa");
+            return;
+        }
 
         setSubmitting(true);
         try {
@@ -123,228 +107,255 @@ const ChecklistFill: React.FC = () => {
                 checklistId: id,
                 userName,
                 notes,
+                startedAt,
                 responses: responses.map(r => ({
                     taskId: r.taskId,
                     value: r.type === 'CHECKBOX' ? (r.isOk ? 'true' : 'false') : String(r.value),
                     isOk: r.isOk ?? false,
-                    notes: r.itemNotes // Envia observação do item
+                    notes: r.itemNotes
                 }))
             });
             setStep('success');
         } catch (error) {
-            toast.error("Erro ao salvar o checklist");
+            toast.error("Erro técnico ao processar o envio");
         } finally {
             setSubmitting(false);
         }
     };
 
     if (loading) return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-            <Loader2 className="w-10 h-10 animate-spin text-orange-500 mb-4" />
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Carregando...</p>
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+            <Loader2 className="w-8 h-8 animate-spin text-slate-900 mb-4" />
+            <p className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Iniciando Protocolo...</p>
         </div>
     );
 
     if (step === 'success') return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 text-center">
-            <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
-                <CheckCircle2 size={48} />
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-8 text-center text-white">
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-20 h-20 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-emerald-500/20">
+                <Check size={48} />
             </motion.div>
-            <h1 className="text-2xl font-black text-slate-900 uppercase italic mb-2 tracking-tighter">Checklist Enviado!</h1>
-            <p className="text-slate-500 mb-8">Tudo pronto! Seu registro foi salvo.</p>
-            <button onClick={() => window.location.reload()} className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic">Novo Preenchimento</button>
+            <h1 className="text-3xl font-black uppercase italic tracking-tighter mb-3 leading-none">Auditoria Finalizada</h1>
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-10 max-w-xs">Os dados foram sincronizados com o servidor central.</p>
+            <button onClick={() => window.location.reload()} className="h-14 px-10 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest italic text-xs shadow-xl">Novo Registro</button>
         </div>
     );
 
-    const currentTask = checklist?.tasks[currentTaskIndex];
-    const currentResponse = responses[currentTaskIndex];
-    const progress = ((currentTaskIndex + 1) / checklist?.tasks.length) * 100;
+    const answeredCount = responses.filter(r => r.isOk !== null || (r.value && r.type !== 'CHECKBOX')).length;
+    const progress = (answeredCount / (checklist?.tasks.length || 1)) * 100;
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-            <header className="bg-white p-5 border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between">
+        <div className="min-h-screen bg-[#fcfcfc] flex flex-col font-sans text-slate-900 pb-20">
+            {/* Ultra Dense Header */}
+            <header className="bg-white border-b border-slate-100 sticky top-0 z-40 px-5 py-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-lg">
-                        <ClipboardCheck size={20} />
+                    <div className="p-2 bg-slate-900 text-white rounded-lg">
+                        <ClipboardCheck size={18} />
                     </div>
                     <div>
-                        <h1 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none line-clamp-1">{checklist?.title}</h1>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{checklist?.sector?.name}</p>
+                        <h1 className="text-xs font-black uppercase italic tracking-tighter leading-none line-clamp-1">{checklist?.title}</h1>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] mt-1">{checklist?.sector?.name}</p>
                     </div>
                 </div>
-                <div className="text-[10px] font-black text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full tracking-tighter">
-                    {step === 'notes' ? 'FINALIZAÇÃO' : `${currentTaskIndex + 1} / ${checklist?.tasks.length}`}
+                <div className="text-[10px] font-black text-slate-900 bg-slate-100 px-3 py-1 rounded-full tabular-nums">
+                    {Math.round(progress)}%
                 </div>
             </header>
 
-            <div className="h-1 bg-slate-100 w-full">
-                <motion.div className="h-full bg-orange-500" initial={{ width: 0 }} animate={{ width: `${step === 'notes' ? 100 : progress}%` }} />
+            <div className="h-1 bg-slate-100 w-full sticky top-[61px] z-40">
+                <motion.div className="h-full bg-slate-900" initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
             </div>
 
-            <main className="p-4 flex-1 max-w-lg mx-auto w-full flex flex-col">
+            <main className="p-4 flex-1 max-w-2xl mx-auto w-full">
                 <AnimatePresence mode="wait">
                     {step === 'info' ? (
-                        <motion.div key="info" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 pt-6 flex-1 flex flex-col">
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex-1">
-                                <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6">
-                                    <UserIcon size={32} />
-                                </div>
-                                <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-2 leading-none">Identificação</h2>
-                                <p className="text-xs text-slate-400 font-bold uppercase mb-8 tracking-widest">Quem está realizando a auditoria?</p>
+                        <motion.div key="info" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="pt-8 space-y-8">
+                            <div className="text-center space-y-2">
+                                <h2 className="text-2xl font-black uppercase italic tracking-tighter">Identificação do Auditor</h2>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Obrigatório para rastreabilidade técnica</p>
+                            </div>
+                            
+                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Nome Completo</label>
                                 <input 
-                                    placeholder="Seu nome completo..."
-                                    className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-orange-500 outline-none font-bold text-lg transition-all"
+                                    autoFocus
+                                    placeholder="Digite seu nome..."
+                                    className="w-full h-14 px-5 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-slate-900 outline-none font-black text-lg transition-all"
                                     value={userName}
                                     onChange={e => setUserName(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && userName && setStep('filling')}
                                 />
                             </div>
+
                             <button 
                                 disabled={!userName}
-                                onClick={() => setStep('tasks')}
-                                className="w-full h-18 bg-orange-500 text-white rounded-[1.5rem] font-black uppercase tracking-widest italic shadow-xl shadow-orange-100 disabled:opacity-50 text-lg flex items-center justify-center gap-3"
+                                onClick={() => setStep('filling')}
+                                className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic disabled:opacity-30 shadow-xl shadow-slate-200 flex items-center justify-center gap-3 transition-all"
                             >
-                                Começar Agora <ChevronRight size={24} />
+                                Iniciar Auditoria <Check size={20} />
                             </button>
                         </motion.div>
-                    ) : step === 'notes' ? (
-                        <motion.div key="notes" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 pt-6 flex-1 flex flex-col">
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex-1">
-                                <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6">
-                                    <MessageSquare size={32} />
+                    ) : (
+                        <motion.div key="filling" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3 pt-4">
+                            {/* All Tasks in a Single Dense List */}
+                            {checklist?.tasks.map((task: any, idx: number) => {
+                                const resp = responses[idx];
+                                return (
+                                    <div key={task.id} className={cn(
+                                        "bg-white rounded-2xl border transition-all duration-300 overflow-hidden",
+                                        resp.isOk === true ? "border-emerald-100 bg-emerald-50/10" : 
+                                        resp.isOk === false ? "border-rose-100 bg-rose-50/10" : "border-slate-100 shadow-sm"
+                                    )}>
+                                        <div className="p-4 flex items-center justify-between gap-4">
+                                            <div className="flex items-start gap-3 flex-1">
+                                                <span className="w-5 h-5 bg-slate-100 rounded flex items-center justify-center text-[9px] font-black text-slate-400 shrink-0 mt-0.5">{idx + 1}</span>
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-slate-800 leading-tight">{task.content}</p>
+                                                    {task.isRequired && <span className="text-[7px] font-black text-rose-500 uppercase tracking-widest">Obrigatório</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Action Buttons based on Type */}
+                                            <div className="flex items-center gap-1.5">
+                                                {task.type === 'CHECKBOX' ? (
+                                                    <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                                        <button 
+                                                            onClick={() => handleUpdateResponse(task.id, 'isOk', true)}
+                                                            className={cn(
+                                                                "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
+                                                                resp.isOk === true ? "bg-emerald-500 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                                            )}
+                                                        >
+                                                            <Check size={18} strokeWidth={3} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleUpdateResponse(task.id, 'isOk', false)}
+                                                            className={cn(
+                                                                "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
+                                                                resp.isOk === false ? "bg-rose-500 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                                            )}
+                                                        >
+                                                            <X size={18} strokeWidth={3} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => toggleExpand(task.id)}
+                                                        className={cn(
+                                                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                                                            resp.value ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-400"
+                                                        )}
+                                                    >
+                                                        {task.type === 'PHOTO' ? <Camera size={18} /> : task.type === 'NUMBER' ? <Hash size={18} /> : <Type size={18} />}
+                                                    </button>
+                                                )}
+                                                
+                                                {/* Detail Toggle */}
+                                                <button 
+                                                    onClick={() => toggleExpand(task.id)}
+                                                    className={cn(
+                                                        "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                                                        resp.isExpanded ? "bg-slate-900 text-white" : "text-slate-300"
+                                                    )}
+                                                >
+                                                    {resp.isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Expandable Technical Inputs */}
+                                        <AnimatePresence>
+                                            {(resp.isExpanded || resp.isOk === false) && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }} 
+                                                    animate={{ height: 'auto', opacity: 1 }} 
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="border-t border-slate-100 px-4 py-4 space-y-4 bg-white/50"
+                                                >
+                                                    {task.type === 'TEXT' && (
+                                                        <textarea 
+                                                            placeholder="Resposta por extenso..."
+                                                            className="w-full p-4 rounded-xl bg-slate-50 border-none outline-none font-bold text-xs h-24 transition-all focus:bg-white focus:ring-1 ring-slate-100"
+                                                            value={resp.value}
+                                                            onChange={(e) => handleUpdateResponse(task.id, 'value', e.target.value)}
+                                                        />
+                                                    )}
+
+                                                    {task.type === 'NUMBER' && (
+                                                        <input 
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                            className="w-full h-12 px-4 rounded-xl bg-slate-50 border-none outline-none font-black text-sm tabular-nums"
+                                                            value={resp.value}
+                                                            onChange={(e) => handleUpdateResponse(task.id, 'value', e.target.value)}
+                                                        />
+                                                    )}
+
+                                                    {task.type === 'PHOTO' && (
+                                                        <div className="space-y-3">
+                                                            <input type="file" accept="image/*" capture="environment" className="hidden" ref={el => fileInputRefs.current[task.id] = el}
+                                                                onChange={(e) => e.target.files?.[0] && handleFileUpload(task.id, e.target.files[0])} />
+                                                            {resp.value ? (
+                                                                <div className="relative rounded-2xl overflow-hidden border border-slate-100 group">
+                                                                    <img src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`} className="w-full h-40 object-cover" />
+                                                                    <button onClick={() => handleUpdateResponse(task.id, 'value', '')} className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-lg shadow-lg">
+                                                                        <X size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <button onClick={() => fileInputRefs.current[task.id]?.click()} disabled={uploadingTask === task.id}
+                                                                    className="w-full h-24 rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-2 text-slate-300 hover:border-slate-900 hover:text-slate-900 transition-all">
+                                                                    {uploadingTask === task.id ? <Loader2 className="animate-spin w-6 h-6" /> : <><Camera size={24} /><span className="text-[8px] font-black uppercase tracking-widest">Abrir Câmera</span></>}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Row-specific Observation */}
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                                            <MessageSquare size={10} /> Observação {resp.isOk === false ? '(Justificativa Obrigatória)' : '(Opcional)'}
+                                                        </label>
+                                                        <textarea 
+                                                            placeholder={resp.isOk === false ? "Explique a irregularidade encontrada..." : "Algum detalhe técnico adicional?"}
+                                                            className={cn(
+                                                                "w-full p-3 rounded-xl border-none outline-none font-bold text-[11px] h-20 transition-all",
+                                                                resp.isOk === false ? "bg-rose-50 text-rose-900 placeholder:text-rose-300" : "bg-slate-50 text-slate-800"
+                                                            )}
+                                                            value={resp.itemNotes}
+                                                            onChange={(e) => handleUpdateResponse(task.id, 'itemNotes', e.target.value)}
+                                                        />
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Global Notes */}
+                            <div className="mt-6 space-y-3">
+                                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Notas Finais</h4>
+                                <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                                    <textarea 
+                                        placeholder="Alguma observação geral sobre o setor ou turno?"
+                                        className="w-full h-24 p-0 bg-transparent border-none outline-none font-bold text-xs resize-none placeholder:text-slate-200"
+                                        value={notes}
+                                        onChange={e => setNotes(e.target.value)}
+                                    />
                                 </div>
-                                <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-2 leading-none">Observações</h2>
-                                <p className="text-xs text-slate-400 font-bold uppercase mb-8 tracking-widest">Algum comentário geral sobre esta rotina?</p>
-                                <textarea 
-                                    placeholder="Escreva aqui (Opcional)..."
-                                    className="w-full h-40 p-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-orange-500 outline-none font-bold text-lg transition-all resize-none"
-                                    value={notes}
-                                    onChange={e => setNotes(e.target.value)}
-                                />
                             </div>
-                            <div className="flex gap-4 pb-10">
-                                <button onClick={() => setStep('tasks')} className="w-18 h-18 bg-white border-2 border-slate-100 text-slate-400 rounded-2xl flex items-center justify-center shadow-sm">
-                                    <ChevronLeft size={32} />
-                                </button>
+
+                            {/* Dense Submit Button Area */}
+                            <div className="pt-8 pb-10">
                                 <button 
                                     onClick={handleSubmit}
                                     disabled={submitting}
-                                    className="flex-1 h-18 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic flex items-center justify-center gap-3 shadow-xl"
+                                    className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic flex items-center justify-center gap-3 shadow-2xl shadow-slate-200"
                                 >
-                                    {submitting ? <Loader2 className="animate-spin" /> : <><Send size={20} /> Finalizar</>}
+                                    {submitting ? <Loader2 className="animate-spin" /> : <><Send size={18} /> Finalizar Auditoria</>}
                                 </button>
-                            </div>
-                        </motion.div>
-                    ) : (
-                        <motion.div key={currentTask?.id} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="pt-6 space-y-6 flex-1 flex flex-col">
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex-1 flex flex-col">
-                                <div className="flex justify-between items-start mb-6">
-                                    <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-black uppercase rounded-lg tracking-widest">
-                                        Tarefa {currentTaskIndex + 1}
-                                    </span>
-                                    {currentTask?.isRequired && <span className="text-[9px] font-black text-rose-500 bg-rose-50 px-2 py-1 rounded-md uppercase">Obrigatório</span>}
-                                </div>
-
-                                <h3 className="text-2xl font-black text-slate-900 leading-tight mb-8">
-                                    {currentTask?.content}
-                                </h3>
-
-                                <div className="flex-1 space-y-6">
-                                    {currentTask?.type === 'CHECKBOX' && (
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <button 
-                                                onClick={() => handleUpdateResponse(currentTask.id, 'isOk', true)}
-                                                className={`h-20 rounded-2xl font-black uppercase italic tracking-widest flex items-center px-6 gap-4 border-2 transition-all ${
-                                                    currentResponse.isOk === true 
-                                                    ? 'bg-green-500 border-green-500 text-white shadow-xl shadow-green-100' 
-                                                    : 'bg-white border-slate-100 text-slate-400'
-                                                }`}
-                                            >
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentResponse.isOk === true ? 'bg-white text-green-500' : 'bg-slate-50'}`}>
-                                                    <CheckCircle2 size={20} />
-                                                </div>
-                                                Conforme
-                                            </button>
-                                            <button 
-                                                onClick={() => handleUpdateResponse(currentTask.id, 'isOk', false)}
-                                                className={`h-20 rounded-2xl font-black uppercase italic tracking-widest flex items-center px-6 gap-4 border-2 transition-all ${
-                                                    currentResponse.isOk === false 
-                                                    ? 'bg-rose-500 border-rose-500 text-white shadow-xl shadow-rose-100' 
-                                                    : 'bg-white border-slate-100 text-slate-400'
-                                                }`}
-                                            >
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentResponse.isOk === false ? 'bg-white text-rose-500' : 'bg-slate-50'}`}>
-                                                    <XCircle size={20} />
-                                                </div>
-                                                Irregular
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {currentTask?.type === 'TEXT' && (
-                                        <textarea 
-                                            placeholder="Digite sua resposta..."
-                                            className="w-full p-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-orange-500 outline-none font-bold text-lg h-40"
-                                            value={currentResponse.value}
-                                            onChange={(e) => handleUpdateResponse(currentTask.id, 'value', e.target.value)}
-                                        />
-                                    )}
-
-                                    {currentTask?.type === 'NUMBER' && (
-                                        <input 
-                                            type="number"
-                                            placeholder="0.00"
-                                            className="w-full h-20 px-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-orange-500 outline-none font-black text-2xl"
-                                            value={currentResponse.value}
-                                            onChange={(e) => handleUpdateResponse(currentTask.id, 'value', e.target.value)}
-                                        />
-                                    )}
-
-                                    {currentTask?.type === 'PHOTO' && (
-                                        <div className="space-y-4">
-                                            <input type="file" accept="image/*" capture="environment" className="hidden" ref={el => fileInputRefs.current[currentTask.id] = el}
-                                                onChange={(e) => e.target.files?.[0] && handleFileUpload(currentTask.id, e.target.files[0])} />
-                                            {currentResponse.value ? (
-                                                <div className="relative rounded-2xl overflow-hidden shadow-lg group">
-                                                    <img src={`${window.location.origin}${currentResponse.value}`} className="w-full h-56 object-cover" />
-                                                    <button onClick={() => handleUpdateResponse(currentTask.id, 'value', '')} className="absolute top-4 right-4 p-3 bg-rose-500 text-white rounded-full shadow-xl">
-                                                        <XCircle size={20} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button onClick={() => fileInputRefs.current[currentTask.id]?.click()} disabled={uploadingTask === currentTask.id}
-                                                    className="w-full h-56 rounded-[2rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-4 text-slate-300 hover:border-orange-500 hover:text-orange-500 transition-all">
-                                                    {uploadingTask === currentTask.id ? <Loader2 className="animate-spin w-10 h-10" /> : <><Camera size={64} /><span className="text-sm font-black uppercase italic tracking-widest">Abrir Câmera</span></>}
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <div className="mt-8 pt-6 border-t border-slate-50">
-                                        <div className="flex items-center gap-2 text-slate-400 mb-3 px-1">
-                                            <MessageSquare size={16} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Observação do Item {currentResponse.isOk === false ? '(Obrigatório)' : '(Opcional)'}</span>
-                                        </div>
-                                        <textarea 
-                                            placeholder={currentResponse.isOk === false ? "Descreva o motivo da irregularidade..." : "Algum detalhe específico sobre este item?"}
-                                            className={cn(
-                                                "w-full p-4 rounded-xl border-none outline-none font-medium text-sm h-24 transition-all",
-                                                currentResponse.isOk === false ? "bg-rose-50 text-rose-700 placeholder:text-rose-300" : "bg-slate-50 text-slate-700"
-                                            )}
-                                            value={currentResponse.itemNotes}
-                                            onChange={(e) => handleUpdateResponse(currentTask.id, 'itemNotes', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-4 pb-10">
-                                <button onClick={prevTask} disabled={currentTaskIndex === 0} className="w-18 h-18 bg-white border-2 border-slate-100 text-slate-400 rounded-2xl flex items-center justify-center disabled:opacity-20 shadow-sm">
-                                    <ChevronLeft size={32} />
-                                </button>
-                                
-                                <button onClick={nextTask} className="flex-1 h-18 bg-orange-500 text-white rounded-2xl font-black uppercase tracking-widest italic flex items-center justify-center gap-3 shadow-lg shadow-orange-100">
-                                    Próximo <ChevronRight size={20} />
-                                </button>
+                                <p className="text-[8px] font-black text-slate-300 text-center mt-4 uppercase tracking-[0.2em]">O envio é irreversível e gera protocolo automático</p>
                             </div>
                         </motion.div>
                     )}

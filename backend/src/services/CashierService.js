@@ -167,7 +167,8 @@ class CashierService {
                 isSettled: false,
                 createdAt: { gte: session.openedAt }
             }, 
-            status: 'DELIVERED' 
+            status: 'DELIVERED',
+            driverId: { not: null } // Apenas bloqueia se houver um entregador para acertar
         },
         select: { driverId: true }
     });
