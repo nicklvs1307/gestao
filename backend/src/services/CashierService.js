@@ -43,21 +43,25 @@ class CashierService {
       return acc;
     }, { sangria: 0, reforco: 0 });
 
-    // Busca acertos de entregadores pendentes do dia
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const pendingDriverSettlements = await prisma.deliveryOrder.findMany({
+    // Busca acertos de entregadores pendentes do dia (Conta quantos motoboys únicos têm pendência)
+    const pendingDeliveries = await prisma.deliveryOrder.findMany({
         where: {
             order: { 
               restaurantId, 
-              isSettled: false // FILTRO CORRETO AGORA
+              isSettled: false
             },
             status: 'DELIVERED'
-        }
+        },
+        select: { driverId: true }
     });
+
+    const uniqueDriversWithPending = new Set(
+        pendingDeliveries
+            .map(d => d.driverId)
+            .filter(id => id !== null) // Filtra apenas motoboys cadastrados
+    );
+
+    const pendingDriverSettlementsCount = uniqueDriversWithPending.size;
 
     // Novos contadores para feedback de fechamento
     const activeOrdersCount = await prisma.order.count({
@@ -119,10 +123,19 @@ class CashierService {
     });
     if (activeOrders > 0) throw new AppError(`Existem ${activeOrders} pedidos ativos. Finalize-os antes de fechar.`, 400);
 
-    const pendingDrivers = await prisma.deliveryOrder.count({
-        where: { order: { restaurantId, isSettled: false }, status: 'DELIVERED' }
+    const pendingDeliveries = await prisma.deliveryOrder.findMany({
+        where: { order: { restaurantId, isSettled: false }, status: 'DELIVERED' },
+        select: { driverId: true }
     });
-    if (pendingDrivers > 0) throw new AppError(`Existem ${pendingDrivers} acertos de motoboy pendentes.`, 400);
+
+    if (pendingDeliveries.length > 0) {
+        const uniqueDrivers = new Set(pendingDeliveries.map(d => d.driverId).filter(id => id !== null));
+        const driversCount = uniqueDrivers.size;
+        const msg = driversCount > 0 
+            ? `Existem acertos pendentes de ${driversCount} entregador(es).` 
+            : `Existem ${pendingDeliveries.length} entregas sem acerto financeiro.`;
+        throw new AppError(msg, 400);
+    }
 
     const openTables = await prisma.order.count({
         where: { restaurantId, orderType: 'TABLE', status: { notIn: ['COMPLETED', 'CANCELED'] } }

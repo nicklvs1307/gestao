@@ -96,6 +96,11 @@ const getUsers = async (req, res) => {
                 isSuperAdmin: true, 
                 roleId: true, 
                 restaurantId: true,
+                isActive: true,
+                phone: true,
+                paymentType: true,
+                baseRate: true,
+                bonusPerDelivery: true,
                 roleRef: {
                     select: {
                         name: true,
