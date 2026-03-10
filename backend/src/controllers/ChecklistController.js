@@ -40,17 +40,19 @@ class ChecklistController {
 
   store = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { title, description, frequency, sectorId, tasks } = req.body;
+    const { title, description, frequency, sectorId, tasks, deadlineTime } = req.body;
 
     const checklist = await prisma.checklist.create({
       data: {
-        title, description, frequency, sectorId, restaurantId,
+        title, description, frequency, sectorId, restaurantId, deadlineTime,
         tasks: {
           create: tasks?.map((t, idx) => ({
             content: t.content,
             isRequired: t.isRequired ?? true,
             type: t.type || 'CHECKBOX',
-            order: idx
+            order: idx,
+            procedureType: t.procedureType || 'NONE',
+            procedureContent: t.procedureContent
           }))
         }
       },
@@ -62,24 +64,21 @@ class ChecklistController {
   update = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { restaurantId } = req;
-    const { title, description, frequency, sectorId, tasks, isActive } = req.body;
+    const { title, description, frequency, sectorId, tasks, isActive, deadlineTime } = req.body;
 
-    // Garante que o checklist pertence ao restaurante
     const existingChecklist = await prisma.checklist.findFirst({
       where: { id, restaurantId }
     });
 
     if (!existingChecklist) {
       res.status(404);
-      throw new Error("Checklist não encontrado ou acesso negado");
+      throw new Error("Checklist não encontrado");
     }
 
     const checklist = await prisma.$transaction(async (tx) => {
       if (tasks) {
-        // Obter IDs das tarefas enviadas que já existem
         const sentTaskIds = tasks.filter(t => t.id).map(t => t.id);
         
-        // Deletar tarefas que NÃO estão na nova lista
         await tx.checklistTask.deleteMany({
           where: {
             checklistId: id,
@@ -87,7 +86,6 @@ class ChecklistController {
           }
         });
 
-        // Upsert das tarefas (preserva IDs e histórico)
         for (let i = 0; i < tasks.length; i++) {
           const t = tasks[i];
           if (t.id) {
@@ -97,7 +95,9 @@ class ChecklistController {
                 content: t.content,
                 isRequired: t.isRequired,
                 type: t.type,
-                order: i
+                order: i,
+                procedureType: t.procedureType,
+                procedureContent: t.procedureContent
               }
             });
           } else {
@@ -107,7 +107,9 @@ class ChecklistController {
                 content: t.content,
                 isRequired: t.isRequired,
                 type: t.type,
-                order: i
+                order: i,
+                procedureType: t.procedureType || 'NONE',
+                procedureContent: t.procedureContent
               }
             });
           }
@@ -117,7 +119,7 @@ class ChecklistController {
       return await tx.checklist.update({
         where: { id },
         data: {
-          title, description, frequency, sectorId, isActive
+          title, description, frequency, sectorId, isActive, deadlineTime
         },
         include: { tasks: { orderBy: { order: 'asc' } } }
       });
@@ -143,12 +145,10 @@ class ChecklistController {
     res.json({ message: 'Checklist excluído.' });
   });
 
-  // Execuções e Respostas
   submitExecution = asyncHandler(async (req, res) => {
     const { user } = req;
     const { checklistId, notes, responses, userName, startedAt } = req.body;
 
-    // 1. Validar existência do checklist e obter restaurantId
     const checklist = await prisma.checklist.findUnique({ 
       where: { id: checklistId },
       include: { tasks: { select: { id: true } } }
@@ -159,7 +159,6 @@ class ChecklistController {
       throw new Error("Checklist não encontrado");
     }
 
-    // 2. Validar se todos os taskIds pertencem a este checklist (Segurança)
     const validTaskIds = checklist.tasks.map(t => t.id);
     const invalidResponses = responses.filter(r => !validTaskIds.includes(r.taskId));
     
@@ -168,7 +167,6 @@ class ChecklistController {
       throw new Error("Uma ou mais tarefas não pertencem a este checklist");
     }
 
-    // 3. Calcular duração se startedAt for fornecido
     let durationSeconds = null;
     const completedAt = new Date();
     if (startedAt) {

@@ -1233,6 +1233,7 @@ model Checklist {
   title        String   // Ex: "Abertura de Cozinha", "Fechamento de Caixa"
   description  String?
   frequency    String   @default("DAILY") // "DAILY", "WEEKLY", "MONTHLY"
+  deadlineTime String?  // Horário limite (ex: "18:30")
   
   isActive     Boolean  @default(true)
 
@@ -1258,6 +1259,10 @@ model ChecklistTask {
   isRequired   Boolean  @default(true)
   order        Int      @default(0)
   type         String   @default("CHECKBOX") // "CHECKBOX", "PHOTO", "TEXT", "NUMBER"
+
+  // Procedimento de apoio
+  procedureType    String?  @default("NONE") // "NONE", "TEXT", "IMAGE", "VIDEO"
+  procedureContent String?  @db.Text
 
   checklistId  String
   checklist    Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
