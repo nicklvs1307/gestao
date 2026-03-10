@@ -176,7 +176,7 @@ const createUser = async (req, res) => {
                 passwordHash, 
                 name, 
                 phone,
-                isActive: isActive !== undefined ? isActive : true,
+                isActive: isActive === true || isActive === 'true',
                 paymentType: paymentType || "DELIVERY",
                 baseRate: baseRate !== undefined ? Number(baseRate) : 0,
                 bonusPerDelivery: bonusPerDelivery !== undefined ? Number(bonusPerDelivery) : 0,
@@ -249,7 +249,7 @@ const updateUser = async (req, res) => {
             email, 
             name,
             phone,
-            isActive,
+            isActive: isActive === true || isActive === 'true',
             paymentType,
             baseRate: baseRate !== undefined ? Number(baseRate) : undefined,
             bonusPerDelivery: bonusPerDelivery !== undefined ? Number(bonusPerDelivery) : undefined

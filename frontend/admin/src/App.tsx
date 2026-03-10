@@ -125,7 +125,11 @@ function AdminRoutes() {
           } />
           
           <Route path="/pos/checkout/:orderId" element={<ProtectedRoute permission="table:manage"><TableCheckout /></ProtectedRoute>} />
+          
+          <Route path="/drivers/settlement" element={<ProtectedRoute permission="driver_settlement:manage"><DriverSettlement /></ProtectedRoute>} />
+          <Route path="/drivers" element={<ProtectedRoute permission="driver_settlement:manage"><DriverManagement /></ProtectedRoute>} />
           <Route path="/drivers/*" element={<ProtectedRoute permission="driver_settlement:manage"><DriverManagement /></ProtectedRoute>} />
+          
           <Route path="/auth/waiters" element={<ProtectedRoute permission="waiter_settlement:manage"><WaiterManagement /></ProtectedRoute>} />
           
           <Route path="/reports/*" element={<ProtectedRoute permission="reports:view"><ReportManagement /></ProtectedRoute>} />
