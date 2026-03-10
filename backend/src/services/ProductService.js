@@ -7,7 +7,7 @@ class ProductService {
    * Busca todos os produtos com suporte a filtros, paginação e segurança (isPublic)
    */
   async getAllProducts(restaurantId, query, isPublic = false) {
-    const { categoryId, isAvailable, showInMenu, search, page = 1, limit = 50 } = query;
+    const { categoryId, isAvailable, showInMenu, search, page = 1, limit = 1000 } = query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
