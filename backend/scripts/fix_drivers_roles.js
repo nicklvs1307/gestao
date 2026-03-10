@@ -1,5 +1,12 @@
 require('dotenv').config();
+const fs = require('fs');
 const { PrismaClient } = require('@prisma/client');
+
+// Suporte para Docker Secrets em produção
+if (!process.env.DATABASE_URL && fs.existsSync('/run/secrets/db_connection_string')) {
+  process.env.DATABASE_URL = fs.readFileSync('/run/secrets/db_connection_string', 'utf8').trim();
+}
+
 const prisma = new PrismaClient();
 
 async function fixDrivers() {

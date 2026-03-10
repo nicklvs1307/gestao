@@ -1,71 +1,25 @@
-index-I4eZbP9h.js:549 [SSE] Conexão estabelecida com o servidor.
-index-CL3SdtP1.js:1 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cmm6nas6m0001k801znx8seh8&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczpt...V3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MzAwNjI3OCwiZXhwIjoxNzczMDM1MDc4fQ.i5jvvl1ORK7dG8uBjhXrUM2pPMh12QuqBUC6YUyYKCY&timestamp=1773007242350&EIO=4&transport=websocket' failed: 
-createSocket @ index-CL3SdtP1.js:1
-doOpen @ index-CL3SdtP1.js:1
-open @ index-CL3SdtP1.js:1
-_open @ index-CL3SdtP1.js:1
-_ @ index-CL3SdtP1.js:1
-He @ index-CL3SdtP1.js:1
-Ke @ index-CL3SdtP1.js:1
-open @ index-CL3SdtP1.js:1
-F @ index-CL3SdtP1.js:1
-P @ index-CL3SdtP1.js:1
-(anônimo) @ useSocket-FVMVYBFh.js:1
-lf @ index-I4eZbP9h.js:41
-Yu @ index-I4eZbP9h.js:41
-(anônimo) @ index-I4eZbP9h.js:41
-z @ index-I4eZbP9h.js:26
-H @ index-I4eZbP9h.js:26
-index-CL3SdtP1.js:1 WebSocket connection to 'wss://kicardapio.towersfy.com/socket.io/?restaurantId=cmm6nas6m0001k801znx8seh8&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtbTZuYXNhYzAwMDVrODAxdWM3bjgwZWYiLCJlbWFpbCI6InJhZmFlbGZlcmlvQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInJlc3RhdXJhbnRJZCI6ImNtbTZuYXM2bTAwMDFrODAxem54OHNlaDgiLCJpc1N1cGVyQWRtaW4iOmZhbHNlLCJmcmFuY2hpc2VJZCI6bnVsbCwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6dmlldyIsInNldHRpbmdzOm1hbmFnZSIsImNhc2hpZXI6bWFuYWdlIiwiYmFua19hY2NvdW50czptYW5hZ2UiLCJ1c2VyczptYW5hZ2UiLCJmaW5hbmNpYWxfY2F0ZWdvcmllczpt...V3IiwiZHJpdmVyX3NldHRsZW1lbnQ6bWFuYWdlIiwicHJvZHVjdHM6dmlldyIsInByb2R1Y3RzOm1hbmFnZSIsImNhdGVnb3JpZXM6bWFuYWdlIiwic3RvY2s6dmlldyIsInN0b2NrOm1hbmFnZSIsInN1cHBsaWVyczptYW5hZ2UiLCJyZXBvcnRzOnZpZXciLCJyZXBvcnRzOmZpbmFuY2lhbCIsInJlcG9ydHM6cGVyZm9ybWFuY2UiLCJyZXBvcnRzOmFiYyIsImNoZWNrbGlzdHM6bWFuYWdlIiwiY2hlY2tsaXN0czp2aWV3Iiwic2VjdG9yczptYW5hZ2UiLCJmaW5hbmNpYWw6bWFuYWdlIl0sImlhdCI6MTc3MzAwNjI3OCwiZXhwIjoxNzczMDM1MDc4fQ.i5jvvl1ORK7dG8uBjhXrUM2pPMh12QuqBUC6YUyYKCY&timestamp=1773007242350&EIO=4&transport=websocket' failed: 
-createSocket @ index-CL3SdtP1.js:1
-doOpen @ index-CL3SdtP1.js:1
-open @ index-CL3SdtP1.js:1
-_open @ index-CL3SdtP1.js:1
-_ @ index-CL3SdtP1.js:1
-He @ index-CL3SdtP1.js:1
-Ke @ index-CL3SdtP1.js:1
-open @ index-CL3SdtP1.js:1
-(anônimo) @ index-CL3SdtP1.js:1
-index-I4eZbP9h.js:41 TypeError: Cannot read properties of undefined (reading 'reduce')
-    at jt (OrderManagement-CEFGx9xU.js:1:15884)
-    at Wl (index-I4eZbP9h.js:39:17828)
-    at bg (index-I4eZbP9h.js:41:44965)
-    at yg (index-I4eZbP9h.js:41:40536)
-    at N4 (index-I4eZbP9h.js:41:40464)
-    at gf (index-I4eZbP9h.js:41:40317)
-    at yp (index-I4eZbP9h.js:41:36578)
-    at pg (index-I4eZbP9h.js:41:37390)
-    at P (index-I4eZbP9h.js:39:3267)
-    at index-I4eZbP9h.js:41:34888
-ep @ index-I4eZbP9h.js:41
-D1.c.callback @ index-I4eZbP9h.js:41
-Hi @ index-I4eZbP9h.js:39
-cg @ index-I4eZbP9h.js:41
-ug @ index-I4eZbP9h.js:41
-b4 @ index-I4eZbP9h.js:41
-_4 @ index-I4eZbP9h.js:41
-Ql @ index-I4eZbP9h.js:41
-pg @ index-I4eZbP9h.js:41
-P @ index-I4eZbP9h.js:39
-(anônimo) @ index-I4eZbP9h.js:41
-index-I4eZbP9h.js:39 Uncaught TypeError: Cannot read properties of undefined (reading 'reduce')
-    at jt (OrderManagement-CEFGx9xU.js:1:15884)
-    at Wl (index-I4eZbP9h.js:39:17828)
-    at bg (index-I4eZbP9h.js:41:44965)
-    at yg (index-I4eZbP9h.js:41:40536)
-    at N4 (index-I4eZbP9h.js:41:40464)
-    at gf (index-I4eZbP9h.js:41:40317)
-    at yp (index-I4eZbP9h.js:41:36578)
-    at pg (index-I4eZbP9h.js:41:37390)
-    at P (index-I4eZbP9h.js:39:3267)
-    at index-I4eZbP9h.js:41:34888
-jt @ OrderManagement-CEFGx9xU.js:1
-Wl @ index-I4eZbP9h.js:39
-bg @ index-I4eZbP9h.js:41
-yg @ index-I4eZbP9h.js:41
-N4 @ index-I4eZbP9h.js:41
-gf @ index-I4eZbP9h.js:41
-yp @ index-I4eZbP9h.js:41
-pg @ index-I4eZbP9h.js:41
-P @ index-I4eZbP9h.js:39
-(anônimo) @ index-I4eZbP9h.js:41
+root@servergestao:~/gestao# docker exec -it 3333220f3b7e /bin/sh
+/app # node scripts/fix_drivers_roles.js
+[dotenv@17.2.3] injecting env (1) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+--- BUSCANDO ENTREGADORES SEM CARGO ---
+PrismaClientInitializationError:
+Invalid `prisma.role.findFirst()` invocation:
+
+
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   |
+ 6 |   provider = "postgresql"
+ 7 |   url      = env("DATABASE_URL")
+   |
+
+Validation Error Count: 1
+    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
+    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
+    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
+    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
+    at async fixDrivers (/app/scripts/fix_drivers_roles.js:9:22) {
+  clientVersion: '6.16.3',
+  errorCode: undefined,
+  retryable: undefined
+}
