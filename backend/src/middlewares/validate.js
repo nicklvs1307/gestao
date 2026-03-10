@@ -3,15 +3,20 @@ const AppError = require('../utils/AppError');
 
 const validate = (schema) => (req, res, next) => {
   try {
-    schema.parse({
+    const validatedData = schema.parse({
       body: req.body,
       query: req.query,
       params: req.params,
     });
+
+    // Atualiza req com os dados validados (incluindo defaults e transforms do Zod)
+    req.body = validatedData.body || req.body;
+    req.query = validatedData.query || req.query;
+    req.params = validatedData.params || req.params;
+
     next();
   } catch (error) {
     if (error instanceof ZodError) {
-      // Formata os erros do Zod para uma mensagem mais amigável
       const errors = error.errors.map((e) => ({
         path: e.path.join('.'),
         message: e.message,

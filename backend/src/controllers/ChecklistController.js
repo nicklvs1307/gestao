@@ -46,7 +46,7 @@ class ChecklistController {
       data: {
         title, description, frequency, sectorId, restaurantId, deadlineTime,
         tasks: {
-          create: tasks?.map((t, idx) => ({
+          create: (tasks || []).map((t, idx) => ({
             content: t.content,
             isRequired: t.isRequired ?? true,
             type: t.type || 'CHECKBOX',
@@ -76,7 +76,7 @@ class ChecklistController {
     }
 
     const checklist = await prisma.$transaction(async (tx) => {
-      if (tasks) {
+      if (Array.isArray(tasks)) {
         const sentTaskIds = tasks.filter(t => t.id).map(t => t.id);
         
         await tx.checklistTask.deleteMany({
@@ -159,8 +159,11 @@ class ChecklistController {
       throw new Error("Checklist não encontrado");
     }
 
+    // Garantir que responses seja um array
+    const responsesArray = Array.isArray(responses) ? responses : [];
+
     const validTaskIds = checklist.tasks.map(t => t.id);
-    const invalidResponses = responses.filter(r => !validTaskIds.includes(r.taskId));
+    const invalidResponses = responsesArray.filter(r => !validTaskIds.includes(r.taskId));
     
     if (invalidResponses.length > 0) {
       res.status(400);
@@ -185,7 +188,7 @@ class ChecklistController {
         completedAt,
         durationSeconds,
         responses: {
-          create: responses.map(r => ({
+          create: responsesArray.map(r => ({
             taskId: r.taskId,
             value: String(r.value),
             isOk: r.isOk ?? true,
