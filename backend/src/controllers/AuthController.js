@@ -126,10 +126,24 @@ const getUsers = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-    const { email, password, name, roleId, permissionIds } = req.body;
+    const { email, password, name, roleId, role, permissionIds, phone, isActive, paymentType, baseRate, bonusPerDelivery } = req.body;
     try {
         const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
         const targetRestaurantId = isRequesterSuperAdmin ? (req.body.restaurantId || req.restaurantId) : req.restaurantId;
+
+        // --- Mapeamento Automático de Role por Nome (se roleId não vier) ---
+        let finalRoleId = roleId;
+        if (!finalRoleId && role) {
+            const foundRole = await prisma.role.findFirst({
+                where: {
+                    OR: [
+                        { name: { equals: role, mode: 'insensitive' } },
+                        { name: { equals: role === 'driver' ? 'Entregador' : role === 'waiter' ? 'Garçom' : role, mode: 'insensitive' } }
+                    ]
+                }
+            });
+            if (foundRole) finalRoleId = foundRole.id;
+        }
 
         // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
         if (permissionIds && permissionIds.length > 0 && !isRequesterSuperAdmin) {
@@ -148,8 +162,8 @@ const createUser = async (req, res) => {
             }
         }
 
-        if (roleId) {
-            const roleToAssign = await prisma.role.findUnique({ where: { id: roleId } });
+        if (finalRoleId) {
+            const roleToAssign = await prisma.role.findUnique({ where: { id: finalRoleId } });
             if (roleToAssign && roleToAssign.isSystem && roleToAssign.name.toLowerCase().includes('superadmin') && !isRequesterSuperAdmin) {
                 return res.status(403).json({ error: 'Acesso negado: Você não tem permissão para criar um SuperAdmin.' });
             }
@@ -161,8 +175,13 @@ const createUser = async (req, res) => {
                 email, 
                 passwordHash, 
                 name, 
+                phone,
+                isActive: isActive !== undefined ? isActive : true,
+                paymentType: paymentType || "DELIVERY",
+                baseRate: baseRate !== undefined ? Number(baseRate) : 0,
+                bonusPerDelivery: bonusPerDelivery !== undefined ? Number(bonusPerDelivery) : 0,
                 restaurantId: targetRestaurantId,
-                roleId: roleId || undefined,
+                roleId: finalRoleId || undefined,
                 isSuperAdmin: false,
                 permissions: permissionIds ? {
                     connect: permissionIds.map(id => ({ id }))
@@ -178,7 +197,7 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { email, name, password, roleId, permissionIds } = req.body;
+    const { email, name, password, roleId, role, permissionIds, phone, isActive, paymentType, baseRate, bonusPerDelivery } = req.body;
     try {
         const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
         
@@ -197,6 +216,20 @@ const updateUser = async (req, res) => {
             return res.status(403).json({ error: 'Acesso negado: Este usuário pertence a outro restaurante.' });
         }
 
+        // --- Mapeamento Automático de Role por Nome (se roleId não vier) ---
+        let finalRoleId = roleId;
+        if (finalRoleId === undefined && role) {
+            const foundRole = await prisma.role.findFirst({
+                where: {
+                    OR: [
+                        { name: { equals: role, mode: 'insensitive' } },
+                        { name: { equals: role === 'driver' ? 'Entregador' : role === 'waiter' ? 'Garçom' : role, mode: 'insensitive' } }
+                    ]
+                }
+            });
+            if (foundRole) finalRoleId = foundRole.id;
+        }
+
         // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
         if (permissionIds && !isRequesterSuperAdmin) {
             const requestedPermissions = await prisma.permission.findMany({
@@ -212,12 +245,21 @@ const updateUser = async (req, res) => {
             }
         }
 
-        const data = { email, name };
+        const data = { 
+            email, 
+            name,
+            phone,
+            isActive,
+            paymentType,
+            baseRate: baseRate !== undefined ? Number(baseRate) : undefined,
+            bonusPerDelivery: bonusPerDelivery !== undefined ? Number(bonusPerDelivery) : undefined
+        };
+        
         if (password) {
             data.passwordHash = await bcrypt.hash(password, 10);
         }
-        if (roleId !== undefined) {
-            data.roleId = roleId;
+        if (finalRoleId !== undefined) {
+            data.roleId = finalRoleId;
         }
 
         // Atualiza permissões diretas (substitui as antigas pelas novas enviadas)
