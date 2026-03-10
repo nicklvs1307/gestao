@@ -56,7 +56,7 @@ const GlobalModals: React.FC = () => {
         <PaymentMethodFormModal
           isOpen={isPaymentMethodModalOpen}
           onClose={closePaymentMethodModal}
-          paymentMethod={paymentMethodToEdit}
+          methodToEdit={paymentMethodToEdit}
           onSave={triggerPaymentMethodsRefetch}
         />
       )}

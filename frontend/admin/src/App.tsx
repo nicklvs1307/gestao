@@ -145,7 +145,11 @@ function AdminRoutes() {
           
           <Route path="/payment-methods" element={
             <ProtectedRoute permission="financial:manage">
-              <PaymentMethodManagement onAddClick={() => openPaymentMethodModal()} />
+              <PaymentMethodManagement 
+                onAddClick={() => openPaymentMethodModal()} 
+                onEditClick={(method) => openPaymentMethodModal(method)}
+                refetchTrigger={refetchPaymentMethods}
+              />
             </ProtectedRoute>
           } />
           
