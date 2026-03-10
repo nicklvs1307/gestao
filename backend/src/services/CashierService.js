@@ -44,11 +44,13 @@ class CashierService {
     }, { sangria: 0, reforco: 0 });
 
     // Busca acertos de entregadores pendentes do dia (Conta quantos motoboys únicos têm pendência)
+    // Filtramos apenas pedidos criados a partir da abertura deste caixa
     const pendingDeliveries = await prisma.deliveryOrder.findMany({
         where: {
             order: { 
               restaurantId, 
-              isSettled: false
+              isSettled: false,
+              createdAt: { gte: session.openedAt }
             },
             status: 'DELIVERED'
         },
@@ -84,6 +86,41 @@ class CashierService {
         openTablesCount
       }
     };
+  }
+
+  /**
+   * Lista pedidos que impedem o fechamento do caixa (Entregues mas sem acerto)
+   */
+  async getPendingSettlements(restaurantId) {
+    const session = await prisma.cashierSession.findFirst({
+        where: { restaurantId, status: 'OPEN' }
+    });
+    if (!session) return [];
+
+    return await prisma.deliveryOrder.findMany({
+        where: {
+            order: { 
+                restaurantId, 
+                isSettled: false,
+                createdAt: { gte: session.openedAt }
+            },
+            status: 'DELIVERED'
+        },
+        include: {
+            order: {
+                select: {
+                    id: true,
+                    dailyOrderNumber: true,
+                    total: true,
+                    createdAt: true
+                }
+            },
+            driver: {
+                select: { name: true }
+            }
+        },
+        orderBy: { order: { createdAt: 'desc' } }
+    });
   }
 
   /**
@@ -124,7 +161,14 @@ class CashierService {
     if (activeOrders > 0) throw new AppError(`Existem ${activeOrders} pedidos ativos. Finalize-os antes de fechar.`, 400);
 
     const pendingDeliveries = await prisma.deliveryOrder.findMany({
-        where: { order: { restaurantId, isSettled: false }, status: 'DELIVERED' },
+        where: { 
+            order: { 
+                restaurantId, 
+                isSettled: false,
+                createdAt: { gte: session.openedAt }
+            }, 
+            status: 'DELIVERED' 
+        },
         select: { driverId: true }
     });
 

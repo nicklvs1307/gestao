@@ -209,6 +209,12 @@ class CashierController {
 
     res.json(orders);
   });
+
+  // GET /api/cashier/pending-settlements
+  getPendingSettlements = asyncHandler(async (req, res) => {
+    const settlements = await CashierService.getPendingSettlements(req.restaurantId);
+    res.json(settlements);
+  });
 }
 
 module.exports = new CashierController();

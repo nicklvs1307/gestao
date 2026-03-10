@@ -74,3 +74,8 @@ export const getCashierHistory = async () => {
     const response = await apiClient.get('/cashier/history');
     return response.data;
 };
+
+export const getPendingSettlements = async () => {
+    const response = await apiClient.get('/cashier/pending-settlements');
+    return response.data;
+};

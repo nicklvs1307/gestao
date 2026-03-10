@@ -7,6 +7,7 @@ router.get('/status', needsAuth, CashierController.getStatus);
 router.get('/summary', needsAuth, CashierController.getSummary);
 router.get('/history', needsAuth, CashierController.getHistory);
 router.get('/orders', needsAuth, CashierController.getSessionOrders);
+router.get('/pending-settlements', needsAuth, CashierController.getPendingSettlements);
 
 // Validação agora é feita dentro do controller para maior robustez
 router.post('/open', needsAuth, CashierController.open);
