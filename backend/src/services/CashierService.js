@@ -79,7 +79,7 @@ class CashierService {
         cashInHand, 
         salesByMethod, 
         adjustments,
-        pendingDriverSettlementsCount: pendingDriverSettlements.length,
+        pendingDriverSettlementsCount,
         activeOrdersCount,
         openTablesCount
       }
