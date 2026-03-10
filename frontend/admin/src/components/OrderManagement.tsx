@@ -4,9 +4,10 @@ import OrderKanbanBoard from './OrderKanbanBoard';
 import OrderListView from './OrderListView';
 import OrderDetailModal from './OrderDetailModal';
 import OrderEditor from './OrderEditor';
-import { getAdminOrders, updateOrderStatus, getOrder } from '../services/api';
+import DriverSelectionModal from './DriverSelectionModal';
+import { getAdminOrders, updateOrderStatus, getOrder, assignDriver } from '../services/api';
 import type { Order } from '@/types/index.ts';
-import { Kanban, List, Search, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone } from 'lucide-react';
+import { Kanban, List, Search, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
@@ -27,6 +28,11 @@ const OrderManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+
+  // Estados para Trava de Motorista
+  const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
+  const [orderIdPendingDriver, setOrderIdPendingDriver] = useState<string | null>(null);
+  const [newStatusPendingDriver, setNewStatusPendingDriver] = useState<string | null>(null);
 
   const handleOpenOrder = async (order: Order) => {
     try {
@@ -94,6 +100,21 @@ const OrderManagement: React.FC = () => {
   }, [on, off]); // Removido selectedOrder para evitar loops
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
+    // TRAVA DE SEGURANÇA: Aguardando Entrega (READY) -> Saiu p/ Entrega (SHIPPED)
+    if (newStatus === 'SHIPPED') {
+      const order = allOrders.find(o => o.id === orderId);
+      const isDelivery = order?.orderType === 'DELIVERY' || !!order?.deliveryOrder;
+      const isPickup = order?.deliveryOrder?.deliveryType === 'pickup';
+      
+      // Se for entrega e não tiver motorista, abre o modal
+      if (isDelivery && !isPickup && !order?.deliveryOrder?.driverId) {
+        setOrderIdPendingDriver(orderId);
+        setNewStatusPendingDriver(newStatus);
+        setIsDriverModalOpen(true);
+        return;
+      }
+    }
+
     try {
       // Optimistic update
       setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
@@ -110,17 +131,110 @@ const OrderManagement: React.FC = () => {
     }
   };
 
+  const handleDriverSelect = async (driverId: string) => {
+    if (!orderIdPendingDriver) return;
+    
+    try {
+      setIsLoading(true);
+      await assignDriver(orderIdPendingDriver, driverId);
+      
+      // Atualiza o estado local para refletir o driver vinculado
+      setAllOrders(prev => prev.map(o => o.id === orderIdPendingDriver ? { 
+        ...o, 
+        deliveryOrder: o.deliveryOrder ? { ...o.deliveryOrder, driverId } : { driverId } as any 
+      } : o));
+
+      toast.success("Entregador vinculado!");
+      
+      // Agora prossegue com a mudança de status
+      const targetStatus = newStatusPendingDriver;
+      const targetId = orderIdPendingDriver;
+      
+      // Limpa estados de pendência antes de chamar o status change para evitar loops
+      setIsDriverModalOpen(false);
+      setOrderIdPendingDriver(null);
+      setNewStatusPendingDriver(null);
+
+      if (targetStatus) {
+        await handleStatusChange(targetId, targetStatus);
+      }
+    } catch (error) {
+      toast.error("Erro ao vincular entregador.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleBulkStatusChange = async (newStatus: string) => {
       if (selectedOrderIds.length === 0) return;
       try {
-          setAllOrders(prev => prev.map(o => selectedOrderIds.includes(o.id) ? { ...o, status: newStatus } : o));
           const idsToProcess = [...selectedOrderIds];
           setSelectedOrderIds([]); 
-          await Promise.all(idsToProcess.map(id => updateOrderStatus(id, newStatus)));
-          toast.success(`${idsToProcess.length} pedidos atualizados!`);
+          
+          // Se for SHIPPED, precisamos verificar individualmente devido à trava
+          if (newStatus === 'SHIPPED') {
+              for (const id of idsToProcess) {
+                  await handleStatusChange(id, newStatus);
+              }
+          } else {
+              setAllOrders(prev => prev.map(o => idsToProcess.includes(o.id) ? { ...o, status: newStatus } : o));
+              await Promise.all(idsToProcess.map(id => updateOrderStatus(id, newStatus)));
+              toast.success(`${idsToProcess.length} pedidos atualizados!`);
+          }
       } catch (error) {
           fetchOrders();
       }
+  };
+
+  const handleBulkAdvance = async () => {
+    if (selectedOrderIds.length === 0) return;
+    
+    const statusFlow: Record<string, string> = {
+      'PENDING': 'PREPARING',
+      'PREPARING': 'READY',
+      'READY': 'SHIPPED',
+      'SHIPPED': 'DELIVERED',
+      'DELIVERED': 'COMPLETED'
+    };
+
+    const idsToProcess = [...selectedOrderIds];
+    setSelectedOrderIds([]);
+
+    for (const id of idsToProcess) {
+      const order = allOrders.find(o => o.id === id);
+      if (order) {
+        const nextStatus = statusFlow[order.status];
+        if (nextStatus) {
+          await handleStatusChange(id, nextStatus);
+        }
+      }
+    }
+    toast.success("Ações em massa processadas!");
+  };
+
+  const handleBulkBack = async () => {
+    if (selectedOrderIds.length === 0) return;
+    
+    const statusFlow: Record<string, string> = {
+      'PREPARING': 'PENDING',
+      'READY': 'PREPARING',
+      'SHIPPED': 'READY',
+      'DELIVERED': 'SHIPPED',
+      'COMPLETED': 'DELIVERED'
+    };
+
+    const idsToProcess = [...selectedOrderIds];
+    setSelectedOrderIds([]);
+
+    for (const id of idsToProcess) {
+      const order = allOrders.find(o => o.id === id);
+      if (order) {
+        const prevStatus = statusFlow[order.status];
+        if (prevStatus) {
+          await handleStatusChange(id, prevStatus);
+        }
+      }
+    }
   };
 
   const toggleSelectOrder = (id: string) => {
@@ -174,12 +288,19 @@ const OrderManagement: React.FC = () => {
                 )}
             </div>
 
-            {/* Ações em Massa - Compactas */}
+            {/* Ações em Massa - Compactas e Poderosas */}
             {selectedOrderIds.length > 0 && (
                 <div className="flex items-center gap-1.5 animate-in slide-in-from-left-4 duration-300 bg-orange-50 p-1 rounded-xl border border-orange-100 shadow-sm">
                     <span className="text-[9px] font-black text-orange-600 px-2 uppercase italic">{selectedOrderIds.length}</span>
+                    
+                    <button onClick={handleBulkBack} className="h-7 w-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-orange-600 flex items-center justify-center transition-all" title="Recuar Status"><ChevronLeft size={14} /></button>
+                    
+                    <button onClick={handleBulkAdvance} className="h-7 px-3 rounded-lg bg-orange-500 text-white text-[8px] font-black uppercase italic hover:bg-orange-600 transition-all flex items-center gap-1">AVANÇAR <ChevronRight size={10} /></button>
+                    
                     <button onClick={() => handleBulkStatusChange('READY')} className="h-7 px-3 rounded-lg bg-emerald-600 text-white text-[8px] font-black uppercase hover:bg-emerald-500 italic transition-all">PRONTOS</button>
+                    
                     <button onClick={() => handleBulkStatusChange('COMPLETED')} className="h-7 px-3 rounded-lg bg-slate-900 text-white text-[8px] font-black uppercase italic transition-all">FINALIZAR</button>
+                    
                     <button onClick={() => setSelectedOrderIds([])} className="h-7 w-7 rounded-lg text-slate-400 hover:bg-slate-200 flex items-center justify-center transition-all"><X size={14} /></button>
                 </div>
             )}
@@ -241,6 +362,18 @@ const OrderManagement: React.FC = () => {
           onRefresh={fetchOrders}
         />
       )}
+
+      {/* Modal de Seleção de Motorista */}
+      <DriverSelectionModal 
+        isOpen={isDriverModalOpen}
+        onClose={() => {
+          setIsDriverModalOpen(false);
+          setOrderIdPendingDriver(null);
+          setNewStatusPendingDriver(null);
+        }}
+        onSelect={handleDriverSelect}
+        orderId={orderIdPendingDriver || undefined}
+      />
     </div>
   );
 };

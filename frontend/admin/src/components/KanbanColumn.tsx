@@ -4,6 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import OrderCard from './OrderCard';
 import type { Order } from '@/types/index.ts';
 import { cn } from '../lib/utils';
+import { CheckCircle } from 'lucide-react';
 
 interface KanbanColumnProps {
   id: string;
@@ -28,6 +29,28 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     id: id,
   });
 
+  const allSelected = orders.length > 0 && orders.every(o => selectedOrderIds.includes(o.id));
+  const someSelected = !allSelected && orders.some(o => selectedOrderIds.includes(o.id));
+
+  const handleToggleAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (allSelected) {
+      // Deseleciona todos desta coluna
+      orders.forEach(o => {
+        if (selectedOrderIds.includes(o.id)) {
+          toggleSelectOrder(o.id);
+        }
+      });
+    } else {
+      // Seleciona todos desta coluna
+      orders.forEach(o => {
+        if (!selectedOrderIds.includes(o.id)) {
+          toggleSelectOrder(o.id);
+        }
+      });
+    }
+  };
+
   return (
     <div 
         ref={setNodeRef} 
@@ -41,9 +64,23 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         "p-3 font-black text-[10px] uppercase tracking-[0.2em] flex justify-between items-center bg-transparent",
         isOver && "text-orange-600"
       )}>
-        <div className="flex items-center gap-3 text-slate-900">
+        <div className="flex items-center gap-2 text-slate-900">
+            {/* Checkbox de Seleção em Massa da Coluna */}
+            <button 
+                onClick={handleToggleAll}
+                className={cn(
+                    "w-4 h-4 rounded border-2 flex items-center justify-center transition-all",
+                    allSelected ? "bg-slate-900 border-slate-900 text-white" : 
+                    someSelected ? "bg-slate-200 border-slate-400 text-slate-600" : 
+                    "bg-white border-slate-300 hover:border-slate-400"
+                )}
+            >
+                {allSelected && <CheckCircle size={10} strokeWidth={4} />}
+                {someSelected && <div className="w-1.5 h-0.5 bg-slate-600 rounded-full" />}
+            </button>
+
             <div className={cn(
-                "w-2 h-2 rounded-full",
+                "w-2 h-2 rounded-full ml-1",
                 id === 'PENDING' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse" :
                 id === 'PREPARING' ? "bg-blue-500" :
                 id === 'READY' ? "bg-emerald-500" :
