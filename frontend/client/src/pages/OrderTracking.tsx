@@ -329,7 +329,19 @@ const OrderTracking: React.FC = () => {
           {/* AJUDA / SUPORTE */}
           <section className="text-center pt-4">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Alguma dúvida sobre seu pedido?</p>
-              <button className="inline-flex items-center gap-2 bg-emerald-500 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-200 hover:scale-105 transition-transform active:scale-95">
+              <button 
+                onClick={() => {
+                    const phone = order?.restaurant?.phone;
+                    if (phone) {
+                        const cleanPhone = phone.replace(/\D/g, '');
+                        const message = encodeURIComponent(`Olá, gostaria de falar sobre o meu pedido #${order.id.slice(-6).toUpperCase()}`);
+                        window.open(`https://wa.me/55${cleanPhone}?text=${message}`, '_blank');
+                    } else {
+                        toast.error("Telefone do restaurante não disponível");
+                    }
+                }}
+                className="inline-flex items-center gap-2 bg-emerald-500 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-200 hover:scale-105 transition-transform active:scale-95"
+              >
                   <Bell size={16} />
                   Falar com o Restaurante
               </button>

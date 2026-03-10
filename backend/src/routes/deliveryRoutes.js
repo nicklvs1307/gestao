@@ -194,7 +194,15 @@ router.get('/order/:orderId', async (req, res) => {
             where: { id: orderId },
             include: {
                 items: { include: { product: true } },
-                deliveryOrder: true
+                deliveryOrder: true,
+                restaurant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        logoUrl: true
+                    }
+                }
             }
         });
         if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
