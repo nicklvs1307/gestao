@@ -6,6 +6,7 @@ import Cart from '../components/Cart';
 import FooterCart from '../components/FooterCart';
 import AccountModal from '../components/AccountModal';
 import ProductDetailModal from '../components/ProductDetailModal';
+import StoreClosedModal from '../components/StoreClosedModal';
 import ThankYouModal from '../components/ThankYouModal';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import SplashScreenHandler from '../components/SplashScreenHandler';
@@ -62,6 +63,7 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   // Estados de Dados
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [isStoreClosedModalOpen, setStoreClosedModalOpen] = useState(false);
     
   const {
     localCartItems,
@@ -126,10 +128,6 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   };
 
   const handleProductClick = (product: Product) => {
-    if (!isStoreOpen) {
-        showInfoModal('Loja Fechada', 'Desculpe, não estamos aceitando novos pedidos no momento.', 'info');
-        return;
-    }
     setSelectedProduct(product);
     openProductDetailModal();
   };
@@ -141,6 +139,10 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
     selectedAddons: AddonOption[],
     selectedFlavors?: Product[]
   ) => {
+      if (!isStoreOpen) {
+          setStoreClosedModalOpen(true);
+          return;
+      }
       addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors);
       closeProductDetailModal();
       openCart();
@@ -372,6 +374,13 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
             product={selectedProduct}
             allProducts={allProducts}
             onAddToCart={handleAddToCart}
+            isStoreOpen={isStoreOpen}
+        />
+
+        <StoreClosedModal 
+            isOpen={isStoreClosedModalOpen}
+            onClose={() => setStoreClosedModalOpen(false)}
+            restaurantName={restaurantSettings?.restaurant?.name}
         />
 
         <OrderSuccessModal isOpen={isOrderSuccessModalOpen} onClose={closeOrderSuccessModal} />

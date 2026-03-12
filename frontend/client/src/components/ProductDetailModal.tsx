@@ -20,6 +20,7 @@ interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
+  isStoreOpen?: boolean;
   onAddToCart: (
     product: Product, 
     quantity: number, 
@@ -30,7 +31,7 @@ interface ProductDetailModalProps {
   ) => void;
 }
 
-const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, onAddToCart }) => {
+const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, onAddToCart, isStoreOpen = true }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
@@ -352,7 +353,26 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 })}
                 <div className="space-y-2 pb-2"><h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-4 bg-amber-400 rounded-full shadow-lg shadow-amber-400/30" /> Alguma observação?</h4><textarea className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-xs font-medium text-slate-700 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm" placeholder="Ex: Tirar cebola, maionese à parte..." rows={3} value={observations} onChange={(e) => setObservations(e.target.value)} /></div>
               </div>
-              <div className="p-4 md:p-6 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] sticky bottom-0"><div className="flex items-center gap-3"><div className="flex items-center bg-slate-100 rounded-[1rem] p-1 border border-slate-200 shadow-inner"><button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all"><Minus size={18} strokeWidth={3} /></button><span className="w-6 text-center font-black text-lg text-slate-900 italic">{quantity}</span><button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 transition-all"><Plus size={18} strokeWidth={3} /></button></div><Button onClick={handleAddToCartClick} disabled={isAdded} className={cn("flex-1 h-12 md:h-14 rounded-[1.25rem] transition-all duration-500", isAdded ? "bg-emerald-500 shadow-emerald-100" : "bg-slate-900 shadow-slate-200")}><div className="w-full flex items-center justify-between px-2"><div className="flex items-center gap-3">{isAdded ? <Check size={24} strokeWidth={3} /> : <ShoppingBag size={20} />}<span className="text-sm font-black uppercase tracking-widest italic">{isAdded ? 'ADICIONADO' : 'ADICIONAR'}</span></div><span className="text-sm font-black italic bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm">R$ {calculateCurrentPrice().toFixed(2).replace('.', ',')}</span></div></Button></div></div>
+              <div className="p-4 md:p-6 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] sticky bottom-0"><div className="flex items-center gap-3"><div className="flex items-center bg-slate-100 rounded-[1rem] p-1 border border-slate-200 shadow-inner"><button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all"><Minus size={18} strokeWidth={3} /></button><span className="w-6 text-center font-black text-lg text-slate-900 italic">{quantity}</span><button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 transition-all"><Plus size={18} strokeWidth={3} /></button></div><Button 
+    onClick={handleAddToCartClick} 
+    disabled={isAdded || !isStoreOpen} 
+    className={cn(
+        "flex-1 h-12 md:h-14 rounded-[1.25rem] transition-all duration-500", 
+        !isStoreOpen ? "bg-rose-50 text-rose-600 border-2 border-rose-100 shadow-none hover:bg-rose-50" : (isAdded ? "bg-emerald-500 shadow-emerald-100" : "bg-slate-900 shadow-slate-200")
+    )}
+>
+    <div className="w-full flex items-center justify-between px-2">
+        <div className="flex items-center gap-3">
+            {!isStoreOpen ? <Clock size={20} /> : (isAdded ? <Check size={24} strokeWidth={3} /> : <ShoppingBag size={20} />)}
+            <span className="text-sm font-black uppercase tracking-widest italic">
+                {!isStoreOpen ? 'LOJA FECHADA' : (isAdded ? 'ADICIONADO' : 'ADICIONAR')}
+            </span>
+        </div>
+        <span className={cn("text-sm font-black italic px-3 py-1.5 rounded-xl backdrop-blur-sm", !isStoreOpen ? "bg-rose-100/50" : "bg-white/10")}>
+            R$ {calculateCurrentPrice().toFixed(2).replace('.', ',')}
+        </span>
+    </div>
+</Button></div></div>
             </div>
           </motion.div>
         </div>

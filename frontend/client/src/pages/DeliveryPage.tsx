@@ -13,6 +13,7 @@ import { RestaurantProvider } from '../context/RestaurantContext';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import PixPaymentModal from '../components/PixPaymentModal';
 import ProductDetailModal from '../components/ProductDetailModal';
+import StoreClosedModal from '../components/StoreClosedModal';
 import { Search, Heart, Clock, ShoppingBag, Palette } from 'lucide-react';
 import { applyTheme } from '../utils/theme';
 import { Button } from '../components/ui/Button';
@@ -45,6 +46,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setProductModalOpen] = useState(false);
+  const [isStoreClosedModalOpen, setStoreClosedModalOpen] = useState(false);
 
   const { localCartItems, handleAddToCart: addToCart, localCartTotal, handleRemoveFromCart, handleUpdateCartItemQuantity, clearCart } = useLocalCart();
 
@@ -56,10 +58,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleProductCardClick = (product: Product) => {
-    if (!isStoreOpen) {
-        alert("Desculpe, a loja está fechada no momento e não estamos aceitando novos pedidos.");
-        return;
-    }
     setSelectedProduct(product);
     setProductModalOpen(true);
   };
@@ -72,6 +70,10 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     selectedFlavors?: Product[],
     observations?: string
   ) => {
+      if (!isStoreOpen) {
+          setStoreClosedModalOpen(true);
+          return;
+      }
       addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors, observations);
       setProductModalOpen(false);
       setCartOpen(true);
@@ -435,6 +437,13 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             onClose={() => setProductModalOpen(false)}
             product={selectedProduct}
             onAddToCart={handleAddToCartFromModal}
+            isStoreOpen={isStoreOpen}
+        />
+
+        <StoreClosedModal 
+            isOpen={isStoreClosedModalOpen}
+            onClose={() => setStoreClosedModalOpen(false)}
+            restaurantName={restaurant.name}
         />
 
         {pixData && (

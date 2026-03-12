@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, Building2, Wallet, CheckCircle } from 'lucide-react';
+import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, Building2, Wallet, CheckCircle, Store, Monitor, ShoppingBag, Power, PowerOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -8,6 +8,7 @@ import apiClient from '../services/api/client';
 import { differenceInMinutes, differenceInHours } from 'date-fns';
 import CashierActionModal from './CashierActionModal';
 import { Button } from './ui/Button';
+import { toast } from 'sonner';
 
 interface TopbarAdminProps {
   title: string;
@@ -25,6 +26,8 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   const [cashierAction, setCashierAction] = useState<{ open: boolean, type: 'INCOME' | 'EXPENSE' }>({ open: false, type: 'INCOME' });
 
   const [currentRestaurant, setCurrentRestaurant] = useState<{name: string, logoUrl: string | null} | null>(null);
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+  const [isStoreLoading, setIsStoreLoading] = useState(false);
 
   const loadData = async () => {
       const selectedRestaurantId = localStorage.getItem('selectedRestaurantId');
@@ -36,6 +39,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                   name: res.data.name,
                   logoUrl: res.data.logoUrl
               });
+              setIsStoreOpen(res.data.settings?.isOpen ?? false);
           } catch (e) { console.warn("Erro ao buscar dados da loja", e); }
       }
 
@@ -52,6 +56,20 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
           setNotifCount(pending.length + requests.length);
           setCashierStatus(cashierRes.data);
       } catch (e) { console.warn(e); }
+  };
+
+  const toggleStoreStatus = async () => {
+    try {
+        setIsStoreLoading(true);
+        const res = await apiClient.put('/settings/status', { isOpen: !isStoreOpen });
+        setIsStoreOpen(res.data.isOpen);
+        toast.success(res.data.isOpen ? "Loja aberta para novos pedidos!" : "Loja fechada para novos pedidos!");
+    } catch (error) {
+        console.error(error);
+        toast.error("Erro ao alterar status da loja.");
+    } finally {
+        setIsStoreLoading(false);
+    }
   };
 
   const getCashierTimeStr = () => {
@@ -91,9 +109,46 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
             </div>
 
             <div className="flex items-center gap-3">
+                {/* BOTÕES RÁPIDOS (STORE, POS, ORDERS) */}
+                <div className="hidden sm:flex items-center gap-2 mr-2 pr-2 border-r border-slate-100">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={toggleStoreStatus}
+                        isLoading={isStoreLoading}
+                        className={cn(
+                            "rounded-xl border-2 transition-all",
+                            isStoreOpen ? "bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100" : "bg-rose-50 border-rose-100 text-rose-600 hover:bg-rose-100"
+                        )}
+                        title={isStoreOpen ? "Loja Aberta (Clique para Fechar)" : "Loja Fechada (Clique para Abrir)"}
+                    >
+                        {isStoreOpen ? <Store size={20} /> : <PowerOff size={20} />}
+                    </Button>
+
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => navigate('/pos')}
+                        className="rounded-xl bg-slate-50 border-slate-100 text-slate-600 hover:text-primary hover:border-primary/20 transition-all"
+                        title="Ir para o PDV"
+                    >
+                        <Monitor size={20} />
+                    </Button>
+
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => navigate('/orders')}
+                        className="rounded-xl bg-slate-50 border-slate-100 text-slate-600 hover:text-primary hover:border-primary/20 transition-all"
+                        title="Gestor de Pedidos"
+                    >
+                        <ShoppingBag size={20} />
+                    </Button>
+                </div>
+
                 {/* BOTÃO DE CAIXA */}
                 {cashierStatus && (
-                    <div className="relative hidden md:block">
+                    <div className="relative hidden lg:block">
                         <button 
                             onClick={() => setCashierDropdownOpen(!isCashierDropdownOpen)}
                             className={cn(
