@@ -58,7 +58,7 @@ const FinancialLayout: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Entradas</p>
-                            <p className="text-sm font-black text-emerald-600 italic">R$ {summary.totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <p className="text-sm font-black text-emerald-600 italic">R$ {(summary?.totalIncome || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </div>
                     <div className="flex-1 min-w-[160px] bg-white border border-slate-100 p-3 rounded-2xl shadow-sm flex items-center gap-3">
@@ -67,7 +67,7 @@ const FinancialLayout: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Saídas</p>
-                            <p className="text-sm font-black text-rose-600 italic">R$ {summary.totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <p className="text-sm font-black text-rose-600 italic">R$ {(summary?.totalExpense || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </div>
                     <div className="flex-1 min-w-[180px] bg-slate-900 p-3 rounded-2xl shadow-xl flex items-center gap-3">
@@ -76,7 +76,7 @@ const FinancialLayout: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Saldo Real</p>
-                            <p className="text-sm font-black text-white italic">R$ {summary.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <p className="text-sm font-black text-white italic">R$ {(summary?.balance || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </div>
                 </div>

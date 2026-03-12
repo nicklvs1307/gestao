@@ -40,6 +40,7 @@ const CashierManagement = lazy(() => import('./components/CashierManagement'));
 const StockLayout = lazy(() => import('./pages/stock/StockLayout'));
 const StockDashboard = lazy(() => import('./pages/stock/StockDashboard'));
 const StockIngredients = lazy(() => import('./pages/stock/StockIngredients'));
+const StockPurchases = lazy(() => import('./pages/stock/StockPurchases'));
 const StockManagement = lazy(() => import('./pages/StockManagement'));
 const FiscalManagement = lazy(() => import('./components/FiscalManagement'));
 const CustomerManagement = lazy(() => import('./components/CustomerManagement'));
@@ -171,7 +172,8 @@ function AdminRoutes() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<StockDashboard />} />
             <Route path="ingredients" element={<StockIngredients />} />
-            {/* Outras rotas como compras e produção serão migradas a seguir */}
+            <Route path="purchases" element={<StockPurchases />} />
+            {/* Outras rotas como produção serão migradas a seguir */}
           </Route>
           <Route path="/production/technical-sheets" element={<ProtectedRoute permission="products:manage"><TechnicalSheetManagement /></ProtectedRoute>} />
           <Route path="/fiscal" element={<ProtectedRoute permission="settings:manage"><FiscalManagement /></ProtectedRoute>} />

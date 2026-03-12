@@ -62,7 +62,7 @@ const StockLayout: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Valor do Patrimônio</p>
-                            <p className="text-sm font-black text-slate-900 italic">R$ {stats.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <p className="text-sm font-black text-slate-900 italic">R$ {(stats?.totalValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </Card>
                     <Card className="flex-1 min-w-[160px] p-3 border-slate-100 flex items-center gap-4 bg-white shadow-sm">
