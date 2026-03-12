@@ -7,6 +7,7 @@ import {
   Plus, 
   Check, 
   ShoppingBag,
+  Clock,
   Pizza as PizzaIcon,
   Loader2
 } from 'lucide-react';
