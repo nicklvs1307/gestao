@@ -30,8 +30,16 @@ const DriverManagement = lazy(() => import('./components/DriverManagement'));
 const WaiterManagement = lazy(() => import('./pages/WaiterManagement'));
 const WaiterPos = lazy(() => import('./pages/WaiterPos')); 
 const PosPage = lazy(() => import('./pages/PosPage'));
+const FinancialLayout = lazy(() => import('./pages/financial/FinancialLayout'));
+const FinancialCategories = lazy(() => import('./pages/financial/FinancialCategories'));
+const FinancialSuppliers = lazy(() => import('./pages/financial/FinancialSuppliers'));
+const FinancialBankAccounts = lazy(() => import('./pages/financial/FinancialBankAccounts'));
+const FinancialEntries = lazy(() => import('./pages/FinancialEntries'));
 const FinancialManagement = lazy(() => import('./pages/FinancialManagement'));
 const CashierManagement = lazy(() => import('./components/CashierManagement'));
+const StockLayout = lazy(() => import('./pages/stock/StockLayout'));
+const StockDashboard = lazy(() => import('./pages/stock/StockDashboard'));
+const StockIngredients = lazy(() => import('./pages/stock/StockIngredients'));
 const StockManagement = lazy(() => import('./pages/StockManagement'));
 const FiscalManagement = lazy(() => import('./components/FiscalManagement'));
 const CustomerManagement = lazy(() => import('./components/CustomerManagement'));
@@ -141,7 +149,13 @@ function AdminRoutes() {
           <Route path="/cashier" element={<ProtectedRoute permission="cashier:manage"><CashierManagement /></ProtectedRoute>} />
           <Route path="/kds" element={<ProtectedRoute permission="kds:view"><KdsPage /></ProtectedRoute>} />
           
-          <Route path="/financial/*" element={<ProtectedRoute permission="financial:view"><FinancialManagement /></ProtectedRoute>} />
+          <Route path="/financial" element={<ProtectedRoute permission="financial:view"><FinancialLayout /></ProtectedRoute>}>
+            <Route index element={<Navigate to="entries" replace />} />
+            <Route path="entries" element={<FinancialEntries />} />
+            <Route path="categories" element={<FinancialCategories />} />
+            <Route path="suppliers" element={<FinancialSuppliers />} />
+            <Route path="bank-accounts" element={<FinancialBankAccounts />} />
+          </Route>
           
           <Route path="/payment-methods" element={
             <ProtectedRoute permission="financial:manage">
@@ -153,7 +167,12 @@ function AdminRoutes() {
             </ProtectedRoute>
           } />
           
-          <Route path="/stock/*" element={<ProtectedRoute permission="stock:view"><StockManagement /></ProtectedRoute>} />
+          <Route path="/stock" element={<ProtectedRoute permission="stock:view"><StockLayout /></ProtectedRoute>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<StockDashboard />} />
+            <Route path="ingredients" element={<StockIngredients />} />
+            {/* Outras rotas como compras e produção serão migradas a seguir */}
+          </Route>
           <Route path="/production/technical-sheets" element={<ProtectedRoute permission="products:manage"><TechnicalSheetManagement /></ProtectedRoute>} />
           <Route path="/fiscal" element={<ProtectedRoute permission="settings:manage"><FiscalManagement /></ProtectedRoute>} />
           <Route path="/checklists" element={<ProtectedRoute permission="orders:view"><ChecklistManagement /></ProtectedRoute>} />

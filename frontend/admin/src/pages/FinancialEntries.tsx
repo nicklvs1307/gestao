@@ -3,17 +3,21 @@ import { api } from '../services/api';
 import { 
     Wallet, Plus, Search, Filter, ArrowUpCircle, 
     ArrowDownCircle, Trash2, Calendar, Tag, User,
-    X, CheckCircle, DollarSign, Calculator, Receipt, ArrowRightLeft, Repeat
+    X, CheckCircle, DollarSign, Calculator, Receipt, 
+    ArrowRightLeft, Repeat, Loader2, ArrowUpRight, ArrowDownLeft
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const FinancialEntries: React.FC = () => {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0 });
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [showTransferForm, setShowTransferForm] = useState(false); // Modal de Transferência
+    const [showTransferForm, setShowTransferForm] = useState(false);
     
     const [formData, setFormData] = useState<any>({
         type: 'EXPENSE',
@@ -78,11 +82,12 @@ const FinancialEntries: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const payload = { ...formData, amount: parseFloat(formData.amount) };
             if (formData.id) {
-                await api.put(`/financial/transactions/${formData.id}`, formData);
+                await api.put(`/financial/transactions/${formData.id}`, payload);
                 toast.success('Lançamento atualizado!');
             } else {
-                await api.post('/financial/transactions', formData);
+                await api.post('/financial/transactions', payload);
                 toast.success('Lançamento realizado!');
             }
             setShowForm(false);
@@ -121,146 +126,128 @@ const FinancialEntries: React.FC = () => {
     };
 
     return (
-        <div className="p-4 space-y-6 animate-in fade-in duration-500 bg-background text-foreground min-h-full">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-black text-foreground uppercase tracking-tighter italic flex items-center gap-2">
-                        <Receipt size={24} className="text-primary" /> Lançamentos
-                    </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-none">Controle de entradas e saídas.</p>
-                </div>
-                
-                <div className="flex gap-2">
+        <div className="space-y-6 animate-in fade-in duration-500">
+            {/* ACTIONS BAR */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-3 bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner">
                     <button 
                         onClick={handleSyncRecurring}
-                        className="ui-button-secondary h-10 px-4 text-[10px] uppercase tracking-widest"
+                        className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 hover:bg-white transition-all flex items-center gap-2"
                         title="Sincronizar contas fixas"
                     >
-                        <Repeat size={16} /> Sincronizar
+                        <Repeat size={12} /> Sincronizar
                     </button>
                     <button 
                         onClick={() => setShowTransferForm(true)}
-                        className="bg-blue-600 text-white px-4 h-10 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md flex items-center gap-2"
+                        className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-white transition-all flex items-center gap-2"
                     >
-                        <ArrowRightLeft size={16} /> Transferir
-                    </button>
-                    <button 
-                        onClick={() => { setShowForm(true); setFormData({ type: 'EXPENSE', status: 'PAID', dueDate: new Date().toISOString().split('T')[0], isRecurring: false, recurrenceFrequency: 'MONTHLY' }); }}
-                        className="ui-button-primary h-10 px-4 text-[10px] uppercase tracking-widest"
-                    >
-                        <Plus size={16} /> Novo Lançamento
+                        <ArrowRightLeft size={12} /> Transferir
                     </button>
                 </div>
+                
+                <Button 
+                    onClick={() => { setShowForm(true); setFormData({ type: 'EXPENSE', status: 'PAID', dueDate: new Date().toISOString().split('T')[0], isRecurring: false, recurrenceFrequency: 'MONTHLY' }); }}
+                    className="h-12 px-8 rounded-2xl shadow-xl shadow-orange-500/10 font-black italic tracking-tighter uppercase text-[10px]"
+                >
+                    <Plus size={16} className="mr-2" /> Novo Lançamento
+                </Button>
             </div>
 
-            {/* Cards de Resumo */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-emerald-500 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden group">
-                    <ArrowUpCircle size={80} className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500" />
-                    <h3 className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80 leading-none">Receitas</h3>
-                    <p className="text-2xl font-black italic tracking-tighter leading-none">R$ {summary.totalIncome.toFixed(2)}</p>
-                </div>
-                <div className="bg-red-500 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden group">
-                    <ArrowDownCircle size={80} className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500" />
-                    <h3 className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80 leading-none">Despesas</h3>
-                    <p className="text-2xl font-black italic tracking-tighter leading-none">R$ {summary.totalExpense.toFixed(2)}</p>
-                </div>
-                <div className="ui-card p-5 relative overflow-hidden group">
-                    <Calculator size={80} className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-500 text-foreground" />
-                    <h3 className="text-[10px] font-black uppercase tracking-widest mb-1 text-slate-400 leading-none">Saldo</h3>
-                    <p className={cn("text-2xl font-black italic tracking-tighter leading-none", (summary.totalIncome - summary.totalExpense) >= 0 ? "text-foreground" : "text-red-600")}>
-                        R$ {(summary.totalIncome - summary.totalExpense).toFixed(2)}
-                    </p>
-                </div>
-            </div>
-
-            {/* Tabela de Lançamentos */}
-            <div className="ui-card overflow-hidden">
-                <div className="p-4 border-b border-border bg-muted/20 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h3 className="font-black text-foreground uppercase italic tracking-widest text-xs flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        Movimentações
-                    </h3>
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            {/* LISTAGEM DE MOVIMENTAÇÕES */}
+            <Card className="overflow-hidden border-slate-200/60 shadow-xl shadow-slate-200/40">
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-6 bg-orange-500 rounded-full" />
+                        <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Livro de Movimentações Financeiras</h3>
+                    </div>
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input 
                             type="text" 
-                            placeholder="Buscar..." 
-                            className="ui-input w-full pl-10 h-9 text-xs"
+                            placeholder="Buscar lançamento..." 
+                            className="ui-input w-full pl-11 h-10 text-[11px] font-bold uppercase tracking-widest"
                         />
                     </div>
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left">
                         <thead>
-                            <tr className="text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-border bg-muted/5">
-                                <th className="px-6 py-4">Data</th>
-                                <th className="px-6 py-4">Descrição</th>
-                                <th className="px-6 py-4">Pagamento</th>
-                                <th className="px-6 py-4 text-right">Valor</th>
-                                <th className="px-6 py-4 text-right">Ações</th>
+                            <tr className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 bg-slate-50/20">
+                                <th className="px-8 py-4">Data / Vencimento</th>
+                                <th className="px-8 py-4">Descrição do Lançamento</th>
+                                <th className="px-8 py-4">Método / Origem</th>
+                                <th className="px-8 py-4 text-right">Valor Líquido</th>
+                                <th className="px-8 py-4 text-right">Ações</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border text-foreground">
+                        <tbody className="divide-y divide-slate-50">
                             {loading ? (
-                                Array.from({ length: 5 }).map((_, i) => (
-                                    <tr key={i} className="animate-pulse">
-                                        <td colSpan={5} className="px-6 py-4"><div className="h-8 bg-muted rounded-lg" /></td>
-                                    </tr>
-                                ))
+                                <tr><td colSpan={5} className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-orange-500" /></td></tr>
                             ) : transactions.map((t) => (
-                                <tr key={t.id} className="hover:bg-muted/30 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
+                                <tr key={t.id} className="group hover:bg-slate-50/80 transition-all duration-300">
+                                    <td className="px-8 py-5">
+                                        <div className="flex items-center gap-3">
                                             <div className={cn(
-                                                "p-1.5 rounded-lg text-white shadow-sm",
-                                                t.type === 'INCOME' ? "bg-emerald-500" : "bg-red-500"
+                                                "w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm border",
+                                                t.type === 'INCOME' ? "bg-emerald-500 border-emerald-400" : "bg-rose-500 border-rose-400"
                                             )}>
-                                                {t.type === 'INCOME' ? <ArrowUpCircle size={14} /> : <ArrowDownCircle size={14} />}
+                                                {t.type === 'INCOME' ? <ArrowUpRight size={18} /> : <ArrowDownLeft size={18} />}
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-xs">{new Date(t.dueDate).toLocaleDateString()}</p>
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Vencimento</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-bold uppercase text-[11px] italic truncate max-w-[200px]">{t.description}</p>
-                                            {t.isRecurring && <Repeat size={10} className="text-blue-500" />}
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-[8px] font-black bg-muted text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-widest">
-                                                {t.category?.name || 'Geral'}
-                                            </span>
-                                            {t.supplier && (
-                                                <span className="text-[8px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
-                                                    <User size={8} /> {t.supplier.name}
+                                            <div className="flex flex-col">
+                                                <span className="font-black text-[11px] text-slate-900 uppercase italic tracking-tighter">
+                                                    {new Date(t.dueDate).toLocaleDateString()}
                                                 </span>
-                                            )}
+                                                <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">
+                                                    {t.status === 'PAID' ? 'Liquidado' : 'Provisionado'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-xs font-bold uppercase italic text-slate-400">
-                                        {t.paymentMethod || '-'}
+                                    <td className="px-8 py-5">
+                                        <div className="flex flex-col">
+                                            <span className="font-black text-xs text-slate-900 uppercase italic tracking-tighter truncate max-w-[250px]">
+                                                {t.description}
+                                            </span>
+                                            <div className="flex gap-2 mt-1">
+                                                <span className="text-[7px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-widest border border-slate-200">
+                                                    {t.category?.name || 'Geral'}
+                                                </span>
+                                                {t.isRecurring && (
+                                                    <span className="text-[7px] font-black bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded uppercase tracking-widest border border-blue-100 flex items-center gap-1">
+                                                        <Repeat size={8} /> Recorrente
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td className={cn("px-6 py-4 text-right font-black text-xs italic", t.type === 'INCOME' ? "text-emerald-600" : "text-red-600")}>
-                                        {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toFixed(2)}
+                                    <td className="px-8 py-5">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-300">
+                                                <Receipt size={14} />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">{t.paymentMethod || 'Carteira'}</span>
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-1">
+                                    <td className={cn(
+                                        "px-8 py-5 text-right font-black text-sm italic tracking-tighter",
+                                        t.type === 'INCOME' ? "text-emerald-600" : "text-rose-600"
+                                    )}>
+                                        {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="px-8 py-5 text-right">
+                                        <div className="flex justify-end gap-2">
                                             <button 
                                                 onClick={() => { setFormData(t); setShowForm(true); }}
-                                                className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                                                className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:text-orange-500 hover:bg-orange-50 transition-all flex items-center justify-center"
                                             >
-                                                <Filter size={16} />
+                                                <Filter size={14} />
                                             </button>
                                             <button 
                                                 onClick={() => handleDelete(t.id)}
-                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </td>
@@ -269,212 +256,214 @@ const FinancialEntries: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </Card>
 
-            {/* Modal de Lançamento */}
-            {showForm && (
-                <div className="ui-modal-overlay">
-                    <form onSubmit={handleSubmit} className="ui-modal-content w-full max-w-xl flex flex-col">
-                        <div className="px-6 py-4 border-b border-border bg-muted/20 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-black text-foreground uppercase italic tracking-tight flex items-center gap-2">
-                                    <Plus size={20} className="text-primary" /> {formData.id ? 'Editar' : 'Novo'} Lançamento
-                                </h3>
-                            </div>
-                            <button type="button" onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-full text-slate-400 transition-all">
-                                <X size={20} />
-                            </button>
-                        </div>
+            {/* MODAL LANÇAMENTO ERP STYLE */}
+            <AnimatePresence>
+                {showForm && (
+                    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => setShowForm(false)} />
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]"
+                        >
+                            <header className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{formData.id ? 'Editar Registro' : 'Novo Lançamento'}</h3>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Livro Diário de Fluxo de Caixa</p>
+                                </div>
+                                <button onClick={() => setShowForm(false)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-100">
+                                    <Plus className="rotate-45" size={24} />
+                                </button>
+                            </header>
 
-                        <div className="p-6 space-y-5 overflow-y-auto max-h-[70vh] custom-scrollbar">
-                            <div className="flex gap-1 p-1 bg-muted rounded-xl border border-border">
-                                <button 
-                                    type="button" 
-                                    onClick={() => setFormData({...formData, type: 'EXPENSE'})}
-                                    className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition-all", formData.type === 'EXPENSE' ? "bg-red-500 text-white shadow-md" : "text-slate-400")}
-                                >Despesa</button>
-                                <button 
-                                    type="button" 
-                                    onClick={() => setFormData({...formData, type: 'INCOME'})}
-                                    className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase transition-all", formData.type === 'INCOME' ? "bg-emerald-500 text-white shadow-md" : "text-slate-400")}
-                                >Receita</button>
-                            </div>
+                            <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                                {/* TIPO SELECTOR */}
+                                <div className="flex gap-1 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setFormData({...formData, type: 'EXPENSE'})}
+                                        className={cn("flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all", formData.type === 'EXPENSE' ? "bg-rose-500 text-white shadow-lg" : "text-slate-400")}
+                                    >Saída (Despesa)</button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setFormData({...formData, type: 'INCOME'})}
+                                        className={cn("flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all", formData.type === 'INCOME' ? "bg-emerald-500 text-white shadow-lg" : "text-slate-400")}
+                                    >Entrada (Receita)</button>
+                                </div>
 
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Descrição</label>
-                                <input 
-                                    type="text" 
-                                    className="ui-input w-full"
-                                    placeholder="Ex: Pagamento Aluguel"
-                                    value={formData.description || ''}
-                                    onChange={e => setFormData({...formData, description: e.target.value})}
-                                    required
-                                />
-                            </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Descrição do Lançamento</label>
+                                    <input 
+                                        type="text" 
+                                        className="ui-input w-full h-12 text-sm font-bold"
+                                        placeholder="Ex: Pagamento Fornecedor Carne..."
+                                        value={formData.description || ''}
+                                        onChange={e => setFormData({...formData, description: e.target.value})}
+                                        required
+                                    />
+                                </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor R$</label>
-                                    <div className="relative">
-                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor Nominal (R$)</label>
+                                        <div className="relative">
+                                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={16} />
+                                            <input 
+                                                type="number" step="0.01"
+                                                className="ui-input w-full h-12 pl-10 text-sm font-bold"
+                                                value={formData.amount || ''}
+                                                onChange={e => setFormData({...formData, amount: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Data de Competência</label>
                                         <input 
-                                            type="number" step="0.01"
-                                            className="ui-input w-full pl-8"
-                                            value={formData.amount || ''}
-                                            onChange={e => setFormData({...formData, amount: e.target.value})}
+                                            type="date" 
+                                            className="ui-input w-full h-12 text-sm font-bold"
+                                            value={formData.dueDate ? formData.dueDate.split('T')[0] : ''}
+                                            onChange={e => setFormData({...formData, dueDate: e.target.value})}
                                             required
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Vencimento</label>
-                                    <input 
-                                        type="date" 
-                                        className="ui-input w-full"
-                                        value={formData.dueDate ? formData.dueDate.split('T')[0] : ''}
-                                        onChange={e => setFormData({...formData, dueDate: e.target.value})}
-                                        required
-                                    />
-                                </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Categoria</label>
-                                    <select 
-                                        className="ui-input w-full cursor-pointer"
-                                        value={formData.categoryId || ''}
-                                        onChange={e => setFormData({...formData, categoryId: e.target.value})}
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {categories.filter(c => c.type === formData.type).map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Conta de Destino</label>
-                                    <select 
-                                        className="ui-input w-full cursor-pointer"
-                                        value={formData.bankAccountId || ''}
-                                        onChange={e => setFormData({...formData, bankAccountId: e.target.value})}
-                                        required={formData.status === 'PAID'}
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {bankAccounts.map(acc => (
-                                            <option key={acc.id} value={acc.id}>{acc.name} (R$ {acc.balance.toFixed(2)})</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-widest flex items-center gap-2">
-                                        <Repeat size={14} /> Recorrência
-                                    </label>
-                                    <input 
-                                        type="checkbox"
-                                        className="w-4 h-4 accent-blue-600"
-                                        checked={formData.isRecurring}
-                                        onChange={e => setFormData({...formData, isRecurring: e.target.checked})}
-                                    />
-                                </div>
-                                
-                                {formData.isRecurring && (
-                                    <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Conta Bancária / Destino</label>
                                         <select 
-                                            className="ui-input w-full h-9 text-xs"
-                                            value={formData.recurrenceFrequency}
-                                            onChange={e => setFormData({...formData, recurrenceFrequency: e.target.value})}
+                                            className="ui-input w-full h-12 text-[11px] font-bold uppercase tracking-tight"
+                                            value={formData.bankAccountId || ''}
+                                            onChange={e => setFormData({...formData, bankAccountId: e.target.value})}
+                                            required={formData.status === 'PAID'}
                                         >
-                                            <option value="WEEKLY">Semanal</option>
-                                            <option value="MONTHLY">Mensal</option>
-                                            <option value="YEARLY">Anual</option>
+                                            <option value="">Selecione...</option>
+                                            {bankAccounts.map(acc => (
+                                                <option key={acc.id} value={acc.id}>{acc.bankName} (R$ {acc.balance.toFixed(2)})</option>
+                                            ))}
                                         </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Categoria Financeira</label>
+                                        <select 
+                                            className="ui-input w-full h-12 text-[11px] font-bold uppercase tracking-tight"
+                                            value={formData.categoryId || ''}
+                                            onChange={e => setFormData({...formData, categoryId: e.target.value})}
+                                        >
+                                            <option value="">Selecione...</option>
+                                            {categories.filter(c => c.type === formData.type).map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* CONFIGURAÇÕES AVANÇADAS */}
+                                <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-blue-500">
+                                                <Repeat size={14} />
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Lançamento Recorrente</span>
+                                        </div>
                                         <input 
-                                            type="date"
-                                            className="ui-input w-full h-9 text-xs"
-                                            value={formData.recurrenceEndDate ? formData.recurrenceEndDate.split('T')[0] : ''}
-                                            onChange={e => setFormData({...formData, recurrenceEndDate: e.target.value})}
+                                            type="checkbox"
+                                            className="w-5 h-5 accent-blue-600"
+                                            checked={formData.isRecurring}
+                                            onChange={e => setFormData({...formData, isRecurring: e.target.checked})}
                                         />
                                     </div>
-                                )}
-                            </div>
+                                    
+                                    {formData.isRecurring && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="grid grid-cols-2 gap-3 pt-2">
+                                            <select 
+                                                className="ui-input h-10 text-[10px] font-bold uppercase"
+                                                value={formData.recurrenceFrequency}
+                                                onChange={e => setFormData({...formData, recurrenceFrequency: e.target.value})}
+                                            >
+                                                <option value="WEEKLY">Semanal</option>
+                                                <option value="MONTHLY">Mensal</option>
+                                                <option value="YEARLY">Anual</option>
+                                            </select>
+                                            <input 
+                                                type="date"
+                                                className="ui-input h-10 text-[10px] font-bold"
+                                                value={formData.recurrenceEndDate ? formData.recurrenceEndDate.split('T')[0] : ''}
+                                                onChange={e => setFormData({...formData, recurrenceEndDate: e.target.value})}
+                                            />
+                                        </motion.div>
+                                    )}
 
-                            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl">
-                                <span className="text-[10px] font-bold uppercase tracking-widest italic text-slate-400">Já foi pago/recebido?</span>
-                                <input 
-                                    type="checkbox"
-                                    className="w-5 h-5 accent-primary"
-                                    checked={formData.status === 'PAID'}
-                                    onChange={e => setFormData({...formData, status: e.target.checked ? 'PAID' : 'PENDING'})}
-                                />
-                            </div>
-                        </div>
+                                    <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-emerald-500">
+                                                <CheckCircle size={14} />
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Liquidado (Já pago/recebido)</span>
+                                        </div>
+                                        <input 
+                                            type="checkbox"
+                                            className="w-5 h-5 accent-emerald-600"
+                                            checked={formData.status === 'PAID'}
+                                            onChange={e => setFormData({...formData, status: e.target.checked ? 'PAID' : 'PENDING'})}
+                                        />
+                                    </div>
+                                </div>
 
-                        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-border flex justify-end gap-3">
-                            <button type="button" onClick={() => setShowForm(false)} className="ui-button-secondary flex-1">Cancelar</button>
-                            <button type="submit" className="ui-button-primary flex-[2] italic uppercase text-xs tracking-widest">
-                                <CheckCircle size={18} /> Confirmar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+                                <div className="pt-4 flex gap-4 shrink-0">
+                                    <Button type="button" variant="ghost" className="flex-1 rounded-2xl h-14 uppercase text-[10px] font-black tracking-widest" onClick={() => setShowForm(false)}>Descartar</Button>
+                                    <Button type="submit" className="flex-[2] h-14 rounded-2xl shadow-xl shadow-orange-500/20 uppercase text-[10px] font-black tracking-widest italic">
+                                        Confirmar Lançamento
+                                    </Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
-            {/* Modal de Transferência */}
-            {showTransferForm && (
-                <div className="ui-modal-overlay">
-                    <form onSubmit={handleTransferSubmit} className="ui-modal-content w-full max-w-sm">
-                         <div className="px-6 py-4 border-b border-border bg-muted/20 flex items-center justify-between">
-                            <h3 className="text-lg font-black text-foreground uppercase italic tracking-tight flex items-center gap-2">
-                                <ArrowRightLeft size={20} className="text-blue-600" /> Transferência
-                            </h3>
-                            <button type="button" onClick={() => setShowTransferForm(false)} className="p-2 hover:bg-muted rounded-full text-slate-400"><X size={20}/></button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Origem</label>
-                                <select 
-                                    className="ui-input w-full h-10 text-xs"
-                                    value={transferData.fromAccountId || ''}
-                                    onChange={e => setTransferData({...transferData, fromAccountId: e.target.value})}
-                                    required
-                                >
-                                    <option value="">Selecione...</option>
-                                    {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                                </select>
+            {/* MODAL TRANSFERÊNCIA ERP STYLE */}
+            <AnimatePresence>
+                {showTransferForm && (
+                    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => setShowTransferForm(false)} />
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+                             <header className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter flex items-center gap-2">
+                                    <ArrowRightLeft size={20} className="text-blue-600" /> Transferência
+                                </h3>
+                                <button onClick={() => setShowTransferForm(false)} className="p-2 hover:bg-white rounded-full text-slate-400 transition-all"><X size={20}/></button>
+                            </header>
+                            <div className="p-8 space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Origem dos Fundos</label>
+                                    <select className="ui-input w-full h-12 text-[11px] font-bold uppercase" value={transferData.fromAccountId || ''} onChange={e => setTransferData({...transferData, fromAccountId: e.target.value})} required>
+                                        <option value="">Selecione...</option>
+                                        {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.bankName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Destino dos Fundos</label>
+                                    <select className="ui-input w-full h-12 text-[11px] font-bold uppercase" value={transferData.toAccountId || ''} onChange={e => setTransferData({...transferData, toAccountId: e.target.value})} required>
+                                        <option value="">Selecione...</option>
+                                        {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.bankName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor da Remessa (R$)</label>
+                                    <input type="number" step="0.01" className="ui-input w-full h-14 text-2xl font-black italic tracking-tighter text-blue-600 bg-blue-50 border-none rounded-2xl" value={transferData.amount || ''} onChange={e => setTransferData({...transferData, amount: e.target.value})} required />
+                                </div>
+                                <Button type="submit" onClick={handleTransferSubmit} className="w-full h-14 bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 text-[10px] font-black tracking-[0.2em] uppercase rounded-2xl mt-4">
+                                    Confirmar Transferência
+                                </Button>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Destino</label>
-                                <select 
-                                    className="ui-input w-full h-10 text-xs"
-                                    value={transferData.toAccountId || ''}
-                                    onChange={e => setTransferData({...transferData, toAccountId: e.target.value})}
-                                    required
-                                >
-                                    <option value="">Selecione...</option>
-                                    {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor R$</label>
-                                <input 
-                                    type="number" step="0.01"
-                                    className="ui-input w-full h-12 text-lg font-black text-blue-600"
-                                    value={transferData.amount || ''}
-                                    onChange={e => setTransferData({...transferData, amount: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className="ui-button-primary w-full bg-blue-600 hover:bg-blue-700 shadow-blue-500/20 text-xs tracking-widest uppercase">
-                                Confirmar Transferência
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
