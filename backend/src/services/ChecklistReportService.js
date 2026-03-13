@@ -168,13 +168,13 @@ class ChecklistReportService {
 
     const recipient = normalizePhone(settings.recipientPhone);
 
+    // 2. Busca a ÚLTIMA execução (removido filtro de data 'hoje')
     const execution = await prisma.checklistExecution.findFirst({
       where: {
-        checklistId: checklist.id,
-        completedAt: { gte: start, lte: end }
+        checklistId: checklist.id
       },
       include: {
-        checklist: { include: { sector: true, tasks: true } },
+        checklist: { include: { sector: true, tasks: true, restaurant: true } },
         responses: { include: { task: true } },
         user: { select: { name: true } }
       },
@@ -182,7 +182,7 @@ class ChecklistReportService {
     });
 
     if (!execution) {
-      throw new Error("Nenhuma execução realizada hoje para este checklist");
+      throw new Error("Nenhuma execução encontrada para este checklist na história");
     }
 
     const okTasks = execution.responses.filter(r => r.isOk).length;
