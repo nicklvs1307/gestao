@@ -558,8 +558,37 @@ const ChecklistManagement: React.FC = () => {
                                                     </div>
                                                 )}
                                                 {task?.type === 'PHOTO' && resp.value && (
-                                                    <div className="relative rounded-xl overflow-hidden border border-slate-100 group w-fit max-w-xs">
-                                                        <img src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`} className="w-full h-32 object-cover" alt="Evidência" />
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {(() => {
+                                                            try {
+                                                                const photos = JSON.parse(resp.value);
+                                                                if (Array.isArray(photos)) {
+                                                                    return photos.map((url: string, pIdx: number) => (
+                                                                        <div key={pIdx} className="relative rounded-xl overflow-hidden border border-slate-100 group w-32 h-32">
+                                                                            <img 
+                                                                                src={`${import.meta.env.VITE_API_URL || ''}${url}`} 
+                                                                                className="w-full h-full object-cover cursor-zoom-in" 
+                                                                                alt="Evidência" 
+                                                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${url}`, '_blank')}
+                                                                            />
+                                                                        </div>
+                                                                    ));
+                                                                }
+                                                            } catch (e) {
+                                                                // Fallback para valor único caso não seja JSON
+                                                                return (
+                                                                    <div className="relative rounded-xl overflow-hidden border border-slate-100 group w-32 h-32">
+                                                                        <img 
+                                                                            src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`} 
+                                                                            className="w-full h-full object-cover cursor-zoom-in" 
+                                                                            alt="Evidência" 
+                                                                            onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${resp.value}`, '_blank')}
+                                                                        />
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
                                                     </div>
                                                 )}
                                             </div>

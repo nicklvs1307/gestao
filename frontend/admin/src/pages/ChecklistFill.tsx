@@ -40,7 +40,7 @@ const ChecklistFill: React.FC = () => {
             
             const initialResponses = data.tasks.map((task: any) => ({
                 taskId: task.id,
-                value: '',
+                value: task.type === 'PHOTO' ? [] : '',
                 isOk: null,
                 type: task.type,
                 itemNotes: '',
@@ -63,21 +63,51 @@ const ChecklistFill: React.FC = () => {
 
     const handleFileUpload = async (taskId: string, file: File) => {
         if (!file) return;
+        
+        // Verificar limite de 3 fotos
+        const currentResponse = responses.find(r => r.taskId === taskId);
+        const currentPhotos = Array.isArray(currentResponse?.value) ? currentResponse.value : [];
+        
+        if (currentPhotos.length >= 3) {
+            toast.error("Limite de 3 fotos atingido");
+            return;
+        }
+
         setUploadingTask(taskId);
         const formData = new FormData();
         formData.append('file', file);
+        
         try {
             const response = await axios.post(`${API_URL}/checklists/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                timeout: 30000 // 30 segundos de timeout
             });
-            handleUpdateResponse(taskId, 'value', response.data.url);
+            
+            const newPhotos = [...currentPhotos, response.data.url];
+            handleUpdateResponse(taskId, 'value', newPhotos);
             handleUpdateResponse(taskId, 'isOk', true);
             toast.success("Foto anexada");
-        } catch (error) {
-            toast.error("Erro no upload");
+        } catch (error: any) {
+            console.error("Upload error:", error);
+            if (error.code === 'ECONNABORTED') {
+                toast.error("Upload demorou muito. Verifique sua conexão.");
+            } else {
+                toast.error("Erro no upload. Tente novamente.");
+            }
         } finally {
             setUploadingTask(null);
+            // Reset input file
+            if (fileInputRefs.current[taskId]) {
+                fileInputRefs.current[taskId]!.value = '';
+            }
         }
+    };
+
+    const removePhoto = (taskId: string, photoUrl: string) => {
+        const currentResponse = responses.find(r => r.taskId === taskId);
+        const currentPhotos = Array.isArray(currentResponse?.value) ? currentResponse.value : [];
+        const newPhotos = currentPhotos.filter(url => url !== photoUrl);
+        handleUpdateResponse(taskId, 'value', newPhotos);
     };
 
     const toggleExpand = (taskId: string) => {
@@ -104,7 +134,10 @@ const ChecklistFill: React.FC = () => {
         const incomplete = responses.find((r, idx) => {
             const task = checklist.tasks[idx];
             if (task.type === 'CHECKBOX' && r.isOk === null) return true;
-            if (task.isRequired && !r.value && task.type !== 'CHECKBOX') return true;
+            if (task.isRequired && task.type !== 'CHECKBOX') {
+                if (task.type === 'PHOTO') return !r.value || r.value.length === 0;
+                return !r.value;
+            }
             if (r.isOk === false && !r.itemNotes) return true;
             return false;
         });
@@ -123,7 +156,9 @@ const ChecklistFill: React.FC = () => {
                 startedAt,
                 responses: responses.map(r => ({
                     taskId: r.taskId,
-                    value: r.type === 'CHECKBOX' ? (r.isOk ? 'true' : 'false') : String(r.value),
+                    value: r.type === 'CHECKBOX' 
+                        ? (r.isOk ? 'true' : 'false') 
+                        : (r.type === 'PHOTO' ? JSON.stringify(r.value) : String(r.value)),
                     isOk: r.isOk ?? false,
                     notes: r.itemNotes
                 }))
@@ -303,11 +338,52 @@ const ChecklistFill: React.FC = () => {
                                                     {task.type === 'PHOTO' && (
                                                         <div className="space-y-4">
                                                             <input type="file" accept="image/*" capture="environment" className="hidden" ref={el => fileInputRefs.current[task.id] = el} onChange={(e) => e.target.files?.[0] && handleFileUpload(task.id, e.target.files[0])} />
-                                                            {resp.value ? (
-                                                                <div className="relative rounded-3xl overflow-hidden shadow-2xl"><img src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`} className="w-full h-60 object-cover" /><button onClick={() => handleUpdateResponse(task.id, 'value', '')} className="absolute top-4 right-4 p-3 bg-rose-500 text-white rounded-2xl"><X size={20}/></button></div>
-                                                            ) : (
-                                                                <button onClick={() => fileInputRefs.current[task.id]?.click()} disabled={uploadingTask === task.id} className="w-full h-40 rounded-[2rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-3 text-slate-300 hover:border-slate-900 transition-all">{uploadingTask === task.id ? <Loader2 className="animate-spin w-8 h-8" /> : <><Camera size={48} /><span className="text-[10px] font-black uppercase tracking-widest">Câmera</span></>}</button>
-                                                            )}
+                                                            
+                                                            <div className="grid grid-cols-1 gap-4">
+                                                                {Array.isArray(resp.value) && resp.value.map((photoUrl: string, pIdx: number) => (
+                                                                    <div key={pIdx} className="relative rounded-3xl overflow-hidden shadow-xl group">
+                                                                        <img src={`${import.meta.env.VITE_API_URL || ''}${photoUrl}`} className="w-full h-60 object-cover" />
+                                                                        <button 
+                                                                            onClick={() => removePhoto(task.id, photoUrl)} 
+                                                                            className="absolute top-4 right-4 p-3 bg-rose-500 text-white rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        >
+                                                                            <X size={20}/>
+                                                                        </button>
+                                                                        {/* Mobile delete button always visible */}
+                                                                        <button 
+                                                                            onClick={() => removePhoto(task.id, photoUrl)} 
+                                                                            className="sm:hidden absolute top-4 right-4 p-3 bg-rose-500 text-white rounded-2xl shadow-lg"
+                                                                        >
+                                                                            <X size={20}/>
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+
+                                                                {(!Array.isArray(resp.value) || resp.value.length < 3) && (
+                                                                    <button 
+                                                                        onClick={() => fileInputRefs.current[task.id]?.click()} 
+                                                                        disabled={uploadingTask === task.id} 
+                                                                        className="w-full h-40 rounded-[2rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-3 text-slate-300 hover:border-slate-900 transition-all hover:bg-slate-50"
+                                                                    >
+                                                                        {uploadingTask === task.id ? (
+                                                                            <div className="flex flex-col items-center gap-2">
+                                                                                <Loader2 className="animate-spin w-8 h-8 text-slate-900" />
+                                                                                <span className="text-[8px] font-black uppercase tracking-widest text-slate-900">Enviando...</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Camera size={48} />
+                                                                                <div className="text-center">
+                                                                                    <span className="text-[10px] font-black uppercase tracking-widest block">Adicionar Foto</span>
+                                                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                                        {Array.isArray(resp.value) ? resp.value.length : 0} de 3
+                                                                                    </span>
+                                                                                </div>
+                                                                            </>
+                                                                        )}
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     )}
                                                     
