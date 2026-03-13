@@ -108,6 +108,11 @@ const ChecklistFill: React.FC = () => {
         const currentPhotos = Array.isArray(currentResponse?.value) ? currentResponse.value : [];
         const newPhotos = currentPhotos.filter(url => url !== photoUrl);
         handleUpdateResponse(taskId, 'value', newPhotos);
+        
+        // Se removeu todas as fotos, reseta o isOk (para forçar o preenchimento se for obrigatório)
+        if (newPhotos.length === 0) {
+            handleUpdateResponse(taskId, 'isOk', null);
+        }
     };
 
     const toggleExpand = (taskId: string) => {

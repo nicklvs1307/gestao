@@ -5,8 +5,15 @@ const { startOfDay, endOfDay, format } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
 
 class ChecklistReportService {
+  // Auxiliar para obter a data/hora atual em São Paulo
+  getSaoPauloDate() {
+    const now = new Date();
+    // Converte para o fuso de São Paulo (Brasília)
+    return new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  }
+
   async generateDailyReport(restaurantId) {
-    const today = new Date();
+    const today = this.getSaoPauloDate();
     const start = startOfDay(today);
     const end = endOfDay(today);
 
@@ -126,7 +133,7 @@ _Relatório gerado automaticamente pelo sistema Pedify._`;
   }
 
   async runAllScheduledReports() {
-    const now = new Date();
+    const now = this.getSaoPauloDate();
     const currentTime = format(now, "HH:mm");
 
     // Busca todos os restaurantes que tem relatório habilitado para este horário
