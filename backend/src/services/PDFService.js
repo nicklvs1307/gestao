@@ -47,13 +47,9 @@ class PDFService {
         doc.fillColor(this.colors.white).fontSize(20).font('Helvetica-Bold').text('CHECKLIST OPERACIONAL', titleX, 35);
         doc.fontSize(10).font('Helvetica').text(`ID: #${execution.id.toUpperCase()}`, titleX, 60, { opacity: 0.7 });
         
-        // Logo KiCardapio (Direita)
-        const kiCardapioLogoPath = path.join(process.cwd(), 'public', 'logo.png');
-        if (fs.existsSync(kiCardapioLogoPath)) {
-            doc.image(kiCardapioLogoPath, 480, 25, { height: 40 });
-        } else {
-            doc.fillColor(this.colors.white).fontSize(14).font('Helvetica-Bold').text('KiCardapio', 480, 40);
-        }
+        // Detalhes no canto superior direito (Data e Descrição)
+        doc.fillColor(this.colors.white).fontSize(10).font('Helvetica').text(new Date(execution.completedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }), 400, 45, { align: 'right' });
+        doc.text('Relatório Técnico de Conformidade', 400, 60, { align: 'right' });
 
         doc.moveDown(4);
 
@@ -91,13 +87,11 @@ class PDFService {
         for (const [index, resp] of execution.responses.entries()) {
           const task = resp.task || execution.checklist.tasks.find(t => t.id === resp.taskId);
           
-          // Container do Item - Verificar espaço ANTES de desenhar
-          if (doc.y > 650) doc.addPage();
+          // Verificar espaço ANTES de desenhar o card (mínimo 100px)
+          if (doc.y > 700) doc.addPage();
 
           const itemTop = doc.y;
           doc.rect(40, itemTop, 515, 45).fill(this.colors.accent);
-          
-          // Status Indicator
           doc.rect(40, itemTop, 5, 45).fill(resp.isOk ? this.colors.success : this.colors.danger);
 
           doc.fillColor(this.colors.primary).fontSize(10).font('Helvetica-Bold').text(`${index + 1}. ${task?.content || 'Tarefa'}`, 55, itemTop + 10);
@@ -109,23 +103,23 @@ class PDFService {
             doc.fillColor(this.colors.secondary).fontSize(8).font('Helvetica-Oblique').text(`Nota: ${resp.notes}`, 200, itemTop + 25);
           }
 
-          doc.moveDown(3);
+          // Atualiza o Y para logo abaixo do card antes de começar as fotos
+          doc.y = itemTop + 55;
 
-          // RENDERIZAR FOTOS DO ITEM (Muito Maiores e Sem Sobreposição)
+          // RENDERIZAR FOTOS DO ITEM
           if (task?.type === 'PHOTO' && resp.value) {
             try {
               const photos = JSON.parse(resp.value);
               if (Array.isArray(photos) && photos.length > 0) {
-                doc.moveDown(1);
-                const imgWidth = 480; // Quase a largura total da página
-                const imgHeight = 320; // Proporção maior
+                const imgWidth = 480; 
+                const imgHeight = 320; 
 
                 for (const photoUrl of photos) {
                   const relativePath = photoUrl.startsWith('/') ? photoUrl.substring(1) : photoUrl;
                   const absolutePath = path.join(process.cwd(), 'public', relativePath);
                   
                   if (fs.existsSync(absolutePath)) {
-                    // Se a imagem for ultrapassar o limite inferior da página, pula ANTES
+                    // Se a imagem não couber na página, pula
                     if (doc.y + imgHeight > 740) {
                         doc.addPage();
                     }
@@ -136,21 +130,20 @@ class PDFService {
                         .jpeg({ quality: 85 })
                         .toBuffer();
 
-                      // Desenha a imagem centralizada (x=55)
                       doc.image(optimizedBuffer, 55, doc.y, { width: imgWidth, height: imgHeight });
-                      
-                      // FORÇA o cursor do PDF a ir para baixo da imagem (Altura da imagem + margem)
-                      doc.y += imgHeight + 15;
+                      doc.y += imgHeight + 15; // Move o cursor para baixo da imagem
                     } catch (sharpError) {
                       console.error("Erro ao otimizar imagem:", sharpError);
                     }
                   }
                 }
-                doc.moveDown(2); // Espaço extra após o bloco de fotos do item
+                doc.moveDown(1);
               }
             } catch (e) {
               console.error("Erro ao processar JSON de fotos:", e);
             }
+          } else {
+              doc.moveDown(1.5); // Espaço se não tiver foto
           }
         }
 
