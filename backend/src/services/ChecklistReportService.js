@@ -269,7 +269,8 @@ class ChecklistReportService {
         message += `O checklist *${checklist.title}* do setor *${checklist.sector.name}* ainda não foi realizado hoje.\n\n`;
         message += `⏰ Horário Limite: ${checklist.deadlineTime}\n`;
         message += `📍 Status: *PENDENTE*\n\n`;
-        message += `_Notificação automática Pedify_`;
+        message += `\n\n_Notificação automática KiCardapio_`;
+
 
         try {
           await evolutionService.sendText(instance.name, recipient, message);

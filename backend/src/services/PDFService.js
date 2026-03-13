@@ -135,7 +135,7 @@ class PDFService {
         const pages = doc.bufferedPageRange();
         for (let i = 0; i < pages.count; i++) {
           doc.switchToPage(i);
-          doc.fillColor(this.colors.secondary).fontSize(8).text(`Página ${i + 1} de ${pages.count} | Gerado por Orion Pedify`, 40, 800, { align: 'center' });
+          doc.fillColor(this.colors.secondary).fontSize(8).text(`Página ${i + 1} de ${pages.count} | Gerado por KiCardapio`, 40, 800, { align: 'center' });
         }
 
         doc.end();
@@ -213,7 +213,7 @@ class PDFService {
         const pages = doc.bufferedPageRange();
         for (let i = 0; i < pages.count; i++) {
           doc.switchToPage(i);
-          doc.fillColor(this.colors.secondary).fontSize(8).text(`Página ${i + 1} de ${pages.count} | Gerado por Orion Pedify`, 40, 800, { align: 'center' });
+          doc.fillColor(this.colors.secondary).fontSize(8).text(`Página ${i + 1} de ${pages.count} | Gerado por KiCardapio`, 40, 800, { align: 'center' });
         }
 
         doc.end();
