@@ -148,6 +148,88 @@ _Relatório gerado automaticamente pelo sistema Pedify._`;
       await this.generateDailyReport(setting.restaurantId);
     }
   }
+
+  async checkIndividualDeadlines() {
+    const now = this.getSaoPauloDate();
+    const currentTime = format(now, "HH:mm");
+    const start = startOfDay(now);
+    const end = endOfDay(now);
+
+    // 1. Busca todos os checklists que tem horário limite para AGORA
+    const checklistsWithDeadline = await prisma.checklist.findMany({
+      where: {
+        isActive: true,
+        deadlineTime: currentTime
+      },
+      include: {
+        sector: true,
+        restaurant: {
+          include: { 
+            checklistReportSettings: true,
+            whatsAppInstance: true
+          }
+        }
+      }
+    });
+
+    for (const checklist of checklistsWithDeadline) {
+      const settings = checklist.restaurant.checklistReportSettings;
+      const instance = checklist.restaurant.whatsAppInstance;
+
+      // Só envia se tiver configuração de envio e WhatsApp conectado
+      if (!settings || !settings.enabled || !settings.recipientPhone) continue;
+      if (!instance || instance.status !== 'CONNECTED') continue;
+
+      const recipient = normalizePhone(settings.recipientPhone);
+
+      // 2. Verifica se houve execução HOJE para este checklist
+      const execution = await prisma.checklistExecution.findFirst({
+        where: {
+          checklistId: checklist.id,
+          completedAt: { gte: start, lte: end }
+        },
+        include: {
+          responses: true,
+          user: { select: { name: true } }
+        },
+        orderBy: { completedAt: 'desc' }
+      });
+
+      let message = '';
+      if (!execution) {
+        // Alerta de ATRASO
+        message = `*⚠️ ALERTA DE OPERAÇÃO EM ATRASO*\n\n`;
+        message += `O checklist *${checklist.title}* do setor *${checklist.sector.name}* ainda não foi realizado hoje.\n\n`;
+        message += `⏰ Horário Limite: ${checklist.deadlineTime}\n`;
+        message += `📍 Status: *PENDENTE*`;
+      } else {
+        // Relatório de CONFORMIDADE INDIVIDUAL
+        const okTasks = execution.responses.filter(r => r.isOk).length;
+        const totalTasks = execution.responses.length;
+        const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
+        const time = format(execution.completedAt, "HH:mm");
+
+        message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
+        message += `O checklist *${checklist.title}* foi concluído com sucesso.\n\n`;
+        message += `📊 Conformidade: *${rate}%*\n`;
+        message += `🕒 Concluído às: ${time}\n`;
+        message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n`;
+        
+        if (execution.notes) {
+          message += `\n💬 Observações: ${execution.notes}`;
+        }
+      }
+
+      message += `\n\n_Notificação automática Pedify_`;
+
+      try {
+        await evolutionService.sendText(instance.name, recipient, message);
+        console.log(`[ChecklistDeadline] Alerta individual enviado para ${recipient} (Checklist: ${checklist.id})`);
+      } catch (error) {
+        console.error(`[ChecklistDeadline] Erro ao enviar alerta individual:`, error);
+      }
+    }
+  }
 }
 
 module.exports = new ChecklistReportService();

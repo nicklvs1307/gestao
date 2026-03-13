@@ -18,6 +18,7 @@ class JobService {
         isRunningChecklist = true;
         console.log('[JobService] Iniciando processamento de relatórios agendados...');
         await checklistReportService.runAllScheduledReports();
+        await checklistReportService.checkIndividualDeadlines();
       } catch (error) {
         console.error('[JobService] Erro ao processar relatórios de checklist:', error);
       } finally {
