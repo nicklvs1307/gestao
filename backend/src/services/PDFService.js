@@ -2,6 +2,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const sharp = require('sharp');
 
 class PDFService {
   // Cores do Tema Pedify
@@ -15,7 +16,7 @@ class PDFService {
   };
 
   async generateChecklistExecutionPDF(execution) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
         const fileName = `checklist_${execution.id}.pdf`;
@@ -66,7 +67,7 @@ class PDFService {
         doc.fillColor(this.colors.primary).fontSize(12).font('Helvetica-Bold').text('VERIFICAÇÃO DETALHADA');
         doc.moveDown(1);
 
-        execution.responses.forEach((resp, index) => {
+        for (const [index, resp] of execution.responses.entries()) {
           const task = resp.task || execution.checklist.tasks.find(t => t.id === resp.taskId);
           
           // Verificar se precisa de nova página
@@ -100,7 +101,7 @@ class PDFService {
                 const imgWidth = 100;
                 const imgHeight = 100;
 
-                photos.forEach(photoUrl => {
+                for (const photoUrl of photos) {
                   const relativePath = photoUrl.startsWith('/') ? photoUrl.substring(1) : photoUrl;
                   const absolutePath = path.join(process.cwd(), 'public', relativePath);
                   
@@ -108,17 +109,27 @@ class PDFService {
                     // Se a imagem for ocupar muito espaço na página, pula
                     if (doc.y + imgHeight > 750) doc.addPage();
                     
-                    doc.image(absolutePath, xPos, doc.y, { fit: [imgWidth, imgHeight] });
-                    xPos += imgWidth + 10;
+                    try {
+                      // Redimensionar imagem com sharp para economizar memória e tamanho do PDF
+                      const optimizedBuffer = await sharp(absolutePath)
+                        .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+                        .jpeg({ quality: 75 })
+                        .toBuffer();
+
+                      doc.image(optimizedBuffer, xPos, doc.y, { fit: [imgWidth, imgHeight] });
+                      xPos += imgWidth + 10;
+                    } catch (sharpError) {
+                      console.error("Erro ao otimizar imagem:", sharpError);
+                    }
                   }
-                });
+                }
                 doc.moveDown(7); // Espaço após o grid de fotos
               }
             } catch (e) {
-              console.error("Erro ao renderizar fotos no PDF:", e);
+              console.error("Erro ao processar JSON de fotos:", e);
             }
           }
-        });
+        }
 
         // Rodapé
         const pages = doc.bufferedPageRange();
