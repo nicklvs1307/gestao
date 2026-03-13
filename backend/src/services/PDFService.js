@@ -17,7 +17,7 @@ class PDFService {
   async generateChecklistExecutionPDF(execution) {
     return new Promise((resolve, reject) => {
       try {
-        const doc = new PDFDocument({ margin: 40, size: 'A4' });
+        const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
         const fileName = `checklist_${execution.id}.pdf`;
         const filePath = path.join(os.tmpdir(), fileName);
         const stream = fs.createWriteStream(filePath);
@@ -140,7 +140,7 @@ class PDFService {
   async generateDailyGeneralPDF(data) {
     return new Promise((resolve, reject) => {
       try {
-        const doc = new PDFDocument({ margin: 40, size: 'A4' });
+        const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
         const fileName = `resumo_geral_${Date.now()}.pdf`;
         const filePath = path.join(os.tmpdir(), fileName);
         const stream = fs.createWriteStream(filePath);
@@ -197,6 +197,13 @@ class PDFService {
 
           doc.moveDown(1.5);
         });
+
+        // Rodapé
+        const pages = doc.bufferedPageRange();
+        for (let i = 0; i < pages.count; i++) {
+          doc.switchToPage(i);
+          doc.fillColor(this.colors.secondary).fontSize(8).text(`Página ${i + 1} de ${pages.count} | Gerado por Orion Pedify`, 40, 800, { align: 'center' });
+        }
 
         doc.end();
         stream.on('finish', () => resolve(filePath));
