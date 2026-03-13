@@ -70,10 +70,9 @@ class PDFService {
         for (const [index, resp] of execution.responses.entries()) {
           const task = resp.task || execution.checklist.tasks.find(t => t.id === resp.taskId);
           
-          // Verificar se precisa de nova página
-          if (doc.y > 700) doc.addPage();
+          // Container do Item - Verificar espaço ANTES de desenhar
+          if (doc.y > 650) doc.addPage();
 
-          // Container do Item
           const itemTop = doc.y;
           doc.rect(40, itemTop, 515, 45).fill(this.colors.accent);
           
@@ -89,41 +88,48 @@ class PDFService {
             doc.fillColor(this.colors.secondary).fontSize(8).font('Helvetica-Oblique').text(`Nota: ${resp.notes}`, 200, itemTop + 25);
           }
 
-          doc.moveDown(2.5);
+          doc.moveDown(3);
 
-          // RENDERIZAR FOTOS DO ITEM
+          // RENDERIZAR FOTOS DO ITEM (Aumentadas)
           if (task?.type === 'PHOTO' && resp.value) {
             try {
               const photos = JSON.parse(resp.value);
               if (Array.isArray(photos) && photos.length > 0) {
-                doc.moveDown(0.5);
                 let xPos = 55;
-                const imgWidth = 100;
-                const imgHeight = 100;
+                const imgWidth = 240; // Fotos bem maiores
+                const imgHeight = 180;
 
                 for (const photoUrl of photos) {
                   const relativePath = photoUrl.startsWith('/') ? photoUrl.substring(1) : photoUrl;
                   const absolutePath = path.join(process.cwd(), 'public', relativePath);
                   
                   if (fs.existsSync(absolutePath)) {
-                    // Se a imagem for ocupar muito espaço na página, pula
-                    if (doc.y + imgHeight > 750) doc.addPage();
+                    // Se não couber na linha atual (máximo 2 fotos por linha)
+                    if (xPos + imgWidth > 540) {
+                        xPos = 55;
+                        doc.moveDown(11); // Move para a próxima linha de fotos
+                    }
+
+                    // Se a imagem for ultrapassar o limite inferior da página, pula ANTES
+                    if (doc.y + imgHeight > 740) {
+                        doc.addPage();
+                        xPos = 55;
+                    }
                     
                     try {
-                      // Redimensionar imagem com sharp para economizar memória e tamanho do PDF
                       const optimizedBuffer = await sharp(absolutePath)
-                        .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
-                        .jpeg({ quality: 75 })
+                        .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+                        .jpeg({ quality: 80 })
                         .toBuffer();
 
-                      doc.image(optimizedBuffer, xPos, doc.y, { fit: [imgWidth, imgHeight] });
-                      xPos += imgWidth + 10;
+                      doc.image(optimizedBuffer, xPos, doc.y, { width: imgWidth, height: imgHeight });
+                      xPos += imgWidth + 15;
                     } catch (sharpError) {
                       console.error("Erro ao otimizar imagem:", sharpError);
                     }
                   }
                 }
-                doc.moveDown(7); // Espaço após o grid de fotos
+                doc.moveDown(13); // Espaço maior após o bloco de fotos
               }
             } catch (e) {
               console.error("Erro ao processar JSON de fotos:", e);
