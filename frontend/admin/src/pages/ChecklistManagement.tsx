@@ -4,7 +4,7 @@ import {
     Edit, ChevronRight, CheckCircle2, AlertCircle, Clock,
     Camera, Type, Hash, CheckSquare, Loader2, X, QrCode, Printer,
     Filter, Settings2, Check, ArrowRight, Save, Copy, HelpCircle,
-    Link as LinkIcon, Video, Image as ImageIcon, MessageCircle
+    Link as LinkIcon, Video, Image as ImageIcon, MessageCircle, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
