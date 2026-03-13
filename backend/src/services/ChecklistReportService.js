@@ -147,7 +147,8 @@ class ChecklistReportService {
         restaurant: {
           include: { 
             checklistReportSettings: true,
-            whatsappInstance: true
+            whatsappInstance: true,
+            logoUrl: true
           }
         }
       }
@@ -233,7 +234,8 @@ class ChecklistReportService {
         restaurant: {
           include: { 
             checklistReportSettings: true,
-            whatsappInstance: true
+            whatsappInstance: true,
+            logoUrl: true
           }
         }
       }

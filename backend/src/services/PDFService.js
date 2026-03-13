@@ -27,12 +27,33 @@ class PDFService {
 
         // --- CABEÇALHO ESTILIZADO ---
         doc.rect(0, 0, 600, 100).fill(this.colors.primary);
-        doc.fillColor(this.colors.white).fontSize(22).font('Helvetica-Bold').text('AUDITORIA OPERACIONAL', 40, 35);
-        doc.fontSize(10).font('Helvetica').text(`ID: #${execution.id.toUpperCase()}`, 40, 65, { opacity: 0.7 });
         
-        // Data no canto superior direito
-        doc.fontSize(10).text(new Date(execution.completedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }), 400, 45, { align: 'right' });
-        doc.text('Relatório Técnico de Conformidade', 400, 60, { align: 'right' });
+        // Logo do Restaurante (Esquerda)
+        let hasRestaurantLogo = false;
+        if (execution.checklist.restaurant.logoUrl) {
+            const logoPath = execution.checklist.restaurant.logoUrl.startsWith('/') 
+                ? execution.checklist.restaurant.logoUrl.substring(1) 
+                : execution.checklist.restaurant.logoUrl;
+            const absoluteLogoPath = path.join(process.cwd(), 'public', logoPath);
+            
+            if (fs.existsSync(absoluteLogoPath)) {
+                doc.image(absoluteLogoPath, 40, 25, { height: 50 });
+                hasRestaurantLogo = true;
+            }
+        }
+
+        // Título (Centralizado ou deslocado se tiver logo)
+        const titleX = hasRestaurantLogo ? 150 : 40;
+        doc.fillColor(this.colors.white).fontSize(20).font('Helvetica-Bold').text('CHECKLIST OPERACIONAL', titleX, 35);
+        doc.fontSize(10).font('Helvetica').text(`ID: #${execution.id.toUpperCase()}`, titleX, 60, { opacity: 0.7 });
+        
+        // Logo KiCardapio (Direita)
+        const kiCardapioLogoPath = path.join(process.cwd(), 'public', 'logo.png');
+        if (fs.existsSync(kiCardapioLogoPath)) {
+            doc.image(kiCardapioLogoPath, 480, 25, { height: 40 });
+        } else {
+            doc.fillColor(this.colors.white).fontSize(14).font('Helvetica-Bold').text('KiCardapio', 480, 40);
+        }
 
         doc.moveDown(4);
 
