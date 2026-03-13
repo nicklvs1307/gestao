@@ -90,46 +90,42 @@ class PDFService {
 
           doc.moveDown(3);
 
-          // RENDERIZAR FOTOS DO ITEM (Aumentadas)
+          // RENDERIZAR FOTOS DO ITEM (Muito Maiores e Sem Sobreposição)
           if (task?.type === 'PHOTO' && resp.value) {
             try {
               const photos = JSON.parse(resp.value);
               if (Array.isArray(photos) && photos.length > 0) {
-                let xPos = 55;
-                const imgWidth = 240; // Fotos bem maiores
-                const imgHeight = 180;
+                doc.moveDown(1);
+                const imgWidth = 480; // Quase a largura total da página
+                const imgHeight = 320; // Proporção maior
 
                 for (const photoUrl of photos) {
                   const relativePath = photoUrl.startsWith('/') ? photoUrl.substring(1) : photoUrl;
                   const absolutePath = path.join(process.cwd(), 'public', relativePath);
                   
                   if (fs.existsSync(absolutePath)) {
-                    // Se não couber na linha atual (máximo 2 fotos por linha)
-                    if (xPos + imgWidth > 540) {
-                        xPos = 55;
-                        doc.moveDown(11); // Move para a próxima linha de fotos
-                    }
-
                     // Se a imagem for ultrapassar o limite inferior da página, pula ANTES
                     if (doc.y + imgHeight > 740) {
                         doc.addPage();
-                        xPos = 55;
                     }
                     
                     try {
                       const optimizedBuffer = await sharp(absolutePath)
                         .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-                        .jpeg({ quality: 80 })
+                        .jpeg({ quality: 85 })
                         .toBuffer();
 
-                      doc.image(optimizedBuffer, xPos, doc.y, { width: imgWidth, height: imgHeight });
-                      xPos += imgWidth + 15;
+                      // Desenha a imagem centralizada (x=55)
+                      doc.image(optimizedBuffer, 55, doc.y, { width: imgWidth, height: imgHeight });
+                      
+                      // FORÇA o cursor do PDF a ir para baixo da imagem (Altura da imagem + margem)
+                      doc.y += imgHeight + 15;
                     } catch (sharpError) {
                       console.error("Erro ao otimizar imagem:", sharpError);
                     }
                   }
                 }
-                doc.moveDown(13); // Espaço maior após o bloco de fotos
+                doc.moveDown(2); // Espaço extra após o bloco de fotos do item
               }
             } catch (e) {
               console.error("Erro ao processar JSON de fotos:", e);
