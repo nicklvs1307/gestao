@@ -58,3 +58,13 @@ export const updateChecklistReportSettings = async (data: any) => {
     const response = await apiClient.put('/checklists/settings/report', data);
     return response.data;
 };
+
+export const sendManualDailyReport = async () => {
+    const response = await apiClient.post('/checklists/reports/daily');
+    return response.data;
+};
+
+export const sendManualIndividualReport = async (id: string) => {
+    const response = await apiClient.post(`/checklists/${id}/reports/individual`);
+    return response.data;
+};

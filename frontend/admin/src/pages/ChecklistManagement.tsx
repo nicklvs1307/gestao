@@ -15,7 +15,8 @@ import { Input } from '../components/ui/Input';
 import { 
     getChecklists, createChecklist, updateChecklist, deleteChecklist,
     getSectors, createSector, deleteSector,
-    getChecklistReportSettings, updateChecklistReportSettings
+    getChecklistReportSettings, updateChecklistReportSettings,
+    sendManualDailyReport, sendManualIndividualReport
 } from '../services/api/checklists';
 import apiClient from '../services/api/client';
 import { cn } from '../lib/utils';
@@ -56,6 +57,31 @@ const ChecklistManagement: React.FC = () => {
 
     const [isEditingSector, setIsEditingSector] = useState(false);
     const [newSectorName, setNewSectorName] = useState('');
+    const [sendingReport, setSendingReport] = useState<string | null>(null);
+
+    const handleSendManualDailyReport = async () => {
+        setSendingReport('daily');
+        try {
+            await sendManualDailyReport();
+            toast.success("Resumo geral enviado para o WhatsApp!");
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Erro ao enviar relatório geral");
+        } finally {
+            setSendingReport(null);
+        }
+    };
+
+    const handleSendManualIndividualReport = async (id: string) => {
+        setSendingReport(id);
+        try {
+            await sendManualIndividualReport(id);
+            toast.success("Relatório detalhado enviado para o WhatsApp!");
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Nenhuma execução encontrada hoje para este checklist");
+        } finally {
+            setSendingReport(null);
+        }
+    };
 
     useEffect(() => {
         loadData();
@@ -252,6 +278,14 @@ const ChecklistManagement: React.FC = () => {
                                         {checklist.sector?.name}
                                     </span>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleSendManualIndividualReport(checklist.id); }} 
+                                            disabled={sendingReport === checklist.id}
+                                            className={cn("p-1.5 transition-all", sendingReport === checklist.id ? "text-blue-500 animate-pulse" : "text-slate-400 hover:text-blue-600")}
+                                            title="Enviar Relatório de Hoje via WhatsApp"
+                                        >
+                                            {sendingReport === checklist.id ? <Loader2 size={14} className="animate-spin" /> : <Send size={14}/>}
+                                        </button>
                                         <button onClick={() => { setSelectedChecklist(checklist); setShowQRCodeModal(true); }} className="p-1.5 text-slate-400 hover:text-slate-900 transition-all"><QrCode size={14}/></button>
                                         <button onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }} className="p-1.5 text-slate-400 hover:text-blue-600 transition-all"><Edit size={14}/></button>
                                         <button onClick={() => { if(confirm("Excluir?")) deleteChecklist(checklist.id).then(loadData); }} className="p-1.5 text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14}/></button>
@@ -356,7 +390,17 @@ const ChecklistManagement: React.FC = () => {
                                 <div><p className="text-[10px] font-black uppercase italic">Habilitar Monitoramento Automático</p></div>
                                 <button onClick={() => setReportSettings({...reportSettings, enabled: !reportSettings.enabled})} className={cn("w-12 h-6 rounded-full relative transition-all duration-300", reportSettings.enabled ? "bg-slate-900" : "bg-slate-300")}><div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", reportSettings.enabled ? "left-7" : "left-1")} /></button>
                             </div>
-                            <Button onClick={handleSaveReportSettings} className="w-full bg-slate-900 italic h-12 uppercase text-[10px] font-black tracking-widest">Salvar Configuração de Alertas</Button>
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <Button onClick={handleSaveReportSettings} className="flex-1 bg-slate-900 italic h-12 uppercase text-[10px] font-black tracking-widest rounded-2xl">Salvar Configuração</Button>
+                                <Button 
+                                    onClick={handleSendManualDailyReport} 
+                                    disabled={sendingReport === 'daily'}
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 italic h-12 uppercase text-[10px] font-black tracking-widest rounded-2xl gap-2"
+                                >
+                                    {sendingReport === 'daily' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                                    Enviar Resumo Agora
+                                </Button>
+                            </div>
                         </div>
                         <div className="bg-slate-900 p-6 rounded-3xl text-white flex gap-4 items-start shadow-xl">
                             <AlertCircle size={20} className="text-emerald-400 shrink-0 mt-0.5" />

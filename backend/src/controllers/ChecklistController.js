@@ -2,7 +2,23 @@ const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
 const { differenceInSeconds } = require('date-fns');
 
+const checklistReportService = require('../services/ChecklistReportService');
+
 class ChecklistController {
+  // ... (existing methods)
+
+  sendManualDailyReport = asyncHandler(async (req, res) => {
+    const { restaurantId } = req;
+    await checklistReportService.generateDailyReport(restaurantId);
+    res.json({ message: "Relatório geral enviado com sucesso!" });
+  });
+
+  sendManualIndividualReport = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    await checklistReportService.sendIndividualReport(id);
+    res.json({ message: "Relatório individual enviado com sucesso!" });
+  });
+
   index = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
     const { sectorId } = req.query;

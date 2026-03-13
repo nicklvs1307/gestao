@@ -135,6 +135,87 @@ class ChecklistReportService {
     }
   }
 
+  async sendIndividualReport(checklistId) {
+    const now = this.getSaoPauloDate();
+    const start = startOfDay(now);
+    const end = endOfDay(now);
+
+    const checklist = await prisma.checklist.findUnique({
+      where: { id: checklistId },
+      include: {
+        sector: true,
+        restaurant: {
+          include: { 
+            checklistReportSettings: true,
+            whatsappInstance: true
+          }
+        }
+      }
+    });
+
+    if (!checklist) throw new Error("Checklist não encontrado");
+
+    const settings = checklist.restaurant.checklistReportSettings;
+    const instance = checklist.restaurant.whatsappInstance;
+
+    if (!settings || !settings.enabled || !settings.recipientPhone) {
+      throw new Error("Relatórios não configurados para este restaurante");
+    }
+    if (!instance || instance.status !== 'CONNECTED') {
+      throw new Error("WhatsApp não conectado");
+    }
+
+    const recipient = normalizePhone(settings.recipientPhone);
+
+    const execution = await prisma.checklistExecution.findFirst({
+      where: {
+        checklistId: checklist.id,
+        completedAt: { gte: start, lte: end }
+      },
+      include: {
+        checklist: { include: { sector: true, tasks: true } },
+        responses: { include: { task: true } },
+        user: { select: { name: true } }
+      },
+      orderBy: { completedAt: 'desc' }
+    });
+
+    if (!execution) {
+      throw new Error("Nenhuma execução realizada hoje para este checklist");
+    }
+
+    const okTasks = execution.responses.filter(r => r.isOk).length;
+    const totalTasks = execution.responses.length;
+    const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
+    const time = format(execution.completedAt, "HH:mm");
+
+    let message = `*✅ RELATÓRIO MANUAL - ${checklist.sector.name}*\n\n`;
+    message += `O checklist *${checklist.title}* foi concluído.\n\n`;
+    message += `📊 Conformidade: *${rate}%*\n`;
+    message += `🕒 Concluído às: ${time}\n`;
+    message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+    message += `_O detalhamento técnico segue em PDF._`;
+
+    let pdfPath = null;
+    try {
+      pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
+      
+      await evolutionService.sendText(instance.name, recipient, message);
+      await evolutionService.sendMedia(
+        instance.name,
+        recipient,
+        pdfPath,
+        `Auditoria_Manual_${checklist.id}_${format(now, 'HHmm')}.pdf`,
+        `Auditoria Detalhada - ${checklist.title}`
+      );
+      return true;
+    } finally {
+      if (pdfPath && fs.existsSync(pdfPath)) {
+        fs.unlinkSync(pdfPath);
+      }
+    }
+  }
+
   async checkIndividualDeadlines() {
     const now = this.getSaoPauloDate();
     const currentTime = format(now, "HH:mm");

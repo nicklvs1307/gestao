@@ -37,6 +37,8 @@ router.delete('/:id', needsAuth, checkPermission('checklists:manage'), Checklist
 // Configurações de Relatório
 router.get('/settings/report', needsAuth, checkPermission('checklists:manage'), ChecklistController.getReportSettings);
 router.put('/settings/report', needsAuth, checkPermission('checklists:manage'), ChecklistController.updateReportSettings);
+router.post('/reports/daily', needsAuth, checkPermission('checklists:manage'), ChecklistController.sendManualDailyReport);
+router.post('/:id/reports/individual', needsAuth, checkPermission('checklists:manage'), ChecklistController.sendManualIndividualReport);
 
 // Execução
 router.post('/submit', 
