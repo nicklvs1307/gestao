@@ -1,8 +1,10 @@
 const prisma = require('../lib/prisma');
 const evolutionService = require('./EvolutionService');
+const pdfService = require('./PDFService');
 const { normalizePhone } = require('../lib/phoneUtils');
 const { startOfDay, endOfDay, format } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
+const fs = require('fs');
 
 class ChecklistReportService {
   // Auxiliar para obter a data/hora atual em São Paulo
@@ -55,8 +57,8 @@ class ChecklistReportService {
         completedAt: { gte: start, lte: end }
       },
       include: {
-        checklist: true,
-        responses: true,
+        checklist: { include: { sector: true, tasks: true } },
+        responses: { include: { task: true } },
         user: { select: { name: true } }
       }
     });
@@ -67,68 +69,52 @@ class ChecklistReportService {
     
     let totalTasks = 0;
     let okTasks = 0;
-    let notOkTasks = 0;
 
     executions.forEach(exe => {
       exe.responses.forEach(res => {
         totalTasks++;
         if (res.isOk) okTasks++;
-        else notOkTasks++;
       });
     });
 
     const conformityRate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(1) : 0;
-
-    // 6. Monta a mensagem
     const dateStr = format(today, "dd 'de' MMMM", { locale: ptBR });
-    let message = `*📊 Relatório de Conformidade - ${dateStr}*
 
-`;
-    
-    message += `✅ *Resumo Geral:*
-`;
-    message += `• Checklists Ativos: ${totalChecklists}
-`;
-    message += `• Realizados Hoje: ${executedToday}
-`;
-    message += `• Taxa de Conformidade: *${conformityRate}%*
+    // 6. Monta a mensagem de texto (Resumo)
+    let message = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+    message += `• Checklists Ativos: ${totalChecklists}\n`;
+    message += `• Realizados Hoje: ${executedToday}\n`;
+    message += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
+    message += `_O relatório detalhado segue em PDF abaixo._`;
 
-`;
-
-    if (executedToday > 0) {
-      message += `📍 *Detalhamento por Execução:*
-`;
-      executions.forEach(exe => {
-        const exeOk = exe.responses.filter(r => r.isOk).length;
-        const exeTotal = exe.responses.length;
-        const exeRate = ((exeOk / exeTotal) * 100).toFixed(0);
-        const time = format(exe.completedAt, "HH:mm");
-        const user = exe.user?.name || "N/A";
-
-        message += `
-📝 *${exe.checklist.title}*
-`;
-        message += `  🕒 ${time} | 👤 ${user}
-`;
-        message += `  📉 Status: ${exeRate}% de conformidade
-`;
-        if (exe.notes) message += `  💬 Obs: ${exe.notes}
-`;
-      });
-    } else {
-      message += `⚠️ *Nenhum checklist foi executado hoje.*`;
-    }
-
-    message += `
-
-_Relatório gerado automaticamente pelo sistema Pedify._`;
-
-    // 7. Envia via WhatsApp
+    // 7. Gera o PDF Detalhado
+    let pdfPath = null;
     try {
+      pdfPath = await pdfService.generateDailyGeneralPDF({
+        dateStr,
+        totalChecklists,
+        executedToday,
+        conformityRate,
+        executions
+      });
+
+      // 8. Envia via WhatsApp (Texto + PDF)
       await evolutionService.sendText(instance.name, recipient, message);
-      console.log(`[ChecklistReport] Relatório enviado para ${recipient} (Restaurante: ${restaurantId})`);
+      await evolutionService.sendMedia(
+        instance.name, 
+        recipient, 
+        pdfPath, 
+        `Resumo_Geral_${format(today, 'yyyy-MM-dd')}.pdf`,
+        `Relatório Detalhado - ${dateStr}`
+      );
+
+      console.log(`[ChecklistReport] Relatório PDF enviado para ${recipient} (Restaurante: ${restaurantId})`);
     } catch (error) {
       console.error(`[ChecklistReport] Erro ao enviar relatório:`, error);
+    } finally {
+      if (pdfPath && fs.existsSync(pdfPath)) {
+        fs.unlinkSync(pdfPath); // Remove arquivo temporário
+      }
     }
   }
 
@@ -189,44 +175,59 @@ _Relatório gerado automaticamente pelo sistema Pedify._`;
           completedAt: { gte: start, lte: end }
         },
         include: {
-          responses: true,
+          checklist: { include: { sector: true, tasks: true } },
+          responses: { include: { task: true } },
           user: { select: { name: true } }
         },
         orderBy: { completedAt: 'desc' }
       });
 
-      let message = '';
       if (!execution) {
-        // Alerta de ATRASO
-        message = `*⚠️ ALERTA DE OPERAÇÃO EM ATRASO*\n\n`;
+        // Alerta de ATRASO (Apenas texto)
+        let message = `*⚠️ ALERTA DE OPERAÇÃO EM ATRASO*\n\n`;
         message += `O checklist *${checklist.title}* do setor *${checklist.sector.name}* ainda não foi realizado hoje.\n\n`;
         message += `⏰ Horário Limite: ${checklist.deadlineTime}\n`;
-        message += `📍 Status: *PENDENTE*`;
+        message += `📍 Status: *PENDENTE*\n\n`;
+        message += `_Notificação automática Pedify_`;
+
+        try {
+          await evolutionService.sendText(instance.name, recipient, message);
+        } catch (error) {
+          console.error(`[ChecklistDeadline] Erro ao enviar alerta de atraso:`, error);
+        }
       } else {
-        // Relatório de CONFORMIDADE INDIVIDUAL
+        // Relatório de CONFORMIDADE INDIVIDUAL (Texto + PDF)
         const okTasks = execution.responses.filter(r => r.isOk).length;
         const totalTasks = execution.responses.length;
         const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
         const time = format(execution.completedAt, "HH:mm");
 
-        message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
-        message += `O checklist *${checklist.title}* foi concluído com sucesso.\n\n`;
+        let message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
+        message += `O checklist *${checklist.title}* foi concluído.\n\n`;
         message += `📊 Conformidade: *${rate}%*\n`;
         message += `🕒 Concluído às: ${time}\n`;
-        message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n`;
-        
-        if (execution.notes) {
-          message += `\n💬 Observações: ${execution.notes}`;
+        message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+        message += `_O detalhamento técnico segue em PDF._`;
+
+        let pdfPath = null;
+        try {
+          pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
+          
+          await evolutionService.sendText(instance.name, recipient, message);
+          await evolutionService.sendMedia(
+            instance.name,
+            recipient,
+            pdfPath,
+            `Auditoria_${checklist.id}_${format(now, 'HHmm')}.pdf`,
+            `Auditoria Detalhada - ${checklist.title}`
+          );
+        } catch (error) {
+          console.error(`[ChecklistDeadline] Erro ao enviar PDF individual:`, error);
+        } finally {
+          if (pdfPath && fs.existsSync(pdfPath)) {
+            fs.unlinkSync(pdfPath);
+          }
         }
-      }
-
-      message += `\n\n_Notificação automática Pedify_`;
-
-      try {
-        await evolutionService.sendText(instance.name, recipient, message);
-        console.log(`[ChecklistDeadline] Alerta individual enviado para ${recipient} (Checklist: ${checklist.id})`);
-      } catch (error) {
-        console.error(`[ChecklistDeadline] Erro ao enviar alerta individual:`, error);
       }
     }
   }

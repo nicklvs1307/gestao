@@ -178,6 +178,29 @@ class EvolutionService {
   }
 
   /**
+   * Envia mídia (PDF, Imagem, etc)
+   */
+  async sendMedia(instanceName, number, mediaPath, fileName, caption = '') {
+    try {
+      const remoteJid = number.includes('@') ? number : `${number.replace(/\D/g, '')}@s.whatsapp.net`;
+      const base64 = fs.readFileSync(mediaPath).toString('base64');
+      const extension = path.extname(mediaPath).replace('.', '');
+      
+      const response = await this.api.post(`/message/sendMedia/${instanceName}`, {
+        number: remoteJid,
+        media: base64,
+        mediaType: 'document',
+        fileName: fileName,
+        caption: caption,
+        mimetype: 'application/pdf'
+      });
+      return response.data;
+    } catch (error) {
+      this._logError('sendMedia', error);
+    }
+  }
+
+  /**
    * Envia uma mensagem de texto com simulação de digitação
    */
   async sendText(instanceName, number, text, delay = 1200) {
