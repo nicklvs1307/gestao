@@ -30,7 +30,7 @@ class PDFService {
         doc.fontSize(10).font('Helvetica').text(`ID: #${execution.id.toUpperCase()}`, 40, 65, { opacity: 0.7 });
         
         // Data no canto superior direito
-        doc.fontSize(10).text(new Date(execution.completedAt).toLocaleString('pt-BR'), 400, 45, { align: 'right' });
+        doc.fontSize(10).text(new Date(execution.completedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }), 400, 45, { align: 'right' });
         doc.text('Relatório Técnico de Conformidade', 400, 60, { align: 'right' });
 
         doc.moveDown(4);
@@ -190,7 +190,7 @@ class PDFService {
           
           doc.fillColor(this.colors.primary).fontSize(9).font('Helvetica-Bold').text(exe.checklist.title, 50, rowY + 12);
           doc.fillColor(this.colors.secondary).font('Helvetica').text(exe.checklist.sector.name, 200, rowY + 12);
-          doc.text(new Date(exe.completedAt).toLocaleTimeString('pt-BR'), 320, rowY + 12);
+          doc.text(new Date(exe.completedAt).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' }), 320, rowY + 12);
           
           doc.fillColor(parseFloat(exeRate) >= 80 ? this.colors.success : this.colors.danger)
              .font('Helvetica-Bold').text(`${exeRate}% Score`, 450, rowY + 12, { align: 'right', width: 80 });
