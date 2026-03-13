@@ -77,7 +77,8 @@ const ChecklistManagement: React.FC = () => {
             await sendManualIndividualReport(id);
             toast.success("Relatório detalhado enviado para o WhatsApp!");
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Nenhuma execução encontrada hoje para este checklist");
+            const msg = error.response?.data?.message || "Nenhuma execução encontrada para este checklist";
+            toast.error(msg);
         } finally {
             setSendingReport(null);
         }
