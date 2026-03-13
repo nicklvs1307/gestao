@@ -3,9 +3,13 @@ const { z } = require('zod');
 const checklistStoreSchema = z.object({
   body: z.object({
     title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
-    description: z.string().optional(),
+    description: z.string().optional().nullable(),
     frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).default('DAILY'),
-    deadlineTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Horário inválido (HH:mm)").optional().nullable(),
+    isActive: z.boolean().optional(),
+    deadlineTime: z.preprocess(
+      (val) => (val === "" ? null : val),
+      z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Horário inválido (HH:mm)").optional().nullable()
+    ),
     sectorId: z.string().cuid("ID de setor inválido"),
     tasks: z.array(z.object({
       id: z.string().optional(),
