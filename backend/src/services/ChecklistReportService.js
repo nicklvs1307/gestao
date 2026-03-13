@@ -152,7 +152,7 @@ class ChecklistReportService {
         restaurant: {
           include: { 
             checklistReportSettings: true,
-            whatsAppInstance: true
+            whatsappInstance: true
           }
         }
       }
@@ -160,7 +160,7 @@ class ChecklistReportService {
 
     for (const checklist of checklistsWithDeadline) {
       const settings = checklist.restaurant.checklistReportSettings;
-      const instance = checklist.restaurant.whatsAppInstance;
+      const instance = checklist.restaurant.whatsappInstance;
 
       // Só envia se tiver configuração de envio e WhatsApp conectado
       if (!settings || !settings.enabled || !settings.recipientPhone) continue;

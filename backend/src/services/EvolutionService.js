@@ -184,12 +184,11 @@ class EvolutionService {
     try {
       const remoteJid = number.includes('@') ? number : `${number.replace(/\D/g, '')}@s.whatsapp.net`;
       const base64 = fs.readFileSync(mediaPath).toString('base64');
-      const extension = path.extname(mediaPath).replace('.', '');
       
       const response = await this.api.post(`/message/sendMedia/${instanceName}`, {
         number: remoteJid,
         media: base64,
-        mediaType: 'document',
+        mediatype: 'document',
         fileName: fileName,
         caption: caption,
         mimetype: 'application/pdf'
