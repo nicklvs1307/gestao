@@ -30,8 +30,15 @@ class ChecklistController {
       },
       include: { 
         sector: true,
-        tasks: { orderBy: { order: 'asc' } },
-        _count: { select: { tasks: true } }
+        tasks: { 
+          where: { isActive: true },
+          orderBy: { order: 'asc' } 
+        },
+        _count: { 
+          select: { 
+            tasks: { where: { isActive: true } } 
+          } 
+        }
       },
       orderBy: { title: 'asc' }
     });
@@ -44,7 +51,10 @@ class ChecklistController {
       where: { id },
       include: { 
         sector: true, 
-        tasks: { orderBy: { order: 'asc' } } 
+        tasks: { 
+          where: { isActive: true },
+          orderBy: { order: 'asc' } 
+        } 
       }
     });
     if (!checklist) {
@@ -68,11 +78,12 @@ class ChecklistController {
             type: t.type || 'CHECKBOX',
             order: idx,
             procedureType: t.procedureType || 'NONE',
-            procedureContent: t.procedureContent
+            procedureContent: t.procedureContent,
+            isActive: true
           }))
         }
       },
-      include: { tasks: true }
+      include: { tasks: { where: { isActive: true } } }
     });
     res.status(201).json(checklist);
   });
@@ -95,11 +106,13 @@ class ChecklistController {
       if (Array.isArray(tasks)) {
         const sentTaskIds = tasks.filter(t => t.id).map(t => t.id);
         
-        await tx.checklistTask.deleteMany({
+        // Soft Delete: Desativar tarefas que não foram enviadas
+        await tx.checklistTask.updateMany({
           where: {
             checklistId: id,
             id: { notIn: sentTaskIds }
-          }
+          },
+          data: { isActive: false }
         });
 
         for (let i = 0; i < tasks.length; i++) {
@@ -113,7 +126,8 @@ class ChecklistController {
                 type: t.type,
                 order: i,
                 procedureType: t.procedureType,
-                procedureContent: t.procedureContent
+                procedureContent: t.procedureContent,
+                isActive: true // Garante que reative se for enviado
               }
             });
           } else {
@@ -125,7 +139,8 @@ class ChecklistController {
                 type: t.type,
                 order: i,
                 procedureType: t.procedureType || 'NONE',
-                procedureContent: t.procedureContent
+                procedureContent: t.procedureContent,
+                isActive: true
               }
             });
           }
@@ -137,7 +152,12 @@ class ChecklistController {
         data: {
           title, description, frequency, sectorId, isActive, deadlineTime
         },
-        include: { tasks: { orderBy: { order: 'asc' } } }
+        include: { 
+          tasks: { 
+            where: { isActive: true },
+            orderBy: { order: 'asc' } 
+          } 
+        }
       });
     });
 

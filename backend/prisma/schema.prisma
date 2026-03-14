@@ -1259,6 +1259,7 @@ model ChecklistTask {
   isRequired   Boolean  @default(true)
   order        Int      @default(0)
   type         String   @default("CHECKBOX") // "CHECKBOX", "PHOTO", "TEXT", "NUMBER"
+  isActive     Boolean  @default(true)
 
   // Procedimento de apoio
   procedureType    String?  @default("NONE") // "NONE", "TEXT", "IMAGE", "VIDEO"
@@ -1310,7 +1311,7 @@ model ChecklistResponse {
   execution    ChecklistExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
 
   taskId       String
-  task         ChecklistTask @relation(fields: [taskId], references: [id]) // Relacionamento formal
+  task         ChecklistTask @relation(fields: [taskId], references: [id], onDelete: Cascade) // Relacionamento formal
   
   value        String   // Resposta: "true", "caminho/foto.jpg", "texto livre", "25.5"
   isOk         Boolean  @default(true) // Se a tarefa foi cumprida conforme esperado
