@@ -1331,6 +1331,7 @@ model ChecklistReportSettings {
   enabled          Boolean  @default(false)
   recipientPhone   String?  // Numero que recebe o relatorio via WhatsApp
   sendTime         String   @default("22:00") // Horário de envio (HH:mm)
+  reportFormat     String   @default("PDF")   // "PDF", "TEXT", "BOTH"
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

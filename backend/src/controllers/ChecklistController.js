@@ -278,12 +278,12 @@ class ChecklistController {
 
   updateReportSettings = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { enabled, recipientPhone, sendTime } = req.body;
+    const { enabled, recipientPhone, sendTime, reportFormat } = req.body;
 
     const settings = await prisma.checklistReportSettings.upsert({
       where: { restaurantId },
-      update: { enabled, recipientPhone, sendTime },
-      create: { restaurantId, enabled, recipientPhone, sendTime }
+      update: { enabled, recipientPhone, sendTime, reportFormat },
+      create: { restaurantId, enabled, recipientPhone, sendTime, reportFormat }
     });
 
     res.json(settings);

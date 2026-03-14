@@ -80,35 +80,82 @@ class ChecklistReportService {
     const conformityRate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(1) : 0;
     const dateStr = format(today, "dd 'de' MMMM", { locale: ptBR });
 
-    // 6. Monta a mensagem de texto (Resumo)
-    let message = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
-    message += `• Checklists Ativos: ${totalChecklists}\n`;
-    message += `• Realizados Hoje: ${executedToday}\n`;
-    message += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
-    message += `_O relatório detalhado segue em PDF abaixo._`;
+    // 6. Define o que será enviado com base nas configurações
+    const formatType = settings.reportFormat || "PDF"; // "PDF", "TEXT", "BOTH"
 
-    // 7. Gera o PDF Detalhado
+    // 7. Monta a mensagem de texto (Resumo Geral)
+    let summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+    summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
+    summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+    summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
+
+    // 8. Se for TEXT ou BOTH, adiciona os detalhes das execuções no texto
+    if (formatType === "TEXT" || formatType === "BOTH") {
+      summaryMessage += `*DETALHAMENTO POR SETOR:*\n`;
+      executions.forEach(exe => {
+        const exeOk = exe.responses.filter(r => r.isOk).length;
+        const exeTotal = exe.responses.length;
+        const exeRate = exeTotal > 0 ? ((exeOk / exeTotal) * 100).toFixed(0) : 0;
+        const time = format(exe.completedAt, "HH:mm");
+        
+        summaryMessage += `\n📍 *${exe.checklist.title}* (${exe.checklist.sector.name})\n`;
+        summaryMessage += `🕒 ${time} | ✅ ${exeRate}% Score\n`;
+        
+        // Adiciona itens irregulares ou com fotos se for detalhado
+        exe.responses.forEach(res => {
+          if (!res.isOk || (res.task?.type === "PHOTO" && res.value)) {
+            const status = res.isOk ? "✅" : "❌";
+            summaryMessage += `  ${status} ${res.task?.content || 'Item'}\n`;
+            if (res.notes) summaryMessage += `     _Nota: ${res.notes}_\n`;
+            
+            // Link das fotos (se houver)
+            if (res.value && res.task?.type === "PHOTO") {
+              try {
+                const photos = JSON.parse(res.value);
+                const baseUrl = process.env.PUBLIC_URL || "http://localhost:5000"; // Fallback URL
+                if (Array.isArray(photos)) {
+                  photos.forEach((p, idx) => {
+                    summaryMessage += `     📸 Ver Foto ${idx+1}: ${baseUrl}${p}\n`;
+                  });
+                }
+              } catch (e) {}
+            }
+          }
+        });
+      });
+      if (formatType === "BOTH") {
+        summaryMessage += `\n_O relatório técnico oficial segue em PDF abaixo._`;
+      }
+    } else {
+      summaryMessage += `_O relatório detalhado segue em PDF abaixo._`;
+    }
+
+    // 9. Processa envios
     let pdfPath = null;
     try {
-      pdfPath = await pdfService.generateDailyGeneralPDF({
-        dateStr,
-        totalChecklists,
-        executedToday,
-        conformityRate,
-        executions
-      });
+      // Envia Mensagem de Texto
+      await evolutionService.sendText(instance.name, recipient, summaryMessage);
 
-      // 8. Envia via WhatsApp (Texto + PDF)
-      await evolutionService.sendText(instance.name, recipient, message);
-      await evolutionService.sendMedia(
-        instance.name, 
-        recipient, 
-        pdfPath, 
-        `Resumo_Geral_${format(today, 'yyyy-MM-dd')}.pdf`,
-        `Relatório Detalhado - ${dateStr}`
-      );
+      // Envia PDF (Se não for apenas TEXT)
+      if (formatType === "PDF" || formatType === "BOTH") {
+        pdfPath = await pdfService.generateDailyGeneralPDF({
+          dateStr,
+          totalChecklists,
+          executedToday,
+          conformityRate,
+          executions
+        });
 
-      console.log(`[ChecklistReport] Relatório PDF enviado para ${recipient} (Restaurante: ${restaurantId})`);
+        await evolutionService.sendMedia(
+          instance.name, 
+          recipient, 
+          pdfPath, 
+          `Resumo_Geral_${format(today, 'yyyy-MM-dd')}.pdf`,
+          `Relatório Detalhado - ${dateStr}`
+        );
+      }
+
+      console.log(`[ChecklistReport] Relatório (${formatType}) enviado para ${recipient} (Restaurante: ${restaurantId})`);
     } catch (error) {
       console.error(`[ChecklistReport] Erro ao enviar relatório:`, error);
     } finally {

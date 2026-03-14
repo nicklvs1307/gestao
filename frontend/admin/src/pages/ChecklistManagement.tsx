@@ -31,7 +31,8 @@ const ChecklistManagement: React.FC = () => {
     const [reportSettings, setReportSettings] = useState<any>({
         enabled: false,
         recipientPhone: '',
-        sendTime: '22:00'
+        sendTime: '22:00',
+        reportFormat: 'PDF'
     });
     
     const [isEditingChecklist, setIsEditingChecklist] = useState(false);
@@ -387,6 +388,30 @@ const ChecklistManagement: React.FC = () => {
                                     <input type="time" className="w-full h-11 px-4 bg-slate-50 rounded-xl text-xs font-bold outline-none" value={reportSettings.sendTime} onChange={e => setReportSettings({...reportSettings, sendTime: e.target.value})} />
                                 </div>
                             </div>
+                            
+                            <div className="space-y-3">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Formato do Relatório WhatsApp</label>
+                                <div className="flex gap-2">
+                                    {[
+                                        { id: 'PDF', label: 'PDF Detalhado', desc: 'Arquivo formal anexado' },
+                                        { id: 'TEXT', label: 'Texto Detalhado', desc: 'Lista de itens na mensagem' },
+                                        { id: 'BOTH', label: 'Ambos', desc: 'Texto + PDF completo' }
+                                    ].map(f => (
+                                        <button 
+                                            key={f.id} 
+                                            onClick={() => setReportSettings({...reportSettings, reportFormat: f.id})}
+                                            className={cn(
+                                                "flex-1 p-3 rounded-2xl border-2 transition-all text-left",
+                                                reportSettings.reportFormat === f.id ? "border-slate-900 bg-slate-50" : "border-slate-50 bg-white"
+                                            )}
+                                        >
+                                            <p className={cn("text-[10px] font-black uppercase italic", reportSettings.reportFormat === f.id ? "text-slate-900" : "text-slate-400")}>{f.label}</p>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">{f.desc}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                                 <div><p className="text-[10px] font-black uppercase italic">Habilitar Monitoramento Automático</p></div>
                                 <button onClick={() => setReportSettings({...reportSettings, enabled: !reportSettings.enabled})} className={cn("w-12 h-6 rounded-full relative transition-all duration-300", reportSettings.enabled ? "bg-slate-900" : "bg-slate-300")}><div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", reportSettings.enabled ? "left-7" : "left-1")} /></button>
