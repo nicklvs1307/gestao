@@ -91,38 +91,48 @@ class ChecklistReportService {
 
     // 8. Se for TEXT ou BOTH, adiciona os detalhes das execuções no texto
     if (formatType === "TEXT" || formatType === "BOTH") {
-      summaryMessage += `*DETALHAMENTO POR SETOR:*\n`;
+      summaryMessage += `*━━━━━━━━━━━━━━━━━━*\n`;
+      summaryMessage += `*📋 DETALHAMENTO POR SETOR*\n`;
+      
       executions.forEach(exe => {
         const exeOk = exe.responses.filter(r => r.isOk).length;
         const exeTotal = exe.responses.length;
         const exeRate = exeTotal > 0 ? ((exeOk / exeTotal) * 100).toFixed(0) : 0;
         const time = format(exe.completedAt, "HH:mm");
         
-        summaryMessage += `\n📍 *${exe.checklist.title}* (${exe.checklist.sector.name})\n`;
-        summaryMessage += `🕒 ${time} | ✅ ${exeRate}% Score\n`;
+        summaryMessage += `\n📍 *${exe.checklist.title.toUpperCase()}*\n`;
+        summaryMessage += ` setor: _${exe.checklist.sector.name}_\n`;
+        summaryMessage += ` 🕒 ${time} | 📊 Conformidade: *${exeRate}%*\n`;
+        summaryMessage += ` 👤 Executor: ${exe.user?.name || exe.externalUserName || 'N/A'}\n`;
         
-        // Adiciona itens irregulares ou com fotos se for detalhado
+        // Adiciona itens irregulares ou com fotos
         exe.responses.forEach(res => {
           if (!res.isOk || (res.task?.type === "PHOTO" && res.value)) {
             const status = res.isOk ? "✅" : "❌";
-            summaryMessage += `  ${status} ${res.task?.content || 'Item'}\n`;
-            if (res.notes) summaryMessage += `     _Nota: ${res.notes}_\n`;
+            summaryMessage += `\n   ${status} *${res.task?.content}*\n`;
             
-            // Link das fotos (se houver)
+            if (res.notes) {
+              summaryMessage += `     └ 📝 _Nota: ${res.notes}_\n`;
+            }
+            
+            // Link das fotos com URL de produção
             if (res.value && res.task?.type === "PHOTO") {
               try {
                 const photos = JSON.parse(res.value);
-                const baseUrl = process.env.PUBLIC_URL || "http://localhost:5000"; // Fallback URL
+                // Prioriza URL de produção do .env ou tenta montar a URL base
+                const baseUrl = process.env.API_URL || "https://api.kicardapio.com.br"; 
                 if (Array.isArray(photos)) {
                   photos.forEach((p, idx) => {
-                    summaryMessage += `     📸 Ver Foto ${idx+1}: ${baseUrl}${p}\n`;
+                    summaryMessage += `     └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
                   });
                 }
               } catch (e) {}
             }
           }
         });
+        summaryMessage += `\n----------------------------------\n`;
       });
+
       if (formatType === "BOTH") {
         summaryMessage += `\n_O relatório técnico oficial segue em PDF abaixo._`;
       }
@@ -235,26 +245,52 @@ class ChecklistReportService {
     const totalTasks = execution.responses.length;
     const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
     const time = format(execution.completedAt, "HH:mm");
+    const formatType = settings.reportFormat || "PDF";
 
-    let message = `*✅ RELATÓRIO MANUAL - ${checklist.sector.name}*\n\n`;
-    message += `O checklist *${checklist.title}* foi concluído.\n\n`;
+    let message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
+    message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
     message += `📊 Conformidade: *${rate}%*\n`;
     message += `🕒 Concluído às: ${time}\n`;
     message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
-    message += `_O detalhamento técnico segue em PDF._`;
+
+    if (formatType === "TEXT" || formatType === "BOTH") {
+      message += `*DETALHAMENTO DOS ITENS:*\n`;
+      execution.responses.forEach(res => {
+        const status = res.isOk ? "✅" : "❌";
+        message += `\n ${status} *${res.task?.content}*\n`;
+        if (res.notes) message += `    └ 📝 _Nota: ${res.notes}_\n`;
+        
+        if (res.value && res.task?.type === "PHOTO") {
+          try {
+            const photos = JSON.parse(res.value);
+            const baseUrl = process.env.API_URL || "https://api.kicardapio.com.br";
+            if (Array.isArray(photos)) {
+              photos.forEach((p, idx) => {
+                message += `    └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
+              });
+            }
+          } catch (e) {}
+        }
+      });
+      if (formatType === "BOTH") message += `\n_O detalhamento técnico segue em PDF._`;
+    } else {
+      message += `_O detalhamento técnico segue em PDF._`;
+    }
 
     let pdfPath = null;
     try {
-      pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
-      
       await evolutionService.sendText(instance.name, recipient, message);
-      await evolutionService.sendMedia(
-        instance.name,
-        recipient,
-        pdfPath,
-        `Auditoria_Manual_${checklist.id}_${format(now, 'HHmm')}.pdf`,
-        `Auditoria Detalhada - ${checklist.title}`
-      );
+
+      if (formatType === "PDF" || formatType === "BOTH") {
+        pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
+        await evolutionService.sendMedia(
+          instance.name,
+          recipient,
+          pdfPath,
+          `Auditoria_Manual_${checklist.id}_${format(now, 'HHmm')}.pdf`,
+          `Auditoria Detalhada - ${checklist.title}`
+        );
+      }
       return true;
     } finally {
       if (pdfPath && fs.existsSync(pdfPath)) {
