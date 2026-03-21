@@ -7,7 +7,7 @@ import DeliveryProductCard from '../components/DeliveryProductCard';
 import Cart from '../components/Cart';
 import FooterCart from '../components/FooterCart';
 import Banner from '../components/Banner';
-import HighImpactPromo from '../components/HighImpactPromo';
+import FeaturedGrid from '../components/FeaturedGrid';
 import CategoryShortcuts from '../components/CategoryShortcuts';
 import ReorderSection from '../components/ReorderSection';
 import BottomNav from '../components/BottomNav';
@@ -244,10 +244,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     );
   };
 
+  const featuredProducts = categories.flatMap(cat => getVisibleProducts(cat)).filter(p => p.isFeatured);
+
   return (
     <RestaurantProvider settings={restaurant.settings || null}>
     <RestaurantMeta restaurant={restaurant} />
-    <div className="bg-background min-h-screen pb-32 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
+    <div className="bg-background min-h-screen pb-28 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
         
         {/* Banner Loja Fechada */}
         {!isStoreOpen && (
@@ -288,13 +290,13 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             </div>
 
             {/* Logo Circular Centralizada */}
-            <div className="relative -mt-20 flex justify-center z-20">
-                <div className="w-36 h-36 rounded-full border-[6px] border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
+            <div className="relative -mt-12 flex justify-center z-20">
+                <div className="w-24 h-24 rounded-full border-[4px] border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
                     {restaurant.logoUrl ? (
                         <img src={restaurant.logoUrl} className="w-full h-full object-cover" alt="Logo" />
                     ) : (
                         <div className="w-full h-full bg-primary flex items-center justify-center">
-                            <span className="text-4xl font-black italic text-white uppercase">{restaurant.name.substring(0, 2)}</span>
+                            <span className="text-2xl font-black italic text-white uppercase">{restaurant.name.substring(0, 2)}</span>
                         </div>
                     )}
                 </div>
@@ -302,7 +304,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
             {/* Informações da Loja Centralizadas */}
             <div className="mt-4 px-5 text-center">
-                <h1 className="text-3xl font-black text-foreground tracking-tight mb-1 uppercase italic leading-none">{restaurant.name}</h1>
+                <h1 className="text-xl font-black text-slate-900 tracking-tight mb-1 uppercase italic leading-none">{restaurant.name}</h1>
                 
                 {/* Endereço */}
                 {restaurant.address && (
@@ -403,13 +405,11 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                     />
                 </div>
 
-                {/* 2. Banner de Vídeo / Destaques de Alto Impacto */}
-                <div className="px-5 mb-8">
-                    <HighImpactPromo 
-                        restaurantId={restaurant.id} 
-                        onProductClick={handleProductCardClick} 
-                    />
-                </div>
+                {/* 2. Destaques (Grid 2 Colunas) */}
+                <FeaturedGrid 
+                    products={featuredProducts}
+                    onProductClick={handleProductCardClick}
+                />
 
                 {/* 3. Peça Novamente */}
                 <div ref={reorderSectionRef}>

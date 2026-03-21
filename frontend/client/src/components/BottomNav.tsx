@@ -17,7 +17,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, hasOrders
   ] as const;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-100 px-6 py-3 pb-6 z-[100] md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-100 px-6 py-2 pb-3 z-[100] md:hidden">
       <div className="flex justify-between items-center max-w-md mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -27,16 +27,16 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, hasOrders
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className="relative flex flex-col items-center gap-1 group"
+              className="relative flex flex-col items-center gap-0.5 group"
             >
               <motion.div
-                animate={isActive ? { scale: 1.2, y: -2 } : { scale: 1, y: 0 }}
+                animate={isActive ? { scale: 1.1, y: -1 } : { scale: 1, y: 0 }}
                 className={`${isActive ? 'text-primary' : 'text-slate-400'} transition-colors duration-300`}
               >
-                <Icon size={22} strokeWidth={isActive ? 3 : 2} />
+                <Icon size={20} strokeWidth={isActive ? 3 : 2} />
               </motion.div>
               
-              <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
+              <span className={`text-[9px] font-black uppercase tracking-tighter ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
                 {tab.label}
               </span>
 
