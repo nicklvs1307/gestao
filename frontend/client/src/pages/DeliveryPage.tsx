@@ -25,6 +25,7 @@ import { Button } from '../components/ui/Button';
 import { isCategoryAvailable } from '../utils/availability';
 import RestaurantMeta from '../components/RestaurantMeta';
 import { getImageUrl } from '../utils/image';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DeliveryPageProps {
   restaurantSlug?: string;
