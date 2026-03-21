@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const videos = [
-  "https://assets.mixkit.co/videos/preview/mixkit-delicious-looking-burger-on-a-wooden-board-1549-large.mp4",
-  "https://assets.mixkit.co/videos/preview/mixkit-chef-preparing-a-pizza-in-a-traditional-oven-43252-large.mp4",
-  "https://assets.mixkit.co/videos/preview/mixkit-close-up-of-a-person-cutting-a-grilled-steak-43034-large.mp4"
-];
+interface VideoCarouselProps {
+  videos: string[];
+}
 
-const VideoCarousel: React.FC = () => {
+const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    if (videos.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % videos.length);
     }, 8000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [videos]);
+
+  if (!videos || videos.length === 0) return null;
 
   return (
-    <div className="relative w-full h-48 md:h-64 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
+    <div className="relative w-full h-40 md:h-56 overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}

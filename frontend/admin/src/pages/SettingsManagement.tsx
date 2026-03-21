@@ -50,7 +50,8 @@ const SettingsManagement: React.FC = () => {
 
   const [appearance, setAppearance] = useState({
     primary: '#f97316', secondary: '#0f172a', background: '#f8fafc',
-    logo: initialLogo, cover: initialBgImage
+    logo: initialLogo, cover: initialBgImage,
+    videoBanners: [] as string[]
   });
 
   const [originalSlug, setOriginalSlug] = useState('');
@@ -117,7 +118,8 @@ const SettingsManagement: React.FC = () => {
         secondary: settingsData.settings?.secondaryColor || '#0f172a',
         background: settingsData.settings?.backgroundColor || '#f8fafc',
         logo: settingsData.logoUrl ? `/api${settingsData.logoUrl.replace(/^\/api/, '')}` : initialLogo,
-        cover: settingsData.settings?.backgroundImageUrl ? `/api${settingsData.settings.backgroundImageUrl.replace(/^\/api/, '')}` : initialBgImage
+        cover: settingsData.settings?.backgroundImageUrl ? `/api${settingsData.settings.backgroundImageUrl.replace(/^\/api/, '')}` : initialBgImage,
+        videoBanners: settingsData.settings?.videoBanners || []
       });
 
       setOriginalSlug(settingsData.slug || '');
@@ -169,7 +171,8 @@ const SettingsManagement: React.FC = () => {
         backgroundImageUrl: appearance.cover.replace(/^\/api/, ''), 
         isOpen: operation.isOpen, deliveryFee: general.deliveryFee, deliveryTime: general.deliveryTime,
         autoAcceptOrders: operation.autoAccept, autoPrintEnabled: operation.autoPrint,
-        loyaltyEnabled: loyalty.enabled, pointsPerReal: loyalty.pointsPerReal, cashbackPercentage: loyalty.cashback
+        loyaltyEnabled: loyalty.enabled, pointsPerReal: loyalty.pointsPerReal, cashbackPercentage: loyalty.cashback,
+        videoBanners: appearance.videoBanners
       });
       setOriginalSlug(general.slug);
       localStorage.setItem('printer_config', JSON.stringify(printerConfig));
@@ -387,24 +390,62 @@ const SettingsManagement: React.FC = () => {
             </Card>
 
             <Card className="lg:col-span-3 p-4 space-y-4 border-slate-100">
-              <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2">
-                <Palette size={14} className="text-orange-500"/> Paleta de Cores
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { id: 'primary', label: 'Destaque (Principal)', val: appearance.primary },
-                  { id: 'secondary', label: 'Contraste (Títulos)', val: appearance.secondary },
-                  { id: 'background', label: 'Fundo do Aplicativo', val: appearance.background },
-                ].map((c) => (
-                  <div key={c.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                <div className="space-y-4">
                     <div>
-                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{c.id}</p>
-                      <p className="text-[10px] font-bold text-slate-900 uppercase italic">{c.label}</p>
+                        <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2 mb-3">
+                            <LayoutTemplate size={14} className="text-orange-500"/> Banners de Vídeo (Opcional)
+                        </h3>
+                        <div className="space-y-2">
+                        {appearance.videoBanners.map((url, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <input 
+                                    type="text" 
+                                    className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold focus:border-orange-500 outline-none transition-all"
+                                    value={url}
+                                    onChange={(e) => {
+                                        const newBanners = [...appearance.videoBanners];
+                                        newBanners[index] = e.target.value;
+                                        setAppearance({...appearance, videoBanners: newBanners});
+                                    }}
+                                />
+                                <Button variant="destructive" size="icon" onClick={() => {
+                                    const newBanners = appearance.videoBanners.filter((_, i) => i !== index);
+                                    setAppearance({...appearance, videoBanners: newBanners});
+                                }}>
+                                    <Trash2 size={14} />
+                                </Button>
+                            </div>
+                        ))}
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            className="mt-3"
+                            onClick={() => setAppearance({...appearance, videoBanners: [...appearance.videoBanners, '']})}
+                        >
+                            <Plus size={14} className="mr-2"/> Adicionar Vídeo
+                        </Button>
                     </div>
-                    <input type="color" className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white shadow-sm" value={c.val} onChange={e => setAppearance({...appearance, [c.id]: e.target.value})} />
-                  </div>
-                ))}
-              </div>
+                    <div>
+                        <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2">
+                            <Palette size={14} className="text-orange-500"/> Paleta de Cores
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                            {[
+                            { id: 'primary', label: 'Destaque (Principal)', val: appearance.primary },
+                            { id: 'secondary', label: 'Contraste (Títulos)', val: appearance.secondary },
+                            { id: 'background', label: 'Fundo do Aplicativo', val: appearance.background },
+                            ].map((c) => (
+                            <div key={c.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                                <div>
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{c.id}</p>
+                                <p className="text-[10px] font-bold text-slate-900 uppercase italic">{c.label}</p>
+                                </div>
+                                <input type="color" className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white shadow-sm" value={c.val} onChange={e => setAppearance({...appearance, [c.id]: e.target.value})} />
+                            </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
               <div className="mt-4 p-8 bg-slate-900 rounded-[2rem] text-center relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <Smartphone className="text-orange-500 mx-auto mb-4" size={32} />

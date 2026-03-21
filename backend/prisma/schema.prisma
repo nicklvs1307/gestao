@@ -232,6 +232,7 @@ model RestaurantSettings {
   loyaltyEnabled      Boolean @default(false)
   pointsPerReal       Int     @default(1) // Ex: 1 real = 1 ponto
   cashbackPercentage  Float   @default(0) // Ex: 5% de cashback
+  videoBanners        String[] @default([]) // Array de URLs dos vídeos para o carrossel
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -1,25 +1,71 @@
-root@servergestao:~/gestao# docker exec -it 3333220f3b7e /bin/sh
-/app # node scripts/fix_drivers_roles.js
-[dotenv@17.2.3] injecting env (1) from .env -- tip: ⚙️  enable debug logging with { debug: true }
---- BUSCANDO ENTREGADORES SEM CARGO ---
-PrismaClientInitializationError:
-Invalid `prisma.role.findFirst()` invocation:
-
-
-error: Environment variable not found: DATABASE_URL.
-  -->  schema.prisma:7
-   |
- 6 |   provider = "postgresql"
- 7 |   url      = env("DATABASE_URL")
-   |
-
-Validation Error Count: 1
-    at ei.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7568)
-    at ei.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6593)
-    at ei.request (/app/node_modules/@prisma/client/runtime/library.js:121:6300)
-    at async a (/app/node_modules/@prisma/client/runtime/library.js:130:9551)
-    at async fixDrivers (/app/scripts/fix_drivers_roles.js:9:22) {
-  clientVersion: '6.16.3',
-  errorCode: undefined,
-  retryable: undefined
-}
+=> ERROR [builder 8/8] RUN npm run build                                                                                                       1.9s
+------
+ > [builder 8/8] RUN npm run build:
+0.510
+0.510 > client@0.0.0 build
+0.510 > vite build
+0.510
+0.818 vite v7.1.9 building for production...
+1.301 transforming...
+1.787 ✓ 27 modules transformed.
+1.789 ✗ Build failed in 939ms
+1.789 error during build:
+1.789 [vite:esbuild] Transform failed with 4 errors:
+1.789 /app/frontend/client/src/pages/DeliveryPage.tsx:413:14: ERROR: Unexpected closing fragment tag does not match opening "div" tag
+1.789 /app/frontend/client/src/pages/DeliveryPage.tsx:414:9: ERROR: The character "}" is not valid inside a JSX element
+1.789 /app/frontend/client/src/pages/DeliveryPage.tsx:545:6: ERROR: Unexpected closing "div" tag does not match opening "RestaurantProvider" tag
+1.789 /app/frontend/client/src/pages/DeliveryPage.tsx:546:25: ERROR: Unterminated regular expression
+1.789 file: /app/frontend/client/src/pages/DeliveryPage.tsx:413:14
+1.789
+1.789 Unexpected closing fragment tag does not match opening "div" tag
+1.789 411 |                      })}
+1.789 412 |                  </main>
+1.789 413 |              </>
+1.789     |                ^
+1.789 414 |          )}
+1.789 415 |
+1.789
+1.789 The character "}" is not valid inside a JSX element
+1.789 412 |                  </main>
+1.789 413 |              </>
+1.789 414 |          )}
+1.789     |           ^
+1.789 415 |
+1.789 416 |          {/* Footer Cart - só aparece se o carrinho modal estiver fechado */}
+1.789
+1.789 Unexpected closing "div" tag does not match opening "RestaurantProvider" tag
+1.789 543 |              hasOrders={localStorage.getItem('recent_orders') !== null}
+1.789 544 |          />
+1.789 545 |      </div>
+1.789     |        ^
+1.789 546 |      </RestaurantProvider>
+1.789 547 |    );
+1.789
+1.789 Unterminated regular expression
+1.789 544 |          />
+1.789 545 |      </div>
+1.789 546 |      </RestaurantProvider>
+1.789     |                           ^
+1.789 547 |    );
+1.789 548 |  };
+1.789
+1.789     at failureErrorWithLog (/app/frontend/client/node_modules/esbuild/lib/main.js:1467:15)
+1.789     at /app/frontend/client/node_modules/esbuild/lib/main.js:736:50
+1.789     at responseCallbacks.<computed> (/app/frontend/client/node_modules/esbuild/lib/main.js:603:9)
+1.789     at handleIncomingPacket (/app/frontend/client/node_modules/esbuild/lib/main.js:658:12)
+1.789     at Socket.readFromStdout (/app/frontend/client/node_modules/esbuild/lib/main.js:581:7)
+1.789     at Socket.emit (node:events:524:28)
+1.789     at addChunk (node:internal/streams/readable:561:12)
+1.789     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+1.789     at Readable.push (node:internal/streams/readable:392:5)
+1.789     at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+------
+Dockerfile:20
+--------------------
+  18 |     WORKDIR /app/frontend/client
+  19 |     RUN npm install --legacy-peer-deps
+  20 | >>> RUN npm run build
+  21 |
+  22 |     # Stage 2: Serve com Nginx
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
