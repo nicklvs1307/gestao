@@ -306,18 +306,17 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             <div className="mt-4 px-5 text-center">
                 <h1 className="text-xl font-black text-slate-900 tracking-tight mb-1 uppercase italic leading-none">{restaurant.name}</h1>
                 
-                {/* Endereço */}
+                {/* Endereço Reduzido */}
                 {restaurant.address && (
                     <a 
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-8 line-clamp-1 hover:text-primary transition-colors flex items-center justify-center gap-1"
+                        className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-8 block truncate hover:text-primary transition-colors text-center"
                     >
                         📍 {restaurant.address}
                     </a>
                 )}
-                
                 <div className="flex flex-wrap justify-center items-center gap-3">
                     {isStoreOpen ? (
                         <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border border-emerald-500/20 shadow-sm">
@@ -396,15 +395,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             </div>
         ) : (
             <>
-                {/* 1. Atalhos de Categoria (Estilo iFood) */}
-                <div className="mb-4">
-                    <CategoryShortcuts 
-                        categories={categories} 
-                        activeCategory={activeCategory} 
-                        onCategoryClick={setActiveCategory} 
-                    />
-                </div>
-
                 {/* 2. Destaques (Grid 2 Colunas) */}
                 <FeaturedGrid 
                     products={featuredProducts}
