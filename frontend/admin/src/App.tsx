@@ -17,6 +17,7 @@ const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const CategoryManagement = lazy(() => import('./components/CategoryManagement'));
 const CategoryFormPage = lazy(() => import('./pages/CategoryFormPage'));
 const PromotionManagement = lazy(() => import('./components/PromotionManagement'));
+const PromotionFormPage = lazy(() => import('./pages/PromotionFormPage'));
 const OrderManagement = lazy(() => import('./components/OrderManagement'));
 const TableManagement = lazy(() => import('./components/TableManagement'));
 const ReportManagement = lazy(() => import('./pages/ReportManagement'));
@@ -120,9 +121,11 @@ function AdminRoutes() {
           
           <Route path="/promotions" element={
             <ProtectedRoute permission="products:manage">
-              <PromotionManagement onAddPromotionClick={() => openPromotionModal()} />
+              <PromotionManagement />
             </ProtectedRoute>
           } />
+          <Route path="/promotions/new" element={<ProtectedRoute permission="products:manage"><PromotionFormPage /></ProtectedRoute>} />
+          <Route path="/promotions/:id" element={<ProtectedRoute permission="products:manage"><PromotionFormPage /></ProtectedRoute>} />
           
           <Route path="/customers" element={<ProtectedRoute permission="orders:view"><CustomerManagement /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute permission="orders:view"><OrderManagement /></ProtectedRoute>} />

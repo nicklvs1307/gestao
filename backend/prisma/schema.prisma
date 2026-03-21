@@ -984,7 +984,7 @@ model Promotion {
   name          String
   description   String?
   saiposIntegrationCode String? // Código de integração da Saipos/iFood
-  
+
   // === Novos campos para Cupons ===
   code          String?   // Ex: "PIZZA10", "BEMVINDO"
   minOrderValue Float?    @default(0)
@@ -1002,12 +1002,18 @@ model Promotion {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  productId     String? // Novo campo para vincular a um produto
+  productId     String? 
   product       Product?   @relation(fields: [productId], references: [id])
+
+  addonId       String?
+  categoryId    String?
 
   @@index([restaurantId])
   @@index([productId])
+  @@index([addonId])
+  @@index([categoryId])
 }
+
 
 // === MODELOS PARA FICHA TÉCNICA (ESTOQUE AVANÇADO - NÍVEL ERP) ===
 

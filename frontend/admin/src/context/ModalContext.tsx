@@ -17,14 +17,6 @@ interface ModalContextType {
   refetchCategories: number;
   triggerCategoriesRefetch: () => void;
 
-  // Promotion Modal
-  isPromotionModalOpen: boolean;
-  promotionToEdit: any | null;
-  openPromotionModal: (promotion?: any) => void;
-  closePromotionModal: () => void;
-  refetchPromotions: number;
-  triggerPromotionsRefetch: () => void;
-
   // Order Detail Modal
   isOrderDetailModalOpen: boolean;
   orderToView: any | null;
@@ -50,10 +42,6 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<any | null>(null);
   const [refetchCategories, setRefetchCategories] = useState(0);
-
-  const [isPromotionModalOpen, setPromotionModalOpen] = useState(false);
-  const [promotionToEdit, setPromotionToEdit] = useState<any | null>(null);
-  const [refetchPromotions, setRefetchPromotions] = useState(0);
 
   const [isOrderDetailModalOpen, setOrderDetailModalOpen] = useState(false);
   const [orderToView, setOrderToView] = useState<any | null>(null);

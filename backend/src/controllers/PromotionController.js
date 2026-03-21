@@ -3,11 +3,6 @@ const prisma = require('../lib/prisma');
 const getActivePromotions = async (req, res) => {
     try {
         const now = new Date();
-        
-        // Ajuste Final de Fuso Horário:
-        // Criamos uma data baseada em UTC Zero horas de hoje.
-        // Isso garante que se o banco tem "2026-01-26T00:00:00Z", e compararmos com "2026-01-26T00:00:00Z", 
-        // a condição (>=) passa, mantendo a promoção ativa no dia do vencimento.
         const startOfTodayUTC = new Date();
         startOfTodayUTC.setUTCHours(0, 0, 0, 0);
 
@@ -15,8 +10,8 @@ const getActivePromotions = async (req, res) => {
             where: {
                 restaurantId: req.params.restaurantId,
                 isActive: true,
-                startDate: { lte: now },             // Já começou
-                endDate: { gte: startOfTodayUTC }    // Termina hoje (UTC) ou no futuro
+                startDate: { lte: now },
+                endDate: { gte: startOfTodayUTC }
             },
             include: { 
                 product: {
@@ -47,7 +42,6 @@ const getActivePromotions = async (req, res) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        // Aplicar ordenação personalizada de grupos se existir o campo addonGroupsOrder
         const sortedPromotions = promotions.map(promo => {
             if (promo.product) {
                 const product = promo.product;
@@ -76,18 +70,21 @@ const getAllPromotions = async (req, res) => {
     try { 
         res.json(await prisma.promotion.findMany({ 
             where: { restaurantId: req.restaurantId }, 
-            include: { product: true }, 
+            include: { 
+                product: { select: { id: true, name: true, imageUrl: true } },
+                // addon: { select: { id: true, name: true } }, // Quando addon for mapeado no prisma
+            }, 
             orderBy: { startDate: 'desc' } 
         })); 
     } catch (error) { 
+        console.error(error);
         res.status(500).json({ error: 'Erro ao buscar promoções.' }); 
     }
 };
 
 const createPromotion = async (req, res) => {
-    const { name, discountType, discountValue, startDate, endDate, isActive, productId, code, minOrderValue, usageLimit } = req.body;
+    const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit } = req.body;
     try {
-        // Garantir que endDate capture o dia inteiro se vier zerado do front
         let end = new Date(endDate);
         if (end.getHours() === 0 && end.getMinutes() === 0) {
             end.setHours(23, 59, 59, 999);
@@ -95,19 +92,23 @@ const createPromotion = async (req, res) => {
 
         const data = { 
             name, 
+            description,
             discountType, 
-            discountValue, 
+            discountValue: parseFloat(discountValue), 
             startDate: new Date(startDate), 
             endDate: end, 
             isActive, 
             code: code ? code.toUpperCase() : null,
             minOrderValue: parseFloat(minOrderValue || 0),
             usageLimit: usageLimit ? parseInt(usageLimit) : null,
-            restaurant: { connect: { id: req.restaurantId || req.body.restaurantId } } 
+            restaurant: { connect: { id: req.restaurantId } },
+            addonId: addonId || null,
+            categoryId: categoryId || null
         };
         if (productId) data.product = { connect: { id: productId } };
         
-        res.status(201).json(await prisma.promotion.create({ data, include: { product: true } }));
+        const promotion = await prisma.promotion.create({ data, include: { product: true } });
+        res.status(201).json(promotion);
     } catch (error) { 
         console.error(error);
         res.status(500).json({ error: 'Erro ao criar promoção.' }); 
@@ -139,9 +140,8 @@ const validateCoupon = async (req, res) => {
 
 const updatePromotion = async (req, res) => {
     const { id } = req.params;
-    const { name, discountType, discountValue, startDate, endDate, isActive, productId, code, minOrderValue, usageLimit } = req.body;
+    const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit } = req.body;
     try {
-        // Garantir que endDate capture o dia inteiro
         let end = new Date(endDate);
         if (end.getHours() === 0 && end.getMinutes() === 0) {
             end.setHours(23, 59, 59, 999);
@@ -149,20 +149,23 @@ const updatePromotion = async (req, res) => {
 
         const data = { 
             name, 
+            description,
             discountType, 
-            discountValue, 
+            discountValue: parseFloat(discountValue), 
             startDate: new Date(startDate), 
             endDate: end, 
             isActive,
             code: code ? code.toUpperCase() : null,
             minOrderValue: parseFloat(minOrderValue || 0),
-            usageLimit: usageLimit ? parseInt(usageLimit) : null
+            usageLimit: usageLimit ? parseInt(usageLimit) : null,
+            addonId: addonId || null,
+            categoryId: categoryId || null
         };
 
         if (productId) {
             data.product = { connect: { id: productId } };
         } else {
-            data.product = { disconnect: true };
+            data.productId = null;
         }
 
         const updated = await prisma.promotion.update({
