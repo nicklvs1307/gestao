@@ -353,65 +353,64 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             />
         </div>
 
-                {/* 3. Peça Novamente */}
-                <div ref={reorderSectionRef}>
-                    <ReorderSection 
-                        onProductClick={handleProductCardClick}
-                        onReorder={handleReorder}
-                    />
-                </div>
+        {/* 3. Peça Novamente */}
+        <div ref={reorderSectionRef}>
+            <ReorderSection 
+                onProductClick={handleProductCardClick}
+                onReorder={handleReorder}
+            />
+        </div>
 
-                <div className="px-5 mb-8">
-                    <VideoCarousel />
-                </div>
+        <div className="px-5 mb-8">
+            <VideoCarousel />
+        </div>
 
-                {/* Categories Nav Sticky (Mantido para scroll longo) */}
-                <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">
-                    <button 
-                        onClick={() => setActiveCategory('todos')}
-                        className={`px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${activeCategory === 'todos' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-secondary text-muted-foreground'}`}
-                    >
-                        🔥 Todos
-                    </button>
-                    {categories.map(cat => (
-                        <button 
-                            key={cat.id}
-                            onClick={() => setActiveCategory(cat.id)}
-                            className={`px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${activeCategory === cat.id ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-secondary text-muted-foreground'}`}
-                        >
-                            {cat.name}
-                        </button>
-                    ))}
-                </nav>
+        {/* Categories Nav Sticky (Mantido para scroll longo) */}
+        <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">
+            <button 
+                onClick={() => setActiveCategory('todos')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${activeCategory === 'todos' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-secondary text-muted-foreground'}`}
+            >
+                🔥 Todos
+            </button>
+            {categories.map(cat => (
+                <button 
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${activeCategory === cat.id ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-secondary text-muted-foreground'}`}
+                >
+                    {cat.name}
+                </button>
+            ))}
+        </nav>
 
-                {/* Main Content */}
-                <main className="p-5 space-y-8">
-                    {categories.map(category => {
-                        if (activeCategory !== 'todos' && activeCategory !== category.id) return null;
-                        const products = getVisibleProducts(category);
+        {/* Main Content */}
+        <main className="p-5 space-y-8">
+            {categories.map(category => {
+                if (activeCategory !== 'todos' && activeCategory !== category.id) return null;
+                const products = getVisibleProducts(category);
 
-                        if (products.length === 0) return null;
+                if (products.length === 0) return null;
 
-                        return (
-                            <section key={category.id}>
-                                <h2 className="text-lg font-black text-foreground mb-4 italic uppercase tracking-tighter">
-                                    {category.name}
-                                </h2>
-                                <div className="grid grid-cols-1 gap-4">
-                                    {products.map(product => (
-                                        <DeliveryProductCard 
-                                            key={product.id} 
-                                            product={product} 
-                                            onAddToCart={handleProductCardClick} 
-                                        />
-                                    ))}
-                                </div>
-                            </section>
-                        );
-                    })}
-                </main>
-            </>
-        )}
+                return (
+                    <section key={category.id}>
+                        <h2 className="text-lg font-black text-foreground mb-4 italic uppercase tracking-tighter">
+                            {category.name}
+                        </h2>
+                        <div className="grid grid-cols-1 gap-4">
+                            {products.map(product => (
+                                <DeliveryProductCard 
+                                    key={product.id} 
+                                    product={product} 
+                                    onAddToCart={handleProductCardClick} 
+                                />
+                            ))}
+                        </div>
+                    </section>
+                );
+            })}
+        </main>
+
 
         {/* Footer Cart - só aparece se o carrinho modal estiver fechado */}
         {!isCartOpen && (
