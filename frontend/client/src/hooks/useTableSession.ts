@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getProducts, getCategories, getRestaurantSettings, getTableInfo, getOrderForTable } from '../services/api';
-import type { Product, Category, RestaurantSettings, Table, Order } from '../types';
+import { getProducts, getCategories, getRestaurantSettings, getTableInfo, getOrderForTable, getActivePromotions } from '../services/api';
+import type { Product, Category, RestaurantSettings, Table, Order, Promotion } from '../types';
 
 interface UseTableSessionProps {
   restaurantId: string;
@@ -16,6 +16,7 @@ export const useTableSession = ({ restaurantId, tableNumber, setIsThankYouModalO
   const [order, setOrder] = useState<Order | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings | null>(null);
   const [tableInfo, setTableInfo] = useState<Table | null>(null);
   const [featuredImages, setFeaturedImages] = useState<string[]>([]);
@@ -32,12 +33,13 @@ export const useTableSession = ({ restaurantId, tableNumber, setIsThankYouModalO
 
     const fetchData = async () => {
       try {
-        const [productsData, categoriesData, settingsRes, tableRes, orderRes] = await Promise.all([
+        const [productsData, categoriesData, settingsRes, tableRes, orderRes, promotionsData] = await Promise.all([
           getProducts(restaurantId),
           getCategories(restaurantId),
           getRestaurantSettings(restaurantId),
           getTableInfo(restaurantId, tableNumber),
-          getOrderForTable(restaurantId, tableNumber)
+          getOrderForTable(restaurantId, tableNumber),
+          getActivePromotions(restaurantId)
         ]);
 
         const settingsData: RestaurantSettings = settingsRes;
@@ -50,6 +52,7 @@ export const useTableSession = ({ restaurantId, tableNumber, setIsThankYouModalO
 
         setAllProducts(productsData);
         setCategories(categoriesData);
+        setPromotions(promotionsData);
         setRestaurantSettings(settingsData);
         setTableInfo(tableData);
         setOrder(orderData);
@@ -112,6 +115,7 @@ export const useTableSession = ({ restaurantId, tableNumber, setIsThankYouModalO
     setOrder,
     allProducts,
     categories,
+    promotions,
     restaurantSettings,
     tableInfo,
     featuredImages,

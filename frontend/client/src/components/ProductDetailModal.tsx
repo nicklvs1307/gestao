@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import type { Product, SizeOption, AddonOption } from '../types';
+import type { Product, SizeOption, AddonOption, Promotion } from '../types';
 import { toast } from 'sonner';
 import { 
   X, 
@@ -21,6 +20,8 @@ interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
+  allProducts?: Product[];
+  promotions?: Promotion[];
   isStoreOpen?: boolean;
   onAddToCart: (
     product: Product, 
@@ -32,7 +33,7 @@ interface ProductDetailModalProps {
   ) => void;
 }
 
-const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, onAddToCart, isStoreOpen = true }) => {
+const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, promotions = [], onAddToCart, isStoreOpen = true }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
@@ -113,7 +114,15 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     else setSelectedAddons(prev => [...prev, { ...addon, quantity: newQty }]);
   };
 
+  const getAddonPromotion = (addon: any) => {
+    return promotions?.find(p => p.isActive && p.addonId === addon.id);
+  };
+
   const isPromoActive = (addon: any) => {
+    // 1. Verifica no novo sistema de promoções (Prioridade)
+    if (getAddonPromotion(addon)) return true;
+
+    // 2. Verifica no sistema legado (promoPrice no objeto)
     if (!addon.promoPrice) return false;
     const now = new Date();
     const start = addon.promoStartDate ? new Date(addon.promoStartDate) : null;
@@ -126,6 +135,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   };
 
   const getAddonPrice = (addon: any) => {
+    // 1. Novo sistema
+    const promo = getAddonPromotion(addon);
+    if (promo) {
+        if (promo.discountType === 'percentage') {
+            return Number(addon.price) * (1 - promo.discountValue / 100);
+        }
+        return Math.max(0, Number(addon.price) - promo.discountValue);
+    }
+
+    // 2. Legado
     return isPromoActive(addon) ? Number(addon.promoPrice) : Number(addon.price);
   };
 
@@ -180,7 +199,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
         return toast.warning(`Escolha no mínimo ${group.minQuantity || 1} em "${group.name}".`);
       }
     }
-    onAddToCart(product, quantity, selectedSize, selectedAddons, [], observations);
+    const addonsWithPromoPrices = selectedAddons.map(sa => ({
+      ...sa,
+      price: getAddonPrice(sa)
+    }));
+
+    onAddToCart(product, quantity, selectedSize, addonsWithPromoPrices, [], observations);
     setIsAdded(true);
     toast.success("Adicionado!");
     setTimeout(onClose, 800);

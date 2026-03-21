@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPromotions, deletePromotion, updatePromotion } from '../services/api';
+import { getPromotions, deletePromotion, updatePromotion, getCategories, getAddonGroups } from '../services/api';
 import { Plus, Edit, Trash2, Percent, Calendar, Tag, Loader2, Sparkles, RefreshCw, Ticket, Package, Layers, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format, parseISO, isAfter, isBefore } from 'date-fns';

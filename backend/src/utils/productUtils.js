@@ -52,22 +52,7 @@ const PUBLIC_PRODUCT_SELECT = {
           price: true,
           promoPrice: true,
           maxQuantity: true,
-          order: true,
-          addonGroup: {
-            select: {
-              restaurant: {
-                select: {
-                  promotions: {
-                    where: {
-                      isActive: true,
-                      startDate: { lte: new Date() },
-                      endDate: { gte: new Date() },
-                    }
-                  }
-                }
-              }
-            }
-          }
+          order: true
         },
         orderBy: { order: 'asc' }
       }
