@@ -12,6 +12,7 @@ import CategoryShortcuts from '../components/CategoryShortcuts';
 import ReorderSection from '../components/ReorderSection';
 import BottomNav from '../components/BottomNav';
 import PromotionSlider from '../components/PromotionSlider';
+import VideoCarousel from '../components/VideoCarousel';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { RestaurantProvider } from '../context/RestaurantContext';
 import OrderSuccessModal from '../components/OrderSuccessModal';
@@ -46,6 +47,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const [activeCategory, setActiveCategory] = useState('todos');
   const [isCartOpen, setCartOpen] = useState(false);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -237,14 +239,15 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   );
   const isStoreOpen = restaurant.settings?.isOpen ?? true;
 
-  // Função auxiliar para filtrar produtos válidos para Delivery/Online
   const getVisibleProducts = (category: any) => {
     return (category.products || []).filter((p: any) => 
-        p.isAvailable && (p.allowDelivery || p.allowOnline)
+        p.isAvailable && (p.allowDelivery || p.allowOnline) && !p.isFlavor
     );
   };
+  
+  const allVisibleProducts = categories.flatMap(cat => getVisibleProducts(cat));
 
-  const featuredProducts = categories.flatMap(cat => getVisibleProducts(cat)).filter(p => p.isFeatured);
+  const featuredProducts = allVisibleProducts.filter(p => p.isFeatured);
 
   return (
     <RestaurantProvider settings={restaurant.settings || null}>
@@ -278,10 +281,10 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 {/* Gradiente sutil para legibilidade */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 z-20" />
                 
-                {/* Botões de Ação no Header */}
+        {/* Botões de Ação no Header */}
                 <div className="absolute top-3 right-4 z-20 flex gap-2">
-                    <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full h-8 w-8 text-white hover:bg-black/40 border border-white/10">
-                        <Palette size={14} />
+                    <Button onClick={() => setIsSearchOpen(true)} variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full h-8 w-8 text-white hover:bg-black/40 border border-white/10">
+                        <Search size={14} />
                     </Button>
                     <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full h-8 w-8 text-white hover:bg-black/40 border border-white/10">
                         <Heart size={14} />
@@ -339,23 +342,19 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                     </div>
                 </div>
             </div>
-
-            {/* Barra de Busca Refinada */}
-            <div className="relative mt-8 px-5">
-                <div className="max-w-xl mx-auto relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
-                    <input 
-                        ref={searchInputRef}
-                        type="text" 
-                        placeholder="Pesquisar itens no cardápio..." 
-                        className="w-full bg-card border-2 border-border/50 rounded-[2rem] py-4 pl-12 pr-4 text-sm focus:bg-background focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted-foreground font-medium shadow-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onFocus={() => setActiveTab('search')}
-                    />
-                </div>
-            </div>
         </header>
+
+        <div className="pt-2">
+            <PromotionSlider
+                restaurantId={restaurant.id}
+                onProductClick={handleProductCardClick}
+                allProducts={restaurant.categories.flatMap(cat => getVisibleProducts(cat))}
+            />
+        </div>
+
+        <div className="px-5 mb-8">
+            <VideoCarousel />
+        </div>
 
         {/* Conteúdo Condicional: Se houver pesquisa, mostra apenas os resultados */}
         {searchTerm ? (
@@ -375,8 +374,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-4">
-                    {categories.flatMap(cat => getVisibleProducts(cat))
-                        .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    {allVisibleProducts
+                        .filter(p => 
+                            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            p.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+                            p.categories?.some((c: any) => c.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))))
+                        )
                         .map(product => (
                             <DeliveryProductCard 
                                 key={product.id} 
@@ -386,8 +389,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                         ))
                     }
                 </div>
-                {categories.flatMap(cat => getVisibleProducts(cat))
-                    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                {allVisibleProducts
+                    .filter(p => 
+                        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        p.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+                        p.categories?.some((c: any) => c.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))))
+                    ).length === 0 && (
                         <div className="text-center py-12">
                             <p className="text-muted-foreground font-bold">Nenhum produto encontrado...</p>
                         </div>
@@ -395,12 +402,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             </div>
         ) : (
             <>
-                {/* 2. Destaques (Grid 2 Colunas) */}
-                <FeaturedGrid 
-                    products={featuredProducts}
-                    onProductClick={handleProductCardClick}
-                />
-
                 {/* 3. Peça Novamente */}
                 <div ref={reorderSectionRef}>
                     <ReorderSection 
@@ -508,6 +509,78 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             isLoading={isPixPaymentLoading}
             />
         )}
+
+        <AnimatePresence>
+            {isSearchOpen && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[200] bg-white flex flex-col"
+              >
+                <div className="p-5 flex items-center gap-4 border-b border-slate-100">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input 
+                            autoFocus
+                            type="text" 
+                            placeholder="Buscar pratos ou sabores..." 
+                            className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-slate-400 text-slate-900 font-bold"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <button 
+                        onClick={() => {
+                            setIsSearchOpen(false);
+                            setSearchTerm('');
+                        }}
+                        className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-5 pb-10">
+                    {searchTerm && (
+                        <div className="mb-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resultados para "{searchTerm}"</p>
+                        </div>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {allVisibleProducts
+                            .filter(p => 
+                                p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                p.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+                                p.categories?.some((c: any) => c.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))))
+                            )
+                            .map(product => (
+                                <DeliveryProductCard 
+                                    key={product.id} 
+                                    product={product} 
+                                    onAddToCart={() => {
+                                        handleProductCardClick(product);
+                                        setIsSearchOpen(false);
+                                    }} 
+                                />
+                            ))
+                        }
+                        {searchTerm && allVisibleProducts
+                            .filter(p => 
+                                p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                p.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+                                p.categories?.some((c: any) => c.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))))
+                            ).length === 0 && (
+                                <div className="text-center py-12 col-span-full">
+                                    <p className="text-muted-foreground font-bold">Nenhum produto encontrado...</p>
+                                </div>
+                            )}
+                    </div>
+                </div>
+              </motion.div>
+            )}
+        </AnimatePresence>
 
         <BottomNav 
             activeTab={activeTab}

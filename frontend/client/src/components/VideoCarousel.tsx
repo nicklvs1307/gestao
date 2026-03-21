@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const videos = [
@@ -13,7 +13,7 @@ const VideoCarousel: React.FC = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % videos.length);
-    }, 8000); // 8 segundos cada vídeo
+    }, 8000);
 
     return () => clearInterval(timer);
   }, []);
@@ -40,8 +40,6 @@ const VideoCarousel: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
         </motion.div>
       </AnimatePresence>
-
-      {/* Indicadores */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
         {videos.map((_, idx) => (
           <div 
