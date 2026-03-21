@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getActivePromotions } from '../services/api';
 import type { Promotion, Product } from '../types';
-import { Flame, Clock, ChevronRight } from 'lucide-react';
+import { Flame, Clock, ChevronRight, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface PromotionSliderProps {
   onProductClick: (product: Product) => void;
   restaurantId: string;
+  allProducts: Product[]; // Necessário para encontrar o pai do addon
 }
 
-const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, restaurantId }) => {
+const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, restaurantId, allProducts }) => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -17,7 +18,8 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
     const fetchPromos = async () => {
       try {
         const data = await getActivePromotions(restaurantId);
-        setPromotions(data.filter(p => p.product));
+        // Agora aceitamos promoções de produtos OU de adicionais
+        setPromotions(data.filter((p: Promotion) => p.product || p.addonId));
       } catch (error) {
         console.error(error);
       }
@@ -35,14 +37,12 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
         const maxScroll = scrollWidth - clientWidth;
         
         if (scrollLeft >= maxScroll - 10) {
-          // Volta pro início se chegar no fim
           scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
-          // Rola para o próximo card (aprox 300px)
           scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
         }
       }
-    }, 4000); // Rola a cada 4 segundos
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [promotions]);
@@ -52,6 +52,21 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
   const calculateDiscountedPrice = (price: number, promo: Promotion) => {
     if (promo.discountType === 'percentage') return price * (1 - promo.discountValue / 100);
     return price - promo.discountValue;
+  };
+
+  const handlePromoClick = (promo: Promotion) => {
+    if (promo.product) {
+        onProductClick(promo.product);
+    } else if (promo.addonId) {
+        // Encontrar o primeiro produto que tem esse addon para abrir o modal
+        const parentProduct = allProducts.find(p => 
+            p.addonGroups?.some(g => g.addons.some(a => a.id === promo.addonId)) ||
+            p.categories?.some(cat => cat.addonGroups?.some(g => g.addons.some(a => a.id === promo.addonId)))
+        );
+        if (parentProduct) {
+            onProductClick(parentProduct);
+        }
+    }
   };
 
   return (
@@ -73,12 +88,12 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
         className="flex gap-4 overflow-x-auto px-5 no-scrollbar pb-4 scroll-smooth"
       >
         {promotions.map((promo) => {
-          const product = promo.product!;
-          const hasSizes = product.sizes && product.sizes.length > 0;
-          const basePrice = hasSizes 
-            ? Math.min(...product.sizes.map(s => s.price)) 
-            : product.price;
+          const isAddonPromo = !!promo.addonId;
+          const displayItem = isAddonPromo ? promo.addon : promo.product;
           
+          if (!displayItem) return null;
+
+          const basePrice = displayItem.price || 0;
           const discountedPrice = calculateDiscountedPrice(basePrice, promo);
           
           let discountText = '';
@@ -92,7 +107,7 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
           return (
             <div 
               key={promo.id}
-              onClick={() => onProductClick(product)}
+              onClick={() => handlePromoClick(promo)}
               className="min-w-[280px] md:min-w-[320px] bg-white rounded-3xl p-3 border border-slate-100 shadow-xl shadow-slate-200/50 flex gap-4 active:scale-[0.98] transition-all cursor-pointer group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 z-10">
@@ -100,13 +115,20 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
                     {discountText}
                 </div>
               </div>
-              <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-50 shadow-inner">
-                  <img src={product.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={product.name} />
+              <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-50 shadow-inner bg-slate-50 flex items-center justify-center">
+                  {displayItem.imageUrl ? (
+                      <img src={displayItem.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={displayItem.name} />
+                  ) : (
+                      <Zap size={32} className="text-slate-200" />
+                  )}
               </div>
               
               <div className="flex-1 flex flex-col justify-between py-1">
                   <div>
-                      <h4 className="font-black text-sm text-slate-900 leading-tight line-clamp-1 italic uppercase">{product.name}</h4>
+                      <h4 className="font-black text-sm text-slate-900 leading-tight line-clamp-1 italic uppercase">
+                          {isAddonPromo && <span className="text-[8px] text-orange-500 block mb-1">Adicional em Oferta</span>}
+                          {displayItem.name}
+                      </h4>
                       <div className="flex items-center gap-1 text-[9px] font-bold text-red-500 mt-1 uppercase">
                           <Clock size={10} /> Expira em breve
                       </div>
@@ -114,9 +136,6 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
 
                   <div className="flex items-end justify-between">
                       <div className="flex flex-col">
-                          {hasSizes && (
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 leading-none">A partir de</span>
-                          )}
                           <span className="text-[10px] line-through text-slate-300 font-bold leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
                           <span className="text-xl font-black italic text-emerald-600 tracking-tighter">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
                       </div>

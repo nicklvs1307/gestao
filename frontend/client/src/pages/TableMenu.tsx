@@ -177,8 +177,8 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   };
 
   const filteredProducts = useMemo(() => {
-    // 1. Filtrar produtos que permitem Salão (allowPos) e estão disponíveis
-    let products = allProducts.filter((p: any) => p.isAvailable && p.allowPos);
+    // 1. Filtrar produtos que permitem Salão (allowPos), estão disponíveis e NÃO são sabores
+    let products = allProducts.filter((p: any) => p.isAvailable && p.allowPos && !p.isFlavor);
     
     // 2. Filtrar produtos cujas categorias permitem Salão e estão ativas
     const validCategoryIds = new Set(availableCategories.map((c: any) => c.id));
@@ -285,11 +285,11 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
             />
         </div>
 
-        <PromotionSlider 
+        <PromotionSlider
             restaurantId={restaurantId!}
             onProductClick={handleProductClick}
+            allProducts={allProducts}
         />
-
         {/* NAVEGAÇÃO DE CATEGORIAS */}
         <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">
             <button 
