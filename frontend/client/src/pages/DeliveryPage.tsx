@@ -353,62 +353,16 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             />
         </div>
 
-        <div className="px-5 mb-8">
-            <VideoCarousel />
-        </div>
-
-        {/* Conteúdo Condicional: Se houver pesquisa, mostra apenas os resultados */}
-        {searchTerm ? (
-            <div className="px-5 animate-in fade-in slide-in-from-top-4 duration-500">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-black text-foreground italic uppercase tracking-tighter">
-                        Resultados para "{searchTerm}"
-                    </h2>
-                    <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setSearchTerm('')}
-                        className="text-xs font-bold text-primary uppercase tracking-widest"
-                    >
-                        Limpar
-                    </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-4">
-                    {allVisibleProducts
-                        .filter(p => 
-                            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            p.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-                            p.categories?.some((c: any) => c.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))))
-                        )
-                        .map(product => (
-                            <DeliveryProductCard 
-                                key={product.id} 
-                                product={product} 
-                                onAddToCart={handleProductCardClick} 
-                            />
-                        ))
-                    }
-                </div>
-                {allVisibleProducts
-                    .filter(p => 
-                        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        p.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-                        p.categories?.some((c: any) => c.addonGroups?.some((g: any) => g.addons?.some((a: any) => a.name.toLowerCase().includes(searchTerm.toLowerCase()))))
-                    ).length === 0 && (
-                        <div className="text-center py-12">
-                            <p className="text-muted-foreground font-bold">Nenhum produto encontrado...</p>
-                        </div>
-                    )}
-            </div>
-        ) : (
-            <>
                 {/* 3. Peça Novamente */}
                 <div ref={reorderSectionRef}>
                     <ReorderSection 
                         onProductClick={handleProductCardClick}
                         onReorder={handleReorder}
                     />
+                </div>
+
+                <div className="px-5 mb-8">
+                    <VideoCarousel />
                 </div>
 
                 {/* Categories Nav Sticky (Mantido para scroll longo) */}

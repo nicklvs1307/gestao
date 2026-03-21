@@ -40,54 +40,55 @@ const ReorderSection: React.FC<ReorderSectionProps> = ({ onProductClick, onReord
   if (loading || recentOrders.length === 0) return null;
 
   return (
-    <div className="px-5 mb-8">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="bg-primary/10 p-2 rounded-xl text-primary">
-          <History size={20} />
+    <div className="px-5 mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+            <History size={16} className="text-primary" />
+            <h3 className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none">Peça Novamente</h3>
         </div>
-        <h3 className="text-lg font-black italic uppercase tracking-tighter text-slate-900 leading-none">Peça Novamente</h3>
+        <a href="#" className="text-[10px] font-bold text-primary uppercase tracking-widest">Ver todos</a>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
         {recentOrders.map((order) => (
           <motion.div
             key={order.id}
             whileTap={{ scale: 0.98 }}
-            className="min-w-[280px] bg-white rounded-[2rem] p-4 border border-slate-100 shadow-xl shadow-slate-200/40 flex flex-col justify-between"
+            className="min-w-[250px] bg-white rounded-2xl p-3 border border-slate-100 shadow-lg shadow-slate-100/70 flex flex-col justify-between"
           >
             <div>
-              <div className="flex justify-between items-start mb-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pedido #{order.dailyOrderNumber || order.id.slice(-4)}</span>
-                <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">Concluído</span>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Pedido #{order.dailyOrderNumber || order.id.slice(-4)}</span>
+                <span className="text-[9px] font-bold text-emerald-500">Concluído</span>
               </div>
               
-              <div className="space-y-2 mb-4">
+              <div className="space-y-1.5 mb-3">
                 {order.items.slice(0, 2).map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-slate-50">
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-50">
                       <img src={item.product.imageUrl} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black text-slate-900 truncate italic uppercase">{item.quantity}x {item.product.name}</p>
+                      <p className="text-[11px] font-black text-slate-800 truncate italic uppercase">{item.quantity}x {item.product.name}</p>
                     </div>
                   </div>
                 ))}
                 {order.items.length > 2 && (
-                  <p className="text-[10px] text-slate-400 font-bold ml-13">+ {order.items.length - 2} itens</p>
+                  <p className="text-[9px] text-slate-400 font-bold ml-10">+ {order.items.length - 2} itens</p>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Total</span>
-                  <span className="text-lg font-black text-slate-900 italic tracking-tighter">R$ {order.total.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total</span>
+                  <span className="text-base font-black text-slate-900 italic tracking-tighter">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                </div>
                <button 
                 onClick={() => onReorder(order.items)}
-                className="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-primary transition-colors shadow-lg shadow-slate-900/10"
+                className="bg-primary text-white h-9 w-9 rounded-lg flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                >
-                 Repetir <PlusCircle size={14} />
+                 <PlusCircle size={16} />
                </button>
             </div>
           </motion.div>
