@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import Banner from '../components/Banner';
 import PromotionSlider from '../components/PromotionSlider';
+import VideoCarousel from '../components/VideoCarousel';
 import Cart from '../components/Cart';
 import FooterCart from '../components/FooterCart';
 import AccountModal from '../components/AccountModal';
@@ -56,6 +57,7 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   
   const [activeCategory, setActiveCategory] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [infoModal, setInfoModal] = useState({ isOpen: false, title: '', message: '', type: 'info' as 'success' | 'error' | 'info' });
   const [showSplashScreen, setShowSplashScreen] = useState(true);
   const [isAppVisible, setIsAppVisible] = useState(false);
@@ -198,7 +200,28 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
 
     if (searchTerm) {
       const low = searchTerm.toLowerCase();
-      products = products.filter((p: any) => p.name.toLowerCase().includes(low) || p.description?.toLowerCase().includes(low));
+      products = products.filter((p: any) => {
+          // Busca no nome do produto
+          if (p.name.toLowerCase().includes(low)) return true;
+          // Busca na descrição do produto
+          if (p.description?.toLowerCase().includes(low)) return true;
+          
+          // Busca nos sabores (addons que estão nos grupos vinculados)
+          const hasMatchingFlavor = p.addonGroups?.some((group: any) => 
+              group.addons?.some((addon: any) => addon.name.toLowerCase().includes(low))
+          );
+          if (hasMatchingFlavor) return true;
+
+          // Busca nos sabores herdados das categorias
+          const hasMatchingCategoryFlavor = p.categories?.some((cat: any) => 
+              cat.addonGroups?.some((group: any) => 
+                  group.addons?.some((addon: any) => addon.name.toLowerCase().includes(low))
+              )
+          );
+          if (hasMatchingCategoryFlavor) return true;
+
+          return false;
+      });
     }
     return products;
   }, [allProducts, activeCategory, searchTerm, availableCategories]);
@@ -247,49 +270,39 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
                                     Fechado
                                 </span>
                             )}
-                            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase">
-                                <History size={10} /> Autoatendimento
-                            </span>
                         </div>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button 
-                        onClick={openAccountModal}
-                        variant="secondary"
-                        className="w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-slate-400 shadow-lg border border-slate-100 hover:text-primary transition-all active:scale-90 p-0"
+                    <button 
+                        onClick={() => setIsSearchOpen(true)}
+                        className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-400 active:scale-90 transition-all"
                     >
-                        <ReceiptText size={20} />
-                        <span className="text-[7px] font-black uppercase mt-0.5">Conta</span>
-                    </Button>
+                        <Search size={22} />
+                    </button>
+                    <button 
+                        onClick={openAccountModal}
+                        className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-400 active:scale-90 transition-all"
+                    >
+                        <ReceiptText size={22} />
+                    </button>
                 </div>
-            </div>
-
-            <div className="relative mt-4">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                    type="text" 
-                    placeholder="Buscar no cardápio..." 
-                    className="w-full bg-slate-100 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-slate-400 text-slate-900 font-bold shadow-inner"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
             </div>
         </header>
 
-        {/* BANNER E PROMOÇÕES */}
-        <div className="px-5 mb-8 pt-4">
-            <Banner 
-                restaurantId={restaurantId!} 
-                onProductClick={handleProductClick} 
+        {/* PROMOÇÕES NO TOPO - SEM TÍTULO DE BANNER */}
+        <div className="pt-2">
+            <PromotionSlider
+                restaurantId={restaurantId!}
+                onProductClick={handleProductClick}
+                allProducts={allProducts}
             />
         </div>
 
-        <PromotionSlider
-            restaurantId={restaurantId!}
-            onProductClick={handleProductClick}
-            allProducts={allProducts}
-        />
+        {/* VIDEO BANNERS (MP4) */}
+        <div className="px-5 mb-8">
+            <VideoCarousel />
+        </div>
         {/* NAVEGAÇÃO DE CATEGORIAS */}
         <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">
             <button 
@@ -360,9 +373,71 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
             isPlacingOrder={isPlacingOrder}
             isDelivery={false}
         />
+{/* MODAL DE BUSCA OVERLAY */}
+<AnimatePresence>
+  {isSearchOpen && (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] bg-white flex flex-col"
+    >
+      <div className="p-5 flex items-center gap-4 border-b border-slate-100">
+          <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Buscar pratos ou sabores..." 
+                  className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-slate-400 text-slate-900 font-bold"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+              />
+          </div>
+          <button 
+              onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchTerm('');
+              }}
+              className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400"
+          >
+              <X size={20} />
+          </button>
+      </div>
 
-        <AccountModal 
-            isOpen={isAccountModalOpen} 
+      <div className="flex-1 overflow-y-auto p-5 pb-10">
+          {searchTerm && (
+              <div className="mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resultados para "{searchTerm}"</p>
+              </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredProducts.map((p) => (
+                  <DeliveryProductCard 
+                      key={p.id} 
+                      product={p} 
+                      onClick={() => {
+                          handleProductClick(p);
+                          setIsSearchOpen(false);
+                      }} 
+                  />
+              ))}
+              {searchTerm && filteredProducts.length === 0 && (
+                  <div className="col-span-full py-20 text-center">
+                      <Utensils className="mx-auto text-slate-200 mb-4" size={48} />
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nenhum item encontrado</p>
+                  </div>
+              )}
+          </div>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+<AccountModal 
+  isOpen={isAccountModalOpen} 
+
             onClose={closeAccountModal} 
             order={order}
             onRequestClose={handleRequestAccountClosure}
