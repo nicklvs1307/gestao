@@ -7,6 +7,10 @@ import DeliveryProductCard from '../components/DeliveryProductCard';
 import Cart from '../components/Cart';
 import FooterCart from '../components/FooterCart';
 import Banner from '../components/Banner';
+import HighImpactPromo from '../components/HighImpactPromo';
+import CategoryShortcuts from '../components/CategoryShortcuts';
+import ReorderSection from '../components/ReorderSection';
+import BottomNav from '../components/BottomNav';
 import PromotionSlider from '../components/PromotionSlider';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { RestaurantProvider } from '../context/RestaurantContext';
@@ -48,7 +52,26 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const [isProductModalOpen, setProductModalOpen] = useState(false);
   const [isStoreClosedModalOpen, setStoreClosedModalOpen] = useState(false);
 
-  const { localCartItems, handleAddToCart: addToCart, localCartTotal, handleRemoveFromCart, handleUpdateCartItemQuantity, clearCart } = useLocalCart();
+  const { localCartItems, handleAddToCart: addToCart, localCartTotal, handleRemoveFromCart, handleUpdateCartItemQuantity, clearCart, setLocalCartItems } = useLocalCart();
+
+  const [activeTab, setActiveTab] = useState<'home' | 'search' | 'orders' | 'profile'>('home');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const reorderSectionRef = useRef<HTMLDivElement>(null);
+
+  const handleTabChange = (tab: 'home' | 'search' | 'orders' | 'profile') => {
+    setActiveTab(tab);
+    if (tab === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setSearchTerm('');
+    } else if (tab === 'search') {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (tab === 'orders') {
+      reorderSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (tab === 'profile') {
+      alert('Perfil do Usuário - Em Breve!');
+    }
+  };
 
   const [isPixModalOpen, setPixModalOpen] = useState(false);
   const [pixData, setPixData] = useState<{ qrCodeImage: string; pixCopiaECola: string } | null>(null);
@@ -123,6 +146,25 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     alert('Pedido cancelado. Você pode refazê-lo.');
   };
 
+  const handleReorder = (items: any[]) => {
+    // Converte OrderItems para LocalCartItems
+    const cartItems: any[] = items.map((item, index) => ({
+      localId: Date.now() + index,
+      product: item.product,
+      productId: item.productId,
+      quantity: item.quantity,
+      priceAtTime: item.priceAtTime,
+      sizeId: item.sizeId || null,
+      sizeJson: item.sizeJson || null,
+      addonsJson: item.addonsJson || null,
+      flavorsJson: item.flavorsJson || null,
+      observations: item.observations || null,
+    }));
+
+    setLocalCartItems(cartItems);
+    setCartOpen(true);
+  };
+
   const handleSubmitDeliveryOrder = async (deliveryInfo: any) => {
     if (!restaurant) return;
 
@@ -138,6 +180,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             deliveryFee: deliveryFee 
         },
       });
+
+      // Salva o ID do pedido no localStorage para o "Peça Novamente"
+      const storedIds = localStorage.getItem('recent_orders');
+      const ids = storedIds ? JSON.parse(storedIds) : [];
+      const updatedIds = [newOrder.id, ...ids.filter((id: string) => id !== newOrder.id)].slice(0, 5);
+      localStorage.setItem('recent_orders', JSON.stringify(updatedIds));
 
       if (deliveryInfo.paymentMethod === 'pix_online') {
         handlePixPayment(newOrder.id, deliveryInfo);
@@ -199,7 +247,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   return (
     <RestaurantProvider settings={restaurant.settings || null}>
     <RestaurantMeta restaurant={restaurant} />
-    <div className="bg-background min-h-screen pb-24 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
+    <div className="bg-background min-h-screen pb-32 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
         
         {/* Banner Loja Fechada */}
         {!isStoreOpen && (
@@ -296,11 +344,13 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 <div className="max-w-xl mx-auto relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                     <input 
+                        ref={searchInputRef}
                         type="text" 
                         placeholder="Pesquisar itens no cardápio..." 
                         className="w-full bg-card border-2 border-border/50 rounded-[2rem] py-4 pl-12 pr-4 text-sm focus:bg-background focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted-foreground font-medium shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onFocus={() => setActiveTab('search')}
                     />
                 </div>
             </div>
@@ -344,21 +394,32 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             </div>
         ) : (
             <>
-                {/* Highlighted Banner (Promotions & Featured) */}
+                {/* 1. Atalhos de Categoria (Estilo iFood) */}
+                <div className="mb-4">
+                    <CategoryShortcuts 
+                        categories={categories} 
+                        activeCategory={activeCategory} 
+                        onCategoryClick={setActiveCategory} 
+                    />
+                </div>
+
+                {/* 2. Banner de Vídeo / Destaques de Alto Impacto */}
                 <div className="px-5 mb-8">
-                    <Banner 
+                    <HighImpactPromo 
                         restaurantId={restaurant.id} 
                         onProductClick={handleProductCardClick} 
                     />
                 </div>
 
-                {/* PROMOÇÕES (SLIDER HORIZONTAL) */}
-                <PromotionSlider 
-                    restaurantId={restaurant.id}
-                    onProductClick={handleProductCardClick}
-                />
+                {/* 3. Peça Novamente */}
+                <div ref={reorderSectionRef}>
+                    <ReorderSection 
+                        onProductClick={handleProductCardClick}
+                        onReorder={handleReorder}
+                    />
+                </div>
 
-                {/* Categories Nav */}
+                {/* Categories Nav Sticky (Mantido para scroll longo) */}
                 <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">
                     <button 
                         onClick={() => setActiveCategory('todos')}
@@ -457,6 +518,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             isLoading={isPixPaymentLoading}
             />
         )}
+
+        <BottomNav 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            hasOrders={localStorage.getItem('recent_orders') !== null}
+        />
     </div>
     </RestaurantProvider>
   );

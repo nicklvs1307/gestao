@@ -15,7 +15,7 @@ const FooterCart: React.FC<FooterCartProps> = ({ items, total, onClick }) => {
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div className="fixed bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-lg z-[100] animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed bottom-24 md:bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-lg z-[100] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div 
         onClick={onClick}
         className="bg-slate-900 border border-white/10 rounded-[2rem] p-2 flex justify-between items-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"

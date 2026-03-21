@@ -1,10 +1,12 @@
 import React from 'react';
 import type { Product } from '../types';
-import { Plus, ShoppingBag } from 'lucide-react';
+import { Plus, ShoppingBag, Zap } from 'lucide-react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { calculateDiscountedPrice, calculateStartingPrice, hasMultiplePrices } from '../utils/product';
 import { getImageUrl } from '../utils/image';
+import { isVideo } from '../utils/media';
+import { motion } from 'framer-motion';
 
 interface DeliveryProductCardProps {
   product: Product;
@@ -24,22 +26,44 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
     onAddToCart(product);
   };
 
+  const mediaUrl = getImageUrl(product.imageUrl);
+
   return (
     <Card 
       hoverEffect 
-      className="flex h-36 overflow-hidden relative active:scale-[0.98]"
+      className={`flex h-36 overflow-hidden relative active:scale-[0.98] transition-all duration-300 ${hasDiscount ? 'border-primary/20 shadow-primary/5' : ''}`}
       noPadding
       onClick={handleClick}
     >
-      {/* Imagem Estilo Borda Infinita (Esquerda) */}
-      <div className="w-36 h-full shrink-0 bg-slate-50 relative overflow-hidden border-r border-slate-50">
+      {/* Efeito de Brilho para Promoções */}
+      {hasDiscount && (
+        <motion.div 
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 z-10 pointer-events-none"
+        />
+      )}
+
+      {/* Imagem/Vídeo Estilo Borda Infinita (Esquerda) */}
+      <div className="w-36 h-full shrink-0 bg-slate-100 relative overflow-hidden border-r border-slate-50">
         {product.imageUrl ? (
           <>
-            <img 
-              src={getImageUrl(product.imageUrl)} 
-              alt={product.name} 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-            />
+            {isVideo(product.imageUrl) ? (
+              <video 
+                src={mediaUrl} 
+                autoPlay 
+                muted 
+                loop 
+                playsInline 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
+            ) : (
+              <img 
+                src={mediaUrl} 
+                alt={product.name} 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
+            )}
             {/* Overlay sutil para integração da imagem */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
           </>
@@ -51,14 +75,14 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
         
         {/* Badge de Promoção Pequena na Imagem */}
         {hasDiscount && (
-             <div className="absolute top-2 left-2 bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-lg z-10">
-                Oferta
+             <div className="absolute top-2 left-2 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-lg z-20 flex items-center gap-1">
+                <Zap size={8} fill="white" /> Oferta
              </div>
         )}
       </div>
       
       {/* Conteúdo à Direita */}
-      <div className="flex flex-col flex-grow p-4 min-w-0 justify-between">
+      <div className="flex flex-col flex-grow p-4 min-w-0 justify-between bg-white">
           <div className="space-y-1">
               <div className="flex justify-between items-start gap-2">
                 <h3 className="text-sm font-black text-slate-900 leading-tight uppercase italic tracking-tighter truncate">{product.name}</h3>
