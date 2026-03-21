@@ -37,8 +37,8 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
               onClick={() => onProductClick(product)}
               className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-lg shadow-slate-200/50 flex flex-col group active:bg-slate-50 transition-colors"
             >
-              {/* Media Container */}
-              <div className="aspect-square relative overflow-hidden bg-slate-100">
+              {/* Media Container - Reduzido de square para 16:11 */}
+              <div className="aspect-[16/11] relative overflow-hidden bg-slate-100">
                 {isVideo(product.imageUrl) ? (
                   <video src={mediaUrl} autoPlay muted loop playsInline className="w-full h-full object-cover" />
                 ) : (
@@ -46,31 +46,31 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
                 )}
                 
                 {activePromotion && (
-                  <div className="absolute top-2 left-2 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase z-10 animate-pulse">
+                  <div className="absolute top-2 left-2 bg-red-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase z-10 animate-pulse">
                     Oferta
                   </div>
                 )}
               </div>
 
-              {/* Info Container */}
-              <div className="p-3 flex flex-col flex-1 justify-between">
+              {/* Info Container - Mais compacto */}
+              <div className="p-2.5 flex flex-col flex-1 justify-between">
                 <div>
-                  <h4 className="text-[11px] font-black text-slate-900 uppercase italic tracking-tighter line-clamp-2 leading-tight mb-1">
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase italic tracking-tighter line-clamp-1 leading-tight mb-0.5">
                     {product.name}
                   </h4>
-                  <p className="text-[9px] text-slate-400 font-medium line-clamp-1">
+                  <p className="text-[8px] text-slate-400 font-medium line-clamp-1">
                     {product.description}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center justify-between mt-2">
                   <div className="flex flex-col">
-                    <span className="text-[12px] font-black text-slate-900 italic tracking-tighter">
+                    <span className="text-[11px] font-black text-slate-900 italic tracking-tighter">
                       R$ {finalPrice.toFixed(2).replace('.', ',')}
                     </span>
                   </div>
-                  <div className="bg-primary text-white p-1.5 rounded-xl shadow-lg shadow-primary/20">
-                    <Plus size={14} strokeWidth={3} />
+                  <div className="bg-primary text-white p-1 rounded-lg shadow-lg shadow-primary/20">
+                    <Plus size={12} strokeWidth={3} />
                   </div>
                 </div>
               </div>

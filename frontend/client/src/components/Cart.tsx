@@ -115,7 +115,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
               )}
             </div>
 
-            <div className="cart-footer p-6 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] shrink-0">
+            <div className="cart-footer p-6 pb-24 md:pb-6 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] shrink-0">
                 {isDelivery && deliveryFee > 0 && (
                   <div className="flex justify-between items-center mb-2 px-2">
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Truck size={12} /> Taxa de Entrega</span>

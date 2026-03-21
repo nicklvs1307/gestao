@@ -259,9 +259,9 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
         )}
 
         {/* Novo Header com Capa e Logo Circular */}
-        <header className="relative mb-6">
-            {/* Imagem de Capa */}
-            <div className="h-44 md:h-56 w-full bg-muted relative overflow-hidden">
+        <header className="relative mb-4">
+            {/* Imagem de Capa Reduzida */}
+            <div className="h-32 md:h-44 w-full bg-muted relative overflow-hidden">
                 {restaurant.settings?.backgroundImageUrl ? (
                     <>
                         <img 
@@ -279,18 +279,18 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 z-20" />
                 
                 {/* Botões de Ação no Header */}
-                <div className="absolute top-4 right-4 z-20 flex gap-2">
-                    <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 border border-white/10">
-                        <Palette size={18} />
+                <div className="absolute top-3 right-4 z-20 flex gap-2">
+                    <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full h-8 w-8 text-white hover:bg-black/40 border border-white/10">
+                        <Palette size={14} />
                     </Button>
-                    <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 border border-white/10">
-                        <Heart size={18} />
+                    <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-full h-8 w-8 text-white hover:bg-black/40 border border-white/10">
+                        <Heart size={14} />
                     </Button>
                 </div>
             </div>
 
-            {/* Logo Circular Centralizada */}
-            <div className="relative -mt-12 flex justify-center z-20">
+            {/* Logo Circular Subindo para o Topo */}
+            <div className="relative -mt-16 flex justify-center z-20">
                 <div className="w-24 h-24 rounded-full border-[4px] border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
                     {restaurant.logoUrl ? (
                         <img src={restaurant.logoUrl} className="w-full h-full object-cover" alt="Logo" />
