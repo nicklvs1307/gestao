@@ -28,6 +28,15 @@ export const uploadCover = async (file: File) => {
   return response.data;
 };
 
+export const uploadVideoBanner = async (file: File) => {
+  const formData = new FormData();
+  formData.append('video', file);
+  const response = await apiClient.post('/settings/video-banner', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
 export const toggleStoreStatus = async (isOpen: boolean) => {
     const response = await apiClient.put('/settings/status', { isOpen });
     return response.data;

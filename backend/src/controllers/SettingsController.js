@@ -199,6 +199,33 @@ const updateCover = async (req, res) => {
     }
 };
 
+const uploadVideoBanner = async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+        
+        const videoUrl = `/uploads/${req.file.filename}`;
+        
+        // Buscar as configurações atuais para adicionar ao array
+        const settings = await prisma.restaurantSettings.findUnique({
+            where: { restaurantId: req.restaurantId },
+            select: { videoBanners: true }
+        });
+
+        const currentBanners = settings?.videoBanners || [];
+        const updatedBanners = [...currentBanners, videoUrl];
+
+        await prisma.restaurantSettings.update({
+            where: { restaurantId: req.restaurantId },
+            data: { videoBanners: updatedBanners }
+        });
+        
+        res.json({ videoUrl });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao fazer upload do vídeo.' });
+    }
+};
+
 const toggleStatus = async (req, res) => {
     const { isOpen } = req.body;
     try {
@@ -291,6 +318,7 @@ module.exports = {
     getClientSettings,
     updateLogo,
     updateCover,
+    uploadVideoBanner,
     toggleStatus,
     getRestaurantBySlug,
     checkSlugAvailability

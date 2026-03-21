@@ -344,6 +344,13 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             </div>
         </header>
 
+        <div className="pt-2">
+            <FeaturedGrid 
+                products={featuredProducts}
+                onProductClick={handleProductCardClick}
+            />
+        </div>
+
         {/* 3. Peça Novamente */}
         <div ref={reorderSectionRef}>
             <ReorderSection 
@@ -352,14 +359,9 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
             />
         </div>
 
-        <div className="mb-8">
+        <div className="mb-4">
             <VideoCarousel videos={restaurant.settings?.videoBanners || []} />
         </div>
-
-        <FeaturedGrid 
-            products={featuredProducts}
-            onProductClick={handleProductCardClick}
-        />
 
         {/* Categories Nav Sticky (Mantido para scroll longo) */}
         <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">

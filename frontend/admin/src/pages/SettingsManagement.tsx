@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getSettings, updateSettings, getCategories, uploadLogo, uploadCover, checkSlugAvailability } from '../services/api';
+import { getSettings, updateSettings, getCategories, uploadLogo, uploadCover, uploadVideoBanner, checkSlugAvailability } from '../services/api';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printing';
 import { 
   Save, Copy, ExternalLink, Palette, Store, 
@@ -73,6 +73,7 @@ const SettingsManagement: React.FC = () => {
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const path = location.pathname;
@@ -422,8 +423,33 @@ const SettingsManagement: React.FC = () => {
                             className="mt-3"
                             onClick={() => setAppearance({...appearance, videoBanners: [...appearance.videoBanners, '']})}
                         >
-                            <Plus size={14} className="mr-2"/> Adicionar Vídeo
+                            <Plus size={14} className="mr-2"/> Adicionar Link Manual
                         </Button>
+
+                        <Button 
+                            variant="secondary" 
+                            className="mt-3 ml-2 bg-orange-500 text-white hover:bg-orange-600"
+                            onClick={() => videoInputRef.current?.click()}
+                        >
+                            <Smartphone size={14} className="mr-2"/> Upload de Vídeo
+                        </Button>
+                        <input 
+                            type="file" 
+                            ref={videoInputRef} 
+                            className="hidden" 
+                            accept="video/*"
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                    const { videoUrl } = await uploadVideoBanner(file);
+                                    setAppearance({...appearance, videoBanners: [...appearance.videoBanners, `/api${videoUrl}`]});
+                                    toast.success('Vídeo enviado com sucesso!');
+                                } catch (error) {
+                                    toast.error('Erro ao enviar vídeo.');
+                                }
+                            }}
+                        />
                     </div>
                     <div>
                         <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2">

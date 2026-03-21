@@ -11,6 +11,7 @@ router.put('/', needsAuth, checkPermission('settings:manage'), SettingsControlle
 router.put('/status', needsAuth, checkPermission('settings:manage'), SettingsController.toggleStatus);
 router.post('/logo', needsAuth, checkPermission('settings:manage'), upload.single('logo'), SettingsController.updateLogo);
 router.post('/cover', needsAuth, checkPermission('settings:manage'), upload.single('cover'), SettingsController.updateCover);
+router.post('/video-banner', needsAuth, checkPermission('settings:manage'), upload.single('video'), SettingsController.uploadVideoBanner);
 
 // Client
 router.get('/slug/:slug', SettingsController.getRestaurantBySlug);
