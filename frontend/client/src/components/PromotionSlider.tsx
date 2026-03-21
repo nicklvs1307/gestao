@@ -11,6 +11,7 @@ interface PromotionSliderProps {
 }
 
 const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, restaurantId, allProducts }) => {
+  return null; // Componente desativado a pedido do usuário
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 

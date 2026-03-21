@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import Banner from '../components/Banner';
-import PromotionSlider from '../components/PromotionSlider';
 import VideoCarousel from '../components/VideoCarousel';
 import Cart from '../components/Cart';
 import FooterCart from '../components/FooterCart';
@@ -290,18 +289,9 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
             </div>
         </header>
 
-        {/* PROMOÇÕES NO TOPO - SEM TÍTULO DE BANNER */}
-        <div className="pt-2">
-            <PromotionSlider
-                restaurantId={restaurantId!}
-                onProductClick={handleProductClick}
-                allProducts={allProducts}
-            />
-        </div>
-
         {/* VIDEO BANNERS (MP4) */}
         <div className="px-5 mb-8">
-            <VideoCarousel />
+            <VideoCarousel videos={restaurantSettings?.videoBanners || []} />
         </div>
         {/* NAVEGAÇÃO DE CATEGORIAS */}
         <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">

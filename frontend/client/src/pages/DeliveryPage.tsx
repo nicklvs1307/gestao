@@ -11,7 +11,6 @@ import FeaturedGrid from '../components/FeaturedGrid';
 import CategoryShortcuts from '../components/CategoryShortcuts';
 import ReorderSection from '../components/ReorderSection';
 import BottomNav from '../components/BottomNav';
-import PromotionSlider from '../components/PromotionSlider';
 import VideoCarousel from '../components/VideoCarousel';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { RestaurantProvider } from '../context/RestaurantContext';
@@ -344,14 +343,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                 </div>
             </div>
         </header>
-
-        <div className="pt-2">
-            <PromotionSlider
-                restaurantId={restaurant.id}
-                onProductClick={handleProductCardClick}
-                allProducts={restaurant.categories.flatMap(cat => getVisibleProducts(cat))}
-            />
-        </div>
 
         {/* 3. Peça Novamente */}
         <div ref={reorderSectionRef}>

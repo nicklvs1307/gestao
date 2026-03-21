@@ -219,6 +219,10 @@ export interface RestaurantSettings {
   isOpen: boolean; 
   autoAcceptOrders: boolean; 
   autoPrintEnabled: boolean; 
+  videoBanners?: string[];
+  loyaltyEnabled?: boolean;
+  pointsPerReal?: number;
+  cashbackPercentage?: number;
   textColor?: string;
   restaurant: Restaurant;
 }

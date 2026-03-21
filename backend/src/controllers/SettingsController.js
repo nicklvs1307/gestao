@@ -45,13 +45,13 @@ const updateSettings = async (req, res) => {
         latitude, longitude,
         primaryColor, secondaryColor, backgroundColor, backgroundType, 
         backgroundImageUrl, isOpen, deliveryFee, deliveryTime, autoAcceptOrders,
-        welcomeMessage, menuUrl, allowTakeaway
+        welcomeMessage, menuUrl, allowTakeaway,
+        loyaltyEnabled, pointsPerReal, cashbackPercentage, videoBanners, autoPrintEnabled
     } = req.body;
 
     try {
         // ... (lógica de slug mantida)
         let finalSlug = slug ? slugify(slug) : undefined;
-        // ... rest of the existing slug logic ...
         
         if (finalSlug) {
             const existingSlug = await prisma.restaurant.findFirst({
@@ -101,9 +101,14 @@ const updateSettings = async (req, res) => {
                     deliveryFee: deliveryFee !== undefined ? parseFloat(deliveryFee) : undefined,
                     deliveryTime,
                     autoAcceptOrders,
+                    autoPrintEnabled,
                     welcomeMessage,
                     menuUrl,
-                    allowTakeaway
+                    allowTakeaway,
+                    loyaltyEnabled,
+                    pointsPerReal: pointsPerReal !== undefined ? parseInt(pointsPerReal) : undefined,
+                    cashbackPercentage: cashbackPercentage !== undefined ? parseFloat(cashbackPercentage) : undefined,
+                    videoBanners
                 } 
             })
         ]);
