@@ -14,53 +14,48 @@ const PromotionManagement: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
+    const [categories, setCategories] = useState<any[]>([]);
+    const [addonGroups, setAddonGroups] = useState<any[]>([]);
+
     const fetchPromotions = async () => {
         try {
             setIsLoading(true);
-            const data = await getPromotions();
-            setPromotions(Array.isArray(data) ? data : []);
+            const [promoData, catData, addonData] = await Promise.all([
+                getPromotions(),
+                getCategories(),
+                getAddonGroups()
+            ]);
+            setPromotions(Array.isArray(promoData) ? promoData : []);
+            setCategories(Array.isArray(catData) ? catData : []);
+            setAddonGroups(Array.isArray(addonData) ? addonData : []);
         } catch (err) {
-            toast.error('Erro ao carregar promoções.');
+            toast.error('Erro ao carregar dados.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => { fetchPromotions(); }, []);
-
-    const handleDelete = async (id: string) => {
-        if (!window.confirm('Excluir esta promoção?')) return;
-        try {
-            await deletePromotion(id);
-            toast.success("Promoção removida.");
-            fetchPromotions();
-        } catch (e) { toast.error("Erro ao excluir."); }
-    };
-
-    const handleStatusToggle = async (p: Promotion) => {
-        try {
-            const newStatus = !p.isActive;
-            await updatePromotion(p.id, { isActive: newStatus });
-            setPromotions(prev => prev.map(item => item.id === p.id ? { ...item, isActive: newStatus } : item));
-            toast.success(newStatus ? "Promoção ativada!" : "Promoção pausada.");
-        } catch (e) { toast.error("Erro ao alterar status."); }
-    };
-
-    const getStatusInfo = (p: Promotion) => {
-        const now = new Date();
-        const start = parseISO(p.startDate);
-        const end = parseISO(p.endDate);
-        
-        if (!p.isActive) return { label: 'Pausada', color: 'bg-slate-100 text-slate-400', textColor: 'text-slate-400' };
-        if (isBefore(now, start)) return { label: 'Agendada', color: 'bg-blue-50 text-blue-600', textColor: 'text-blue-500' };
-        if (isAfter(now, end)) return { label: 'Expirada', color: 'bg-rose-50 text-rose-600', textColor: 'text-rose-500' };
-        return { label: 'Ativa', color: 'bg-emerald-50 text-emerald-600', textColor: 'text-emerald-500' };
+    const getTargetName = (p: Promotion) => {
+        if (p.productId && p.product) return p.product.name;
+        if (p.categoryId) {
+            const cat = categories.find(c => c.id === p.categoryId);
+            return cat ? `Cat: ${cat.name}` : 'Categoria';
+        }
+        if (p.addonId) {
+            // Procura o addon dentro dos grupos
+            for (const group of addonGroups) {
+                const addon = group.addons?.find((a: any) => a.id === p.addonId);
+                if (addon) return `Addon: ${addon.name}`;
+            }
+            return 'Adicional';
+        }
+        return 'Geral (Todo o Cardápio)';
     };
 
     const getTargetIcon = (p: Promotion) => {
-        if (p.productId) return <Package size={14} className="text-slate-400" />;
-        if (p.addonId) return <Zap size={14} className="text-slate-400" />;
-        if (p.categoryId) return <Layers size={14} className="text-slate-400" />;
+        if (p.productId) return <Package size={14} className="text-blue-400" />;
+        if (p.addonId) return <Zap size={14} className="text-orange-400" />;
+        if (p.categoryId) return <Layers size={14} className="text-emerald-400" />;
         return <Tag size={14} className="text-slate-400" />;
     };
 
@@ -138,8 +133,8 @@ const PromotionManagement: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 {getTargetIcon(promo)}
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight truncate">
-                                                    {promo.product ? promo.product.name : 'Geral'}
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight truncate max-w-[150px]">
+                                                    {getTargetName(promo)}
                                                 </span>
                                             </div>
                                         </td>

@@ -71,7 +71,7 @@ const PageLoader = () => (
 function AdminRoutes() {
   const [pageTitle, setPageTitle] = useState('Dashboard');
   const location = useLocation();
-  const { openPromotionModal, openTableModal, openPaymentMethodModal, refetchPaymentMethods } = useModals();
+  const { openTableModal, openPaymentMethodModal, refetchPaymentMethods } = useModals();
 
   useEffect(() => {
     const path = location.pathname;

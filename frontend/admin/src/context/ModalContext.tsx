@@ -59,10 +59,6 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const closeCategoryModal = () => { setCategoryModalOpen(false); setCategoryToEdit(null); };
   const triggerCategoriesRefetch = () => setRefetchCategories(prev => prev + 1);
 
-  const openPromotionModal = (promotion = null) => { setPromotionToEdit(promotion); setPromotionModalOpen(true); };
-  const closePromotionModal = () => { setPromotionModalOpen(false); setPromotionToEdit(null); };
-  const triggerPromotionsRefetch = () => setRefetchPromotions(prev => prev + 1);
-
   const openOrderDetailModal = (order: any) => { setOrderToView(order); setOrderDetailModalOpen(true); };
   const closeOrderDetailModal = () => { setOrderDetailModalOpen(false); setOrderToView(null); };
 
@@ -74,7 +70,6 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     <ModalContext.Provider value={{
       isTableModalOpen, tableToEdit, openTableModal, closeTableModal, refetchTables, triggerTablesRefetch,
       isCategoryModalOpen, categoryToEdit, openCategoryModal, closeCategoryModal, refetchCategories, triggerCategoriesRefetch,
-      isPromotionModalOpen, promotionToEdit, openPromotionModal, closePromotionModal, refetchPromotions, triggerPromotionsRefetch,
       isOrderDetailModalOpen, orderToView, openOrderDetailModal, closeOrderDetailModal,
       isPaymentMethodModalOpen, paymentMethodToEdit, openPaymentMethodModal, closePaymentMethodModal, refetchPaymentMethods, triggerPaymentMethodsRefetch
     }}>

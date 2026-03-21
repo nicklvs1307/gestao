@@ -119,9 +119,8 @@ class ChecklistReportService {
             if (res.value && res.task?.type === "PHOTO") {
               try {
                 const photos = JSON.parse(res.value);
-                // Prioriza URL de produção do .env ou tenta montar a URL base
-                const baseUrl = process.env.API_URL || "https://api.kicardapio.com.br"; 
-                if (Array.isArray(photos)) {
+                const baseUrl = process.env.API_URL; 
+                if (Array.isArray(photos) && baseUrl) {
                   photos.forEach((p, idx) => {
                     summaryMessage += `     └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
                   });
