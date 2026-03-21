@@ -598,6 +598,7 @@ model Category {
 
   products    Product[] 
   addonGroups AddonGroup[] // Vínculo com categorias para herança automática (Estilo Uai Rango)
+  promotions  Promotion[] // Relação inversa para promoções
 
   // Para sub-categorias
   parentId      String?
@@ -756,6 +757,7 @@ model Addon {
 
   // Ficha Técnica do Adicional
   ingredients  AddonIngredient[]
+  promotions   Promotion[] // Novo: Promoções do sistema de marketing
 
   // Relação com o Grupo de Adicionais
   addonGroupId String
@@ -1006,7 +1008,10 @@ model Promotion {
   product       Product?   @relation(fields: [productId], references: [id])
 
   addonId       String?
+  addon         Addon?     @relation(fields: [addonId], references: [id])
+
   categoryId    String?
+  category      Category?  @relation(fields: [categoryId], references: [id])
 
   @@index([restaurantId])
   @@index([productId])

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPromotions, deletePromotion, updatePromotion, getCategories, getAddonGroups } from '../services/api';
+import { getPromotions, deletePromotion, updatePromotion } from '../services/api';
 import { Plus, Edit, Trash2, Percent, Calendar, Tag, Loader2, Sparkles, RefreshCw, Ticket, Package, Layers, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format, parseISO, isAfter, isBefore } from 'date-fns';
@@ -14,20 +14,11 @@ const PromotionManagement: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
-    const [categories, setCategories] = useState<any[]>([]);
-    const [addonGroups, setAddonGroups] = useState<any[]>([]);
-
     const fetchPromotions = async () => {
         try {
             setIsLoading(true);
-            const [promoData, catData, addonData] = await Promise.all([
-                getPromotions(),
-                getCategories(),
-                getAddonGroups()
-            ]);
+            const promoData = await getPromotions();
             setPromotions(Array.isArray(promoData) ? promoData : []);
-            setCategories(Array.isArray(catData) ? catData : []);
-            setAddonGroups(Array.isArray(addonData) ? addonData : []);
         } catch (err) {
             toast.error('Erro ao carregar dados.');
         } finally {
@@ -35,20 +26,37 @@ const PromotionManagement: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        fetchPromotions();
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Tem certeza que deseja excluir esta promoção?')) return;
+        try {
+            await deletePromotion(id);
+            toast.success('Promoção excluída!');
+            fetchPromotions();
+        } catch (err) {
+            toast.error('Erro ao excluir promoção.');
+        }
+    };
+
+    const getStatusInfo = (p: Promotion) => {
+        const now = new Date();
+        const start = parseISO(p.startDate);
+        const end = parseISO(p.endDate);
+
+        if (!p.isActive) return { label: 'Inativa', color: 'bg-slate-100', textColor: 'text-slate-400' };
+        if (isBefore(now, start)) return { label: 'Agendada', color: 'bg-blue-50', textColor: 'text-blue-500' };
+        if (isAfter(now, end)) return { label: 'Expirada', color: 'bg-rose-50', textColor: 'text-rose-400' };
+        return { label: 'Ativa', color: 'bg-emerald-50', textColor: 'text-emerald-600' };
+    };
+
     const getTargetName = (p: Promotion) => {
         if (p.productId && p.product) return p.product.name;
-        if (p.categoryId) {
-            const cat = categories.find(c => c.id === p.categoryId);
-            return cat ? `Cat: ${cat.name}` : 'Categoria';
-        }
-        if (p.addonId) {
-            // Procura o addon dentro dos grupos
-            for (const group of addonGroups) {
-                const addon = group.addons?.find((a: any) => a.id === p.addonId);
-                if (addon) return `Addon: ${addon.name}`;
-            }
-            return 'Adicional';
-        }
+        if (p.categoryId && p.category) return `Cat: ${p.category.name}`;
+        if (p.addonId && p.addon) return `Addon: ${p.addon.name}`;
+        
         return 'Geral (Todo o Cardápio)';
     };
 

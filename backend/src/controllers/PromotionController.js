@@ -72,7 +72,8 @@ const getAllPromotions = async (req, res) => {
             where: { restaurantId: req.restaurantId }, 
             include: { 
                 product: { select: { id: true, name: true, imageUrl: true } },
-                // addon: { select: { id: true, name: true } }, // Quando addon for mapeado no prisma
+                addon: { select: { id: true, name: true } },
+                category: { select: { id: true, name: true } }
             }, 
             orderBy: { startDate: 'desc' } 
         })); 
@@ -107,7 +108,14 @@ const createPromotion = async (req, res) => {
         };
         if (productId) data.product = { connect: { id: productId } };
         
-        const promotion = await prisma.promotion.create({ data, include: { product: true } });
+        const promotion = await prisma.promotion.create({ 
+            data, 
+            include: { 
+                product: true,
+                addon: true,
+                category: true
+            } 
+        });
         res.status(201).json(promotion);
     } catch (error) { 
         console.error(error);
@@ -171,7 +179,11 @@ const updatePromotion = async (req, res) => {
         const updated = await prisma.promotion.update({
             where: { id },
             data,
-            include: { product: true }
+            include: { 
+                product: true,
+                addon: true,
+                category: true
+            }
         });
         res.json(updated);
     } catch (error) {

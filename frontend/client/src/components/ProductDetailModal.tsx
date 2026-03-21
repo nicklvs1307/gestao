@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Product, SizeOption, AddonOption, Promotion } from '../types';
 import { toast } from 'sonner';
 import { 
@@ -47,7 +48,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
 
   const config = getPizzaConfig();
 
-  const addonGroups = React.useMemo(() => {
+  const addonGroups = useMemo(() => {
     if (!product) return [];
     
     // Merge de grupos: Categorias herdadas primeiro, depois grupos diretos do produto
@@ -118,6 +119,21 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     return promotions?.find(p => p.isActive && p.addonId === addon.id);
   };
 
+  const getProductPromotion = (product: Product) => {
+    // 1. Promoção direta no produto
+    const directPromo = product.promotions?.find(p => p.isActive) || 
+                       promotions?.find(p => p.isActive && p.productId === product.id);
+    if (directPromo) return directPromo;
+
+    // 2. Promoção por categoria
+    const categoryPromo = promotions?.find(p => p.isActive && product.categories?.some(c => c.id === p.categoryId));
+    if (categoryPromo) return categoryPromo;
+
+    // 3. Promoção Global (sem alvo específico)
+    const globalPromo = promotions?.find(p => p.isActive && !p.productId && !p.addonId && !p.categoryId);
+    return globalPromo;
+  };
+
   const isPromoActive = (addon: any) => {
     // 1. Verifica no novo sistema de promoções (Prioridade)
     if (getAddonPromotion(addon)) return true;
@@ -152,7 +168,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     if (!product) return 0;
     let basePrice = selectedSize ? selectedSize.price : product.price;
 
-    const promo = product.promotions?.find(p => p.isActive);
+    const promo = getProductPromotion(product);
     if (promo) {
         if (promo.discountType === 'percentage') basePrice *= (1 - promo.discountValue / 100);
         else basePrice = Math.max(0, basePrice - promo.discountValue);
