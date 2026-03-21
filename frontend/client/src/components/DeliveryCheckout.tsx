@@ -224,7 +224,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
           </h2>
       </div>
 
-      <div className="flex-1 p-6 pb-40 space-y-8 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 p-6 pb-48 space-y-8 overflow-y-auto custom-scrollbar">
         
         {step === 'form' ? (
             /* --- TELA 1: FORMULÁRIO --- */

@@ -52,8 +52,8 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
 
   return (
     <>
-      <div className={cn("cart-overlay", isOpen && "open", "backdrop-blur-sm bg-black/40")} onClick={handleCloseWrapper}></div>
-      <div className={cn("cart-panel", isOpen && "open", isDelivery && "delivery-cart-panel", "bg-slate-50 shadow-2xl ring-1 ring-black/5 flex flex-col")}>
+      <div className={cn("cart-overlay", isOpen && "open", "backdrop-blur-sm bg-black/40 z-[150]")} onClick={handleCloseWrapper}></div>
+      <div className={cn("cart-panel", isOpen && "open", isDelivery && "delivery-cart-panel", "bg-slate-50 shadow-2xl ring-1 ring-black/5 flex flex-col z-[200]")}>
         
         {/* Header fixo no topo do painel */}
         <div className="cart-header border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center px-4 h-16 shrink-0">
