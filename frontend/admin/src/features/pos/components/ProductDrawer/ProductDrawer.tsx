@@ -30,7 +30,12 @@ export const ProductDrawer: React.FC = () => {
 
   const confirmAddToCart = () => {
     const size = product.sizes?.find(s => s.id === selectedSizeId);
-    const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => safeAddonIds.includes(a.id)) || [];
+    
+    // Map each ID in safeAddonIds to its corresponding addon object, allowing duplicates for quantity
+    const selectedAddons = safeAddonIds.map(id => {
+      const addon = product.addonGroups?.flatMap(g => g.addons).find(a => a.id === id);
+      return addon;
+    }).filter(Boolean);
 
     let itemName = product.name;
     if (size) itemName += ` (${size.name})`;
@@ -112,33 +117,74 @@ export const ProductDrawer: React.FC = () => {
             <div key={group.id} className="space-y-4">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
                 <div className="w-1 h-4 bg-blue-500 rounded-full" /> {group.name} 
-                <span className="text-[8px] opacity-50 ml-2">(Max: {group.type === 'single' ? '1' : 'Vários'})</span>
+                <span className="text-[8px] opacity-50 ml-2">
+                  ({group.type === 'single' ? 'Selecione 1' : `Máx: ${group.maxQuantity || 'Livre'}`})
+                </span>
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                 {group.addons.map(addon => {
-                  const isSelected = safeAddonIds.includes(addon.id);
+                  const currentQty = safeAddonIds.filter(id => id === addon.id).length;
+                  const isSelected = currentQty > 0;
+                  
                   return (
                     <Card 
                       key={addon.id} 
-                      onClick={() => { 
-                        if (group.type === 'single') { 
-                          const othersInGroup = group.addons.map(a => a.id); 
-                          const newIds = safeAddonIds.filter(id => !othersInGroup.includes(id)); 
-                          setSelectedAddonIds([...newIds, addon.id]); 
-                        } else { 
-                          if (isSelected) setSelectedAddonIds(safeAddonIds.filter(id => id !== addon.id)); 
-                          else setSelectedAddonIds([...safeAddonIds, addon.id]); 
-                        } 
-                      }} 
+                      onClick={() => {
+                        if (group.type === 'single') {
+                          const othersInGroup = group.addons.map(a => a.id);
+                          const newIds = safeAddonIds.filter(id => !othersInGroup.includes(id));
+                          setSelectedAddonIds([...newIds, addon.id]);
+                        } else if (currentQty === 0) {
+                          // Se não está selecionado, adiciona a primeira unidade respeitando o limite do grupo
+                          const totalInGroup = safeAddonIds.filter(id => group.addons.some(a => a.id === id)).length;
+                          if (group.maxQuantity > 0 && totalInGroup >= group.maxQuantity) {
+                            toast.warning(`Limite de ${group.maxQuantity} itens atingido em "${group.name}"`);
+                            return;
+                          }
+                          setSelectedAddonIds([...safeAddonIds, addon.id]);
+                        }
+                      }}
                       className={cn(
-                        "p-4 border-2 transition-all flex flex-col items-center justify-center text-center gap-1 shadow-sm cursor-pointer", 
+                        "p-4 border-2 transition-all flex flex-col items-center justify-center text-center gap-2 shadow-sm cursor-pointer relative min-h-[100px]", 
                         isSelected ? "border-blue-500 bg-blue-50 shadow-lg shadow-blue-100" : "border-slate-50 bg-white text-slate-500 hover:border-slate-200"
                       )}
                     >
-                      <span className={cn("font-black text-[10px] uppercase italic leading-none", isSelected ? "text-blue-700" : "text-slate-600")}>
+                      <span className={cn("font-black text-[10px] uppercase italic leading-tight", isSelected ? "text-blue-700" : "text-slate-600")}>
                         {addon.name}
                       </span>
-                      {addon.price > 0 && <span className="text-[9px] font-black text-emerald-600 mt-1">+ R$ {addon.price.toFixed(2)}</span>}
+                      {addon.price > 0 && <span className="text-[9px] font-black text-emerald-600 leading-none">+ R$ {addon.price.toFixed(2)}</span>}
+                      
+                      {isSelected && group.type !== 'single' && (
+                        <div className="flex items-center gap-2 mt-1 bg-white rounded-lg p-1 border border-blue-100 shadow-sm" onClick={e => e.stopPropagation()}>
+                          <button 
+                            onClick={() => {
+                              const index = safeAddonIds.lastIndexOf(addon.id);
+                              if (index !== -1) {
+                                const newIds = [...safeAddonIds];
+                                newIds.splice(index, 1);
+                                setSelectedAddonIds(newIds);
+                              }
+                            }}
+                            className="w-6 h-6 flex items-center justify-center rounded bg-slate-50 text-slate-400 hover:text-rose-500"
+                          >
+                            <Minus size={12} strokeWidth={3} />
+                          </button>
+                          <span className="text-xs font-black italic text-slate-900 w-4">{currentQty}</span>
+                          <button 
+                            onClick={() => {
+                              const totalInGroup = safeAddonIds.filter(id => group.addons.some(a => a.id === id)).length;
+                              if (group.maxQuantity > 0 && totalInGroup >= group.maxQuantity) {
+                                toast.warning(`Limite de ${group.maxQuantity} itens atingido em "${group.name}"`);
+                                return;
+                              }
+                              setSelectedAddonIds([...safeAddonIds, addon.id]);
+                            }}
+                            className="w-6 h-6 flex items-center justify-center rounded bg-slate-50 text-slate-400 hover:text-emerald-500"
+                          >
+                            <Plus size={12} strokeWidth={3} />
+                          </button>
+                        </div>
+                      )}
                     </Card>
                   );
                 })}

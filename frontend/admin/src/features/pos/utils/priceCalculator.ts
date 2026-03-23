@@ -16,11 +16,10 @@ export const calculateProductPrice = (
   const addonsPrice = product.addonGroups?.reduce((total, group) => {
     if (!group.addons) return total;
     
-    const selectedInGroup = group.addons.filter(a => safeAddonIds.includes(a.id));
-    
-    if (selectedInGroup.length === 0) return total;
-
     if (group.isFlavorGroup) {
+      const selectedInGroup = group.addons.filter(a => safeAddonIds.includes(a.id));
+      if (selectedInGroup.length === 0) return total;
+      
       const prices = selectedInGroup.map(a => a.price || 0);
       const rule = group.priceRule || 'higher';
       if (rule === 'average' && prices.length > 0) {
@@ -31,7 +30,13 @@ export const calculateProductPrice = (
       return total;
     }
 
-    return total + selectedInGroup.reduce((sum, addon) => sum + (addon.price || 0), 0);
+    const groupAddonIds = group.addons.map(a => a.id);
+    const selectedInGroupIds = safeAddonIds.filter(id => groupAddonIds.includes(id));
+    
+    return total + selectedInGroupIds.reduce((sum, id) => {
+      const addon = group.addons.find(a => a.id === id);
+      return sum + (addon?.price || 0);
+    }, 0);
   }, 0) || 0;
 
   return (basePrice + addonsPrice) * quantity;
