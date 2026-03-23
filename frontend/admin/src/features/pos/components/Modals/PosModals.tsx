@@ -59,9 +59,16 @@ export const PosModals: React.FC<PosModalsProps> = ({
 
       {activeModal === 'delivery_info' && (
         <CustomerSelectionModal 
+          isOpen={true}
           onClose={() => setActiveModal('none')} 
-          onSelect={handleSelectCustomer}
-          availableAddresses={customerAddresses}
+          onSelectCustomer={(data) => {
+            handleSelectCustomer({
+              name: data.name,
+              phone: data.phone,
+              address: data.addressStr
+            });
+            setActiveModal('none');
+          }}
         />
       )}
     </AnimatePresence>

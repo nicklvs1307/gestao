@@ -126,8 +126,8 @@ export const ProductDrawer: React.FC = () => {
                           const newIds = safeAddonIds.filter(id => !othersInGroup.includes(id)); 
                           setSelectedAddonIds([...newIds, addon.id]); 
                         } else { 
-                          if (isSelected) setSelectedAddonIds(prev => (Array.isArray(prev) ? prev : []).filter(id => id !== addon.id)); 
-                          else setSelectedAddonIds(prev => [...(Array.isArray(prev) ? prev : []), addon.id]); 
+                          if (isSelected) setSelectedAddonIds(safeAddonIds.filter(id => id !== addon.id)); 
+                          else setSelectedAddonIds([...safeAddonIds, addon.id]); 
                         } 
                       }} 
                       className={cn(
