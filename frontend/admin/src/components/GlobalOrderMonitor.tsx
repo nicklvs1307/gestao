@@ -214,10 +214,17 @@ const GlobalOrderMonitor: React.FC = () => {
       if (allToPrint.length === 0) return;
 
       for (const order of allToPrint) {
-        console.log(`Enviando para impressora: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
+        console.log(`[AUTOPRINT] Iniciando impressão automática: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
         try {
           const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-          const receiptSettings = JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
+          
+          // Busca as configurações de layout atualizadas em tempo real
+          const sLayout = localStorage.getItem('receipt_layout');
+          const sSettings = localStorage.getItem('receipt_settings');
+          const receiptSettings = sLayout ? JSON.parse(sLayout) : (sSettings ? JSON.parse(sSettings) : {});
+
+          console.log(`[AUTOPRINT DEBUG] Logo=${receiptSettings.showLogo}, Fonte=${receiptSettings.fontSize}`);
+
           const settingsData = await getSettings();
           const restaurantInfo = {
               name: settingsData.name, address: settingsData.address, phone: settingsData.phone,

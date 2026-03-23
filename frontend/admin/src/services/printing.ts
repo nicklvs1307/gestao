@@ -590,9 +590,26 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
       categoryMapping: config?.categoryMapping || {}
   };
 
-  const finalSettings = (receiptSettings && Object.keys(receiptSettings).length > 0) 
-      ? receiptSettings 
-      : JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
+  // Tenta carregar as configurações. Prioridade: 
+  // 1. Objeto passado via argumento (se não for vazio)
+  // 2. localStorage 'receipt_layout' (novo padrão)
+  // 3. localStorage 'receipt_settings' (legado)
+  const storageLayout = localStorage.getItem('receipt_layout');
+  const storageSettings = localStorage.getItem('receipt_settings');
+  
+  let finalSettings: ReceiptSettings;
+  
+  if (receiptSettings && Object.keys(receiptSettings).length > 0) {
+      finalSettings = receiptSettings;
+  } else if (storageLayout) {
+      finalSettings = JSON.parse(storageLayout);
+  } else if (storageSettings) {
+      finalSettings = JSON.parse(storageSettings);
+  } else {
+      finalSettings = { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '', itemSpacing: 2 };
+  }
+
+  console.log(`[PRINT DEBUG] Usando configurações: Logo=${finalSettings.showLogo}, Fonte=${finalSettings.fontSize}`);
   const finalRestaurant = restaurantInfo || { 
       name: localStorage.getItem('restaurant_name'),
       address: localStorage.getItem('restaurant_address'),
