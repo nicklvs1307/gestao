@@ -66,20 +66,26 @@ export interface Product {
 
 export interface CartItem {
   id: string;
+  cartItemId?: string; // Usado internamente no frontend
   productId: string;
-  product?: Product; // Opcional para não quebrar outros lugares, mas útil para impressão
+  product?: Product;
   name: string;
   price: number;
   quantity: number;
+  observation?: string;
   imageUrl?: string;
   selectedSize?: SizeOption;
   selectedAddons?: AddonOption[];
-  totalPrice: number;
+  totalPrice?: number;
+  // Campos estruturados (JSON) para persistência e visualização rápida
+  sizeJson?: string | null;
+  addonsJson?: string | null;
+  flavorsJson?: string | null;
   // Campos adicionais para o pedido
-  productDbId: string; // ID do produto no banco de dados
-  selectedSizeDbId?: string; // ID do tamanho no banco de dados
-  selectedAddonDbIds?: string[]; // IDs dos adicionais no banco de dados
-  selectedFlavorIds?: string[]; // IDs dos sabores no banco de dados
+  productDbId: string;
+  selectedSizeDbId?: string;
+  selectedAddonDbIds?: string[];
+  selectedFlavorIds?: string[];
 }
 
 export interface OrderItem {

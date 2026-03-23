@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getSettings, updateSettings, getCategories, uploadLogo, uploadCover, uploadVideoBanner, checkSlugAvailability } from '../services/api';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printing';
+import PrinterLayoutEditor, { type ReceiptLayout } from '../components/PrinterLayoutEditor';
 import { 
   Save, Copy, ExternalLink, Palette, Store, 
   Clock, MapPin, Phone, Link as LinkIcon, Image as ImageIcon,
@@ -63,6 +64,16 @@ const SettingsManagement: React.FC = () => {
   const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
   const [agentStatus, setAgentStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+  
+  const [receiptLayout, setReceiptLayout] = useState<ReceiptLayout>({
+    showLogo: true,
+    showAddress: true,
+    showOrderDate: true,
+    fontSize: 'medium',
+    headerText: '',
+    footerText: 'OBRIGADO PELA PREFERÊNCIA!',
+    itemSpacing: 2
+  });
   
   const [printerConfig, setPrinterConfig] = useState<PrinterConfig>({
       cashierPrinters: [''],
@@ -129,6 +140,9 @@ const SettingsManagement: React.FC = () => {
       const savedPrinter = localStorage.getItem('printer_config');
       if (savedPrinter) setPrinterConfig(JSON.parse(savedPrinter));
 
+      const savedLayout = localStorage.getItem('receipt_layout');
+      if (savedLayout) setReceiptLayout(JSON.parse(savedLayout));
+
       await loadPrinters();
     } catch (error) { console.error(error); }
     finally { setIsLoading(false); }
@@ -177,6 +191,7 @@ const SettingsManagement: React.FC = () => {
       });
       setOriginalSlug(general.slug);
       localStorage.setItem('printer_config', JSON.stringify(printerConfig));
+      localStorage.setItem('receipt_layout', JSON.stringify(receiptLayout));
       toast.success('Configurações salvas!');
     } catch (e) { toast.error('Erro ao salvar.'); }
     finally { setIsSaving(false); }
@@ -567,6 +582,15 @@ const SettingsManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* EDITOR DE LAYOUT DA COMANDA */}
+              <PrinterLayoutEditor 
+                layout={receiptLayout}
+                onChange={setReceiptLayout}
+                restaurantName={general.name}
+                restaurantLogo={appearance.logo}
+                restaurantAddress={general.address}
+              />
             </Card>
           </div>
         )}

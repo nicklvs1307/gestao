@@ -44,6 +44,7 @@ export interface ReceiptSettings {
     fontSize: 'small' | 'medium' | 'large';
     headerText: string;
     footerText: string;
+    itemSpacing?: number;
 }
 
 export const checkAgentStatus = async (): Promise<boolean> => {
@@ -154,6 +155,16 @@ const generateReceiptPdf = (order: Order, itemsToPrint: OrderItem[], title: stri
       y += 2;
       doc.text('--------------------------------------------', centerX, y, { align: 'center' });
       y += lineHeight;
+
+      // --- TEXTO PERSONALIZADO DO CABEÇALHO ---
+      if (settings.headerText) {
+          const headerLines = doc.splitTextToSize(settings.headerText.toUpperCase(), 65);
+          doc.setFont('helvetica', 'bold');
+          doc.text(headerLines, centerX, y, { align: 'center' });
+          y += (headerLines.length * lineHeight) + 2;
+          doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+          y += lineHeight;
+      }
   }
 
   // --- INFO PEDIDO (NOVO LAYOUT) ---
@@ -307,7 +318,7 @@ const generateReceiptPdf = (order: Order, itemsToPrint: OrderItem[], title: stri
         doc.text(obsLines, detailMargin, y);
         y += (obsLines.length * lineHeight);
     }
-    y += 4; // Espaço extra maior entre itens para não embolar
+    y += (settings.itemSpacing || 4); // Espaço extra dinâmico entre itens
   });
 
   y += 2;
@@ -373,6 +384,13 @@ const generateReceiptPdf = (order: Order, itemsToPrint: OrderItem[], title: stri
   }
 
   // --- RODAPÉ ---
+  if (!isProduction && settings.footerText) {
+      const footerLines = doc.splitTextToSize(settings.footerText.toUpperCase(), 65);
+      doc.setFont('helvetica', 'bold');
+      doc.text(footerLines, centerX, y, { align: 'center' });
+      y += (footerLines.length * lineHeight) + 2;
+  }
+
   doc.text('============================================', centerX, y, { align: 'center' });
   y += lineHeight;
   doc.setFontSize(baseSize - 2);
@@ -581,12 +599,13 @@ export const printTableCheckout = async (tableNumber: number, items: any[], paym
 
     const savedConfig = localStorage.getItem('printer_config');
     const config = savedConfig ? JSON.parse(savedConfig) : { cashierPrinters: [localStorage.getItem('cashier_printer_name') || ''] };
-    const settings = JSON.parse(localStorage.getItem('receipt_settings') || '{}');
+    const settings = JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
     
     const restaurantInfo = {
         name: localStorage.getItem('restaurant_name') || 'Minha Loja',
         address: localStorage.getItem('restaurant_address'),
-        phone: localStorage.getItem('restaurant_phone')
+        phone: localStorage.getItem('restaurant_phone'),
+        logoUrl: localStorage.getItem('restaurant_logo')
     };
 
     const pdf = generateTableClosurePdf(tableNumber, items, payments, restaurantInfo, settings);
@@ -608,10 +627,11 @@ export const printCashierClosure = async (summary: any) => {
 
     const savedConfig = localStorage.getItem('printer_config');
     const config = savedConfig ? JSON.parse(savedConfig) : { cashierPrinters: [localStorage.getItem('cashier_printer_name') || ''] };
-    const settings = JSON.parse(localStorage.getItem('receipt_settings') || '{}');
+    const settings = JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
     
     const restaurantInfo = {
-        name: localStorage.getItem('restaurant_name') || 'Minha Loja'
+        name: localStorage.getItem('restaurant_name') || 'Minha Loja',
+        logoUrl: localStorage.getItem('restaurant_logo')
     };
 
     const pdf = generateCashierPdf(summary, restaurantInfo, settings);
@@ -639,8 +659,13 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
       categoryMapping: config?.categoryMapping || {}
   };
 
-  const finalSettings = receiptSettings || JSON.parse(localStorage.getItem('receipt_settings') || '{}');
-  const finalRestaurant = restaurantInfo || { name: localStorage.getItem('restaurant_name') };
+  const finalSettings = receiptSettings || JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
+  const finalRestaurant = restaurantInfo || { 
+      name: localStorage.getItem('restaurant_name'),
+      address: localStorage.getItem('restaurant_address'),
+      phone: localStorage.getItem('restaurant_phone'),
+      logoUrl: localStorage.getItem('restaurant_logo')
+  };
 
   // Pré-carregar Logo se necessário (apenas para caixa)
   let logoBase64: string | null = null;
