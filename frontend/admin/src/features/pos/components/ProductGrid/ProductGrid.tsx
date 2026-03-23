@@ -16,8 +16,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, categories, 
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const matchCat = selectedCategory === 'all' || p.categories?.some(c => c.id === selectedCategory);
-      const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchCat = selectedCategory === 'all' || p.categories?.some(c => c?.id === selectedCategory);
+      const nameMatch = (p.name || '').toLowerCase();
+      const termMatch = (searchTerm || '').toLowerCase();
+      const matchSearch = nameMatch.includes(termMatch);
       return matchCat && matchSearch;
     });
   }, [products, selectedCategory, searchTerm]);
