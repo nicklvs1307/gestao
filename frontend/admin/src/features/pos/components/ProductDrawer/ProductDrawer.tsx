@@ -25,11 +25,12 @@ export const ProductDrawer: React.FC = () => {
   if (!showProductDrawer || !selectedProductForAdd) return null;
 
   const product = selectedProductForAdd;
-  const currentPrice = calculateProductPrice(product, selectedSizeId, selectedAddonIds, tempQty);
+  const safeAddonIds = Array.isArray(selectedAddonIds) ? selectedAddonIds : [];
+  const currentPrice = calculateProductPrice(product, selectedSizeId, safeAddonIds, tempQty);
 
   const confirmAddToCart = () => {
     const size = product.sizes?.find(s => s.id === selectedSizeId);
-    const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => selectedAddonIds.includes(a.id)) || [];
+    const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => safeAddonIds.includes(a.id)) || [];
 
     let itemName = product.name;
     if (size) itemName += ` (${size.name})`;
@@ -44,7 +45,7 @@ export const ProductDrawer: React.FC = () => {
       quantity: tempQty,
       observation: tempObs.trim(),
       selectedSizeDbId: selectedSizeId,
-      selectedAddonDbIds: selectedAddonIds,
+      selectedAddonDbIds: safeAddonIds,
       selectedFlavorIds: [],
       sizeJson: size ? JSON.stringify(size) : null,
       addonsJson: JSON.stringify(selectedAddons),

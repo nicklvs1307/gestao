@@ -1,58 +1,49 @@
-index-B8rjnvrA.js:564 [SSE] Conexão estabelecida com o servidor.
-index-B8rjnvrA.js:564 [SSE] Conexão estabelecida com o servidor.
-index-B8rjnvrA.js:41 [Violation] 'click' handler took 160ms
-[Violation] Forced reflow while executing JavaScript took 105ms
-useSocket-Du_LmFwf.js:1 [Socket] Conectado: jTECsAnMWLRm1dDhAAAB
-useSocket-Du_LmFwf.js:1 [Socket] Desconectado
-index-B8rjnvrA.js:26 [Violation] 'message' handler took 240ms
-useSocket-Du_LmFwf.js:1 [Socket] Conectado: avbYLfHwzNM1ap2xAAAD
-useSocket-Du_LmFwf.js:1 [Socket] Desconectado
-useSocket-Du_LmFwf.js:1 [Socket] Conectado: lJaF_iQYYwu9fH0lAAAF
-index-B8rjnvrA.js:41 TypeError: i.includes is not a function
-    at PosPage-BMkM7Fs1.js:1:23264
-    at Array.filter (<anonymous>)
-    at PosPage-BMkM7Fs1.js:1:23252
-    at Array.reduce (<anonymous>)
-    at as (PosPage-BMkM7Fs1.js:1:23220)
-    at ls (PosPage-BMkM7Fs1.js:1:23766)
-    at $l (index-B8rjnvrA.js:39:17828)
-    at tp (index-B8rjnvrA.js:41:3158)
-    at bg (index-B8rjnvrA.js:41:45739)
-    at yg (index-B8rjnvrA.js:41:40536)
-ep @ index-B8rjnvrA.js:41
-D1.c.callback @ index-B8rjnvrA.js:41
-$i @ index-B8rjnvrA.js:39
-cg @ index-B8rjnvrA.js:41
-ug @ index-B8rjnvrA.js:41
-w3 @ index-B8rjnvrA.js:41
-A3 @ index-B8rjnvrA.js:41
-Jl @ index-B8rjnvrA.js:41
-pg @ index-B8rjnvrA.js:41
-P @ index-B8rjnvrA.js:39
-(anonymous) @ index-B8rjnvrA.js:41
-index-B8rjnvrA.js:39 Uncaught TypeError: i.includes is not a function
-    at PosPage-BMkM7Fs1.js:1:23264
-    at Array.filter (<anonymous>)
-    at PosPage-BMkM7Fs1.js:1:23252
-    at Array.reduce (<anonymous>)
-    at as (PosPage-BMkM7Fs1.js:1:23220)
-    at ls (PosPage-BMkM7Fs1.js:1:23766)
-    at $l (index-B8rjnvrA.js:39:17828)
-    at tp (index-B8rjnvrA.js:41:3158)
-    at bg (index-B8rjnvrA.js:41:45739)
-    at yg (index-B8rjnvrA.js:41:40536)
-(anonymous) @ PosPage-BMkM7Fs1.js:1
-(anonymous) @ PosPage-BMkM7Fs1.js:1
-as @ PosPage-BMkM7Fs1.js:1
-ls @ PosPage-BMkM7Fs1.js:1
-$l @ index-B8rjnvrA.js:39
-tp @ index-B8rjnvrA.js:41
-bg @ index-B8rjnvrA.js:41
-yg @ index-B8rjnvrA.js:41
-k3 @ index-B8rjnvrA.js:41
-yf @ index-B8rjnvrA.js:41
-yp @ index-B8rjnvrA.js:41
-pg @ index-B8rjnvrA.js:41
-P @ index-B8rjnvrA.js:39
-(anonymous) @ index-B8rjnvrA.js:41
-useSocket-Du_LmFwf.js:1 [Socket] Desconectado
+index-CmdME0LH.js:564 [SSE] Conexão estabelecida com o servidor.
+useSocket-C_KUvtIu.js:1 [Socket] Conectado: y2ZAOA0G118-qWb5AAAJ
+index-CmdME0LH.js:41 TypeError: o.includes is not a function
+    at PosPage-yvXPq_jT.js:1:26794
+    at Array.map (<anonymous>)
+    at PosPage-yvXPq_jT.js:1:26776
+    at Array.map (<anonymous>)
+    at ls (PosPage-yvXPq_jT.js:1:26282)
+    at $l (index-CmdME0LH.js:39:17828)
+    at tp (index-CmdME0LH.js:41:3158)
+    at bg (index-CmdME0LH.js:41:45739)
+    at yg (index-CmdME0LH.js:41:40536)
+    at k3 (index-CmdME0LH.js:41:40464)
+ep @ index-CmdME0LH.js:41
+D1.c.callback @ index-CmdME0LH.js:41
+$i @ index-CmdME0LH.js:39
+cg @ index-CmdME0LH.js:41
+ug @ index-CmdME0LH.js:41
+w3 @ index-CmdME0LH.js:41
+A3 @ index-CmdME0LH.js:41
+Jl @ index-CmdME0LH.js:41
+pg @ index-CmdME0LH.js:41
+P @ index-CmdME0LH.js:39
+(anonymous) @ index-CmdME0LH.js:41
+index-CmdME0LH.js:39 Uncaught TypeError: o.includes is not a function
+    at PosPage-yvXPq_jT.js:1:26794
+    at Array.map (<anonymous>)
+    at PosPage-yvXPq_jT.js:1:26776
+    at Array.map (<anonymous>)
+    at ls (PosPage-yvXPq_jT.js:1:26282)
+    at $l (index-CmdME0LH.js:39:17828)
+    at tp (index-CmdME0LH.js:41:3158)
+    at bg (index-CmdME0LH.js:41:45739)
+    at yg (index-CmdME0LH.js:41:40536)
+    at k3 (index-CmdME0LH.js:41:40464)
+(anonymous) @ PosPage-yvXPq_jT.js:1
+(anonymous) @ PosPage-yvXPq_jT.js:1
+ls @ PosPage-yvXPq_jT.js:1
+$l @ index-CmdME0LH.js:39
+tp @ index-CmdME0LH.js:41
+bg @ index-CmdME0LH.js:41
+yg @ index-CmdME0LH.js:41
+k3 @ index-CmdME0LH.js:41
+yf @ index-CmdME0LH.js:41
+yp @ index-CmdME0LH.js:41
+pg @ index-CmdME0LH.js:41
+P @ index-CmdME0LH.js:39
+(anonymous) @ index-CmdME0LH.js:41
+useSocket-C_KUvtIu.js:1 [Socket] Desconectado
