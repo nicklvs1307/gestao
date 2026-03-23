@@ -590,7 +590,9 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
       categoryMapping: config?.categoryMapping || {}
   };
 
-  const finalSettings = receiptSettings || JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
+  const finalSettings = (receiptSettings && Object.keys(receiptSettings).length > 0) 
+      ? receiptSettings 
+      : JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
   const finalRestaurant = restaurantInfo || { 
       name: localStorage.getItem('restaurant_name'),
       address: localStorage.getItem('restaurant_address'),

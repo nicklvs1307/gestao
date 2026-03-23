@@ -217,7 +217,7 @@ const GlobalOrderMonitor: React.FC = () => {
         console.log(`Enviando para impressora: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
         try {
           const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-          const receiptSettings = JSON.parse(localStorage.getItem('receipt_settings') || '{}');
+          const receiptSettings = JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
           const settingsData = await getSettings();
           const restaurantInfo = {
               name: settingsData.name, address: settingsData.address, phone: settingsData.phone,
