@@ -308,17 +308,17 @@ const generateOrderReceiptPdf = (
             if (Array.isArray(addons)) {
                 addons.forEach((a:any) => {
                     doc.setFont('helvetica', 'bold');
-                    doc.text(`[+] ${a.name?.toUpperCase() || ''}`, detailMargin, y);
+                    const qtyPrefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
+                    doc.text(`[+] ${qtyPrefix}${a.name?.toUpperCase() || ''}`, detailMargin, y);
                     y += lineHeight;
                 });
             }
         } catch(e) {}
     }
-    // Observações
+    // Observações do Item
     if (item.observations) {
         doc.setFont('helvetica', 'bold');
-        const obsLines = doc.splitTextToSize(`(!) OBS: ${item.observations.toUpperCase()}`, detailWidth);
-        doc.setDrawColor(200);
+        const obsLines = doc.splitTextToSize(`(!) OBS ITEM: ${item.observations.toUpperCase()}`, detailWidth);
         doc.text(obsLines, detailMargin, y);
         y += (obsLines.length * lineHeight);
     }
@@ -329,6 +329,20 @@ const generateOrderReceiptPdf = (
   doc.setFont('helvetica', 'normal');
   doc.text('--------------------------------------------', centerX, y, { align: 'center' });
   y += lineHeight;
+
+  // 7.5 OBSERVAÇÃO GERAL DO PEDIDO
+  const generalObs = order.observations || (order as any).deliveryOrder?.observations || (order as any).notes;
+  if (generalObs) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(baseSize + 1);
+      const generalObsLines = doc.splitTextToSize(`OBS GERAL: ${generalObs.toUpperCase()}`, 65);
+      doc.text(generalObsLines, leftMargin, y);
+      y += (generalObsLines.length * lineHeight) + 2;
+      doc.setFontSize(baseSize);
+      doc.setFont('helvetica', 'normal');
+      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
+  }
 
   // 8. TOTAIS E PAGAMENTO (Apenas Caixa)
   if (!isProduction) {
