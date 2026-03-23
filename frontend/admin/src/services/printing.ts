@@ -112,15 +112,15 @@ const generateOrderReceiptPdf = (
     format: [80, 297]
   });
 
-  const fontSizes = { small: 8, medium: 9, large: 11 };
-  const baseSize = fontSizes[settings.fontSize] || 9;
+  const fontSizes = { small: 8, medium: 10, large: 12 };
+  const baseSize = fontSizes[settings.fontSize] || 10;
 
   const leftMargin = 7; 
   const rightMargin = 73; 
-  const maxContentWidth = 55; 
+  const maxContentWidth = 52; // Reduzido para evitar corte na direita
   const centerX = 40;
   let y = 10; 
-  const lineHeight = baseSize * 0.65;
+  const lineHeight = baseSize * 0.85; // Aumentado para evitar sobreposição (de 0.65 para 0.85)
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(baseSize);
