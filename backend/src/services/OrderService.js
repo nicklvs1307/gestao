@@ -45,7 +45,27 @@ const summaryOrderSelect = {
     }
   },
   user: { select: { name: true } },
-  _count: { select: { items: true } }
+  items: {
+    select: {
+      id: true,
+      quantity: true,
+      priceAtTime: true,
+      observations: true,
+      sizeJson: true,
+      addonsJson: true,
+      flavorsJson: true,
+      product: {
+        select: {
+          name: true,
+          categories: {
+            select: {
+              name: true
+            }
+          }
+        }
+      }
+    }
+  }
 };
 
 const eventEmitter = require('../lib/eventEmitter');
