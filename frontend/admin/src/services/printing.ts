@@ -112,15 +112,15 @@ const generateOrderReceiptPdf = (
     format: [80, 297]
   });
 
-  const fontSizes = { small: 8, medium: 10, large: 12 };
-  const baseSize = fontSizes[settings.fontSize] || 10;
+  const fontSizes = { small: 8, medium: 9, large: 11 };
+  const baseSize = fontSizes[settings.fontSize] || 9;
 
-  const leftMargin = 5; 
-  const rightMargin = 75; 
-  const maxContentWidth = 60; 
+  const leftMargin = 7; 
+  const rightMargin = 73; 
+  const maxContentWidth = 55; 
   const centerX = 40;
   let y = 10; 
-  const lineHeight = baseSize * 0.6;
+  const lineHeight = baseSize * 0.65;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(baseSize);
@@ -273,9 +273,9 @@ const generateOrderReceiptPdf = (
     y += (productLines.length * lineHeight);
 
     // COMPLEMENTOS (SABORES, TAMANHO, ADICIONAIS, OBS)
-    doc.setFontSize(baseSize); 
-    const detailMargin = leftMargin + 4;
-    const detailWidth = 65;
+    doc.setFontSize(baseSize - 1); 
+    const detailMargin = leftMargin + 3;
+    const detailWidth = 52;
     
     // Sabores
     if (item.flavorsJson) {
