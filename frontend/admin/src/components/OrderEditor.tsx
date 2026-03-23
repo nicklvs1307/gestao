@@ -18,6 +18,7 @@ import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
+import { useAuth } from '../context/AuthContext';
 
 interface OrderEditorProps {
   onClose: () => void;
@@ -34,6 +35,7 @@ const STATUS_OPTIONS = [
 ];
 
 const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'items' | 'payment'>('items');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -84,10 +86,17 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const loadData = async () => {
     try {
         setIsLoading(true);
+        const finalRestaurantId = order.restaurantId || user?.restaurantId || localStorage.getItem('selectedRestaurantId');
+        
+        if (!finalRestaurantId) {
+            console.error("[OrderEditor] Nao foi possivel identificar o restaurantId");
+            return;
+        }
+
         const [prodData, catData, payData, driversData] = await Promise.all([
             getProducts(),
             getCategories(),
-            getPaymentMethods(order.restaurantId),
+            getPaymentMethods(finalRestaurantId),
             getDrivers()
         ]);
         setProducts(prodData);

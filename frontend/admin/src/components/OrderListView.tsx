@@ -120,18 +120,18 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, se
                             {STATUS_MAP[order.status] || order.status}
                             </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-slate-900">
                             {isDelivery && !isPickup ? (
                                 <div className="flex items-center gap-1.5">
                                     <div className={cn(
                                         "p-1 rounded-lg border",
-                                        order.deliveryOrder?.driverId ? "bg-indigo-50 border-indigo-100 text-indigo-600" : "bg-slate-50 border-slate-100 text-slate-300"
+                                        order.deliveryOrder?.driverId ? "bg-indigo-600 border-indigo-700 text-white" : "bg-slate-100 border-slate-200 text-slate-400"
                                     )}>
-                                        <Bike size={10} />
+                                        <Bike size={12} strokeWidth={3} />
                                     </div>
                                     <span className={cn(
-                                        "text-[9px] font-black uppercase italic tracking-tighter",
-                                        order.deliveryOrder?.driverId ? "text-indigo-600" : "text-slate-300"
+                                        "text-[10px] font-black uppercase italic tracking-tighter",
+                                        order.deliveryOrder?.driverId ? "text-indigo-700" : "text-slate-400"
                                     )}>
                                         {driverName}
                                     </span>
