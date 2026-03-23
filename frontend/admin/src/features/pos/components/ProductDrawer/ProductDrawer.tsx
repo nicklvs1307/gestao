@@ -116,18 +116,18 @@ export const ProductDrawer: React.FC = () => {
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                 {group.addons.map(addon => {
-                  const isSelected = selectedAddonIds.includes(addon.id);
+                  const isSelected = safeAddonIds.includes(addon.id);
                   return (
                     <Card 
                       key={addon.id} 
                       onClick={() => { 
                         if (group.type === 'single') { 
                           const othersInGroup = group.addons.map(a => a.id); 
-                          const newIds = selectedAddonIds.filter(id => !othersInGroup.includes(id)); 
+                          const newIds = safeAddonIds.filter(id => !othersInGroup.includes(id)); 
                           setSelectedAddonIds([...newIds, addon.id]); 
                         } else { 
-                          if (isSelected) setSelectedAddonIds(prev => prev.filter(id => id !== addon.id)); 
-                          else setSelectedAddonIds(prev => [...prev, addon.id]); 
+                          if (isSelected) setSelectedAddonIds(prev => (Array.isArray(prev) ? prev : []).filter(id => id !== addon.id)); 
+                          else setSelectedAddonIds(prev => [...(Array.isArray(prev) ? prev : []), addon.id]); 
                         } 
                       }} 
                       className={cn(

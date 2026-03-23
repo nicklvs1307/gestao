@@ -1,49 +1,52 @@
-index-CmdME0LH.js:564 [SSE] Conexão estabelecida com o servidor.
-useSocket-C_KUvtIu.js:1 [Socket] Conectado: y2ZAOA0G118-qWb5AAAJ
-index-CmdME0LH.js:41 TypeError: o.includes is not a function
-    at PosPage-yvXPq_jT.js:1:26794
+index-C-zZQfM9.js:564 [SSE] Conexão estabelecida com o servidor.
+index-C-zZQfM9.js:564 [SSE] Conexão estabelecida com o servidor.
+useSocket-Dq5uDeMj.js:1 [Socket] Conectado: XlF3g29dYV1_fW2zAAAN
+useSocket-Dq5uDeMj.js:1 [Socket] Desconectado
+useSocket-Dq5uDeMj.js:1 [Socket] Conectado: JY3nT9bBVG2Ysg6YAAAP
+index-C-zZQfM9.js:41 TypeError: o.includes is not a function
+    at PosPage-DJ9VZA1I.js:1:26818
     at Array.map (<anonymous>)
-    at PosPage-yvXPq_jT.js:1:26776
+    at PosPage-DJ9VZA1I.js:1:26800
     at Array.map (<anonymous>)
-    at ls (PosPage-yvXPq_jT.js:1:26282)
-    at $l (index-CmdME0LH.js:39:17828)
-    at tp (index-CmdME0LH.js:41:3158)
-    at bg (index-CmdME0LH.js:41:45739)
-    at yg (index-CmdME0LH.js:41:40536)
-    at k3 (index-CmdME0LH.js:41:40464)
-ep @ index-CmdME0LH.js:41
-D1.c.callback @ index-CmdME0LH.js:41
-$i @ index-CmdME0LH.js:39
-cg @ index-CmdME0LH.js:41
-ug @ index-CmdME0LH.js:41
-w3 @ index-CmdME0LH.js:41
-A3 @ index-CmdME0LH.js:41
-Jl @ index-CmdME0LH.js:41
-pg @ index-CmdME0LH.js:41
-P @ index-CmdME0LH.js:39
-(anonymous) @ index-CmdME0LH.js:41
-index-CmdME0LH.js:39 Uncaught TypeError: o.includes is not a function
-    at PosPage-yvXPq_jT.js:1:26794
+    at ls (PosPage-DJ9VZA1I.js:1:26306)
+    at $l (index-C-zZQfM9.js:39:17828)
+    at tp (index-C-zZQfM9.js:41:3158)
+    at bg (index-C-zZQfM9.js:41:45739)
+    at yg (index-C-zZQfM9.js:41:40536)
+    at k3 (index-C-zZQfM9.js:41:40464)
+ep @ index-C-zZQfM9.js:41
+D1.c.callback @ index-C-zZQfM9.js:41
+$i @ index-C-zZQfM9.js:39
+cg @ index-C-zZQfM9.js:41
+ug @ index-C-zZQfM9.js:41
+w3 @ index-C-zZQfM9.js:41
+A3 @ index-C-zZQfM9.js:41
+Jl @ index-C-zZQfM9.js:41
+pg @ index-C-zZQfM9.js:41
+P @ index-C-zZQfM9.js:39
+(anonymous) @ index-C-zZQfM9.js:41
+index-C-zZQfM9.js:39 Uncaught TypeError: o.includes is not a function
+    at PosPage-DJ9VZA1I.js:1:26818
     at Array.map (<anonymous>)
-    at PosPage-yvXPq_jT.js:1:26776
+    at PosPage-DJ9VZA1I.js:1:26800
     at Array.map (<anonymous>)
-    at ls (PosPage-yvXPq_jT.js:1:26282)
-    at $l (index-CmdME0LH.js:39:17828)
-    at tp (index-CmdME0LH.js:41:3158)
-    at bg (index-CmdME0LH.js:41:45739)
-    at yg (index-CmdME0LH.js:41:40536)
-    at k3 (index-CmdME0LH.js:41:40464)
-(anonymous) @ PosPage-yvXPq_jT.js:1
-(anonymous) @ PosPage-yvXPq_jT.js:1
-ls @ PosPage-yvXPq_jT.js:1
-$l @ index-CmdME0LH.js:39
-tp @ index-CmdME0LH.js:41
-bg @ index-CmdME0LH.js:41
-yg @ index-CmdME0LH.js:41
-k3 @ index-CmdME0LH.js:41
-yf @ index-CmdME0LH.js:41
-yp @ index-CmdME0LH.js:41
-pg @ index-CmdME0LH.js:41
-P @ index-CmdME0LH.js:39
-(anonymous) @ index-CmdME0LH.js:41
-useSocket-C_KUvtIu.js:1 [Socket] Desconectado
+    at ls (PosPage-DJ9VZA1I.js:1:26306)
+    at $l (index-C-zZQfM9.js:39:17828)
+    at tp (index-C-zZQfM9.js:41:3158)
+    at bg (index-C-zZQfM9.js:41:45739)
+    at yg (index-C-zZQfM9.js:41:40536)
+    at k3 (index-C-zZQfM9.js:41:40464)
+(anonymous) @ PosPage-DJ9VZA1I.js:1
+(anonymous) @ PosPage-DJ9VZA1I.js:1
+ls @ PosPage-DJ9VZA1I.js:1
+$l @ index-C-zZQfM9.js:39
+tp @ index-C-zZQfM9.js:41
+bg @ index-C-zZQfM9.js:41
+yg @ index-C-zZQfM9.js:41
+k3 @ index-C-zZQfM9.js:41
+yf @ index-C-zZQfM9.js:41
+yp @ index-C-zZQfM9.js:41
+pg @ index-C-zZQfM9.js:41
+P @ index-C-zZQfM9.js:39
+(anonymous) @ index-C-zZQfM9.js:41
+useSocket-Dq5uDeMj.js:1 [Socket] Desconectado
