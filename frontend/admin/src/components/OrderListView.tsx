@@ -144,9 +144,14 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, se
                             R$ {((order.total || 0) + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
                         </td>
                         <td className="px-4 py-3">
-                            <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase italic">
-                                <Clock size={10} className="text-orange-500" />
-                                {format(new Date(order.createdAt), 'HH:mm')}
+                            <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase italic">
+                                    <Clock size={10} className="text-orange-500" />
+                                    {format(new Date(order.createdAt), 'HH:mm')}
+                                </div>
+                                <span className="text-[7px] font-black text-slate-300 uppercase italic ml-3.5">
+                                    {format(new Date(order.createdAt), 'dd/MM/yy')}
+                                </span>
                             </div>
                         </td>
                         <td className="px-4 py-3 text-right">

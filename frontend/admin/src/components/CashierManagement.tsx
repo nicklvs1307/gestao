@@ -25,6 +25,7 @@ import { Input } from './ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import MoneyCounter from './MoneyCounter';
+import { printCashierClosure } from '../services/printing';
 
 const CashierManagement: React.FC = () => {
     const { user: authUser } = useAuth();
@@ -192,6 +193,13 @@ const CashierManagement: React.FC = () => {
                 cashLeftover: parseFloat(cashLeftover) || 0,
                 moneyCountJson: moneyCountDetails
             };
+
+            // Imprime o relatório de fechamento antes de enviar ao servidor
+            try {
+                await printCashierClosure(summary);
+            } catch (printError) {
+                console.error('[PRINT_ERROR]: Falha ao imprimir fechamento:', printError);
+            }
 
             await apiClient.post('/cashier/close', payload); // Usando endpoint direto para custom payload
             
