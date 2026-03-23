@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Minus, Plus, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Minus, Plus, CheckCircle, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
@@ -20,13 +20,40 @@ export const ProductDrawer: React.FC = () => {
     selectedAddonIds, setSelectedAddonIds
   } = usePosStore();
 
+  const [addonSearch, setAddonSearch] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { addToCart } = useCartStore();
+
+  // Atalho Alt + F para focar na busca
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Reset da busca ao fechar/abrir
+  useEffect(() => {
+    if (!showProductDrawer) setAddonSearch('');
+  }, [showProductDrawer]);
 
   if (!showProductDrawer || !selectedProductForAdd) return null;
 
   const product = selectedProductForAdd;
   const safeAddonIds = Array.isArray(selectedAddonIds) ? selectedAddonIds : [];
   const currentPrice = calculateProductPrice(product, selectedSizeId, safeAddonIds, tempQty);
+
+  // Filtragem de grupos e adicionais
+  const filteredAddonGroups = product.addonGroups?.map(group => {
+    const filteredAddons = group.addons.filter(addon => 
+      addon.name.toLowerCase().includes(addonSearch.toLowerCase())
+    );
+    return { ...group, addons: filteredAddons };
+  }).filter(group => group.addons.length > 0);
 
   const confirmAddToCart = () => {
     const size = product.sizes?.find(s => s.id === selectedSizeId);
@@ -79,19 +106,31 @@ export const ProductDrawer: React.FC = () => {
         className="relative w-[calc(100%-400px)] bg-white shadow-2xl flex flex-col h-full"
       >
         <header className="h-20 border-b border-slate-100 px-10 flex items-center justify-between shrink-0 bg-white sticky top-0 z-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
             <Button variant="ghost" size="icon" onClick={() => setShowProductDrawer(false)} className="bg-slate-50">
               <X size={20} />
             </Button>
             <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">{product.name}</h3>
+            
+            <div className="ml-8 relative flex-1 max-w-xs group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={16} />
+              <input 
+                ref={searchInputRef}
+                type="text" 
+                placeholder="Buscar adicional (Alt+F)" 
+                className="w-full h-10 pl-10 pr-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold text-xs outline-none focus:border-orange-500 focus:bg-white transition-all uppercase italic"
+                value={addonSearch}
+                onChange={e => setAddonSearch(e.target.value)}
+              />
+            </div>
           </div>
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Personalizar Item</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Personalizar Item</span>
         </header>
 
         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-12 bg-slate-50/30">
           {product.sizes?.length > 0 && (
             <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
                 <div className="w-1 h-4 bg-orange-500 rounded-full" /> 1. Escolha o Tamanho
               </h4>
               <div className="flex flex-wrap gap-3">
@@ -101,10 +140,10 @@ export const ProductDrawer: React.FC = () => {
                     onClick={() => setSelectedSizeId(size.id)} 
                     className={cn(
                       "px-8 py-4 border-2 transition-all shadow-sm cursor-pointer min-w-[120px] text-center", 
-                      selectedSizeId === size.id ? "border-orange-500 bg-orange-50 shadow-orange-100" : "border-slate-100 bg-white text-slate-400 hover:border-slate-200"
+                      selectedSizeId === size.id ? "border-orange-500 bg-orange-50 shadow-orange-100" : "border-slate-100 bg-white text-slate-500 hover:border-slate-200"
                     )}
                   >
-                    <span className={cn("font-black text-xs uppercase italic", selectedSizeId === size.id ? "text-orange-600" : "text-slate-500")}>
+                    <span className={cn("font-black text-xs uppercase italic", selectedSizeId === size.id ? "text-orange-600" : "text-slate-900")}>
                       {size.name}
                     </span>
                   </Card>
@@ -113,11 +152,11 @@ export const ProductDrawer: React.FC = () => {
             </div>
           )}
 
-          {product.addonGroups?.map(group => (
+          {filteredAddonGroups?.map(group => (
             <div key={group.id} className="space-y-4">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
+              <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
                 <div className="w-1 h-4 bg-blue-500 rounded-full" /> {group.name} 
-                <span className="text-[8px] opacity-50 ml-2">
+                <span className="text-[8px] opacity-70 ml-2">
                   ({group.type === 'single' ? 'Selecione 1' : `Máx: ${group.maxQuantity || 'Livre'}`})
                 </span>
               </h4>
@@ -146,13 +185,13 @@ export const ProductDrawer: React.FC = () => {
                       }}
                       className={cn(
                         "p-4 border-2 transition-all flex flex-col items-center justify-center text-center gap-2 shadow-sm cursor-pointer relative min-h-[100px]", 
-                        isSelected ? "border-blue-500 bg-blue-50 shadow-lg shadow-blue-100" : "border-slate-50 bg-white text-slate-500 hover:border-slate-200"
+                        isSelected ? "border-blue-500 bg-blue-50 shadow-lg shadow-blue-100" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                       )}
                     >
-                      <span className={cn("font-black text-[10px] uppercase italic leading-tight", isSelected ? "text-blue-700" : "text-slate-600")}>
+                      <span className={cn("font-black text-[11px] uppercase italic leading-tight", isSelected ? "text-blue-700" : "text-slate-900")}>
                         {addon.name}
                       </span>
-                      {addon.price > 0 && <span className="text-[9px] font-black text-emerald-600 leading-none">+ R$ {addon.price.toFixed(2)}</span>}
+                      {addon.price > 0 && <span className="text-[10px] font-black text-emerald-700 leading-none">+ R$ {addon.price.toFixed(2)}</span>}
                       
                       {isSelected && group.type !== 'single' && (
                         <div className="flex items-center gap-2 mt-1 bg-white rounded-lg p-1 border border-blue-100 shadow-sm" onClick={e => e.stopPropagation()}>
