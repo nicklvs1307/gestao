@@ -29,6 +29,11 @@ class OrderController {
     // Send a comment to establish and keep the connection alive
     res.write('data: {"type":"CONNECTION_ESTABLISHED"}\n\n');
 
+    // Heartbeat mechanism (keeps the connection alive)
+    const heartbeat = setInterval(() => {
+      res.write(': keep-alive\n\n');
+    }, 30000);
+
     const orderEventHandler = (data) => {
       // Only send events for the client's specific restaurant
       if (data.restaurantId === restaurantId) {
@@ -39,6 +44,7 @@ class OrderController {
     eventEmitter.on('order_update', orderEventHandler);
 
     req.on('close', () => {
+      clearInterval(heartbeat);
       eventEmitter.removeListener('order_update', orderEventHandler);
       res.end();
     });

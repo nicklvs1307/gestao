@@ -117,60 +117,84 @@ const GlobalOrderMonitor: React.FC = () => {
   useEffect(() => {
     if (isKdsPage || !hasUser()) return;
 
-    const userStr = localStorage.getItem('user');
-    const user = JSON.parse(userStr!);
-    const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: any = null;
 
-    if (!isAdminOrStaff) return;
-
-    const token = localStorage.getItem('token');
-    const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
-    
-    const eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
-
-    eventSource.onmessage = (event) => {
+    const connectSSE = () => {
       try {
-        const eventData = JSON.parse(event.data);
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
 
-        if (eventData.type === 'CONNECTION_ESTABLISHED') {
-          console.log('[SSE] Conexão estabelecida com o servidor.');
-          return;
-        }
+        if (!isAdminOrStaff) return;
 
-        const updatedOrder = eventData.payload as Order;
-        if (!updatedOrder || !updatedOrder.id) return;
+        const token = localStorage.getItem('token');
+        const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
+
+        if (!token || !restaurantId) return;
         
-        setAllOrders(prevOrders => {
-          const currentOrders = Array.isArray(prevOrders) ? prevOrders : [];
-          const newOrders = [...currentOrders];
-          const existingOrderIndex = newOrders.findIndex(o => o.id === updatedOrder.id);
-          
-          if (existingOrderIndex > -1) {
-            // Update existing order
-            newOrders[existingOrderIndex] = updatedOrder;
-          } else {
-            // Add new order
-            newOrders.unshift(updatedOrder);
-            lastOrderIdsRef.current.add(updatedOrder.id);
-            playNotificationSound();
-             if (!isAutoAccept && updatedOrder.status === 'PENDING') {
-                setIsOrderModalOpen(true);
-             }
+        eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
+
+        eventSource.onmessage = (event) => {
+          try {
+            const eventData = JSON.parse(event.data);
+
+            if (eventData.type === 'CONNECTION_ESTABLISHED') {
+              console.log('[SSE] Conexão estabelecida com o servidor.');
+              return;
+            }
+
+            const updatedOrder = eventData.payload as Order;
+            if (!updatedOrder || !updatedOrder.id) return;
+            
+            setAllOrders(prevOrders => {
+              const currentOrders = Array.isArray(prevOrders) ? prevOrders : [];
+              const newOrders = [...currentOrders];
+              const existingOrderIndex = newOrders.findIndex(o => o.id === updatedOrder.id);
+              
+              if (existingOrderIndex > -1) {
+                // Update existing order
+                newOrders[existingOrderIndex] = updatedOrder;
+              } else {
+                // Add new order
+                newOrders.unshift(updatedOrder);
+                lastOrderIdsRef.current.add(updatedOrder.id);
+                playNotificationSound();
+                 if (!isAutoAccept && updatedOrder.status === 'PENDING') {
+                    setIsOrderModalOpen(true);
+                 }
+              }
+              return newOrders;
+            });
+          } catch (err) {
+            console.error('Erro ao processar mensagem SSE:', err);
           }
-          return newOrders;
-        });
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('SSE Error. Reconnecting...', error);
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+          // Tenta reconectar após 5 segundos
+          reconnectTimeout = setTimeout(connectSSE, 5000);
+        };
       } catch (err) {
-        console.error('Erro ao processar mensagem SSE:', err);
+        console.error('SSE Setup Error:', err);
       }
     };
 
-    eventSource.onerror = (error) => {
-      console.error('SSE Error:', error);
-      eventSource.close();
-    };
+    connectSSE();
 
     return () => {
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
     };
   }, [isKdsPage, isAutoAccept]);
 

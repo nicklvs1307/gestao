@@ -48,6 +48,8 @@ const summaryOrderSelect = {
   _count: { select: { items: true } }
 };
 
+const eventEmitter = require('../lib/eventEmitter');
+
 async function emitOrderUpdate(orderId, eventType = 'ORDER_UPDATED') {
   if (!orderId) return;
   try {
@@ -56,14 +58,20 @@ async function emitOrderUpdate(orderId, eventType = 'ORDER_UPDATED') {
       include: fullOrderInclude,
     });
     if (order) {
-      // Emite via Socket.io para o canal do restaurante
-      socketLib.emitToRestaurant(order.restaurantId, 'order_update', {
+      const eventData = {
         eventType,
+        restaurantId: order.restaurantId,
         payload: order,
-      });
+      };
+
+      // Emite via Socket.io para o canal do restaurante
+      socketLib.emitToRestaurant(order.restaurantId, 'order_update', eventData);
+
+      // Emite via EventEmitter para o SSE do OrderController
+      eventEmitter.emit('order_update', eventData);
     }
   } catch (error) {
-    console.error(`[Socket] Failed to emit event for order ${orderId}:`, error);
+    console.error(`[Socket/SSE] Failed to emit event for order ${orderId}:`, error);
   }
 }
 

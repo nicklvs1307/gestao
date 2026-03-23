@@ -27,9 +27,12 @@ const LoginPage: React.FC = () => {
       
       const permissions = user.permissions || [];
       const normalizedRole = user.role?.toLowerCase() || '';
+      const isSystemAdmin = user.isSuperAdmin || normalizedRole === 'admin' || normalizedRole === 'superadmin' || permissions.includes('all:manage');
 
-      // Prioridade por permissão específica em vez de nome de cargo
-      if (permissions.includes('waiter:pos') || normalizedRole.includes('waiter')) {
+      // Prioridade: Administradores e SuperAdmins sempre vão para o dashboard
+      if (isSystemAdmin) {
+          navigate('/dashboard');
+      } else if (permissions.includes('waiter:pos') || normalizedRole.includes('waiter')) {
           navigate('/waiter');
       } else if (permissions.includes('delivery:manage') || normalizedRole.includes('driver')) {
           navigate('/driver/dashboard');
