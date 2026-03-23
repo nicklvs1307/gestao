@@ -106,32 +106,32 @@ const generateOrderReceiptPdf = (
     logoBase64: string | null, 
     isProduction: boolean = false
 ): string => {
-  const fontSizes = { small: 8, medium: 10, large: 12 };
-  const baseSize = fontSizes[settings.fontSize] || 10;
-  const leftMargin = 7; 
-  const rightMargin = 73; 
-  const maxContentWidth = 52;
+  const fontSizes = { small: 7, medium: 9, large: 11 }; // Reduzido levemente para caber mais info
+  const baseSize = fontSizes[settings.fontSize] || 9;
+  const leftMargin = 5; // Margem menor para aproveitar largura
+  const rightMargin = 75; 
+  const maxContentWidth = 55;
   const centerX = 40;
-  const lineHeight = baseSize * 0.85;
+  const lineHeight = baseSize * 0.42; // Ajustado: 9pt * 0.42 = ~3.8mm por linha (Ideal para térmica)
 
   // Função interna para desenhar o conteúdo e retornar o Y final
   const drawContent = (doc: jsPDF): number => {
-    let y = 10;
+    let y = 8;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(baseSize);
 
     // 1. LOGO
     if (!isProduction && settings.showLogo && logoBase64) {
         try {
-            doc.addImage(logoBase64, 'PNG', 25, y, 30, 30);
-            y += 32; 
+            doc.addImage(logoBase64, 'PNG', 25, y, 30, 20); // Logo mais baixa
+            y += 22; 
         } catch (err) { console.error("Erro ao inserir logo no PDF:", err); }
     }
 
     // 2. CABEÇALHO DA LOJA
     if (!isProduction) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(baseSize + 2);
+        doc.setFontSize(baseSize + 1);
         doc.text(restaurantInfo.name?.toUpperCase() || 'KICARDÁPIO', centerX, y, { align: 'center' });
         y += lineHeight;
         
@@ -143,7 +143,7 @@ const generateOrderReceiptPdf = (
         }
 
         if (restaurantInfo.address) {
-            const addrLines = doc.splitTextToSize(restaurantInfo.address, 65);
+            const addrLines = doc.splitTextToSize(restaurantInfo.address, 70);
             doc.text(addrLines, centerX, y, { align: 'center' });
             y += (addrLines.length * lineHeight);
         }
@@ -152,16 +152,16 @@ const generateOrderReceiptPdf = (
             y += lineHeight;
         }
         
-        y += 2;
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += 1;
+        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
         y += lineHeight;
 
         if (settings.headerText) {
-            const headerLines = doc.splitTextToSize(settings.headerText.toUpperCase(), 65);
+            const headerLines = doc.splitTextToSize(settings.headerText.toUpperCase(), 70);
             doc.setFont('helvetica', 'bold');
             doc.text(headerLines, centerX, y, { align: 'center' });
-            y += (headerLines.length * lineHeight) + 2;
-            doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+            y += (headerLines.length * lineHeight) + 1;
+            doc.text('------------------------------------------------', centerX, y, { align: 'center' });
             y += lineHeight;
         }
     }
@@ -177,14 +177,14 @@ const generateOrderReceiptPdf = (
         typeLabel = isPickup ? 'RETIRADA/BALCÃO' : 'ENTREGA';
     }
 
-    y += 2; 
-    doc.setFontSize(baseSize + 6); 
+    y += 1; 
+    doc.setFontSize(baseSize + 4); 
     doc.setFont('helvetica', 'bold');
     doc.text(typeLabel, centerX, y, { align: 'center' });
-    y += lineHeight + 2;
+    y += lineHeight + 1;
 
     // 4. INFO DO PEDIDO
-    doc.setFontSize(baseSize);
+    doc.setFontSize(baseSize - 1);
     doc.setFont('helvetica', 'normal');
     const dateStr = format(new Date(order.createdAt), "dd/MM/yyyy HH:mm");
     doc.text(dateStr, rightMargin, y, { align: 'right' });
@@ -195,14 +195,14 @@ const generateOrderReceiptPdf = (
     }
     y += lineHeight;
 
-    doc.setFontSize(baseSize + 2);
+    doc.setFontSize(baseSize + 1);
     doc.setFont('helvetica', 'bold');
     doc.text(`PEDIDO: #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}`, leftMargin, y);
     y += lineHeight;
 
     // 5. DADOS DO CLIENTE
     if (order.deliveryOrder) {
-        doc.setFontSize(baseSize);
+        doc.setFontSize(baseSize - 1);
         doc.setFont('helvetica', 'bold');
         doc.text(`CLIENTE: ${order.deliveryOrder.name || 'N/A'}`, leftMargin, y);
         y += lineHeight;
@@ -214,7 +214,7 @@ const generateOrderReceiptPdf = (
 
           if (!isPickup && order.deliveryOrder.address) {
               doc.setFont('helvetica', 'bold');
-              const addrLines = doc.splitTextToSize(`END: ${order.deliveryOrder.address.toUpperCase()}`, 65);
+              const addrLines = doc.splitTextToSize(`END: ${order.deliveryOrder.address.toUpperCase()}`, 70);
               doc.text(addrLines, leftMargin, y);
               y += (addrLines.length * lineHeight);
           }
@@ -222,19 +222,22 @@ const generateOrderReceiptPdf = (
     }
 
     doc.setFont('helvetica', 'normal');
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
     // 6. TÍTULO DA VIA
     if (title) {
       doc.setFont('helvetica', 'bold');
+      doc.setFontSize(baseSize);
       doc.text(title.toUpperCase(), centerX, y, { align: 'center' });
       y += lineHeight;
-      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+      doc.text('------------------------------------------------', centerX, y, { align: 'center' });
       y += lineHeight;
     }
 
     // 7. LISTAGEM DE ITENS
+    doc.setFontSize(baseSize - 1);
     doc.setFont('helvetica', 'bold');
     if (isProduction) {
         doc.text('QTD  PRODUTO', leftMargin, y);
@@ -244,16 +247,16 @@ const generateOrderReceiptPdf = (
     }
     y += lineHeight;
     doc.setFont('helvetica', 'normal');
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
     (itemsToPrint || []).forEach(item => {
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(baseSize + 2); 
+      doc.setFontSize(baseSize); 
       
       const productName = item.product?.name || "Produto";
       const productText = `${item.quantity}x ${productName.toUpperCase()}`;
-      const productLines = doc.splitTextToSize(productText, maxContentWidth + (isProduction ? 15 : 0));
+      const productLines = doc.splitTextToSize(productText, maxContentWidth + (isProduction ? 10 : 0));
       
       doc.text(productLines, leftMargin, y);
       
@@ -265,9 +268,9 @@ const generateOrderReceiptPdf = (
       y += (productLines.length * lineHeight);
 
       // COMPLEMENTOS
-      doc.setFontSize(baseSize - 1); 
-      const detailMargin = leftMargin + 3;
-      const detailWidth = 52;
+      doc.setFontSize(baseSize - 2); 
+      const detailMargin = leftMargin + 2;
+      const detailWidth = 60;
       
       if (item.flavorsJson) {
           try {
@@ -305,30 +308,29 @@ const generateOrderReceiptPdf = (
           } catch(e) {}
       }
       if (item.observations) {
-          doc.setFont('helvetica', 'bold');
-          const obsLines = doc.splitTextToSize(`(!) OBS ITEM: ${item.observations.toUpperCase()}`, detailWidth);
+          doc.setFont('helvetica', 'italic');
+          const obsLines = doc.splitTextToSize(`(!) OBS: ${item.observations.toUpperCase()}`, detailWidth);
           doc.text(obsLines, detailMargin, y);
           y += (obsLines.length * lineHeight);
       }
-      y += (settings.itemSpacing || 2); 
+      y += (settings.itemSpacing || 1); // Reduzido padrão para 1
     });
 
-    y += 2;
-    doc.setFont('helvetica', 'normal');
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    y += 1;
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
     // 7.5 OBSERVAÇÃO GERAL
     const generalObs = order.observations || (order as any).deliveryOrder?.observations || (order as any).notes;
     if (generalObs) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(baseSize + 1);
-        const generalObsLines = doc.splitTextToSize(`OBS GERAL: ${generalObs.toUpperCase()}`, 65);
-        doc.text(generalObsLines, leftMargin, y);
-        y += (generalObsLines.length * lineHeight) + 2;
         doc.setFontSize(baseSize);
-        doc.setFont('helvetica', 'normal');
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        const generalObsLines = doc.splitTextToSize(`OBS GERAL: ${generalObs.toUpperCase()}`, 70);
+        doc.text(generalObsLines, leftMargin, y);
+        y += (generalObsLines.length * lineHeight) + 1;
+        doc.setFontSize(baseSize - 1);
+        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
         y += lineHeight;
     }
 
@@ -338,8 +340,7 @@ const generateOrderReceiptPdf = (
         doc.setFont('helvetica', 'bold');
         doc.text(`QTD ITENS: ${totalQty}`, leftMargin, y);
         y += lineHeight;
-        doc.setFont('helvetica', 'normal');
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
         y += lineHeight;
 
         const subtotal = order.total || 0;
@@ -348,6 +349,7 @@ const generateOrderReceiptPdf = (
         const extraCharge = order.extraCharge || 0;
         const totalGeral = subtotal + deliveryFee - discount + extraCharge;
 
+        doc.setFont('helvetica', 'normal');
         doc.text(`SUBTOTAL`, leftMargin, y);
         doc.text(`${subtotal.toFixed(2)}`, rightMargin, y, { align: 'right' });
         y += lineHeight;
@@ -364,15 +366,15 @@ const generateOrderReceiptPdf = (
           y += lineHeight;
         }
 
-        doc.setFontSize(baseSize + 2);
+        doc.setFontSize(baseSize + 1);
         doc.setFont('helvetica', 'bold');
         doc.text(`TOTAL`, leftMargin, y);
         doc.text(`${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
-        doc.setFontSize(baseSize);
+        doc.setFontSize(baseSize - 1);
         y += lineHeight;
 
         doc.setFont('helvetica', 'normal');
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
         y += lineHeight;
 
         doc.setFont('helvetica', 'bold');
@@ -395,7 +397,7 @@ const generateOrderReceiptPdf = (
             doc.text('A PAGAR NO CAIXA', leftMargin, y);
             y += lineHeight;
         }
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
         y += lineHeight;
     } else {
         doc.setFont('helvetica', 'bold');
@@ -405,18 +407,19 @@ const generateOrderReceiptPdf = (
 
     // 9. RODAPÉ
     if (!isProduction && settings.footerText) {
-        const footerLines = doc.splitTextToSize(settings.footerText.toUpperCase(), 65);
+        const footerLines = doc.splitTextToSize(settings.footerText.toUpperCase(), 70);
         doc.setFont('helvetica', 'bold');
         doc.text(footerLines, centerX, y, { align: 'center' });
-        y += (footerLines.length * lineHeight) + 2;
+        y += (footerLines.length * lineHeight) + 1;
     }
 
-    doc.setFontSize(baseSize - 2);
+    doc.setFontSize(baseSize - 3);
+    doc.setFont('helvetica', 'normal');
     doc.text(`ID: ${order.id}`, leftMargin, y);
     y += lineHeight;
     doc.setFont('helvetica', 'bold');
     doc.text('KICARDAPIO@', centerX, y, { align: 'center' });
-    y += 10; // Margem extra no final para evitar corte na serrilha
+    y += 8; // Margem final reduzida para 8mm
     return y;
   };
 
