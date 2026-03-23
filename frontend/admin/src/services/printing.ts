@@ -106,402 +106,410 @@ const generateOrderReceiptPdf = (
     logoBase64: string | null, 
     isProduction: boolean = false
 ): string => {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: [80, 297]
-  });
-
   const fontSizes = { small: 8, medium: 10, large: 12 };
   const baseSize = fontSizes[settings.fontSize] || 10;
-
   const leftMargin = 7; 
   const rightMargin = 73; 
-  const maxContentWidth = 52; // Reduzido para evitar corte na direita
+  const maxContentWidth = 52;
   const centerX = 40;
-  let y = 10; 
-  const lineHeight = baseSize * 0.85; // Aumentado para evitar sobreposição (de 0.65 para 0.85)
+  const lineHeight = baseSize * 0.85;
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(baseSize);
+  // Função interna para desenhar o conteúdo e retornar o Y final
+  const drawContent = (doc: jsPDF): number => {
+    let y = 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(baseSize);
 
-  // 1. LOGO (Apenas Caixa/Cliente e se configurado)
-  if (!isProduction && settings.showLogo && logoBase64) {
-      try {
-          doc.addImage(logoBase64, 'PNG', 25, y, 30, 30);
-          y += 32; 
-      } catch (err) { console.error("Erro ao inserir logo no PDF:", err); }
-  }
+    // 1. LOGO
+    if (!isProduction && settings.showLogo && logoBase64) {
+        try {
+            doc.addImage(logoBase64, 'PNG', 25, y, 30, 30);
+            y += 32; 
+        } catch (err) { console.error("Erro ao inserir logo no PDF:", err); }
+    }
 
-  // 2. CABEÇALHO DA LOJA (Apenas Caixa/Cliente)
-  if (!isProduction) {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(baseSize + 2);
-      doc.text(restaurantInfo.name?.toUpperCase() || 'KICARDÁPIO', centerX, y, { align: 'center' });
-      y += lineHeight;
-      
-      doc.setFontSize(baseSize - 1);
-      doc.setFont('helvetica', 'normal');
-      if (restaurantInfo.cnpj) {
-        doc.text(`CNPJ: ${restaurantInfo.cnpj}`, centerX, y, { align: 'center' });
+    // 2. CABEÇALHO DA LOJA
+    if (!isProduction) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(baseSize + 2);
+        doc.text(restaurantInfo.name?.toUpperCase() || 'KICARDÁPIO', centerX, y, { align: 'center' });
         y += lineHeight;
-      }
-
-      if (restaurantInfo.address) {
-          const addrLines = doc.splitTextToSize(restaurantInfo.address, 65);
-          doc.text(addrLines, centerX, y, { align: 'center' });
-          y += (addrLines.length * lineHeight);
-      }
-      if (restaurantInfo.phone) {
-          doc.text(`TEL: ${restaurantInfo.phone}`, centerX, y, { align: 'center' });
-          y += lineHeight;
-      }
-      
-      y += 2;
-      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-      y += lineHeight;
-
-      if (settings.headerText) {
-          const headerLines = doc.splitTextToSize(settings.headerText.toUpperCase(), 65);
-          doc.setFont('helvetica', 'bold');
-          doc.text(headerLines, centerX, y, { align: 'center' });
-          y += (headerLines.length * lineHeight) + 2;
-          doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-          y += lineHeight;
-      }
-  }
-
-  // 3. TÍTULO E TIPO DE PEDIDO
-  const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
-  const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
-  
-  let typeLabel = '';
-  if (order.orderType === 'TABLE') {
-      typeLabel = `MESA ${order.tableNumber}`;
-  } else {
-      typeLabel = isPickup ? 'RETIRADA/BALCÃO' : 'ENTREGA';
-  }
-
-  y += 2; 
-  doc.setFontSize(baseSize + 6); 
-  doc.setFont('helvetica', 'bold');
-  doc.text(typeLabel, centerX, y, { align: 'center' });
-  y += lineHeight + 2;
-
-  // 4. INFO DO PEDIDO (Data, Atendente, Número)
-  doc.setFontSize(baseSize);
-  doc.setFont('helvetica', 'normal');
-  const dateStr = format(new Date(order.createdAt), "dd/MM/yyyy HH:mm");
-  doc.text(dateStr, rightMargin, y, { align: 'right' });
-  
-  if (order.user?.name) {
-    doc.setFont('helvetica', 'bold');
-    doc.text(`ATEND: ${order.user.name.toUpperCase()}`, leftMargin, y);
-  }
-  y += lineHeight;
-
-  doc.setFontSize(baseSize + 2);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`PEDIDO: #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}`, leftMargin, y);
-  y += lineHeight;
-
-  // 5. DADOS DO CLIENTE
-  if (order.deliveryOrder) {
-      doc.setFontSize(baseSize);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`CLIENTE: ${order.deliveryOrder.name || 'N/A'}`, leftMargin, y);
-      y += lineHeight;
-      
-      if (!isProduction) {
+        
+        doc.setFontSize(baseSize - 1);
         doc.setFont('helvetica', 'normal');
-        doc.text(`FONE: ${order.deliveryOrder.phone || 'N/A'}`, leftMargin, y);
-        y += lineHeight;
+        if (restaurantInfo.cnpj) {
+          doc.text(`CNPJ: ${restaurantInfo.cnpj}`, centerX, y, { align: 'center' });
+          y += lineHeight;
+        }
 
-        if (!isPickup && order.deliveryOrder.address) {
-            doc.setFont('helvetica', 'bold');
-            const addrLines = doc.splitTextToSize(`END: ${order.deliveryOrder.address.toUpperCase()}`, 65);
-            doc.text(addrLines, leftMargin, y);
+        if (restaurantInfo.address) {
+            const addrLines = doc.splitTextToSize(restaurantInfo.address, 65);
+            doc.text(addrLines, centerX, y, { align: 'center' });
             y += (addrLines.length * lineHeight);
         }
-      }
-  }
+        if (restaurantInfo.phone) {
+            doc.text(`TEL: ${restaurantInfo.phone}`, centerX, y, { align: 'center' });
+            y += lineHeight;
+        }
+        
+        y += 2;
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += lineHeight;
 
-  doc.setFont('helvetica', 'normal');
-  doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-  y += lineHeight;
+        if (settings.headerText) {
+            const headerLines = doc.splitTextToSize(settings.headerText.toUpperCase(), 65);
+            doc.setFont('helvetica', 'bold');
+            doc.text(headerLines, centerX, y, { align: 'center' });
+            y += (headerLines.length * lineHeight) + 2;
+            doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+            y += lineHeight;
+        }
+    }
 
-  // 6. TÍTULO DA VIA (EX: VIA COZINHA, VIA BAR)
-  if (title) {
+    // 3. TÍTULO E TIPO DE PEDIDO
+    const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
+    const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
+    
+    let typeLabel = '';
+    if (order.orderType === 'TABLE') {
+        typeLabel = `MESA ${order.tableNumber}`;
+    } else {
+        typeLabel = isPickup ? 'RETIRADA/BALCÃO' : 'ENTREGA';
+    }
+
+    y += 2; 
+    doc.setFontSize(baseSize + 6); 
     doc.setFont('helvetica', 'bold');
-    doc.text(title.toUpperCase(), centerX, y, { align: 'center' });
+    doc.text(typeLabel, centerX, y, { align: 'center' });
+    y += lineHeight + 2;
+
+    // 4. INFO DO PEDIDO
+    doc.setFontSize(baseSize);
+    doc.setFont('helvetica', 'normal');
+    const dateStr = format(new Date(order.createdAt), "dd/MM/yyyy HH:mm");
+    doc.text(dateStr, rightMargin, y, { align: 'right' });
+    
+    if (order.user?.name) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`ATEND: ${order.user.name.toUpperCase()}`, leftMargin, y);
+    }
     y += lineHeight;
+
+    doc.setFontSize(baseSize + 2);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`PEDIDO: #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}`, leftMargin, y);
+    y += lineHeight;
+
+    // 5. DADOS DO CLIENTE
+    if (order.deliveryOrder) {
+        doc.setFontSize(baseSize);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`CLIENTE: ${order.deliveryOrder.name || 'N/A'}`, leftMargin, y);
+        y += lineHeight;
+        
+        if (!isProduction) {
+          doc.setFont('helvetica', 'normal');
+          doc.text(`FONE: ${order.deliveryOrder.phone || 'N/A'}`, leftMargin, y);
+          y += lineHeight;
+
+          if (!isPickup && order.deliveryOrder.address) {
+              doc.setFont('helvetica', 'bold');
+              const addrLines = doc.splitTextToSize(`END: ${order.deliveryOrder.address.toUpperCase()}`, 65);
+              doc.text(addrLines, leftMargin, y);
+              y += (addrLines.length * lineHeight);
+          }
+        }
+    }
+
+    doc.setFont('helvetica', 'normal');
     doc.text('--------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
-  }
 
-  // 7. LISTAGEM DE ITENS
-  doc.setFont('helvetica', 'bold');
-  if (isProduction) {
-      doc.text('QTD  PRODUTO', leftMargin, y);
-  } else {
-      doc.text('QTD  DESCRIÇÃO', leftMargin, y);
-      doc.text('VALOR', rightMargin, y, { align: 'right' });
-  }
-  y += lineHeight;
-  doc.setFont('helvetica', 'normal');
-  doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-  y += lineHeight;
+    // 6. TÍTULO DA VIA
+    if (title) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(title.toUpperCase(), centerX, y, { align: 'center' });
+      y += lineHeight;
+      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
+    }
 
-  let totalQty = 0;
-  (itemsToPrint || []).forEach(item => {
-    totalQty += item.quantity || 0;
-    
+    // 7. LISTAGEM DE ITENS
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(baseSize + 2); 
-    
-    const productName = item.product?.name || "Produto";
-    const productText = `${item.quantity}x ${productName.toUpperCase()}`;
-    const productLines = doc.splitTextToSize(productText, maxContentWidth + (isProduction ? 15 : 0));
-    
-    doc.text(productLines, leftMargin, y);
-    
-    if (!isProduction) {
-        const totalItem = ((item.priceAtTime || 0) * (item.quantity || 0)).toFixed(2);
-        doc.text(totalItem, rightMargin, y, { align: 'right' });
+    if (isProduction) {
+        doc.text('QTD  PRODUTO', leftMargin, y);
+    } else {
+        doc.text('QTD  DESCRIÇÃO', leftMargin, y);
+        doc.text('VALOR', rightMargin, y, { align: 'right' });
     }
-    
-    y += (productLines.length * lineHeight);
+    y += lineHeight;
+    doc.setFont('helvetica', 'normal');
+    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
 
-    // COMPLEMENTOS (SABORES, TAMANHO, ADICIONAIS, OBS)
-    doc.setFontSize(baseSize - 1); 
-    const detailMargin = leftMargin + 3;
-    const detailWidth = 52;
-    
-    // Sabores
-    if (item.flavorsJson) {
-        try {
-            const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
-            if (Array.isArray(flavors)) {
-                flavors.forEach((f: any) => {
-                    doc.setFont('helvetica', 'bold');
-                    const line = `> SABOR: ${f.name?.toUpperCase() || ''}`;
-                    const lines = doc.splitTextToSize(line, detailWidth);
-                    doc.text(lines, detailMargin, y);
-                    y += (lines.length * lineHeight);
-                });
-            }
-        } catch(e) {}
-    }
-    // Tamanho
-    if (item.sizeJson) {
-        try { 
-            const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
-            doc.setFont('helvetica', 'normal');
-            doc.text(`> TAM: ${size.name?.toUpperCase() || ''}`, detailMargin, y); 
-            y += lineHeight; 
-        } catch(e) {}
-    }
-    // Adicionais / Complementos
-    if (item.addonsJson) {
-        try { 
-            const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
-            if (Array.isArray(addons)) {
-                addons.forEach((a:any) => {
-                    doc.setFont('helvetica', 'bold');
-                    const qtyPrefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-                    doc.text(`[+] ${qtyPrefix}${a.name?.toUpperCase() || ''}`, detailMargin, y);
-                    y += lineHeight;
-                });
-            }
-        } catch(e) {}
-    }
-    // Observações do Item
-    if (item.observations) {
+    (itemsToPrint || []).forEach(item => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(baseSize + 2); 
+      
+      const productName = item.product?.name || "Produto";
+      const productText = `${item.quantity}x ${productName.toUpperCase()}`;
+      const productLines = doc.splitTextToSize(productText, maxContentWidth + (isProduction ? 15 : 0));
+      
+      doc.text(productLines, leftMargin, y);
+      
+      if (!isProduction) {
+          const totalItem = ((item.priceAtTime || 0) * (item.quantity || 0)).toFixed(2);
+          doc.text(totalItem, rightMargin, y, { align: 'right' });
+      }
+      
+      y += (productLines.length * lineHeight);
+
+      // COMPLEMENTOS
+      doc.setFontSize(baseSize - 1); 
+      const detailMargin = leftMargin + 3;
+      const detailWidth = 52;
+      
+      if (item.flavorsJson) {
+          try {
+              const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
+              if (Array.isArray(flavors)) {
+                  flavors.forEach((f: any) => {
+                      doc.setFont('helvetica', 'bold');
+                      const line = `> SABOR: ${f.name?.toUpperCase() || ''}`;
+                      const lines = doc.splitTextToSize(line, detailWidth);
+                      doc.text(lines, detailMargin, y);
+                      y += (lines.length * lineHeight);
+                  });
+              }
+          } catch(e) {}
+      }
+      if (item.sizeJson) {
+          try { 
+              const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
+              doc.setFont('helvetica', 'normal');
+              doc.text(`> TAM: ${size.name?.toUpperCase() || ''}`, detailMargin, y); 
+              y += lineHeight; 
+          } catch(e) {}
+      }
+      if (item.addonsJson) {
+          try { 
+              const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
+              if (Array.isArray(addons)) {
+                  addons.forEach((a:any) => {
+                      doc.setFont('helvetica', 'bold');
+                      const qtyPrefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
+                      doc.text(`[+] ${qtyPrefix}${a.name?.toUpperCase() || ''}`, detailMargin, y);
+                      y += lineHeight;
+                  });
+              }
+          } catch(e) {}
+      }
+      if (item.observations) {
+          doc.setFont('helvetica', 'bold');
+          const obsLines = doc.splitTextToSize(`(!) OBS ITEM: ${item.observations.toUpperCase()}`, detailWidth);
+          doc.text(obsLines, detailMargin, y);
+          y += (obsLines.length * lineHeight);
+      }
+      y += (settings.itemSpacing || 2); 
+    });
+
+    y += 2;
+    doc.setFont('helvetica', 'normal');
+    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // 7.5 OBSERVAÇÃO GERAL
+    const generalObs = order.observations || (order as any).deliveryOrder?.observations || (order as any).notes;
+    if (generalObs) {
         doc.setFont('helvetica', 'bold');
-        const obsLines = doc.splitTextToSize(`(!) OBS ITEM: ${item.observations.toUpperCase()}`, detailWidth);
-        doc.text(obsLines, detailMargin, y);
-        y += (obsLines.length * lineHeight);
+        doc.setFontSize(baseSize + 1);
+        const generalObsLines = doc.splitTextToSize(`OBS GERAL: ${generalObs.toUpperCase()}`, 65);
+        doc.text(generalObsLines, leftMargin, y);
+        y += (generalObsLines.length * lineHeight) + 2;
+        doc.setFontSize(baseSize);
+        doc.setFont('helvetica', 'normal');
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += lineHeight;
     }
-    y += (settings.itemSpacing || 2); 
-  });
 
-  y += 2;
-  doc.setFont('helvetica', 'normal');
-  doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-  y += lineHeight;
-
-  // 7.5 OBSERVAÇÃO GERAL DO PEDIDO
-  const generalObs = order.observations || (order as any).deliveryOrder?.observations || (order as any).notes;
-  if (generalObs) {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(baseSize + 1);
-      const generalObsLines = doc.splitTextToSize(`OBS GERAL: ${generalObs.toUpperCase()}`, 65);
-      doc.text(generalObsLines, leftMargin, y);
-      y += (generalObsLines.length * lineHeight) + 2;
-      doc.setFontSize(baseSize);
-      doc.setFont('helvetica', 'normal');
-      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-      y += lineHeight;
-  }
-
-  // 8. TOTAIS E PAGAMENTO (Apenas Caixa)
-  if (!isProduction) {
-      doc.setFont('helvetica', 'bold');
-      doc.text(`QTD ITENS: ${totalQty}`, leftMargin, y);
-      y += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-      y += lineHeight;
-
-      const subtotal = order.total || 0;
-      const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
-      const discount = order.discount || 0;
-      const extraCharge = order.extraCharge || 0;
-      const totalGeral = subtotal + deliveryFee - discount + extraCharge;
-
-      doc.text(`SUBTOTAL`, leftMargin, y);
-      doc.text(`${subtotal.toFixed(2)}`, rightMargin, y, { align: 'right' });
-      y += lineHeight;
-
-      if (deliveryFee > 0) {
-        doc.text(`TAXA ENTREGA`, leftMargin, y);
-        doc.text(`${deliveryFee.toFixed(2)}`, rightMargin, y, { align: 'right' });
+    // 8. TOTAIS E PAGAMENTO
+    if (!isProduction) {
+        let totalQty = (itemsToPrint || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`QTD ITENS: ${totalQty}`, leftMargin, y);
         y += lineHeight;
-      }
-      
-      if (discount > 0) {
-        doc.text(`DESCONTO (-)`, leftMargin, y);
-        doc.text(`${discount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
         y += lineHeight;
-      }
 
-      doc.setFontSize(baseSize + 2);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`TOTAL`, leftMargin, y);
-      doc.text(`${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
-      doc.setFontSize(baseSize);
-      y += lineHeight;
+        const subtotal = order.total || 0;
+        const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
+        const discount = order.discount || 0;
+        const extraCharge = order.extraCharge || 0;
+        const totalGeral = subtotal + deliveryFee - discount + extraCharge;
 
-      doc.setFont('helvetica', 'normal');
-      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-      y += lineHeight;
+        doc.text(`SUBTOTAL`, leftMargin, y);
+        doc.text(`${subtotal.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        y += lineHeight;
 
-      // PAGAMENTOS
-      doc.setFont('helvetica', 'bold');
-      doc.text('PAGAMENTO:', leftMargin, y);
-      y += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      
-      const methodMap: any = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
-
-      if (order.payments && order.payments.length > 0) {
-          order.payments.forEach((p: any) => {
-              doc.text(`(${methodMap[p.method] || p.method.toUpperCase()})`, leftMargin, y);
-              doc.text(`${p.amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
-              y += lineHeight;
-          });
-      } else if (order.deliveryOrder?.paymentMethod) {
-          doc.text(`(${methodMap[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase()})`, leftMargin, y);
+        if (deliveryFee > 0) {
+          doc.text(`TAXA ENTREGA`, leftMargin, y);
+          doc.text(`${deliveryFee.toFixed(2)}`, rightMargin, y, { align: 'right' });
           y += lineHeight;
-      } else {
-          doc.text('A PAGAR NO CAIXA', leftMargin, y);
+        }
+        
+        if (discount > 0) {
+          doc.text(`DESCONTO (-)`, leftMargin, y);
+          doc.text(`${discount.toFixed(2)}`, rightMargin, y, { align: 'right' });
           y += lineHeight;
-      }
-      doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-      y += lineHeight;
-  } else {
-      doc.setFont('helvetica', 'bold');
-      doc.text('*** FIM DA PRODUÇÃO ***', centerX, y, { align: 'center' });
-      y += lineHeight;
-  }
+        }
 
-  // 9. RODAPÉ
-  if (!isProduction && settings.footerText) {
-      const footerLines = doc.splitTextToSize(settings.footerText.toUpperCase(), 65);
-      doc.setFont('helvetica', 'bold');
-      doc.text(footerLines, centerX, y, { align: 'center' });
-      y += (footerLines.length * lineHeight) + 2;
-  }
+        doc.setFontSize(baseSize + 2);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`TOTAL`, leftMargin, y);
+        doc.text(`${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        doc.setFontSize(baseSize);
+        y += lineHeight;
 
-  doc.setFontSize(baseSize - 2);
-  doc.text(`ID: ${order.id}`, leftMargin, y);
-  y += lineHeight;
-  doc.setFont('helvetica', 'bold');
-  doc.text('KICARDAPIO@', centerX, y, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += lineHeight;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('PAGAMENTO:', leftMargin, y);
+        y += lineHeight;
+        doc.setFont('helvetica', 'normal');
+        
+        const methodMap: any = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
+
+        if (order.payments && order.payments.length > 0) {
+            order.payments.forEach((p: any) => {
+                doc.text(`(${methodMap[p.method] || p.method.toUpperCase()})`, leftMargin, y);
+                doc.text(`${p.amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+                y += lineHeight;
+            });
+        } else if (order.deliveryOrder?.paymentMethod) {
+            doc.text(`(${methodMap[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase()})`, leftMargin, y);
+            y += lineHeight;
+        } else {
+            doc.text('A PAGAR NO CAIXA', leftMargin, y);
+            y += lineHeight;
+        }
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += lineHeight;
+    } else {
+        doc.setFont('helvetica', 'bold');
+        doc.text('*** FIM DA PRODUÇÃO ***', centerX, y, { align: 'center' });
+        y += lineHeight;
+    }
+
+    // 9. RODAPÉ
+    if (!isProduction && settings.footerText) {
+        const footerLines = doc.splitTextToSize(settings.footerText.toUpperCase(), 65);
+        doc.setFont('helvetica', 'bold');
+        doc.text(footerLines, centerX, y, { align: 'center' });
+        y += (footerLines.length * lineHeight) + 2;
+    }
+
+    doc.setFontSize(baseSize - 2);
+    doc.text(`ID: ${order.id}`, leftMargin, y);
+    y += lineHeight;
+    doc.setFont('helvetica', 'bold');
+    doc.text('KICARDAPIO@', centerX, y, { align: 'center' });
+    y += 10; // Margem extra no final para evitar corte na serrilha
+    return y;
+  };
+
+  // 1º Passo: Calcular Altura
+  const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
+  const finalHeight = drawContent(tempDoc);
+
+  // 2º Passo: Gerar PDF Real com a altura calculada
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, finalHeight] });
+  drawContent(doc);
 
   return doc.output('datauristring').split(',')[1];
 };
 
 const generateCashierPdf = (summary: any, restaurantInfo: any, settings: ReceiptSettings): string => {
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 200] });
     const centerX = 40;
     const leftMargin = 10;
     const rightMargin = 74;
-    let y = 12;
     const lineHeight = 5;
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text("FECHAMENTO DE CAIXA", centerX, y, { align: 'center' });
-    y += lineHeight + 2;
+    const drawContent = (doc: jsPDF): number => {
+        let y = 12;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text("FECHAMENTO DE CAIXA", centerX, y, { align: 'center' });
+        y += lineHeight + 2;
 
-    doc.setFontSize(10);
-    doc.text(restaurantInfo.name?.toUpperCase() || 'NOME DA LOJA', leftMargin, y);
-    y += lineHeight;
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text(`ABERTURA: ${format(new Date(summary.openedAt), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
-    y += lineHeight;
-    doc.text(`FECHAMENTO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
-    y += lineHeight + 2;
-
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-    y += lineHeight;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text("RESUMO DE VENDAS", leftMargin, y);
-    y += lineHeight;
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-    y += lineHeight;
-
-    doc.setFont('helvetica', 'normal');
-    Object.entries(summary.salesByMethod || {}).forEach(([method, amount]: [string, any]) => {
-        const methodMap: any = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
-        doc.text(methodMap[method] || method.toUpperCase(), leftMargin, y);
-        doc.text(`R$ ${amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        doc.setFontSize(10);
+        doc.text(restaurantInfo.name?.toUpperCase() || 'NOME DA LOJA', leftMargin, y);
         y += lineHeight;
-    });
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`ABERTURA: ${format(new Date(summary.openedAt), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
+        y += lineHeight;
+        doc.text(`FECHAMENTO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
+        y += lineHeight + 2;
 
-    y += 2;
-    doc.setFont('helvetica', 'bold');
-    doc.text("TOTAL VENDIDO", leftMargin, y);
-    doc.text(`R$ ${summary.totalSales.toFixed(2)}`, rightMargin, y, { align: 'right' });
-    y += lineHeight + 2;
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += lineHeight;
 
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-    y += lineHeight;
+        doc.setFont('helvetica', 'bold');
+        doc.text("RESUMO DE VENDAS", leftMargin, y);
+        y += lineHeight;
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += lineHeight;
 
-    doc.text("SALDO FINAL", leftMargin, y);
-    y += lineHeight;
-    doc.setFont('helvetica', 'normal');
-    doc.text("Fundo de Caixa (Inicial)", leftMargin, y);
-    doc.text(`+ R$ ${summary.initialAmount.toFixed(2)}`, rightMargin, y, { align: 'right' });
-    y += lineHeight;
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    const totalGeral = summary.totalSales + summary.initialAmount;
-    doc.text("TOTAL EM CAIXA", leftMargin, y);
-    doc.text(`R$ ${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
-    y += lineHeight * 2;
+        doc.setFont('helvetica', 'normal');
+        Object.entries(summary.salesByMethod || {}).forEach(([method, amount]: [string, any]) => {
+            const methodMap: any = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
+            doc.text(methodMap[method] || method.toUpperCase(), leftMargin, y);
+            doc.text(`R$ ${amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+            y += lineHeight;
+        });
 
-    doc.setFontSize(8);
-    doc.text("ASSINATURA RESPONSÁVEL:", leftMargin, y);
-    y += 15;
-    doc.text('____________________________________', centerX, y, { align: 'center' });
-    y += lineHeight;
-    doc.text('KICARDAPIO@', centerX, y, { align: 'center' });
+        y += 2;
+        doc.setFont('helvetica', 'bold');
+        doc.text("TOTAL VENDIDO", leftMargin, y);
+        doc.text(`R$ ${summary.totalSales.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        y += lineHeight + 2;
+
+        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+        y += lineHeight;
+
+        doc.text("SALDO FINAL", leftMargin, y);
+        y += lineHeight;
+        doc.setFont('helvetica', 'normal');
+        doc.text("Fundo de Caixa (Inicial)", leftMargin, y);
+        doc.text(`+ R$ ${summary.initialAmount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        y += lineHeight;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        const totalGeral = (summary.totalSales || 0) + (summary.initialAmount || 0);
+        doc.text("TOTAL EM CAIXA", leftMargin, y);
+        doc.text(`R$ ${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        y += lineHeight * 2;
+
+        doc.setFontSize(8);
+        doc.text("ASSINATURA RESPONSÁVEL:", leftMargin, y);
+        y += 15;
+        doc.text('____________________________________', centerX, y, { align: 'center' });
+        y += lineHeight;
+        doc.text('KICARDAPIO@', centerX, y, { align: 'center' });
+        y += 10;
+        return y;
+    };
+
+    const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
+    const finalHeight = drawContent(tempDoc);
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, finalHeight] });
+    drawContent(doc);
 
     return doc.output('datauristring').split(',')[1];
 };
