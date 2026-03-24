@@ -379,7 +379,7 @@ const AddonFormPage: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-4 border-b border-slate-200">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sticky top-0 bg-slate-50/90 backdrop-blur-md z-40 py-4 border-b border-slate-200">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/addons')} className="rounded-xl bg-white border border-slate-200 h-10 w-10 shadow-sm"><ArrowLeft size={20}/></Button>
                     <div>

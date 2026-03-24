@@ -118,7 +118,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
       <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={onClose} />
       
-      <div className="relative w-full max-w-6xl h-[95vh] lg:h-auto lg:max-h-[85vh] flex flex-col bg-[#F8FAFC] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20">
+      <div className="relative w-full max-w-6xl h-[95vh] lg:h-auto lg:max-h-[85vh] flex flex-col bg-slate-50 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20">
         
         {/* HEADER DE ALTO NÍVEL */}
         <header className="h-20 bg-slate-900 text-white px-8 flex items-center justify-between shrink-0 z-10 shadow-xl">

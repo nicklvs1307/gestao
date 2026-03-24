@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { api } from '../services/api';
 import { 
     Wallet, Plus, Search, Filter, ArrowUpCircle, 
@@ -35,6 +36,7 @@ const FinancialEntries: React.FC = () => {
     const [categories, setCategories] = useState<any[]>([]);
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     const loadData = async () => {
         setLoading(true);
@@ -115,14 +117,15 @@ const FinancialEntries: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Deseja excluir este lançamento?')) return;
-        try {
-            await api.delete(`/financial/transactions/${id}`);
-            toast.success('Lançamento removido');
-            loadData();
-        } catch (error) {
-            toast.error('Erro ao excluir');
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Deseja excluir este lançamento?', onConfirm: async () => {
+            try {
+                await api.delete(`/financial/transactions/${id}`);
+                toast.success('Lançamento removido');
+                loadData();
+            } catch (error) {
+                toast.error('Erro ao excluir');
+            }
+        }});
     };
 
     return (
@@ -464,6 +467,7 @@ const FinancialEntries: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

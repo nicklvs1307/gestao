@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { api, payDriverSettlement } from '../services/api';
 import { 
   Truck, DollarSign, CreditCard, Building2, 
@@ -29,6 +30,7 @@ const DriverSettlement: React.FC = () => {
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [startTime, setStartTime] = useState('00:00');
     const [endTime, setEndTime] = useState('23:59');
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     const fetchSettlement = async () => {
         setLoading(true);
@@ -46,20 +48,20 @@ const DriverSettlement: React.FC = () => {
     };
 
     const handlePaySettlement = async (settlement: SettlementData) => {
-        if(!confirm(`CONFIRMAR ACERTO: R$ ${settlement.totalToPay.toFixed(2)} com ${settlement.driverName}?\nIsso lançará os valores no caixa aberto.`)) return;
-
-        try {
-            await payDriverSettlement({
-                driverName: settlement.driverName,
-                amount: settlement.totalToPay,
-                date: date,
-                driverId: settlement.driverId
-            });
-            toast.success(`Acerto de ${settlement.driverName} registrado com sucesso!`);
-            fetchSettlement();
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || "Erro ao registrar acerto.");
-        }
+        setConfirmData({open: true, title: 'Confirmar Acerto', message: `CONFIRMAR ACERTO: R$ ${settlement.totalToPay.toFixed(2)} com ${settlement.driverName}?\nIsso lançará os valores no caixa aberto.`, onConfirm: async () => {
+            try {
+                await payDriverSettlement({
+                    driverName: settlement.driverName,
+                    amount: settlement.totalToPay,
+                    date: date,
+                    driverId: settlement.driverId
+                });
+                toast.success(`Acerto de ${settlement.driverName} registrado com sucesso!`);
+                fetchSettlement();
+            } catch (error: any) {
+                toast.error(error.response?.data?.error || "Erro ao registrar acerto.");
+            }
+        }});
     };
 
     useEffect(() => {
@@ -268,6 +270,7 @@ const DriverSettlement: React.FC = () => {
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Sincronizado com Fluxo de Caixa Centralizado</p>
             </div>
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

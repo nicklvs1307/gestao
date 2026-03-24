@@ -7,6 +7,7 @@ import {
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Card } from '../../components/ui/Card';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +18,7 @@ const FinancialCategories: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<any>({ type: 'EXPENSE' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     useEffect(() => {
         loadCategories();
@@ -53,14 +55,16 @@ const FinancialCategories: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Excluir esta categoria? Isso pode afetar relatórios históricos.')) return;
-        try {
-            await api.delete(`/financial/categories/${id}`);
-            toast.success('Categoria removida.');
-            loadCategories();
-        } catch (error) {
-            toast.error('Erro ao excluir. Verifique se existem lançamentos vinculados.');
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Excluir esta categoria? Isso pode afetar relatórios históricos.', onConfirm: async () => {
+            try {
+                await api.delete(`/financial/categories/${id}`);
+                toast.success('Categoria removida.');
+                loadCategories();
+            } catch (error) {
+                toast.error('Erro ao excluir. Verifique se existem lançamentos vinculados.');
+            }
+            setConfirmData(prev => ({...prev, open: false}));
+        }});
     };
 
     const filtered = categories.filter(c => 
@@ -308,6 +312,15 @@ const FinancialCategories: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            <ConfirmDialog
+                isOpen={confirmData.open}
+                onClose={() => setConfirmData(prev => ({...prev, open: false}))}
+                onConfirm={confirmData.onConfirm}
+                title={confirmData.title}
+                message={confirmData.message}
+                variant="danger"
+            />
         </div>
     );
 };

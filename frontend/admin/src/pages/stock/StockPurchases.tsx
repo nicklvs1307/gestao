@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { api } from '../../services/api';
 import { 
     Plus, Search, ShoppingCart, Receipt, Calendar, 
@@ -21,6 +22,7 @@ const StockPurchases: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
     
     // FORM STATE
     const [formData, setFormData] = useState<any>({
@@ -53,14 +55,15 @@ const StockPurchases: React.FC = () => {
     };
 
     const handleConfirm = async (id: string) => {
-        if (!confirm('Confirmar entrada desta nota? O estoque será atualizado imediatamente.')) return;
-        try {
-            await api.put(`/stock/entries/${id}/confirm`);
-            toast.success('Entrada confirmada e estoque atualizado!');
-            loadData();
-        } catch (e) {
-            toast.error('Erro ao confirmar entrada.');
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Confirmar entrada desta nota? O estoque será atualizado imediatamente.', onConfirm: async () => {
+            try {
+                await api.put(`/stock/entries/${id}/confirm`);
+                toast.success('Entrada confirmada e estoque atualizado!');
+                loadData();
+            } catch (e) {
+                toast.error('Erro ao confirmar entrada.');
+            }
+        }});
     };
 
     const handleAddItem = () => {
@@ -407,6 +410,7 @@ const StockPurchases: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

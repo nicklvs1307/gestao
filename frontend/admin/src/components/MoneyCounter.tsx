@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Banknote, Coins, X, Check, Calculator, Trash2 } from 'lucide-react';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,6 +17,7 @@ const COINS = [1, 0.50, 0.25, 0.10, 0.05];
 
 const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm, initialDetails }) => {
     const [counts, setCounts] = useState<Record<string, number>>({});
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     useEffect(() => {
         if (isOpen && initialDetails) {
@@ -44,14 +46,18 @@ const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm,
     };
 
     const clearAll = () => {
-        if(confirm('Limpar toda a contagem?')) setCounts({});
+        setConfirmData({open: true, title: 'Confirmar', message: 'Limpar toda a contagem?', onConfirm: () => {
+            setCounts({});
+            setConfirmData(prev => ({...prev, open: false}));
+        }});
     };
 
     if (!isOpen) return null;
 
     return (
-        <AnimatePresence>
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 bg-slate-900/60 backdrop-blur-sm">
+        <>
+            <AnimatePresence>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 bg-slate-900/60 backdrop-blur-sm">
                 <motion.div 
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -175,7 +181,17 @@ const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm,
                     </div>
                 </motion.div>
             </div>
-        </AnimatePresence>
+            </AnimatePresence>
+
+            <ConfirmDialog
+                isOpen={confirmData.open}
+                onClose={() => setConfirmData(prev => ({...prev, open: false}))}
+                onConfirm={confirmData.onConfirm}
+                title={confirmData.title}
+                message={confirmData.message}
+                variant="warning"
+            />
+        </>
     );
 };
 

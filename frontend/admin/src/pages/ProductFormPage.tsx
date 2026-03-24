@@ -181,7 +181,7 @@ function ProductFormPage() {
     return (
         <div className="space-y-4 animate-in fade-in duration-500 pb-10 text-slate-900">
             {/* Header Super Compacto */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-2 border-b border-slate-200">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sticky top-0 bg-slate-50/90 backdrop-blur-md z-40 py-2 border-b border-slate-200">
                 <div className="flex items-center gap-3">
                     <Button variant="ghost" size="icon" type="button" onClick={() => navigate('/products')} className="rounded-lg bg-white h-9 w-9 border border-slate-200 shadow-sm"><ArrowLeft size={18}/></Button>
                     <div>

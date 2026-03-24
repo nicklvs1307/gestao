@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    ClipboardCheck, Plus, Search, LayoutGrid, Trash2, 
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import {
+    ClipboardCheck, Plus, Search, LayoutGrid, Trash2,
     Edit, ChevronRight, CheckCircle2, AlertCircle, Clock,
     Camera, Type, Hash, CheckSquare, Loader2, X, QrCode, Printer,
     Filter, Settings2, Check, ArrowRight, Save, Copy, HelpCircle,
@@ -59,6 +60,7 @@ const ChecklistManagement: React.FC = () => {
     const [isEditingSector, setIsEditingSector] = useState(false);
     const [newSectorName, setNewSectorName] = useState('');
     const [sendingReport, setSendingReport] = useState<string | null>(null);
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     const handleSendManualDailyReport = async () => {
         setSendingReport('daily');
@@ -144,14 +146,15 @@ const ChecklistManagement: React.FC = () => {
     };
 
     const handleDeleteSector = async (id: string) => {
-        if (!confirm("Excluir setor?")) return;
-        try {
-            await deleteSector(id);
-            toast.success("Setor removido");
-            loadData();
-        } catch (error) {
-            toast.error("Erro ao excluir");
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Excluir setor?', onConfirm: async () => {
+            try {
+                await deleteSector(id);
+                toast.success("Setor removido");
+                loadData();
+            } catch (error) {
+                toast.error("Erro ao excluir");
+            }
+        }});
     };
 
     const handleAddTask = () => {
@@ -290,7 +293,7 @@ const ChecklistManagement: React.FC = () => {
                                         </button>
                                         <button onClick={() => { setSelectedChecklist(checklist); setShowQRCodeModal(true); }} className="p-1.5 text-slate-400 hover:text-slate-900 transition-all"><QrCode size={14}/></button>
                                         <button onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }} className="p-1.5 text-slate-400 hover:text-blue-600 transition-all"><Edit size={14}/></button>
-                                        <button onClick={() => { if(confirm("Excluir?")) deleteChecklist(checklist.id).then(loadData); }} className="p-1.5 text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14}/></button>
+                                        <button onClick={() => { setConfirmData({open: true, title: 'Confirmar', message: 'Excluir?', onConfirm: async () => { await deleteChecklist(checklist.id); loadData(); }}); }} className="p-1.5 text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14}/></button>
                                     </div>
                                 </div>
                                 <h3 className="text-sm font-black text-slate-900 uppercase italic mb-1">{checklist.title}</h3>
@@ -588,7 +591,7 @@ const ChecklistManagement: React.FC = () => {
             {showExecutionDetail && selectedExecution && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowExecutionDetail(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-[#fcfcfc] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <header className="p-6 bg-white border-b border-slate-100 flex items-center justify-between sticky top-0 z-10">
                             <div className="flex items-center gap-4">
                                 <div className="p-2.5 bg-slate-900 text-white rounded-xl"><CheckSquare size={20} /></div>
@@ -670,6 +673,7 @@ const ChecklistManagement: React.FC = () => {
                     </motion.div>
                 </div>
             )}
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

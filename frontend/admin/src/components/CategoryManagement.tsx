@@ -22,6 +22,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 interface CategoryManagementProps {
@@ -137,6 +138,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
+  const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -197,15 +199,15 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
   };
 
   const handleDelete = async (categoryId: string) => {
-    if (!window.confirm('Excluir esta categoria permanentemente?')) return;
-
-    try {
-      await deleteCategory(categoryId);
-      setCategories(prev => prev.filter(c => c.id !== categoryId));
-      toast.success("Categoria excluída.");
-    } catch (err) {
-      toast.error("Erro ao excluir categoria.");
-    }
+    setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Excluir esta categoria permanentemente?', onConfirm: async () => {
+      try {
+        await deleteCategory(categoryId);
+        setCategories(prev => prev.filter(c => c.id !== categoryId));
+        toast.success("Categoria excluída.");
+      } catch (err) {
+        toast.error("Erro ao excluir categoria.");
+      }
+    }});
   };
 
   if (isLoading && !isReordering) {
@@ -292,6 +294,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
           <span className="text-[9px] font-black uppercase tracking-[0.1em] italic">Salvando nova ordem...</span>
         </div>
       )}
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 }

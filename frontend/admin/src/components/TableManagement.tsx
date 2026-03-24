@@ -9,6 +9,7 @@ import { cn } from '../lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 interface TableManagementProps {
@@ -25,6 +26,7 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
   const [qrCodeLink, setQrCodeLink] = useState<string | null>(null);
   const { user } = useAuth();
   const restaurantId = user?.restaurantId;
+  const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const fetchTables = async () => {
     try {
@@ -62,14 +64,15 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
   };
 
   const handleDelete = async (tableId: string) => {
-    if (!window.confirm('Excluir esta mesa?')) return;
-    try {
-      await deleteTable(tableId);
-      toast.success("Mesa removida.");
-      fetchTables();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Erro ao excluir.');
-    }
+    setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Excluir esta mesa?', onConfirm: async () => {
+      try {
+        await deleteTable(tableId);
+        toast.success("Mesa removida.");
+        fetchTables();
+      } catch (err: any) {
+        toast.error(err.response?.data?.error || 'Erro ao excluir.');
+      }
+    }});
   };
 
   const generateMenuLink = (tableNumber: number) => {
@@ -269,6 +272,7 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
           </div>
         )}
       </AnimatePresence>
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

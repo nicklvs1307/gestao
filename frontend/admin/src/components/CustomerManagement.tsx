@@ -10,6 +10,7 @@ import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Input } from './ui/Input';
 
 const CustomerManagement: React.FC = () => {
@@ -21,6 +22,7 @@ const CustomerManagement: React.FC = () => {
     
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<any>(null);
+    const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     const fetchCustomers = async () => {
         setLoading(true);
@@ -52,14 +54,15 @@ const CustomerManagement: React.FC = () => {
     };
 
     const handleDeleteClick = async (id: string) => {
-        if (!confirm('Deseja realmente excluir este cliente?')) return;
-        try {
-            await api.delete(`/customers/${id}`);
-            toast.success('Cliente excluído!');
-            fetchCustomers();
-        } catch (error) {
-            toast.error('Erro ao excluir cliente');
-        }
+        setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Deseja realmente excluir este cliente?', onConfirm: async () => {
+            try {
+                await api.delete(`/customers/${id}`);
+                toast.success('Cliente excluído!');
+                fetchCustomers();
+            } catch (error) {
+                toast.error('Erro ao excluir cliente');
+            }
+        }});
     };
 
     const handleSaveCustomer = async (e: React.FormEvent) => {
@@ -290,6 +293,7 @@ const CustomerManagement: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

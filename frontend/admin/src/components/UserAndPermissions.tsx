@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 import UserFormModal from './UserFormModal';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 const UserAndPermissions: React.FC = () => {
@@ -15,6 +16,7 @@ const UserAndPermissions: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<any | null>(null);
+  const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -33,14 +35,15 @@ const UserAndPermissions: React.FC = () => {
   }, []);
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Excluir este usuário?')) return;
-    try {
-      await deleteUser(userId);
-      toast.success('Membro removido.');
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message);
-    }
+    setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Excluir este usuário?', onConfirm: async () => {
+      try {
+        await deleteUser(userId);
+        toast.success('Membro removido.');
+        fetchData();
+      } catch (error: any) {
+        toast.error(error.message);
+      }
+    }});
   };
 
   return (
@@ -127,12 +130,13 @@ const UserAndPermissions: React.FC = () => {
           )}
       </div>
 
-      <UserFormModal 
-        isOpen={isUserModalOpen} 
-        onClose={() => setIsUserModalOpen(false)} 
-        onSave={fetchData} 
-        userToEdit={userToEdit} 
+      <UserFormModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        onSave={fetchData}
+        userToEdit={userToEdit}
       />
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

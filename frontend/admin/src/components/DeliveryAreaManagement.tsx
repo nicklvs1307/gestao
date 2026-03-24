@@ -18,6 +18,7 @@ import {
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 
@@ -41,6 +42,7 @@ const DeliveryAreaManagement: React.FC = () => {
     const [type, setType] = useState<'RADIUS' | 'POLYGON'>('RADIUS');
     const [geometry, setGeometry] = useState<any>(null);
     const [radius, setRadius] = useState<number>(1000);
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     const mapRef = useRef<HTMLDivElement>(null);
     const leafletMap = useRef<L.Map | null>(null);
@@ -157,14 +159,16 @@ const DeliveryAreaManagement: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Excluir esta área?")) return;
-        try {
-            await api.delete(`/delivery-areas/${id}`);
-            toast.success("Área removida.");
-            loadAreas();
-        } catch (error) {
-            toast.error("Erro ao remover.");
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Excluir esta área?', onConfirm: async () => {
+            try {
+                await api.delete(`/delivery-areas/${id}`);
+                toast.success("Área removida.");
+                loadAreas();
+            } catch (error) {
+                toast.error("Erro ao remover.");
+            }
+            setConfirmData(prev => ({...prev, open: false}));
+        }});
     };
 
     return (
@@ -324,6 +328,15 @@ const DeliveryAreaManagement: React.FC = () => {
                 </div>
 
             </div>
+
+            <ConfirmDialog
+                isOpen={confirmData.open}
+                onClose={() => setConfirmData(prev => ({...prev, open: false}))}
+                onConfirm={confirmData.onConfirm}
+                title={confirmData.title}
+                message={confirmData.message}
+                variant="danger"
+            />
         </div>
     );
 };

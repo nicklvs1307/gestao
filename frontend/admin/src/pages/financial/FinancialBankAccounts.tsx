@@ -8,6 +8,7 @@ import {
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Card } from '../../components/ui/Card';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +18,7 @@ const FinancialBankAccounts: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<any>({ balance: 0 });
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     useEffect(() => {
         loadAccounts();
@@ -54,14 +56,16 @@ const FinancialBankAccounts: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Excluir esta conta? Isso removerá o histórico de saldo associado.')) return;
-        try {
-            await api.delete(`/financial/bank-accounts/${id}`);
-            toast.success('Conta removida.');
-            loadAccounts();
-        } catch (error) {
-            toast.error('Erro ao excluir. Verifique se existem lançamentos vinculados.');
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Excluir esta conta? Isso removerá o histórico de saldo associado.', onConfirm: async () => {
+            try {
+                await api.delete(`/financial/bank-accounts/${id}`);
+                toast.success('Conta removida.');
+                loadAccounts();
+            } catch (error) {
+                toast.error('Erro ao excluir. Verifique se existem lançamentos vinculados.');
+            }
+            setConfirmData(prev => ({...prev, open: false}));
+        }});
     };
 
     const totalBalance = accounts.reduce((acc, curr) => acc + curr.balance, 0);
@@ -217,6 +221,15 @@ const FinancialBankAccounts: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            <ConfirmDialog
+                isOpen={confirmData.open}
+                onClose={() => setConfirmData(prev => ({...prev, open: false}))}
+                onConfirm={confirmData.onConfirm}
+                title={confirmData.title}
+                message={confirmData.message}
+                variant="danger"
+            />
         </div>
     );
 };

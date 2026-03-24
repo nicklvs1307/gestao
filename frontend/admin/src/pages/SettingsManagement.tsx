@@ -202,7 +202,7 @@ const SettingsManagement: React.FC = () => {
   return (
     <div className="space-y-4 animate-in fade-in duration-500 pb-10 max-w-[1400px] mx-auto">
       {/* ENTERPRISE STICKY HEADER */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-[#f8fafc]/90 backdrop-blur-md z-40 py-4 border-b border-slate-200 px-1">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-slate-50/90 backdrop-blur-md z-40 py-4 border-b border-slate-200 px-1">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-slate-900 text-white rounded-xl shadow-lg"><Settings size={18}/></div>
           <div>

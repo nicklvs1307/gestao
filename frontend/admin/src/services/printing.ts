@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import type { Order, OrderItem } from '../types';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const AGENT_URL = 'http://localhost:4676';
 
@@ -555,7 +556,7 @@ export const printTableCheckout = async (
     receiptSettings?: ReceiptSettings
 ) => {
     const status = await checkAgentStatus();
-    if (!status) return alert("ERRO: Agente de impressão não encontrado!");
+    if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
 
     const config = printerConfig || getPrinterConfigFromStorage();
     const settings = receiptSettings || getReceiptSettingsFromStorage();
@@ -592,7 +593,7 @@ export const printCashierClosure = async (
     printerConfig?: { cashierPrinters: string[] }
 ) => {
     const status = await checkAgentStatus();
-    if (!status) return alert("ERRO: Agente de impressão não encontrado!");
+    if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
 
     const config = printerConfig || getPrinterConfigFromStorage();
     const info = restaurantInfo || getRestaurantInfoFromStorage();
@@ -612,11 +613,12 @@ export const printCashierClosure = async (
 
 export const printOrder = async (order: Order, config: PrinterConfig, receiptSettings?: ReceiptSettings, restaurantInfo?: RestaurantInfo) => {
   const status = await checkAgentStatus();
-  if (!status) return alert("ERRO: Agente de impressão não encontrado!");
+  if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
 
   if (!order || (!order.items || order.items.length === 0)) {
     console.error("Pedido sem itens para impressão:", order);
-    return alert("AVISO: O pedido parece estar vazio ou não foi carregado corretamente para impressão.");
+    toast.error("O pedido parece estar vazio ou não foi carregado corretamente para impressão.");
+    return;
   }
 
   // Garantir que config tenha todas as propriedades necessárias

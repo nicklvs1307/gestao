@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  MessageSquare, 
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import {
+  MessageSquare,
   Settings, 
   Power, 
   RefreshCw, 
@@ -29,6 +30,7 @@ const KnowledgeBase: React.FC<{ restaurantId: string, getHeaders: any }> = ({ re
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [newEntry, setNewEntry] = useState({ question: '', answer: '', category: 'faq' });
+  const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   useEffect(() => {
     fetchKnowledge();
@@ -63,14 +65,15 @@ const KnowledgeBase: React.FC<{ restaurantId: string, getHeaders: any }> = ({ re
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Remover esta informação da base do agente?')) return;
-    try {
-      await axios.delete(`${API_URL}/whatsapp/knowledge/${id}`, getHeaders());
-      setKnowledge(knowledge.filter(k => k.id !== id));
-      toast.success('Informação removida.');
-    } catch (error) {
-      toast.error('Erro ao remover informação');
-    }
+    setConfirmData({open: true, title: 'Confirmar', message: 'Remover esta informação da base do agente?', onConfirm: async () => {
+      try {
+        await axios.delete(`${API_URL}/whatsapp/knowledge/${id}`, getHeaders());
+        setKnowledge(knowledge.filter(k => k.id !== id));
+        toast.success('Informação removida.');
+      } catch (error) {
+        toast.error('Erro ao remover informação');
+      }
+    }});
   };
 
   return (
@@ -163,6 +166,7 @@ const KnowledgeBase: React.FC<{ restaurantId: string, getHeaders: any }> = ({ re
           )}
         </div>
       </div>
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };
@@ -187,6 +191,7 @@ const WhatsAppManagement: React.FC = () => {
   const [savingSettings, setSavingSettings] = useState(false);
   const [clearingHistory, setClearingHistory] = useState(false);
   const [actionLoading, setActionLoading] = useState(false); // Para ações de controle
+  const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   // Helper para headers
   const getHeaders = () => ({
@@ -324,20 +329,19 @@ const WhatsAppManagement: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Tem certeza que deseja deletar esta instância do WhatsApp? Isso não pode ser desfeito.')) {
-      return;
-    }
-    try {
-      setActionLoading(true);
-      await axios.delete(`${API_URL}/whatsapp/delete`, getHeaders());
-      toast.success('Instância deletada.');
-      setInstance(null); // Limpa a instância do estado
-      setQrCode(null);
-    } catch (error) {
-      toast.error('Erro ao deletar instância.');
-    } finally {
-      setActionLoading(false);
-    }
+    setConfirmData({open: true, title: 'Confirmar', message: 'Tem certeza que deseja deletar esta instância do WhatsApp? Isso não pode ser desfeito.', onConfirm: async () => {
+      try {
+        setActionLoading(true);
+        await axios.delete(`${API_URL}/whatsapp/delete`, getHeaders());
+        toast.success('Instância deletada.');
+        setInstance(null); // Limpa a instância do estado
+        setQrCode(null);
+      } catch (error) {
+        toast.error('Erro ao deletar instância.');
+      } finally {
+        setActionLoading(false);
+      }
+    }});
   };
 
   const handleSaveSettings = async () => {
@@ -353,19 +357,17 @@ const WhatsAppManagement: React.FC = () => {
   };
 
   const handleClearHistory = async () => {
-    if (!window.confirm('Deseja realmente limpar TODO o histórico de conversas do agente? Esta ação fará com que a IA perca o contexto de todos os atendimentos atuais.')) {
-      return;
-    }
-
-    try {
-      setClearingHistory(true);
-      await axios.post(`${API_URL}/whatsapp/clear-history`, { all: true }, getHeaders());
-      toast.success('Histórico de conversas reiniciado!');
-    } catch (error) {
-      toast.error('Erro ao limpar histórico');
-    } finally {
-      setClearingHistory(false);
-    }
+    setConfirmData({open: true, title: 'Confirmar', message: 'Deseja realmente limpar TODO o histórico de conversas do agente? Esta ação fará com que a IA perca o contexto de todos os atendimentos atuais.', onConfirm: async () => {
+      try {
+        setClearingHistory(true);
+        await axios.post(`${API_URL}/whatsapp/clear-history`, { all: true }, getHeaders());
+        toast.success('Histórico de conversas reiniciado!');
+      } catch (error) {
+        toast.error('Erro ao limpar histórico');
+      } finally {
+        setClearingHistory(false);
+      }
+    }});
   };
 
   if (loading) {
@@ -602,6 +604,7 @@ const WhatsAppManagement: React.FC = () => {
 
       {/* Base de Conhecimento (RAG) */}
       <KnowledgeBase restaurantId={restaurantId} getHeaders={getHeaders} />
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

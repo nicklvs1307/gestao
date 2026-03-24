@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, Percent, Calendar, Tag, Loader2, Sparkles, RefreshC
 import { cn } from '../lib/utils';
 import { format, parseISO, isAfter, isBefore } from 'date-fns';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 type Promotion = any;
@@ -12,6 +13,7 @@ type Promotion = any;
 const PromotionManagement: React.FC = () => {
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
     const navigate = useNavigate();
 
     const fetchPromotions = async () => {
@@ -31,14 +33,15 @@ const PromotionManagement: React.FC = () => {
     }, []);
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Tem certeza que deseja excluir esta promoção?')) return;
-        try {
-            await deletePromotion(id);
-            toast.success('Promoção excluída!');
-            fetchPromotions();
-        } catch (err) {
-            toast.error('Erro ao excluir promoção.');
-        }
+        setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Tem certeza que deseja excluir esta promoção?', onConfirm: async () => {
+            try {
+                await deletePromotion(id);
+                toast.success('Promoção excluída!');
+                fetchPromotions();
+            } catch (err) {
+                toast.error('Erro ao excluir promoção.');
+            }
+        }});
     };
 
     const getStatusInfo = (p: Promotion) => {
@@ -162,6 +165,7 @@ const PromotionManagement: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { getImageUrl } from '../utils/image';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import {
   DndContext,
   closestCenter,
@@ -300,6 +301,7 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
   const [isReordering, setIsReordering] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -359,12 +361,13 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!window.confirm('Excluir este produto permanentemente?')) return;
-    try {
-      await deleteProduct(productId);
-      setProducts(prev => prev.filter(p => p.id !== productId));
-      toast.success("Produto removido.");
-    } catch (err: any) { toast.error('Falha na exclusão.'); }
+    setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Excluir este produto permanentemente?', onConfirm: async () => {
+      try {
+        await deleteProduct(productId);
+        setProducts(prev => prev.filter(p => p.id !== productId));
+        toast.success("Produto removido.");
+      } catch (err: any) { toast.error('Falha na exclusão.'); }
+    }});
   };
 
   const filteredProducts = useMemo(() => {
@@ -455,6 +458,7 @@ function ProductManagement({ refetchTrigger }: { refetchTrigger: number }) {
         </div>
       </div>
       {isReordering && (<div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-10 duration-300 z-50 border border-white/10"><Loader2 className="h-4 w-4 animate-spin text-orange-500" /><span className="text-[9px] font-black uppercase tracking-[0.1em] italic">Sincronizando nova ordem...</span></div>)}
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

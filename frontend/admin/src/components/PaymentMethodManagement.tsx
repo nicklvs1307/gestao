@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 
 interface PaymentMethodManagementProps {
   onAddClick: () => void;
@@ -18,6 +19,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
   const { user } = useAuth();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const fetchMethods = async () => {
     if (!user?.restaurantId) return;
@@ -35,12 +37,13 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
   useEffect(() => { fetchMethods(); }, [refetchTrigger, user?.restaurantId]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Excluir esta forma de pagamento?')) return;
-    try {
-      await deletePaymentMethod(id);
-      toast.success('Removido com sucesso!');
-      fetchMethods();
-    } catch (err: any) { toast.error('Falha ao excluir.'); }
+    setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Excluir esta forma de pagamento?', onConfirm: async () => {
+      try {
+        await deletePaymentMethod(id);
+        toast.success('Removido com sucesso!');
+        fetchMethods();
+      } catch (err: any) { toast.error('Falha ao excluir.'); }
+    }});
   };
 
   const handleToggleStatus = async (method: PaymentMethod) => {
@@ -157,6 +160,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
             <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] group-hover:text-white transition-colors">Nova Opção</p>
         </Card>
       </div>
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

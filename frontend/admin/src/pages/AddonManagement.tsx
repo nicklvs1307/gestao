@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { addonService, updateAddon } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
 import { 
@@ -163,6 +164,7 @@ const AddonManagement: React.FC = () => {
   const [groups, setGroups] = useState<AddonGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   useEffect(() => { fetchData(); }, []);
 
@@ -186,12 +188,13 @@ const AddonManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja excluir este grupo permanentemente? Todos os vínculos com produtos serão removidos.')) return;
-    try {
-      await addonService.delete(id);
-      toast.success('Grupo removido da biblioteca.');
-      fetchData();
-    } catch (error) { toast.error('Erro ao excluir grupo.'); }
+    setConfirmData({open: true, title: 'Confirmar', message: 'Deseja excluir este grupo permanentemente? Todos os vínculos com produtos serão removidos.', onConfirm: async () => {
+      try {
+        await addonService.delete(id);
+        toast.success('Grupo removido da biblioteca.');
+        fetchData();
+      } catch (error) { toast.error('Erro ao excluir grupo.'); }
+    }});
   };
 
   const filteredGroups = useMemo(() => {
@@ -289,6 +292,7 @@ const AddonManagement: React.FC = () => {
         </div>
         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Sistema de Gestão Industrial v2.0</p>
       </div>
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

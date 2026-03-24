@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { getUsers, deleteUser } from '../services/api';
 import { Plus, Trash2, Edit2, Loader2, Mail, Utensils, RefreshCw, UserCheck, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -12,6 +13,7 @@ const WaiterManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<any | null>(null);
+  const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -44,14 +46,15 @@ const WaiterManagement: React.FC = () => {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!window.confirm('Remover garçom da equipe permanentemente?')) return;
-    try {
-      await deleteUser(userId);
-      toast.success('Garçom removido!');
-      fetchUsers();
-    } catch (error) {
-      toast.error('Erro ao excluir.');
-    }
+    setConfirmData({open: true, title: 'Confirmar', message: 'Remover garçom da equipe permanentemente?', onConfirm: async () => {
+      try {
+        await deleteUser(userId);
+        toast.success('Garçom removido!');
+        fetchUsers();
+      } catch (error) {
+        toast.error('Erro ao excluir.');
+      }
+    }});
   };
 
   return (
@@ -149,6 +152,7 @@ const WaiterManagement: React.FC = () => {
         onSave={handleSave}
         userToEdit={userToEdit}
       />
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

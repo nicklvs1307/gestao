@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getUsers, createUser, updateUser, deleteUser } from '../services/api';
 import { Truck, Plus, Trash2, Edit2, Loader2, Phone, Mail, User, DollarSign, X } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 
 const DriverManagement: React.FC = () => {
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -18,6 +19,7 @@ const DriverManagement: React.FC = () => {
   const [paymentType, setPaymentType] = useState('DELIVERY'); // DAILY, SHIFT, DELIVERY
   const [baseRate, setBaseRate] = useState(0);
   const [bonusPerDelivery, setBonusPerDelivery] = useState(0);
+  const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const fetchDrivers = async () => {
     setIsLoading(true);
@@ -83,14 +85,14 @@ const DriverManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja remover este entregador?')) {
+    setConfirmData({open: true, title: 'Confirmar Exclusão', message: 'Tem certeza que deseja remover este entregador?', onConfirm: async () => {
       try {
         await deleteUser(id);
         fetchDrivers();
       } catch (error) {
         alert('Erro ao deletar entregador');
       }
-    }
+    }});
   };
 
   return (
@@ -243,6 +245,7 @@ const DriverManagement: React.FC = () => {
           </div>
         </div>
       )}
+      <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>
   );
 };

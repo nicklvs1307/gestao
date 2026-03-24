@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { api } from '../../services/api';
 import { 
     Plus, Search, Edit2, Trash2, Filter, AlertTriangle, 
@@ -16,6 +17,7 @@ const StockIngredients: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterGroup, setFilterGroup] = useState('all');
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     useEffect(() => {
         loadData();
@@ -38,14 +40,15 @@ const StockIngredients: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Excluir este insumo? Isso removerá o histórico e vínculos.')) return;
-        try {
-            await api.delete(`/ingredients/${id}`);
-            toast.success('Insumo removido!');
-            loadData();
-        } catch (e) {
-            toast.error('Não é possível excluir insumos com movimentações.');
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Excluir este insumo? Isso removerá o histórico e vínculos.', onConfirm: async () => {
+            try {
+                await api.delete(`/ingredients/${id}`);
+                toast.success('Insumo removido!');
+                loadData();
+            } catch (e) {
+                toast.error('Não é possível excluir insumos com movimentações.');
+            }
+        }});
     };
 
     const filtered = ingredients.filter(i => {
@@ -165,6 +168,7 @@ const StockIngredients: React.FC = () => {
                     )}
                 </div>
             </Card>
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

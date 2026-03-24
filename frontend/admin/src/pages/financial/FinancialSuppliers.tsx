@@ -8,6 +8,7 @@ import {
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 import { Card } from '../../components/ui/Card';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +19,7 @@ const FinancialSuppliers: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<any>({});
     const [searchQuery, setSearchQuery] = useState('');
+    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
     useEffect(() => {
         loadSuppliers();
@@ -54,14 +56,16 @@ const FinancialSuppliers: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Excluir fornecedor? Isso não apagará os lançamentos vinculados a ele.')) return;
-        try {
-            await api.delete(`/financial/suppliers/${id}`);
-            toast.success('Fornecedor removido.');
-            loadSuppliers();
-        } catch (error) {
-            toast.error('Erro ao excluir.');
-        }
+        setConfirmData({open: true, title: 'Confirmar', message: 'Excluir fornecedor? Isso não apagará os lançamentos vinculados a ele.', onConfirm: async () => {
+            try {
+                await api.delete(`/financial/suppliers/${id}`);
+                toast.success('Fornecedor removido.');
+                loadSuppliers();
+            } catch (error) {
+                toast.error('Erro ao excluir.');
+            }
+            setConfirmData(prev => ({...prev, open: false}));
+        }});
     };
 
     const filtered = suppliers.filter(s => 
@@ -272,6 +276,15 @@ const FinancialSuppliers: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            <ConfirmDialog
+                isOpen={confirmData.open}
+                onClose={() => setConfirmData(prev => ({...prev, open: false}))}
+                onConfirm={confirmData.onConfirm}
+                title={confirmData.title}
+                message={confirmData.message}
+                variant="danger"
+            />
         </div>
     );
 };

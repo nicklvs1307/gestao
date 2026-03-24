@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Input } from './ui/Input';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -23,6 +24,7 @@ function GlobalSizeManagement() {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [newSize, setNewSize] = useState({ name: '', description: '' });
   const [editData, setEditData] = useState({ name: '', description: '' });
+  const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   const fetchSizes = async () => {
     try {
@@ -64,14 +66,16 @@ function GlobalSizeManagement() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza? Isso pode afetar produtos vinculados.")) return;
-    try {
-      await globalSizeService.delete(id);
-      fetchSizes();
-      toast.success("Tamanho removido.");
-    } catch (error) {
-      toast.error("Erro ao remover.");
-    }
+    setConfirmData({open: true, title: 'Confirmar', message: 'Tem certeza? Isso pode afetar produtos vinculados.', onConfirm: async () => {
+      try {
+        await globalSizeService.delete(id);
+        fetchSizes();
+        toast.success("Tamanho removido.");
+      } catch (error) {
+        toast.error("Erro ao remover.");
+      }
+      setConfirmData(prev => ({...prev, open: false}));
+    }});
   };
 
   return (
@@ -206,6 +210,15 @@ function GlobalSizeManagement() {
               </div>
           </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmData.open}
+        onClose={() => setConfirmData(prev => ({...prev, open: false}))}
+        onConfirm={confirmData.onConfirm}
+        title={confirmData.title}
+        message={confirmData.message}
+        variant="danger"
+      />
     </div>
   );
 };

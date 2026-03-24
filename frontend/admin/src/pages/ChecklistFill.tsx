@@ -197,7 +197,7 @@ const ChecklistFill: React.FC = () => {
     const progress = (answeredCount / (checklist?.tasks.length || 1)) * 100;
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-900 pb-24">
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 pb-24">
             {/* Minimal Header */}
             <header className="bg-white border-b border-slate-100 sticky top-0 z-40 px-5 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">

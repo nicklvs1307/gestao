@@ -151,7 +151,7 @@ const PromotionFormPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pb-20">
+        <div className="min-h-screen bg-slate-50 pb-20">
             {/* Top Bar Fixa */}
             <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-8 py-4">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">

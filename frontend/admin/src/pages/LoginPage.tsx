@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#f8fafc] overflow-hidden">
+    <div className="min-h-screen w-full flex bg-slate-50 overflow-hidden">
       
       {/* PAINEL VISUAL (Esquerda - Oculto em Mobile) */}
       <div className="hidden lg:flex lg:w-[55%] xl:w-[60%] relative overflow-hidden bg-slate-900">
