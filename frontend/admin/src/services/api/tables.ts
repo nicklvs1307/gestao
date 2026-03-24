@@ -5,12 +5,12 @@ export const getTables = async () => {
   return response.data;
 };
 
-export const createTable = async (tableData: any) => {
+export const createTable = async (tableData: Record<string, unknown>) => {
   const response = await apiClient.post('/tables', tableData);
   return response.data;
 };
 
-export const updateTable = async (id: string, tableData: any) => {
+export const updateTable = async (id: string, tableData: Record<string, unknown>) => {
   const response = await apiClient.put(`/tables/${id}`, tableData);
   return response.data;
 };

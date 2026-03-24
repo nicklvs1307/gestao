@@ -20,7 +20,7 @@ export const createProduct = async (data: Partial<Product>): Promise<Product> =>
   return response.data;
 };
 
-export const updateProduct = async (id: string, productData: any) => {
+export const updateProduct = async (id: string, productData: Record<string, unknown>) => {
   const response = await apiClient.put(`/products/${id}`, productData);
   return response.data;
 };

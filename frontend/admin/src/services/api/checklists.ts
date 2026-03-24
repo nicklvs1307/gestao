@@ -5,12 +5,12 @@ export const getSectors = async () => {
     return response.data;
 };
 
-export const createSector = async (data: any) => {
+export const createSector = async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/sectors', data);
     return response.data;
 };
 
-export const updateSector = async (id: string, data: any) => {
+export const updateSector = async (id: string, data: Record<string, unknown>) => {
     const response = await apiClient.put(`/sectors/${id}`, data);
     return response.data;
 };
@@ -25,12 +25,12 @@ export const getChecklists = async () => {
     return response.data;
 };
 
-export const createChecklist = async (data: any) => {
+export const createChecklist = async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/checklists', data);
     return response.data;
 };
 
-export const updateChecklist = async (id: string, data: any) => {
+export const updateChecklist = async (id: string, data: Record<string, unknown>) => {
     const response = await apiClient.put(`/checklists/${id}`, data);
     return response.data;
 };
@@ -40,12 +40,12 @@ export const deleteChecklist = async (id: string) => {
     return response.data;
 };
 
-export const submitChecklistExecution = async (data: any) => {
+export const submitChecklistExecution = async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/checklists/execute', data);
     return response.data;
 };
 
-export const getChecklistExecutions = async (params?: any) => {
+export const getChecklistExecutions = async (params?: Record<string, unknown>) => {
     const response = await apiClient.get('/checklists/history', { params });
     return response.data;
 };
@@ -54,7 +54,7 @@ export const getChecklistReportSettings = async () => {
     return response.data;
 };
 
-export const updateChecklistReportSettings = async (data: any) => {
+export const updateChecklistReportSettings = async (data: Record<string, unknown>) => {
     const response = await apiClient.put('/checklists/settings/report', data);
     return response.data;
 };

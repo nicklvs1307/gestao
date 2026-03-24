@@ -5,7 +5,7 @@ export const getSettings = async () => {
   return response.data;
 };
 
-export const updateSettings = async (settingsData: any) => {
+export const updateSettings = async (settingsData: Record<string, unknown>) => {
   const response = await apiClient.put('/settings', settingsData);
   return response.data;
 };

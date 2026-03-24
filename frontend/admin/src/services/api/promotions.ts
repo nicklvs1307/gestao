@@ -5,12 +5,12 @@ export const getPromotions = async () => {
   return response.data;
 };
 
-export const createPromotion = async (promotionData: any) => {
+export const createPromotion = async (promotionData: Record<string, unknown>) => {
   const response = await apiClient.post('/promotions', promotionData);
   return response.data;
 };
 
-export const updatePromotion = async (id: string, promotionData: any) => {
+export const updatePromotion = async (id: string, promotionData: Record<string, unknown>) => {
   const response = await apiClient.put(`/promotions/${id}`, promotionData);
   return response.data;
 };

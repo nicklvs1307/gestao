@@ -5,7 +5,7 @@ export const getFiscalConfig = async () => {
     return response.data;
 };
 
-export const saveFiscalConfig = async (data: any) => {
+export const saveFiscalConfig = async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/fiscal/config', data);
     return response.data;
 };

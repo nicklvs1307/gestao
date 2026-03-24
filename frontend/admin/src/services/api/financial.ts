@@ -5,12 +5,12 @@ export const getSuppliers = async () => {
   return response.data;
 };
 
-export const createSupplier = async (data: any) => {
+export const createSupplier = async (data: Record<string, unknown>) => {
   const response = await apiClient.post('/financial/suppliers', data);
   return response.data;
 };
 
-export const updateSupplier = async (id: string, data: any) => {
+export const updateSupplier = async (id: string, data: Record<string, unknown>) => {
   const response = await apiClient.put(`/financial/suppliers/${id}`, data);
   return response.data;
 };
@@ -25,7 +25,7 @@ export const getFinancialCategories = async () => {
   return response.data;
 };
 
-export const createFinancialCategory = async (data: any) => {
+export const createFinancialCategory = async (data: Record<string, unknown>) => {
   const response = await apiClient.post('/financial/categories', data);
   return response.data;
 };
@@ -35,7 +35,7 @@ export const getTransactions = async () => {
   return response.data;
 };
 
-export const createTransaction = async (data: any) => {
+export const createTransaction = async (data: Record<string, unknown>) => {
   const response = await apiClient.post('/financial/transactions', data);
   return response.data;
 };

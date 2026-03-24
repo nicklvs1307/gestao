@@ -50,9 +50,10 @@ apiClient.interceptors.response.use(
     }
 
     // Cria um novo erro com a mensagem extraída
-    const customError = new Error(message);
-    (customError as any).status = error.response?.status;
-    (customError as any).data = error.response?.data;
+    const customError = Object.assign(new Error(message), {
+      status: error.response?.status,
+      data: error.response?.data,
+    });
 
     return Promise.reject(customError);
   }

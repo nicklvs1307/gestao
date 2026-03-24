@@ -44,13 +44,13 @@ export const getDashboardStats = async () => {
     const summary = summaryResponse.data;
     
     const today = new Date().toISOString().split('T')[0];
-    const ordersToday = orders.filter((order: any) => order.createdAt.startsWith(today));
-    
+    const ordersToday = orders.filter((order: { createdAt: string }) => order.createdAt.startsWith(today));
+
     return {
         ordersToday: ordersToday.length,
         revenueToday: summary.totalRevenue,
         activeProducts: summary.activeProducts,
-        customersToday: new Set(ordersToday.map((o: any) => o.tableNumber)).size,
+        customersToday: new Set(ordersToday.map((o: { tableNumber: number }) => o.tableNumber)).size,
     };
 };
 

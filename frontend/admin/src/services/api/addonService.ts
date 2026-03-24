@@ -68,7 +68,7 @@ export const reorderAddonGroups = async (items: { id: string, order: number }[])
   return response.data;
 };
 
-export const updateAddon = async (id: string, data: any) => {
+export const updateAddon = async (id: string, data: Partial<Addon>) => {
   const response = await api.put(`/addons/item/${id}`, data);
   return response.data;
 };

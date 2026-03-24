@@ -11,12 +11,12 @@ export async function getCategoryById(id: string) {
   return response.data;
 }
 
-export async function createCategory(categoryData: any) {
+export async function createCategory(categoryData: Record<string, unknown>) {
   const response = await apiClient.post('/categories', categoryData);
   return response.data;
 }
 
-export async function updateCategory(id: string, categoryData: any) {
+export async function updateCategory(id: string, categoryData: Record<string, unknown>) {
   const response = await apiClient.put(`/categories/${id}`, categoryData);
   return response.data;
 }

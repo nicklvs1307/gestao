@@ -10,12 +10,12 @@ export const searchCustomers = async (query: string) => {
     return response.data;
 };
 
-export const createCustomer = async (data: any) => {
+export const createCustomer = async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/customers', data);
     return response.data;
 };
 
-export const updateCustomer = async (id: string, data: any) => {
+export const updateCustomer = async (id: string, data: Record<string, unknown>) => {
     const response = await apiClient.put(`/customers/${id}`, data);
     return response.data;
 };

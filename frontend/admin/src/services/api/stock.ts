@@ -5,12 +5,12 @@ export const getIngredients = async () => {
   return response.data;
 };
 
-export const createIngredient = async (data: any) => {
+export const createIngredient = async (data: Record<string, unknown>) => {
   const response = await apiClient.post('/ingredients', data);
   return response.data;
 };
 
-export const updateIngredient = async (id: string, data: any) => {
+export const updateIngredient = async (id: string, data: Record<string, unknown>) => {
   const response = await apiClient.put(`/ingredients/${id}`, data);
   return response.data;
 };
@@ -25,7 +25,7 @@ export const getStockEntries = async () => {
     return response.data;
 };
 
-export const createStockEntry = async (data: any) => {
+export const createStockEntry = async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/stock/entries', data);
     return response.data;
 };

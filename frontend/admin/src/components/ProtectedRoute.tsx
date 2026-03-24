@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  permission?: string; // Nova propriedade opcional
+  permission?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, permission }) => {
   const { isAuthenticated, loading, user } = useAuth();
+
+  useEffect(() => {
+    if (!loading && isAuthenticated && permission && user) {
+      const hasAccess = user.isSuperAdmin ||
+                        user.permissions.includes('all:manage') ||
+                        user.permissions.includes(permission);
+      if (!hasAccess) {
+        toast.error("Acesso Negado: Você não tem permissão para acessar esta página.");
+      }
+    }
+  }, [loading, isAuthenticated, permission, user]);
 
   if (loading) {
     return (
@@ -23,15 +34,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, permission })
     return <Navigate to="/login" replace />;
   }
 
-  // Se uma permissão específica foi exigida, verificamos:
   if (permission && user) {
-    const hasAccess = user.isSuperAdmin || 
-                      user.permissions.includes('all:manage') || 
+    const hasAccess = user.isSuperAdmin ||
+                      user.permissions.includes('all:manage') ||
                       user.permissions.includes(permission);
-
     if (!hasAccess) {
-      // Opcional: Avisar o usuário que ele não tem acesso
-      toast.error("Acesso Negado: Você não tem permissão para acessar esta página.");
       return <Navigate to="/dashboard" replace />;
     }
   }

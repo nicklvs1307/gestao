@@ -5,7 +5,7 @@ export const getSystemRoles = async () => {
     return response.data;
 };
 
-export const createRole = async (roleData: any) => {
+export const createRole = async (roleData: Record<string, unknown>) => {
     const response = await apiClient.post('/super-admin/roles', roleData);
     return response.data;
 };
@@ -20,7 +20,7 @@ export const getFranchises = async () => {
     return response.data;
 };
 
-export const createFranchise = async (data: any) => {
+export const createFranchise = async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/super-admin/franchises', data);
     return response.data;
 };

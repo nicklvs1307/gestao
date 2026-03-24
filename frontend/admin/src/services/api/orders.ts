@@ -70,12 +70,12 @@ export const assignDriver = async (orderId: string, driverId: string) => {
     return response.data;
 };
 
-export const createOrder = async (orderData: any) => {
+export const createOrder = async (orderData: Record<string, unknown>) => {
   const response = await apiClient.post('/admin/orders', orderData);
   return response.data;
 };
 
-export const addItemsToOrder = async (orderId: string, items: any[]) => {
+export const addItemsToOrder = async (orderId: string, items: Record<string, unknown>[]) => {
     const response = await apiClient.post(`/admin/orders/${orderId}/items`, { items });
     return response.data;
 };

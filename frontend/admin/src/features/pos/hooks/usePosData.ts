@@ -1,36 +1,57 @@
-import { useState, useEffect } from 'react';
-import { 
+import { useState, useEffect, useCallback } from 'react';
+import {
     getProducts, getCategories, getTables, getAdminOrders,
-    getSettings, getCashierStatus, getPaymentMethods, getPosTableSummary 
+    getSettings, getCashierStatus, getPaymentMethods, getPosTableSummary
 } from '../../../services/api';
 import { useSocket } from '../../../hooks/useSocket';
-import { Product, Category, TableSummary, PaymentMethod, Order } from '../../../types';
+import type { Product, Category, TableSummary, PaymentMethod, Order } from '../../../types';
 
 export const usePosData = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-    const [tables, setTables] = useState<any[]>([]);
+    const [tables, setTables] = useState<unknown[]>([]);
     const [tablesSummary, setTablesSummary] = useState<TableSummary[]>([]);
     const [deliveryOrders, setDeliveryOrders] = useState<Order[]>([]);
     const [isStoreOpen, setIsStoreOpen] = useState(false);
     const [deliveryFee, setDeliveryFee] = useState(0);
     const [isCashierOpen, setIsCashierOpen] = useState(false);
-    const [cashierSession, setCashierSession] = useState<any>(null);
+    const [cashierSession, setCashierSession] = useState<unknown>(null);
     const [loading, setLoading] = useState(true);
 
     const { on, off } = useSocket();
 
-    const loadTableSummary = async () => {
+    const loadTableSummary = useCallback(async () => {
         try {
             const summary = await getPosTableSummary();
             setTablesSummary(summary);
         } catch (error) {
             console.error("Erro ao carregar mesas:", error);
         }
-    };
+    }, []);
 
-    const loadInitialData = async () => {
+    const loadOrders = useCallback(async () => {
+        try {
+            const ordersData = await getAdminOrders();
+            setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY'));
+        } catch (error) {
+            console.error("Erro ao carregar pedidos:", error);
+        }
+    }, []);
+
+    const loadCashierStatus = useCallback(async () => {
+        try {
+            const cashierData = await getCashierStatus();
+            if (cashierData) {
+                setIsCashierOpen(cashierData.isOpen);
+                setCashierSession(cashierData.session);
+            }
+        } catch (error) {
+            console.error("Erro ao carregar caixa:", error);
+        }
+    }, []);
+
+    const loadInitialData = useCallback(async () => {
         try {
             setLoading(true);
             const userStr = localStorage.getItem('user');
@@ -51,8 +72,8 @@ export const usePosData = () => {
             setCategories(categoriesData || []);
             setTables(tablesData || []);
             setPaymentMethods(paymentMethodsData || []);
-            setDeliveryOrders(ordersData.filter((o: any) => o.orderType === 'DELIVERY') || []);
-            
+            setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY'));
+
             if (settingsData?.settings) {
                 setIsStoreOpen(settingsData.settings.isOpen);
                 setDeliveryFee(settingsData.settings.deliveryFee || 0);
@@ -67,13 +88,34 @@ export const usePosData = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [loadTableSummary]);
 
     useEffect(() => {
         loadInitialData();
-        on('order_update', loadInitialData);
-        return () => off('order_update');
-    }, [on, off]);
+
+        const cleanupOrderUpdate = on('order_update', () => {
+            loadTableSummary();
+            loadOrders();
+        });
+
+        const cleanupNewOrder = on('new_order', () => {
+            loadTableSummary();
+            loadOrders();
+        });
+
+        const cleanupCashierUpdate = on('cashier_update', () => {
+            loadCashierStatus();
+        });
+
+        return () => {
+            cleanupOrderUpdate?.();
+            cleanupNewOrder?.();
+            cleanupCashierUpdate?.();
+            off('order_update');
+            off('new_order');
+            off('cashier_update');
+        };
+    }, [loadInitialData, loadTableSummary, loadOrders, loadCashierStatus, on, off]);
 
     return {
         products,

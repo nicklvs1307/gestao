@@ -1,6 +1,6 @@
 import apiClient from './client';
 
-export const login = async (credentials: any) => {
+export const login = async (credentials: Record<string, unknown>) => {
   const response = await apiClient.post('/auth/login', credentials);
   if (response.data.token) {
     localStorage.setItem('token', response.data.token);
@@ -13,12 +13,12 @@ export const getUsers = async () => {
     return response.data;
 };
 
-export const createUser = async (userData: any) => {
+export const createUser = async (userData: Record<string, unknown>) => {
     const response = await apiClient.post('/auth/users', userData);
     return response.data;
 };
 
-export const updateUser = async (id: string, userData: any) => {
+export const updateUser = async (id: string, userData: Record<string, unknown>) => {
     const response = await apiClient.put(`/auth/users/${id}`, userData);
     return response.data;
 };

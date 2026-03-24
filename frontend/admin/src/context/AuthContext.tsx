@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
@@ -11,7 +11,7 @@ interface User {
   isSuperAdmin: boolean;
   permissions: string[];
   logoUrl?: string | null;
-  menuUrl?: string; // Adicionado para a URL do cardápio
+  menuUrl?: string;
 }
 
 interface AuthContextType {
@@ -20,7 +20,7 @@ interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => void;
   isAuthenticated: boolean;
-  loading: boolean; // Adicionado estado de carregamento
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // Inicia como true
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,35 +41,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage", error);
-      // Limpa o estado se os dados estiverem corrompidos
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);
       setToken(null);
     } finally {
-      setLoading(false); // Finaliza o carregamento
+      setLoading(false);
     }
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
+  const login = useCallback((newToken: string, newUser: User) => {
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     navigate('/login');
-  };
+  }, [navigate]);
 
   const isAuthenticated = !!token && !!user;
 
+  const value = useMemo<AuthContextType>(
+    () => ({ user, token, login, logout, isAuthenticated, loading }),
+    [user, token, login, logout, isAuthenticated, loading]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

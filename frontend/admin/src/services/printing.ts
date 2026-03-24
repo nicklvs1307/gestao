@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 const AGENT_URL = 'http://localhost:4676';
 
 // Função auxiliar para fetch com timeout para não travar a interface
-const fetchWithTimeout = async (url: string, options: any = {}, timeout = 3000) => {
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 3000) => {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
@@ -64,7 +64,7 @@ export const getPrinters = async (): Promise<string[]> => {
     // ou um array de objetos dependendo da versão/plataforma.
     // Vamos garantir que lidamos com ambos.
     if (Array.isArray(data)) {
-        return data.map((p: any) => typeof p === 'string' ? p : (p.name || p.printer || ''));
+        return data.map((p: unknown) => typeof p === 'string' ? p : ((p as { name?: string }).name || (p as { printer?: string }).printer || ''));
     }
     return [];
   } catch (e) {
@@ -102,8 +102,8 @@ const generateOrderReceiptPdf = (
     itemsToPrint: OrderItem[], 
     title: string, 
     settings: ReceiptSettings, 
-    restaurantInfo: any, 
-    logoBase64: string | null, 
+    restaurantInfo: RestaurantInfo | Record<string, unknown>,
+    logoBase64: string | null,
     isProduction: boolean = false
 ): string => {
   const fontSizes = { small: 7, medium: 9, large: 11 }; // Reduzido levemente para caber mais info
@@ -276,7 +276,7 @@ const generateOrderReceiptPdf = (
           try {
               const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
               if (Array.isArray(flavors)) {
-                  flavors.forEach((f: any) => {
+                  flavors.forEach((f: { name: string }) => {
                       doc.setFont('helvetica', 'bold');
                       const line = `> SABOR: ${f.name?.toUpperCase() || ''}`;
                       const lines = doc.splitTextToSize(line, detailWidth);
@@ -284,7 +284,7 @@ const generateOrderReceiptPdf = (
                       y += (lines.length * lineHeight);
                   });
               }
-          } catch(e) {}
+          } catch { /* empty */ }
       }
       if (item.sizeJson) {
           try { 
@@ -292,20 +292,20 @@ const generateOrderReceiptPdf = (
               doc.setFont('helvetica', 'normal');
               doc.text(`> TAM: ${size.name?.toUpperCase() || ''}`, detailMargin, y); 
               y += lineHeight; 
-          } catch(e) {}
+          } catch { /* empty */ }
       }
       if (item.addonsJson) {
           try { 
               const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
               if (Array.isArray(addons)) {
-                  addons.forEach((a:any) => {
+                  addons.forEach((a: { name: string; quantity?: number }) => {
                       doc.setFont('helvetica', 'bold');
                       const qtyPrefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
                       doc.text(`[+] ${qtyPrefix}${a.name?.toUpperCase() || ''}`, detailMargin, y);
                       y += lineHeight;
                   });
               }
-          } catch(e) {}
+          } catch { /* empty */ }
       }
       if (item.observations) {
           doc.setFont('helvetica', 'italic');
@@ -322,7 +322,7 @@ const generateOrderReceiptPdf = (
     y += lineHeight;
 
     // 7.5 OBSERVAÇÃO GERAL
-    const generalObs = order.observations || (order as any).deliveryOrder?.observations || (order as any).notes;
+    const generalObs = order.observations || order.deliveryOrder?.observations || (order as { notes?: string }).notes;
     if (generalObs) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(baseSize);
@@ -336,7 +336,7 @@ const generateOrderReceiptPdf = (
 
     // 8. TOTAIS E PAGAMENTO
     if (!isProduction) {
-        let totalQty = (itemsToPrint || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
+        const totalQty = (itemsToPrint || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
         doc.setFont('helvetica', 'bold');
         doc.text(`QTD ITENS: ${totalQty}`, leftMargin, y);
         y += lineHeight;
@@ -382,10 +382,10 @@ const generateOrderReceiptPdf = (
         y += lineHeight;
         doc.setFont('helvetica', 'normal');
         
-        const methodMap: any = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
+        const methodMap: Record<string, string> = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
 
         if (order.payments && order.payments.length > 0) {
-            order.payments.forEach((p: any) => {
+            order.payments.forEach((p: { method: string; amount: number }) => {
                 doc.text(`(${methodMap[p.method] || p.method.toUpperCase()})`, leftMargin, y);
                 doc.text(`${p.amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
                 y += lineHeight;
@@ -434,7 +434,7 @@ const generateOrderReceiptPdf = (
   return doc.output('datauristring').split(',')[1];
 };
 
-const generateCashierPdf = (summary: any, restaurantInfo: any, settings: ReceiptSettings): string => {
+const generateCashierPdf = (summary: Record<string, unknown>, restaurantInfo: RestaurantInfo | Record<string, unknown>): string => {
     const centerX = 40;
     const leftMargin = 10;
     const rightMargin = 74;
@@ -468,8 +468,8 @@ const generateCashierPdf = (summary: any, restaurantInfo: any, settings: Receipt
         y += lineHeight;
 
         doc.setFont('helvetica', 'normal');
-        Object.entries(summary.salesByMethod || {}).forEach(([method, amount]: [string, any]) => {
-            const methodMap: any = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
+        Object.entries(summary.salesByMethod as Record<string, number> || {}).forEach(([method, amount]) => {
+        const methodMap: Record<string, string> = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
             doc.text(methodMap[method] || method.toUpperCase(), leftMargin, y);
             doc.text(`R$ ${amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
             y += lineHeight;
@@ -517,36 +517,64 @@ const generateCashierPdf = (summary: any, restaurantInfo: any, settings: Receipt
     return doc.output('datauristring').split(',')[1];
 };
 
-export const printTableCheckout = async (tableNumber: number, items: any[], payments: any[], order?: Order) => {
-    const status = await checkAgentStatus();
-    if (!status) return alert("ERRO: Agente de impressão não encontrado!");
+interface RestaurantInfo {
+    name: string;
+    address?: string | null;
+    phone?: string | null;
+    cnpj?: string | null;
+    logoUrl?: string | null;
+}
 
-    const savedConfig = localStorage.getItem('printer_config');
-    const config = savedConfig ? JSON.parse(savedConfig) : { cashierPrinters: [localStorage.getItem('cashier_printer_name') || ''] };
-    const settings = JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
-    
-    const restaurantInfo = {
+function getRestaurantInfoFromStorage(): RestaurantInfo {
+    return {
         name: localStorage.getItem('restaurant_name') || 'Minha Loja',
         address: localStorage.getItem('restaurant_address'),
         phone: localStorage.getItem('restaurant_phone'),
         cnpj: localStorage.getItem('restaurant_cnpj'),
-        logoUrl: localStorage.getItem('restaurant_logo')
+        logoUrl: localStorage.getItem('restaurant_logo'),
     };
+}
 
-    // Objeto mock de pedido caso não venha o real, para manter compatibilidade
-    const dummyOrder: any = order || {
+function getPrinterConfigFromStorage(): { cashierPrinters: string[] } {
+    const saved = localStorage.getItem('printer_config');
+    return saved ? JSON.parse(saved) : { cashierPrinters: [localStorage.getItem('cashier_printer_name') || ''] };
+}
+
+function getReceiptSettingsFromStorage(): ReceiptSettings {
+    const layout = localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings');
+    return layout ? JSON.parse(layout) : { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '' };
+}
+
+export const printTableCheckout = async (
+    tableNumber: number,
+    items: Record<string, unknown>[],
+    payments: Record<string, unknown>[],
+    order?: Order,
+    restaurantInfo?: RestaurantInfo,
+    printerConfig?: { cashierPrinters: string[] },
+    receiptSettings?: ReceiptSettings
+) => {
+    const status = await checkAgentStatus();
+    if (!status) return alert("ERRO: Agente de impressão não encontrado!");
+
+    const config = printerConfig || getPrinterConfigFromStorage();
+    const settings = receiptSettings || getReceiptSettingsFromStorage();
+    const info = restaurantInfo || getRestaurantInfoFromStorage();
+
+    const dummyOrder: Order = order || {
         id: 'CONTA-' + tableNumber,
         tableNumber: tableNumber,
         orderType: 'TABLE',
         status: 'COMPLETED',
-        total: items.reduce((acc, i) => acc + ((i.priceAtTime || 0) * (i.quantity || 0)), 0),
+        total: items.reduce((acc, i) => acc + ((i.priceAtTime as number || 0) * (i.quantity as number || 0)), 0),
         createdAt: new Date().toISOString(),
-        items: items,
-        payments: payments
+        items: items as unknown as Order['items'],
+        payments: payments as unknown as Order['payments'],
+        restaurantId: '',
     };
 
-    const pdf = generateOrderReceiptPdf(dummyOrder, items, `EXTRATO MESA ${tableNumber}`, settings, restaurantInfo, null, false);
-    
+    const pdf = generateOrderReceiptPdf(dummyOrder, items, `EXTRATO MESA ${tableNumber}`, settings, info, null, false);
+
     if (config.cashierPrinters && config.cashierPrinters.length > 0) {
         for (const p of config.cashierPrinters) {
             await fetchWithTimeout(`${getAgentUrl()}/print`, {
@@ -558,20 +586,18 @@ export const printTableCheckout = async (tableNumber: number, items: any[], paym
     }
 };
 
-export const printCashierClosure = async (summary: any) => {
+export const printCashierClosure = async (
+    summary: Record<string, unknown>,
+    restaurantInfo?: RestaurantInfo,
+    printerConfig?: { cashierPrinters: string[] }
+) => {
     const status = await checkAgentStatus();
     if (!status) return alert("ERRO: Agente de impressão não encontrado!");
 
-    const savedConfig = localStorage.getItem('printer_config');
-    const config = savedConfig ? JSON.parse(savedConfig) : { cashierPrinters: [localStorage.getItem('cashier_printer_name') || ''] };
-    const settings = JSON.parse(localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings') || '{}');
-    
-    const restaurantInfo = {
-        name: localStorage.getItem('restaurant_name') || 'Minha Loja',
-        logoUrl: localStorage.getItem('restaurant_logo')
-    };
+    const config = printerConfig || getPrinterConfigFromStorage();
+    const info = restaurantInfo || getRestaurantInfoFromStorage();
 
-    const pdf = generateCashierPdf(summary, restaurantInfo, settings);
+    const pdf = generateCashierPdf(summary, info);
     
     if (config.cashierPrinters && config.cashierPrinters.length > 0) {
         for (const p of config.cashierPrinters) {
@@ -584,7 +610,7 @@ export const printCashierClosure = async (summary: any) => {
     }
 };
 
-export const printOrder = async (order: Order, config: PrinterConfig, receiptSettings?: ReceiptSettings, restaurantInfo?: any) => {
+export const printOrder = async (order: Order, config: PrinterConfig, receiptSettings?: ReceiptSettings, restaurantInfo?: RestaurantInfo) => {
   const status = await checkAgentStatus();
   if (!status) return alert("ERRO: Agente de impressão não encontrado!");
 
@@ -670,8 +696,8 @@ export const printOrder = async (order: Order, config: PrinterConfig, receiptSet
               categoryName = product.categories[0].name;
           } else if (product?.category?.name) {
               categoryName = product.category.name;
-          } else if ((item as any).category?.name) {
-              categoryName = (item as any).category.name;
+           } else if ((item as { category?: { name?: string } }).category?.name) {
+              categoryName = (item as { category?: { name?: string } }).category!.name;
           }
           
           const destinationId = finalConfig.categoryMapping[categoryName] || finalConfig.categoryMapping[categoryName.trim()] || 'k1';

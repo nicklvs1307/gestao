@@ -70,6 +70,18 @@
     --ring: 24.6 95% 45%;
 
     --radius: 0.75rem;
+
+    /* Legacy CSS variables used by App.css (mapped to Tailwind tokens) */
+    --bg-app: hsl(210 40% 98%);
+    --bg-card: hsl(0 0% 100%);
+    --bg-surface: hsl(0 0% 100%);
+    --text-main: hsl(222.2 47.4% 11.2%);
+    --text-secondary: hsl(215.4 16.3% 46.9%);
+    --text-muted: hsl(215.4 16.3% 46.9%);
+    --border-subtle: 1px solid hsl(214.3 31.8% 91.4%);
+    --success: hsl(142 76% 36%);
+    --warning: hsl(38 92% 50%);
+    --accent: hsl(210 40% 96.1%);
   }
 }
 

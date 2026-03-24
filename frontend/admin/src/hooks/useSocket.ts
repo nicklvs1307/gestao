@@ -1,62 +1,37 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useCallback, useEffect, useState } from 'react';
+import { getSocket, connectSocket } from '../services/socket';
 
 export const useSocket = () => {
-  const socketRef = useRef<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const socket = getSocket();
+  const [isConnected, setIsConnected] = useState(socket.connected);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const restaurantId = localStorage.getItem('selectedRestaurantId') || user?.restaurantId;
+    connectSocket();
 
-    if (!restaurantId) return;
+    const handleConnect = () => setIsConnected(true);
+    const handleDisconnect = () => setIsConnected(false);
 
-    const socketUrl = window.location.hostname === 'localhost' 
-      ? window.location.origin 
-      : 'https://apikicardapio.towersfy.com';
-
-    // Conecta ao servidor socket
-    const socket = io(socketUrl, {
-      query: { 
-        restaurantId, 
-        token,
-        timestamp: new Date().getTime() // Cache busting for some proxies
-      },
-      transports: ['websocket', 'polling'], // Adicionado polling como fallback
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
-    });
-
-    socket.on('connect', () => {
-      console.log('[Socket] Conectado:', socket.id);
-      setIsConnected(true);
-    });
-
-    socket.on('disconnect', () => {
-      console.log('[Socket] Desconectado');
-      setIsConnected(false);
-    });
-
-    socketRef.current = socket;
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
 
     return () => {
-      socket.disconnect();
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
     };
-  }, []);
+  }, [socket]);
 
-  const emit = (event: string, data: any) => {
-    socketRef.current?.emit(event, data);
-  };
+  const emit = useCallback((event: string, data: unknown) => {
+    socket.emit(event, data);
+  }, [socket]);
 
-  const on = useCallback((event: string, callback: (data: any) => void) => {
-    socketRef.current?.on(event, callback);
-  }, []);
+  const on = useCallback((event: string, callback: (...args: unknown[]) => void) => {
+    socket.on(event, callback);
+    return () => { socket.off(event, callback); };
+  }, [socket]);
 
-  const off = useCallback((event: string) => {
-    socketRef.current?.off(event);
-  }, []);
+  const off = useCallback((event: string, callback?: (...args: unknown[]) => void) => {
+    socket.off(event, callback);
+  }, [socket]);
 
-  return { socket: socketRef.current, isConnected, emit, on, off };
+  return { socket, isConnected, emit, on, off };
 };

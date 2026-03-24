@@ -5,7 +5,7 @@ export const getSaiposSettings = async () => {
   return response.data;
 };
 
-export const updateSaiposSettings = async (settingsData: any) => {
+export const updateSaiposSettings = async (settingsData: Record<string, unknown>) => {
   const response = await apiClient.put('/integrations/saipos', settingsData);
   return response.data;
 };
@@ -15,7 +15,7 @@ export const getUairangoSettings = async () => {
   return response.data;
 };
 
-export const updateUairangoSettings = async (settingsData: any) => {
+export const updateUairangoSettings = async (settingsData: Record<string, unknown>) => {
   const response = await apiClient.put('/integrations/uairango', settingsData);
   return response.data;
 };

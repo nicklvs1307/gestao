@@ -1,32 +1,28 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
 interface ModalContextType {
-  // Table Modal
   isTableModalOpen: boolean;
-  tableToEdit: any | null;
-  openTableModal: (table?: any) => void;
+  tableToEdit: unknown | null;
+  openTableModal: (table?: unknown) => void;
   closeTableModal: () => void;
   refetchTables: number;
   triggerTablesRefetch: () => void;
 
-  // Category Modal
   isCategoryModalOpen: boolean;
-  categoryToEdit: any | null;
-  openCategoryModal: (category?: any) => void;
+  categoryToEdit: unknown | null;
+  openCategoryModal: (category?: unknown) => void;
   closeCategoryModal: () => void;
   refetchCategories: number;
   triggerCategoriesRefetch: () => void;
 
-  // Order Detail Modal
   isOrderDetailModalOpen: boolean;
-  orderToView: any | null;
-  openOrderDetailModal: (order: any) => void;
+  orderToView: unknown | null;
+  openOrderDetailModal: (order: unknown) => void;
   closeOrderDetailModal: () => void;
 
-  // Payment Method Modal
   isPaymentMethodModalOpen: boolean;
-  paymentMethodToEdit: any | null;
-  openPaymentMethodModal: (method?: any) => void;
+  paymentMethodToEdit: unknown | null;
+  openPaymentMethodModal: (method?: unknown) => void;
   closePaymentMethodModal: () => void;
   refetchPaymentMethods: number;
   triggerPaymentMethodsRefetch: () => void;
@@ -36,43 +32,73 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isTableModalOpen, setTableModalOpen] = useState(false);
-  const [tableToEdit, setTableToEdit] = useState<any | null>(null);
+  const [tableToEdit, setTableToEdit] = useState<unknown | null>(null);
   const [refetchTables, setRefetchTables] = useState(0);
 
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [categoryToEdit, setCategoryToEdit] = useState<any | null>(null);
+  const [categoryToEdit, setCategoryToEdit] = useState<unknown | null>(null);
   const [refetchCategories, setRefetchCategories] = useState(0);
 
   const [isOrderDetailModalOpen, setOrderDetailModalOpen] = useState(false);
-  const [orderToView, setOrderToView] = useState<any | null>(null);
+  const [orderToView, setOrderToView] = useState<unknown | null>(null);
 
   const [isPaymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
-  const [paymentMethodToEdit, setPaymentMethodToEdit] = useState<any | null>(null);
+  const [paymentMethodToEdit, setPaymentMethodToEdit] = useState<unknown | null>(null);
   const [refetchPaymentMethods, setRefetchPaymentMethods] = useState(0);
 
-  // Handlers
-  const openTableModal = (table = null) => { setTableToEdit(table); setTableModalOpen(true); };
-  const closeTableModal = () => { setTableModalOpen(false); setTableToEdit(null); };
-  const triggerTablesRefetch = () => setRefetchTables(prev => prev + 1);
+  const openTableModal = useCallback((table: unknown = null) => {
+    setTableToEdit(table);
+    setTableModalOpen(true);
+  }, []);
+  const closeTableModal = useCallback(() => {
+    setTableModalOpen(false);
+    setTableToEdit(null);
+  }, []);
+  const triggerTablesRefetch = useCallback(() => setRefetchTables(prev => prev + 1), []);
 
-  const openCategoryModal = (category = null) => { setCategoryToEdit(category); setCategoryModalOpen(true); };
-  const closeCategoryModal = () => { setCategoryModalOpen(false); setCategoryToEdit(null); };
-  const triggerCategoriesRefetch = () => setRefetchCategories(prev => prev + 1);
+  const openCategoryModal = useCallback((category: unknown = null) => {
+    setCategoryToEdit(category);
+    setCategoryModalOpen(true);
+  }, []);
+  const closeCategoryModal = useCallback(() => {
+    setCategoryModalOpen(false);
+    setCategoryToEdit(null);
+  }, []);
+  const triggerCategoriesRefetch = useCallback(() => setRefetchCategories(prev => prev + 1), []);
 
-  const openOrderDetailModal = (order: any) => { setOrderToView(order); setOrderDetailModalOpen(true); };
-  const closeOrderDetailModal = () => { setOrderDetailModalOpen(false); setOrderToView(null); };
+  const openOrderDetailModal = useCallback((order: unknown) => {
+    setOrderToView(order);
+    setOrderDetailModalOpen(true);
+  }, []);
+  const closeOrderDetailModal = useCallback(() => {
+    setOrderDetailModalOpen(false);
+    setOrderToView(null);
+  }, []);
 
-  const openPaymentMethodModal = (method = null) => { setPaymentMethodToEdit(method); setPaymentMethodModalOpen(true); };
-  const closePaymentMethodModal = () => { setPaymentMethodModalOpen(false); setPaymentMethodToEdit(null); };
-  const triggerPaymentMethodsRefetch = () => setRefetchPaymentMethods(prev => prev + 1);
+  const openPaymentMethodModal = useCallback((method: unknown = null) => {
+    setPaymentMethodToEdit(method);
+    setPaymentMethodModalOpen(true);
+  }, []);
+  const closePaymentMethodModal = useCallback(() => {
+    setPaymentMethodModalOpen(false);
+    setPaymentMethodToEdit(null);
+  }, []);
+  const triggerPaymentMethodsRefetch = useCallback(() => setRefetchPaymentMethods(prev => prev + 1), []);
+
+  const value = useMemo<ModalContextType>(() => ({
+    isTableModalOpen, tableToEdit, openTableModal, closeTableModal, refetchTables, triggerTablesRefetch,
+    isCategoryModalOpen, categoryToEdit, openCategoryModal, closeCategoryModal, refetchCategories, triggerCategoriesRefetch,
+    isOrderDetailModalOpen, orderToView, openOrderDetailModal, closeOrderDetailModal,
+    isPaymentMethodModalOpen, paymentMethodToEdit, openPaymentMethodModal, closePaymentMethodModal, refetchPaymentMethods, triggerPaymentMethodsRefetch,
+  }), [
+    isTableModalOpen, tableToEdit, openTableModal, closeTableModal, refetchTables, triggerTablesRefetch,
+    isCategoryModalOpen, categoryToEdit, openCategoryModal, closeCategoryModal, refetchCategories, triggerCategoriesRefetch,
+    isOrderDetailModalOpen, orderToView, openOrderDetailModal, closeOrderDetailModal,
+    isPaymentMethodModalOpen, paymentMethodToEdit, openPaymentMethodModal, closePaymentMethodModal, refetchPaymentMethods, triggerPaymentMethodsRefetch,
+  ]);
 
   return (
-    <ModalContext.Provider value={{
-      isTableModalOpen, tableToEdit, openTableModal, closeTableModal, refetchTables, triggerTablesRefetch,
-      isCategoryModalOpen, categoryToEdit, openCategoryModal, closeCategoryModal, refetchCategories, triggerCategoriesRefetch,
-      isOrderDetailModalOpen, orderToView, openOrderDetailModal, closeOrderDetailModal,
-      isPaymentMethodModalOpen, paymentMethodToEdit, openPaymentMethodModal, closePaymentMethodModal, refetchPaymentMethods, triggerPaymentMethodsRefetch
-    }}>
+    <ModalContext.Provider value={value}>
       {children}
     </ModalContext.Provider>
   );
