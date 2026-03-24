@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Store, Briefcase, Shield, X, Check, BarChart3, DollarSign, Settings, Users, Key, Calendar, RefreshCw, ChevronRight, LayoutDashboard, Loader2, ArrowUpRight, Target, ShieldCheck } from 'lucide-react';
+import { Plus, Store, Briefcase, Shield, X, Check, CheckCircle, BarChart3, DollarSign, Settings, Users, Key, Calendar, RefreshCw, ChevronRight, LayoutDashboard, Loader2, ArrowUpRight, Target, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
