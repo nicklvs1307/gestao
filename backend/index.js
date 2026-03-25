@@ -33,7 +33,8 @@ if (allowedOrigins.length === 0) {
 app.use(cors({
   origin: (origin, callback) => {
     // Permite requests sem origin (mobile apps, curl em dev)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Permite wildcard "*" para liberar todas as origens
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Não permitido pelo CORS'));

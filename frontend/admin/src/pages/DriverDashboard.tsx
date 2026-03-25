@@ -57,7 +57,7 @@ const DeliveryMap: React.FC<{
         });
 
         const customerIcon = L.divIcon({
-            html: `<div class="bg-orange-500 p-2 rounded-full border-2 border-white shadow-lg text-white flex items-center justify-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
+            html: `<div class="bg-primary p-2 rounded-full border-2 border-white shadow-lg text-white flex items-center justify-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
             className: '', iconSize: [32, 32], iconAnchor: [16, 16]
         });
 
@@ -207,15 +207,15 @@ const DriverDashboard: React.FC = () => {
                     <button onClick={() => { setView('list'); setRoute([]); setIsMapExpanded(false); }} className="p-2 bg-white/5 rounded-xl"><ChevronLeft/></button>
                     <div className="text-center">
                         <h2 className="font-black italic text-sm tracking-tighter uppercase leading-none">Pedido #{selectedOrder.dailyOrderNumber}</h2>
-                        <span className="text-[8px] font-black text-orange-500 uppercase tracking-[0.2em]">{selectedOrder.status}</span>
+                        <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">{selectedOrder.status}</span>
                     </div>
-                    <div className="w-10 h-10 flex items-center justify-center text-orange-500 bg-orange-500/10 rounded-xl"><Package size={20}/></div>
+                    <div className="w-10 h-10 flex items-center justify-center text-primary bg-primary/10 rounded-xl"><Package size={20}/></div>
                 </div>
 
                 <div className="p-4 space-y-4">
                     <Card className={cn("p-0 overflow-hidden border-none shadow-2xl relative bg-slate-900 transition-all duration-500", isMapExpanded ? "fixed inset-0 z-[150] rounded-none h-full" : "h-[35vh] rounded-[2rem]")}>
                         {isGeocoding ? (
-                            <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-orange-500" /></div>
+                            <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>
                         ) : customerCoords ? (
                             <div className="w-full h-full relative">
                                 <DeliveryMap orderId={selectedOrder.id} customerCoords={customerCoords} restaurantCoords={restaurantCoords || [-23.5505, -46.6333]} currentLocation={currentLocation} route={route} />
@@ -226,23 +226,23 @@ const DriverDashboard: React.FC = () => {
 
                     <div className="space-y-3">
                         <div className="p-5 bg-white/5 rounded-[1.5rem] border border-white/5">
-                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Endereço</p>
+                            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1 italic">Endereço</p>
                             <h3 className="font-black text-lg text-white uppercase italic tracking-tighter">{selectedOrder.deliveryOrder?.name}</h3>
-                            <p className="text-xs font-bold text-slate-400 mt-2">{selectedOrder.deliveryOrder?.address}</p>
+                            <p className="text-xs font-bold text-muted-foreground mt-2">{selectedOrder.deliveryOrder?.address}</p>
                             
                             <div className="flex gap-2 mt-4 pt-4 border-t border-white/5">
                                 <Button onClick={async () => {
                                     let coords = customerCoords;
                                     if (!coords) coords = await handleInternalGeocode(selectedOrder.deliveryOrder?.address);
                                     if (coords) { setCustomerCoords(coords); handleInternalRoute(coords); }
-                                }} isLoading={isRouting} className="flex-1 h-12 rounded-xl bg-orange-500 text-[10px] uppercase font-black italic"><Radio size={16} className="mr-2"/> ROTA</Button>
+                                }} isLoading={isRouting} className="flex-1 h-12 rounded-xl bg-primary text-[10px] uppercase font-black italic"><Radio size={16} className="mr-2"/> ROTA</Button>
                                 {selectedOrder.deliveryOrder?.phone && <a href={`tel:${selectedOrder.deliveryOrder.phone}`} className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center"><Phone size={18}/></a>}
                             </div>
                         </div>
 
                         <div className="p-5 bg-slate-900 rounded-[1.5rem] flex items-center justify-between border border-white/5">
-                            <div><p className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">A Receber</p><h4 className="text-2xl font-black text-white italic tracking-tighter">R$ {selectedOrder.total.toFixed(2)}</h4></div>
-                            <span className="text-[10px] font-black text-orange-500 uppercase px-3 py-1 bg-orange-500/10 rounded-full">{selectedOrder.deliveryOrder?.paymentMethod}</span>
+                            <div><p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest italic">A Receber</p><h4 className="text-2xl font-black text-white italic tracking-tighter">R$ {selectedOrder.total.toFixed(2)}</h4></div>
+                            <span className="text-[10px] font-black text-primary uppercase px-3 py-1 bg-primary/10 rounded-full">{selectedOrder.deliveryOrder?.paymentMethod}</span>
                         </div>
 
                         <div className="pt-2">
@@ -270,7 +270,7 @@ const DriverDashboard: React.FC = () => {
                         </div>
                         <div>
                             <h1 className="text-xl font-black italic uppercase leading-none tracking-tighter">Cockpit Delivery</h1>
-                            <p className="text-[8px] font-black text-slate-500 uppercase mt-1.5">{isOnline ? 'Online para Entregas' : 'Pausado'}</p>
+                            <p className="text-[8px] font-black text-muted-foreground uppercase mt-1.5">{isOnline ? 'Online para Entregas' : 'Pausado'}</p>
                         </div>
                     </div>
                     <button onClick={loadData} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center"><RefreshCw size={18} className={loading ? "animate-spin" : ""}/></button>
@@ -278,16 +278,16 @@ const DriverDashboard: React.FC = () => {
             </header>
 
             <div className="px-4 -mt-6 relative z-[101] max-w-lg mx-auto grid grid-cols-2 gap-3">
-                <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl"><p className="text-[7px] font-black text-slate-500 uppercase mb-1">Caixa (Mão)</p><h3 className="text-xl font-black italic text-emerald-400 tracking-tighter">R$ {cashToDeliver.toFixed(2)}</h3></div>
-                <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl"><p className="text-[7px] font-black text-slate-500 uppercase mb-1">Taxas</p><h3 className="text-xl font-black italic text-orange-500 tracking-tighter">R$ {earnedFees.toFixed(2)}</h3></div>
+                <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl"><p className="text-[7px] font-black text-muted-foreground uppercase mb-1">Caixa (Mão)</p><h3 className="text-xl font-black italic text-emerald-400 tracking-tighter">R$ {cashToDeliver.toFixed(2)}</h3></div>
+                <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl"><p className="text-[7px] font-black text-muted-foreground uppercase mb-1">Taxas</p><h3 className="text-xl font-black italic text-primary tracking-tighter">R$ {earnedFees.toFixed(2)}</h3></div>
             </div>
 
             <main className="p-4 pt-8 space-y-6 max-w-lg mx-auto">
                 {activeTab === 'home' && (
                     <div className="space-y-4">
                         <div className="flex p-1 bg-white/5 rounded-2xl border border-white/5">
-                            <button onClick={() => setHomeSubTab('my')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase italic transition-all", homeSubTab === 'my' ? "bg-white text-slate-950 shadow-xl" : "text-slate-500")}>Minha Rota ({myOrders.length})</button>
-                            <button onClick={() => setHomeSubTab('queue')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase italic transition-all", homeSubTab === 'queue' ? "bg-white text-slate-950 shadow-xl" : "text-slate-500")}>Fila (Disponíveis) ({availableOrders.length})</button>
+                            <button onClick={() => setHomeSubTab('my')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase italic transition-all", homeSubTab === 'my' ? "bg-white text-slate-950 shadow-xl" : "text-muted-foreground")}>Minha Rota ({myOrders.length})</button>
+                            <button onClick={() => setHomeSubTab('queue')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase italic transition-all", homeSubTab === 'queue' ? "bg-white text-slate-950 shadow-xl" : "text-muted-foreground")}>Fila (Disponíveis) ({availableOrders.length})</button>
                         </div>
 
                         <div className="space-y-2">
@@ -296,7 +296,7 @@ const DriverDashboard: React.FC = () => {
                             ) : (
                                 (homeSubTab === 'my' ? myOrders : availableOrders).map(order => (
                                     <div key={order.id} onClick={() => { setSelectedOrder(order); setView('detail'); handleInternalGeocode(order.deliveryOrder?.address).then(setCustomerCoords); }} className={cn("p-4 rounded-[1.5rem] flex items-center gap-4 border transition-all active:scale-[0.98] cursor-pointer", homeSubTab === 'my' ? "bg-white text-slate-900 border-white shadow-xl" : "bg-white/5 text-white border-white/5")}>
-                                        <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center shrink-0", homeSubTab === 'my' ? "bg-slate-900 text-white" : "bg-white/10 text-slate-500")}><span className="text-lg font-black italic tracking-tighter">#{order.dailyOrderNumber}</span></div>
+                                        <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center shrink-0", homeSubTab === 'my' ? "bg-slate-900 text-white" : "bg-white/10 text-muted-foreground")}><span className="text-lg font-black italic tracking-tighter">#{order.dailyOrderNumber}</span></div>
                                         <div className="flex-1 min-w-0"><h4 className="font-black uppercase italic text-xs truncate leading-none mb-1.5">{order.deliveryOrder?.name}</h4><p className="text-[9px] font-bold truncate opacity-50">{order.deliveryOrder?.address}</p></div>
                                         <ChevronRight size={20} className="opacity-20" />
                                     </div>
@@ -308,20 +308,20 @@ const DriverDashboard: React.FC = () => {
 
                 {activeTab === 'history' && (
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center px-2"><h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] italic">Relatório de Turno</h3></div>
+                        <div className="flex justify-between items-center px-2"><h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] italic">Relatório de Turno</h3></div>
                         {history.map(order => (
                             <div key={order.id} className="p-5 bg-white/5 rounded-[2rem] border border-white/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><CheckCircle size={18}/></div>
-                                        <div><h4 className="text-xs font-black uppercase text-white italic">#{order.dailyOrderNumber} • {order.deliveryOrder?.name}</h4><p className="text-[8px] font-bold text-slate-500 uppercase">{new Date(order.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div>
+                                        <div><h4 className="text-xs font-black uppercase text-white italic">#{order.dailyOrderNumber} • {order.deliveryOrder?.name}</h4><p className="text-[8px] font-bold text-muted-foreground uppercase">{new Date(order.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div>
                                     </div>
                                     <span className="text-base font-black italic text-emerald-400">R$ {order.total.toFixed(2)}</span>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
                                     {['Dinheiro', 'Pix', 'Cartão'].map(method => {
                                         const isActive = (order.deliveryOrder?.paymentMethod || '').toLowerCase().includes(method.toLowerCase()) || (order.deliveryOrder?.paymentMethod === 'Cartão' && method === 'Cartão');
-                                        return <button key={method} onClick={() => handleUpdatePayment(order.id, method)} className={cn("h-9 rounded-xl text-[8px] font-black uppercase transition-all border", isActive ? "bg-white border-white text-slate-950" : "bg-white/5 border-white/5 text-slate-500")}>{method}</button>
+                                        return <button key={method} onClick={() => handleUpdatePayment(order.id, method)} className={cn("h-9 rounded-xl text-[8px] font-black uppercase transition-all border", isActive ? "bg-white border-white text-slate-950" : "bg-white/5 border-white/5 text-muted-foreground")}>{method}</button>
                                     })}
                                 </div>
                             </div>
@@ -331,7 +331,7 @@ const DriverDashboard: React.FC = () => {
 
                 {activeTab === 'profile' && (
                     <div className="space-y-6 pt-4">
-                        <div className="p-10 bg-white text-slate-900 rounded-[2.5rem] text-center space-y-4 shadow-2xl relative overflow-hidden"><div className="absolute top-0 left-0 w-full h-2 bg-orange-500" /><div className="w-20 h-20 bg-slate-100 rounded-[2rem] mx-auto flex items-center justify-center text-slate-400 border-4 border-slate-50"><User size={40}/></div><h3 className="text-xl font-black uppercase italic tracking-tighter">{authUser?.name}</h3><p className="text-[9px] font-black text-orange-500 uppercase mt-1">ID: {authUser?.id.slice(-6).toUpperCase()}</p></div>
+                        <div className="p-10 bg-white text-slate-900 rounded-[2.5rem] text-center space-y-4 shadow-2xl relative overflow-hidden"><div className="absolute top-0 left-0 w-full h-2 bg-primary" /><div className="w-20 h-20 bg-slate-100 rounded-[2rem] mx-auto flex items-center justify-center text-muted-foreground border-4 border-slate-50"><User size={40}/></div><h3 className="text-xl font-black uppercase italic tracking-tighter">{authUser?.name}</h3><p className="text-[9px] font-black text-primary uppercase mt-1">ID: {authUser?.id.slice(-6).toUpperCase()}</p></div>
                         <Button fullWidth variant="danger" onClick={logout} className="h-14 rounded-2xl uppercase font-black italic text-[10px]"><LogOut size={18} className="mr-2"/> ENCERRAR EXPEDIENTE</Button>
                     </div>
                 )}
@@ -340,7 +340,7 @@ const DriverDashboard: React.FC = () => {
             <nav className="fixed bottom-0 left-0 right-0 h-20 bg-slate-950 border-t border-white/5 flex items-center justify-around px-8 z-[200]">
                 {[{ id: 'home', icon: Radio, label: 'Cockpit' }, { id: 'history', icon: History, label: 'Acerto' }, { id: 'profile', icon: Smartphone, label: 'Conta' }].map(tab => {
                     const isActive = activeTab === tab.id;
-                    return <button key={tab.id} onClick={() => { setActiveTab(tab.id as any); setView('list'); }} className={cn("flex flex-col items-center gap-1.5 transition-all", isActive ? "text-orange-500 scale-110" : "text-slate-600")}><tab.icon size={22} strokeWidth={isActive ? 3 : 2} /><span className="text-[8px] font-black uppercase tracking-widest">{tab.label}</span></button>
+                    return <button key={tab.id} onClick={() => { setActiveTab(tab.id as any); setView('list'); }} className={cn("flex flex-col items-center gap-1.5 transition-all", isActive ? "text-primary scale-110" : "text-foreground/60")}><tab.icon size={22} strokeWidth={isActive ? 3 : 2} /><span className="text-[8px] font-black uppercase tracking-widest">{tab.label}</span></button>
                 })}
             </nav>
         </div>

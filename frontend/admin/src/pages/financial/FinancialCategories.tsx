@@ -78,32 +78,32 @@ const FinancialCategories: React.FC = () => {
         <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
             {/* TOP ACTIONS & STATS */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <Card className="p-4 bg-white border-slate-100 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center">
+                <Card className="p-4 bg-white border-border flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-50 text-primary rounded-2xl flex items-center justify-center">
                         <Disc size={24} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total de Categorias</p>
-                        <h4 className="text-xl font-black text-slate-900 italic leading-tight">{categories.length}</h4>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Total de Categorias</p>
+                        <h4 className="text-xl font-black text-foreground italic leading-tight">{categories.length}</h4>
                     </div>
                 </Card>
 
-                <Card className="p-4 bg-white border-slate-100 flex items-center gap-4">
+                <Card className="p-4 bg-white border-border flex items-center gap-4">
                     <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
                         <TrendingUp size={24} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Receitas</p>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Receitas</p>
                         <h4 className="text-xl font-black text-emerald-600 italic">{incomeCount}</h4>
                     </div>
                 </Card>
 
-                <Card className="p-4 bg-white border-slate-100 flex items-center gap-4">
+                <Card className="p-4 bg-white border-border flex items-center gap-4">
                     <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center">
                         <TrendingDown size={24} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Despesas</p>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Despesas</p>
                         <h4 className="text-xl font-black text-rose-600 italic">{expenseCount}</h4>
                     </div>
                 </Card>
@@ -111,7 +111,7 @@ const FinancialCategories: React.FC = () => {
                 <div className="flex items-center justify-end">
                     <Button 
                         onClick={() => { setShowForm(true); setFormData({ type: 'EXPENSE' }); }}
-                        className="h-14 w-full lg:w-auto px-8 rounded-2xl shadow-xl shadow-orange-500/10 font-black italic tracking-tighter uppercase text-[11px]"
+                        className="h-14 w-full lg:w-auto px-8 rounded-2xl shadow-xl shadow-primary/10 font-black italic tracking-tighter uppercase text-[11px]"
                     >
                         <Plus size={18} className="mr-2" /> Nova Categoria
                     </Button>
@@ -119,14 +119,14 @@ const FinancialCategories: React.FC = () => {
             </div>
 
             {/* LISTAGEM DENSA */}
-            <Card className="overflow-hidden border-slate-200/60 shadow-xl shadow-slate-200/40">
-                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
+            <Card className="overflow-hidden border-border/60 shadow-xl shadow-slate-200/40">
+                <div className="p-5 border-b border-border bg-background/50 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-6 bg-orange-500 rounded-full" />
-                        <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Estrutura do Plano de Contas</h3>
+                        <div className="w-1.5 h-6 bg-primary rounded-full" />
+                        <h3 className="font-black text-foreground uppercase italic tracking-tighter text-sm">Estrutura do Plano de Contas</h3>
                     </div>
                     <div className="relative w-full md:w-80 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={16} />
                         <input 
                             type="text" 
                             placeholder="Pesquisar categoria..."
@@ -139,14 +139,14 @@ const FinancialCategories: React.FC = () => {
 
                 <div className="overflow-x-auto">
                     {loading ? (
-                        <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-400">
-                            <Loader2 className="animate-spin text-orange-500" size={32} />
+                        <div className="p-20 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+                            <Loader2 className="animate-spin text-primary" size={32} />
                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando dados...</span>
                         </div>
                     ) : (
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 bg-slate-50/20">
+                                <tr className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] border-b border-border bg-background/20">
                                     <th className="px-8 py-4">Nome da Categoria / Conta</th>
                                     <th className="px-8 py-4 text-center">Natureza DRE</th>
                                     <th className="px-8 py-4 text-center">Visualização</th>
@@ -156,12 +156,12 @@ const FinancialCategories: React.FC = () => {
                             <tbody className="divide-y divide-slate-50">
                                 {filtered.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold italic text-sm">
+                                        <td colSpan={4} className="px-8 py-12 text-center text-muted-foreground font-bold italic text-sm">
                                             Nenhuma categoria encontrada para o filtro atual.
                                         </td>
                                     </tr>
                                 ) : filtered.map((category) => (
-                                    <tr key={category.id} className="group hover:bg-slate-50/80 transition-all duration-300">
+                                    <tr key={category.id} className="group hover:bg-background/80 transition-all duration-300">
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className={cn(
@@ -173,10 +173,10 @@ const FinancialCategories: React.FC = () => {
                                                     <PieChart size={18} />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="font-black text-xs text-slate-900 uppercase italic tracking-tighter group-hover:text-orange-600 transition-colors">
+                                                    <span className="font-black text-xs text-foreground uppercase italic tracking-tighter group-hover:text-primary transition-colors">
                                                         {category.name}
                                                     </span>
-                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Plano de Contas Ativo</span>
+                                                    <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Plano de Contas Ativo</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -202,7 +202,7 @@ const FinancialCategories: React.FC = () => {
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon" 
-                                                    className="w-9 h-9 bg-slate-100 text-slate-600 hover:bg-orange-100 hover:text-orange-600 rounded-xl"
+                                                    className="w-9 h-9 bg-muted text-foreground/60 hover:bg-orange-100 hover:text-primary rounded-xl"
                                                     onClick={() => { setFormData(category); setShowForm(true); }}
                                                 >
                                                     <Edit3 size={16} />
@@ -210,7 +210,7 @@ const FinancialCategories: React.FC = () => {
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon" 
-                                                    className="w-9 h-9 bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-600 rounded-xl"
+                                                    className="w-9 h-9 bg-muted text-foreground/60 hover:bg-rose-100 hover:text-rose-600 rounded-xl"
                                                     onClick={() => handleDelete(category.id)}
                                                 >
                                                     <Trash2 size={16} />
@@ -236,23 +236,23 @@ const FinancialCategories: React.FC = () => {
                         />
                         <motion.div 
                             initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100"
+                            className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-border"
                         >
-                            <header className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                            <header className="px-8 py-6 bg-background border-b border-border flex justify-between items-center">
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                                    <h3 className="text-xl font-black text-foreground italic uppercase tracking-tighter leading-none">
                                         {formData.id ? 'Editar Conta' : 'Nova Categoria'}
                                     </h3>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Configuração do Plano de Contas</p>
+                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Configuração do Plano de Contas</p>
                                 </div>
-                                <button onClick={() => setShowForm(false)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-100 transition-all">
+                                <button onClick={() => setShowForm(false)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground shadow-sm border border-border transition-all">
                                     <Plus className="rotate-45" size={24} />
                                 </button>
                             </header>
 
                             <form onSubmit={handleSubmit} className="p-8 space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome da Categoria</label>
+                                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Nome da Categoria</label>
                                     <Input 
                                         value={formData.name || ''} 
                                         onChange={e => setFormData({...formData, name: e.target.value})} 
@@ -263,7 +263,7 @@ const FinancialCategories: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Natureza Financeira (DRE)</label>
+                                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Natureza Financeira (DRE)</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             type="button"
@@ -272,7 +272,7 @@ const FinancialCategories: React.FC = () => {
                                                 "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
                                                 formData.type === 'INCOME' 
                                                     ? "border-emerald-500 bg-emerald-50 text-emerald-700" 
-                                                    : "border-slate-100 bg-white text-slate-400 grayscale hover:grayscale-0"
+                                                    : "border-border bg-white text-muted-foreground grayscale hover:grayscale-0"
                                             )}
                                         >
                                             <TrendingUp size={24} />
@@ -285,7 +285,7 @@ const FinancialCategories: React.FC = () => {
                                                 "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
                                                 formData.type === 'EXPENSE' 
                                                     ? "border-rose-500 bg-rose-50 text-rose-700" 
-                                                    : "border-slate-100 bg-white text-slate-400 grayscale hover:grayscale-0"
+                                                    : "border-border bg-white text-muted-foreground grayscale hover:grayscale-0"
                                             )}
                                         >
                                             <TrendingDown size={24} />
@@ -295,7 +295,7 @@ const FinancialCategories: React.FC = () => {
                                 </div>
 
                                 <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 flex gap-3">
-                                    <Info size={16} className="text-orange-600 shrink-0 mt-0.5" />
+                                    <Info size={16} className="text-primary shrink-0 mt-0.5" />
                                     <p className="text-[9px] font-bold text-orange-800 leading-relaxed uppercase">
                                         A natureza da categoria define como este lançamento impactará seu lucro líquido e relatórios de fluxo de caixa automáticos.
                                     </p>
@@ -303,7 +303,7 @@ const FinancialCategories: React.FC = () => {
 
                                 <div className="pt-4 flex gap-4">
                                     <Button type="button" variant="ghost" className="flex-1 rounded-2xl h-14 uppercase text-[10px] font-black tracking-widest" onClick={() => setShowForm(false)}>Descartar</Button>
-                                    <Button type="submit" className="flex-[2] h-14 rounded-2xl shadow-xl shadow-orange-500/20 uppercase text-[10px] font-black tracking-widest italic">
+                                    <Button type="submit" className="flex-[2] h-14 rounded-2xl shadow-xl shadow-primary/20 uppercase text-[10px] font-black tracking-widest italic">
                                         {formData.id ? 'Salvar Alterações' : 'Confirmar Cadastro'}
                                     </Button>
                                 </div>

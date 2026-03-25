@@ -11,7 +11,7 @@ module.exports = {
 
     io = new Server(httpServer, {
       cors: {
-        origin: allowedOrigins.length > 0 ? allowedOrigins : false,
+        origin: allowedOrigins.includes('*') ? true : (allowedOrigins.length > 0 ? allowedOrigins : false),
         methods: ['GET', 'POST']
       }
     });

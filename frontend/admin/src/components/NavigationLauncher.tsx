@@ -203,12 +203,12 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.95, opacity: 0, y: 10 }}
                         transition={{ type: "spring", damping: 30, stiffness: 400 }}
-                        className="relative w-full max-w-6xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200"
+                        className="relative w-full max-w-6xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
                     >
                         {/* Top Barra de Busca e Header */}
-                        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row items-center gap-4 bg-slate-50/50">
+                        <div className="p-6 border-b border-border flex flex-col sm:flex-row items-center gap-4 bg-background/50">
                             <div className="flex-1 w-full relative group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-600 transition-colors" size={18} />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                                 <input 
                                     type="text" 
                                     value={searchQuery}
@@ -219,7 +219,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                                 />
                             </div>
                             <div className="flex items-center gap-3">
-                                <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 transition-all shadow-sm">
+                                <button className="p-3 bg-white border border-border rounded-xl text-muted-foreground hover:text-primary transition-all shadow-sm">
                                     <Bell size={20} />
                                 </button>
                                 <button 
@@ -239,23 +239,23 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                                 {searchQuery === '' && (
                                     <div className="space-y-10">
                                         <div className="space-y-4">
-                                            <div className="flex items-center gap-2 text-orange-600">
+                                            <div className="flex items-center gap-2 text-primary">
                                                 <Star size={16} className="fill-current" />
                                                 <h3 className="text-[10px] font-black uppercase tracking-widest">Favoritos</h3>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs font-bold text-slate-400 italic">Seus atalhos.</p>
-                                                <button className="text-[10px] font-black uppercase text-orange-600 hover:underline">+ Adicionar</button>
+                                                <p className="text-xs font-bold text-muted-foreground italic">Seus atalhos.</p>
+                                                <button className="text-[10px] font-black uppercase text-primary hover:underline">+ Adicionar</button>
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4 pt-4 border-t border-slate-100">
-                                            <div className="flex items-center gap-2 text-slate-400">
+                                        <div className="space-y-4 pt-4 border-t border-border">
+                                            <div className="flex items-center gap-2 text-muted-foreground">
                                                 <History size={16} />
                                                 <h3 className="text-[10px] font-black uppercase tracking-widest">Histórico</h3>
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Pedidos Recentes<br/>Caixa Aberto</p>
+                                                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">Pedidos Recentes<br/>Caixa Aberto</p>
                                             </div>
                                         </div>
                                     </div>
@@ -263,8 +263,8 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
 
                                 {filteredCategories.map((cat, idx) => (
                                     <div key={idx} className="space-y-4">
-                                        <div className="flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-3">
-                                            <div className="p-1.5 bg-slate-100 rounded text-slate-600">
+                                        <div className="flex items-center gap-2 text-foreground border-b border-border pb-3">
+                                            <div className="p-1.5 bg-muted rounded text-foreground/60">
                                                 <cat.icon size={16} />
                                             </div>
                                             <h3 className="text-[10px] font-black uppercase tracking-widest">
@@ -276,9 +276,9 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                                                 <button
                                                     key={iIdx}
                                                     onClick={() => handleNavigate(item.path)}
-                                                    className="group flex items-center gap-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-orange-600 transition-all text-left"
+                                                    className="group flex items-center gap-2.5 py-1.5 text-xs font-bold text-muted-foreground hover:text-primary transition-all text-left"
                                                 >
-                                                    <div className="w-1 h-1 rounded-full bg-slate-200 group-hover:bg-orange-600 group-hover:scale-125 transition-all" />
+                                                    <div className="w-1 h-1 rounded-full bg-border group-hover:bg-primary group-hover:scale-125 transition-all" />
                                                     <span className="group-hover:translate-x-1 transition-transform">
                                                         {item.label}
                                                     </span>
@@ -291,13 +291,13 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                         </div>
 
                         {/* Footer / Info */}
-                        <div className="px-10 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <ShoppingCart size={12} className="text-orange-600" /> Kicardapio v2.5.0
+                        <div className="px-10 py-4 bg-background border-t border-border flex items-center justify-between">
+                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                <ShoppingCart size={12} className="text-primary" /> Kicardapio v2.5.0
                             </p>
                             <div className="flex gap-4">
-                                <button className="text-[9px] font-black uppercase text-slate-400 hover:text-orange-600 transition-colors">Suporte</button>
-                                <button className="text-[9px] font-black uppercase text-slate-400 hover:text-orange-600 transition-colors">Docs</button>
+                                <button className="text-[9px] font-black uppercase text-muted-foreground hover:text-primary transition-colors">Suporte</button>
+                                <button className="text-[9px] font-black uppercase text-muted-foreground hover:text-primary transition-colors">Docs</button>
                             </div>
                         </div>
                     </motion.div>

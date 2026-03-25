@@ -80,46 +80,46 @@ const DriverSettlement: React.FC = () => {
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-10">
             {/* ERP HEADER - COMPACT & FUNCTIONAL */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-6 rounded-2xl border border-border shadow-sm">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-100">
+                    <h1 className="text-2xl font-black text-foreground tracking-tighter uppercase italic flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/10">
                             <Truck size={20} />
                         </div>
                         Gestão de Acertos (Logística)
                     </h1>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 ml-13">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1 ml-13">
                         Controle de Turnos e Liquidação de Entregadores
                     </p>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm">
-                        <Calendar size={14} className="text-orange-500" />
+                <div className="flex flex-wrap items-center gap-3 bg-background p-2 rounded-xl border border-border">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-border shadow-sm">
+                        <Calendar size={14} className="text-primary" />
                         <input 
                             type="date" 
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="bg-transparent border-none font-black text-[11px] uppercase outline-none text-slate-600 cursor-pointer"
+                            className="bg-transparent border-none font-black text-[11px] uppercase outline-none text-foreground/60 cursor-pointer"
                         />
                     </div>
                     
                     <div className="h-6 w-px bg-slate-200 mx-1" />
 
                     <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-slate-400" />
+                        <Clock size={14} className="text-muted-foreground" />
                         <input 
                             type="time" 
                             value={startTime}
                             onChange={(e) => setStartTime(e.target.value)}
-                            className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 font-black text-[11px] outline-none text-slate-600"
+                            className="bg-white border border-border rounded-lg px-2 py-1.5 font-black text-[11px] outline-none text-foreground/60"
                         />
                         <ArrowRightLeft size={12} className="text-slate-300" />
                         <input 
                             type="time" 
                             value={endTime}
                             onChange={(e) => setEndTime(e.target.value)}
-                            className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 font-black text-[11px] outline-none text-slate-600"
+                            className="bg-white border border-border rounded-lg px-2 py-1.5 font-black text-[11px] outline-none text-foreground/60"
                         />
                     </div>
 
@@ -132,18 +132,18 @@ const DriverSettlement: React.FC = () => {
             {/* FINANCIAL SUMMARY TABLE - DENSE */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Repasse Entregadores', val: totals.toPay, icon: DollarSign, color: 'orange', bg: 'bg-orange-500' },
+                    { label: 'Total Repasse Entregadores', val: totals.toPay, icon: DollarSign, color: 'orange', bg: 'bg-primary' },
                     { label: 'Resultado Líquido Loja', val: totals.net, icon: TrendingUp, color: 'emerald', bg: 'bg-emerald-500' },
                     { label: 'Total Coletado Dinheiro', val: totals.cash, icon: Wallet, color: 'blue', bg: 'bg-blue-500' },
                     { label: 'Volume de Entregas', val: totals.orders, icon: Package, color: 'slate', bg: 'bg-slate-700', isCurrency: false },
                 ].map((stat, i) => (
-                    <Card key={i} className="p-4 border-slate-100 flex items-center gap-4 bg-white hover:shadow-md transition-shadow">
+                    <Card key={i} className="p-4 border-border flex items-center gap-4 bg-white hover:shadow-md transition-shadow">
                         <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg", stat.bg)}>
                             <stat.icon size={20} />
                         </div>
                         <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">{stat.label}</p>
-                            <h4 className="text-lg font-black text-slate-900 tracking-tighter italic leading-none">
+                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1.5">{stat.label}</p>
+                            <h4 className="text-lg font-black text-foreground tracking-tighter italic leading-none">
                                 {stat.isCurrency === false ? stat.val : `R$ ${stat.val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                             </h4>
                         </div>
@@ -152,7 +152,7 @@ const DriverSettlement: React.FC = () => {
             </div>
 
             {/* MAIN DATA TABLE - ERP STYLE */}
-            <Card className="p-0 overflow-hidden border-slate-100 shadow-xl bg-white" noPadding>
+            <Card className="p-0 overflow-hidden border-border shadow-xl bg-white" noPadding>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -170,46 +170,46 @@ const DriverSettlement: React.FC = () => {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={7} className="px-6 py-4 h-16 bg-slate-50/50" />
+                                        <td colSpan={7} className="px-6 py-4 h-16 bg-background/50" />
                                     </tr>
                                 ))
                             ) : data.length > 0 ? data.map((settlement, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
+                                <tr key={idx} className="hover:bg-background/80 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                                            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-white transition-all">
                                                 <User size={14} />
                                             </div>
-                                            <span className="font-black text-slate-700 uppercase italic tracking-tighter text-sm">{settlement.driverName}</span>
+                                            <span className="font-black text-foreground uppercase italic tracking-tighter text-sm">{settlement.driverName}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full text-[10px] font-black">
+                                        <span className="bg-muted text-foreground/60 px-2.5 py-1 rounded-full text-[10px] font-black">
                                             {settlement.totalOrders}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
                                             <span className="text-emerald-600 font-black text-sm italic tracking-tighter">R$ {settlement.cash.toFixed(2)}</span>
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Coletado na Rua</span>
+                                            <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Coletado na Rua</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex gap-4">
                                             <div className="flex flex-col">
-                                                <span className="text-slate-600 font-black text-xs italic">R$ {settlement.card.toFixed(2)}</span>
-                                                <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Cartão</span>
+                                                <span className="text-foreground/60 font-black text-xs italic">R$ {settlement.card.toFixed(2)}</span>
+                                                <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Cartão</span>
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-slate-600 font-black text-xs italic">R$ {settlement.pix.toFixed(2)}</span>
-                                                <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">PIX</span>
+                                                <span className="text-foreground/60 font-black text-xs italic">R$ {settlement.pix.toFixed(2)}</span>
+                                                <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">PIX</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-orange-600 font-black text-sm italic tracking-tighter">R$ {settlement.totalToPay.toFixed(2)}</span>
+                                        <span className="text-primary font-black text-sm italic tracking-tighter">R$ {settlement.totalToPay.toFixed(2)}</span>
                                     </td>
-                                    <td className="px-6 py-4 bg-slate-50/50">
+                                    <td className="px-6 py-4 bg-background/50">
                                         <span className={cn("font-black text-sm italic tracking-tighter", settlement.storeNet >= 0 ? "text-emerald-500" : "text-rose-500")}>
                                             R$ {settlement.storeNet.toFixed(2)}
                                         </span>
@@ -219,7 +219,7 @@ const DriverSettlement: React.FC = () => {
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
-                                                className="h-8 w-8 p-0 rounded-lg hover:bg-slate-100"
+                                                className="h-8 w-8 p-0 rounded-lg hover:bg-muted"
                                                 title="Imprimir Comprovante"
                                             >
                                                 <Printer size={14} />
@@ -246,14 +246,14 @@ const DriverSettlement: React.FC = () => {
                                 </tr>
                             )}
                         </tbody>
-                        <tfoot className="bg-slate-50 font-black border-t border-slate-200">
+                        <tfoot className="bg-background font-black border-t border-border">
                             <tr>
-                                <td className="px-6 py-4 text-[10px] uppercase tracking-widest text-slate-400">TOTAIS DO PERÍODO</td>
-                                <td className="px-6 py-4 text-center text-slate-900">{totals.orders}</td>
+                                <td className="px-6 py-4 text-[10px] uppercase tracking-widest text-muted-foreground">TOTAIS DO PERÍODO</td>
+                                <td className="px-6 py-4 text-center text-foreground">{totals.orders}</td>
                                 <td className="px-6 py-4 text-emerald-600">R$ {totals.cash.toFixed(2)}</td>
-                                <td className="px-6 py-4 text-slate-600">R$ {(totals.card + totals.pix).toFixed(2)}</td>
-                                <td className="px-6 py-4 text-orange-600 underline">R$ {totals.toPay.toFixed(2)}</td>
-                                <td className="px-6 py-4 text-slate-900 bg-slate-100">R$ {totals.net.toFixed(2)}</td>
+                                <td className="px-6 py-4 text-foreground/60">R$ {(totals.card + totals.pix).toFixed(2)}</td>
+                                <td className="px-6 py-4 text-primary underline">R$ {totals.toPay.toFixed(2)}</td>
+                                <td className="px-6 py-4 text-foreground bg-muted">R$ {totals.net.toFixed(2)}</td>
                                 <td className="px-6 py-4 text-right">
                                     <Button variant="outline" size="sm" className="h-8 text-[9px] font-black uppercase tracking-widest italic gap-2 border-slate-300">
                                         <FileDown size={14} /> EXPORTAR RELATÓRIO
@@ -266,7 +266,7 @@ const DriverSettlement: React.FC = () => {
             </Card>
 
             {/* ERP COMPLIANCE FOOTER */}
-            <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-2 text-muted-foreground">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Sincronizado com Fluxo de Caixa Centralizado</p>
             </div>

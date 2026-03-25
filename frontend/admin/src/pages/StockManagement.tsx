@@ -73,7 +73,7 @@ const StockManagement: React.FC = () => {
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center h-[60vh] opacity-30">
-            <Loader2 className="animate-spin text-orange-500 mb-4" size={32}/>
+            <Loader2 className="animate-spin text-primary mb-4" size={32}/>
             <span className="text-[10px] font-black uppercase tracking-widest italic">Sincronizando Almoxarifado...</span>
         </div>
     );
@@ -81,17 +81,17 @@ const StockManagement: React.FC = () => {
     return (
         <div className="space-y-4 animate-in fade-in duration-500 pb-10 max-w-[1400px] mx-auto">
             {/* ENTERPRISE STICKY HEADER */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-slate-50/90 backdrop-blur-md z-40 py-4 border-b border-slate-200 px-1">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-background/90 backdrop-blur-md z-40 py-4 border-b border-border px-1">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-slate-900 text-white rounded-xl shadow-lg"><Archive size={18}/></div>
                     <div>
-                        <h1 className="text-lg font-black text-slate-900 tracking-tighter uppercase italic leading-none">Estoque & Insumos</h1>
-                        <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest mt-1">Gestão de Almoxarifado e Produção</p>
+                        <h1 className="text-lg font-black text-foreground tracking-tighter uppercase italic leading-none">Estoque & Insumos</h1>
+                        <p className="text-muted-foreground text-[8px] font-bold uppercase tracking-widest mt-1">Gestão de Almoxarifado e Produção</p>
                     </div>
                 </div>
                 
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="hidden lg:flex bg-slate-100 p-0.5 rounded-lg gap-0.5">
+                    <div className="hidden lg:flex bg-muted p-0.5 rounded-lg gap-0.5">
                         {[
                             { id: 'inventory', label: 'Dashboard', icon: Layers },
                             { id: 'ingredients', label: 'Insumos', icon: Package },
@@ -104,7 +104,7 @@ const StockManagement: React.FC = () => {
                                 onClick={() => navigate(tab.id === 'inventory' ? '/stock' : `/stock/${tab.id}`)}
                                 className={cn(
                                     "px-4 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2", 
-                                    activeTab === tab.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:bg-white/50"
+                                    activeTab === tab.id ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:bg-white/50"
                                 )}
                             >
                                 <tab.icon size={12} />
@@ -112,7 +112,7 @@ const StockManagement: React.FC = () => {
                             </button>
                         ))}
                     </div>
-                    <Button className="flex-1 md:flex-none px-6 h-10 rounded-xl shadow-lg italic font-black text-[10px] uppercase tracking-widest bg-orange-500 text-white hover:bg-orange-600 transition-all">
+                    <Button className="flex-1 md:flex-none px-6 h-10 rounded-xl shadow-lg italic font-black text-[10px] uppercase tracking-widest bg-primary text-white hover:brightness-90 transition-all">
                         <Plus size={14} className="mr-2" /> NOVA ENTRADA
                     </Button>
                 </div>
@@ -122,46 +122,46 @@ const StockManagement: React.FC = () => {
                 {activeTab === 'inventory' && (
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                         <Card className="p-4 bg-slate-900 text-white lg:col-span-2 overflow-hidden relative group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-orange-500/20 transition-all" />
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all" />
                             <div className="relative z-10">
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Valor Total em Estoque</p>
+                                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">Valor Total em Estoque</p>
                                 <h2 className="text-3xl font-black italic tracking-tighter">
                                     R$ {(Array.isArray(ingredients) ? ingredients : []).reduce((acc, i) => acc + (i.stock * (i.averageCost || 0)), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </h2>
                                 <div className="mt-4 flex gap-4">
                                     <div className="flex flex-col">
-                                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Insumos Ativos</span>
+                                        <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Insumos Ativos</span>
                                         <span className="text-sm font-black italic">{ingredients.length}</span>
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Fichas Técnicas</span>
+                                        <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Fichas Técnicas</span>
                                         <span className="text-sm font-black italic">{ingredients.filter(i => i.isProduced).length}</span>
                                     </div>
                                 </div>
                             </div>
                         </Card>
 
-                        <Card className="p-4 border-slate-100 flex flex-col justify-between">
+                        <Card className="p-4 border-border flex flex-col justify-between">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-black uppercase italic text-slate-900">Itens em Falta</h3>
+                                <h3 className="text-[10px] font-black uppercase italic text-foreground">Itens em Falta</h3>
                                 <AlertTriangle size={16} className="text-rose-500" />
                             </div>
                             <div className="mt-4">
                                 <p className="text-2xl font-black italic text-rose-600 leading-none">
                                     {ingredients.filter(i => i.stock <= (i.minStock || 0)).length}
                                 </p>
-                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Abaixo do estoque mínimo</p>
+                                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Abaixo do estoque mínimo</p>
                             </div>
                         </Card>
 
-                        <Card className="p-4 border-slate-100 flex flex-col justify-between">
+                        <Card className="p-4 border-border flex flex-col justify-between">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-black uppercase italic text-slate-900">Giro de Estoque</h3>
+                                <h3 className="text-[10px] font-black uppercase italic text-foreground">Giro de Estoque</h3>
                                 <TrendingDown size={16} className="text-blue-500" />
                             </div>
                             <div className="mt-4">
                                 <p className="text-2xl font-black italic text-blue-600 leading-none">Alta</p>
-                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Consumo 12% maior que o mês ant.</p>
+                                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Consumo 12% maior que o mês ant.</p>
                             </div>
                         </Card>
                     </div>

@@ -200,14 +200,14 @@ const WaiterPos: React.FC = () => {
         return products.filter(p => (selectedCategory === 'all' || p.categoryId === selectedCategory || p.categories?.some(c => c.id === selectedCategory)) && p.name.toLowerCase().includes(searchTerm.toLowerCase()) && p.isAvailable);
     }, [products, selectedCategory, searchTerm]);
 
-    if (loading) return <div className="flex h-screen w-screen items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-orange-500" size={48} /></div>;
+    if (loading) return <div className="flex h-screen w-screen items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-primary" size={48} /></div>;
 
     return (
         <div className="flex flex-col h-screen w-screen bg-slate-950 text-white overflow-hidden">
             {/* Header Mobile - Removido margens e integrado como App FullScreen */}
             <header className="h-20 bg-slate-900 border-b border-white/5 px-6 flex items-center justify-between shrink-0 z-30 shadow-2xl">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-orange-500 rounded-2xl shadow-xl shadow-orange-500/20"><Utensils size={24} /></div>
+                    <div className="p-3 bg-primary rounded-2xl shadow-xl shadow-primary/20"><Utensils size={24} /></div>
                     <div>
                         <h1 className="text-sm font-black uppercase tracking-[0.2em] leading-none">Garçom Pro</h1>
                         <p className="text-[10px] font-bold text-slate-500 mt-1.5 uppercase italic">{selectedTable ? `MESA ${selectedTable.number}` : 'Selecione Ambiente'}</p>
@@ -230,10 +230,10 @@ const WaiterPos: React.FC = () => {
                         { id: 'cart', label: `Sacola (${cart.length})`, icon: ShoppingCart },
                         { id: 'tables', label: 'Consumo Mesa', icon: Receipt }
                     ].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 py-5 flex flex-col items-center gap-1.5 transition-all relative", activeTab === tab.id ? "text-orange-500" : "text-slate-500")}>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 py-5 flex flex-col items-center gap-1.5 transition-all relative", activeTab === tab.id ? "text-primary" : "text-slate-500")}>
                             <tab.icon size={18} />
                             <span className="text-[8px] font-black uppercase tracking-widest">{tab.label}</span>
-                            {activeTab === tab.id && <div className="absolute bottom-0 w-8 h-1 bg-orange-500 rounded-full shadow-[0_0_10px_orange]" />}
+                            {activeTab === tab.id && <div className="absolute bottom-0 w-8 h-1 bg-primary rounded-full shadow-[0_0_10px_hsl(var(--primary))]" />}
                         </button>
                     ))}
                 </div>
@@ -250,7 +250,7 @@ const WaiterPos: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
                             {tables.map(table => (
-                                <button key={table.id} onClick={() => { setSelectedTable(table); setActiveTab('menu'); }} className={cn("aspect-square rounded-[2rem] border-2 flex flex-col items-center justify-center transition-all active:scale-90 shadow-lg", table.status === 'free' ? "bg-slate-900 border-white/5 text-slate-600" : "bg-orange-500 border-orange-400 text-white shadow-orange-500/20")}>
+                                <button key={table.id} onClick={() => { setSelectedTable(table); setActiveTab('menu'); }} className={cn("aspect-square rounded-[2rem] border-2 flex flex-col items-center justify-center transition-all active:scale-90 shadow-lg", table.status === 'free' ? "bg-slate-900 border-white/5 text-slate-600" : "bg-primary border-primary text-white shadow-primary/20")}>
                                     <span className="text-3xl font-black italic tracking-tighter">{table.number}</span>
                                     <span className="text-[8px] font-black uppercase tracking-widest mt-1 opacity-60">{table.status === 'free' ? 'Livre' : 'Ocupada'}</span>
                                 </button>
@@ -264,23 +264,23 @@ const WaiterPos: React.FC = () => {
                     <div className="flex flex-col h-full animate-in fade-in duration-300">
                         <div className="p-6 bg-slate-900 border-b border-white/5 space-y-4">
                             <div className="relative group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-500 transition-colors" size={18} />
-                                <input type="text" placeholder="Buscar no cardápio..." className="w-full h-14 pl-12 bg-slate-950 border-2 border-white/5 rounded-2xl font-black text-sm outline-none focus:border-orange-500 transition-all uppercase italic tracking-tight" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
+                                <input type="text" placeholder="Buscar no cardápio..." className="w-full h-14 pl-12 bg-slate-950 border-2 border-white/5 rounded-2xl font-black text-sm outline-none focus:border-primary transition-all uppercase italic tracking-tight" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                             </div>
                             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                                <button onClick={() => setSelectedCategory('all')} className={cn("px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all", selectedCategory === 'all' ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "bg-slate-800 text-slate-500")}>Todos</button>
-                                {categories.map(cat => <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={cn("px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all", selectedCategory === cat.id ? "bg-orange-500 text-white shadow-lg" : "bg-slate-800 text-slate-500")}>{cat.name}</button>)}
+                                <button onClick={() => setSelectedCategory('all')} className={cn("px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all", selectedCategory === 'all' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-slate-800 text-slate-500")}>Todos</button>
+                                {categories.map(cat => <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={cn("px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all", selectedCategory === cat.id ? "bg-primary text-white shadow-lg" : "bg-slate-800 text-slate-500")}>{cat.name}</button>)}
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-2.5 custom-scrollbar">
                             {filteredProducts.map(product => (
-                                <button key={product.id} onClick={() => handleProductClick(product)} className="w-full p-5 bg-slate-900 border-2 border-white/5 rounded-[2rem] flex justify-between items-center active:scale-95 transition-all hover:border-orange-500/30">
+                                <button key={product.id} onClick={() => handleProductClick(product)} className="w-full p-5 bg-slate-900 border-2 border-white/5 rounded-[2rem] flex justify-between items-center active:scale-95 transition-all hover:border-primary/30">
                                     <div className="text-left flex-1 min-w-0 pr-4">
                                         <h4 className="font-black text-white uppercase italic tracking-tight text-sm truncate">{product.name}</h4>
                                         <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{product.category?.name}</p>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <span className="font-black text-orange-500 text-sm italic tracking-tighter">R$ {product.price.toFixed(2)}</span>
+                                        <span className="font-black text-primary text-sm italic tracking-tighter">R$ {product.price.toFixed(2)}</span>
                                         <div className="w-10 h-10 rounded-2xl bg-white text-slate-900 flex items-center justify-center shadow-lg"><Plus size={20} strokeWidth={4} /></div>
                                     </div>
                                 </button>
@@ -299,12 +299,12 @@ const WaiterPos: React.FC = () => {
                                 <Card key={item.id} className="p-5 bg-slate-900 border-white/5 rounded-[2rem] flex justify-between items-center shadow-xl">
                                     <div className="flex-1 pr-4">
                                         <h4 className="font-black text-white text-sm italic uppercase leading-none mb-2">{item.name}</h4>
-                                        {item.observation && <div className="flex items-center gap-2 text-orange-500"><Info size={10}/><p className="text-[9px] font-bold italic truncate uppercase">{item.observation}</p></div>}
+                                        {item.observation && <div className="flex items-center gap-2 text-primary"><Info size={10}/><p className="text-[9px] font-bold italic truncate uppercase">{item.observation}</p></div>}
                                     </div>
                                     <div className="flex items-center bg-slate-950 rounded-2xl p-1.5 gap-3 border border-white/5 shadow-inner">
                                         <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: Math.max(0, i.quantity - 1) } : i).filter(i => i.quantity > 0))} className="w-8 h-8 flex items-center justify-center text-slate-500"><Minus size={16} strokeWidth={4}/></button>
                                         <span className="w-6 text-center font-black text-white text-sm">{item.quantity}</span>
-                                        <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i))} className="w-8 h-8 flex items-center justify-center text-orange-500"><Plus size={16} strokeWidth={4}/></button>
+                                        <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i))} className="w-8 h-8 flex items-center justify-center text-primary"><Plus size={16} strokeWidth={4}/></button>
                                     </div>
                                 </Card>
                             ))}
@@ -313,7 +313,7 @@ const WaiterPos: React.FC = () => {
                             <div className="flex justify-between items-end mb-8">
                                 <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500 tracking-widest leading-none mb-2">Total do Lançamento</span><span className="text-4xl font-black text-white italic tracking-tighter leading-none">R$ {cart.reduce((sum, i) => sum + (i.price * i.quantity), 0).toFixed(2).replace('.', ',')}</span></div>
                             </div>
-                            <Button fullWidth onClick={handleSubmitOrder} disabled={cart.length === 0 || isPlacingOrder} isLoading={isPlacingOrder} className="h-16 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-orange-500/20 italic">
+                            <Button fullWidth onClick={handleSubmitOrder} disabled={cart.length === 0 || isPlacingOrder} isLoading={isPlacingOrder} className="h-16 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-primary/20 italic">
                                 ENVIAR PARA COZINHA <Send size={16} className="ml-2" />
                             </Button>
                         </div>
@@ -360,7 +360,7 @@ const WaiterPos: React.FC = () => {
                     <div className="fixed inset-0 z-[200] flex items-end justify-center bg-slate-950/90 backdrop-blur-md">
                         <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="w-full max-w-xl bg-slate-900 rounded-t-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border-t border-white/10">
                             <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
-                                <div><h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">{productWithOptions.name}</h3><p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-2">Personalizar Pedido</p></div>
+                                <div><h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">{productWithOptions.name}</h3><p className="text-[10px] font-black text-primary uppercase tracking-widest mt-2">Personalizar Pedido</p></div>
                                 <Button variant="ghost" size="icon" onClick={() => setProductWithOptions(null)} className="rounded-full bg-white/5 h-12 w-12"><X size={24} /></Button>
                             </div>
                             
@@ -368,14 +368,14 @@ const WaiterPos: React.FC = () => {
                                 {/* Tamanhos */}
                                 {productWithOptions.sizes && productWithOptions.sizes.length > 0 && (
                                     <div className="space-y-4">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> 1. Escolha o Tamanho</h4>
+                                        <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> 1. Escolha o Tamanho</h4>
                                         <div className="grid grid-cols-1 gap-3">
                                             {productWithOptions.sizes.map(size => (
-                                                <button key={size.id} onClick={() => { setSelectedSizeId(size.id); setSelectedFlavorIds([]); }} className={cn("p-5 rounded-3xl border-2 flex justify-between items-center transition-all", selectedSizeId === size.id ? "border-orange-500 bg-orange-500/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
+                                                <button key={size.id} onClick={() => { setSelectedSizeId(size.id); setSelectedFlavorIds([]); }} className={cn("p-5 rounded-3xl border-2 flex justify-between items-center transition-all", selectedSizeId === size.id ? "border-primary bg-primary/10 text-white" : "border-white/5 bg-slate-950 text-slate-500")}>
                                                     <span className="font-black text-sm uppercase italic tracking-tight">{size.name}</span>
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-black text-xs italic tracking-tighter">R$ {size.price.toFixed(2)}</span>
-                                                        <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center", selectedSizeId === size.id ? "bg-orange-500 border-orange-500" : "border-white/10")}>{selectedSizeId === size.id && <Check size={14} strokeWidth={4} />}</div>
+                                                        <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center", selectedSizeId === size.id ? "bg-primary border-primary" : "border-white/10")}>{selectedSizeId === size.id && <Check size={14} strokeWidth={4} />}</div>
                                                     </div>
                                                 </button>
                                             ))}
@@ -429,7 +429,7 @@ const WaiterPos: React.FC = () => {
                                 {/* Observação do Garçom */}
                                 <div className="space-y-4">
                                     <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] flex items-center gap-3 italic"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Observação do Item</h4>
-                                    <textarea className="w-full bg-slate-950 border-2 border-white/5 rounded-[2rem] p-6 text-sm font-black text-white uppercase italic tracking-tight outline-none focus:border-orange-500 transition-all shadow-inner" rows={3} placeholder="EX: SEM CEBOLA, GELO À PARTE..." value={obs} onChange={e => setObs(e.target.value)} />
+                                    <textarea className="w-full bg-slate-950 border-2 border-white/5 rounded-[2rem] p-6 text-sm font-black text-white uppercase italic tracking-tight outline-none focus:border-primary transition-all shadow-inner" rows={3} placeholder="EX: SEM CEBOLA, GELO À PARTE..." value={obs} onChange={e => setObs(e.target.value)} />
                                 </div>
                             </div>
 
@@ -437,13 +437,13 @@ const WaiterPos: React.FC = () => {
                                 <div className="flex items-center bg-slate-950 border border-white/5 rounded-2xl p-1 shrink-0">
                                     <button onClick={() => setTempQty(Math.max(1, tempQty - 1))} className="w-10 h-10 flex items-center justify-center text-slate-500"><Minus size={16} strokeWidth={4}/></button>
                                     <span className="w-8 text-center font-black text-white text-sm italic">{tempQty}</span>
-                                    <button onClick={() => setTempQty(tempQty + 1)} className="w-10 h-10 flex items-center justify-center text-orange-500"><Plus size={16} strokeWidth={4}/></button>
+                                    <button onClick={() => setTempQty(tempQty + 1)} className="w-10 h-10 flex items-center justify-center text-primary"><Plus size={16} strokeWidth={4}/></button>
                                 </div>
                                 <div className="flex-1 text-right flex flex-col justify-center">
                                     <span className="text-[10px] font-black text-slate-500 uppercase italic leading-none mb-1">Total do Item</span>
                                     <span className="text-2xl font-black text-white italic tracking-tighter leading-none">R$ {calculateCurrentPrice().toFixed(2).replace('.', ',')}</span>
                                 </div>
-                                <Button size="lg" onClick={confirmAddToCart} className="h-16 px-8 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-orange-500/20 italic shrink-0">LANÇAR <Check size={16} className="ml-2"/></Button>
+                                <Button size="lg" onClick={confirmAddToCart} className="h-16 px-8 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 italic shrink-0">LANÇAR <Check size={16} className="ml-2"/></Button>
                             </div>
                         </motion.div>
                     </div>

@@ -250,7 +250,7 @@ const WhatsAppChat: React.FC = () => {
       {/* Sidebar - Lista de Conversas */}
       <div className="w-80 md:w-96 border-r border-gray-100 flex flex-col bg-gray-50/30">
         <div className="p-4 bg-white border-b border-gray-50">
-          <h2 className="text-xl font-black italic uppercase text-slate-800 mb-4 tracking-tighter">Atendimentos</h2>
+          <h2 className="text-xl font-black italic uppercase text-foreground mb-4 tracking-tighter">Atendimentos</h2>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -292,14 +292,14 @@ const WhatsAppChat: React.FC = () => {
                   )}
                   <div className={cn(
                     "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center",
-                    chat.isAgentEnabled ? "bg-primary text-white" : "bg-orange-500 text-white"
+                    chat.isAgentEnabled ? "bg-primary text-white" : "bg-primary text-white"
                   )}>
                     {chat.isAgentEnabled ? <Bot size={10} /> : <UserCheck size={10} />}
                   </div>
                 </div>
                 <div className="flex-1 text-left overflow-hidden">
                   <div className="flex justify-between items-baseline">
-                    <h4 className="font-bold text-slate-800 truncate text-sm">
+                    <h4 className="font-bold text-foreground truncate text-sm">
                       {chat.customerName || chat.customerPhone.split('@')[0]}
                     </h4>
                     <span className="text-[10px] text-gray-400 font-medium">
@@ -312,7 +312,7 @@ const WhatsAppChat: React.FC = () => {
                   {chat.labels.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {chat.labels.map(label => (
-                        <span key={label} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-bold uppercase tracking-tighter">
+                        <span key={label} className="px-1.5 py-0.5 bg-muted text-foreground/60 rounded text-[9px] font-bold uppercase tracking-tighter">
                           {label}
                         </span>
                       ))}
@@ -346,16 +346,16 @@ const WhatsAppChat: React.FC = () => {
                   />
                 ) : (
                   <div 
-                    className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold cursor-pointer"
+                    className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground font-bold cursor-pointer"
                     onClick={() => setShowDetails(!showDetails)}
                   >
                     {selectedChat.customerName?.charAt(0) || <User size={20} />}
                   </div>
                 )}
                 <div className="cursor-pointer" onClick={() => setShowDetails(!showDetails)}>
-                  <h3 className="font-bold text-slate-800 text-sm">{selectedChat.customerName || selectedChat.customerPhone}</h3>
+                  <h3 className="font-bold text-foreground text-sm">{selectedChat.customerName || selectedChat.customerPhone}</h3>
                   <div className="flex items-center space-x-1.5">
-                    <div className={cn("w-1.5 h-1.5 rounded-full", selectedChat.isAgentEnabled ? "bg-green-500" : "bg-orange-500")}></div>
+                    <div className={cn("w-1.5 h-1.5 rounded-full", selectedChat.isAgentEnabled ? "bg-green-500" : "bg-primary")}></div>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       {selectedChat.isAgentEnabled ? 'Agente IA Ativo' : 'Atendimento Humano'}
                     </span>
@@ -369,7 +369,7 @@ const WhatsAppChat: React.FC = () => {
                   className={cn(
                     "flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-black uppercase italic transition tracking-tighter",
                     selectedChat.isAgentEnabled 
-                      ? "bg-orange-50 text-orange-600 hover:bg-orange-100" 
+                      ? "bg-primary/10 text-primary hover:bg-primary/20" 
                       : "bg-primary/10 text-primary hover:bg-primary/20"
                   )}
                 >
@@ -404,7 +404,7 @@ const WhatsAppChat: React.FC = () => {
                         <div key={msg.id || idx} className={cn("flex w-full", isMe ? "justify-end" : "justify-start")}>
                           <div className={cn(
                             "max-w-[80%] rounded-xl px-3 py-1.5 shadow-sm relative group min-w-[60px]",
-                            isMe ? "bg-[#d9fdd3] text-slate-800 rounded-tr-none" : "bg-white text-slate-800 rounded-tl-none"
+                            isMe ? "bg-[#d9fdd3] text-foreground rounded-tr-none" : "bg-white text-foreground rounded-tl-none"
                           )}>
                             {isMe && (
                               <div className="flex items-center space-x-1 mb-0.5">
@@ -467,20 +467,20 @@ const WhatsAppChat: React.FC = () => {
                           {selectedChat.customerName?.charAt(0) || <User size={48} />}
                         </div>
                       )}
-                      <h3 className="font-black text-slate-800 italic uppercase text-lg leading-tight tracking-tighter">{selectedChat.customerName || 'Desconhecido'}</h3>
+                      <h3 className="font-black text-foreground italic uppercase text-lg leading-tight tracking-tighter">{selectedChat.customerName || 'Desconhecido'}</h3>
                       <p className="text-gray-500 font-medium text-sm">{selectedChat.customerPhone}</p>
                     </div>
 
                     {/* Etiquetas */}
                     <div className="mb-8">
-                      <div className="flex items-center space-x-2 text-slate-800 font-black italic uppercase text-xs mb-3 tracking-tighter">
+                      <div className="flex items-center space-x-2 text-foreground font-black italic uppercase text-xs mb-3 tracking-tighter">
                         <Tag size={14} className="text-primary" />
                         <span>Etiquetas</span>
                       </div>
                       <div className="flex flex-wrap gap-2 mb-3">
                         {selectedChat.labels.map(label => (
                           <div key={label} className="group relative">
-                            <span className="px-2 py-1 bg-white border border-gray-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-tighter flex items-center shadow-sm">
+                            <span className="px-2 py-1 bg-white border border-gray-200 text-foreground/60 rounded-lg text-[10px] font-black uppercase tracking-tighter flex items-center shadow-sm">
                               {label}
                               <button 
                                 onClick={() => removeLabel(label)}
@@ -506,7 +506,7 @@ const WhatsAppChat: React.FC = () => {
 
                     {/* Dados do Cadastro */}
                     <div>
-                      <div className="flex items-center space-x-2 text-slate-800 font-black italic uppercase text-xs mb-3 tracking-tighter">
+                      <div className="flex items-center space-x-2 text-foreground font-black italic uppercase text-xs mb-3 tracking-tighter">
                         <User size={14} className="text-primary" />
                         <span>Dados do Cadastro</span>
                       </div>
@@ -515,7 +515,7 @@ const WhatsAppChat: React.FC = () => {
                         <div className="space-y-4">
                           <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
                             <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Telefone</p>
-                            <div className="flex items-center space-x-2 text-slate-700 text-xs font-bold">
+                            <div className="flex items-center space-x-2 text-foreground text-xs font-bold">
                               <Phone size={12} className="text-gray-400" />
                               <span>{selectedChat.customer.phone}</span>
                             </div>
@@ -523,7 +523,7 @@ const WhatsAppChat: React.FC = () => {
                           
                           <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
                             <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Endereço</p>
-                            <div className="flex items-start space-x-2 text-slate-700 text-xs font-bold leading-relaxed">
+                            <div className="flex items-start space-x-2 text-foreground text-xs font-bold leading-relaxed">
                               <MapPin size={12} className="text-gray-400 mt-0.5" />
                               <span>
                                 {selectedChat.customer.street ? (
@@ -537,7 +537,7 @@ const WhatsAppChat: React.FC = () => {
 
                           <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
                             <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Desde</p>
-                            <div className="flex items-center space-x-2 text-slate-700 text-xs font-bold">
+                            <div className="flex items-center space-x-2 text-foreground text-xs font-bold">
                               <Calendar size={12} className="text-gray-400" />
                               <span>{format(new Date(selectedChat.customer.createdAt), "dd 'de' MMMM, yyyy", { locale: ptBR })}</span>
                             </div>
@@ -551,8 +551,8 @@ const WhatsAppChat: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl text-center">
-                          <p className="text-[10px] text-orange-600 font-bold uppercase">Cliente não cadastrado no PDV</p>
+                        <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-center">
+                          <p className="text-[10px] text-primary font-bold uppercase">Cliente não cadastrado no PDV</p>
                           <p className="text-[9px] text-orange-400 mt-1 uppercase italic leading-tight">Cadastre o número para visualizar detalhes de pedidos e fidelidade.</p>
                         </div>
                       )}
@@ -566,7 +566,7 @@ const WhatsAppChat: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 space-y-4">
             <div className="p-6 bg-gray-50 rounded-full"><MessageSquare size={64} className="opacity-20" /></div>
             <div className="text-center">
-              <h3 className="font-bold text-slate-800">Selecione uma conversa</h3>
+              <h3 className="font-bold text-foreground">Selecione uma conversa</h3>
               <p className="text-sm">Visualize as mensagens e assuma o controle quando necessário.</p>
             </div>
           </div>

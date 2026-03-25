@@ -93,14 +93,14 @@ const KdsPage: React.FC = () => {
             {/* Header Superior */}
             <div className="h-16 bg-[#0a0a0a] border-b border-white/[0.05] flex items-center justify-between px-6 shrink-0 z-30">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-900/20">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-orange-900/20">
                         <ChefHat size={20} className="text-white" />
                     </div>
                     <div>
                         <h2 className="text-lg font-black uppercase tracking-tight italic leading-none text-white">Monitor de Produção</h2>
                         <div className="flex items-center gap-1.5 mt-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Tempo Real</span>
+                            <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Tempo Real</span>
                         </div>
                     </div>
                 </div>
@@ -118,7 +118,7 @@ const KdsPage: React.FC = () => {
                                 onClick={() => changeArea(a.id)}
                                 className={cn(
                                     "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2",
-                                    area === a.id ? "bg-orange-600 text-white" : "text-slate-500 hover:text-slate-300"
+                                    area === a.id ? "bg-primary text-white" : "text-muted-foreground hover:text-slate-300"
                                 )}
                             >
                                 <a.icon size={12} />
@@ -127,7 +127,7 @@ const KdsPage: React.FC = () => {
                         ))}
                     </nav>
                     
-                    <button onClick={() => navigate('/dashboard')} className="p-2.5 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                    <button onClick={() => navigate('/dashboard')} className="p-2.5 text-muted-foreground hover:text-white hover:bg-white/5 rounded-xl transition-all">
                         <LogOut size={20} />
                     </button>
                 </div>
@@ -137,7 +137,7 @@ const KdsPage: React.FC = () => {
             <main className="flex-1 overflow-x-auto p-6 flex gap-6 custom-scrollbar items-start bg-black">
                 {loading && groupedOrders.length === 0 ? (
                     <div className="w-full flex flex-col items-center justify-center opacity-30 gap-4">
-                        <Loader2 size={40} className="animate-spin text-orange-600" />
+                        <Loader2 size={40} className="animate-spin text-primary" />
                         <span className="text-[10px] font-black uppercase tracking-[0.3em]">Sincronizando...</span>
                     </div>
                 ) : groupedOrders.length > 0 ? (
@@ -151,7 +151,7 @@ const KdsPage: React.FC = () => {
                                 <div className={cn(
                                     "rounded-[2rem] overflow-hidden flex flex-col border-2 transition-all shadow-2xl",
                                     isCritical ? "border-rose-600 bg-rose-950/10" : 
-                                    isUrgent ? "border-orange-500 bg-orange-950/10" : 
+                                    isUrgent ? "border-primary bg-orange-950/10" :
                                     "border-emerald-500/20 bg-[#0c0c0c]"
                                 )}>
                                     
@@ -162,18 +162,18 @@ const KdsPage: React.FC = () => {
                                     )}>
                                         <div>
                                             <div className="flex items-center gap-2 mb-1.5">
-                                                <div className={cn("w-2 h-2 rounded-full", isCritical ? "bg-rose-500 animate-pulse" : isUrgent ? "bg-orange-500" : "bg-emerald-500")} />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                <div className={cn("w-2 h-2 rounded-full", isCritical ? "bg-rose-500 animate-pulse" : isUrgent ? "bg-primary" : "bg-emerald-500")} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                                     {order.orderType === 'DELIVERY' ? 'DELIVERY' : `MESA ${order.tableNumber || '?'}`}
                                                 </span>
                                             </div>
                                             <h4 className="text-2xl font-black italic uppercase tracking-tighter text-white">
                                                 {order.dailyOrderNumber ? `#${order.dailyOrderNumber}` : ''} 
                                                 {order.dailyOrderNumber && <span className="text-white/10 mx-0.5">•</span>}
-                                                <span className="text-orange-500">{order.customerName?.split(' ')[0] || (order.deliveryOrder?.name?.split(' ')[0]) || 'BOX'}</span>
+                                                <span className="text-primary">{order.customerName?.split(' ')[0] || (order.deliveryOrder?.name?.split(' ')[0]) || 'BOX'}</span>
                                             </h4>
                                         </div>
-                                        <div className={cn("px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-2", isUrgent ? "bg-orange-500" : "bg-white/5 text-emerald-400")}>
+                                        <div className={cn("px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-2", isUrgent ? "bg-primary" : "bg-white/5 text-emerald-400")}>
                                             <Timer size={14} /> {waitTime}M
                                         </div>
                                     </div>
@@ -187,14 +187,14 @@ const KdsPage: React.FC = () => {
                                                         <span className="text-lg font-black text-white">{item.quantity}</span>
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-black uppercase leading-tight text-white group-hover:text-orange-500 transition-colors">
+                                                        <p className="text-sm font-black uppercase leading-tight text-white group-hover:text-primary transition-colors">
                                                             {item.product.name}
                                                         </p>
                                                         
                                                         {/* Opções e Tamanhos */}
                                                         <div className="flex flex-wrap gap-1.5 mt-2">
                                                             {item.sizeJson && (
-                                                                <span className="text-[8px] font-black bg-white/10 text-slate-400 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                                                <span className="text-[8px] font-black bg-white/10 text-muted-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
                                                                     TAM: {JSON.parse(item.sizeJson).name}
                                                                 </span>
                                                             )}
@@ -218,9 +218,9 @@ const KdsPage: React.FC = () => {
 
                                                         {/* Observações com Destaque */}
                                                         {item.observations && (
-                                                            <div className="mt-4 p-3 bg-orange-500/10 border-l-2 border-orange-500 rounded-lg">
+                                                            <div className="mt-4 p-3 bg-primary/10 border-l-2 border-primary rounded-lg">
                                                                 <p className="text-[10px] font-bold text-orange-200 leading-tight flex gap-2 italic">
-                                                                    <AlertCircle size={12} className="shrink-0 text-orange-500" />
+                                                                    <AlertCircle size={12} className="shrink-0 text-primary" />
                                                                     {item.observations}
                                                                 </p>
                                                             </div>

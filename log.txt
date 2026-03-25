@@ -1,52 +1,80 @@
-index-C-zZQfM9.js:564 [SSE] Conexão estabelecida com o servidor.
-index-C-zZQfM9.js:564 [SSE] Conexão estabelecida com o servidor.
-useSocket-Dq5uDeMj.js:1 [Socket] Conectado: XlF3g29dYV1_fW2zAAAN
-useSocket-Dq5uDeMj.js:1 [Socket] Desconectado
-useSocket-Dq5uDeMj.js:1 [Socket] Conectado: JY3nT9bBVG2Ysg6YAAAP
-index-C-zZQfM9.js:41 TypeError: o.includes is not a function
-    at PosPage-DJ9VZA1I.js:1:26818
-    at Array.map (<anonymous>)
-    at PosPage-DJ9VZA1I.js:1:26800
-    at Array.map (<anonymous>)
-    at ls (PosPage-DJ9VZA1I.js:1:26306)
-    at $l (index-C-zZQfM9.js:39:17828)
-    at tp (index-C-zZQfM9.js:41:3158)
-    at bg (index-C-zZQfM9.js:41:45739)
-    at yg (index-C-zZQfM9.js:41:40536)
-    at k3 (index-C-zZQfM9.js:41:40464)
-ep @ index-C-zZQfM9.js:41
-D1.c.callback @ index-C-zZQfM9.js:41
-$i @ index-C-zZQfM9.js:39
-cg @ index-C-zZQfM9.js:41
-ug @ index-C-zZQfM9.js:41
-w3 @ index-C-zZQfM9.js:41
-A3 @ index-C-zZQfM9.js:41
-Jl @ index-C-zZQfM9.js:41
-pg @ index-C-zZQfM9.js:41
-P @ index-C-zZQfM9.js:39
-(anonymous) @ index-C-zZQfM9.js:41
-index-C-zZQfM9.js:39 Uncaught TypeError: o.includes is not a function
-    at PosPage-DJ9VZA1I.js:1:26818
-    at Array.map (<anonymous>)
-    at PosPage-DJ9VZA1I.js:1:26800
-    at Array.map (<anonymous>)
-    at ls (PosPage-DJ9VZA1I.js:1:26306)
-    at $l (index-C-zZQfM9.js:39:17828)
-    at tp (index-C-zZQfM9.js:41:3158)
-    at bg (index-C-zZQfM9.js:41:45739)
-    at yg (index-C-zZQfM9.js:41:40536)
-    at k3 (index-C-zZQfM9.js:41:40464)
-(anonymous) @ PosPage-DJ9VZA1I.js:1
-(anonymous) @ PosPage-DJ9VZA1I.js:1
-ls @ PosPage-DJ9VZA1I.js:1
-$l @ index-C-zZQfM9.js:39
-tp @ index-C-zZQfM9.js:41
-bg @ index-C-zZQfM9.js:41
-yg @ index-C-zZQfM9.js:41
-k3 @ index-C-zZQfM9.js:41
-yf @ index-C-zZQfM9.js:41
-yp @ index-C-zZQfM9.js:41
-pg @ index-C-zZQfM9.js:41
-P @ index-C-zZQfM9.js:39
-(anonymous) @ index-C-zZQfM9.js:41
-useSocket-Dq5uDeMj.js:1 [Socket] Desconectado
+No pending migrations to apply.
+Executando Seed de Permissões...
+Iniciando a aplicação...
+[dotenv@17.2.3] injecting env (1) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+[JobService] Inicializando agendador de tarefas...
+[JobService] Tarefas agendadas com sucesso.
+{"level":"info","message":"Servidor rodando em http://localhost:3001"}
+[JobService] Iniciando processamento de relatórios agendados...
+Socket conectado: yiwqbDT4Lf3OSkVNAAAB - Restaurante: cmm6nas6m0001k801znx8seh8
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+Socket desconectado: yiwqbDT4Lf3OSkVNAAAB
+Socket conectado: wV_GCAPPw4yHcmuIAAAD - Restaurante: cmm6nas6m0001k801znx8seh8
+Socket desconectado: wV_GCAPPw4yHcmuIAAAD
+Socket conectado: YnM3m0FkHP-m2E0JAAAF - Restaurante: cmm6nas6m0001k801znx8seh8
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+Socket desconectado: YnM3m0FkHP-m2E0JAAAF
+Socket conectado: ZKNBmQM9unj3hgn4AAAH - Restaurante: cmm6nas6m0001k801znx8seh8
+Socket desconectado: ZKNBmQM9unj3hgn4AAAH
+Socket conectado: -0tFaJEpMMDiUQFuAAAJ - Restaurante: cmm6nas6m0001k801znx8seh8
+[JobService] Iniciando processamento de relatórios agendados...
+[ORDER] Atualizando dados financeiros do pedido cmn38nqkn003so301wm0if8k1
+[JobService] Iniciando processamento de relatórios agendados...
+[ORDER] Atualizando dados financeiros do pedido cmn33rt370001o301ys1wjr9b
+[ORDER] Atualizando dados financeiros do pedido cmn0en5bi0001qn01j28sqh1i
+[JobService] Iniciando processamento de relatórios agendados...
+Socket desconectado: -0tFaJEpMMDiUQFuAAAJ
+Socket conectado: _u9ttS8a0ZtcPxnxAAAL - Restaurante: cmm6nas6m0001k801znx8seh8
+[FISCAL] Analisando pedido #cmn38hg1r003eo30103n0o4z0 para emissão automática...
+[FISCAL] Analisando pedido #cmn38nqkn003so301wm0if8k1 para emissão automática...
+Socket desconectado: _u9ttS8a0ZtcPxnxAAAL
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[JobService] Iniciando processamento de relatórios agendados...
+[CASHIER_CONTROLLER] Iniciando fechamento: {
+  finalAmount: 4575.15,
+  notes: 'lucas',
+  closingDetails: {
+    cash: '2089.65',
+    pix: '0',
+    credit_card: '0',
+    debit_card: '0',
+    other: '0',
+    'pix na entrega': '237.08',
+    'credito na entrega': '2248.42'
+  },
+  cashLeftover: 0,
+  moneyCountJson: {
+    '1': 2,
+    '2': 1,
+    '5': 1,
+    '10': 1,
+    '20': 1,
+    '50': 1,
+    '100': 0,
+    '200': 10,
+    '0.5': 1,
+    '0.1': 1,
+    '0.05': 1
+  }
+}
+[CASHIER_SERVICE] Calculando fechamento:
+        Esperado: 4613.61
+        Informado: 4575.15
+        Diferença: -38.46
+        Dinheiro Informado: 2089.65
+        Fundo Troco (prox): 0
+        Sangria Cofre: 2089.65
+[CASHIER_CONTROLLER] Fechamento realizado com sucesso: cmmmkmj0o004yr601sbyq8onl
+[JobService] Iniciando processamento de relatórios agendados...

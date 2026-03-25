@@ -197,27 +197,27 @@ const SettingsManagement: React.FC = () => {
     finally { setIsSaving(false); }
   };
 
-  if (isLoading) return <div className="flex flex-col items-center justify-center h-[60vh] opacity-30"><Loader2 className="animate-spin text-orange-500 mb-4" size={32}/><span className="text-[10px] font-black uppercase tracking-widest">Sincronizando Dados...</span></div>;
+  if (isLoading) return <div className="flex flex-col items-center justify-center h-[60vh] opacity-30"><Loader2 className="animate-spin text-primary mb-4" size={32}/><span className="text-[10px] font-black uppercase tracking-widest">Sincronizando Dados...</span></div>;
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500 pb-10 max-w-[1400px] mx-auto">
       {/* ENTERPRISE STICKY HEADER */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-slate-50/90 backdrop-blur-md z-40 py-4 border-b border-slate-200 px-1">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-background/90 backdrop-blur-md z-40 py-4 border-b border-border px-1">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-slate-900 text-white rounded-xl shadow-lg"><Settings size={18}/></div>
           <div>
-            <h1 className="text-lg font-black text-slate-900 tracking-tighter uppercase italic leading-none">Configurações</h1>
-            <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest mt-1">Gestão de Identidade e Operação</p>
+            <h1 className="text-lg font-black text-foreground tracking-tighter uppercase italic leading-none">Configurações</h1>
+            <p className="text-muted-foreground text-[8px] font-bold uppercase tracking-widest mt-1">Gestão de Identidade e Operação</p>
           </div>
         </div>
         
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="hidden lg:flex bg-slate-100 p-0.5 rounded-lg gap-0.5">
+          <div className="hidden lg:flex bg-muted p-0.5 rounded-lg gap-0.5">
             {['general', 'appearance', 'printing', 'links'].map((tab) => (
               <button 
                 key={tab} 
                 onClick={() => navigate(`/settings/${tab}`)}
-                className={cn("px-4 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all", activeTab === tab ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:bg-white/50")}
+                className={cn("px-4 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all", activeTab === tab ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:bg-white/50")}
               >
                 {tab === 'general' ? 'Geral' : tab === 'appearance' ? 'Visual' : tab === 'printing' ? 'Impressão' : 'Links'}
               </button>
@@ -234,60 +234,60 @@ const SettingsManagement: React.FC = () => {
         {activeTab === 'general' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Coluna 1: Dados Vitais */}
-            <Card className="p-4 space-y-4 border-slate-100">
-              <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2">
-                <Store size={14} className="text-orange-500"/> Identidade
+            <Card className="p-4 space-y-4 border-border">
+              <h3 className="text-[10px] font-black uppercase text-foreground italic flex items-center gap-2 border-b border-background pb-2">
+                <Store size={14} className="text-primary"/> Identidade
               </h3>
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Nome do Estabelecimento</label>
-                  <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold focus:border-orange-500 outline-none transition-all" value={general.name} onChange={e => setGeneral({...general, name: e.target.value})} />
+                  <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Nome do Estabelecimento</label>
+                  <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold focus:border-primary outline-none transition-all" value={general.name} onChange={e => setGeneral({...general, name: e.target.value})} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">WhatsApp / SAC</label>
-                    <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.phone} onChange={e => setGeneral({...general, phone: e.target.value})} />
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">WhatsApp / SAC</label>
+                    <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.phone} onChange={e => setGeneral({...general, phone: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Taxa Serviço (%)</label>
-                    <input type="number" className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.serviceTax} onChange={e => setGeneral({...general, serviceTax: parseFloat(e.target.value)})} />
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Taxa Serviço (%)</label>
+                    <input type="number" className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.serviceTax} onChange={e => setGeneral({...general, serviceTax: parseFloat(e.target.value)})} />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Horário de Funcionamento</label>
-                  <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.openingHours} onChange={e => setGeneral({...general, openingHours: e.target.value})} placeholder="Seg a Sex 18h-23h" />
+                  <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Horário de Funcionamento</label>
+                  <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.openingHours} onChange={e => setGeneral({...general, openingHours: e.target.value})} placeholder="Seg a Sex 18h-23h" />
                 </div>
               </div>
             </Card>
 
             {/* Coluna 2: Localização e Mapas */}
-            <Card className="p-4 space-y-4 border-slate-100">
-              <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2">
+            <Card className="p-4 space-y-4 border-border">
+              <h3 className="text-[10px] font-black uppercase text-foreground italic flex items-center gap-2 border-b border-slate-50 pb-2">
                 <MapPin size={14} className="text-orange-500"/> Localização
               </h3>
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Endereço Completo</label>
-                  <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.address} onChange={e => setGeneral({...general, address: e.target.value})} />
+                  <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Endereço Completo</label>
+                  <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.address} onChange={e => setGeneral({...general, address: e.target.value})} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Cidade</label>
-                    <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.city} onChange={e => setGeneral({...general, city: e.target.value})} />
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Cidade</label>
+                    <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.city} onChange={e => setGeneral({...general, city: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Estado (UF)</label>
-                    <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.state} onChange={e => setGeneral({...general, state: e.target.value})} />
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Estado (UF)</label>
+                    <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.state} onChange={e => setGeneral({...general, state: e.target.value})} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Latitude</label>
-                    <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.latitude} onChange={e => setGeneral({...general, latitude: e.target.value})} />
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Latitude</label>
+                    <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.latitude} onChange={e => setGeneral({...general, latitude: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Longitude</label>
-                    <input className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold" value={general.longitude} onChange={e => setGeneral({...general, longitude: e.target.value})} />
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Longitude</label>
+                    <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.longitude} onChange={e => setGeneral({...general, longitude: e.target.value})} />
                   </div>
                 </div>
               </div>
@@ -301,30 +301,30 @@ const SettingsManagement: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Taxa Fixa (R$)</label>
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Taxa Fixa (R$)</label>
                     <input type="number" className="w-full h-9 px-3 rounded-lg bg-white border border-orange-100 text-[11px] font-bold" value={general.deliveryFee} onChange={e => setGeneral({...general, deliveryFee: parseFloat(e.target.value)})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Tempo Médio</label>
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Tempo Médio</label>
                     <input className="w-full h-9 px-3 rounded-lg bg-white border border-orange-100 text-[11px] font-bold" value={general.deliveryTime} onChange={e => setGeneral({...general, deliveryTime: e.target.value})} />
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-4 space-y-3 border-slate-100">
-                <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+              <Card className="p-4 space-y-3 border-border">
+                <div className="flex items-center justify-between p-2 bg-background rounded-xl">
                   <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Loja Aberta</p>
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Loja Aberta</p>
                     <p className={cn("text-[10px] font-black italic", operation.isOpen ? "text-emerald-600" : "text-rose-600")}>{operation.isOpen ? 'ONLINE' : 'OFFLINE'}</p>
                   </div>
                   <button onClick={() => setOperation({...operation, isOpen: !operation.isOpen})} className={cn("w-10 h-5 rounded-full relative transition-all", operation.isOpen ? "bg-emerald-500" : "bg-slate-300")}>
                     <div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", operation.isOpen ? "left-6" : "left-1")} />
                   </button>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+                <div className="flex items-center justify-between p-2 bg-background rounded-xl">
                   <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Aceite Automático</p>
-                    <p className="text-[10px] font-black italic text-slate-700">{operation.autoAccept ? 'ATIVADO' : 'MANUAL'}</p>
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Aceite Automático</p>
+                    <p className="text-[10px] font-black italic text-foreground">{operation.autoAccept ? 'ATIVADO' : 'MANUAL'}</p>
                   </div>
                   <button onClick={() => setOperation({...operation, autoAccept: !operation.autoAccept})} className={cn("w-10 h-5 rounded-full relative transition-all", operation.autoAccept ? "bg-slate-900" : "bg-slate-300")}>
                     <div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", operation.autoAccept ? "left-6" : "left-1")} />
@@ -352,14 +352,14 @@ const SettingsManagement: React.FC = () => {
                   </div>
                   <div className={cn("flex gap-3 transition-opacity", !loyalty.enabled && "opacity-20 pointer-events-none")}>
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-bold uppercase text-slate-400">R$ 1 =</span>
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground">R$ 1 =</span>
                       <input type="number" className="w-14 h-8 px-2 rounded-lg bg-white border border-emerald-100 text-[11px] font-bold" value={loyalty.pointsPerReal} onChange={e => setLoyalty({...loyalty, pointsPerReal: parseInt(e.target.value)})} />
-                      <span className="text-[9px] font-bold uppercase text-slate-400">Pontos</span>
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground">Pontos</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-bold uppercase text-slate-400">Cashback</span>
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground">Cashback</span>
                       <input type="number" className="w-14 h-8 px-2 rounded-lg bg-white border border-emerald-100 text-[11px] font-bold" value={loyalty.cashback} onChange={e => setLoyalty({...loyalty, cashback: parseFloat(e.target.value)})} />
-                      <span className="text-[9px] font-bold uppercase text-slate-400">%</span>
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground">%</span>
                     </div>
                   </div>
                 </div>
@@ -371,14 +371,14 @@ const SettingsManagement: React.FC = () => {
         {/* TAB: VISUAL (DENSIDADE ENTERPRISE) */}
         {activeTab === 'appearance' && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <Card className="p-4 space-y-4 border-slate-100">
-              <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2">
+            <Card className="p-4 space-y-4 border-border">
+              <h3 className="text-[10px] font-black uppercase text-foreground italic flex items-center gap-2 border-b border-slate-50 pb-2">
                 <ImageIcon size={14} className="text-orange-500"/> Brand Assets
               </h3>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Logo Principal</p>
-                  <div className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center p-3 group relative cursor-pointer overflow-hidden" onClick={() => logoInputRef.current?.click()}>
+                  <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Logo Principal</p>
+                  <div className="aspect-square bg-background border-2 border-dashed border-border rounded-2xl flex items-center justify-center p-3 group relative cursor-pointer overflow-hidden" onClick={() => logoInputRef.current?.click()}>
                     <img src={appearance.logo} className="w-full h-full object-contain group-hover:scale-105 transition-all" alt="Logo" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                       <span className="text-[8px] font-black text-white uppercase italic">Trocar</span>
@@ -390,8 +390,8 @@ const SettingsManagement: React.FC = () => {
                   }} />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Capa do Menu</p>
-                  <div className="aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center relative group cursor-pointer overflow-hidden" onClick={() => coverInputRef.current?.click()}>
+                  <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Capa do Menu</p>
+                  <div className="aspect-video bg-background border-2 border-dashed border-border rounded-xl flex items-center justify-center relative group cursor-pointer overflow-hidden" onClick={() => coverInputRef.current?.click()}>
                     <img src={appearance.cover} className="w-full h-full object-cover group-hover:scale-105 transition-all" alt="Capa" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                       <span className="text-[8px] font-black text-white uppercase italic">Trocar</span>
@@ -405,10 +405,10 @@ const SettingsManagement: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="lg:col-span-3 p-4 space-y-4 border-slate-100">
+            <Card className="lg:col-span-3 p-4 space-y-4 border-border">
                 <div className="space-y-4">
                     <div>
-                        <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2 mb-3">
+                        <h3 className="text-[10px] font-black uppercase text-foreground italic flex items-center gap-2 border-b border-slate-50 pb-2 mb-3">
                             <LayoutTemplate size={14} className="text-orange-500"/> Banners de Vídeo (Opcional)
                         </h3>
                         <div className="space-y-2">
@@ -416,7 +416,7 @@ const SettingsManagement: React.FC = () => {
                             <div key={index} className="flex items-center gap-2">
                                 <input 
                                     type="text" 
-                                    className="w-full h-9 px-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-bold focus:border-orange-500 outline-none transition-all"
+                                    className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold focus:border-primary outline-none transition-all"
                                     value={url}
                                     onChange={(e) => {
                                         const newBanners = [...appearance.videoBanners];
@@ -467,7 +467,7 @@ const SettingsManagement: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <h3 className="text-[10px] font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-50 pb-2">
+                        <h3 className="text-[10px] font-black uppercase text-foreground italic flex items-center gap-2 border-b border-slate-50 pb-2">
                             <Palette size={14} className="text-orange-500"/> Paleta de Cores
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
@@ -476,10 +476,10 @@ const SettingsManagement: React.FC = () => {
                             { id: 'secondary', label: 'Contraste (Títulos)', val: appearance.secondary },
                             { id: 'background', label: 'Fundo do Aplicativo', val: appearance.background },
                             ].map((c) => (
-                            <div key={c.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                            <div key={c.id} className="p-3 bg-background border border-border rounded-xl flex items-center justify-between">
                                 <div>
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{c.id}</p>
-                                <p className="text-[10px] font-bold text-slate-900 uppercase italic">{c.label}</p>
+                                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">{c.id}</p>
+                                <p className="text-[10px] font-bold text-foreground uppercase italic">{c.label}</p>
                                 </div>
                                 <input type="color" className="w-10 h-10 rounded-lg cursor-pointer border-2 border-white shadow-sm" value={c.val} onChange={e => setAppearance({...appearance, [c.id]: e.target.value})} />
                             </div>
@@ -491,7 +491,7 @@ const SettingsManagement: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <Smartphone className="text-orange-500 mx-auto mb-4" size={32} />
                 <h4 className="text-white font-black italic uppercase text-sm tracking-tight">Experiência do Cliente</h4>
-                <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.2em] max-w-sm mx-auto mt-2 leading-relaxed">As cores aplicadas aqui alteram instantaneamente o layout do cardápio digital, proporcionando uma identidade visual única.</p>
+                <p className="text-muted-foreground text-[9px] font-bold uppercase tracking-[0.2em] max-w-sm mx-auto mt-2 leading-relaxed">As cores aplicadas aqui alteram instantaneamente o layout do cardápio digital, proporcionando uma identidade visual única.</p>
               </div>
             </Card>
           </div>
@@ -506,32 +506,32 @@ const SettingsManagement: React.FC = () => {
                   <div className={cn("p-2 rounded-lg", agentStatus === 'online' ? "bg-emerald-500 text-white" : "bg-rose-500 text-white")}><PrinterIcon size={16}/></div>
                   <button onClick={loadPrinters} className="p-1.5 hover:bg-black/5 rounded-lg transition-colors"><RefreshCw size={14} className={cn(agentStatus === 'checking' && 'animate-spin')} /></button>
                 </div>
-                <h3 className="text-[10px] font-black uppercase italic text-slate-900 leading-none">Agente Local</h3>
+                <h3 className="text-[10px] font-black uppercase italic text-foreground leading-none">Agente Local</h3>
                 <p className={cn("text-[8px] font-black uppercase mt-1", agentStatus === 'online' ? "text-emerald-600" : "text-rose-600")}>{agentStatus === 'online' ? '● CONECTADO' : '○ DESCONECTADO'}</p>
               </Card>
 
-              <Card className="p-4 border-slate-100 rounded-2xl space-y-4">
+              <Card className="p-4 border-border rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black uppercase italic text-slate-900">Automação</h3>
+                  <h3 className="text-[10px] font-black uppercase italic text-foreground">Automação</h3>
                   <button onClick={() => setOperation({...operation, autoPrint: !operation.autoPrint})} className={cn("w-10 h-5 rounded-full relative transition-all", operation.autoPrint ? "bg-slate-900" : "bg-slate-300")}>
                     <div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", operation.autoPrint ? "left-6" : "left-1")} />
                   </button>
                 </div>
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Imprimir cupons automaticamente ao aceitar pedidos no sistema.</p>
+                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">Imprimir cupons automaticamente ao aceitar pedidos no sistema.</p>
               </Card>
             </div>
 
-            <Card className="lg:col-span-3 p-4 border-slate-100 rounded-2xl">
+            <Card className="lg:col-span-3 p-4 border-border rounded-2xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-                    <h4 className="text-[10px] font-black uppercase italic text-slate-900 flex items-center gap-2"><CreditCard size={12}/> Caixa</h4>
-                    <button onClick={() => setPrinterConfig({...printerConfig, cashierPrinters: [...printerConfig.cashierPrinters, '']})} className="p-1 hover:bg-slate-100 rounded-md text-slate-500"><Plus size={14}/></button>
+                    <h4 className="text-[10px] font-black uppercase italic text-foreground flex items-center gap-2"><CreditCard size={12}/> Caixa</h4>
+                    <button onClick={() => setPrinterConfig({...printerConfig, cashierPrinters: [...printerConfig.cashierPrinters, '']})} className="p-1 hover:bg-muted rounded-md text-muted-foreground"><Plus size={14}/></button>
                   </div>
                   <div className="space-y-2">
                     {printerConfig.cashierPrinters.map((p, i) => (
                       <div key={i} className="flex gap-2">
-                        <select className="flex-1 h-8 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold outline-none px-2" value={p} onChange={e => {
+                        <select className="flex-1 h-8 bg-background border border-border rounded-lg text-[10px] font-bold outline-none px-2" value={p} onChange={e => {
                           const n = [...printerConfig.cashierPrinters]; n[i] = e.target.value; setPrinterConfig({...printerConfig, cashierPrinters: n});
                         }}>
                           <option value="">Nenhuma</option>
@@ -545,16 +545,16 @@ const SettingsManagement: React.FC = () => {
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-                    <h4 className="text-[10px] font-black uppercase italic text-slate-900 flex items-center gap-2"><ChefHat size={12}/> Cozinha</h4>
-                    <button onClick={() => setPrinterConfig({...printerConfig, kitchenPrinters: [...printerConfig.kitchenPrinters, { id: Date.now().toString(), name: 'Setor', printer: '' }]})} className="p-1 hover:bg-slate-100 rounded-md text-slate-500"><Plus size={14}/></button>
+                    <h4 className="text-[10px] font-black uppercase italic text-foreground flex items-center gap-2"><ChefHat size={12}/> Cozinha</h4>
+                    <button onClick={() => setPrinterConfig({...printerConfig, kitchenPrinters: [...printerConfig.kitchenPrinters, { id: Date.now().toString(), name: 'Setor', printer: '' }]})} className="p-1 hover:bg-muted rounded-md text-muted-foreground"><Plus size={14}/></button>
                   </div>
                   <div className="space-y-2">
                     {printerConfig.kitchenPrinters.map((kp, i) => (
-                      <div key={kp.id} className="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded-lg relative group">
-                        <input className="h-7 bg-white border border-slate-100 rounded-md text-[9px] font-black uppercase px-2" value={kp.name} onChange={e => {
+                      <div key={kp.id} className="grid grid-cols-2 gap-2 bg-background p-2 rounded-lg relative group">
+                        <input className="h-7 bg-white border border-border rounded-md text-[9px] font-black uppercase px-2" value={kp.name} onChange={e => {
                           const n = [...printerConfig.kitchenPrinters]; n[i].name = e.target.value; setPrinterConfig({...printerConfig, kitchenPrinters: n});
                         }} />
-                        <select className="h-7 bg-white border border-slate-100 rounded-md text-[9px] font-bold px-2" value={kp.printer} onChange={e => {
+                        <select className="h-7 bg-white border border-border rounded-md text-[9px] font-bold px-2" value={kp.printer} onChange={e => {
                           const n = [...printerConfig.kitchenPrinters]; n[i].printer = e.target.value; setPrinterConfig({...printerConfig, kitchenPrinters: n});
                         }}>
                           <option value="">Selecione...</option>
@@ -567,12 +567,12 @@ const SettingsManagement: React.FC = () => {
                 </div>
 
                 <div className="md:col-span-2 mt-4 pt-4 border-t border-slate-50">
-                  <h4 className="text-[10px] font-black uppercase italic text-slate-900 flex items-center gap-2 mb-3"><LayoutTemplate size={12}/> Roteamento de Categorias</h4>
+                  <h4 className="text-[10px] font-black uppercase italic text-foreground flex items-center gap-2 mb-3"><LayoutTemplate size={12}/> Roteamento de Categorias</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {categories.map(cat => (
-                      <div key={cat.id} className="p-2 bg-slate-50 border border-slate-100 rounded-xl flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black text-slate-400 uppercase truncate">{cat.name}</span>
-                        <select className="h-7 bg-white border border-slate-100 rounded-lg text-[9px] font-black outline-none italic" value={printerConfig.categoryMapping[cat.name] || ''} onChange={e => setPrinterConfig({...printerConfig, categoryMapping: {...printerConfig.categoryMapping, [cat.name]: e.target.value}})}>
+                      <div key={cat.id} className="p-2 bg-background border border-border rounded-xl flex flex-col gap-1.5">
+                        <span className="text-[8px] font-black text-muted-foreground uppercase truncate">{cat.name}</span>
+                        <select className="h-7 bg-white border border-border rounded-lg text-[9px] font-black outline-none italic" value={printerConfig.categoryMapping[cat.name] || ''} onChange={e => setPrinterConfig({...printerConfig, categoryMapping: {...printerConfig.categoryMapping, [cat.name]: e.target.value}})}>
                           <option value="">NÃO IMPRIMIR</option>
                           <optgroup label="Cozinhas">{printerConfig.kitchenPrinters.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}</optgroup>
                           <optgroup label="Bares">{printerConfig.barPrinters.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</optgroup>
@@ -604,13 +604,13 @@ const SettingsManagement: React.FC = () => {
                 <div className="p-4 bg-orange-500 text-white rounded-2xl shadow-xl shadow-orange-500/30"><Globe size={24}/></div>
                 <div>
                   <h3 className="text-xl font-black uppercase italic tracking-tighter leading-none">Domínio e Acesso</h3>
-                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Configuração de Endereço Web Personalizado</p>
+                  <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">Configuração de Endereço Web Personalizado</p>
                 </div>
               </div>
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-1">Identificador Slug</label>
+                  <label className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-1">Identificador Slug</label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <input className={cn("w-full h-12 bg-white/5 border-2 border-white/10 rounded-xl px-5 font-black text-lg italic outline-none uppercase transition-all", isSlugAvailable === true && "border-emerald-500 text-emerald-400", isSlugAvailable === false && "border-rose-500 text-rose-400")} value={general.slug} onChange={e => setGeneral({...general, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} />
@@ -624,8 +624,8 @@ const SettingsManagement: React.FC = () => {
 
                 <div className="bg-white rounded-2xl p-4 flex items-center justify-between group shadow-xl">
                   <div className="truncate">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">URL Pública do Cardápio</p>
-                    <span className="text-sm font-black text-slate-900 italic tracking-tighter truncate">
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1 leading-none">URL Pública do Cardápio</p>
+                    <span className="text-sm font-black text-foreground italic tracking-tighter truncate">
                       {window.location.hostname.includes('towersfy.com') ? `https://${general.slug}.towersfy.com` : `${clientUrl}/${general.slug}`}
                     </span>
                   </div>

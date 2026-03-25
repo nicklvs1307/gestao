@@ -65,13 +65,13 @@ const LoginPage: React.FC = () => {
                 </div>
                 <div>
                     <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none">Kicardapio</h2>
-                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-[0.3em] mt-1">Smart Management</p>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] mt-1">Smart Management</p>
                 </div>
             </div>
 
             <div className="max-w-xl">
                 <h3 className="text-6xl font-black italic tracking-tighter uppercase leading-[0.9] mb-8">
-                    Gestão <span className="text-orange-500">Elite</span> para o seu Restaurante.
+                    Gestão <span className="text-primary">Elite</span> para o seu Restaurante.
                 </h3>
                 <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md">
                     Controle pedidos, estoque, financeiro e delivery em uma plataforma única, robusta e ultra-veloz.
@@ -84,7 +84,7 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                <ShieldCheck size={16} className="text-orange-500" />
+                <ShieldCheck size={16} className="text-primary" />
                 Sistema Protegido com Criptografia de Ponta
             </div>
         </div>
@@ -130,7 +130,7 @@ const LoginPage: React.FC = () => {
                             className="h-14"
                         />
                         <div className="flex justify-end">
-                            <button type="button" className="text-[10px] font-black text-slate-400 hover:text-orange-600 uppercase tracking-widest transition-colors italic">Esqueci minha senha?</button>
+                            <button type="button" className="text-[10px] font-black text-muted-foreground hover:text-primary uppercase tracking-widest transition-colors italic">Esqueci minha senha?</button>
                         </div>
                     </div>
                 </div>

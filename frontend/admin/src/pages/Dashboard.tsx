@@ -197,9 +197,9 @@ const Dashboard: React.FC = () => {
       {/* Header do Dashboard */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Visão Geral</h1>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                  <Clock size={14} className="text-orange-500" /> Atualizado em tempo real
+              <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase italic leading-none">Visão Geral</h1>
+              <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                  <Clock size={14} className="text-primary" /> Atualizado em tempo real
               </p>
           </div>
           <div className="flex gap-3">
@@ -214,13 +214,13 @@ const Dashboard: React.FC = () => {
 
       {/* Guia de Onboarding Premium */}
       {!isConfigComplete && (
-          <Card className="bg-slate-900 border-none p-8 relative overflow-hidden shadow-2xl">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+          <Card className="bg-foreground border-none p-8 relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
               <div className="relative z-10 flex flex-col lg:flex-row gap-10 items-center">
                   <div className="flex-1 text-center lg:text-left">
-                      <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Configuração Pendente</span>
+                      <span className="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Configuração Pendente</span>
                       <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-3">Vamos turbinar sua loja?</h2>
-                      <p className="text-slate-400 text-sm font-medium max-w-md">Complete os passos abaixo para ativar seu cardápio e começar a faturar.</p>
+                      <p className="text-muted-foreground text-sm font-medium max-w-md">Complete os passos abaixo para ativar seu cardápio e começar a faturar.</p>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full lg:w-auto">
                       {[
@@ -236,10 +236,10 @@ const Dashboard: React.FC = () => {
                                 "p-5 border-2 transition-all flex flex-col items-center text-center gap-3 cursor-pointer group",
                                 step.done 
                                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500" 
-                                    : "bg-white/5 border-white/10 text-slate-500 hover:border-orange-500/50"
+                                    : "bg-white/5 border-white/10 text-muted-foreground hover:border-primary/50"
                             )}
                           >
-                              {step.done ? <CheckCircle size={24} /> : <step.icon size={24} className="group-hover:text-orange-500" />}
+                              {step.done ? <CheckCircle size={24} /> : <step.icon size={24} className="group-hover:text-primary" />}
                               <p className="text-[10px] font-black uppercase tracking-widest">{step.label}</p>
                           </Card>
                       ))}
@@ -256,21 +256,21 @@ const Dashboard: React.FC = () => {
             { label: 'Faturamento', value: `R$ ${stats?.revenueToday?.toFixed(2)}`, icon: DollarSign, color: 'emerald', sub: 'Total do dia' },
             { label: 'Ticket Médio', value: `R$ ${stats?.ticketMedio?.toFixed(2)}`, icon: TrendingUp, color: 'purple', sub: 'Valor por pedido' },
         ].map((item, i) => (
-            <Card key={i} className="p-6 group hover:border-orange-500/20 transition-all duration-300">
+            <Card key={i} className="p-6 group hover:border-primary/20 transition-all duration-300">
                 <div className="flex justify-between items-start mb-4">
                     <div className={cn(
                         "w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110",
                         item.color === 'blue' ? "bg-blue-500 text-white shadow-blue-200" :
-                        item.color === 'orange' ? "bg-orange-500 text-white shadow-orange-200" :
+                        item.color === 'orange' ? "bg-primary text-white shadow-primary/20" :
                         item.color === 'emerald' ? "bg-emerald-500 text-white shadow-emerald-200" :
                         "bg-purple-500 text-white shadow-purple-200"
                     )}>
                         <item.icon size={22} />
                     </div>
-                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{item.sub}</span>
+                    <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">{item.sub}</span>
                 </div>
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{item.label}</p>
-                <h3 className="text-3xl font-black text-slate-900 tracking-tighter italic">{item.value}</h3>
+                <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">{item.label}</p>
+                <h3 className="text-3xl font-black text-foreground tracking-tighter italic">{item.value}</h3>
             </Card>
         ))}
       </div>
@@ -280,10 +280,10 @@ const Dashboard: React.FC = () => {
         <Card className="lg:col-span-2 p-8">
           <div className="flex justify-between items-center mb-8">
             <div>
-                <h3 className="font-black text-slate-900 text-lg italic uppercase tracking-tighter leading-none">Faturamento Semanal</h3>
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Desempenho dos últimos 7 dias</p>
+                <h3 className="font-black text-foreground text-lg italic uppercase tracking-tighter leading-none">Faturamento Semanal</h3>
+                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">Desempenho dos últimos 7 dias</p>
             </div>
-            <Button variant="ghost" size="sm" className="text-orange-600" onClick={() => navigate('/reports')}>
+            <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/reports')}>
                 Ver Detalhes <ChevronRight size={16} />
             </Button>
           </div>
@@ -294,10 +294,10 @@ const Dashboard: React.FC = () => {
 
         {/* Lista de Pedidos Recentes */}
         <Card className="flex flex-col overflow-hidden p-0">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div className="p-6 border-b border-border flex justify-between items-center bg-background/50">
             <div>
-                <h3 className="font-black text-slate-900 text-base italic uppercase tracking-tighter leading-none">Últimos Pedidos</h3>
-                <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-1">Atividade recente</p>
+                <h3 className="font-black text-foreground text-base italic uppercase tracking-tighter leading-none">Últimos Pedidos</h3>
+                <p className="text-muted-foreground text-[9px] font-bold uppercase tracking-widest mt-1">Atividade recente</p>
             </div>
             <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate('/orders')}>
                 <ArrowRight size={18} />
@@ -305,27 +305,27 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="overflow-auto flex-1">
             <table className="w-full text-left">
-              <tbody className="divide-y divide-slate-50 text-slate-900">
+              <tbody className="divide-y divide-border/50 text-foreground">
                 {recentOrders.length > 0 ? (
                   recentOrders.map(order => (
-                    <tr key={order.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate('/orders')}>
+                    <tr key={order.id} className="hover:bg-muted transition-colors group cursor-pointer" onClick={() => navigate('/orders')}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                             <div className={cn(
                                 "w-2 h-2 rounded-full",
-                                order.status === 'PENDING' ? "bg-orange-500 animate-pulse" : "bg-emerald-500"
+                                order.status === 'PENDING' ? "bg-primary animate-pulse" : "bg-emerald-500"
                             )} />
                             <div>
                                 <span className="block text-xs font-black uppercase italic tracking-tighter">#{order.id.slice(-4)}</span>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase">Mesa {order.tableNumber || 'Delivery'}</span>
+                                <span className="text-[10px] text-muted-foreground font-bold uppercase">Mesa {order.tableNumber || 'Delivery'}</span>
                             </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-black text-sm italic text-slate-900">R$ {order.total?.toFixed(2).replace('.', ',')}</span>
+                        <span className="font-black text-sm italic text-foreground">R$ {order.total?.toFixed(2).replace('.', ',')}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                         <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-orange-500 group-hover:border-orange-100 transition-all">
+                         <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center text-muted-foreground/60 group-hover:text-primary group-hover:border-primary/10 transition-all">
                             <ChevronRight size={16} />
                          </div>
                       </td>
@@ -333,15 +333,15 @@ const Dashboard: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-slate-300 italic text-xs uppercase font-bold tracking-widest">Nenhum pedido recente</td>
+                    <td colSpan={3} className="px-6 py-12 text-center text-muted-foreground/60 italic text-xs uppercase font-bold tracking-widest">Nenhum pedido recente</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
           {recentOrders.length > 0 && (
-              <div className="p-4 bg-slate-50/50 border-t border-slate-100 text-center">
-                  <button onClick={() => navigate('/orders')} className="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:underline">
+              <div className="p-4 bg-background/50 border-t border-border text-center">
+                  <button onClick={() => navigate('/orders')} className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
                       Ver histórico completo
                   </button>
               </div>

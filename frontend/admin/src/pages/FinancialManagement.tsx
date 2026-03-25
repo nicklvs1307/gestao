@@ -133,9 +133,9 @@ const FinancialManagement: React.FC = () => {
             {/* Header e Tabs */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Financeiro</h1>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1 flex items-center gap-2">
-                        <DollarSign size={12} className="text-orange-500" /> Gestão de Fluxo de Caixa e Contas
+                    <h1 className="text-2xl font-black text-foreground tracking-tighter uppercase italic leading-none">Financeiro</h1>
+                    <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1 flex items-center gap-2">
+                        <DollarSign size={12} className="text-primary" /> Gestão de Fluxo de Caixa e Contas
                     </p>
                 </div>
                 <div className="flex bg-slate-200/50 p-1 rounded-xl gap-1 shadow-inner">
@@ -151,8 +151,8 @@ const FinancialManagement: React.FC = () => {
                             className={cn(
                                 "px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap",
                                 activeTab === tab.id 
-                                    ? "bg-white text-slate-900 shadow-md scale-[1.02]" 
-                                    : "text-slate-500 hover:text-slate-700"
+                                    ? "bg-white text-foreground shadow-md scale-[1.02]" 
+                                    : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             <tab.icon size={12} /> {tab.label}
@@ -171,7 +171,7 @@ const FinancialManagement: React.FC = () => {
                             </div>
                             <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-100 px-2 py-0.5 rounded-md">Entradas</span>
                         </div>
-                        <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-0.5">Total Recebido</p>
+                        <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest mb-0.5">Total Recebido</p>
                         <h3 className="text-2xl font-black text-emerald-900 tracking-tighter italic">R$ {summary.totalIncome.toFixed(2).replace('.', ',')}</h3>
                     </Card>
 
@@ -182,19 +182,19 @@ const FinancialManagement: React.FC = () => {
                             </div>
                             <span className="text-[9px] font-black text-rose-600 uppercase tracking-widest bg-rose-100 px-2 py-0.5 rounded-md">Saídas</span>
                         </div>
-                        <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-0.5">Total Pago</p>
+                        <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest mb-0.5">Total Pago</p>
                         <h3 className="text-2xl font-black text-rose-900 tracking-tighter italic">R$ {summary.totalExpense.toFixed(2).replace('.', ',')}</h3>
                     </Card>
 
-                    <Card className="p-4 border-slate-200 bg-slate-900 text-white relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 blur-[40px] -mr-12 -mt-12 rounded-full" />
+                    <Card className="p-4 border-border bg-slate-900 text-white relative overflow-hidden shadow-2xl">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 blur-[40px] -mr-12 -mt-12 rounded-full" />
                         <div className="flex justify-between items-start mb-2 relative z-10">
-                            <div className="w-10 h-10 bg-white text-slate-900 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="w-10 h-10 bg-white text-foreground rounded-xl flex items-center justify-center shadow-lg">
                                 <DollarSign size={20} />
                             </div>
-                            <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest border border-orange-500/30 px-2 py-0.5 rounded-md">Disponível</span>
+                            <span className="text-[9px] font-black text-primary uppercase tracking-widest border border-orange-500/30 px-2 py-0.5 rounded-md">Disponível</span>
                         </div>
-                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-0.5 relative z-10">Saldo Atual</p>
+                        <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest mb-0.5 relative z-10">Saldo Atual</p>
                         <h3 className="text-2xl font-black text-white tracking-tighter italic relative z-10">
                             R$ {(summary.totalIncome - summary.totalExpense).toFixed(2).replace('.', ',')}
                         </h3>
@@ -203,13 +203,13 @@ const FinancialManagement: React.FC = () => {
             )}
 
             {/* Listagens */}
-            <Card className="p-0 overflow-hidden border-slate-200 shadow-lg">
-                <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <Card className="p-0 overflow-hidden border-border shadow-lg">
+                <div className="p-4 border-b border-border bg-background/50 flex justify-between items-center">
                     <div>
-                        <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">
+                        <h3 className="font-black text-foreground uppercase italic tracking-tighter text-sm">
                             {activeTab === 'transactions' ? 'Livro de Lançamentos' : activeTab === 'suppliers' ? 'Meus Fornecedores' : activeTab === 'categories' ? 'Categorias de Fluxo' : 'Minhas Contas'}
                         </h3>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Registros atualizados do sistema</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Registros atualizados do sistema</p>
                     </div>
                     <Button size="sm" className="px-5 h-9 rounded-xl italic text-[10px]" onClick={() => { setShowForm(true); setFormData({}); }}>
                         <Plus size={14} /> ADICIONAR
@@ -219,13 +219,13 @@ const FinancialManagement: React.FC = () => {
                 <div className="overflow-x-auto">
                     {loading ? (
                         <div className="p-16 text-center flex flex-col items-center justify-center gap-3">
-                            <Loader2 className="animate-spin text-orange-500" size={28} />
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Carregando dados...</span>
+                            <Loader2 className="animate-spin text-primary" size={28} />
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Carregando dados...</span>
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="text-[8px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/30">
+                                <tr className="text-[8px] font-black uppercase text-muted-foreground tracking-widest border-b border-border bg-background/30">
                                     {activeTab === 'bank-accounts' ? (
                                         <>
                                             <th className="px-6 py-3">Instituição / Banco</th>
@@ -259,25 +259,25 @@ const FinancialManagement: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {activeTab === 'bank-accounts' && bankAccounts.map((b: any) => (
-                                    <tr key={b.id} className="hover:bg-slate-50/80 transition-colors group">
+                                    <tr key={b.id} className="hover:bg-background/80 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-colors shadow-sm">
+                                                <div className="w-8 h-8 bg-white border border-border rounded-lg flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors shadow-sm">
                                                     <Building2 size={16} />
                                                 </div>
-                                                <span className="font-black text-[11px] text-slate-900 uppercase italic tracking-tight">{b.bankName}</span>
+                                                <span className="font-black text-[11px] text-foreground uppercase italic tracking-tight">{b.bankName}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{b.agency} / {b.accountNumber}</span>
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-0.5 rounded border border-border">{b.agency} / {b.accountNumber}</span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="font-black text-xs text-slate-900 italic tracking-tighter">R$ {b.balance.toFixed(2).replace('.', ',')}</span>
+                                            <span className="font-black text-xs text-foreground italic tracking-tighter">R$ {b.balance.toFixed(2).replace('.', ',')}</span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-1.5">
-                                                <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-orange-50" onClick={() => { setShowForm(true); setFormData(b); }}><ArrowUpCircle size={14} className="text-orange-500"/></Button>
-                                                <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-rose-50" onClick={() => handleDelete(b.id)}><Trash2 size={14} className="text-rose-500"/></Button>
+                                                <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg bg-background hover:bg-orange-50" onClick={() => { setShowForm(true); setFormData(b); }}><ArrowUpCircle size={14} className="text-primary"/></Button>
+                                                <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg bg-background hover:bg-rose-50" onClick={() => handleDelete(b.id)}><Trash2 size={14} className="text-rose-500"/></Button>
                                             </div>
                                         </td>
                                     </tr>
@@ -287,9 +287,9 @@ const FinancialManagement: React.FC = () => {
                                     const isMesa = t.description.toLowerCase().includes('mesa');
                                     const isDelivery = t.order?.orderType === 'DELIVERY';
                                     return (
-                                        <tr key={t.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <tr key={t.id} className="hover:bg-background/80 transition-colors group">
                                             <td className="px-6 py-4">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{new Date(t.dueDate).toLocaleDateString()}</span>
+                                                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{new Date(t.dueDate).toLocaleDateString()}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
@@ -297,22 +297,22 @@ const FinancialManagement: React.FC = () => {
                                                         {t.type === 'INCOME' && (
                                                             <span className={cn(
                                                                 "text-[7px] font-black px-1 py-0.5 rounded uppercase tracking-widest shadow-sm",
-                                                                isMesa ? "bg-orange-500 text-white" : isDelivery ? "bg-blue-500 text-white" : "bg-emerald-500 text-white"
+                                                                isMesa ? "bg-primary text-white" : isDelivery ? "bg-blue-500 text-white" : "bg-emerald-500 text-white"
                                                             )}>
                                                                 {isMesa ? 'Mesa' : isDelivery ? 'Delivery' : 'Balcão'}
                                                             </span>
                                                         )}
-                                                        <span className="font-black text-[11px] text-slate-900 uppercase italic tracking-tighter truncate max-w-[200px]">{t.description}</span>
+                                                        <span className="font-black text-[11px] text-foreground uppercase italic tracking-tighter truncate max-w-[200px]">{t.description}</span>
                                                     </div>
-                                                    {t.orderId && <span className="text-[8px] text-slate-400 font-bold uppercase italic opacity-60">ID: #{t.orderId.slice(-6).toUpperCase()}</span>}
+                                                    {t.orderId && <span className="text-[8px] text-muted-foreground font-bold uppercase italic opacity-60">ID: #{t.orderId.slice(-6).toUpperCase()}</span>}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{t.category?.name || 'Geral'}</span>
+                                                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">{t.category?.name || 'Geral'}</span>
                                                     <div className="flex items-center gap-1">
                                                         <CreditCard size={8} className="text-slate-300" />
-                                                        <span className="text-[9px] font-bold text-slate-500 uppercase">{t.paymentMethod || 'Dinheiro'}</span>
+                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase">{t.paymentMethod || 'Dinheiro'}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -332,17 +332,17 @@ const FinancialManagement: React.FC = () => {
                                 })}
 
                                 {activeTab === 'suppliers' && suppliers.map((s: any) => (
-                                    <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                                        <td className="px-6 py-4 font-black text-[11px] text-slate-900 uppercase italic tracking-tighter">{s.name}</td>
-                                        <td className="px-6 py-4"><span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{s.cnpj || '---'}</span></td>
-                                        <td className="px-6 py-4"><span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{s.phone || '---'}</span></td>
+                                    <tr key={s.id} className="hover:bg-background/80 transition-colors">
+                                        <td className="px-6 py-4 font-black text-[11px] text-foreground uppercase italic tracking-tighter">{s.name}</td>
+                                        <td className="px-6 py-4"><span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{s.cnpj || '---'}</span></td>
+                                        <td className="px-6 py-4"><span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{s.phone || '---'}</span></td>
                                         <td className="px-6 py-4 text-right"><Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-rose-50 rounded-lg" onClick={() => handleDelete(s.id)}><Trash2 size={16} className="text-rose-500"/></Button></td>
                                     </tr>
                                 ))}
 
                                 {activeTab === 'categories' && categories.map((c: any) => (
-                                    <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                                        <td className="px-6 py-4 font-black text-[11px] text-slate-900 uppercase italic tracking-tighter">{c.name}</td>
+                                    <tr key={c.id} className="hover:bg-background/80 transition-colors">
+                                        <td className="px-6 py-4 font-black text-[11px] text-foreground uppercase italic tracking-tighter">{c.name}</td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={cn(
                                                 "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
@@ -365,9 +365,9 @@ const FinancialManagement: React.FC = () => {
                 {showForm && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-                            <header className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                                <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-border">
+                            <header className="px-10 py-6 border-b border-border bg-background/50 flex justify-between items-center">
+                                <h3 className="text-xl font-black text-foreground italic uppercase tracking-tighter leading-none">
                                     {formData.id ? 'Editar' : 'Novo'} Lançamento
                                 </h3>
                                 <Button variant="ghost" size="icon" className="rounded-full bg-white" onClick={() => setShowForm(false)}><X size={24}/></Button>
@@ -380,7 +380,7 @@ const FinancialManagement: React.FC = () => {
                                         <div className="grid grid-cols-2 gap-6">
                                             <Input label="Valor Bruto (R$)" type="number" step="0.01" value={formData.amount || ''} onChange={e => setFormData({...formData, amount: e.target.value})} required />
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Tipo de Operação</label>
+                                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Tipo de Operação</label>
                                                 <select className="ui-input w-full h-12" value={formData.type || 'EXPENSE'} onChange={e => setFormData({...formData, type: e.target.value})}>
                                                     <option value="EXPENSE">Despesa (Saída)</option>
                                                     <option value="INCOME">Receita (Entrada)</option>
@@ -390,7 +390,7 @@ const FinancialManagement: React.FC = () => {
                                         <div className="grid grid-cols-2 gap-6">
                                             <Input label="Data de Vencimento" type="date" value={formData.dueDate ? formData.dueDate.split('T')[0] : ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} required />
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Categoria Financeira</label>
+                                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Categoria Financeira</label>
                                                 <select className="ui-input w-full h-12" value={formData.categoryId || ''} onChange={e => setFormData({...formData, categoryId: e.target.value})}>
                                                     <option value="">Selecionar...</option>
                                                     {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -419,7 +419,7 @@ const FinancialManagement: React.FC = () => {
                                     <div className="space-y-6">
                                         <Input label="Nome da Categoria" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required />
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Natureza da Operação</label>
+                                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Natureza da Operação</label>
                                             <select className="ui-input w-full h-12" value={formData.type || 'EXPENSE'} onChange={e => setFormData({...formData, type: e.target.value})}>
                                                 <option value="EXPENSE">Despesa</option>
                                                 <option value="INCOME">Receita</option>

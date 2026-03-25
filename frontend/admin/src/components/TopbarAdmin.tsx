@@ -92,25 +92,25 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
 
   return (
     <>
-        <header className="bg-white/80 backdrop-blur-md h-16 px-6 flex items-center justify-between z-40 sticky top-0 border-b border-slate-200">
+        <header className="bg-white/80 backdrop-blur-md h-16 px-6 flex items-center justify-between z-40 sticky top-0 border-b border-border">
             <div className="flex items-center gap-4">
                 <Button 
                     variant="ghost" 
                     size="icon" 
                     onClick={onMenuClick} 
-                    className="bg-slate-50 border-slate-100"
+                    className="bg-background border-border"
                 >
                     <Menu size={20} />
                 </Button>
                 
                 <div className="hidden sm:block">
-                    <h1 className="text-base font-black text-slate-900 italic uppercase tracking-tighter leading-none">{title}</h1>
+                    <h1 className="text-base font-black text-foreground italic uppercase tracking-tighter leading-none">{title}</h1>
                 </div>
             </div>
 
             <div className="flex items-center gap-3">
                 {/* BOTÕES RÁPIDOS (STORE, POS, ORDERS) */}
-                <div className="hidden sm:flex items-center gap-2 mr-2 pr-2 border-r border-slate-100">
+                <div className="hidden sm:flex items-center gap-2 mr-2 pr-2 border-r border-border">
                     <Button 
                         variant="ghost" 
                         size="icon" 
@@ -129,7 +129,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         variant="ghost" 
                         size="icon" 
                         onClick={() => navigate('/pos')}
-                        className="rounded-xl bg-slate-50 border-slate-100 text-slate-600 hover:text-primary hover:border-primary/20 transition-all"
+                        className="rounded-xl bg-background border-border text-foreground/60 hover:text-primary hover:border-primary/20 transition-all"
                         title="Ir para o PDV"
                     >
                         <Monitor size={20} />
@@ -139,7 +139,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         variant="ghost" 
                         size="icon" 
                         onClick={() => navigate('/orders')}
-                        className="rounded-xl bg-slate-50 border-slate-100 text-slate-600 hover:text-primary hover:border-primary/20 transition-all"
+                        className="rounded-xl bg-background border-border text-foreground/60 hover:text-primary hover:border-primary/20 transition-all"
                         title="Gestor de Pedidos"
                     >
                         <ShoppingBag size={20} />
@@ -163,22 +163,22 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         {isCashierDropdownOpen && (
                             <>
                                 <div className="fixed inset-0 z-10" onClick={() => setCashierDropdownOpen(false)} />
-                                <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
-                                    <div className="p-5 border-b border-slate-50 bg-slate-50/50">
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{getCashierTimeStr() || 'Turno Encerrado'}</p>
+                                <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-border z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
+                                    <div className="p-5 border-b border-border bg-background/50">
+                                        <p className="text-xs font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">{getCashierTimeStr() || 'Turno Encerrado'}</p>
                                         {cashierStatus?.isOpen && (
-                                            <p className="text-base font-black text-slate-900 italic">R$ {(cashierStatus.session?.cashBalance || 0).toFixed(2)}</p>
+                                            <p className="text-base font-black text-foreground italic">R$ {(cashierStatus.session?.cashBalance || 0).toFixed(2)}</p>
                                         )}
                                     </div>
                                     <div className="p-2">
-                                        <button onClick={() => { setCashierAction({ open: true, type: 'EXPENSE' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 flex items-center gap-3 uppercase transition-all">
+                                        <button onClick={() => { setCashierAction({ open: true, type: 'EXPENSE' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-foreground/60 hover:bg-rose-50 hover:text-rose-600 flex items-center gap-3 uppercase transition-all">
                                             <ArrowRight size={16} className="rotate-180" /> Retirada / Sangria
                                         </button>
-                                        <button onClick={() => { setCashierAction({ open: true, type: 'INCOME' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 flex items-center gap-3 uppercase transition-all">
+                                        <button onClick={() => { setCashierAction({ open: true, type: 'INCOME' }); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-foreground/60 hover:bg-emerald-50 hover:text-emerald-600 flex items-center gap-3 uppercase transition-all">
                                             <Plus size={16} /> Reforço / Suprimento
                                         </button>
-                                        <div className="h-[1px] bg-slate-100 my-2 mx-2" />
-                                        <button onClick={() => { navigate('/cashier'); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-black text-slate-900 bg-slate-100 hover:bg-slate-200 flex items-center gap-3 uppercase transition-all">
+                                        <div className="h-[1px] bg-border my-2 mx-2" />
+                                        <button onClick={() => { navigate('/cashier'); setCashierDropdownOpen(false); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-black text-foreground bg-muted hover:bg-border flex items-center gap-3 uppercase transition-all">
                                             <CheckCircle size={16} /> Ir para Fechamento
                                         </button>
                                     </div>
@@ -194,13 +194,13 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         variant="ghost" 
                         size="icon" 
                         className={cn(
-                            "rounded-xl bg-slate-50 border-slate-100 relative", 
-                            notifCount > 0 && "text-orange-600 border-orange-100 bg-orange-50"
+                            "rounded-xl bg-background border-border relative", 
+                            notifCount > 0 && "text-primary border-primary/10 bg-primary/5"
                         )}
                     >
                         <Bell size={20} />
                         {notifCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce">
                                 {notifCount}
                             </span>
                         )}
@@ -211,34 +211,34 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                 <div className="relative ml-2">
                     <div 
                         onClick={() => setProfileOpen(!isProfileOpen)} 
-                        className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-slate-50 transition-all border-2 border-transparent hover:border-slate-100"
+                        className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-background transition-all border-2 border-transparent hover:border-border"
                     >
                         <div className="text-right hidden lg:block">
-                            <p className="text-sm font-black text-slate-900 leading-none italic uppercase tracking-tighter">{user?.name || 'Usuário'}</p>
-                            <p className="text-xs font-bold text-slate-400 uppercase mt-1 tracking-widest opacity-70">{displayName}</p>
+                            <p className="text-sm font-black text-foreground leading-none italic uppercase tracking-tighter">{user?.name || 'Usuário'}</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase mt-1 tracking-widest opacity-70">{displayName}</p>
                         </div>
-                        <div className="h-10 w-10 rounded-xl bg-white border-2 border-slate-200 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+                        <div className="h-10 w-10 rounded-xl bg-white border-2 border-border flex items-center justify-center overflow-hidden shadow-sm shrink-0">
                             {displayLogo ? (
                                 <img src={displayLogo.startsWith('http') ? displayLogo : `/api${displayLogo}`} alt="Empresa" className="w-full h-full object-cover" />
                             ) : (
-                                <Building2 size={20} className="text-slate-300" />
+                                <Building2 size={20} className="text-muted-foreground/40" />
                             )}
                         </div>
-                        <ChevronDown size={14} className={cn("text-slate-400 transition-transform mr-1", isProfileOpen && "rotate-180")} />
+                        <ChevronDown size={14} className={cn("text-muted-foreground transition-transform mr-1", isProfileOpen && "rotate-180")} />
                     </div>
                     
                     {isProfileOpen && (
                         <>
                             <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)} />
-                            <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
+                            <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-border z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
                                 <div className="p-2">
-                                    <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                                        <Settings size={18} className="text-slate-400" /> Configurações da Loja
+                                    <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-foreground/60 hover:bg-background transition-all">
+                                        <Settings size={18} className="text-muted-foreground" /> Configurações da Loja
                                     </Link>
-                                    <Link to="/users" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                                        <User size={18} className="text-slate-400" /> Meu Perfil
+                                    <Link to="/users" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-foreground/60 hover:bg-background transition-all">
+                                        <User size={18} className="text-muted-foreground" /> Meu Perfil
                                     </Link>
-                                    <div className="h-[1px] bg-slate-50 my-1 mx-2" />
+                                    <div className="h-[1px] bg-border my-1 mx-2" />
                                     <button onClick={() => { logout(); navigate('/login'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-rose-500 hover:bg-rose-50 transition-all uppercase tracking-widest italic">
                                         <LogOut size={18} /> Encerrar Sessão
                                     </button>

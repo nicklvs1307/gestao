@@ -151,8 +151,8 @@ const SalesMap: React.FC = () => {
                             <span class="text-[10px] font-black bg-slate-900 text-white px-2 py-0.5 rounded italic">#${p.orderNumber || 'N/A'}</span>
                             <span class="text-xs font-black text-emerald-600">R$ ${weight.toFixed(2).replace('.', ',')}</span>
                         </div>
-                        <p class="text-[11px] font-black text-slate-900 uppercase italic mb-1">${p.customer || 'Cliente Geral'}</p>
-                        <div class="flex items-start gap-1 text-slate-500">
+                        <p class="text-[11px] font-black text-foreground uppercase italic mb-1">${p.customer || 'Cliente Geral'}</p>
+                        <div class="flex items-start gap-1 text-muted-foreground">
                             <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" class="mt-0.5 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                             <p class="text-[9px] font-bold uppercase leading-tight">${p.address || 'Endereço não informado'}</p>
                         </div>
@@ -177,20 +177,20 @@ const SalesMap: React.FC = () => {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[2rem] shadow-sm border border-border">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200">
                         <MapPin size={24} />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Mapa de Calor de Vendas</h2>
-                        <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-1">Visão geográfica da demanda de delivery</p>
+                        <h2 className="text-2xl font-black text-foreground tracking-tighter italic uppercase leading-none">Mapa de Calor de Vendas</h2>
+                        <p className="text-muted-foreground text-[9px] font-bold uppercase tracking-widest mt-1">Visão geográfica da demanda de delivery</p>
                     </div>
                 </div>
                 
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 text-slate-600">
-                        <Calendar size={14} className="text-orange-500" />
+                    <div className="flex items-center gap-2 px-3 py-2 bg-background rounded-xl border border-border text-foreground/60">
+                        <Calendar size={14} className="text-primary" />
                         <span className="text-[9px] font-black uppercase tracking-widest">Últimos 90 Dias</span>
                     </div>
                     <Button onClick={fetchData} size="sm" className="rounded-xl h-10 px-5 italic text-[10px]">ATUALIZAR</Button>
@@ -198,38 +198,38 @@ const SalesMap: React.FC = () => {
             </div>
 
             {/* Mapa Master */}
-            <Card className="p-0 overflow-hidden border-slate-200 shadow-xl relative" noPadding>
+            <Card className="p-0 overflow-hidden border-border shadow-xl relative" noPadding>
                 {loading && (
                     <div className="absolute inset-0 z-[1000] bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
-                        <Loader2 className="animate-spin text-orange-500" size={40} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Processando coordenadas...</span>
+                        <Loader2 className="animate-spin text-primary" size={40} />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60">Processando coordenadas...</span>
                     </div>
                 )}
                 
                 {/* Controles Flutuantes */}
                 <div className="absolute top-4 right-4 z-[500] space-y-2">
-                    <button onClick={() => mapRef.current?.zoomIn()} className="w-10 h-10 bg-white rounded-xl shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:text-orange-500 transition-colors">
+                    <button onClick={() => mapRef.current?.zoomIn()} className="w-10 h-10 bg-white rounded-xl shadow-lg border border-border flex items-center justify-center text-foreground/60 hover:text-primary transition-colors">
                         <Maximize2 size={18} />
                     </button>
-                    <button className="w-10 h-10 bg-white rounded-xl shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:text-orange-500 transition-colors">
+                    <button className="w-10 h-10 bg-white rounded-xl shadow-lg border border-border flex items-center justify-center text-foreground/60 hover:text-primary transition-colors">
                         <Layers size={18} />
                     </button>
                 </div>
 
-                <div id="sales-map-container" className="w-full h-[65vh] bg-slate-50" />
+                <div id="sales-map-container" className="w-full h-[65vh] bg-background" />
 
                 {/* Legenda e Stats */}
-                <div className="absolute bottom-6 left-6 z-[500] bg-white p-4 rounded-3xl shadow-2xl border border-slate-100 max-w-xs">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-3 flex items-center gap-2">
-                        <Target size={14} className="text-orange-500" /> Densidade de Pedidos
+                <div className="absolute bottom-6 left-6 z-[500] bg-white p-4 rounded-3xl shadow-2xl border border-border max-w-xs">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
+                        <Target size={14} className="text-primary" /> Densidade de Pedidos
                     </h4>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex-1 h-2 bg-gradient-to-r from-blue-500 via-lime-500 to-red-500 rounded-full" />
-                            <span className="text-[8px] font-black text-slate-400 uppercase">Frio / Quente</span>
+                            <span className="text-[8px] font-black text-muted-foreground uppercase">Frio / Quente</span>
                         </div>
-                        <p className="text-[9px] font-bold text-slate-500 leading-tight uppercase italic">
-                            O mapa exibe <b className="text-slate-900">{heatmapData.length}</b> entregas realizadas com sucesso no período selecionado.
+                        <p className="text-[9px] font-bold text-muted-foreground leading-tight uppercase italic">
+                            O mapa exibe <b className="text-foreground">{heatmapData.length}</b> entregas realizadas com sucesso no período selecionado.
                         </p>
                     </div>
                 </div>
@@ -237,20 +237,20 @@ const SalesMap: React.FC = () => {
 
             {/* Grid de Resumo Geográfico */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-6 border-slate-100 bg-white group hover:border-orange-500/20 transition-all">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Zona de Maior Impacto</p>
-                    <h3 className="text-xl font-black italic tracking-tighter text-slate-900 uppercase">Centro Expandido</h3>
+                <Card className="p-6 border-border bg-white group hover:border-orange-500/20 transition-all">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Zona de Maior Impacto</p>
+                    <h3 className="text-xl font-black italic tracking-tighter text-foreground uppercase">Centro Expandido</h3>
                     <div className="mt-2 text-emerald-500 text-[10px] font-black italic">42% do volume total</div>
                 </Card>
-                <Card className="p-6 border-slate-100 bg-white group hover:border-blue-500/20 transition-all">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Raio Médio de Entrega</p>
-                    <h3 className="text-xl font-black italic tracking-tighter text-slate-900 uppercase">3.2 KM</h3>
-                    <div className="mt-2 text-slate-400 text-[10px] font-black italic">Tempo médio: 24 min</div>
+                <Card className="p-6 border-border bg-white group hover:border-blue-500/20 transition-all">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Raio Médio de Entrega</p>
+                    <h3 className="text-xl font-black italic tracking-tighter text-foreground uppercase">3.2 KM</h3>
+                    <div className="mt-2 text-muted-foreground text-[10px] font-black italic">Tempo médio: 24 min</div>
                 </Card>
-                <Card className="p-6 border-slate-100 bg-white group hover:border-emerald-500/20 transition-all">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Taxa de Conversão por Área</p>
-                    <h3 className="text-xl font-black italic tracking-tighter text-slate-900 uppercase">Alta Fidelidade</h3>
-                    <div className="mt-2 text-orange-500 text-[10px] font-black italic">8.2 pedidos / cliente</div>
+                <Card className="p-6 border-border bg-white group hover:border-emerald-500/20 transition-all">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Taxa de Conversão por Área</p>
+                    <h3 className="text-xl font-black italic tracking-tighter text-foreground uppercase">Alta Fidelidade</h3>
+                    <div className="mt-2 text-primary text-[10px] font-black italic">8.2 pedidos / cliente</div>
                 </Card>
             </div>
         </div>
