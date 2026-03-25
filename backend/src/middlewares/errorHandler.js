@@ -71,12 +71,20 @@ const sendErrorProd = (err, req, res) => {
 
     // B) Programming or other unknown error: don't leak error details
     // 1) Log error
-    logger.error('CRITICAL ERROR 💥', {
+    const sanitizedBody = { ...req.body };
+    // Remove campos sensíveis antes de logar
+    delete sanitizedBody.password;
+    delete sanitizedBody.passwordHash;
+    delete sanitizedBody.token;
+    delete sanitizedBody.jwt;
+    delete sanitizedBody.secret;
+
+    logger.error('CRITICAL ERROR', {
         message: err.message,
         stack: err.stack,
         url: req.originalUrl,
         method: req.method,
-        body: req.body
+        body: sanitizedBody
     });
     console.error('ERROR 💥', err);
 

@@ -3,8 +3,17 @@ const router = express.Router();
 const AuthController = require('../controllers/AuthController');
 const { needsAdmin, needsAuth } = require('../middlewares/auth');
 const prisma = require('../lib/prisma');
+const validate = require('../middlewares/validate');
+const { z } = require('zod');
 
-router.post('/login', AuthController.login);
+const loginSchema = z.object({
+  body: z.object({
+    email: z.string().email('Email inválido.'),
+    password: z.string().min(1, 'Senha é obrigatória.')
+  })
+});
+
+router.post('/login', validate(loginSchema), AuthController.login);
 router.get('/users', needsAdmin, AuthController.getUsers);
 router.post('/users', needsAdmin, AuthController.createUser);
 router.put('/users/:id', needsAdmin, AuthController.updateUser);

@@ -4,6 +4,15 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+const validatePassword = (password) => {
+    if (!password || typeof password !== 'string') return 'Senha é obrigatória.';
+    if (password.length < 8) return 'Senha deve ter pelo menos 8 caracteres.';
+    if (!/[A-Z]/.test(password)) return 'Senha deve conter ao menos uma letra maiúscula.';
+    if (!/[a-z]/.test(password)) return 'Senha deve conter ao menos uma letra minúscula.';
+    if (!/[0-9]/.test(password)) return 'Senha deve conter ao menos um número.';
+    return null; // válida
+};
+
 const normalizeRole = (dbRoleName, isSuperAdmin) => {
     if (isSuperAdmin) return 'superadmin';
     if (!dbRoleName) return 'staff';
@@ -174,6 +183,11 @@ const createUser = async (req, res) => {
             }
         }
 
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            return res.status(400).json({ error: passwordError });
+        }
+
         const passwordHash = await bcrypt.hash(password, 10);
         const newUser = await prisma.user.create({ 
             data: { 
@@ -261,6 +275,10 @@ const updateUser = async (req, res) => {
         };
         
         if (password) {
+            const passwordError = validatePassword(password);
+            if (passwordError) {
+                return res.status(400).json({ error: passwordError });
+            }
             data.passwordHash = await bcrypt.hash(password, 10);
         }
         if (finalRoleId !== undefined) {

@@ -37,14 +37,12 @@ file_env 'EVOLUTION_API_URL'
 file_env 'EVOLUTION_API_KEY'
 
 # Aguarda o banco de dados estar pronto (evita falha na inicialização)
-echo "Aguardando banco de dados responder em $DATABASE_URL..."
-MAX_RETRIES=30
-COUNT=0
-
-# Extrai host e porta da URL do banco (suporta formatos comuns do Prisma/Postgres)
 DB_HOST=$(echo $DATABASE_URL | sed -e 's|.*@||' -e 's|/.*||' -e 's|:.*||')
 DB_PORT=$(echo $DATABASE_URL | sed -e 's|.*:||' -e 's|/.*||')
 [ -z "$DB_PORT" ] && DB_PORT=5432
+echo "Aguardando banco de dados responder em $DB_HOST:$DB_PORT..."
+MAX_RETRIES=30
+COUNT=0
 
 # Usa Node para testar a conexão TCP (mais leve que prisma db pull)
 until node -e "const net = require('net'); const client = net.createConnection({host: '$DB_HOST', port: $DB_PORT}, () => client.end()); client.on('error', (e) => process.exit(1));" || [ $COUNT -eq $MAX_RETRIES ]; do

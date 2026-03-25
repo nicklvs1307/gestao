@@ -179,7 +179,9 @@ async function main() {
   }
 
   // 5. Garantir SuperAdmin
-  const adminPasswordHash = await bcrypt.hash('superadmin123', 10);
+  const crypto = require('crypto');
+  const superAdminPassword = crypto.randomBytes(16).toString('hex');
+  const adminPasswordHash = await bcrypt.hash(superAdminPassword, 10);
   await prisma.user.upsert({
     where: { email: 'super@admin.com' },
     update: { isSuperAdmin: true, roleId: superAdminRole.id },
@@ -192,7 +194,7 @@ async function main() {
     },
   });
 
-  console.log('--- SEED FINALIZADO COM SUCESSO ---');
+  console.log('SuperAdmin garantido. Altere a senha no primeiro acesso.');
 }
 
 main()

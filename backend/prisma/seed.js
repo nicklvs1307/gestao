@@ -93,10 +93,10 @@ async function main() {
 
   // 3. CRIAÇÃO DE USUÁRIO ADMIN
   console.log('Criando usuário administrador...');
-  const adminPasswordHash = await bcrypt.hash('admin123', 10);
+  const crypto = require('crypto');
+  const adminPassword = crypto.randomBytes(12).toString('hex'); // Senha aleatória
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
   
-  // Primeiro buscamos a Role de Administrador (que deve ser criada pelo seed_permissions)
-  // Se não existir (rodando seed sozinho), usamos isSuperAdmin
   await prisma.user.create({
     data: {
       email: 'admin@hamburgueriateste.com',
@@ -106,7 +106,7 @@ async function main() {
       restaurantId: restaurant.id,
     },
   });
-  console.log('Usuário administrador criado (admin@hamburgueriateste.com / admin123).');
+  console.log('Usuário administrador criado. Altere a senha no primeiro acesso.');
 
   // 4. CRIAÇÃO DE CONFIGURAÇÕES
   console.log('Criando configurações do restaurante...');

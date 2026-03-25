@@ -6,6 +6,8 @@ const { needsAuth } = require('../middlewares/auth');
 // Admin / POS
 router.get('/', needsAuth, TableController.getTables);
 router.post('/', needsAuth, TableController.createTable);
+router.put('/:id', needsAuth, TableController.updateTable);
+router.delete('/:id', needsAuth, TableController.deleteTable);
 router.get('/summary', needsAuth, TableController.getPosTablesSummary);
 router.post('/partial-payment-simple', needsAuth, TableController.partialPaymentSimple);
 router.post('/:tableId/checkout', needsAuth, TableController.checkoutTable);

@@ -100,6 +100,7 @@ class IngredientController {
     const { id } = req.params;
     const { items, yieldAmount } = req.body;
 
+    const restaurantId = req.restaurantId;
     const result = await prisma.$transaction(async (tx) => {
       // Limpa receita anterior (Garante que só deleta se o ingrediente pertencer ao restaurante do usuário)
       await tx.ingredientRecipe.deleteMany({

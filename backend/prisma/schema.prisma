@@ -299,7 +299,7 @@ model Invoice {
   updatedAt     DateTime @updatedAt
 
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
-  order         Order?     @relation(fields: [orderId], references: [id])
+  order         Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId])
 }
@@ -365,22 +365,22 @@ model FinancialTransaction {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   categoryId   String?
-  category     TransactionCategory? @relation(fields: [categoryId], references: [id])
+  category     TransactionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   supplierId   String?
-  supplier     Supplier? @relation(fields: [supplierId], references: [id])
+  supplier     Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
   recipientUserId String? // Para pagamentos a funcionários (Drivers, Garçons)
-  recipientUser   User?   @relation("TransactionRecipient", fields: [recipientUserId], references: [id])
+  recipientUser   User?   @relation("TransactionRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
 
   orderId      String?
-  order        Order?    @relation(fields: [orderId], references: [id]) // Se vier de uma venda
+  order        Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull) // Se vier de uma venda
 
   cashierId    String?   // Se foi pago com dinheiro do caixa
-  cashier      CashierSession? @relation(fields: [cashierId], references: [id])
+  cashier      CashierSession? @relation(fields: [cashierId], references: [id], onDelete: SetNull)
 
   bankAccountId String?  // Novo: Vínculo com conta bancária
-  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
 
   stockEntry   StockEntry?
 
@@ -455,6 +455,7 @@ model CashierSession {
 
   @@index([restaurantId])
   @@index([userId])
+  @@index([status])
 }
 
 model IntegrationSettings {
@@ -826,6 +827,11 @@ model Order {
   financialTransaction FinancialTransaction[] // Lançamento financeiro (Ex: Conta a Receber gerada)
 
   @@index([restaurantId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([orderType])
+  @@index([isSettled])
+  @@index([tableNumber, restaurantId])
 }
 
 model Payment {
@@ -885,6 +891,7 @@ model DeliveryOrder {
   @@index([orderId])
   @@index([driverId])
   @@index([customerId])
+  @@index([status])
 }
 
 model Customer {

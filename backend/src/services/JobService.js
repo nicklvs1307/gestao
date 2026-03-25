@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const checklistReportService = require('./ChecklistReportService');
+const logger = require('../config/logger');
 
 class JobService {
   constructor() {
@@ -7,31 +8,38 @@ class JobService {
   }
 
   init() {
-    console.log('[JobService] Inicializando agendador de tarefas...');
+    logger.info('[JobService] Inicializando agendador de tarefas...');
     let isRunningChecklist = false;
+    let lockTimeout = null;
 
-    // 1. Cron Job para Relatórios de Checklist (Verifica a cada minuto para bater com o HH:mm agendado)
-    const checklistReportJob = cron.schedule('* * * * *', async () => {
-      if (isRunningChecklist) return; // Trava contra sobreposição
-      
+    // Cron Job para Relatórios de Checklist (Verifica a cada 5 minutos)
+    // Reduzido de 1 minuto para 5 minutos - suficiente para HH:mm checks
+    const checklistReportJob = cron.schedule('*/5 * * * *', async () => {
+      if (isRunningChecklist) return;
+
       try {
         isRunningChecklist = true;
-        console.log('[JobService] Iniciando processamento de relatórios agendados...');
+
+        // Timeout de segurança: libera o lock após 4 minutos
+        lockTimeout = setTimeout(() => {
+          isRunningChecklist = false;
+          logger.warn('[JobService] Lock de relatórios liberado por timeout (4min).');
+        }, 4 * 60 * 1000);
+
         await checklistReportService.runAllScheduledReports();
         await checklistReportService.checkIndividualDeadlines();
       } catch (error) {
-        console.error('[JobService] Erro ao processar relatórios de checklist:', error);
+        logger.error('[JobService] Erro ao processar relatórios de checklist:', error);
       } finally {
+        if (lockTimeout) clearTimeout(lockTimeout);
         isRunningChecklist = false;
       }
     });
 
     this.jobs.push({ name: 'ChecklistReport', job: checklistReportJob });
 
-    console.log('[JobService] Tarefas agendadas com sucesso.');
+    logger.info('[JobService] Tarefas agendadas com sucesso.');
   }
-
-  // Futuramente, se houver outros jobs, adicionar aqui
 }
 
 module.exports = new JobService();

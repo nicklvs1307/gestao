@@ -26,10 +26,14 @@ app.use(helmet({
 }));
 
 // 3. SEGURANÇA: Configuração de CORS Restrita
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['*'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+if (allowedOrigins.length === 0) {
+  logger.warn('AVISO: ALLOWED_ORIGINS não configurado. CORS será restrito. Configure ALLOWED_ORIGINS no .env');
+}
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+    // Permite requests sem origin (mobile apps, curl em dev)
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Não permitido pelo CORS'));
@@ -39,8 +43,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-restaurant-id']
 }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // 4. SEGURANÇA: Rate Limiting Global (SPA Friendly)
 const globalLimiter = rateLimit({
@@ -148,6 +152,22 @@ app.use('/api/client/settings', settingsRoutes);
 app.get('/api/client/table-info', TableController.checkTableExists);
 app.get('/api/client/order/table', TableController.getClientTableOrder);
 app.post('/api/client/table-requests', TableController.createClientTableRequest);
+app.post('/api/client/orders/:orderId/batch-add-items', OrderController.addItemsToOrder);
+app.post('/api/client/orders/:orderId/request-close', TableController.requestClose);
+app.post('/api/tables/:tableId/request-payment', needsAuth, TableController.requestPayment);
+
+// Client integration settings (public, read-only)
+app.get('/api/client/integration-settings/:restaurantId', async (req, res) => {
+  try {
+    const integrationSettings = await require('./src/lib/prisma').integrationSettings.findUnique({
+      where: { restaurantId: req.params.restaurantId },
+      select: { id: true, saiposIntegrationActive: true, uairangoActive: true }
+    });
+    res.json(integrationSettings || {});
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar configurações de integração.' });
+  }
+});
 
 // Root
 app.get('/api', (req, res) => res.send('API Online!'));

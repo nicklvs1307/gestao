@@ -7,12 +7,29 @@ class StockController {
     
     // GET /api/stock/entries
     getEntries = asyncHandler(async (req, res) => {
-        const entries = await prisma.stockEntry.findMany({
-            where: { restaurantId: req.restaurantId },
-            include: { supplier: true, items: { include: { ingredient: true } } },
-            orderBy: { receivedAt: 'desc' }
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [entries, total] = await Promise.all([
+            prisma.stockEntry.findMany({
+                where: { restaurantId: req.restaurantId },
+                include: { supplier: true, items: { include: { ingredient: true } } },
+                orderBy: { receivedAt: 'desc' },
+                skip,
+                take: parseInt(limit)
+            }),
+            prisma.stockEntry.count({ where: { restaurantId: req.restaurantId } })
+        ]);
+
+        res.json({
+            data: entries,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                totalPages: Math.ceil(total / parseInt(limit))
+            }
         });
-        res.json(entries);
     });
 
     // POST /api/stock/entries

@@ -47,6 +47,13 @@ router.post('/submit',
   ChecklistController.submitExecution
 );
 
-router.post('/upload', upload.single('file'), ChecklistController.uploadFile); // Upload de fotos
+// Alias para compatibilidade com frontend
+router.post('/execute', 
+  submitLimiter,
+  validate(checklistSubmitSchema),
+  ChecklistController.submitExecution
+);
+
+router.post('/upload', needsAuth, upload.single('file'), ChecklistController.uploadFile);
 
 module.exports = router;

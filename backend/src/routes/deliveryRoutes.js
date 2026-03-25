@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const prisma = require('../lib/prisma'); // Singleton
-const OrderController = require('../controllers/OrderController'); // Adjusted path
+const prisma = require('../lib/prisma');
+const OrderController = require('../controllers/OrderController');
+const { needsAuth, authenticateToken, setRestaurantId } = require('../middlewares/auth');
 
-// Middleware simplificado para detectar usuário sem barrar a requisição (opcional)
+// Middleware para rotas de delivery que podem ou não ter auth
 const optionalAuth = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -130,8 +131,8 @@ router.get('/restaurant/:slug', async (req, res) => {
     }
   });
 
-// Rota para buscar todos os pedidos de delivery de um restaurante
-router.get('/restaurants/:restaurantId/delivery-orders', async (req, res) => {
+// Rota para buscar todos os pedidos de delivery de um restaurante (PROTEGIDO)
+router.get('/restaurants/:restaurantId/delivery-orders', authenticateToken, setRestaurantId, async (req, res) => {
   const { restaurantId } = req.params;
   try {
     const deliveryOrders = await prisma.deliveryOrder.findMany({
@@ -157,8 +158,8 @@ router.get('/restaurants/:restaurantId/delivery-orders', async (req, res) => {
 
 router.post('/restaurants/:restaurantId/delivery-orders', optionalAuth, (req, res) => OrderController.createDeliveryOrder(req, res));
 
-// Rota para atribuir entregador ao pedido
-router.patch('/delivery-orders/:orderId/assign-driver', async (req, res) => {
+// Rota para atribuir entregador ao pedido (PROTEGIDO)
+router.patch('/delivery-orders/:orderId/assign-driver', authenticateToken, setRestaurantId, async (req, res) => {
     const { orderId } = req.params;
     const { driverId } = req.body;
 
@@ -187,7 +188,8 @@ router.patch('/delivery-orders/:orderId/assign-driver', async (req, res) => {
     }
 });
 
-router.get('/order/:orderId', async (req, res) => {
+// Rota para buscar detalhes de um pedido (PROTEGIDO - ou com token de pedido)
+router.get('/order/:orderId', authenticateToken, async (req, res) => {
     const { orderId } = req.params;
     try {
         const order = await prisma.order.findUnique({

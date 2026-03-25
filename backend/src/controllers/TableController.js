@@ -23,6 +23,56 @@ class TableController {
     res.status(201).json(table);
   });
 
+  // PUT /api/tables/:id
+  updateTable = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const validatedData = CreateTableSchema.parse(req.body);
+
+    const table = await prisma.table.findFirst({
+      where: { id, restaurantId: req.restaurantId }
+    });
+    if (!table) {
+      res.status(404);
+      throw new Error('Mesa não encontrada.');
+    }
+
+    const updated = await prisma.table.update({
+      where: { id },
+      data: validatedData
+    });
+    res.json(updated);
+  });
+
+  // DELETE /api/tables/:id
+  deleteTable = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const table = await prisma.table.findFirst({
+      where: { id, restaurantId: req.restaurantId }
+    });
+    if (!table) {
+      res.status(404);
+      throw new Error('Mesa não encontrada.');
+    }
+
+    // Verifica se há pedidos ativos na mesa
+    const activeOrders = await prisma.order.count({
+      where: {
+        restaurantId: req.restaurantId,
+        tableNumber: table.number,
+        status: { notIn: ['COMPLETED', 'CANCELED'] }
+      }
+    });
+
+    if (activeOrders > 0) {
+      res.status(400);
+      throw new Error('Não é possível excluir uma mesa com pedidos ativos.');
+    }
+
+    await prisma.table.delete({ where: { id } });
+    res.json({ success: true });
+  });
+
   // GET /api/tables/summary (PDV)
   getPosTablesSummary = asyncHandler(async (req, res) => {
     const summary = await TableService.getTablesSummary(req.restaurantId);
@@ -212,7 +262,74 @@ class TableController {
             status: 'PENDING'
         } 
     });
+
+    // Notifica via Socket.IO
+    const socketLib = require('../lib/socket');
+    socketLib.emitToRestaurant(validatedData.restaurantId, 'table_request', newRequest);
+
     res.status(201).json(newRequest); 
+  });
+
+  // POST /api/client/orders/:orderId/request-close
+  requestClose = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const { restaurantId, tableNumber } = req.body;
+
+    if (!restaurantId || !tableNumber) {
+      res.status(400);
+      throw new Error("Dados incompletos");
+    }
+
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, restaurantId }
+    });
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Pedido não encontrado.');
+    }
+
+    const tableRequest = await prisma.tableRequest.create({
+      data: {
+        restaurantId,
+        tableNumber: parseInt(tableNumber),
+        type: 'BILL',
+        status: 'PENDING'
+      }
+    });
+
+    const socketLib = require('../lib/socket');
+    socketLib.emitToRestaurant(restaurantId, 'table_request', tableRequest);
+
+    res.status(201).json({ success: true, request: tableRequest });
+  });
+
+  // POST /api/tables/:tableId/request-payment
+  requestPayment = asyncHandler(async (req, res) => {
+    const { tableId } = req.params;
+
+    const table = await prisma.table.findFirst({
+      where: { id: tableId, restaurantId: req.restaurantId }
+    });
+
+    if (!table) {
+      res.status(404);
+      throw new Error('Mesa não encontrada.');
+    }
+
+    const tableRequest = await prisma.tableRequest.create({
+      data: {
+        restaurantId: req.restaurantId,
+        tableNumber: table.number,
+        type: 'BILL',
+        status: 'PENDING'
+      }
+    });
+
+    const socketLib = require('../lib/socket');
+    socketLib.emitToRestaurant(req.restaurantId, 'table_request', tableRequest);
+
+    res.status(201).json({ success: true, request: tableRequest });
   });
 
   // Helper privado para emissão fiscal

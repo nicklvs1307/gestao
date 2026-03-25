@@ -163,27 +163,16 @@ class DriverController {
       if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
 
       // Se estiver saindo para entrega, vincula o motoboy se ainda não estiver vinculado
-      const updateData = { status };
-      
-      await prisma.$transaction(async (tx) => {
-        await tx.order.update({
-          where: { id: orderId },
-          data: updateData
-        });
-
-        // Atualiza a tabela deliveryOrder associada
-        let deliveryStatus = 'PENDING';
-        if (status === 'SHIPPED') deliveryStatus = 'OUT_FOR_DELIVERY';
-        if (status === 'COMPLETED') deliveryStatus = 'DELIVERED';
-
-        await tx.deliveryOrder.update({
+      if (status === 'SHIPPED' && !order.deliveryOrder?.driverId) {
+        await prisma.deliveryOrder.update({
           where: { orderId: orderId },
-          data: { 
-            status: deliveryStatus,
-            driverId: driverId // Garante que o motoboy que clicou é o que está levando
-          }
+          data: { driverId }
         });
-      });
+      }
+
+      // Usa o OrderService para garantir que baixa de estoque e financeiro sejam processados
+      const OrderService = require('../services/OrderService');
+      await OrderService.updateOrderStatus(orderId, status);
 
       res.json({ success: true });
     } catch (error) {
