@@ -18,7 +18,7 @@ import OrderSuccessModal from '../components/OrderSuccessModal';
 import PixPaymentModal from '../components/PixPaymentModal';
 import ProductDetailModal from '../components/ProductDetailModal';
 import StoreClosedModal from '../components/StoreClosedModal';
-import { Search, Heart, Clock, ShoppingBag, Palette } from 'lucide-react';
+import { Search, Heart, Clock, ShoppingBag, Palette, X } from 'lucide-react';
 import { applyTheme } from '../utils/theme';
 import { Button } from '../components/ui/Button';
 import { isCategoryAvailable } from '../utils/availability';
@@ -66,8 +66,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setSearchTerm('');
     } else if (tab === 'search') {
-      searchInputRef.current?.focus();
-      searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setIsSearchOpen(true);
     } else if (tab === 'orders') {
       reorderSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else if (tab === 'profile') {
@@ -474,6 +473,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input 
+                            ref={searchInputRef}
                             autoFocus
                             type="text" 
                             placeholder="Buscar pratos ou sabores..." 
@@ -486,6 +486,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                         onClick={() => {
                             setIsSearchOpen(false);
                             setSearchTerm('');
+                            setActiveTab('home');
                         }}
                         className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400"
                     >
@@ -514,6 +515,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
                                     onAddToCart={() => {
                                         handleProductCardClick(product);
                                         setIsSearchOpen(false);
+                                        setActiveTab('home');
                                     }} 
                                 />
                             ))

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Product, SizeOption, AddonOption, Promotion } from '../types';
 import { toast } from 'sonner';
 import { 
@@ -9,7 +9,8 @@ import {
   ShoppingBag,
   Clock,
   Pizza as PizzaIcon,
-  Loader2
+  Loader2,
+  Search
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getImageUrl } from '../utils/image';
@@ -40,6 +41,22 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
   const [observations, setObservations] = useState('');
   const [isAdded, setIsAdded] = useState(false);
+  const [addonSearchTerm, setAddonSearchTerm] = useState('');
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const obsSectionRef = useRef<HTMLDivElement>(null);
+
+  const scrollToSection = (id: string) => {
+    setTimeout(() => {
+      let element = sectionRefs.current[id];
+      if (id === 'observations') element = obsSectionRef.current;
+      
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+  };
 
   const getPizzaConfig = () => {
     if (!product?.pizzaConfig) return { active: false, maxFlavors: 1, priceRule: 'higher' };
@@ -91,13 +108,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     
     if (newQty > (addon.maxQuantity || 1) && delta > 0) return;
 
-    if (delta > 0) {
-        // Unificado: Se o produto tem pizzaConfig.active, ele manda no limite de sabores.
-        // Se não for pizza, usa o limite do grupo.
-        const isFlavor = group.isFlavorGroup && config.active;
-        const limit = isFlavor ? (config.maxFlavors || 1) : (group.maxQuantity || 0);
+    const isFlavor = group.isFlavorGroup && config.active;
+    const limit = isFlavor ? (config.maxFlavors || 1) : (group.maxQuantity || 0);
 
-        // Se limit for 0, tratamos como ilimitado
+    if (delta > 0) {
         if (limit > 0) {
             const currentTotal = selectedAddons
                 .filter(a => group.addons.some((ga: any) => ga.id === a.id))
@@ -106,6 +120,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             if (currentTotal + delta > limit) {
                 toast.warning(isFlavor ? `Limite de ${limit} sabores atingido.` : `Limite de ${limit} itens em "${group.name}".`);
                 return;
+            }
+
+            // Scroll Automático se atingir o limite ou se for item único
+            if (currentTotal + delta === limit) {
+               const currentIndex = addonGroups.findIndex(g => g.id === group.id);
+               if (currentIndex < addonGroups.length - 1) {
+                  scrollToSection(addonGroups[currentIndex + 1].id);
+               } else {
+                  scrollToSection('observations');
+               }
             }
         }
     }
@@ -309,7 +333,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" /> 1. Escolha o Tamanho</h4>
                     <div className="grid grid-cols-1 gap-1.5">
                       {product.sizes.map((size: any) => (
-                        <Card key={size.id} onClick={() => setSelectedSize(size)} className={cn("flex items-center justify-between p-4 border-2 transition-all duration-300", selectedSize?.id === size.id ? "border-primary bg-primary/5 shadow-md" : "border-transparent bg-white hover:border-slate-200 shadow-sm")}>
+                        <Card key={size.id} onClick={() => {
+                          setSelectedSize(size);
+                          if (addonGroups.length > 0) scrollToSection(addonGroups[0].id);
+                          else scrollToSection('observations');
+                        }} className={cn("flex items-center justify-between p-4 border-2 transition-all duration-300", selectedSize?.id === size.id ? "border-primary bg-primary/5 shadow-md" : "border-transparent bg-white hover:border-slate-200 shadow-sm")}>
                           <span className={cn("font-black text-sm uppercase tracking-tight", selectedSize?.id === size.id ? "text-primary" : "text-slate-700")}>{size.name}</span>
                           {!addonGroups.some(g => g.isFlavorGroup) && <span className="font-black text-slate-900 text-sm italic">R$ {size.price.toFixed(2).replace('.', ',')}</span>}
                         </Card>
@@ -317,14 +345,38 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                     </div>
                   </div>
                 )}
+
+                {/* Barra de Pesquisa de Adicionais */}
+                {addonGroups.length > 0 && (
+                  <div className="relative sticky top-0 z-20 bg-slate-50 py-2">
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input 
+                        type="text"
+                        placeholder="Pesquisar sabor ou adicional..."
+                        className="w-full bg-white border-2 border-slate-100 rounded-2xl py-3 pl-12 pr-4 text-xs font-bold focus:border-primary outline-none transition-all shadow-sm"
+                        value={addonSearchTerm}
+                        onChange={(e) => setAddonSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {addonGroups.map((group) => {
+                  const filteredAddons = group.addons.filter((a: any) => 
+                    a.name.toLowerCase().includes(addonSearchTerm.toLowerCase()) ||
+                    (a.description && a.description.toLowerCase().includes(addonSearchTerm.toLowerCase()))
+                  );
+
+                  if (filteredAddons.length === 0 && addonSearchTerm) return null;
+
                   const isFlavor = group.isFlavorGroup;
                   const limit = isFlavor ? (group.maxQuantity || 1) : (group.maxQuantity || 0);
                   const selectedInGroup = selectedAddons.filter(sa => group.addons.some(ga => ga.id === sa.id));
                   const totalInGroup = selectedInGroup.reduce((sum, a) => sum + (a.quantity || 0), 0);
                   const hasImages = group.addons.some(a => a.imageUrl);
                   return (
-                    <div key={group.id} className="space-y-4">
+                    <div key={group.id} ref={el => sectionRefs.current[group.id] = el} className="space-y-4 scroll-mt-24">
                       <div className="flex items-center justify-between">
                         <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" /> {group.name}</h4>
                         <div className="flex gap-2">
@@ -335,11 +387,35 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                         </div>
                       </div>
                       <div className={cn("grid gap-3", (isFlavor || hasImages) ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
-                        {group.addons.map((addon: any) => {
+                        {filteredAddons.map((addon: any) => {
                           const selected = selectedAddons.find(a => a.id === addon.id);
                           const isSelected = !!selected;
                           const currentQty = selected?.quantity || 0;
-                          const fractionText = isFlavor ? `${currentQty}/${config.maxFlavors}` : undefined;
+                          
+                          // Lógica para fração dinâmica (ex: 1/2, 2/2)
+                          let fractionText = undefined;
+                          if (isFlavor && isSelected) {
+                            // Encontra a posição deste sabor na lista de selecionados
+                            const allSelectedInGroup = group.addons
+                              .filter((a: any) => selectedAddons.some(sa => sa.id === a.id))
+                              .map((a: any) => ({
+                                id: a.id,
+                                quantity: selectedAddons.find(sa => sa.id === a.id)?.quantity || 0
+                              }));
+                            
+                            let startIndex = 0;
+                            for (const s of allSelectedInGroup) {
+                              if (s.id === addon.id) break;
+                              startIndex += s.quantity;
+                            }
+                            
+                            if (currentQty > 1) {
+                              fractionText = `${startIndex + 1}-${startIndex + currentQty}/${config.maxFlavors}`;
+                            } else {
+                              fractionText = `${startIndex + 1}/${config.maxFlavors}`;
+                            }
+                          }
+
                           const activePromo = isPromoActive(addon);
                           
                           if (isFlavor || hasImages) {
@@ -392,7 +468,19 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                     </div>
                   );
                 })}
-                <div className="space-y-2 pb-2"><h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-4 bg-amber-400 rounded-full shadow-lg shadow-amber-400/30" /> Alguma observação?</h4><textarea className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-xs font-medium text-slate-700 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm" placeholder="Ex: Tirar cebola, maionese à parte..." rows={3} value={observations} onChange={(e) => setObservations(e.target.value)} /></div>
+                <div ref={obsSectionRef} className="space-y-2 pb-2 scroll-mt-24">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <div className="w-1.5 h-4 bg-amber-400 rounded-full shadow-lg shadow-amber-400/30" /> 
+                    Alguma observação?
+                  </h4>
+                  <textarea 
+                    className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-xs font-medium text-slate-700 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm" 
+                    placeholder="Ex: Tirar cebola, maionese à parte..." 
+                    rows={3} 
+                    value={observations} 
+                    onChange={(e) => setObservations(e.target.value)} 
+                  />
+                </div>
               </div>
               <div className="p-4 md:p-6 bg-white border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] sticky bottom-0"><div className="flex items-center gap-3"><div className="flex items-center bg-slate-100 rounded-[1rem] p-1 border border-slate-200 shadow-inner"><button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all"><Minus size={18} strokeWidth={3} /></button><span className="w-6 text-center font-black text-lg text-slate-900 italic">{quantity}</span><button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 transition-all"><Plus size={18} strokeWidth={3} /></button></div><Button 
     onClick={handleAddToCartClick} 
