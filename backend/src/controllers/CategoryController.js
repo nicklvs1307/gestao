@@ -92,10 +92,14 @@ class CategoryController {
   });
 
   createCategory = asyncHandler(async (req, res) => {
+    const { addonGroups, ...rest } = req.body;
     const category = await prisma.category.create({
       data: {
-        ...req.body,
-        restaurant: { connect: { id: req.restaurantId } }
+        ...rest,
+        restaurant: { connect: { id: req.restaurantId } },
+        ...(addonGroups && Array.isArray(addonGroups) && addonGroups.length > 0
+          ? { addonGroups: { connect: addonGroups.map(id => ({ id })) } }
+          : {})
       }
     });
     res.status(201).json(category);
@@ -103,9 +107,15 @@ class CategoryController {
 
   updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const { addonGroups, ...rest } = req.body;
     const category = await prisma.category.update({
       where: { id },
-      data: req.body
+      data: {
+        ...rest,
+        ...(addonGroups !== undefined && Array.isArray(addonGroups)
+          ? { addonGroups: { set: addonGroups.map(id => ({ id })) } }
+          : {})
+      }
     });
     res.json(category);
   });
