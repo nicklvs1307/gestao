@@ -149,18 +149,24 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
   const handleReorder = (items: any[]) => {
     // Converte OrderItems para LocalCartItems
-    const cartItems: any[] = items.map((item, index) => ({
-      localId: Date.now() + index,
-      product: item.product,
-      productId: item.productId,
-      quantity: item.quantity,
-      priceAtTime: item.priceAtTime,
-      sizeId: item.sizeId || null,
-      sizeJson: item.sizeJson || null,
-      addonsJson: item.addonsJson || null,
-      flavorsJson: item.flavorsJson || null,
-      observations: item.observations || null,
-    }));
+    const cartItems: any[] = items.map((item, index) => {
+      // Garante que o preço unitário seja extraído corretamente
+      // Se vier do banco/histórico, pode ser 'price' ou 'priceAtTime'
+      const unitPrice = item.priceAtTime || item.price || (item.total && item.quantity ? item.total / item.quantity : 0);
+
+      return {
+        localId: Date.now() + index,
+        product: item.product,
+        productId: item.productId,
+        quantity: item.quantity,
+        priceAtTime: Number(unitPrice),
+        sizeId: item.sizeId || null,
+        sizeJson: item.sizeJson || null,
+        addonsJson: item.addonsJson || null,
+        flavorsJson: item.flavorsJson || null,
+        observations: item.observations || null,
+      };
+    });
 
     setLocalCartItems(cartItems);
     setCartOpen(true);
