@@ -24,11 +24,12 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
+import { useModals } from '../context/ModalContext';
 
 interface CategoryManagementProps {
-  onAddCategoryClick: () => void;
-  onEditCategoryClick: (category: Category) => void;
-  refetchTrigger: number;
+  onAddCategoryClick?: () => void;
+  onEditCategoryClick?: (category: Category) => void;
+  refetchTrigger?: number;
 }
 
 interface SortableRowProps {
@@ -134,6 +135,11 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
 }
 
 function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTrigger }: CategoryManagementProps) {
+  const { openCategoryModal, refetchCategories } = useModals();
+  const handleAdd = onAddCategoryClick ?? (() => openCategoryModal());
+  const handleEdit = onEditCategoryClick ?? ((category: Category) => openCategoryModal(category));
+  const trigger = refetchTrigger ?? refetchCategories;
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,7 +174,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
 
   useEffect(() => {
     fetchCategories();
-  }, [refetchTrigger]);
+  }, [trigger]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -232,7 +238,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
             <Button variant="outline" size="sm" className="bg-white rounded-lg h-10 w-10 p-0" onClick={fetchCategories}>
                 <RefreshCw size={16} />
             </Button>
-            <Button onClick={onAddCategoryClick} className="rounded-lg px-6 h-10 italic font-black text-xs">
+             <Button onClick={handleAdd} className="rounded-lg px-6 h-10 italic font-black text-xs">
                 <Plus size={16} className="mr-2" /> NOVA CATEGORIA
             </Button>
         </div>
@@ -268,7 +274,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
                     <SortableRow 
                       key={category.id} 
                       category={category} 
-                      onEdit={onEditCategoryClick}
+                      onEdit={handleEdit}
                       onDelete={handleDelete}
                     />
                   ))}

@@ -28,7 +28,7 @@ const GlobalModals: React.FC = () => {
         <CategoryFormModal
           isOpen={isCategoryModalOpen}
           onClose={closeCategoryModal}
-          category={categoryToEdit}
+          categoryToEdit={categoryToEdit}
           onSave={triggerCategoriesRefetch}
         />
       )}
