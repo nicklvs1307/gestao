@@ -3,7 +3,7 @@ import type { Order, OrderItem } from '../types';
 import { getIntegrationSettings, requestCloseOrder, sendTableRequest } from '../services/api';
 import { X, ReceiptText, UserCheck, CreditCard, ChevronRight, Clock, CheckCircle2, History, Package } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useRestaurant } from '../context/RestaurantContext';
+import { useRestaurant } from '../contexts/RestaurantContext';
 
 interface AccountModalProps {
   isOpen: boolean;

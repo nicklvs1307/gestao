@@ -13,7 +13,7 @@ import ReorderSection from '../components/ReorderSection';
 import BottomNav from '../components/BottomNav';
 import VideoCarousel from '../components/VideoCarousel';
 import { useLocalCart } from '../hooks/useLocalCart';
-import { RestaurantProvider } from '../context/RestaurantContext';
+import { RestaurantProvider } from '../contexts/RestaurantContext';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import PixPaymentModal from '../components/PixPaymentModal';
 import ProductDetailModal from '../components/ProductDetailModal';

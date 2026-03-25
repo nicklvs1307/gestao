@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Order } from '../types';
-import { useRestaurant } from '../context/RestaurantContext';
+import { useRestaurant } from '../contexts/RestaurantContext';
 
 // QR Code estático como placeholder
 const qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://google.com';

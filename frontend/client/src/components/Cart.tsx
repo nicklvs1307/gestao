@@ -4,7 +4,7 @@ import DeliveryCheckout from './DeliveryCheckout';
 import './DeliveryCart.css'; 
 import { Trash2, Minus, Plus, X, ArrowLeft, ShoppingBasket, Truck } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useRestaurant } from '../context/RestaurantContext';
+import { useRestaurant } from '../contexts/RestaurantContext';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 

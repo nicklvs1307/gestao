@@ -8,7 +8,7 @@ import { cn } from '../lib/utils';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { LocationService } from '../services/LocationService';
 import { getPaymentMethods } from '../services/api';
-import { useRestaurant } from '../context/RestaurantContext'; // Adicionado
+import { useRestaurant } from '../contexts/RestaurantContext'; // Adicionado
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
