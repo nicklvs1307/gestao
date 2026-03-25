@@ -18,6 +18,12 @@ class OrderController {
   });
 
   streamOrderEvents = (req, res) => {
+    // Logs para auditoria de SSE
+    console.log('[SSE] streamOrderEvents connection attempt', {
+      restaurantId: req.restaurantId,
+      tokenQuery: req.query?.token,
+      userId: req.user?.id
+    });
     const restaurantId = req.restaurantId;
 
     res.writeHead(200, {

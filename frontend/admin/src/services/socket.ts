@@ -22,9 +22,13 @@ export function getSocket(): Socket {
   const { token, restaurantId } = getSocketConfig();
 
   socket = io(getSocketUrl(), {
+    // Envia token via auth para autenticação no handshake do Socket.IO
+    auth: {
+      token: token || ''
+    },
+    // Mantém o restaurantId no query para join na sala correta no servidor
     query: {
       restaurantId: restaurantId || '',
-      token: token || '',
       timestamp: String(Date.now()),
     },
     transports: ['websocket', 'polling'],
@@ -33,6 +37,13 @@ export function getSocket(): Socket {
     reconnectionDelay: 2000,
     autoConnect: false,
   });
+
+  // Garante que a conexão seja estabelecida automaticamente ao obter o socket
+  try {
+    socket.connect();
+  } catch (e) {
+    // Se já estiver conectado, ignore
+  }
 
   return socket;
 }

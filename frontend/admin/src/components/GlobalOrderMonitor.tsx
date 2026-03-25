@@ -136,6 +136,9 @@ const GlobalOrderMonitor: React.FC = () => {
         
         eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
 
+        eventSource.onopen = () => {
+          console.log('[SSE] Order events stream opened');
+        };
         eventSource.onmessage = (event) => {
           try {
             const eventData = JSON.parse(event.data);
