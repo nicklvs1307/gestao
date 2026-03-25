@@ -1,0 +1,37 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "settings": "Settings"
+  },
+  "orders": {
+    "title": "Orders",
+    "created": "Order created successfully",
+    "empty": "No orders found"
+  },
+  "tableMenu": {
+    "allCategories": "All categories",
+    "searchPlaceholder": "Search dishes or flavors...",
+    "noItemsFound": "No items found",
+    "storeClosed": "Restaurant Closed - We are not accepting new orders",
+    "open": "Open",
+    "closed": "Closed",
+    "table": "Table",
+    "addToCart": "Add to cart",
+    "viewDetails": "View details",
+    "placeOrder": "Place order",
+    "requestAccount": "Request check",
+    "thankYou": "Thank you for your preference!",
+    "orderSuccess": "Order placed successfully!",
+    "info": "Information",
+    "closeAccount": "Close account"
+  }
+}

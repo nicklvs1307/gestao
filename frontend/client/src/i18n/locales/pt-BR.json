@@ -1,0 +1,37 @@
+{
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso"
+  },
+  "nav": {
+    "dashboard": "Painel",
+    "orders": "Pedidos",
+    "settings": "Configurações"
+  },
+  "orders": {
+    "title": "Pedidos",
+    "created": "Pedido criado com sucesso",
+    "empty": "Nenhum pedido encontrado"
+  },
+  "tableMenu": {
+    "allCategories": "Todas as categorias",
+    "searchPlaceholder": "Buscar pratos ou sabores...",
+    "noItemsFound": "Nenhum item encontrado",
+    "storeClosed": "Restaurante Fechado - Não estamos aceitando novos pedidos",
+    "open": "Aberto",
+    "closed": "Fechado",
+    "table": "Mesa",
+    "addToCart": "Adicionar ao carrinho",
+    "viewDetails": "Ver detalhes",
+    "placeOrder": "Fazer pedido",
+    "requestAccount": "Solicitar conta",
+    "thankYou": "Obrigado pela preferência!",
+    "orderSuccess": "Pedido realizado com sucesso!",
+    "info": "Informação",
+    "closeAccount": "Fechar conta"
+  }
+}

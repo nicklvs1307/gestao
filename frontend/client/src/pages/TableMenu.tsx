@@ -15,22 +15,36 @@ import { batchAddItemsToOrder, requestPayment } from '../services/api';
 import type { Product, SizeOption, AddonOption, Category } from '../types';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { useTableSession } from '../hooks/useTableSession';
-import { useRestaurant } from '../context/RestaurantContext';
+import { useRestaurant } from '../contexts/RestaurantContext';
 import { useModal } from '../hooks/useModal';
-import { Search, Heart, Clock, Utensils, User, History, ReceiptText } from 'lucide-react';
+import { useProductFiltering } from '../hooks/useProductFiltering';
+import { Search, Heart, Clock, Utensils, User, History, ReceiptText, X } from 'lucide-react';
 import DeliveryProductCard from '../components/DeliveryProductCard';
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui/Button';
 import { isCategoryAvailable } from '../utils/availability';
+import { CategoryNavigator } from '../components/CategoryNavigator';
+import { ProductGrid } from '../components/ProductGrid';
+import { SearchModal } from '../components/SearchModal';
+import { TableHeader } from '../components/TableHeader';
+import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface TableMenuProps {
   sessionData: any;
+  isThankYouModalOpen: boolean;
+  closeThankYouModal: () => void;
 }
 
-const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
+const TableMenu: React.FC<TableMenuProps> = ({ 
+  sessionData, 
+  isThankYouModalOpen, 
+  closeThankYouModal 
+}) => {
   const { restaurantId, tableNumber } = useParams<{ restaurantId: string; tableNumber: string }>();
   const { restaurantSettings } = useRestaurant();
   const isStoreOpen = restaurantSettings?.isOpen ?? true;
+  const { t } = useTranslation();
 
   // Extrair dados da sessão vindo do Wrapper (Repassado via props)
   const {
@@ -43,17 +57,16 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
     featuredImages,
     isLoading,
   } = sessionData;
-  
+   
   // Cores Dinâmicas
   const primaryColor = restaurantSettings?.primaryColor || '#ea580c'; // Default orange-600
-  
+   
   // Modais
   const { isOpen: isCartOpen, open: openCart, close: closeCart } = useModal();
   const { isOpen: isAccountModalOpen, open: openAccountModal, close: closeAccountModal } = useModal();
   const { isOpen: isProductDetailModalOpen, open: openProductDetailModal, close: closeProductDetailModal } = useModal();
-  const { isOpen: isThankYouModalOpen, open: openThankYouModal } = useModal();
   const { isOpen: isOrderSuccessModalOpen, open: openOrderSuccessModal, close: closeOrderSuccessModal } = useModal();
-  
+   
   const [activeCategory, setActiveCategory] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -66,7 +79,7 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isStoreClosedModalOpen, setStoreClosedModalOpen] = useState(false);
-    
+   
   const {
     localCartItems,
     handleAddToCart: addToCart,
@@ -160,7 +173,7 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
       closeCart();
       openOrderSuccessModal();
     } catch (error) {
-      showInfoModal('Erro ao Enviar', (error as Error).message, 'error');
+      showInfoModal(t('tableMenu.errorSendingOrder'), (error as Error).message, 'error');
     } finally {
       setIsPlacingOrder(false);
     }
@@ -173,57 +186,16 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
       closeAccountModal();
       openThankYouModal();
     } catch (error) {
-      showInfoModal('Erro', (error as Error).message, 'error');
+      showInfoModal(t('tableMenu.error'), (error as Error).message, 'error');
     }
   };
 
-  const filteredProducts = useMemo(() => {
-    // 1. Filtrar produtos que permitem Salão (allowPos), estão disponíveis e NÃO são sabores
-    let products = allProducts.filter((p: any) => p.isAvailable && p.allowPos && !p.isFlavor);
-    
-    // 2. Filtrar produtos cujas categorias permitem Salão e estão ativas
-    const validCategoryIds = new Set(availableCategories.map((c: any) => c.id));
-    
-    products = products.filter((p: any) => {
-        const pCategories = p.categories || [];
-        return pCategories.some((c: any) => validCategoryIds.has(c.id));
-    });
-
-    // 3. Filtro por categoria selecionada (se não for "todos")
-    if (activeCategory !== 'todos') {
-      products = products.filter((p: any) => 
-        p.categoryId === activeCategory || 
-        (p.categories && p.categories.some((c: any) => c.id === activeCategory))
-      );
-    }
-
-    if (searchTerm) {
-      const low = searchTerm.toLowerCase();
-      products = products.filter((p: any) => {
-          // Busca no nome do produto
-          if (p.name.toLowerCase().includes(low)) return true;
-          // Busca na descrição do produto
-          if (p.description?.toLowerCase().includes(low)) return true;
-          
-          // Busca nos sabores (addons que estão nos grupos vinculados)
-          const hasMatchingFlavor = p.addonGroups?.some((group: any) => 
-              group.addons?.some((addon: any) => addon.name.toLowerCase().includes(low))
-          );
-          if (hasMatchingFlavor) return true;
-
-          // Busca nos sabores herdados das categorias
-          const hasMatchingCategoryFlavor = p.categories?.some((cat: any) => 
-              cat.addonGroups?.some((group: any) => 
-                  group.addons?.some((addon: any) => addon.name.toLowerCase().includes(low))
-              )
-          );
-          if (hasMatchingCategoryFlavor) return true;
-
-          return false;
-      });
-    }
-    return products;
-  }, [allProducts, activeCategory, searchTerm, availableCategories]);
+  const filteredProducts = useProductFiltering({
+    allProducts,
+    categories,
+    activeCategory,
+    searchTerm,
+  });
 
   return (
     <SplashScreenHandler
@@ -240,225 +212,103 @@ const TableMenu: React.FC<TableMenuProps> = ({ sessionData }) => {
         {/* Banner Loja Fechada */}
         {!isStoreOpen && (
             <div className="bg-red-600 text-white p-3 text-center sticky top-0 z-[100] font-black uppercase text-xs tracking-widest animate-pulse flex items-center justify-center gap-2">
-                <Clock size={16} /> Restaurante Fechado - Não estamos aceitando novos pedidos
+                <Clock size={16} /> {t('tableMenu.storeClosed')}
             </div>
         )}
 
         {/* HEADER MODERNO */}
-        <header className="p-5 pb-2">
-            <div className="flex justify-between items-start mb-4">
-                <div className="flex gap-4">
-                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl border-4 border-white overflow-hidden shrink-0">
-                        {restaurantSettings?.restaurantLogo ? (
-                            <img src={restaurantSettings.restaurantLogo} className="w-full h-full object-contain" alt="Logo" />
-                        ) : (
-                            <span className="font-black italic text-primary">FS</span>
-                        )}
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-slate-900 leading-tight uppercase tracking-tighter italic">
-                            {restaurantSettings?.restaurantName || 'Carregando...'}
-                        </h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            {isStoreOpen ? (
-                                <span className="bg-slate-900 text-white text-[10px] font-black px-2.5 py-1 rounded-lg tracking-[0.1em] uppercase">
-                                    Mesa {tableNumber}
-                                </span>
-                            ) : (
-                                <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg tracking-[0.1em] uppercase">
-                                    Fechado
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <button 
-                        onClick={() => setIsSearchOpen(true)}
-                        className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-400 active:scale-90 transition-all"
-                    >
-                        <Search size={22} />
-                    </button>
-                    <button 
-                        onClick={openAccountModal}
-                        className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-400 active:scale-90 transition-all"
-                    >
-                        <ReceiptText size={22} />
-                    </button>
-                </div>
-            </div>
-        </header>
+        <TableHeader 
+          restaurantSettings={restaurantSettings}
+          tableNumber={tableNumber}
+          isStoreOpen={isStoreOpen}
+          onSearchOpen={() => setIsSearchOpen(true)}
+          onOpenAccountModal={openAccountModal}
+          t={t}
+        />
 
         {/* VIDEO BANNERS (MP4) */}
         <div className="px-5 mb-8">
-            <VideoCarousel videos={restaurantSettings?.videoBanners || []} />
+          <VideoCarousel videos={restaurantSettings?.videoBanners || []} />
         </div>
         {/* NAVEGAÇÃO DE CATEGORIAS */}
-        <nav className="sticky top-0 bg-background/90 backdrop-blur-md z-30 py-4 border-b border-border overflow-x-auto no-scrollbar flex gap-3 px-5">
-            <button 
-                onClick={() => setActiveCategory('todos')}
-                className={cn(
-                    "px-6 py-3 rounded-2xl font-black text-xs uppercase italic tracking-widest transition-all",
-                    activeCategory === 'todos' ? "bg-primary text-white shadow-lg shadow-primary/30" : "bg-slate-100 text-slate-400"
-                )}
-            >
-                🔥 Tudo
-            </button>
-            {availableCategories.map((cat: any) => (
-                <button 
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={cn(
-                        "px-6 py-3 rounded-2xl font-black text-xs uppercase italic tracking-widest whitespace-nowrap transition-all",
-                        activeCategory === cat.id ? "bg-primary text-white shadow-lg shadow-primary/30" : "bg-slate-100 text-slate-400"
-                    )}
-                >
-                    {cat.name}
-                </button>
-            ))}
-        </nav>
+        <CategoryNavigator 
+          categories={availableCategories} 
+          activeCategory={activeCategory} 
+          setActiveCategory={setActiveCategory} 
+        />
 
         {/* LISTAGEM DE PRODUTOS */}
         <main className="p-5">
-            {isLoading && allProducts.length === 0 ? (
-                <div className="grid grid-cols-2 gap-4">
-                    {[1,2,3,4].map(i => (
-                        <div key={i} className="aspect-[4/5] bg-slate-100 animate-pulse rounded-3xl" />
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-2 gap-4">
-                    {filteredProducts.map(product => (
-                        <DeliveryProductCard 
-                            key={product.id} 
-                            product={product} 
-                            onAddToCart={() => handleProductClick(product)} 
-                        />
-                    ))}
-                </div>
-            )}
-            {!isLoading && filteredProducts.length === 0 && (
-                <div className="py-20 text-center opacity-30 flex flex-col items-center gap-4 grayscale">
-                    <Search size={48} strokeWidth={1} />
-                    <p className="font-black uppercase tracking-widest text-xs">Nenhum item encontrado</p>
-                </div>
-            )}
+          <ProductGrid 
+            products={filteredProducts} 
+            isLoading={isLoading} 
+            onProductClick={handleProductClick} 
+          />
         </main>
 
         {/* FOOTER E CARRINHO */}
         <FooterCart 
-            items={localCartItems}
-            total={localCartTotal}
-            onClick={openCart}
+          items={localCartItems}
+          total={localCartTotal}
+          onClick={openCart}
         />
 
         <Cart 
-            isOpen={isCartOpen} 
-            onClose={closeCart} 
-            items={localCartItems}
-            total={localCartTotal}
-            onRemoveItem={handleRemoveFromCart}
-            onUpdateItemQuantity={handleUpdateCartItemQuantity}
-            onSubmitOrder={handlePlaceOrder}
-            isPlacingOrder={isPlacingOrder}
-            isDelivery={false}
+          isOpen={isCartOpen} 
+          onClose={closeCart} 
+          items={localCartItems}
+          total={localCartTotal}
+          onRemoveItem={handleRemoveFromCart}
+          onUpdateItemQuantity={handleUpdateCartItemQuantity}
+          onSubmitOrder={handlePlaceOrder}
+          isPlacingOrder={isPlacingOrder}
+          isDelivery={false}
         />
-{/* MODAL DE BUSCA OVERLAY */}
-<AnimatePresence>
-  {isSearchOpen && (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] bg-white flex flex-col"
-    >
-      <div className="p-5 flex items-center gap-4 border-b border-slate-100">
-          <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                  autoFocus
-                  type="text" 
-                  placeholder="Buscar pratos ou sabores..." 
-                  className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-slate-400 text-slate-900 font-bold"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-              />
-          </div>
-          <button 
-              onClick={() => {
-                  setIsSearchOpen(false);
-                  setSearchTerm('');
-              }}
-              className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400"
-          >
-              <X size={20} />
-          </button>
-      </div>
+        {/* MODAL DE BUSCA OVERLAY */}
+        <SearchModal 
+          isOpen={isSearchOpen}
+          onClose={() => {
+            setIsSearchOpen(false);
+            setSearchTerm('');
+          }}
+          filteredProducts={filteredProducts}
+          onProductClick={handleProductClick}
+          t={t}
+        />
 
-      <div className="flex-1 overflow-y-auto p-5 pb-10">
-          {searchTerm && (
-              <div className="mb-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resultados para "{searchTerm}"</p>
-              </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredProducts.map((p) => (
-                  <DeliveryProductCard 
-                      key={p.id} 
-                      product={p} 
-                      onClick={() => {
-                          handleProductClick(p);
-                          setIsSearchOpen(false);
-                      }} 
-                  />
-              ))}
-              {searchTerm && filteredProducts.length === 0 && (
-                  <div className="col-span-full py-20 text-center">
-                      <Utensils className="mx-auto text-slate-200 mb-4" size={48} />
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nenhum item encontrado</p>
-                  </div>
-              )}
-          </div>
-      </div>
-    </motion.div>
-  )}
-</AnimatePresence>
-
-<AccountModal 
-  isOpen={isAccountModalOpen} 
-
-            onClose={closeAccountModal} 
-            order={order}
-            onRequestClose={handleRequestAccountClosure}
-            showInfoModal={showInfoModal}
+        <AccountModal 
+          isOpen={isAccountModalOpen} 
+          onClose={closeAccountModal} 
+          order={order}
+          onRequestClose={handleRequestAccountClosure}
+          showInfoModal={showInfoModal}
         />
 
         <ProductDetailModal 
-            isOpen={isProductDetailModalOpen} 
-            onClose={closeProductDetailModal}
-            product={selectedProduct}
-            allProducts={allProducts}
-            promotions={promotions}
-            onAddToCart={handleAddToCart}
-            isStoreOpen={isStoreOpen}
+          isOpen={isProductDetailModalOpen} 
+          onClose={closeProductDetailModal}
+          product={selectedProduct}
+          allProducts={allProducts}
+          promotions={promotions}
+          onAddToCart={handleAddToCart}
+          isStoreOpen={isStoreOpen}
         />
 
         <StoreClosedModal 
-            isOpen={isStoreClosedModalOpen}
-            onClose={() => setStoreClosedModalOpen(false)}
-            restaurantName={restaurantSettings?.restaurant?.name}
+          isOpen={isStoreClosedModalOpen}
+          onClose={() => setStoreClosedModalOpen(false)}
+          restaurantName={restaurantSettings?.restaurant?.name}
         />
 
         <OrderSuccessModal isOpen={isOrderSuccessModalOpen} onClose={closeOrderSuccessModal} />
         <ThankYouModal isOpen={isThankYouModalOpen} logoUrl={restaurantSettings?.restaurantLogo} order={order} />
         
         <InfoModal 
-            isOpen={infoModal.isOpen}
-            onClose={() => setInfoModal({ ...infoModal, isOpen: false })}
-            title={infoModal.title}
-            message={infoModal.message}
-            type={infoModal.type}
+          isOpen={infoModal.isOpen}
+          onClose={() => setInfoModal({ ...infoModal, isOpen: false })}
+          title={infoModal.title}
+          message={infoModal.message}
+          type={infoModal.type}
         />
       </div>
     </SplashScreenHandler>

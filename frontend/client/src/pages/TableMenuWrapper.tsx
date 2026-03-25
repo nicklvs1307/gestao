@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { RestaurantProvider } from '../context/RestaurantContext';
+import { RestaurantProvider } from '../contexts/RestaurantContext';
 import { useModal } from '../hooks/useModal';
 import TableMenu from './TableMenu';
 import { useTableSession } from '../hooks/useTableSession';
@@ -35,15 +35,15 @@ const TableMenuWrapper: React.FC<TableMenuWrapperProps> = ({
 
   if (session.isLoading && !session.allProducts.length) return (
     <div className="flex h-screen flex-col items-center justify-center bg-gray-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Sincronizando Sessão de Mesa...</p>
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Sincronizando Sessão de Mesa...</p>
     </div>
   );
-  
+
   if (session.error) return (
     <div className="flex h-screen flex-col items-center justify-center p-10 text-center">
-        <div className="text-red-500 font-black uppercase text-xl italic tracking-tighter mb-4">Erro Crítico</div>
-        <div className="text-slate-400 font-bold text-xs uppercase tracking-widest leading-loose max-w-xs">{session.error}</div>
+      <div className="text-red-500 font-black uppercase text-xl italic tracking-tighter mb-4">Erro Crítico</div>
+      <div className="text-slate-400 font-bold text-xs uppercase tracking-widest leading-loose max-w-xs">{session.error}</div>
     </div>
   );
 
