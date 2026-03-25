@@ -92,7 +92,7 @@ class CategoryController {
   });
 
   createCategory = asyncHandler(async (req, res) => {
-    const { addonGroups, ...rest } = req.body;
+    const { addonGroups, halfAndHalfRule, ...rest } = req.body;
     const category = await prisma.category.create({
       data: {
         ...rest,
@@ -107,7 +107,7 @@ class CategoryController {
 
   updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { addonGroups, ...rest } = req.body;
+    const { addonGroups, halfAndHalfRule, ...rest } = req.body;
     const category = await prisma.category.update({
       where: { id },
       data: {
