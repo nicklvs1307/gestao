@@ -188,7 +188,33 @@ router.patch('/delivery-orders/:orderId/assign-driver', authenticateToken, setRe
     }
 });
 
-// Rota para buscar detalhes de um pedido (PROTEGIDO - ou com token de pedido)
+// Rota pública para acompanhamento de pedido (sem autenticação)
+router.get('/public/order/:orderId', async (req, res) => {
+    const { orderId } = req.params;
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                items: { include: { product: true } },
+                deliveryOrder: true,
+                restaurant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        logoUrl: true
+                    }
+                }
+            }
+        });
+        if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar pedido.' });
+    }
+});
+
+// Rota para buscar detalhes de um pedido (PROTEGIDA - admin/restaurante)
 router.get('/order/:orderId', authenticateToken, async (req, res) => {
     const { orderId } = req.params;
     try {

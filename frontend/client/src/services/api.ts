@@ -77,7 +77,7 @@ export const checkPixStatus = async (orderId: string) => {
 };
 
 export const getOrderById = async (orderId: string): Promise<Order> => {
-  const response = await apiClient.get(`/delivery/order/${orderId}`);
+  const response = await apiClient.get(`/delivery/public/order/${orderId}`);
   return response.data;
 };
 
