@@ -1,5 +1,6 @@
 const axios = require('axios');
 const prisma = require('../lib/prisma');
+const GeocodingService = require('./GeocodingService');
 const socketLib = require('../lib/socket');
 
 class SaiposService {
@@ -185,10 +186,14 @@ class SaiposService {
           mode = 'DELIVERY';
       }
       
+      // Definição do método de entrega. Espera-se que a data/hora tenha
+      // o fuso correto (UTC ou offset conforme doc). Tenta usar deliveryDateTime
+      // vindo do pedido, senão use a hora atual.
+      const deliveryDateSource = order.deliveryOrder?.deliveryDateTime || order.deliveryOrder?.deliveryTime || order.createdAt;
       let orderMethod = {
           mode: mode,
           scheduled: false,
-          delivery_date_time: new Date().toISOString()
+          delivery_date_time: deliveryDateSource ? new Date(deliveryDateSource).toISOString() : new Date().toISOString()
       };
 
       // Sempre envia delivery_by e delivery_fee se for DELIVERY (Exigência Saipos erro 902)
@@ -223,9 +228,19 @@ class SaiposService {
           street_number: normalize(c?.number || 'S/N'),
           postal_code: (c?.zipCode || '00000000').replace(/\D/g, ''),
           reference: normalize(c?.reference || ''),
-          complement: normalize(c?.complement || ''),
-          coordinates: { latitude: 0, longitude: 0 }
+          complement: normalize(c?.complement || '')
+          // coordinates serão preenchidas abaixo via geocoding
         };
+
+        // 3b. Obtém coordenadas via geocoding (ORS/Nominatim) para o endereço de entrega
+        // Se não houver serviço de geocoding disponível ou falhar, mantém coordenadas 0,0
+        try {
+          const addressForGeocode = `${deliveryAddress.street_name}, ${deliveryAddress.street_number}, ${deliveryAddress.district}, ${deliveryAddress.city}, ${deliveryAddress.state}`;
+          const coords = await GeocodingService.getCoordinates(addressForGeocode);
+          deliveryAddress.coordinates = coords ? { latitude: coords.lat, longitude: coords.lng } : { latitude: 0, longitude: 0 };
+        } catch (ge) {
+          deliveryAddress.coordinates = { latitude: 0, longitude: 0 };
+        }
 
         console.log(`[SAIPOS] Endereço montado - Cidade: ${deliveryAddress.city} (via ${citySource}), UF: ${deliveryAddress.state} (via ${stateSource})`);
       }
