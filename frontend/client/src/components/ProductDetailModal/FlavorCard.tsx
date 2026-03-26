@@ -166,7 +166,7 @@ const FlavorCard: React.FC<FlavorCardProps> = ({
 
 export default React.memo(FlavorCard);
 
-function PizzaIcon({ size }: { size: number }) {
+export function PizzaIcon({ size }: { size: number }) {
   return (
     <svg 
       width={size} 
