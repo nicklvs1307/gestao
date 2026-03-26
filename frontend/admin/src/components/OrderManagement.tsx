@@ -68,7 +68,7 @@ const OrderManagement: React.FC = () => {
     fetchOrders();
 
     // Socket.io for real-time updates
-    on('order_update', (eventData: any) => {
+    const handleOrderUpdate = (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
       
       // Apenas processar se for DELIVERY
@@ -92,10 +92,12 @@ const OrderManagement: React.FC = () => {
         }
         return current;
       });
-    });
+    };
+
+    on('order_update', handleOrderUpdate);
 
     return () => {
-      off('order_update');
+      off('order_update', handleOrderUpdate);
     };
   }, [on, off]); // Removido selectedOrder para evitar loops
 
