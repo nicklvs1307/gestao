@@ -1,3 +1,4 @@
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const AppError = require('../utils/AppError');
 
@@ -221,7 +222,7 @@ class CashierService {
         safeDepositAmount = Math.round((informedCash - nextShiftFloat) * 100) / 100;
     }
 
-    console.log(`[CASHIER_SERVICE] Calculando fechamento: 
+    logger.info(`[CASHIER_SERVICE] Calculando fechamento: 
         Esperado: ${expectedAmount}
         Informado: ${finalAmount}
         Diferença: ${difference}

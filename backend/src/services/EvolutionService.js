@@ -1,4 +1,5 @@
 const axios = require('axios');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const OpenAI = require('openai');
 const fs = require('fs');
@@ -27,20 +28,20 @@ class EvolutionService {
    * Função auxiliar para logar erros de forma detalhada
    */
   _logError(method, error) {
-    console.error(`Erro em ${method} da Evolution API:`);
+    logger.error(`Erro em ${method} da Evolution API:`);
     if (error.response) {
-      console.error('  Status:', error.response.status);
-      console.error('  Data:', error.response.data);
+      logger.error('  Status:', error.response.status);
+      logger.error('  Data:', error.response.data);
       if (error.response.data && error.response.data.response && error.response.data.response.message) {
-        console.error('  Evolution API Message:', JSON.stringify(error.response.data.response.message, null, 2));
+        logger.error('  Evolution API Message:', JSON.stringify(error.response.data.response.message, null, 2));
       }
-      console.error('  Headers:', error.response.headers);
+      logger.error('  Headers:', error.response.headers);
     } else if (error.request) {
-      console.error('  No response received:', error.request);
+      logger.error('  No response received:', error.request);
     } else {
-      console.error('  Message:', error.message);
+      logger.error('  Message:', error.message);
     }
-    console.error('  Config:', error.config);
+    logger.error('  Config:', error.config);
   }
 
   /**
@@ -226,7 +227,7 @@ class EvolutionService {
    */
   async transcribeAudio(instanceName, messageKey) {
     if (!this.openai) {
-      console.warn('OpenAI não configurado para transcrição de áudio.');
+      logger.warn('OpenAI não configurado para transcrição de áudio.');
       return null;
     }
 
@@ -242,7 +243,7 @@ class EvolutionService {
       
       const base64Data = response.data.base64;
       if (!base64Data) {
-        console.warn('Base64 do áudio não recebido da Evolution API.');
+        logger.warn('Base64 do áudio não recebido da Evolution API.');
         return null;
       }
 

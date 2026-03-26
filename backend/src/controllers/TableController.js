@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const TableService = require('../services/TableService');
 const asyncHandler = require('../middlewares/asyncHandler');
 const { CreateTableSchema, TableCheckoutSchema, PartialPaymentSchema, TableRequestSchema } = require('../schemas/tableSchema');
@@ -128,7 +129,7 @@ class TableController {
 
     // Emissão Fiscal Automática (Background)
     this._triggerFiscalEmission(req.restaurantId, result.orders).catch(err => 
-        console.error("[FISCAL] Checkout Error:", err.message)
+        logger.error("[FISCAL] Checkout Error:", err.message)
     );
 
     res.json({ success: true });

@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../config/logger');
 const router = express.Router();
 const CustomerController = require('../controllers/CustomerController');
 const { needsAuth } = require('../middlewares/auth');
@@ -38,7 +39,7 @@ router.get('/search', needsAuth, async (req, res) => {
         });
         res.json({ customers });
     } catch (error) {
-        console.error("Erro ao buscar clientes:", error);
+        logger.error("Erro ao buscar clientes:", error);
         res.status(500).json({ error: 'Erro ao buscar clientes.' });
     }
 });

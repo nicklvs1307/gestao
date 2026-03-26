@@ -1,3 +1,5 @@
+const { validatePassword } = require('../utils/passwordValidator');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 
@@ -22,7 +24,7 @@ const getMyRestaurants = async (req, res) => {
         });
         res.json(restaurants);
     } catch (error) {
-        console.error("ERRO [getMyRestaurants]:", error);
+        logger.error("ERRO [getMyRestaurants]:", error);
         res.status(500).json({ error: 'Erro ao buscar restaurantes da franquia.' });
     }
 };
@@ -35,6 +37,11 @@ const createRestaurant = async (req, res) => {
     } = req.body;
 
     if (!franchiseId) return res.status(403).json({ error: 'Apenas franqueadores podem criar lojas.' });
+
+    const passwordError = validatePassword(adminPassword);
+    if (passwordError) {
+        return res.status(400).json({ error: passwordError });
+    }
 
     try {
         const result = await prisma.$transaction(async (tx) => {
@@ -80,7 +87,7 @@ const createRestaurant = async (req, res) => {
 
         res.status(201).json(result);
     } catch (error) {
-        console.error("Erro ao criar restaurante na franquia:", error);
+        logger.error("Erro ao criar restaurante na franquia:", error);
         if (error.code === 'P2002') {
             return res.status(400).json({ error: 'Conflito de dados: Nome, Slug ou E-mail já existem.' });
         }

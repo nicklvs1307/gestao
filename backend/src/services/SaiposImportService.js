@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const XLSX = require('xlsx');
 
 class SaiposImportService {
@@ -152,7 +153,7 @@ class SaiposImportService {
             };
 
         } catch (error) {
-            console.error('Erro na importação:', error);
+            logger.error('Erro na importação:', error);
             throw new Error('Falha ao processar o arquivo de importação: ' + error.message);
         }
     }

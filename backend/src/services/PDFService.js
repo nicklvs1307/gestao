@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const logger = require('../config/logger');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -133,14 +134,14 @@ class PDFService {
                       doc.image(optimizedBuffer, 55, doc.y, { width: imgWidth, height: imgHeight });
                       doc.y += imgHeight + 15; // Move o cursor para baixo da imagem
                     } catch (sharpError) {
-                      console.error("Erro ao otimizar imagem:", sharpError);
+                      logger.error("Erro ao otimizar imagem:", sharpError);
                     }
                   }
                 }
                 doc.moveDown(1);
               }
             } catch (e) {
-              console.error("Erro ao processar JSON de fotos:", e);
+              logger.error("Erro ao processar JSON de fotos:", e);
             }
           } else {
               doc.moveDown(1.5); // Espaço se não tiver foto

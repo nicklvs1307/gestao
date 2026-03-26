@@ -93,6 +93,7 @@ const deliveryRoutes = require('./src/routes/deliveryRoutes');
 const driverRoutes = require('./src/routes/driverRoutes');
 const deliveryAreaRoutes = require('./src/routes/deliveryAreaRoutes');
 const paymentMethodRoutes = require('./src/routes/paymentMethodRoutes');
+const paymentRoutes = require('./src/routes/paymentRoutes');
 const superAdminRoutes = require('./src/routes/superAdminRoutes');
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 const whatsappRoutes = require('./src/routes/whatsappRoutes');
@@ -135,6 +136,7 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/delivery-areas', deliveryAreaRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 
 // KDS Alias
@@ -157,8 +159,8 @@ app.post('/api/client/orders/:orderId/batch-add-items', OrderController.addItems
 app.post('/api/client/orders/:orderId/request-close', TableController.requestClose);
 app.post('/api/tables/:tableId/request-payment', needsAuth, TableController.requestPayment);
 
-// Client integration settings (public, read-only)
-app.get('/api/client/integration-settings/:restaurantId', async (req, res) => {
+// Client integration settings (auth required)
+app.get('/api/client/integration-settings/:restaurantId', needsAuth, async (req, res) => {
   try {
     const integrationSettings = await require('./src/lib/prisma').integrationSettings.findUnique({
       where: { restaurantId: req.params.restaurantId },
@@ -168,6 +170,11 @@ app.get('/api/client/integration-settings/:restaurantId', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar configurações de integração.' });
   }
+});
+
+// Health check for monitoring/Docker
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 // Root

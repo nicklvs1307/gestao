@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const SaiposService = require('./SaiposService');
 const PricingService = require('./PricingService');
 const InventoryService = require('./InventoryService');
@@ -91,7 +92,7 @@ async function emitOrderUpdate(orderId, eventType = 'ORDER_UPDATED') {
       eventEmitter.emit('order_update', eventData);
     }
   } catch (error) {
-    console.error(`[Socket/SSE] Failed to emit event for order ${orderId}:`, error);
+    logger.error(`[Socket/SSE] Failed to emit event for order ${orderId}:`, error);
   }
 }
 
@@ -170,7 +171,7 @@ class OrderService {
    * Cria um pedido completo de forma transacional.
    */
   async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName, discount = 0, extraCharge = 0 }) {
-    console.log(`[ORDER] Iniciando criação de pedido para restaurante: ${restaurantId}`);
+    logger.info(`[ORDER] Iniciando criação de pedido para restaurante: ${restaurantId}`);
     
     // 1. Preparação dos Itens (Utiliza método unificado)
     const { processedItems, subtotal: orderTotal } = await this._processOrderItems(items);
@@ -181,7 +182,7 @@ class OrderService {
     });
 
     if (!restaurant) {
-        console.error(`[ORDER ERROR] Restaurante não encontrado: ${restaurantId}`);
+        logger.error(`[ORDER ERROR] Restaurante não encontrado: ${restaurantId}`);
         throw new Error(`Restaurante não encontrado: ${restaurantId}`);
     }
     
@@ -206,7 +207,7 @@ class OrderService {
             } else {
                 fullAddress = deliveryInfo.address || 'Endereço não informado';
             }
-            console.log(`[ORDER] Buscando coordenadas para: ${fullAddress}`);
+            logger.info(`[ORDER] Buscando coordenadas para: ${fullAddress}`);
             coords = await GeocodingService.getCoordinates(fullAddress);
         }
     }
@@ -240,7 +241,7 @@ class OrderService {
       tableNumber: (finalOrderType === 'TABLE' && tableNumber) ? parseInt(tableNumber) : null
     };
 
-    console.log(`[ORDER] Iniciando transação do banco de dados...`);
+    logger.info(`[ORDER] Iniciando transação do banco de dados...`);
     const newOrder = await prisma.$transaction(async (tx) => {
         if (finalOrderType === 'DELIVERY') {
             const openSession = await tx.cashierSession.findFirst({
@@ -367,11 +368,11 @@ class OrderService {
         });
     }, { timeout: 30000 });
 
-    SaiposService.sendOrderToSaipos(newOrder.id).catch(err => console.error('[SAIPOS ERROR] Erro ao enviar pedido:', err));
+    SaiposService.sendOrderToSaipos(newOrder.id).catch(err => logger.error('[SAIPOS ERROR] Erro ao enviar pedido:', err));
     const finalOrder = await prisma.order.findUnique({ where: { id: newOrder.id }, include: fullOrderInclude });
     
     if (finalOrder && finalOrder.orderType === 'DELIVERY' && finalOrder.deliveryOrder?.phone) {
-        WhatsAppNotificationService.notifyOrderUpdate(finalOrder.id, finalOrder.status).catch(err => console.error('[WhatsApp Notification ERROR]:', err));
+        WhatsAppNotificationService.notifyOrderUpdate(finalOrder.id, finalOrder.status).catch(err => logger.error('[WhatsApp Notification ERROR]:', err));
     }
 
     emitOrderUpdate(finalOrder.id, 'ORDER_CREATED');
@@ -382,7 +383,7 @@ class OrderService {
    * Adiciona itens a um pedido existente
    */
   async addItemsToOrder(orderId, items, userId = null) {
-    console.log(`[ORDER] Adicionando itens ao pedido: ${orderId}`);
+    logger.info(`[ORDER] Adicionando itens ao pedido: ${orderId}`);
 
     const originalOrder = await prisma.order.findUnique({
         where: { id: orderId },
@@ -421,7 +422,7 @@ class OrderService {
         });
     });
 
-    SaiposService.sendOrderToSaipos(orderId).catch(err => console.error('[SAIPOS] AddItems Error:', err));
+    SaiposService.sendOrderToSaipos(orderId).catch(err => logger.error('[SAIPOS] AddItems Error:', err));
     emitOrderUpdate(result.id);
     return result;
   }
@@ -482,11 +483,11 @@ class OrderService {
     });
 
     if (status === 'COMPLETED') {
-        this._triggerAutomaticInvoice(updatedOrder).catch(err => console.error('[FISCAL BACKGROUND]', err));
+        this._triggerAutomaticInvoice(updatedOrder).catch(err => logger.error('[FISCAL BACKGROUND]', err));
     }
     
     emitOrderUpdate(updatedOrder.id);
-    WhatsAppNotificationService.notifyOrderUpdate(updatedOrder.id, status).catch(err => console.error('[WhatsApp Notification] Error:', err));
+    WhatsAppNotificationService.notifyOrderUpdate(updatedOrder.id, status).catch(err => logger.error('[WhatsApp Notification] Error:', err));
     return await prisma.order.findUnique({ where: { id: updatedOrder.id }, include: fullOrderInclude });
   }
 
@@ -600,7 +601,7 @@ class OrderService {
   }
 
   async updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge }) {
-    console.log(`[ORDER] Atualizando dados financeiros do pedido ${orderId}`);
+    logger.info(`[ORDER] Atualizando dados financeiros do pedido ${orderId}`);
     
     const result = await prisma.$transaction(async (tx) => {
         // 1. Atualiza o pedido principal (Order)
@@ -705,7 +706,7 @@ class OrderService {
         });
     });
 
-    SaiposService.sendOrderToSaipos(orderId).catch(err => console.error('[SAIPOS] UpdateDeliveryType Sync Error:', err));
+    SaiposService.sendOrderToSaipos(orderId).catch(err => logger.error('[SAIPOS] UpdateDeliveryType Sync Error:', err));
     emitOrderUpdate(orderId);
     return result;
   }
@@ -833,7 +834,7 @@ class OrderService {
   }
 
   async _triggerAutomaticInvoice(order) {
-      console.log(`[FISCAL] Analisando pedido #${order.id} para emissão automática...`);
+      logger.info(`[FISCAL] Analisando pedido #${order.id} para emissão automática...`);
   }
 }
 

@@ -5,7 +5,7 @@ class ProductController {
   // GET /api/products
   getAll = async (req, res, next) => {
     try {
-      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
+      const restaurantId = req.restaurantId;
       const products = await ProductService.getAllProducts(restaurantId, req.query, false);
       res.json(products);
     } catch (error) {
@@ -17,7 +17,7 @@ class ProductController {
   getOne = async (req, res, next) => {
     try {
       const { id } = req.params;
-      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
+      const restaurantId = req.restaurantId;
       const product = await ProductService.getProductById(id, restaurantId, false);
       res.json(product);
     } catch (error) {
@@ -27,7 +27,7 @@ class ProductController {
 
   create = async (req, res, next) => {
     try {
-      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
+      const restaurantId = req.restaurantId;
       const product = await ProductService.createProduct(req.body, restaurantId);
       res.status(201).json(product);
     } catch (error) {
@@ -38,7 +38,7 @@ class ProductController {
   update = async (req, res, next) => {
     try {
       const { id } = req.params;
-      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
+      const restaurantId = req.restaurantId;
       const product = await ProductService.updateProduct(id, req.body, restaurantId);
       res.json(product);
     } catch (error) {
@@ -49,7 +49,7 @@ class ProductController {
   delete = async (req, res, next) => {
     try {
       const { id } = req.params;
-      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
+      const restaurantId = req.restaurantId;
       await ProductService.deleteProduct(id, restaurantId);
       res.status(204).end();
     } catch (error) {
@@ -59,7 +59,7 @@ class ProductController {
 
   getPricingAnalysis = async (req, res, next) => {
     try {
-      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
+      const restaurantId = req.restaurantId;
       const analysis = await ProductService.getPricingAnalysis(restaurantId);
       res.json(analysis);
     } catch (error) {
@@ -69,7 +69,7 @@ class ProductController {
 
   reorderProducts = async (req, res, next) => {
     try {
-      const restaurantId = req.restaurantId || (req.user && req.user.restaurantId);
+      const restaurantId = req.restaurantId;
       const { products } = req.body;
       await ProductService.reorderProducts(products, restaurantId);
       res.status(200).json({ status: 'success', message: 'Products reordered successfully' });

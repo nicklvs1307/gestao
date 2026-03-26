@@ -1,3 +1,4 @@
+const FinancialService = require('./FinancialService');
 const prisma = require('../lib/prisma');
 
 class TableService {
@@ -118,16 +119,7 @@ class TableService {
         }
 
         // 4. Registro Financeiro
-        // Busca ou cria categoria de vendas
-        let category = await tx.transactionCategory.findFirst({
-            where: { restaurantId, name: 'Vendas' }
-        });
-
-        if (!category) {
-            category = await tx.transactionCategory.create({
-                data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId }
-            });
-        }
+        const category = await FinancialService.getOrCreateVendasCategory(restaurantId, tx);
 
         const openSession = await tx.cashierSession.findFirst({
             where: { restaurantId, status: 'OPEN' }
@@ -183,15 +175,7 @@ class TableService {
         }
 
         // 3. Registro Financeiro com categoria correta
-        let category = await tx.transactionCategory.findFirst({
-            where: { restaurantId, name: 'Vendas' }
-        });
-
-        if (!category) {
-            category = await tx.transactionCategory.create({
-                data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId }
-            });
-        }
+        const category = await FinancialService.getOrCreateVendasCategory(restaurantId, tx);
 
         const openSession = await tx.cashierSession.findFirst({
             where: { restaurantId, status: 'OPEN' }

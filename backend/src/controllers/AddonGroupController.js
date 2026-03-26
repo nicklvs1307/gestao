@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 
 const getAddonGroups = async (req, res) => {
     try {
@@ -20,7 +21,7 @@ const getAddonGroups = async (req, res) => {
         });
         res.json(groups);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao buscar biblioteca de complementos.' });
     }
 };
@@ -51,7 +52,7 @@ const getAddonGroupById = async (req, res) => {
 
         res.json(group);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao buscar grupo de complementos.' });
     }
 };
@@ -98,7 +99,7 @@ const createAddonGroup = async (req, res) => {
         });
         res.status(201).json(newGroup);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao criar grupo de complementos.' });
     }
 };
@@ -155,7 +156,7 @@ const duplicateAddonGroup = async (req, res) => {
 
         res.status(201).json(duplicatedGroup);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao duplicar grupo de complementos.' });
     }
 };
@@ -200,7 +201,7 @@ const updateAddonGroup = async (req, res) => {
         });
         res.json(updatedGroup);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao atualizar grupo de complementos.' });
     }
 };
@@ -210,7 +211,7 @@ const deleteAddonGroup = async (req, res) => {
         await prisma.addonGroup.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao excluir grupo de complementos.' });
     }
 };
@@ -255,7 +256,7 @@ const updateAddon = async (req, res) => {
         });
         res.json(updated);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao atualizar adicional individual.' });
     }
 };

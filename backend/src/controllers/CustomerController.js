@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const { normalizePhone } = require('../lib/phoneUtils');
 
 class CustomerController {
@@ -39,7 +40,7 @@ class CustomerController {
         }
       });
     } catch (error) {
-      console.error('Erro ao listar clientes:', error);
+      logger.error('Erro ao listar clientes:', error);
       res.status(500).json({ error: 'Erro ao listar clientes.' });
     }
   }

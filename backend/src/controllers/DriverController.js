@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 
 class DriverController {
   constructor() {
@@ -143,7 +144,7 @@ class DriverController {
           availableOrders
       });
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       res.status(500).json({ error: 'Erro ao buscar pedidos para o entregador.' });
     }
   }
@@ -176,7 +177,7 @@ class DriverController {
 
       res.json({ success: true });
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       res.status(500).json({ error: 'Erro ao atualizar status da entrega.' });
     }
   }

@@ -1,10 +1,11 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const FiscalService = require('../services/FiscalService');
 const AdmZip = require('adm-zip');
 
 // Obter Configurações Fiscais
 exports.getFiscalConfig = async (req, res) => {
-  const { restaurantId } = req.user;
+  const { restaurantId } = req;
   try {
     let config = await prisma.restaurantFiscalConfig.findUnique({
       where: { restaurantId }
@@ -23,7 +24,7 @@ exports.getFiscalConfig = async (req, res) => {
 
 // Salvar/Atualizar Configurações Fiscais
 exports.saveFiscalConfig = async (req, res) => {
-  const { restaurantId } = req.user;
+  const { restaurantId } = req;
   const { 
     companyName, cnpj, ie, im, taxRegime,
     zipCode, street, number, complement, neighborhood, city, state, ibgeCode,
@@ -53,7 +54,7 @@ exports.saveFiscalConfig = async (req, res) => {
 
 // Upload do Certificado A1
 exports.uploadCertificate = async (req, res) => {
-    const { restaurantId } = req.user;
+    const { restaurantId } = req;
     const { password } = req.body;
     
     if (!req.file) return res.status(400).json({ error: 'Arquivo de certificado não enviado.' });
@@ -77,7 +78,7 @@ exports.uploadCertificate = async (req, res) => {
 
 // Listar Notas Fiscais
 exports.getInvoices = async (req, res) => {
-    const { restaurantId } = req.user;
+    const { restaurantId } = req;
     const { page = 1, limit = 20 } = req.query;
     try {
         const invoices = await prisma.invoice.findMany({
@@ -94,7 +95,7 @@ exports.getInvoices = async (req, res) => {
 
 // Emitir Nota Fiscal (Envio Manual)
 exports.emitInvoice = async (req, res) => {
-    const { restaurantId } = req.user;
+    const { restaurantId } = req;
     const { orderId } = req.body;
 
     try {
@@ -155,14 +156,14 @@ exports.emitInvoice = async (req, res) => {
         }
 
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro interno ao processar nota.' });
     }
 };
 
 // Fechamento Mensal: Exportar XMLs para o contador
 exports.exportMonthlyXmls = async (req, res) => {
-    const { restaurantId } = req.user;
+    const { restaurantId } = req;
     const { month, year } = req.query; // Ex: month=10, year=2025
 
     if (!month || !year) return res.status(400).json({ error: 'Mês e ano são obrigatórios.' });
@@ -197,7 +198,7 @@ exports.exportMonthlyXmls = async (req, res) => {
         res.send(zipBuffer);
 
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao exportar XMLs.' });
     }
 };

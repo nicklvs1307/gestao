@@ -1,3 +1,4 @@
+const logger = require('../config/logger');
 const OrderService = require('../services/OrderService');
 const asyncHandler = require('../middlewares/asyncHandler');
 const { CreateDeliveryOrderSchema, AddItemsSchema, UpdateStatusSchema } = require('../schemas/orderSchema');
@@ -19,9 +20,8 @@ class OrderController {
 
   streamOrderEvents = (req, res) => {
     // Logs para auditoria de SSE
-    console.log('[SSE] streamOrderEvents connection attempt', {
+    logger.info('[SSE] streamOrderEvents connection attempt', {
       restaurantId: req.restaurantId,
-      tokenQuery: req.query?.token,
       userId: req.user?.id
     });
     const restaurantId = req.restaurantId;

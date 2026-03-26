@@ -1,4 +1,5 @@
 const axios = require('axios');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 
 class UairangoService {
@@ -110,7 +111,7 @@ class UairangoService {
             await prisma.integrationSettings.update({ where: { restaurantId }, data: { uairangoImportedAt: new Date() } });
             return { success: true, importedCount };
         } catch (error) {
-            console.error(`[UAIRANGO] Erro:`, error.message);
+            logger.error(`[UAIRANGO] Erro:`, error.message);
             throw error;
         }
     }

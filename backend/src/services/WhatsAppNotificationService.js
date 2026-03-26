@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const evolutionService = require('./EvolutionService');
 const { normalizePhone } = require('../lib/phoneUtils');
 
@@ -135,10 +136,10 @@ class WhatsAppNotificationService {
       message += `\n\n_Mensagem automática de ${order.restaurant.name}_`;
 
       await evolutionService.sendText(instance.name, phone, message);
-      console.log(`[WhatsApp Notification] Status ${status} enviado para ${phone} (Pedido #${order.id})`);
+      logger.info(`[WhatsApp Notification] Status ${status} enviado para ${phone} (Pedido #${order.id})`);
 
     } catch (error) {
-      console.error(`[WhatsApp Notification] Erro ao enviar notificação:`, error);
+      logger.error(`[WhatsApp Notification] Erro ao enviar notificação:`, error);
     }
   }
 }

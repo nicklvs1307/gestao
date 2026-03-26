@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const { normalizePhone } = require('../lib/phoneUtils');
@@ -6,7 +7,7 @@ const { normalizePhone } = require('../lib/phoneUtils');
 class WhatsAppAIService {
   constructor() {
     if (!process.env.OPENAI_API_KEY) {
-      console.warn('OPENAI_API_KEY não definida no ambiente. O agente AI pode não funcionar.');
+      logger.warn('OPENAI_API_KEY não definida no ambiente. O agente AI pode não funcionar.');
     }
     this.openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
@@ -227,7 +228,7 @@ class WhatsAppAIService {
 
       case 'check_order_status':
         const searchPhone = normalizePhone(args.phone || customerPhone);
-        console.log(`[AI] Buscando status do pedido para: ${searchPhone}`);
+        logger.info(`[AI] Buscando status do pedido para: ${searchPhone}`);
         
         const orderStatus = await prisma.order.findFirst({
           where: { 
@@ -254,7 +255,7 @@ class WhatsAppAIService {
 
       case 'create_order':
         try {
-          console.log(`[AI] Iniciando criação de pedido para ${args.customerName}`);
+          logger.info(`[AI] Iniciando criação de pedido para ${args.customerName}`);
           let calculatedTotal = 0;
           const orderItemsData = [];
 
@@ -279,7 +280,7 @@ class WhatsAppAIService {
             });
 
             if (!dbProduct) {
-              console.warn(`[AI] Produto NÃO localizado: ${item.name}`);
+              logger.warn(`[AI] Produto NÃO localizado: ${item.name}`);
               return `ERRO: Não consegui confirmar o produto "${item.name}" no sistema. Por favor, peça ao cliente para confirmar se o nome está exatamente como no cardápio ou tente buscá-lo novamente.`;
             }
 
@@ -376,7 +377,7 @@ class WhatsAppAIService {
           socketLib.emitToRestaurant(restaurantId, 'new_order', newOrder);
           return `SUCESSO: Pedido #${newOrder.id} criado. Total: R$ ${calculatedTotal.toFixed(2)}. Informe ao cliente que o pedido foi enviado para a cozinha!`;
         } catch (error) {
-          console.error('[AI ORDER ERROR]', error);
+          logger.error('[AI ORDER ERROR]', error);
           return "ERRO: Ocorreu uma falha técnica ao salvar o pedido. Tente novamente ou peça ajuda.";
         }
 
@@ -392,7 +393,7 @@ class WhatsAppAIService {
       });
       return true;
     } catch (error) {
-      console.error('[AI SERVICE CLEAR HISTORY ERROR]', error);
+      logger.error('[AI SERVICE CLEAR HISTORY ERROR]', error);
       return false;
     }
   }
@@ -500,7 +501,7 @@ DADOS DO RESTAURANTE:
 
       return responseText;
     } catch (error) {
-      console.error('[AI SERVICE ERROR]', error);
+      logger.error('[AI SERVICE ERROR]', error);
       return "Estou com uma pequena instabilidade agora, mas logo volto ao normal. Pode repetir sua mensagem?";
     }
   }

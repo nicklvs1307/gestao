@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const { startOfDay, endOfDay } = require('date-fns');
 
 const ReportController = {
@@ -128,7 +129,7 @@ const ReportController = {
             });
 
         } catch (error) {
-            console.error('Erro ao gerar DRE:', error);
+            logger.error('Erro ao gerar DRE:', error);
             res.status(500).json({ error: 'Erro ao processar DRE Gerencial.' });
         }
     },
@@ -157,11 +158,16 @@ const ReportController = {
                 _count: { id: true }
             });
 
-            const staffDetails = await Promise.all(stats.map(async (s) => {
-                const user = await prisma.user.findUnique({
-                    where: { id: s.userId },
-                    select: { name: true, roleRef: { select: { name: true } } }
-                });
+            // Batch fetch users to avoid N+1 query
+            const userIds = stats.map(s => s.userId);
+            const users = await prisma.user.findMany({
+                where: { id: { in: userIds } },
+                select: { id: true, name: true, roleRef: { select: { name: true } } }
+            });
+            const userMap = new Map(users.map(u => [u.id, u]));
+
+            const staffDetails = stats.map(s => {
+                const user = userMap.get(s.userId);
                 return {
                     userId: s.userId,
                     name: user?.name || 'Desconhecido',
@@ -170,11 +176,11 @@ const ReportController = {
                     ordersCount: s._count.id || 0,
                     averageTicket: (s._sum.total || 0) / (s._count.id || 1)
                 };
-            }));
+            });
 
             res.json(staffDetails.sort((a, b) => b.totalRevenue - a.totalRevenue));
         } catch (error) {
-            console.error('Erro ao buscar desempenho de equipe:', error);
+            logger.error('Erro ao buscar desempenho de equipe:', error);
             res.status(500).json({ error: 'Erro ao buscar desempenho de equipe.' });
         }
     },
@@ -218,7 +224,7 @@ const ReportController = {
                 netProfit: revenue - expense
             });
         } catch (error) {
-            console.error('Erro no sumário:', error);
+            logger.error('Erro no sumário:', error);
             res.status(500).json({ error: 'Erro ao buscar sumário.' });
         }
     },
@@ -263,7 +269,7 @@ const ReportController = {
 
             res.json(history);
         } catch (error) {
-            console.error('Erro no histórico de vendas:', error);
+            logger.error('Erro no histórico de vendas:', error);
             res.status(500).json({ error: 'Erro ao buscar histórico.' });
         }
     },
@@ -292,7 +298,7 @@ const ReportController = {
 
             res.json(formatted);
         } catch (error) {
-            console.error('Erro nos métodos de pagamento:', error);
+            logger.error('Erro nos métodos de pagamento:', error);
             res.status(500).json({ error: 'Erro ao buscar métodos de pagamento.' });
         }
     },
@@ -336,7 +342,7 @@ const ReportController = {
                 lowStockProducts
             });
         } catch (error) {
-            console.error('Erro ao buscar estatísticas:', error);
+            logger.error('Erro ao buscar estatísticas:', error);
             res.status(500).json({ error: 'Erro interno do servidor' });
         }
     },
@@ -389,7 +395,7 @@ const ReportController = {
                 sales
             });
         } catch (error) {
-            console.error('Erro no relatório de vendas:', error);
+            logger.error('Erro no relatório de vendas:', error);
             res.status(500).json({ error: 'Erro ao gerar relatório' });
         }
     },
@@ -410,20 +416,25 @@ const ReportController = {
                 take: 10
             });
 
-            const productDetails = await Promise.all(topSelling.map(async (item) => {
-                const product = await prisma.product.findUnique({
-                    where: { id: item.productId },
-                    select: { name: true, price: true }
-                });
+            // Batch fetch products to avoid N+1 query
+            const productIds = topSelling.map(item => item.productId);
+            const products = await prisma.product.findMany({
+                where: { id: { in: productIds } },
+                select: { id: true, name: true, price: true }
+            });
+            const productMap = new Map(products.map(p => [p.id, p]));
+
+            const productDetails = topSelling.map(item => {
+                const product = productMap.get(item.productId);
                 return {
                     ...product,
                     totalQuantity: item._sum.quantity
                 };
-            }));
+            });
 
             res.json(productDetails);
         } catch (error) {
-            console.error('Erro ao buscar produtos mais vendidos:', error);
+            logger.error('Erro ao buscar produtos mais vendidos:', error);
             res.status(500).json({ error: 'Erro interno' });
         }
     },
@@ -477,7 +488,7 @@ const ReportController = {
                 products: abcData
             });
         } catch (error) {
-            console.error('Erro na Curva ABC:', error);
+            logger.error('Erro na Curva ABC:', error);
             res.status(500).json({ error: 'Erro ao gerar Curva ABC.' });
         }
     },
@@ -513,7 +524,7 @@ const ReportController = {
 
             res.json(Object.values(areaMap).sort((a, b) => b.count - a.count));
         } catch (error) {
-            console.error('Erro ao buscar estatísticas de entrega:', error);
+            logger.error('Erro ao buscar estatísticas de entrega:', error);
             res.status(500).json({ error: 'Erro ao buscar estatísticas de entrega.' });
         }
     },
@@ -557,7 +568,7 @@ const ReportController = {
 
             res.json(payments);
         } catch (error) {
-            console.error('Erro em getDetailedPayments:', error);
+            logger.error('Erro em getDetailedPayments:', error);
             res.status(500).json({ error: 'Erro ao buscar detalhamento de pagamentos.' });
         }
     },
@@ -668,9 +679,6 @@ const ReportController = {
         }
     },
 
-    async getHourlySales(req, res) {
-        // ... (conteúdo original)
-    },
 
     async getSalesHeatmap(req, res) {
         try {

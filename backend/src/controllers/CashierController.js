@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const CashierService = require('../services/CashierService');
 const asyncHandler = require('../middlewares/asyncHandler');
 const AppError = require('../utils/AppError');
@@ -26,13 +27,13 @@ class CashierController {
 
   // POST /api/cashier/close
   close = asyncHandler(async (req, res) => {
-    console.log('[CASHIER_CONTROLLER] Iniciando fechamento:', req.body);
+    logger.info('[CASHIER_CONTROLLER] Iniciando fechamento:', req.body);
     
     // Importação dinâmica para evitar dependência circular ou erro de carregamento
     const { CloseCashierSchema } = require('../schemas/cashierSchema');
     
     if (!CloseCashierSchema) {
-        console.error('[CASHIER_CONTROLLER] ERRO: CloseCashierSchema está undefined!');
+        logger.error('[CASHIER_CONTROLLER] ERRO: CloseCashierSchema está undefined!');
         throw new AppError("Erro interno ao carregar validador de caixa.", 500);
     }
 
@@ -40,7 +41,7 @@ class CashierController {
     const result = CloseCashierSchema.safeParse(req.body);
     
     if (!result.success) {
-        console.error('[CASHIER_CONTROLLER] Erro de Validação Zod:', result.error.format());
+        logger.error('[CASHIER_CONTROLLER] Erro de Validação Zod:', result.error.format());
         const errorMsg = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(' | ');
         throw new AppError(`Erro nos dados enviados: ${errorMsg}`, 400);
     }
@@ -48,10 +49,10 @@ class CashierController {
     try {
         // Se validou, chama o serviço
         const session = await CashierService.closeSession(req.restaurantId, result.data);
-        console.log('[CASHIER_CONTROLLER] Fechamento realizado com sucesso:', session.id);
+        logger.info('[CASHIER_CONTROLLER] Fechamento realizado com sucesso:', session.id);
         res.json(session);
     } catch (error) {
-        console.error('[CASHIER_CONTROLLER] Erro no CashierService.closeSession:', error);
+        logger.error('[CASHIER_CONTROLLER] Erro no CashierService.closeSession:', error);
         throw error;
     }
   });

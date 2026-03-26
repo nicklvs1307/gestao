@@ -3,19 +3,29 @@ const prisma = require('../lib/prisma');
 class FinancialService {
 
   /**
+   * Busca ou cria a categoria 'Vendas' padrao do sistema.
+   * Centraliza a logica duplicada em TableService e FinancialService.
+   */
+  async getOrCreateVendasCategory(restaurantId, tx = prisma) {
+    let category = await tx.transactionCategory.findFirst({
+      where: { restaurantId, name: 'Vendas' }
+    });
+
+    if (!category) {
+      category = await tx.transactionCategory.create({
+        data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId }
+      });
+    }
+
+    return category;
+  }
+
+  /**
    * Processa o lançamento financeiro de uma venda.
    * Centraliza a lógica de categorias e sessões de caixa.
    */
   async processOrderPayment(restaurantId, { order, paymentMethod, cashierId = null, tx = prisma }) {
-    let category = await tx.transactionCategory.findFirst({
-        where: { restaurantId, name: 'Vendas' }
-    });
-
-    if (!category) {
-        category = await tx.transactionCategory.create({
-            data: { name: 'Vendas', type: 'INCOME', isSystem: true, restaurantId }
-        });
-    }
+    const category = await this.getOrCreateVendasCategory(restaurantId, tx);
 
     const description = `VENDA #${order.dailyOrderNumber || order.id.slice(-4)}`;
     

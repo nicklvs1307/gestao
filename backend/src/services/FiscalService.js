@@ -1,4 +1,5 @@
 const forge = require('node-forge');
+const logger = require('../config/logger');
 const { SignedXml } = require('xml-crypto');
 const axios = require('axios');
 const https = require('https');
@@ -61,7 +62,7 @@ class FiscalService {
                 xml: signedXml 
             };
         } catch (error) {
-            console.error('Falha na autorização NFC-e:', error);
+            logger.error('Falha na autorização NFC-e:', error);
             return { success: false, error: error.message };
         }
     }
@@ -332,7 +333,7 @@ class FiscalService {
                 raw: response.data 
             };
         } catch (err) {
-            console.error('Erro na comunicação SEFAZ:', err.response?.data || err.message);
+            logger.error('Erro na comunicação SEFAZ:', err.response?.data || err.message);
             throw new Error('Falha na comunicação com SEFAZ: ' + (err.response?.data || err.message));
         }
     }

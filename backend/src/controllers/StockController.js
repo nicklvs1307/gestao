@@ -73,7 +73,9 @@ class StockController {
     // DELETE /api/stock/entries/:id
     deleteEntry = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const entry = await prisma.stockEntry.findUnique({ where: { id } });
+        const entry = await prisma.stockEntry.findFirst({ 
+            where: { id, restaurantId: req.restaurantId } 
+        });
         
         if (!entry) {
             res.status(404);

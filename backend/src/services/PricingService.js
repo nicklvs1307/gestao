@@ -1,3 +1,4 @@
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 
 class PricingService {
@@ -123,12 +124,12 @@ class PricingService {
    * e herança de grupos via categorias.
    */
   async _calculateAddonsPriceV2(product, addonsIds, sizeName) {
-    console.log(`[PRICING] Calculando adicionais para produto: ${product.name} (IDs: ${JSON.stringify(addonsIds)})`);
+    logger.info(`[PRICING] Calculando adicionais para produto: ${product.name} (IDs: ${JSON.stringify(addonsIds)})`);
     let addonsTotal = 0;
     const addonsObjects = [];
 
     if (!addonsIds || addonsIds.length === 0) {
-      console.log(`[PRICING] Nenhum ID de adicional recebido.`);
+      logger.info(`[PRICING] Nenhum ID de adicional recebido.`);
       return { addonsTotal, addonsObjects };
     }
 
@@ -140,7 +141,7 @@ class PricingService {
     const allGroupsMap = new Map();
     [...categoryGroups, ...productGroups].forEach(g => allGroupsMap.set(g.id, g));
     const groups = Array.from(allGroupsMap.values());
-    console.log(`[PRICING] Grupos encontrados para este produto: ${groups.map(g => g.name).join(', ')}`);
+    logger.info(`[PRICING] Grupos encontrados para este produto: ${groups.map(g => g.name).join(', ')}`);
 
     const counts = {};
     addonsIds.forEach(id => { 
@@ -152,14 +153,14 @@ class PricingService {
         const selectedAddonsInGroup = group.addons.filter(a => counts[a.id]);
         
         if (selectedAddonsInGroup.length === 0) {
-            console.log(`[PRICING] Grupo "${group.name}" não tem nenhum dos itens selecionados.`);
+            logger.info(`[PRICING] Grupo "${group.name}" não tem nenhum dos itens selecionados.`);
             continue;
         }
 
-        console.log(`[PRICING] Itens encontrados no grupo "${group.name}": ${selectedAddonsInGroup.map(a => a.name).join(', ')}`);
+        logger.info(`[PRICING] Itens encontrados no grupo "${group.name}": ${selectedAddonsInGroup.map(a => a.name).join(', ')}`);
 
         if (group.isFlavorGroup) {
-            console.log(`[PRICING] Processando como GRUPO DE SABOR (Regra: ${group.priceRule || 'higher'})`);
+            logger.info(`[PRICING] Processando como GRUPO DE SABOR (Regra: ${group.priceRule || 'higher'})`);
             // Coleta os preços de cada seleção individual (considerando quantidade)
             const selectionPrices = [];
             selectedAddonsInGroup.forEach(addon => {
@@ -181,7 +182,7 @@ class PricingService {
                 }
             }
         } else {
-            console.log(`[PRICING] Processando como GRUPO DE ADICIONAIS COMUNS`);
+            logger.info(`[PRICING] Processando como GRUPO DE ADICIONAIS COMUNS`);
             // Regra Normal: Somar todos os itens (Adicionais comuns)
             selectedAddonsInGroup.forEach(addon => {
                 const qty = counts[addon.id];
@@ -202,7 +203,7 @@ class PricingService {
         });
     }
 
-    console.log(`[PRICING] Total de adicionais calculado: ${addonsTotal}`);
+    logger.info(`[PRICING] Total de adicionais calculado: ${addonsTotal}`);
     return { addonsTotal, addonsObjects };
   }
 }

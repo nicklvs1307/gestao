@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../config/logger');
 const router = express.Router();
 const OrderController = require('../controllers/OrderController');
 const { needsAdmin, needsAuth, checkPermission } = require('../middlewares/auth');
@@ -29,7 +30,7 @@ router.get('/:orderId', needsAuth, checkPermission('orders:view'), async (req, r
         if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
         res.json(order);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao buscar pedido.' });
     }
 });
@@ -86,7 +87,7 @@ router.get('/delivery/status/:id', async (req, res) => {
 
         res.json(order);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao buscar status do pedido.' });
     }
 });

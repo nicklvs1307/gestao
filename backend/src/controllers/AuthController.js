@@ -1,17 +1,10 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { validatePassword } = require('../utils/passwordValidator');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-
-const validatePassword = (password) => {
-    if (!password || typeof password !== 'string') return 'Senha é obrigatória.';
-    if (password.length < 8) return 'Senha deve ter pelo menos 8 caracteres.';
-    if (!/[A-Z]/.test(password)) return 'Senha deve conter ao menos uma letra maiúscula.';
-    if (!/[a-z]/.test(password)) return 'Senha deve conter ao menos uma letra minúscula.';
-    if (!/[0-9]/.test(password)) return 'Senha deve conter ao menos um número.';
-    return null; // válida
-};
 
 const normalizeRole = (dbRoleName, isSuperAdmin) => {
     if (isSuperAdmin) return 'superadmin';
@@ -27,6 +20,50 @@ const normalizeRole = (dbRoleName, isSuperAdmin) => {
     if (normalized.includes('franqueador') || normalized.includes('franchisor')) return 'franchisor';
     
     return normalized;
+};
+
+/**
+ * Busca o ID de um role pelo nome, com mapeamento de aliases (driver -> Entregador, waiter -> Garcom).
+ */
+const _findRoleId = async (role, roleId) => {
+    if (!role || roleId) return roleId;
+    
+    const foundRole = await prisma.role.findFirst({
+        where: {
+            OR: [
+                { name: { equals: role, mode: 'insensitive' } },
+                { name: { equals: role === 'driver' ? 'Entregador' : role === 'waiter' ? 'Garcom' : role, mode: 'insensitive' } }
+            ]
+        }
+    });
+    
+    return foundRole ? foundRole.id : roleId;
+};
+
+/**
+ * Verifica se o usuario tem permissao para conceder as permissoes solicitadas.
+ * Retorna null se OK, ou um objeto { status, error } em caso de violacao.
+ */
+const _checkPermissionHierarchy = async (permissionIds, isRequesterSuperAdmin, userPermissions) => {
+    if (!permissionIds || permissionIds.length === 0 || isRequesterSuperAdmin) {
+        return null;
+    }
+    
+    const requestedPermissions = await prisma.permission.findMany({
+        where: { id: { in: permissionIds } }
+    });
+    const requestedNames = requestedPermissions.map(p => p.name);
+    
+    const hasAll = requestedNames.every(pName => userPermissions.includes(pName));
+    
+    if (!hasAll) {
+        return { 
+            status: 403, 
+            error: 'Acesso negado: Voce nao pode conceder permissoes que voce mesmo nao possui.' 
+        };
+    }
+    
+    return null;
 };
 
 const login = async (req, res) => {
@@ -82,7 +119,7 @@ const login = async (req, res) => {
             } 
         });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro no servidor.' });
     }
 };
@@ -134,7 +171,7 @@ const getUsers = async (req, res) => {
 
         res.json(mappedUsers); 
     } catch (error) { 
-        console.error("Erro ao buscar usuários:", error);
+        logger.error("Erro ao buscar usuários:", error);
         res.status(500).json({ error: 'Erro ao buscar usuários.' }); 
     }
 };
@@ -145,35 +182,13 @@ const createUser = async (req, res) => {
         const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
         const targetRestaurantId = isRequesterSuperAdmin ? (req.body.restaurantId || req.restaurantId) : req.restaurantId;
 
-        // --- Mapeamento Automático de Role por Nome (se roleId não vier) ---
-        let finalRoleId = roleId;
-        if (!finalRoleId && role) {
-            const foundRole = await prisma.role.findFirst({
-                where: {
-                    OR: [
-                        { name: { equals: role, mode: 'insensitive' } },
-                        { name: { equals: role === 'driver' ? 'Entregador' : role === 'waiter' ? 'Garçom' : role, mode: 'insensitive' } }
-                    ]
-                }
-            });
-            if (foundRole) finalRoleId = foundRole.id;
-        }
+        // --- Mapeamento Automático de Role por Nome ---
+        let finalRoleId = await _findRoleId(role, roleId);
 
         // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
-        if (permissionIds && permissionIds.length > 0 && !isRequesterSuperAdmin) {
-            const requestedPermissions = await prisma.permission.findMany({
-                where: { id: { in: permissionIds } }
-            });
-            const requestedNames = requestedPermissions.map(p => p.name);
-            
-            // Verifica se o admin que está criando tem todas essas permissões
-            const hasAll = requestedNames.every(pName => req.user.permissions.includes(pName));
-            
-            if (!hasAll) {
-                return res.status(403).json({ 
-                    error: 'Acesso negado: Você não pode conceder permissões que você mesmo não possui.' 
-                });
-            }
+        const permError = await _checkPermissionHierarchy(permissionIds, isRequesterSuperAdmin, req.user.permissions);
+        if (permError) {
+            return res.status(permError.status).json({ error: permError.error });
         }
 
         if (finalRoleId) {
@@ -209,7 +224,7 @@ const createUser = async (req, res) => {
         });
         res.status(201).json(newUser);
     } catch (error) { 
-        console.error("Erro ao criar usuário:", error);
+        logger.error("Erro ao criar usuário:", error);
         res.status(500).json({ error: 'Erro ao criar usuário.' }); 
     }
 };
@@ -235,33 +250,13 @@ const updateUser = async (req, res) => {
             return res.status(403).json({ error: 'Acesso negado: Este usuário pertence a outro restaurante.' });
         }
 
-        // --- Mapeamento Automático de Role por Nome (se roleId não vier) ---
-        let finalRoleId = roleId;
-        if (finalRoleId === undefined && role) {
-            const foundRole = await prisma.role.findFirst({
-                where: {
-                    OR: [
-                        { name: { equals: role, mode: 'insensitive' } },
-                        { name: { equals: role === 'driver' ? 'Entregador' : role === 'waiter' ? 'Garçom' : role, mode: 'insensitive' } }
-                    ]
-                }
-            });
-            if (foundRole) finalRoleId = foundRole.id;
-        }
+        // --- Mapeamento Automático de Role por Nome ---
+        let finalRoleId = await _findRoleId(role, roleId === undefined ? undefined : roleId);
 
         // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
-        if (permissionIds && !isRequesterSuperAdmin) {
-            const requestedPermissions = await prisma.permission.findMany({
-                where: { id: { in: permissionIds } }
-            });
-            const requestedNames = requestedPermissions.map(p => p.name);
-            const hasAll = requestedNames.every(pName => req.user.permissions.includes(pName));
-            
-            if (!hasAll) {
-                return res.status(403).json({ 
-                    error: 'Acesso negado: Você não pode conceder permissões que você mesmo não possui.' 
-                });
-            }
+        const permError = await _checkPermissionHierarchy(permissionIds, isRequesterSuperAdmin, req.user.permissions);
+        if (permError) {
+            return res.status(permError.status).json({ error: permError.error });
         }
 
         const data = { 
@@ -299,7 +294,7 @@ const updateUser = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        console.error("Erro ao atualizar usuário:", error);
+        logger.error("Erro ao atualizar usuário:", error);
         res.status(500).json({ error: 'Erro ao atualizar usuário.' });
     }
 };
@@ -342,7 +337,7 @@ const getAvailableRoles = async (req, res) => {
         
         res.json(roles);
     } catch (error) {
-        console.error("Erro ao buscar cargos disponíveis:", error);
+        logger.error("Erro ao buscar cargos disponíveis:", error);
         res.status(500).json({ error: 'Erro ao buscar cargos.' });
     }
 };
@@ -373,7 +368,7 @@ const deleteUser = async (req, res) => {
         await prisma.user.delete({ where: { id } });
         res.json({ message: 'Usuário removido com sucesso.' });
     } catch (error) {
-        console.error("Erro ao deletar usuário:", error);
+        logger.error("Erro ao deletar usuário:", error);
         res.status(500).json({ error: 'Erro ao deletar usuário.' });
     }
 };

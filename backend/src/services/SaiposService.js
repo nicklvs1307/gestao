@@ -1,4 +1,5 @@
 const axios = require('axios');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const GeocodingService = require('./GeocodingService');
 const socketLib = require('../lib/socket');
@@ -17,7 +18,7 @@ class SaiposService {
    * Notifica falha na sincronização para o PDV
    */
   _notifySyncError(restaurantId, orderId, message) {
-      console.error(`[SAIPOS SYNC ERROR] Order ${orderId}: ${message}`);
+      logger.error(`[SAIPOS SYNC ERROR] Order ${orderId}: ${message}`);
       socketLib.emitToRestaurant(restaurantId, 'sync_error', {
           orderId,
           service: 'SAIPOS',
@@ -34,7 +35,7 @@ class SaiposService {
     }
 
     try {
-      console.log(`[SAIPOS] Solicitando novo token para restaurante ${restaurantId}...`);
+      logger.info(`[SAIPOS] Solicitando novo token para restaurante ${restaurantId}...`);
       const baseUrl = this.getBaseUrl(settings.saiposEnv);
       
       const response = await axios.post(`${baseUrl}/auth`, {
@@ -55,7 +56,7 @@ class SaiposService {
 
       return token;
     } catch (error) {
-      console.error(`[SAIPOS] Erro na autenticação (Restaurante ${restaurantId}):`, error.response?.data || error.message);
+      logger.error(`[SAIPOS] Erro na autenticação (Restaurante ${restaurantId}):`, error.response?.data || error.message);
       throw new Error('Falha na autenticação com a Saipos. Verifique idPartner e Secret.');
     }
   }
@@ -103,7 +104,7 @@ class SaiposService {
       const baseUrl = this.getBaseUrl(settings.saiposEnv);
 
       if (!settings.saiposCodStore) {
-        console.error('[SAIPOS] Erro: Código da Loja (cod_store) não configurado.');
+        logger.error('[SAIPOS] Erro: Código da Loja (cod_store) não configurado.');
         return;
       }
       
@@ -111,7 +112,7 @@ class SaiposService {
       try {
         token = await this.getAccessToken(order.restaurantId, settings);
       } catch (e) {
-        console.error(`[SAIPOS] Abortando envio por erro de token.`);
+        logger.error(`[SAIPOS] Abortando envio por erro de token.`);
         return;
       }
 
@@ -216,7 +217,7 @@ class SaiposService {
         // Proteção extra para Andradas (MG) caso o estado venha errado
         if (city.toLowerCase().includes('andradas') && state === 'SP') {
             state = 'MG';
-            console.log(`[SAIPOS] Correção Automática: Cidade Andradas detectada, forçando UF para MG.`);
+            logger.info(`[SAIPOS] Correção Automática: Cidade Andradas detectada, forçando UF para MG.`);
         }
 
         deliveryAddress = {
@@ -242,7 +243,7 @@ class SaiposService {
           deliveryAddress.coordinates = { latitude: 0, longitude: 0 };
         }
 
-        console.log(`[SAIPOS] Endereço montado - Cidade: ${deliveryAddress.city} (via ${citySource}), UF: ${deliveryAddress.state} (via ${stateSource})`);
+        logger.info(`[SAIPOS] Endereço montado - Cidade: ${deliveryAddress.city} (via ${citySource}), UF: ${deliveryAddress.state} (via ${stateSource})`);
       }
 
       if (orderMethod.mode === 'TABLE') {
@@ -308,7 +309,7 @@ class SaiposService {
           return value === null || value === undefined ? '' : value;
       }));
 
-      console.log(`[SAIPOS] Enviando Pedido #${order.dailyOrderNumber} (Modo: ${orderMethod.mode}) para Loja ${settings.saiposCodStore}...`);
+      logger.info(`[SAIPOS] Enviando Pedido #${order.dailyOrderNumber} (Modo: ${orderMethod.mode}) para Loja ${settings.saiposCodStore}...`);
       
       const response = await axios.post(`${baseUrl}/order`, payload, {
         headers: {
@@ -323,7 +324,7 @@ class SaiposService {
           where: { id: orderId },
           data: { saiposOrderId: 'SYNCED_V3' }
         });
-        console.log(`[SAIPOS] Sucesso! Pedido integrado.`);
+        logger.info(`[SAIPOS] Sucesso! Pedido integrado.`);
       }
 
     } catch (error) {
@@ -331,7 +332,7 @@ class SaiposService {
       this._notifySyncError(orderId ? (await prisma.order.findUnique({ where: { id: orderId }, select: { restaurantId: true } }))?.restaurantId : null, orderId, errorMsg);
       
       if (error.response?.data) {
-          console.log(`[SAIPOS] Payload que falhou:`, JSON.stringify(error.config?.data ? JSON.parse(error.config.data) : 'N/A', null, 2));
+          logger.info(`[SAIPOS] Payload que falhou:`, JSON.stringify(error.config?.data ? JSON.parse(error.config.data) : 'N/A', null, 2));
       }
     }
   }

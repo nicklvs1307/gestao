@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../config/logger');
 const router = express.Router();
 const AuthController = require('../controllers/AuthController');
 const { needsAdmin, needsAuth } = require('../middlewares/auth');
@@ -75,7 +76,7 @@ router.get('/drivers', needsAuth, async (req, res) => {
         });
         res.json(drivers);
     } catch (e) { 
-        console.error('Erro ao buscar entregadores:', e);
+        logger.error('Erro ao buscar entregadores:', e);
         res.status(500).json({ error: 'Erro ao buscar entregadores.' }); 
     }
 });

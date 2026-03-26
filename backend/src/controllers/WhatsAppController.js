@@ -1,4 +1,5 @@
 const evolutionService = require('../services/EvolutionService');
+const logger = require('../config/logger');
 const aiService = require('../services/WhatsAppAIService');
 const prisma = require('../lib/prisma');
 const asyncHandler = require('../middlewares/asyncHandler');
@@ -55,7 +56,7 @@ const WhatsAppController = {
     } catch (createError) {
       // Se a criação falhar e for um "already in use", tenta buscar a existente para pegar o token
       if (createError.message.includes('already in use')) {
-        console.warn(`Instância '${instanceName}' já existe na Evolution API, recuperando dados...`);
+        logger.warn(`Instância '${instanceName}' já existe na Evolution API, recuperando dados...`);
         try {
           const instanceData = await evolutionService.fetchInstance(instanceName);
           if (instanceData) {
@@ -77,7 +78,7 @@ const WhatsAppController = {
             throw new Error('Falha ao sincronizar: instância não encontrada na Evolution API.');
           }
         } catch (fetchError) {
-          console.error('connect:fetchExistingInstance', fetchError);
+          logger.error('connect:fetchExistingInstance', fetchError);
           throw new Error('Falha ao sincronizar instância de WhatsApp.');
         }
       } else {
@@ -89,9 +90,9 @@ const WhatsAppController = {
     try {
       const webhookUrl = `${process.env.API_URL}/api/whatsapp/webhook`;
       await evolutionService.setWebhook(instance.name, webhookUrl);
-      console.log(`Webhook configurado com sucesso para ${instance.name}`);
+      logger.info(`Webhook configurado com sucesso para ${instance.name}`);
     } catch (webhookError) {
-      console.warn(`Aviso: Falha ao configurar webhook para ${instance.name}:`, webhookError.message);
+      logger.warn(`Aviso: Falha ao configurar webhook para ${instance.name}:`, webhookError.message);
       // Não lançamos erro aqui para permitir que o usuário veja a instância criada
     }
 
@@ -419,7 +420,7 @@ const WhatsAppController = {
     const { event, data, instance } = req.body;
     
     // Log inicial para debug de recebimento
-    console.log(`[Webhook Evolution] Recebido: ${event} | Instância: ${instance}`);
+    logger.info(`[Webhook Evolution] Recebido: ${event} | Instância: ${instance}`);
 
     // Ignora mensagens de grupos ( remoteJid termina com @g.us )
     if (data?.key?.remoteJid?.includes('@g.us')) {
@@ -432,7 +433,7 @@ const WhatsAppController = {
     });
 
     if (!dbInstance) {
-      console.warn(`Instância ${instance} não encontrada no banco de dados.`);
+      logger.warn(`Instância ${instance} não encontrada no banco de dados.`);
       return res.sendStatus(200);
     }
 
@@ -532,7 +533,7 @@ const WhatsAppController = {
         }
 
         // --- MENSAGEM DO CLIENTE ---
-        console.log(`[WhatsApp] Mensagem recebida de ${customerPhone}`);
+        logger.info(`[WhatsApp] Mensagem recebida de ${customerPhone}`);
         
         // Busca foto de perfil se não tivermos ou se a última atualização for antiga (cache simples)
         let profilePic = null;
@@ -592,7 +593,7 @@ const WhatsAppController = {
         
         // 2. Se o agente estiver desabilitado para este contato, encerra
         if (!conversation.isAgentEnabled) {
-          console.log(`[WhatsApp] Agente pausado para ${customerPhone}. Aguardando intervenção humana.`);
+          logger.info(`[WhatsApp] Agente pausado para ${customerPhone}. Aguardando intervenção humana.`);
           return res.sendStatus(200);
         }
 

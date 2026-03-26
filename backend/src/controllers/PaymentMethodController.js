@@ -1,3 +1,5 @@
+const { DEFAULT_PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS_PUBLIC } = require('../utils/paymentDefaults');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 
 class PaymentMethodController {
@@ -11,13 +13,7 @@ class PaymentMethodController {
 
       // Se não houver métodos, cria os padrões
       if (methods.length === 0) {
-        const defaults = [
-          { name: 'Dinheiro', type: 'CASH', allowDelivery: true, allowPos: true, allowTable: true },
-          { name: 'Pix', type: 'PIX', allowDelivery: true, allowPos: true, allowTable: true },
-          { name: 'Cartão de Crédito', type: 'CREDIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
-          { name: 'Cartão de Débito', type: 'DEBIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
-          { name: 'Outros', type: 'OTHER', allowDelivery: true, allowPos: true, allowTable: true },
-        ];
+        const defaults = DEFAULT_PAYMENT_METHODS;
 
         await prisma.paymentMethod.createMany({
           data: defaults.map(d => ({ ...d, restaurantId }))
@@ -76,12 +72,7 @@ class PaymentMethodController {
       // Se for público e não tiver nada, vamos criar os padrões marcados como allowDelivery: true
       // Isso evita que o checkout do delivery fique travado se o admin nunca configurou
       if (methods.length === 0) {
-        const defaults = [
-          { name: 'Dinheiro', type: 'CASH', allowDelivery: true, allowPos: true, allowTable: true },
-          { name: 'Pix', type: 'PIX', allowDelivery: true, allowPos: true, allowTable: true },
-          { name: 'Cartão de Crédito', type: 'CREDIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
-          { name: 'Cartão de Débito', type: 'DEBIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
-        ];
+        const defaults = DEFAULT_PAYMENT_METHODS_PUBLIC;
 
         await prisma.paymentMethod.createMany({
           data: defaults.map(d => ({ ...d, restaurantId: realId }))
@@ -107,7 +98,7 @@ class PaymentMethodController {
 
       res.json(methods);
     } catch (error) {
-      console.error('Erro ao listar formas de pagamento públicas:', error);
+      logger.error('Erro ao listar formas de pagamento públicas:', error);
       res.status(500).json({ error: 'Erro ao listar formas de pagamento' });
     }
   }

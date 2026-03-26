@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const evolutionService = require('./EvolutionService');
 const pdfService = require('./PDFService');
 const { normalizePhone } = require('../lib/phoneUtils');
@@ -37,7 +38,7 @@ class ChecklistReportService {
     });
 
     if (!instance || instance.status !== 'CONNECTED') {
-      console.warn(`[ChecklistReport] Restaurante ${restaurantId} sem WhatsApp conectado.`);
+      logger.warn(`[ChecklistReport] Restaurante ${restaurantId} sem WhatsApp conectado.`);
       return;
     }
 
@@ -164,9 +165,9 @@ class ChecklistReportService {
         );
       }
 
-      console.log(`[ChecklistReport] Relatório (${formatType}) enviado para ${recipient} (Restaurante: ${restaurantId})`);
+      logger.info(`[ChecklistReport] Relatório (${formatType}) enviado para ${recipient} (Restaurante: ${restaurantId})`);
     } catch (error) {
-      console.error(`[ChecklistReport] Erro ao enviar relatório:`, error);
+      logger.error(`[ChecklistReport] Erro ao enviar relatório:`, error);
     } finally {
       if (pdfPath && fs.existsSync(pdfPath)) {
         fs.unlinkSync(pdfPath); // Remove arquivo temporário
@@ -357,7 +358,7 @@ class ChecklistReportService {
         try {
           await evolutionService.sendText(instance.name, recipient, message);
         } catch (error) {
-          console.error(`[ChecklistDeadline] Erro ao enviar alerta de atraso:`, error);
+          logger.error(`[ChecklistDeadline] Erro ao enviar alerta de atraso:`, error);
         }
       } else {
         // Relatório de CONFORMIDADE INDIVIDUAL (Texto + PDF)
@@ -386,7 +387,7 @@ class ChecklistReportService {
             `Auditoria Detalhada - ${checklist.title}`
           );
         } catch (error) {
-          console.error(`[ChecklistDeadline] Erro ao enviar PDF individual:`, error);
+          logger.error(`[ChecklistDeadline] Erro ao enviar PDF individual:`, error);
         } finally {
           if (pdfPath && fs.existsSync(pdfPath)) {
             fs.unlinkSync(pdfPath);

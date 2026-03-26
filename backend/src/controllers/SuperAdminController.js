@@ -1,3 +1,5 @@
+const { validatePassword } = require('../utils/passwordValidator');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 
@@ -33,6 +35,11 @@ const createRestaurant = async (req, res) => {
         name, slug, franchiseId, plan, expiresAt,
         adminName, adminEmail, adminPassword 
     } = req.body;
+
+    const passwordError = validatePassword(adminPassword);
+    if (passwordError) {
+        return res.status(400).json({ error: passwordError });
+    }
 
     try {
         const result = await prisma.$transaction(async (tx) => {
@@ -75,7 +82,7 @@ const createRestaurant = async (req, res) => {
 
         res.status(201).json(result);
     } catch (error) {
-        console.error("Erro ao criar restaurante completo:", error);
+        logger.error("Erro ao criar restaurante completo:", error);
         if (error.code === 'P2002') {
             const target = error.meta?.target || [];
             if (target.includes('name')) return res.status(400).json({ error: 'Já existe uma loja com este nome.' });
@@ -101,7 +108,7 @@ const getAllRestaurants = async (req, res) => {
         });
         res.json(restaurants);
     } catch (error) {
-        console.error("ERRO [getAllRestaurants]:", error);
+        logger.error("ERRO [getAllRestaurants]:", error);
         res.status(500).json({ error: 'Erro ao buscar restaurantes.', details: error.message });
     }
 };
@@ -129,6 +136,11 @@ const updateRestaurantSubscription = async (req, res) => {
 const createGlobalUser = async (req, res) => {
     const { email, password, name, isSuperAdmin, franchiseId, restaurantId, roleId } = req.body;
     try {
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            return res.status(400).json({ error: passwordError });
+        }
+
         const passwordHash = await bcrypt.hash(password, 10);
         const user = await prisma.user.create({
             data: {
@@ -203,7 +215,7 @@ const updateRolePermissions = async (req, res) => {
         });
         res.json(role);
     } catch (error) {
-        console.error("Erro ao atualizar permissões do cargo:", error);
+        logger.error("Erro ao atualizar permissões do cargo:", error);
         res.status(500).json({ error: 'Erro ao atualizar permissões do cargo.' });
     }
 };

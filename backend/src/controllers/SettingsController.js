@@ -1,4 +1,6 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
+const { DEFAULT_PAYMENT_METHODS_PUBLIC } = require('../utils/paymentDefaults');
 
 function slugify(text) {
     return text.toString().toLowerCase()
@@ -114,7 +116,7 @@ const updateSettings = async (req, res) => {
         ]);
         res.json({ ...updatedRest, settings: updatedSettings });
     } catch (error) { 
-        console.error('Erro ao atualizar configurações:', error);
+        logger.error('Erro ao atualizar configurações:', error);
         res.status(500).json({ error: 'Erro ao atualizar.' }); 
     }
 };
@@ -158,7 +160,7 @@ const getClientSettings = async (req, res) => {
             serviceTax: restaurant.serviceTaxPercentage
         });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao buscar configurações do cliente.' });
     }
 };
@@ -176,7 +178,7 @@ const updateLogo = async (req, res) => {
         
         res.json({ logoUrl });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao fazer upload da logo.' });
     }
 };
@@ -194,7 +196,7 @@ const updateCover = async (req, res) => {
         
         res.json({ coverUrl });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao fazer upload da capa.' });
     }
 };
@@ -221,7 +223,7 @@ const uploadVideoBanner = async (req, res) => {
         
         res.json({ videoUrl });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao fazer upload do vídeo.' });
     }
 };
@@ -235,7 +237,7 @@ const toggleStatus = async (req, res) => {
         });
         res.json(updatedSettings);
     } catch (error) {
-        console.error("Erro ao alternar status da loja:", error);
+        logger.error("Erro ao alternar status da loja:", error);
         res.status(500).json({ error: "Erro ao alternar status." });
     }
 };
@@ -283,12 +285,7 @@ const getRestaurantBySlug = async (req, res) => {
 
         // Se não houver formas de pagamento, tenta criar as padrões (mesma lógica do PaymentMethodController)
         if (restaurant.paymentMethods.length === 0) {
-            const defaults = [
-                { name: 'Dinheiro', type: 'CASH', allowDelivery: true, allowPos: true, allowTable: true },
-                { name: 'Pix', type: 'PIX', allowDelivery: true, allowPos: true, allowTable: true },
-                { name: 'Cartão de Crédito', type: 'CREDIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
-                { name: 'Cartão de Débito', type: 'DEBIT_CARD', allowDelivery: true, allowPos: true, allowTable: true },
-            ];
+            const defaults = DEFAULT_PAYMENT_METHODS_PUBLIC;
 
             await prisma.paymentMethod.createMany({
                 data: defaults.map(d => ({ ...d, restaurantId: restaurant.id }))
@@ -307,7 +304,7 @@ const getRestaurantBySlug = async (req, res) => {
         
         res.json(restaurant);
     } catch (error) {
-        console.error('Erro ao buscar restaurante por slug:', error);
+        logger.error('Erro ao buscar restaurante por slug:', error);
         res.status(500).json({ error: 'Erro interno do servidor.' });
     }
 };

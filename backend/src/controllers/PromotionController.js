@@ -1,3 +1,5 @@
+const { applyAddonGroupOrder } = require('../utils/productUtils');
+const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 
 const getActivePromotions = async (req, res) => {
@@ -44,24 +46,14 @@ const getActivePromotions = async (req, res) => {
 
         const sortedPromotions = promotions.map(promo => {
             if (promo.product) {
-                const product = promo.product;
-                if (product.addonGroupsOrder && Array.isArray(product.addonGroupsOrder) && product.addonGroupsOrder.length > 0) {
-                    const orderMap = new Map();
-                    product.addonGroupsOrder.forEach((id, index) => orderMap.set(id, index));
-
-                    product.addonGroups.sort((a, b) => {
-                        const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
-                        const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
-                        return orderA - orderB;
-                    });
-                }
+                applyAddonGroupOrder(promo.product);
             }
             return promo;
         });
         
         res.json(sortedPromotions);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao buscar promoções.' });
     }
 };
@@ -78,7 +70,7 @@ const getAllPromotions = async (req, res) => {
             orderBy: { startDate: 'desc' } 
         })); 
     } catch (error) { 
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao buscar promoções.' }); 
     }
 };
@@ -118,7 +110,7 @@ const createPromotion = async (req, res) => {
         });
         res.status(201).json(promotion);
     } catch (error) { 
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Erro ao criar promoção.' }); 
     }
 };
@@ -187,7 +179,7 @@ const updatePromotion = async (req, res) => {
         });
         res.json(updated);
     } catch (error) {
-        console.error("Erro ao atualizar promoção:", error);
+        logger.error("Erro ao atualizar promoção:", error);
         res.status(500).json({ error: 'Erro ao atualizar promoção.' });
     }
 };

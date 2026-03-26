@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../config/logger');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
@@ -126,7 +127,7 @@ router.get('/restaurant/:slug', async (req, res) => {
   
       res.json(restaurant);
     } catch (error) {
-      console.error(`Erro ao buscar restaurante pelo slug ${slug}:`, error);
+      logger.error(`Erro ao buscar restaurante pelo slug ${slug}:`, error);
       res.status(500).json({ error: 'Não foi possível buscar os dados do restaurante.' });
     }
   });
@@ -151,7 +152,7 @@ router.get('/restaurants/:restaurantId/delivery-orders', authenticateToken, setR
     });
     res.json(deliveryOrders);
   } catch (error) {
-    console.error('Erro ao buscar pedidos de delivery:', error);
+    logger.error('Erro ao buscar pedidos de delivery:', error);
     res.status(500).json({ error: 'Erro ao buscar pedidos de delivery' });
   }
 });
@@ -183,7 +184,7 @@ router.patch('/delivery-orders/:orderId/assign-driver', authenticateToken, setRe
         
         res.json(updated);
     } catch (error) {
-        console.error('Erro ao atribuir entregador:', error);
+        logger.error('Erro ao atribuir entregador:', error);
         res.status(500).json({ error: 'Erro ao atribuir entregador.' });
     }
 });

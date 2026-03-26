@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 
 class InventoryService {
   /**
@@ -166,24 +167,29 @@ class InventoryService {
     if (addonsJson) {
       try {
         const addons = JSON.parse(addonsJson);
-        for (const addon of addons) {
-          // Busca a ficha técnica do adicional
-          const addonWithIngredients = await tx.addon.findUnique({
-            where: { id: addon.id },
+        if (addons.length > 0) {
+          // Batch fetch all addons at once to avoid N+1 query
+          const addonIds = addons.map(a => a.id);
+          const addonsWithIngredients = await tx.addon.findMany({
+            where: { id: { in: addonIds } },
             include: { ingredients: true }
           });
+          const addonMap = new Map(addonsWithIngredients.map(a => [a.id, a]));
 
-          if (addonWithIngredients && addonWithIngredients.ingredients.length > 0) {
-            for (const addonIng of addonWithIngredients.ingredients) {
-              await tx.ingredient.update({
-                where: { id: addonIng.ingredientId },
-                data: { stock: { decrement: (addonIng.quantity * (addon.quantity || 1)) * quantity } }
-              });
+          for (const addon of addons) {
+            const addonWithIngredients = addonMap.get(addon.id);
+            if (addonWithIngredients && addonWithIngredients.ingredients.length > 0) {
+              for (const addonIng of addonWithIngredients.ingredients) {
+                await tx.ingredient.update({
+                  where: { id: addonIng.ingredientId },
+                  data: { stock: { decrement: (addonIng.quantity * (addon.quantity || 1)) * quantity } }
+                });
+              }
             }
           }
         }
       } catch (e) {
-        console.error("Erro ao processar baixa de estoque de adicionais:", e);
+        logger.error("Erro ao processar baixa de estoque de adicionais:", e);
       }
     }
   }

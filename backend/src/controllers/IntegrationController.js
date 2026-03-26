@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const logger = require('../config/logger');
 const UairangoService = require('../services/UairangoService');
 const SaiposImportService = require('../services/SaiposImportService');
 
@@ -16,7 +17,7 @@ const getSaiposSettings = async (req, res) => {
 
         res.json(settings);
     } catch (error) {
-        console.error('Erro ao buscar configurações da Saipos:', error);
+        logger.error('Erro ao buscar configurações da Saipos:', error);
         res.status(500).json({ error: 'Erro ao buscar configurações da Saipos.' });
     }
 };
@@ -46,7 +47,7 @@ const updateSaiposSettings = async (req, res) => {
 
         res.json(settings);
     } catch (error) {
-        console.error('Erro ao atualizar configurações da Saipos:', error);
+        logger.error('Erro ao atualizar configurações da Saipos:', error);
         res.status(500).json({ error: 'Erro ao atualizar configurações da Saipos.' });
     }
 };
@@ -59,7 +60,7 @@ const importSaiposMenu = async (req, res) => {
         const result = await SaiposImportService.importFromExcel(req.restaurantId, req.file.buffer);
         res.json(result);
     } catch (error) {
-        console.error('Erro ao importar cardápio da Saipos:', error);
+        logger.error('Erro ao importar cardápio da Saipos:', error);
         res.status(500).json({ error: error.message || 'Erro ao importar cardápio da Saipos.' });
     }
 };
@@ -78,7 +79,7 @@ const getUairangoSettings = async (req, res) => {
 
         res.json(settings);
     } catch (error) {
-        console.error('Erro ao buscar configurações do UaiRango:', error);
+        logger.error('Erro ao buscar configurações do UaiRango:', error);
         res.status(500).json({ error: 'Erro ao buscar configurações do UaiRango.' });
     }
 };
@@ -104,7 +105,7 @@ const updateUairangoSettings = async (req, res) => {
 
         res.json(settings);
     } catch (error) {
-        console.error('Erro ao atualizar configurações do UaiRango:', error);
+        logger.error('Erro ao atualizar configurações do UaiRango:', error);
         res.status(500).json({ error: 'Erro ao atualizar configurações do UaiRango.' });
     }
 };
@@ -114,7 +115,7 @@ const importUairangoMenu = async (req, res) => {
         const result = await UairangoService.importMenu(req.restaurantId);
         res.json(result);
     } catch (error) {
-        console.error('Erro ao importar cardápio do UaiRango:', error);
+        logger.error('Erro ao importar cardápio do UaiRango:', error);
         res.status(500).json({ error: error.message || 'Erro ao importar cardápio do UaiRango.' });
     }
 };
