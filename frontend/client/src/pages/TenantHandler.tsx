@@ -17,6 +17,8 @@ const TenantHandler = () => {
   const { tableNumber } = useParams();
   const location = useLocation();
 
+  console.log('[TenantHandler] Render - restaurant:', restaurant, 'loading:', loading, 'error:', error);
+
   useEffect(() => {
     const slug = getTenantSlug();
     

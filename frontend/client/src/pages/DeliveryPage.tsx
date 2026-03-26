@@ -37,6 +37,8 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const tenantSlug = getTenantSlug();
   const effectiveSlug = restaurantSlug || tenantSlug || slug;
 
+  console.log('[DeliveryPage] Render - restaurantSlug:', restaurantSlug, 'tenantSlug:', tenantSlug, 'slug:', slug, 'effectiveSlug:', effectiveSlug);
+
   const { data: restaurant, isLoading, error } = useQuery({
     queryKey: [RESTAURANT_KEY, effectiveSlug],
     queryFn: () => getRestaurantBySlug(effectiveSlug!),
