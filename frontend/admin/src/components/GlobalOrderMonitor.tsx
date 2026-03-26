@@ -10,10 +10,7 @@ import { toast } from 'sonner';
 
 // Helper to get the base URL for the API
 const getApiBaseUrl = () => {
-  // In a real app, this would come from an environment variable
-  // For dev, assume Vite proxy is handled or it's the same origin.
-  // For prod, it's same origin.
-  return window.location.origin;
+  return import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || window.location.origin;
 };
 
 const GlobalOrderMonitor: React.FC = () => {

@@ -1,10 +1,11 @@
 import { io, Socket } from 'socket.io-client';
 
 function getSocketUrl(): string {
-  if (window.location.hostname === 'localhost') {
-    return window.location.origin;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    return apiUrl.replace(/\/api\/?$/, '');
   }
-  return 'https://apikicardapio.towersfy.com';
+  return window.location.origin;
 }
 
 function getSocketConfig() {
