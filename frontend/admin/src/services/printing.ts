@@ -2,52 +2,54 @@ import jsPDF from 'jspdf';
 import type { Order, OrderItem } from '../types';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { generateEscPosReceipt, escPosToBase64 } from './escpos';
 
 const AGENT_URL = 'http://localhost:4676';
 
-// Função auxiliar para fetch com timeout para não travar a interface
-const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 3000) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
-        clearTimeout(id);
-        return response;
-    } catch (e) {
-        clearTimeout(id);
-        throw e;
-    }
-};
+// ─── CONFIGURAÇÃO DO AGENTE ───────────────────────────────────────────
+const getAgentUrl = () => AGENT_URL;
+const getAgentToken = () => 'kicardapio-printer-2024'; // Deve bater com o server.js
 
-const getAgentUrl = () => {
-    // Se o site estiver em HTTPS, o agente local também deve ser acessado de forma segura
-    // ou o navegador bloqueará por Mixed Content. 
-    // Por enquanto, o agente é HTTP localhost, o que o Chrome permite.
-    return AGENT_URL;
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 3000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return response;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
 };
 
 export interface PrinterConfig {
-  // Agora suportamos múltiplas impressoras por setor
-  cashierPrinters: string[]; 
-  kitchenPrinters: { id: string, name: string, printer: string }[];
-  barPrinters: { id: string, name: string, printer: string }[];
-  
-  // Mapeamento: Nome da Categoria -> ID da Impressora de Produção (Ex: "k1", "k2", "b1")
+  cashierPrinters: string[];
+  kitchenPrinters: { id: string; name: string; printer: string }[];
+  barPrinters: { id: string; name: string; printer: string }[];
   categoryMapping: Record<string, string>;
+  /** Modo de impressão: 'escpos' para térmicas, 'pdf' para fallback */
+  printMode?: 'escpos' | 'pdf' | 'auto';
 }
 
 export interface ReceiptSettings {
-    showLogo: boolean;
-    showAddress: boolean;
-    fontSize: 'small' | 'medium' | 'large';
-    headerText: string;
-    footerText: string;
-    itemSpacing?: number;
+  showLogo: boolean;
+  showAddress: boolean;
+  fontSize: 'small' | 'medium' | 'large';
+  headerText: string;
+  footerText: string;
+  itemSpacing?: number;
 }
 
+interface RestaurantInfo {
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  cnpj?: string | null;
+  logoUrl?: string | null;
+}
+
+// ─── VERIFICAÇÃO DO AGENTE ────────────────────────────────────────────
 export const checkAgentStatus = async (): Promise<boolean> => {
   try {
     const res = await fetchWithTimeout(`${getAgentUrl()}/status`);
@@ -61,11 +63,10 @@ export const getPrinters = async (): Promise<string[]> => {
   try {
     const res = await fetchWithTimeout(`${getAgentUrl()}/printers`);
     const data = await res.json();
-    // No Windows, o pdf-to-printer pode retornar um array de strings diretamente
-    // ou um array de objetos dependendo da versão/plataforma.
-    // Vamos garantir que lidamos com ambos.
     if (Array.isArray(data)) {
-        return data.map((p: unknown) => typeof p === 'string' ? p : ((p as { name?: string }).name || (p as { printer?: string }).printer || ''));
+      return data.map((p: unknown) =>
+        typeof p === 'string' ? p : ((p as { name?: string }).name || (p as { printer?: string }).printer || '')
+      );
     }
     return [];
   } catch (e) {
@@ -74,21 +75,70 @@ export const getPrinters = async (): Promise<string[]> => {
   }
 };
 
+// ─── ENVIO PARA O AGENTE ──────────────────────────────────────────────
+const sendToAgent = async (printer: string, content: string, type: 'escpos' | 'pdf' = 'pdf') => {
+  if (!printer) return;
+
+  await fetchWithTimeout(`${getAgentUrl()}/print`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      printer,
+      content,
+      type,
+      token: getAgentToken(),
+    }),
+  }, 8000);
+};
+
+// ─── DETECÇÃO DE MODO DE IMPRESSÃO ────────────────────────────────────
+function isNetworkPrinter(printer: string): boolean {
+  return /^(\d{1,3}\.){3}\d{1,3}/.test(printer) ||
+    printer.startsWith('\\\\') ||
+    printer.toLowerCase().includes('network') ||
+    printer.toLowerCase().includes('tcp');
+}
+
+function detectPrintMode(printer: string, configMode?: string): 'escpos' | 'pdf' {
+  if (configMode === 'escpos') return 'escpos';
+  if (configMode === 'pdf') return 'pdf';
+  // Auto: ESC/POS para impressoras de rede, PDF para USB/local
+  return isNetworkPrinter(printer) ? 'escpos' : 'pdf';
+}
+
+// ─── HELPERS DE STORAGE ───────────────────────────────────────────────
+function getRestaurantInfoFromStorage(): RestaurantInfo {
+  return {
+    name: localStorage.getItem('restaurant_name') || 'Minha Loja',
+    address: localStorage.getItem('restaurant_address'),
+    phone: localStorage.getItem('restaurant_phone'),
+    cnpj: localStorage.getItem('restaurant_cnpj'),
+    logoUrl: localStorage.getItem('restaurant_logo'),
+  };
+}
+
+function getReceiptSettingsFromStorage(): ReceiptSettings {
+  const layout = localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings');
+  return layout ? JSON.parse(layout) : {
+    showLogo: true,
+    showAddress: true,
+    fontSize: 'medium',
+    headerText: '',
+    footerText: '',
+  };
+}
+
+// ─── GERADOR DE PDF (FALLBACK) ────────────────────────────────────────
 const getBase64Image = async (url: string): Promise<string | null> => {
   if (!url) return null;
   try {
     const baseUrl = import.meta.env.VITE_API_URL || '';
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
-    
     const response = await fetch(fullUrl);
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        // Remove o prefixo do data URI se o jsPDF reclamar, mas geralmente ele aceita
-        resolve(result); 
-      };
+      reader.onloadend = () => resolve(reader.result as string);
       reader.readAsDataURL(blob);
     });
   } catch (e) {
@@ -97,99 +147,84 @@ const getBase64Image = async (url: string): Promise<string | null> => {
   }
 };
 
-// --- GERADOR UNIFICADO DE PDF ---
 const generateOrderReceiptPdf = (
-    order: Order, 
-    itemsToPrint: OrderItem[], 
-    title: string, 
-    settings: ReceiptSettings, 
-    restaurantInfo: RestaurantInfo | Record<string, unknown>,
-    logoBase64: string | null,
-    isProduction: boolean = false
+  order: Order,
+  itemsToPrint: OrderItem[],
+  title: string,
+  settings: ReceiptSettings,
+  restaurantInfo: RestaurantInfo | Record<string, unknown>,
+  logoBase64: string | null,
+  isProduction: boolean = false
 ): string => {
-  const fontSizes = { small: 7, medium: 9, large: 11 }; // Reduzido levemente para caber mais info
+  const fontSizes = { small: 7, medium: 9, large: 11 };
   const baseSize = fontSizes[settings.fontSize] || 9;
-  const leftMargin = 5; // Margem menor para aproveitar largura
-  const rightMargin = 75; 
+  const leftMargin = 5;
+  const rightMargin = 75;
   const maxContentWidth = 55;
   const centerX = 40;
-  const lineHeight = baseSize * 0.42; // Ajustado: 9pt * 0.42 = ~3.8mm por linha (Ideal para térmica)
+  const lineHeight = baseSize * 0.42;
 
-  // Função interna para desenhar o conteúdo e retornar o Y final
   const drawContent = (doc: jsPDF): number => {
     let y = 8;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(baseSize);
 
-    // 1. LOGO
     if (!isProduction && settings.showLogo && logoBase64) {
-        try {
-            doc.addImage(logoBase64, 'PNG', 25, y, 30, 20); // Logo mais baixa
-            y += 22; 
-        } catch (err) { console.error("Erro ao inserir logo no PDF:", err); }
+      try {
+        doc.addImage(logoBase64, 'PNG', 25, y, 30, 20);
+        y += 22;
+      } catch (err) { console.error("Erro ao inserir logo:", err); }
     }
 
-    // 2. CABEÇALHO DA LOJA
     if (!isProduction) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(baseSize + 1);
-        doc.text(restaurantInfo.name?.toUpperCase() || 'KICARDÁPIO', centerX, y, { align: 'center' });
-        y += lineHeight;
-        
-        doc.setFontSize(baseSize - 1);
-        doc.setFont('helvetica', 'normal');
-        if (restaurantInfo.cnpj) {
-          doc.text(`CNPJ: ${restaurantInfo.cnpj}`, centerX, y, { align: 'center' });
-          y += lineHeight;
-        }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(baseSize + 1);
+      doc.text(restaurantInfo.name?.toUpperCase() || 'KICARDÁPIO', centerX, y, { align: 'center' });
+      y += lineHeight;
 
-        if (restaurantInfo.address) {
-            const addrLines = doc.splitTextToSize(restaurantInfo.address, 70);
-            doc.text(addrLines, centerX, y, { align: 'center' });
-            y += (addrLines.length * lineHeight);
-        }
-        if (restaurantInfo.phone) {
-            doc.text(`TEL: ${restaurantInfo.phone}`, centerX, y, { align: 'center' });
-            y += lineHeight;
-        }
-        
-        y += 1;
+      doc.setFontSize(baseSize - 1);
+      doc.setFont('helvetica', 'normal');
+      if (restaurantInfo.cnpj) {
+        doc.text(`CNPJ: ${restaurantInfo.cnpj}`, centerX, y, { align: 'center' });
+        y += lineHeight;
+      }
+      if (restaurantInfo.address) {
+        const addrLines = doc.splitTextToSize(restaurantInfo.address, 70);
+        doc.text(addrLines, centerX, y, { align: 'center' });
+        y += (addrLines.length * lineHeight);
+      }
+      if (restaurantInfo.phone) {
+        doc.text(`TEL: ${restaurantInfo.phone}`, centerX, y, { align: 'center' });
+        y += lineHeight;
+      }
+      y += 1;
+      doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
+
+      if (settings.headerText) {
+        const headerLines = doc.splitTextToSize(settings.headerText.toUpperCase(), 70);
+        doc.setFont('helvetica', 'bold');
+        doc.text(headerLines, centerX, y, { align: 'center' });
+        y += (headerLines.length * lineHeight) + 1;
         doc.text('------------------------------------------------', centerX, y, { align: 'center' });
         y += lineHeight;
-
-        if (settings.headerText) {
-            const headerLines = doc.splitTextToSize(settings.headerText.toUpperCase(), 70);
-            doc.setFont('helvetica', 'bold');
-            doc.text(headerLines, centerX, y, { align: 'center' });
-            y += (headerLines.length * lineHeight) + 1;
-            doc.text('------------------------------------------------', centerX, y, { align: 'center' });
-            y += lineHeight;
-        }
+      }
     }
 
-    // 3. TÍTULO E TIPO DE PEDIDO
     const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
     const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
-    
-    let typeLabel = '';
-    if (order.orderType === 'TABLE') {
-        typeLabel = `MESA ${order.tableNumber}`;
-    } else {
-        typeLabel = isPickup ? 'RETIRADA/BALCÃO' : 'ENTREGA';
-    }
+    let typeLabel = order.orderType === 'TABLE' ? `MESA ${order.tableNumber}` : (isPickup ? 'RETIRADA/BALCÃO' : 'ENTREGA');
 
-    y += 1; 
-    doc.setFontSize(baseSize + 4); 
+    y += 1;
+    doc.setFontSize(baseSize + 4);
     doc.setFont('helvetica', 'bold');
     doc.text(typeLabel, centerX, y, { align: 'center' });
     y += lineHeight + 1;
 
-    // 4. INFO DO PEDIDO
     doc.setFontSize(baseSize - 1);
     doc.setFont('helvetica', 'normal');
     const dateStr = format(new Date(order.createdAt), "dd/MM/yyyy HH:mm");
     doc.text(dateStr, rightMargin, y, { align: 'right' });
-    
     if (order.user?.name) {
       doc.setFont('helvetica', 'bold');
       doc.text(`ATEND: ${order.user.name.toUpperCase()}`, leftMargin, y);
@@ -201,25 +236,22 @@ const generateOrderReceiptPdf = (
     doc.text(`PEDIDO: #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}`, leftMargin, y);
     y += lineHeight;
 
-    // 5. DADOS DO CLIENTE
     if (order.deliveryOrder) {
-        doc.setFontSize(baseSize - 1);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`CLIENTE: ${order.deliveryOrder.name || 'N/A'}`, leftMargin, y);
+      doc.setFontSize(baseSize - 1);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`CLIENTE: ${order.deliveryOrder.name || 'N/A'}`, leftMargin, y);
+      y += lineHeight;
+      if (!isProduction) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(`FONE: ${order.deliveryOrder.phone || 'N/A'}`, leftMargin, y);
         y += lineHeight;
-        
-        if (!isProduction) {
-          doc.setFont('helvetica', 'normal');
-          doc.text(`FONE: ${order.deliveryOrder.phone || 'N/A'}`, leftMargin, y);
-          y += lineHeight;
-
-          if (!isPickup && order.deliveryOrder.address) {
-              doc.setFont('helvetica', 'bold');
-              const addrLines = doc.splitTextToSize(`END: ${order.deliveryOrder.address.toUpperCase()}`, 70);
-              doc.text(addrLines, leftMargin, y);
-              y += (addrLines.length * lineHeight);
-          }
+        if (!isPickup && order.deliveryOrder.address) {
+          doc.setFont('helvetica', 'bold');
+          const addrLines = doc.splitTextToSize(`END: ${order.deliveryOrder.address.toUpperCase()}`, 70);
+          doc.text(addrLines, leftMargin, y);
+          y += (addrLines.length * lineHeight);
         }
+      }
     }
 
     doc.setFont('helvetica', 'normal');
@@ -227,7 +259,6 @@ const generateOrderReceiptPdf = (
     doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
-    // 6. TÍTULO DA VIA
     if (title) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(baseSize);
@@ -237,14 +268,13 @@ const generateOrderReceiptPdf = (
       y += lineHeight;
     }
 
-    // 7. LISTAGEM DE ITENS
     doc.setFontSize(baseSize - 1);
     doc.setFont('helvetica', 'bold');
     if (isProduction) {
-        doc.text('QTD  PRODUTO', leftMargin, y);
+      doc.text('QTD  PRODUTO', leftMargin, y);
     } else {
-        doc.text('QTD  DESCRIÇÃO', leftMargin, y);
-        doc.text('VALOR', rightMargin, y, { align: 'right' });
+      doc.text('QTD  DESCRIÇÃO', leftMargin, y);
+      doc.text('VALOR', rightMargin, y, { align: 'right' });
     }
     y += lineHeight;
     doc.setFont('helvetica', 'normal');
@@ -253,68 +283,56 @@ const generateOrderReceiptPdf = (
 
     (itemsToPrint || []).forEach(item => {
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(baseSize); 
-      
-      const productName = item.product?.name || "Produto";
-      const productText = `${item.quantity}x ${productName.toUpperCase()}`;
+      doc.setFontSize(baseSize);
+      const productText = `${item.quantity}x ${(item.product?.name || "Produto").toUpperCase()}`;
       const productLines = doc.splitTextToSize(productText, maxContentWidth + (isProduction ? 10 : 0));
-      
       doc.text(productLines, leftMargin, y);
-      
       if (!isProduction) {
-          const totalItem = ((item.priceAtTime || 0) * (item.quantity || 0)).toFixed(2);
-          doc.text(totalItem, rightMargin, y, { align: 'right' });
+        doc.text(((item.priceAtTime || 0) * (item.quantity || 0)).toFixed(2), rightMargin, y, { align: 'right' });
       }
-      
       y += (productLines.length * lineHeight);
 
-      // COMPLEMENTOS
-      doc.setFontSize(baseSize - 2); 
+      doc.setFontSize(baseSize - 2);
       const detailMargin = leftMargin + 2;
       const detailWidth = 60;
-      
+
       if (item.flavorsJson) {
-          try {
-              const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
-              if (Array.isArray(flavors)) {
-                  flavors.forEach((f: { name: string }) => {
-                      doc.setFont('helvetica', 'bold');
-                      const line = `> SABOR: ${f.name?.toUpperCase() || ''}`;
-                      const lines = doc.splitTextToSize(line, detailWidth);
-                      doc.text(lines, detailMargin, y);
-                      y += (lines.length * lineHeight);
-                  });
-              }
-          } catch { /* empty */ }
+        try {
+          const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
+          if (Array.isArray(flavors)) flavors.forEach((f: { name: string }) => {
+            doc.setFont('helvetica', 'bold');
+            const lines = doc.splitTextToSize(`> SABOR: ${(f.name || '').toUpperCase()}`, detailWidth);
+            doc.text(lines, detailMargin, y);
+            y += (lines.length * lineHeight);
+          });
+        } catch { /* empty */ }
       }
       if (item.sizeJson) {
-          try { 
-              const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
-              doc.setFont('helvetica', 'normal');
-              doc.text(`> TAM: ${size.name?.toUpperCase() || ''}`, detailMargin, y); 
-              y += lineHeight; 
-          } catch { /* empty */ }
+        try {
+          const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
+          doc.setFont('helvetica', 'normal');
+          doc.text(`> TAM: ${(size.name || '').toUpperCase()}`, detailMargin, y);
+          y += lineHeight;
+        } catch { /* empty */ }
       }
       if (item.addonsJson) {
-          try { 
-              const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
-              if (Array.isArray(addons)) {
-                  addons.forEach((a: { name: string; quantity?: number }) => {
-                      doc.setFont('helvetica', 'bold');
-                      const qtyPrefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-                      doc.text(`[+] ${qtyPrefix}${a.name?.toUpperCase() || ''}`, detailMargin, y);
-                      y += lineHeight;
-                  });
-              }
-          } catch { /* empty */ }
+        try {
+          const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
+          if (Array.isArray(addons)) addons.forEach((a: { name: string; quantity?: number }) => {
+            doc.setFont('helvetica', 'bold');
+            const qtyPrefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
+            doc.text(`[+] ${qtyPrefix}${(a.name || '').toUpperCase()}`, detailMargin, y);
+            y += lineHeight;
+          });
+        } catch { /* empty */ }
       }
       if (item.observations) {
-          doc.setFont('helvetica', 'italic');
-          const obsLines = doc.splitTextToSize(`(!) OBS: ${item.observations.toUpperCase()}`, detailWidth);
-          doc.text(obsLines, detailMargin, y);
-          y += (obsLines.length * lineHeight);
+        doc.setFont('helvetica', 'italic');
+        const obsLines = doc.splitTextToSize(`(!) OBS: ${item.observations.toUpperCase()}`, detailWidth);
+        doc.text(obsLines, detailMargin, y);
+        y += (obsLines.length * lineHeight);
       }
-      y += (settings.itemSpacing || 1); // Reduzido padrão para 1
+      y += (settings.itemSpacing || 1);
     });
 
     y += 1;
@@ -322,96 +340,75 @@ const generateOrderReceiptPdf = (
     doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
-    // 7.5 OBSERVAÇÃO GERAL
-    const generalObs = order.observations || order.deliveryOrder?.observations || (order as { notes?: string }).notes;
-    if (generalObs) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(baseSize);
-        const generalObsLines = doc.splitTextToSize(`OBS GERAL: ${generalObs.toUpperCase()}`, 70);
-        doc.text(generalObsLines, leftMargin, y);
-        y += (generalObsLines.length * lineHeight) + 1;
-        doc.setFontSize(baseSize - 1);
-        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
-        y += lineHeight;
-    }
-
-    // 8. TOTAIS E PAGAMENTO
     if (!isProduction) {
-        const totalQty = (itemsToPrint || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`QTD ITENS: ${totalQty}`, leftMargin, y);
-        y += lineHeight;
-        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
-        y += lineHeight;
+      const totalQty = (itemsToPrint || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`QTD ITENS: ${totalQty}`, leftMargin, y);
+      y += lineHeight;
+      doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
 
-        const subtotal = order.total || 0;
-        const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
-        const discount = order.discount || 0;
-        const extraCharge = order.extraCharge || 0;
-        const totalGeral = subtotal + deliveryFee - discount + extraCharge;
+      const subtotal = order.total || 0;
+      const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
+      const discount = (order as { discount?: number }).discount || 0;
+      const extraCharge = (order as { extraCharge?: number }).extraCharge || 0;
+      const totalGeral = subtotal + deliveryFee - discount + extraCharge;
 
-        doc.setFont('helvetica', 'normal');
-        doc.text(`SUBTOTAL`, leftMargin, y);
-        doc.text(`${subtotal.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.text(`SUBTOTAL`, leftMargin, y);
+      doc.text(`${subtotal.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      y += lineHeight;
+      if (deliveryFee > 0) {
+        doc.text(`TAXA ENTREGA`, leftMargin, y);
+        doc.text(`${deliveryFee.toFixed(2)}`, rightMargin, y, { align: 'right' });
         y += lineHeight;
+      }
+      if (discount > 0) {
+        doc.text(`DESCONTO (-)`, leftMargin, y);
+        doc.text(`${discount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+        y += lineHeight;
+      }
+      doc.setFontSize(baseSize + 1);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`TOTAL`, leftMargin, y);
+      doc.text(`${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      doc.setFontSize(baseSize - 1);
+      y += lineHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
 
-        if (deliveryFee > 0) {
-          doc.text(`TAXA ENTREGA`, leftMargin, y);
-          doc.text(`${deliveryFee.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      doc.setFont('helvetica', 'bold');
+      doc.text('PAGAMENTO:', leftMargin, y);
+      y += lineHeight;
+      doc.setFont('helvetica', 'normal');
+      const methodMap: Record<string, string> = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
+      if (order.payments && order.payments.length > 0) {
+        order.payments.forEach((p: { method: string; amount: number }) => {
+          doc.text(`(${methodMap[p.method] || p.method.toUpperCase()})`, leftMargin, y);
+          doc.text(`${p.amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
           y += lineHeight;
-        }
-        
-        if (discount > 0) {
-          doc.text(`DESCONTO (-)`, leftMargin, y);
-          doc.text(`${discount.toFixed(2)}`, rightMargin, y, { align: 'right' });
-          y += lineHeight;
-        }
-
-        doc.setFontSize(baseSize + 1);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`TOTAL`, leftMargin, y);
-        doc.text(`${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
-        doc.setFontSize(baseSize - 1);
+        });
+      } else if (order.deliveryOrder?.paymentMethod) {
+        doc.text(`(${methodMap[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase()})`, leftMargin, y);
         y += lineHeight;
-
-        doc.setFont('helvetica', 'normal');
-        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+      } else {
+        doc.text('A PAGAR NO CAIXA', leftMargin, y);
         y += lineHeight;
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('PAGAMENTO:', leftMargin, y);
-        y += lineHeight;
-        doc.setFont('helvetica', 'normal');
-        
-        const methodMap: Record<string, string> = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
-
-        if (order.payments && order.payments.length > 0) {
-            order.payments.forEach((p: { method: string; amount: number }) => {
-                doc.text(`(${methodMap[p.method] || p.method.toUpperCase()})`, leftMargin, y);
-                doc.text(`${p.amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
-                y += lineHeight;
-            });
-        } else if (order.deliveryOrder?.paymentMethod) {
-            doc.text(`(${methodMap[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase()})`, leftMargin, y);
-            y += lineHeight;
-        } else {
-            doc.text('A PAGAR NO CAIXA', leftMargin, y);
-            y += lineHeight;
-        }
-        doc.text('------------------------------------------------', centerX, y, { align: 'center' });
-        y += lineHeight;
+      }
+      doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
     } else {
-        doc.setFont('helvetica', 'bold');
-        doc.text('*** FIM DA PRODUÇÃO ***', centerX, y, { align: 'center' });
-        y += lineHeight;
+      doc.setFont('helvetica', 'bold');
+      doc.text('*** FIM DA PRODUÇÃO ***', centerX, y, { align: 'center' });
+      y += lineHeight;
     }
 
-    // 9. RODAPÉ
     if (!isProduction && settings.footerText) {
-        const footerLines = doc.splitTextToSize(settings.footerText.toUpperCase(), 70);
-        doc.setFont('helvetica', 'bold');
-        doc.text(footerLines, centerX, y, { align: 'center' });
-        y += (footerLines.length * lineHeight) + 1;
+      const footerLines = doc.splitTextToSize(settings.footerText.toUpperCase(), 70);
+      doc.setFont('helvetica', 'bold');
+      doc.text(footerLines, centerX, y, { align: 'center' });
+      y += (footerLines.length * lineHeight) + 1;
     }
 
     doc.setFontSize(baseSize - 3);
@@ -420,311 +417,275 @@ const generateOrderReceiptPdf = (
     y += lineHeight;
     doc.setFont('helvetica', 'bold');
     doc.text('KICARDAPIO@', centerX, y, { align: 'center' });
-    y += 8; // Margem final reduzida para 8mm
+    y += 8;
     return y;
   };
 
-  // 1º Passo: Calcular Altura
   const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
   const finalHeight = drawContent(tempDoc);
-
-  // 2º Passo: Gerar PDF Real com a altura calculada
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, finalHeight] });
   drawContent(doc);
-
   return doc.output('datauristring').split(',')[1];
 };
 
-const generateCashierPdf = (summary: Record<string, unknown>, restaurantInfo: RestaurantInfo | Record<string, unknown>): string => {
-    const centerX = 40;
-    const leftMargin = 10;
-    const rightMargin = 74;
-    const lineHeight = 5;
+// ─── FUNÇÕES PÚBLICAS DE IMPRESSÃO ───────────────────────────────────
 
-    const drawContent = (doc: jsPDF): number => {
-        let y = 12;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text("FECHAMENTO DE CAIXA", centerX, y, { align: 'center' });
-        y += lineHeight + 2;
-
-        doc.setFontSize(10);
-        doc.text(restaurantInfo.name?.toUpperCase() || 'NOME DA LOJA', leftMargin, y);
-        y += lineHeight;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.text(`ABERTURA: ${format(new Date(summary.openedAt), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
-        y += lineHeight;
-        doc.text(`FECHAMENTO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
-        y += lineHeight + 2;
-
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-        y += lineHeight;
-
-        doc.setFont('helvetica', 'bold');
-        doc.text("RESUMO DE VENDAS", leftMargin, y);
-        y += lineHeight;
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-        y += lineHeight;
-
-        doc.setFont('helvetica', 'normal');
-        Object.entries(summary.salesByMethod as Record<string, number> || {}).forEach(([method, amount]) => {
-        const methodMap: Record<string, string> = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
-            doc.text(methodMap[method] || method.toUpperCase(), leftMargin, y);
-            doc.text(`R$ ${amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
-            y += lineHeight;
-        });
-
-        y += 2;
-        doc.setFont('helvetica', 'bold');
-        doc.text("TOTAL VENDIDO", leftMargin, y);
-        doc.text(`R$ ${summary.totalSales.toFixed(2)}`, rightMargin, y, { align: 'right' });
-        y += lineHeight + 2;
-
-        doc.text('--------------------------------------------', centerX, y, { align: 'center' });
-        y += lineHeight;
-
-        doc.text("SALDO FINAL", leftMargin, y);
-        y += lineHeight;
-        doc.setFont('helvetica', 'normal');
-        doc.text("Fundo de Caixa (Inicial)", leftMargin, y);
-        doc.text(`+ R$ ${summary.initialAmount.toFixed(2)}`, rightMargin, y, { align: 'right' });
-        y += lineHeight;
-        
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        const totalGeral = (summary.totalSales || 0) + (summary.initialAmount || 0);
-        doc.text("TOTAL EM CAIXA", leftMargin, y);
-        doc.text(`R$ ${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
-        y += lineHeight * 2;
-
-        doc.setFontSize(8);
-        doc.text("ASSINATURA RESPONSÁVEL:", leftMargin, y);
-        y += 15;
-        doc.text('____________________________________', centerX, y, { align: 'center' });
-        y += lineHeight;
-        doc.text('KICARDAPIO@', centerX, y, { align: 'center' });
-        y += 10;
-        return y;
-    };
-
-    const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
-    const finalHeight = drawContent(tempDoc);
-
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, finalHeight] });
-    drawContent(doc);
-
-    return doc.output('datauristring').split(',')[1];
-};
-
-interface RestaurantInfo {
-    name: string;
-    address?: string | null;
-    phone?: string | null;
-    cnpj?: string | null;
-    logoUrl?: string | null;
-}
-
-function getRestaurantInfoFromStorage(): RestaurantInfo {
-    return {
-        name: localStorage.getItem('restaurant_name') || 'Minha Loja',
-        address: localStorage.getItem('restaurant_address'),
-        phone: localStorage.getItem('restaurant_phone'),
-        cnpj: localStorage.getItem('restaurant_cnpj'),
-        logoUrl: localStorage.getItem('restaurant_logo'),
-    };
-}
-
-function getPrinterConfigFromStorage(): { cashierPrinters: string[] } {
-    const saved = localStorage.getItem('printer_config');
-    return saved ? JSON.parse(saved) : { cashierPrinters: [localStorage.getItem('cashier_printer_name') || ''] };
-}
-
-function getReceiptSettingsFromStorage(): ReceiptSettings {
-    const layout = localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings');
-    return layout ? JSON.parse(layout) : { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '' };
-}
-
-export const printTableCheckout = async (
-    tableNumber: number,
-    items: Record<string, unknown>[],
-    payments: Record<string, unknown>[],
-    order?: Order,
-    restaurantInfo?: RestaurantInfo,
-    printerConfig?: { cashierPrinters: string[] },
-    receiptSettings?: ReceiptSettings
+export const printOrder = async (
+  order: Order,
+  config: PrinterConfig,
+  receiptSettings?: ReceiptSettings,
+  restaurantInfo?: RestaurantInfo
 ) => {
-    const status = await checkAgentStatus();
-    if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
-
-    const config = printerConfig || getPrinterConfigFromStorage();
-    const settings = receiptSettings || getReceiptSettingsFromStorage();
-    const info = restaurantInfo || getRestaurantInfoFromStorage();
-
-    const dummyOrder: Order = order || {
-        id: 'CONTA-' + tableNumber,
-        tableNumber: tableNumber,
-        orderType: 'TABLE',
-        status: 'COMPLETED',
-        total: items.reduce((acc, i) => acc + ((i.priceAtTime as number || 0) * (i.quantity as number || 0)), 0),
-        createdAt: new Date().toISOString(),
-        items: items as unknown as Order['items'],
-        payments: payments as unknown as Order['payments'],
-        restaurantId: '',
-    };
-
-    const pdf = generateOrderReceiptPdf(dummyOrder, items, `EXTRATO MESA ${tableNumber}`, settings, info, null, false);
-
-    if (config.cashierPrinters && config.cashierPrinters.length > 0) {
-        for (const p of config.cashierPrinters) {
-            await fetchWithTimeout(`${getAgentUrl()}/print`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ printer: p, content: pdf })
-            });
-        }
-    }
-};
-
-export const printCashierClosure = async (
-    summary: Record<string, unknown>,
-    restaurantInfo?: RestaurantInfo,
-    printerConfig?: { cashierPrinters: string[] }
-) => {
-    const status = await checkAgentStatus();
-    if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
-
-    const config = printerConfig || getPrinterConfigFromStorage();
-    const info = restaurantInfo || getRestaurantInfoFromStorage();
-
-    const pdf = generateCashierPdf(summary, info);
-    
-    if (config.cashierPrinters && config.cashierPrinters.length > 0) {
-        for (const p of config.cashierPrinters) {
-            await fetchWithTimeout(`${getAgentUrl()}/print`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ printer: p, content: pdf })
-            });
-        }
-    }
-};
-
-export const printOrder = async (order: Order, config: PrinterConfig, receiptSettings?: ReceiptSettings, restaurantInfo?: RestaurantInfo) => {
   const status = await checkAgentStatus();
-  if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
-
-  if (!order || (!order.items || order.items.length === 0)) {
-    console.error("Pedido sem itens para impressão:", order);
-    toast.error("O pedido parece estar vazio ou não foi carregado corretamente para impressão.");
+  if (!status) {
+    toast.error("Agente de impressão não encontrado!");
     return;
   }
 
-  // Garantir que config tenha todas as propriedades necessárias
+  if (!order || !order.items || order.items.length === 0) {
+    console.error("Pedido sem itens para impressão:", order);
+    toast.error("O pedido está vazio ou não foi carregado para impressão.");
+    return;
+  }
+
   const finalConfig: PrinterConfig = {
-      cashierPrinters: config?.cashierPrinters || [],
-      kitchenPrinters: config?.kitchenPrinters || [],
-      barPrinters: config?.barPrinters || [],
-      categoryMapping: config?.categoryMapping || {}
+    cashierPrinters: config?.cashierPrinters || [],
+    kitchenPrinters: config?.kitchenPrinters || [],
+    barPrinters: config?.barPrinters || [],
+    categoryMapping: config?.categoryMapping || {},
+    printMode: config?.printMode || 'auto',
   };
 
-  // Tenta carregar as configurações. Prioridade: 
-  // 1. Objeto passado via argumento (se não for vazio)
-  // 2. localStorage 'receipt_layout' (novo padrão)
-  // 3. localStorage 'receipt_settings' (legado)
   const storageLayout = localStorage.getItem('receipt_layout');
   const storageSettings = localStorage.getItem('receipt_settings');
-  
   let finalSettings: ReceiptSettings;
-  
+
   if (receiptSettings && Object.keys(receiptSettings).length > 0) {
-      finalSettings = receiptSettings;
+    finalSettings = receiptSettings;
   } else if (storageLayout) {
-      finalSettings = JSON.parse(storageLayout);
+    finalSettings = JSON.parse(storageLayout);
   } else if (storageSettings) {
-      finalSettings = JSON.parse(storageSettings);
+    finalSettings = JSON.parse(storageSettings);
   } else {
-      finalSettings = { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '', itemSpacing: 2 };
+    finalSettings = { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '', itemSpacing: 2 };
   }
 
-  console.log(`[PRINT DEBUG] Usando configurações: Logo=${finalSettings.showLogo}, Fonte=${finalSettings.fontSize}`);
-  const finalRestaurant = restaurantInfo || { 
-      name: localStorage.getItem('restaurant_name'),
-      address: localStorage.getItem('restaurant_address'),
-      phone: localStorage.getItem('restaurant_phone'),
-      cnpj: localStorage.getItem('restaurant_cnpj'),
-      logoUrl: localStorage.getItem('restaurant_logo')
-  };
+  const finalRestaurant = restaurantInfo || getRestaurantInfoFromStorage();
 
-  // Pré-carregar Logo se necessário (apenas para caixa)
+  // Pré-carregar logo apenas para PDF
   let logoBase64: string | null = null;
   if (finalSettings.showLogo && finalRestaurant.logoUrl) {
-      logoBase64 = await getBase64Image(finalRestaurant.logoUrl);
+    logoBase64 = await getBase64Image(finalRestaurant.logoUrl);
   }
 
-  const sendToAgent = async (printer: string, pdf: string) => {
-      if (!printer) return;
-      await fetchWithTimeout(`${getAgentUrl()}/print`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ printer, content: pdf })
-      });
-  };
-
-  // 1. IMPRIMIR NO CAIXA (Via do Cliente / Extrato)
   const isTable = order.orderType === 'TABLE';
   const isCompleted = order.status === 'COMPLETED';
+
+  // ── 1. IMPRESSÃO DO CAIXA (Via do Cliente / Extrato) ──
   const shouldPrintCashier = !isTable || (isTable && isCompleted);
 
   if (shouldPrintCashier && finalConfig.cashierPrinters?.length > 0) {
-      const pdf = generateOrderReceiptPdf(order, order.items, isTable ? "EXTRATO DE CONTA" : "VIA CAIXA", finalSettings, finalRestaurant, logoBase64, false);
-      for (const p of finalConfig.cashierPrinters) {
-          await sendToAgent(p, pdf);
+    for (const printer of finalConfig.cashierPrinters) {
+      const mode = detectPrintMode(printer, finalConfig.printMode);
+
+      if (mode === 'escpos') {
+        const escPos = generateEscPosReceipt(order, order.items, isTable ? "EXTRATO DE CONTA" : "VIA CAIXA", finalSettings, finalRestaurant, false);
+        await sendToAgent(printer, escPosToBase64(escPos), 'escpos');
+      } else {
+        const pdf = generateOrderReceiptPdf(order, order.items, isTable ? "EXTRATO DE CONTA" : "VIA CAIXA", finalSettings, finalRestaurant, logoBase64, false);
+        await sendToAgent(printer, pdf, 'pdf');
       }
+    }
   }
 
-  // 2. IMPRIMIR NA PRODUÇÃO (Cozinha/Bar)
+  // ── 2. IMPRESSÃO NA PRODUÇÃO (Cozinha/Bar) ──
   const shouldPrintProduction = !isTable || (isTable && !isCompleted);
 
   if (shouldPrintProduction) {
-      const productionGroups: Record<string, OrderItem[]> = {};
+    const productionGroups: Record<string, OrderItem[]> = {};
 
-      (order.items || []).forEach(item => {
-          const product = item.product;
-          let categoryName = "Geral";
+    (order.items || []).forEach(item => {
+      const product = item.product;
+      let categoryName = "Geral";
 
-          if (product?.categories && product.categories.length > 0) {
-              categoryName = product.categories[0].name;
-          } else if (product?.category?.name) {
-              categoryName = product.category.name;
-           } else if ((item as { category?: { name?: string } }).category?.name) {
-              categoryName = (item as { category?: { name?: string } }).category!.name;
-          }
-          
-          const destinationId = finalConfig.categoryMapping[categoryName] || finalConfig.categoryMapping[categoryName.trim()] || 'k1';
-          if (destinationId === 'none') return;
-
-          if (!productionGroups[destinationId]) productionGroups[destinationId] = [];
-          productionGroups[destinationId].push(item);
-      });
-
-      // Disparar para Cozinhas
-      for (const k of finalConfig.kitchenPrinters) {
-          const items = productionGroups[k.id];
-          if (items && items.length > 0) {
-              const pdf = generateOrderReceiptPdf(order, items, `VIA ${k.name.toUpperCase()}`, finalSettings, finalRestaurant, null, true);
-              await sendToAgent(k.printer, pdf);
-          }
+      if (product?.categories && product.categories.length > 0) {
+        categoryName = product.categories[0].name;
+      } else if ((product as { category?: { name?: string } })?.category?.name) {
+        categoryName = (product as { category?: { name?: string } }).category!.name;
+      } else if ((item as { category?: { name?: string } }).category?.name) {
+        categoryName = (item as { category?: { name?: string } }).category!.name;
       }
 
-      // Disparar para Bares
-      for (const b of finalConfig.barPrinters) {
-          const items = productionGroups[b.id];
-          if (items && items.length > 0) {
-              const pdf = generateOrderReceiptPdf(order, items, `VIA ${b.name.toUpperCase()}`, finalSettings, finalRestaurant, null, true);
-              await sendToAgent(b.printer, pdf);
-          }
+      const destinationId = finalConfig.categoryMapping[categoryName] || finalConfig.categoryMapping[categoryName.trim()] || 'k1';
+      if (destinationId === 'none') return;
+
+      if (!productionGroups[destinationId]) productionGroups[destinationId] = [];
+      productionGroups[destinationId].push(item);
+    });
+
+    // Cozinhas
+    for (const k of (finalConfig.kitchenPrinters || [])) {
+      const items = productionGroups[k.id];
+      if (items && items.length > 0) {
+        const mode = detectPrintMode(k.printer, finalConfig.printMode);
+        if (mode === 'escpos') {
+          const escPos = generateEscPosReceipt(order, items, `VIA ${k.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
+          await sendToAgent(k.printer, escPosToBase64(escPos), 'escpos');
+        } else {
+          const pdf = generateOrderReceiptPdf(order, items, `VIA ${k.name.toUpperCase()}`, finalSettings, finalRestaurant, null, true);
+          await sendToAgent(k.printer, pdf, 'pdf');
+        }
       }
+    }
+
+    // Bares
+    for (const b of (finalConfig.barPrinters || [])) {
+      const items = productionGroups[b.id];
+      if (items && items.length > 0) {
+        const mode = detectPrintMode(b.printer, finalConfig.printMode);
+        if (mode === 'escpos') {
+          const escPos = generateEscPosReceipt(order, items, `VIA ${b.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
+          await sendToAgent(b.printer, escPosToBase64(escPos), 'escpos');
+        } else {
+          const pdf = generateOrderReceiptPdf(order, items, `VIA ${b.name.toUpperCase()}`, finalSettings, finalRestaurant, null, true);
+          await sendToAgent(b.printer, pdf, 'pdf');
+        }
+      }
+    }
+  }
+};
+
+export const printTableCheckout = async (
+  tableNumber: number,
+  items: Record<string, unknown>[],
+  payments: Record<string, unknown>[],
+  order?: Order,
+  restaurantInfo?: RestaurantInfo,
+  printerConfig?: { cashierPrinters: string[] },
+  receiptSettings?: ReceiptSettings
+) => {
+  const status = await checkAgentStatus();
+  if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
+
+  const config = printerConfig || { cashierPrinters: [] };
+  const settings = receiptSettings || getReceiptSettingsFromStorage();
+  const info = restaurantInfo || getRestaurantInfoFromStorage();
+
+  const dummyOrder: Order = order || {
+    id: 'CONTA-' + tableNumber,
+    tableNumber: tableNumber,
+    orderType: 'TABLE',
+    status: 'COMPLETED',
+    total: items.reduce((acc, i) => acc + ((i.priceAtTime as number || 0) * (i.quantity as number || 0)), 0),
+    createdAt: new Date().toISOString(),
+    items: items as unknown as Order['items'],
+    payments: payments as unknown as Order['payments'],
+    restaurantId: '',
+  };
+
+  const escPos = generateEscPosReceipt(dummyOrder, items as unknown as OrderItem[], `EXTRATO MESA ${tableNumber}`, settings, info, false);
+
+  if (config.cashierPrinters && config.cashierPrinters.length > 0) {
+    for (const p of config.cashierPrinters) {
+      await sendToAgent(p, escPosToBase64(escPos), 'escpos');
+    }
+  }
+};
+
+export const printCashierClosure = async (
+  summary: Record<string, unknown>,
+  restaurantInfo?: RestaurantInfo,
+  printerConfig?: { cashierPrinters: string[] }
+) => {
+  const status = await checkAgentStatus();
+  if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
+
+  const config = printerConfig || { cashierPrinters: [] };
+  const info = restaurantInfo || getRestaurantInfoFromStorage();
+
+  // Usar PDF para fechamento de caixa (layout mais complexo)
+  const centerX = 40;
+  const leftMargin = 10;
+  const rightMargin = 74;
+  const lineHeight = 5;
+
+  const drawContent = (doc: jsPDF): number => {
+    let y = 12;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text("FECHAMENTO DE CAIXA", centerX, y, { align: 'center' });
+    y += lineHeight + 2;
+
+    doc.setFontSize(10);
+    doc.text(info.name.toUpperCase(), leftMargin, y);
+    y += lineHeight;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`ABERTURA: ${format(new Date(summary.openedAt as string), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
+    y += lineHeight;
+    doc.text(`FECHAMENTO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
+    y += lineHeight + 2;
+
+    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text("RESUMO DE VENDAS", leftMargin, y);
+    y += lineHeight;
+    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    doc.setFont('helvetica', 'normal');
+    const methodMap: Record<string, string> = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
+    Object.entries(summary.salesByMethod as Record<string, number> || {}).forEach(([method, amount]) => {
+      doc.text(methodMap[method] || method.toUpperCase(), leftMargin, y);
+      doc.text(`R$ ${amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      y += lineHeight;
+    });
+
+    y += 2;
+    doc.setFont('helvetica', 'bold');
+    doc.text("TOTAL VENDIDO", leftMargin, y);
+    doc.text(`R$ ${(summary.totalSales as number).toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight + 2;
+
+    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    doc.text("SALDO FINAL", leftMargin, y);
+    y += lineHeight;
+    doc.setFont('helvetica', 'normal');
+    doc.text("Fundo de Caixa (Inicial)", leftMargin, y);
+    doc.text(`+ R$ ${(summary.initialAmount as number).toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    const totalGeral = (summary.totalSales as number || 0) + (summary.initialAmount as number || 0);
+    doc.text("TOTAL EM CAIXA", leftMargin, y);
+    doc.text(`R$ ${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight * 2;
+
+    doc.setFontSize(8);
+    doc.text("ASSINATURA RESPONSÁVEL:", leftMargin, y);
+    y += 15;
+    doc.text('____________________________________', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.text('KICARDÁPIO@', centerX, y, { align: 'center' });
+    y += 10;
+    return y;
+  };
+
+  const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
+  const finalHeight = drawContent(tempDoc);
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, finalHeight] });
+  drawContent(doc);
+  const pdf = doc.output('datauristring').split(',')[1];
+
+  if (config.cashierPrinters && config.cashierPrinters.length > 0) {
+    for (const p of config.cashierPrinters) {
+      await sendToAgent(p, pdf, 'pdf');
+    }
   }
 };
