@@ -266,7 +266,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
   return (
     <RestaurantProvider settings={restaurantSettings}>
-      <div>DEBUG: settings passed: {String(restaurantSettings)}</div>
+      <div>DEBUG OK</div>
     </RestaurantProvider>
   );
 };
