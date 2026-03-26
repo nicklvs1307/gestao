@@ -262,8 +262,12 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
   const restaurantSettings = restaurant?.settings ?? null;
 
+  console.log('[DeliveryPage] Before return - restaurantSettings:', restaurantSettings);
+
   return (
     <RestaurantProvider settings={restaurantSettings}>
+      <div>DEBUG: Entered RestaurantProvider children</div>
+      {/*
       <RestaurantMeta restaurant={restaurant} />
       <div className="bg-background min-h-screen pb-28 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
         {!isStoreOpen && (
@@ -351,6 +355,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
         <OrderSuccessModal 
           isOpen={isSuccessModalOpen}
           onClose={() => setSuccessModalOpen(false)}
+          orderId={lastCreatedOrderId}
         />
 
         <ProductDetailModal
@@ -404,6 +409,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
           hasOrders={localStorage.getItem('recent_orders') !== null}
         />
       </div>
+      */}
     </RestaurantProvider>
   );
 };
