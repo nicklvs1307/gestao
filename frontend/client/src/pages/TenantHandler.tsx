@@ -117,6 +117,12 @@ const TenantHandler = () => {
       </Helmet>
 
       {tableNumber ? (
+        <div>DEBUG: Rendering TableMenuWrapper</div>
+      ) : (
+        <div>DEBUG: Rendering DeliveryPage with slug: {restaurant?.slug}</div>
+      )}
+
+      {tableNumber ? (
         <TableMenuWrapper restaurantId={restaurant.id} tableNumber={tableNumber} />
       ) : (
         <DeliveryPage restaurantSlug={restaurant.slug} />
