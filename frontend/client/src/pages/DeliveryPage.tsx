@@ -12,7 +12,6 @@ import ReorderSection from '../components/ReorderSection';
 import BottomNav from '../components/BottomNav';
 import VideoCarousel from '../components/VideoCarousel';
 import { useLocalCart } from '../hooks/useLocalCart';
-import { RestaurantProvider } from '../contexts/RestaurantContext';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import PixPaymentModal from '../components/PixPaymentModal';
 import ProductDetailModal from '../components/ProductDetailModal';
@@ -265,9 +264,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   console.log('[DeliveryPage] settings value:', JSON.stringify(restaurantSettings));
 
   return (
-    <RestaurantProvider settings={restaurantSettings}>
-      <div>DEBUG OK</div>
-    </RestaurantProvider>
+    <div>DEBUG OK - NO RestaurantProvider</div>
   );
 };
 
