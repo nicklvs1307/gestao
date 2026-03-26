@@ -55,6 +55,9 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
   const { localCartItems, handleAddToCart: addToCart, localCartTotal, handleRemoveFromCart, handleUpdateCartItemQuantity, clearCart, setLocalCartItems } = useLocalCart();
 
+  // Definir isStoreOpen ANTES de funções que dependem dele
+  const isStoreOpen = restaurant?.settings?.isOpen ?? true;
+
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'orders' | 'profile'>('home');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const reorderSectionRef = useRef<HTMLDivElement>(null);
@@ -92,6 +95,9 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
       toast.info('Perfil do Usuário - Em Breve!');
     }
   }, []);
+
+  // Definir isStoreOpen ANTES de funções que dependem dele
+  const isStoreOpen = restaurant?.settings?.isOpen ?? true;
 
   const handleProductCardClick = useCallback((product: Product) => {
     setSelectedProduct(product);
@@ -227,8 +233,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
       isCategoryAvailable(cat)
     );
   }, [restaurant?.categories]);
-
-  const isStoreOpen = restaurant?.settings?.isOpen ?? true;
 
   const allVisibleProducts = useMemo(() => {
     const getVisibleProducts = (category: Category) => {
