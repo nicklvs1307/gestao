@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { Product, SizeOption, AddonOption, Promotion } from '../types';
 import { toast } from 'sonner';
 import { 
@@ -8,7 +8,6 @@ import {
   Check, 
   ShoppingBag,
   Clock,
-  Pizza as PizzaIcon,
   Loader2,
   Search
 } from 'lucide-react';
@@ -17,6 +16,8 @@ import { getImageUrl } from '../utils/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
+import { FlavorCard, AddonSelector } from './ProductDetailModal';
+import { usePrefersReducedMotion, useDebounce } from '../hooks';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ interface ProductDetailModalProps {
 }
 
 const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose, product, promotions = [], onAddToCart, isStoreOpen = true }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<SizeOption | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
@@ -47,21 +49,21 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const obsSectionRef = useRef<HTMLDivElement>(null);
 
-  const scrollToSection = (id: string) => {
+  const scrollToSection = useCallback((id: string) => {
     setTimeout(() => {
       let element = sectionRefs.current[id];
       if (id === 'observations') element = obsSectionRef.current;
       
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
       }
     }, 150);
-  };
+  }, [prefersReducedMotion]);
 
-  const getPizzaConfig = () => {
+  const getPizzaConfig = useCallback(() => {
     if (!product?.pizzaConfig) return { active: false, maxFlavors: 1, priceRule: 'higher' };
     return typeof product.pizzaConfig === 'string' ? JSON.parse(product.pizzaConfig) : product.pizzaConfig;
-  };
+  }, [product?.pizzaConfig]);
 
   const config = getPizzaConfig();
 

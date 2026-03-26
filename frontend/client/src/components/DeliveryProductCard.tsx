@@ -56,12 +56,15 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
                 loop 
                 playsInline 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                preload="none"
               />
             ) : (
               <img 
                 src={mediaUrl} 
                 alt={product.name} 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                loading="lazy"
+                decoding="async"
               />
             )}
             {/* Overlay sutil para integração da imagem */}
