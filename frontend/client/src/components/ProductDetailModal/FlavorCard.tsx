@@ -1,8 +1,8 @@
 import React from 'react';
 import { Minus, Plus, Check } from 'lucide-react';
-import { Card } from './ui/Card';
-import { getImageUrl } from '../utils/image';
-import { cn } from '../lib/utils';
+import { Card } from '../ui/Card';
+import { getImageUrl } from '../../utils/image';
+import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FlavorCardProps {

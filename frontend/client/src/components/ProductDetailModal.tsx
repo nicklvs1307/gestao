@@ -16,7 +16,8 @@ import { getImageUrl } from '../utils/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
-import { FlavorCard, AddonSelector } from './ProductDetailModal';
+import AddonSelector from './ProductDetailModal/AddonSelector';
+import { PizzaIcon } from './ProductDetailModal/FlavorCard';
 import { usePrefersReducedMotion, useDebounce } from '../hooks';
 
 interface ProductDetailModalProps {
