@@ -17,8 +17,6 @@ const TenantHandler = () => {
   const { tableNumber } = useParams();
   const location = useLocation();
 
-  console.log('[TenantHandler] Render - restaurant:', restaurant, 'loading:', loading, 'error:', error);
-
   useEffect(() => {
     const slug = getTenantSlug();
     
@@ -96,7 +94,32 @@ const TenantHandler = () => {
   }
 
   return (
-    <div>DEBUG TenantHandler SIMPLE</div>
+    <>
+      <Helmet>
+        <title>{restaurantName} | Cardápio Digital</title>
+        <link rel="icon" type="image/png" href={restaurantLogo} />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={fullUrl} />
+        <meta property="og:title" content={`${restaurantName} - Peça Online`} />
+        <meta property="og:description" content={restaurantDescription} />
+        <meta property="og:image" content={restaurantLogo} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={fullUrl} />
+        <meta property="twitter:title" content={`${restaurantName} - Peça Online`} />
+        <meta property="twitter:description" content={restaurantDescription} />
+        <meta property="twitter:image" content={restaurantLogo} />
+      </Helmet>
+
+      {tableNumber ? (
+        <TableMenuWrapper restaurantId={restaurant.id} tableNumber={tableNumber} />
+      ) : (
+        <DeliveryPage restaurantSlug={restaurant.slug} />
+      )}
+    </>
   );
 };
 
