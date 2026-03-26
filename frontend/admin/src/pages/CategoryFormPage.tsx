@@ -75,7 +75,7 @@ const CategoryFormPage: React.FC = () => {
         await createCategory(data);
         toast.success("Categoria criada com sucesso!");
       }
-      navigate('/products'); // Volta para a gestão de produtos para ver o resultado
+      navigate('/categories');
     } catch (error) {
       toast.error("Erro ao salvar categoria.");
     } finally {

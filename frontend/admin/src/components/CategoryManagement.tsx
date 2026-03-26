@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Category } from '@/types/index';
 import { getCategories, deleteCategory, reorderCategories } from '../services/api';
 import { Plus, Edit, Trash2, Layers, Loader2, GripVertical, CheckCircle, RefreshCw, Clock } from 'lucide-react';
@@ -135,9 +136,10 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
 }
 
 function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTrigger }: CategoryManagementProps) {
-  const { openCategoryModal, refetchCategories } = useModals();
-  const handleAdd = onAddCategoryClick ?? (() => openCategoryModal());
-  const handleEdit = onEditCategoryClick ?? ((category: Category) => openCategoryModal(category));
+  const navigate = useNavigate();
+  const { refetchCategories } = useModals();
+  const handleAdd = onAddCategoryClick ?? (() => navigate('/categories/new'));
+  const handleEdit = onEditCategoryClick ?? ((category: Category) => navigate(`/categories/${category.id}`));
   const trigger = refetchTrigger ?? refetchCategories;
 
   const [categories, setCategories] = useState<Category[]>([]);
