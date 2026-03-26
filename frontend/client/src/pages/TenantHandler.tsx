@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { getTenantSlug } from '../utils/tenant';
 import { getRestaurantBySlug } from '../services/api';
 import TableMenuWrapper from './TableMenuWrapper';
 import DeliveryPage from './DeliveryPage';
 import { Restaurant } from '../types';
+import { Button } from '../components/ui/Button';
+import { getImageUrl } from '../utils/image';
 
 const TenantHandler = () => {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -16,13 +19,16 @@ const TenantHandler = () => {
 
   useEffect(() => {
     const slug = getTenantSlug();
+    
+    // Se não houver subdomínio, mas houver um slug na URL (fallback)
+    // Ex: kicardapio.towersfy.com/minha-loja
     const pathSlug = location.pathname.split('/')[1]?.toLowerCase();
     const finalSlug = slug || (pathSlug && pathSlug !== 'mesa' && pathSlug !== '' ? pathSlug : null);
 
     console.log('Domain Debug:', { hostname: window.location.hostname, detectedSlug: slug, finalSlug });
 
     if (!finalSlug) {
-      setError(`Nenhum restaurante identificado no endereço: ${window.location.hostname}`);
+      setError(`Nenhum restaurante identificado no endereço: ${window.location.hostname}. Use um subdomínio como 'loja.kicardapio.towersfy.com'`);
       setLoading(false);
       return;
     }
@@ -33,7 +39,8 @@ const TenantHandler = () => {
         setRestaurant(data);
       } catch (err: any) {
         console.error('Erro ao buscar restaurante:', err);
-        setError(`Não foi possível carregar o cardápio da loja '${finalSlug}'`);
+        const debugMsg = err.response?.data?.error || err.message || JSON.stringify(err);
+        setError(`Não foi possível carregar o cardápio da loja '${finalSlug}'. Detalhes: ${debugMsg}`);
       } finally {
         setLoading(false);
       }
@@ -42,17 +49,77 @@ const TenantHandler = () => {
     fetchRestaurant();
   }, [location.pathname]);
 
-  if (loading) return <div>Carregando...</div>;
-  if (error || !restaurant) return <div>Erro: {error}</div>;
+  if (loading) return (
+    <div className="flex h-screen flex-col items-center justify-center bg-gray-50">
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      <p className="mt-4 text-gray-600 font-medium">Carregando cardápio...</p>
+    </div>
+  );
+
+  const fullUrl = window.location.href;
+  const restaurantLogo = restaurant?.logo ? getImageUrl(restaurant.logo) : '/logo.png';
+  const restaurantName = restaurant?.name || 'KiCardápio';
+  const restaurantDescription = restaurant?.description || 'Confira nosso cardápio completo e faça seu pedido online!';
+
+  if (error || !restaurant) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center p-6 text-center bg-gray-50">
+        <Helmet>
+          <title>Loja não encontrada | KiCardápio</title>
+        </Helmet>
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 max-w-md w-full">
+          <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-black text-gray-800 uppercase tracking-tight">Loja não encontrada</h1>
+          <p className="mt-4 text-gray-600 font-medium leading-relaxed">
+            O cardápio que você tentou acessar no endereço <span className="text-primary font-bold">{window.location.hostname}</span> não está ativo ou o link está incorreto.
+          </p>
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">Desenvolvido por</p>
+            <h2 className="text-xl font-black text-primary">KiCardapio</h2>
+          </div>
+          <Button 
+            onClick={() => window.location.href = 'https://kicardapio.towersfy.com'}
+            fullWidth
+            size="lg"
+          >
+            Conhecer o Sistema
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
+    <>
+      <Helmet>
+        <title>{restaurantName} | Cardápio Digital</title>
+        <link rel="icon" type="image/png" href={restaurantLogo} />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={fullUrl} />
+        <meta property="og:title" content={`${restaurantName} - Peça Online`} />
+        <meta property="og:description" content={restaurantDescription} />
+        <meta property="og:image" content={restaurantLogo} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={fullUrl} />
+        <meta property="twitter:title" content={`${restaurantName} - Peça Online`} />
+        <meta property="twitter:description" content={restaurantDescription} />
+        <meta property="twitter:image" content={restaurantLogo} />
+      </Helmet>
+
       {tableNumber ? (
         <TableMenuWrapper restaurantId={restaurant.id} tableNumber={tableNumber} />
       ) : (
         <DeliveryPage restaurantSlug={restaurant.slug} />
       )}
-    </div>
+    </>
   );
 };
 

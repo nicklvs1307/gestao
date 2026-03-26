@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import PrivateRoute from '../components/common/PrivateRoute';
 import { useAuth } from '../hooks/useAuth';
@@ -9,13 +9,11 @@ const Loading = () => (
   </div>
 );
 
-// Direct imports for debugging
-import TableMenuWrapper from '../pages/TableMenuWrapper';
-import DeliveryPage from '../pages/DeliveryPage';
-import OrderTracking from '../pages/OrderTracking';
-import TenantHandler from '../pages/TenantHandler';
-
-console.log('[Routes] Direct imports loaded');
+// Lazy load pages
+const TableMenuWrapper = lazy(() => import('../pages/TableMenuWrapper'));
+const DeliveryPage = lazy(() => import('../pages/DeliveryPage'));
+const OrderTracking = lazy(() => import('../pages/OrderTracking'));
+const TenantHandler = lazy(() => import('../pages/TenantHandler'));
 
 function AppRoutes() {
   const { user, loading: authLoading } = useAuth();

@@ -41,7 +41,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     queryKey: [RESTAURANT_KEY, effectiveSlug],
     queryFn: () => getRestaurantBySlug(effectiveSlug!),
     enabled: !!effectiveSlug,
-    staleTime: 1000 * 60 * 5,
   });
 
   const [activeCategory, setActiveCategory] = useState('todos');
@@ -230,9 +229,8 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   }, [restaurant?.categories]);
 
   const isStoreOpen = restaurant?.settings?.isOpen ?? true;
-  
+
   const allVisibleProducts = useMemo(() => {
-    if (!categories.length) return [];
     const getVisibleProducts = (category: Category) => {
       return (category.products || []).filter((p: Product) => 
         p.isAvailable && (p.allowDelivery || p.allowOnline) && !p.isFlavor
@@ -242,11 +240,10 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   }, [categories]);
 
   const featuredProducts = useMemo(() => {
-    if (!allVisibleProducts.length) return [];
     return allVisibleProducts.filter(p => p.isFeatured);
   }, [allVisibleProducts]);
 
-  if (isLoading || !effectiveSlug) return (
+  if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-background text-foreground text-sm font-bold animate-pulse" role="status" aria-live="polite">
       Carregando cardápio...
     </div>

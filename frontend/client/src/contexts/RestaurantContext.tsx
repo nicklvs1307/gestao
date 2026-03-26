@@ -23,8 +23,6 @@ interface RestaurantProviderProps {
 }
 
 export const RestaurantProvider: React.FC<RestaurantProviderProps> = ({ children, settings }) => {
-  console.log('[RestaurantProvider] Render - settings:', settings, 'type:', typeof settings);
-
   useEffect(() => {
     if (settings) {
       applyTheme(settings);
