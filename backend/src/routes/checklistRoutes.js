@@ -54,6 +54,6 @@ router.post('/execute',
   ChecklistController.submitExecution
 );
 
-router.post('/upload', needsAuth, upload.single('file'), ChecklistController.uploadFile);
+router.post('/upload', upload.single('file'), ChecklistController.uploadFile);
 
 module.exports = router;
