@@ -243,7 +243,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
           <Card className="p-4 rounded-2xl border-slate-200 shadow-sm bg-white">
             <h3 className="text-[10px] font-black text-slate-900 uppercase italic mb-3 flex items-center gap-2 tracking-widest"><FileText size={14} className="text-blue-500" /> Observações do Cliente</h3>
             <div className="p-3 bg-blue-50/30 border border-blue-100/50 rounded-xl text-[10px] font-bold text-slate-600 italic h-24 overflow-y-auto custom-scrollbar leading-snug">
-              {order.deliveryOrder?.observations || 'Nenhuma observação informada pelo cliente para esta entrega.'}
+              {order.deliveryOrder?.notes || 'Nenhuma observação informada pelo cliente para esta entrega.'}
             </div>
           </Card>
         </div>

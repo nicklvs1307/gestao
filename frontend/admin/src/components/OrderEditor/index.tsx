@@ -28,7 +28,9 @@ const STATUS_OPTIONS = [
     { value: 'PENDING', label: 'Pendente', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
     { value: 'PREPARING', label: 'Cozinha', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
     { value: 'READY', label: 'Pronto', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { value: 'COMPLETED', label: 'Finalizado', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
+    { value: 'SHIPPED', label: 'Em Rota', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+    { value: 'DELIVERED', label: 'Entregue', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
+    { value: 'COMPLETED', label: 'Finalizado', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100' },
     { value: 'CANCELED', label: 'Cancelado', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
 ];
 

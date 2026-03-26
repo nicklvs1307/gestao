@@ -8,11 +8,12 @@ import {
 import { printOrder } from '../services/printing';
 import { format } from 'date-fns';
 import { 
-  X, Clock, MapPin, CheckCircle, 
-  Circle, PlayCircle, XCircle, Printer, Phone, 
+  X, Clock, MapPin, CheckCircle,
+  Circle, PlayCircle, XCircle, Printer, Phone,
   ExternalLink, Package, CreditCard, Loader2, FileText,
   ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck, List,
-  DollarSign, Receipt, ArrowRight, ShieldCheck, Hash, Wallet, Smartphone, Landmark
+  DollarSign, Receipt, ArrowRight, ShieldCheck, Hash, Wallet, Smartphone, Landmark,
+  ShoppingCart
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';

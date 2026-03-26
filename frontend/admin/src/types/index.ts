@@ -110,6 +110,7 @@ export interface DeliveryOrder {
   paymentMethod?: string;
   changeFor?: number;
   deliveryFee: number;
+  notes?: string;
   estimatedDeliveryTime?: string;
   status: string;
   createdAt: string;
@@ -135,7 +136,7 @@ export interface Order {
   tableNumber: number;
   status: string;
   total: number;
-  customerName?: string | null; // Adicionado suporte a comandas individuais
+  customerName?: string | null;
   createdAt: string;
   updatedAt: string;
   restaurantId: string;
@@ -144,6 +145,19 @@ export interface Order {
   deliveryOrder?: DeliveryOrder;
   payments?: Payment[];
   user?: { name: string };
+  discount?: number;
+  extraCharge?: number;
+  isPrinted?: boolean;
+  isSettled?: boolean;
+  settledAt?: string | null;
+  invoice?: { id: string; pdfUrl?: string } | null;
+  pendingAt?: string | null;
+  preparingAt?: string | null;
+  readyAt?: string | null;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
+  completedAt?: string | null;
+  canceledAt?: string | null;
 }
 
 export interface TableSummary {
