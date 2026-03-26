@@ -47,8 +47,10 @@ const TableMenuWrapper: React.FC<TableMenuWrapperProps> = ({
     </div>
   );
 
+  const restaurantSettings = session.restaurantSettings ?? null;
+
   return (
-    <RestaurantProvider settings={session.restaurantSettings}>
+    <RestaurantProvider settings={restaurantSettings}>
       <TableMenu 
         sessionData={session}
         isThankYouModalOpen={isThankYouModalOpen}

@@ -258,8 +258,10 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     </div>
   );
 
+  const restaurantSettings = restaurant?.settings ?? null;
+
   return (
-    <RestaurantProvider settings={restaurant.settings || null}>
+    <RestaurantProvider settings={restaurantSettings}>
       <RestaurantMeta restaurant={restaurant} />
       <div className="bg-background min-h-screen pb-28 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
         {!isStoreOpen && (
