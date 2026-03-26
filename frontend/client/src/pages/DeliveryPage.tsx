@@ -82,7 +82,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     };
   }, []);
 
-  const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profile') => {
+const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profile') => {
     setActiveTab(tab);
     if (tab === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -95,9 +95,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
       toast.info('Perfil do Usuário - Em Breve!');
     }
   }, []);
-
-  // Definir isStoreOpen ANTES de funções que dependem dele
-  const isStoreOpen = restaurant?.settings?.isOpen ?? true;
 
   const handleProductCardClick = useCallback((product: Product) => {
     setSelectedProduct(product);
