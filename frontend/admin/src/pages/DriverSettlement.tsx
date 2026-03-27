@@ -92,7 +92,7 @@ const DriverSettlement: React.FC = () => {
     card: acc.card + curr.card,
     pix: acc.pix + curr.pix,
     orders: acc.orders + curr.totalOrders
-  }), { toPay: 0, net: 0, cash: 0, card: 0, pix: 0, orders: 0 });
+  }), { toPay: 0, net: 0, cash: 0, card: 0, pix: 0, orders: 0 }), [data]);
 
   const avgTicket = totals.orders > 0 ? totals.net / totals.orders : 0;
   const profitMargin = totals.toPay > 0 ? ((totals.net / totals.toPay) * 100) : 0;
