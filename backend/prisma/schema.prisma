@@ -234,6 +234,11 @@ model RestaurantSettings {
   cashbackPercentage  Float   @default(0) // Ex: 5% de cashback
   videoBanners        String[] @default([]) // Array de URLs dos vídeos para o carrossel
 
+  // === Configurações de Pixels e Analytics ===
+  metaPixelId         String?  // Meta/Facebook Pixel ID
+  googleAnalyticsId   String?  // Google Analytics 4 ID (G-XXXXXXXXXX)
+  internalPixelId    String?  // Pixel interno personalizado
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

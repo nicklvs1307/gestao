@@ -224,6 +224,9 @@ export interface RestaurantSettings {
   pointsPerReal?: number;
   cashbackPercentage?: number;
   textColor?: string;
+  metaPixelId?: string;
+  googleAnalyticsId?: string;
+  internalPixelId?: string;
   restaurant: Restaurant;
 }
 

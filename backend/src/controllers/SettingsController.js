@@ -48,7 +48,8 @@ const updateSettings = async (req, res) => {
         primaryColor, secondaryColor, backgroundColor, backgroundType, 
         backgroundImageUrl, isOpen, deliveryFee, deliveryTime, autoAcceptOrders,
         welcomeMessage, menuUrl, allowTakeaway,
-        loyaltyEnabled, pointsPerReal, cashbackPercentage, videoBanners, autoPrintEnabled
+        loyaltyEnabled, pointsPerReal, cashbackPercentage, videoBanners, autoPrintEnabled,
+        metaPixelId, googleAnalyticsId, internalPixelId
     } = req.body;
 
     try {
@@ -110,7 +111,10 @@ const updateSettings = async (req, res) => {
                     loyaltyEnabled,
                     pointsPerReal: pointsPerReal !== undefined ? parseInt(pointsPerReal) : undefined,
                     cashbackPercentage: cashbackPercentage !== undefined ? parseFloat(cashbackPercentage) : undefined,
-                    videoBanners
+                    videoBanners,
+                    metaPixelId,
+                    googleAnalyticsId,
+                    internalPixelId
                 } 
             })
         ]);

@@ -7,7 +7,7 @@ import {
   Save, Copy, ExternalLink, Palette, Store, 
   Clock, MapPin, Phone, Link as LinkIcon, Image as ImageIcon,
   CheckCircle, Loader2, Printer as PrinterIcon, RefreshCw, LayoutTemplate, Plus, Trash2,
-  XCircle, Smartphone, MousePointer2, CreditCard, DollarSign, ChefHat, Beer, Settings, Globe, Navigation, TrendingUp
+  XCircle, Smartphone, MousePointer2, CreditCard, DollarSign, ChefHat, Beer, Settings, Globe, Navigation, TrendingUp, BarChart3
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -47,6 +47,10 @@ const SettingsManagement: React.FC = () => {
 
   const [loyalty, setLoyalty] = useState({
     enabled: false, pointsPerReal: 1, cashback: 0
+  });
+
+  const [pixels, setPixels] = useState({
+    metaPixelId: '', googleAnalyticsId: '', internalPixelId: ''
   });
 
   const [appearance, setAppearance] = useState({
@@ -125,6 +129,12 @@ const SettingsManagement: React.FC = () => {
         cashback: settingsData.settings?.cashbackPercentage || 0
       });
 
+      setPixels({
+        metaPixelId: settingsData.settings?.metaPixelId || '',
+        googleAnalyticsId: settingsData.settings?.googleAnalyticsId || '',
+        internalPixelId: settingsData.settings?.internalPixelId || ''
+      });
+
       setAppearance({
         primary: settingsData.settings?.primaryColor || '#f97316',
         secondary: settingsData.settings?.secondaryColor || '#0f172a',
@@ -187,7 +197,8 @@ const SettingsManagement: React.FC = () => {
         isOpen: operation.isOpen, deliveryFee: general.deliveryFee, deliveryTime: general.deliveryTime,
         autoAcceptOrders: operation.autoAccept, autoPrintEnabled: operation.autoPrint,
         loyaltyEnabled: loyalty.enabled, pointsPerReal: loyalty.pointsPerReal, cashbackPercentage: loyalty.cashback,
-        videoBanners: appearance.videoBanners
+        videoBanners: appearance.videoBanners,
+        metaPixelId: pixels.metaPixelId, googleAnalyticsId: pixels.googleAnalyticsId, internalPixelId: pixels.internalPixelId
       });
       setOriginalSlug(general.slug);
       localStorage.setItem('printer_config', JSON.stringify(printerConfig));
@@ -363,6 +374,55 @@ const SettingsManagement: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </Card>
+
+            {/* Seção Longa: Pixels e Analytics (Full Width) */}
+            <Card className="lg:col-span-3 p-4 border-blue-100 bg-blue-50/10">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500 text-white rounded-xl shadow-md"><BarChart3 size={16}/></div>
+                  <div>
+                    <h3 className="text-[10px] font-black uppercase text-blue-900 italic leading-none">Pixels e Analytics</h3>
+                    <p className="text-[8px] font-bold text-blue-600 uppercase tracking-widest mt-1">Rastreamento de Conversões e Análises</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full md:w-auto">
+                  <div className="space-y-1">
+                    <label className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Meta Pixel ID</label>
+                    <input 
+                      className="w-full h-8 px-3 rounded-lg bg-white border border-blue-100 text-[10px] font-bold" 
+                      placeholder="1234567890"
+                      value={pixels.metaPixelId} 
+                      onChange={e => setPixels({...pixels, metaPixelId: e.target.value})} 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Google Analytics (GA4)</label>
+                    <input 
+                      className="w-full h-8 px-3 rounded-lg bg-white border border-blue-100 text-[10px] font-bold" 
+                      placeholder="G-XXXXXXXXXX"
+                      value={pixels.googleAnalyticsId} 
+                      onChange={e => setPixels({...pixels, googleAnalyticsId: e.target.value})} 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Pixel Interno</label>
+                    <input 
+                      className="w-full h-8 px-3 rounded-lg bg-white border border-blue-100 text-[10px] font-bold" 
+                      placeholder="ID Personalizado"
+                      value={pixels.internalPixelId} 
+                      onChange={e => setPixels({...pixels, internalPixelId: e.target.value})} 
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-[8px] font-bold text-blue-700 leading-relaxed">
+                  <strong>Meta Pixel:</strong> Use para rastrear conversões no Facebook e Instagram. <br/>
+                  <strong>GA4:</strong> Use para análise completa no Google Analytics 4. <br/>
+                  <strong>Pixel Interno:</strong> Para integrações personalizadas com outros sistemas.
+                </p>
               </div>
             </Card>
           </div>

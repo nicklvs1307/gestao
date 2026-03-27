@@ -25,6 +25,7 @@ import RestaurantMeta from '../components/RestaurantMeta';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DeliveryHeader, CategoryNav, SearchModal, ProductSection } from '../components/delivery';
 import { RESTAURANT_KEY } from '../hooks/useRestaurant';
+import { usePixelTracking } from '../hooks/usePixelTracking';
 
 interface DeliveryPageProps {
   restaurantSlug?: string;
@@ -57,6 +58,20 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
 
   // Definir isStoreOpen ANTES de funções que dependem dele
   const isStoreOpen = restaurant?.settings?.isOpen ?? true;
+
+  const pixelConfig = {
+    metaPixelId: restaurant?.settings?.metaPixelId,
+    googleAnalyticsId: restaurant?.settings?.googleAnalyticsId,
+    internalPixelId: restaurant?.settings?.internalPixelId,
+  };
+
+  const { trackPageView, trackViewContent, trackAddToCart, trackInitiateCheckout, trackPurchase } = usePixelTracking(pixelConfig);
+
+  useEffect(() => {
+    if (restaurant?.id) {
+      trackPageView(window.location.pathname);
+    }
+  }, [restaurant?.id, trackPageView]);
 
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'orders' | 'profile'>('home');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -99,7 +114,8 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
   const handleProductCardClick = useCallback((product: Product) => {
     setSelectedProduct(product);
     setProductModalOpen(true);
-  }, []);
+    trackViewContent(product.name, product.id, product.price, product.categories?.[0]?.name);
+  }, [trackViewContent]);
 
   const handleAddToCartFromModal = useCallback((
     product: Product, 
@@ -116,7 +132,8 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
     addToCart(product, quantity, selectedSize, selectedAddons, selectedFlavors, observations);
     setProductModalOpen(false);
     setCartOpen(true);
-  }, [addToCart, isStoreOpen]);
+    trackAddToCart(product.name, product.id, product.price, quantity, product.categories?.[0]?.name);
+  }, [addToCart, isStoreOpen, trackAddToCart]);
 
   const handlePixPayment = useCallback(async (orderId: string, deliveryInfo: any) => {
     setPixPaymentLoading(true);
@@ -192,6 +209,16 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
       const deliveryFee = deliveryInfo.deliveryType === 'delivery' ? (restaurant.settings?.deliveryFee || 0) : 0;
       const finalTotal = localCartTotal + deliveryFee;
 
+      const itemsForTracking = localCartItems.map(item => ({
+        productId: item.productId,
+        name: item.product?.name || '',
+        price: item.priceAtTime,
+        quantity: item.quantity,
+        category: item.product?.categories?.[0]?.name,
+      }));
+
+      trackInitiateCheckout(finalTotal, itemsForTracking);
+
       const newOrder = await createDeliveryOrder(restaurant.id, {
         items: localCartItems,
         total: finalTotal, 
@@ -206,6 +233,8 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
       const updatedIds = [newOrder.id, ...ids.filter((id: string) => id !== newOrder.id)].slice(0, 5);
       localStorage.setItem('recent_orders', JSON.stringify(updatedIds));
 
+      trackPurchase(newOrder.id, finalTotal, itemsForTracking);
+
       if (deliveryInfo.paymentMethod === 'pix_online') {
         handlePixPayment(newOrder.id, deliveryInfo);
       } else {
@@ -216,7 +245,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
       toast.error('Falha ao enviar o pedido de delivery.');
       console.error(err);
     }
-  }, [restaurant, localCartItems, localCartTotal, navigate, clearCart, handlePixPayment]);
+  }, [restaurant, localCartItems, localCartTotal, navigate, clearCart, handlePixPayment, trackInitiateCheckout, trackPurchase]);
 
   const handleSearchClick = useCallback(() => {
     setIsSearchOpen(true);
