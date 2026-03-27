@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';
@@ -11,11 +11,22 @@ interface PosHeaderProps {
   onRefreshTables: () => void;
 }
 
-export const PosHeader: React.FC<PosHeaderProps> = ({ 
+export const PosHeader = React.memo<PosHeaderProps>(({ 
   isStoreOpen, isCashierOpen, onToggleStore, onRefreshTables 
 }) => {
   const navigate = useNavigate();
   const { activeTab, setActiveTab, setActiveModal } = usePosStore();
+
+  const handleTabChange = useCallback((tab: 'pos' | 'tables') => {
+    setActiveTab(tab);
+    if (tab === 'tables') {
+      onRefreshTables();
+    }
+  }, [setActiveTab, onRefreshTables]);
+
+  const handleOpenCashierModal = useCallback(() => {
+    setActiveModal('cashier_open');
+  }, [setActiveModal]);
 
   return (
     <div className="px-4 py-2 bg-white border-b border-slate-200 flex items-center justify-between gap-4 z-10 shrink-0">
@@ -39,7 +50,8 @@ export const PosHeader: React.FC<PosHeaderProps> = ({
       </div>
       <div className="flex bg-slate-100 p-0.5 rounded-lg gap-0.5 w-full max-w-[220px] border border-slate-200">
         <button 
-          onClick={() => setActiveTab('pos')} 
+          onClick={() => handleTabChange('pos')} 
+          aria-pressed={activeTab === 'pos'}
           className={cn(
             "flex-1 py-1 rounded-md text-[8px] font-black uppercase tracking-wider transition-all", 
             activeTab === 'pos' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
@@ -48,7 +60,8 @@ export const PosHeader: React.FC<PosHeaderProps> = ({
           Catálogo
         </button>
         <button 
-          onClick={() => { setActiveTab('tables'); onRefreshTables(); }} 
+          onClick={() => handleTabChange('tables')} 
+          aria-pressed={activeTab === 'tables'}
           className={cn(
             "flex-1 py-1 rounded-md text-[8px] font-black uppercase tracking-wider transition-all", 
             activeTab === 'tables' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
@@ -59,7 +72,7 @@ export const PosHeader: React.FC<PosHeaderProps> = ({
       </div>
       <div className="flex gap-1.5">
         {!isCashierOpen ? (
-          <Button size="sm" className="rounded-md px-3 h-7 text-[8px] font-black uppercase bg-slate-900" onClick={() => setActiveModal('cashier_open')}>
+          <Button size="sm" className="rounded-md px-3 h-7 text-[8px] font-black uppercase bg-slate-900" onClick={handleOpenCashierModal}>
             Abrir Caixa
           </Button>
         ) : (
@@ -70,4 +83,4 @@ export const PosHeader: React.FC<PosHeaderProps> = ({
       </div>
     </div>
   );
-};
+});

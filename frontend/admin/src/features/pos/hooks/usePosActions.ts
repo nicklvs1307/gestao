@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { 
     createOrder, addItemsToOrder, updateOrderFinancials, 
@@ -19,7 +20,7 @@ export const usePosActions = (
     const pos = usePosStore();
     const { cart, clearCart, getCartTotal } = useCartStore();
 
-    const handleProductClick = (product: Product, isCashierOpen: boolean) => {
+    const handleProductClick = useCallback((product: Product, isCashierOpen: boolean) => {
         if (!isCashierOpen) return toast.error("Abra o caixa antes de vender!");
         pos.setSelectedProductForAdd(product);
         pos.setTempQty(1);
@@ -27,9 +28,9 @@ export const usePosActions = (
         pos.setSelectedSizeId(product.sizes?.[0]?.id || '');
         pos.setSelectedAddonIds([]);
         pos.setShowProductDrawer(true);
-    };
+    }, [pos]);
 
-    const handleTableClick = (table: TableSummary) => {
+    const handleTableClick = useCallback((table: TableSummary) => {
         pos.setSelectedTable(table.number.toString());
         pos.setOrderMode('table');
         pos.setActiveTab('pos');
@@ -37,9 +38,9 @@ export const usePosActions = (
         if (table.status !== 'free') {
             toast.info(`Mesa ${table.number} selecionada. Itens adicionados serão somados à conta atual.`);
         }
-    };
+    }, [pos]);
 
-    const submitOrder = async () => {
+    const submitOrder = useCallback(async () => {
         if (pos.orderMode === 'table' && !pos.selectedTable) {
             return toast.error("Por favor, selecione uma mesa");
         }
@@ -122,23 +123,23 @@ export const usePosActions = (
         } catch (e) {
             toast.error("Erro ao enviar pedido");
         }
-    };
+    }, [pos, cart, paymentMethods, tablesSummary, deliveryOrders, getCartTotal, clearCart, refreshTables, refreshData]);
 
-    const handleToggleStore = async (isStoreOpen: boolean) => {
+    const handleToggleStore = useCallback(async (isStoreOpen: boolean) => {
         const newState = !isStoreOpen;
         await toggleStoreStatus(newState);
         refreshData();
         toast.success(newState ? "Loja Aberta" : "Loja Fechada");
-    };
+    }, [refreshData]);
 
-    const handleOpenCashier = async (amount: string) => {
+    const handleOpenCashier = useCallback(async (amount: string) => {
         if (!amount) return toast.error("Informe o fundo de caixa");
         await openCashier(parseFloat(amount));
         pos.setActiveModal('none');
         refreshData();
-    };
+    }, [pos, refreshData]);
 
-    const handleOpenCheckout = () => {
+    const handleOpenCheckout = useCallback(() => {
         if (cart.length === 0) return toast.error("Carrinho vazio!");
         
         pos.setPosDeliveryFee(pos.orderMode === 'delivery' && pos.deliverySubType === 'delivery' ? deliveryFee.toString() : '0');
@@ -149,9 +150,9 @@ export const usePosActions = (
         pos.setPosObservations('');
         
         pos.setActiveModal('pos_checkout');
-    };
+    }, [pos, cart, deliveryFee]);
 
-    const handleTableCheckout = async (viewingTable: TableSummary, checkoutData: any) => {
+    const handleTableCheckout = useCallback(async (viewingTable: TableSummary, checkoutData: any) => {
         try {
             await checkoutTable(viewingTable.id, checkoutData);
             toast.success("Mesa finalizada com sucesso!");
@@ -162,9 +163,9 @@ export const usePosActions = (
         } catch (error) {
             toast.error("Erro ao finalizar mesa.");
         }
-    };
+    }, [pos, setViewingTable, refreshTables, refreshData]);
 
-    const handleTransferTable = async (viewingTable: TableSummary, newTableNumber: number) => {
+    const handleTransferTable = useCallback(async (viewingTable: TableSummary, newTableNumber: number) => {
         try {
             await transferTable(viewingTable.id, newTableNumber);
             toast.success(`Mesa transferida para ${newTableNumber}`);
@@ -175,7 +176,7 @@ export const usePosActions = (
         } catch (error) {
             toast.error("Erro ao transferir mesa.");
         }
-    };
+    }, [pos, setViewingTable, refreshTables, refreshData]);
 
     return {
         handleProductClick,

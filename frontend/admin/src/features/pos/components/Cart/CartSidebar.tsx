@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { ShoppingCart, Minus, Plus, Bike, ShoppingBag, User, X, ChevronRight, CheckCircle } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import { useCartStore } from '../../hooks/useCartStore';
@@ -14,7 +14,7 @@ interface CartSidebarProps {
   onOpenCheckout: () => void;
 }
 
-export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary, onOpenCheckout }) => {
+export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary, onOpenCheckout }) => {
   const navigate = useNavigate();
   const { cart, updateQuantity, getCartTotal } = useCartStore();
   const { 
@@ -26,7 +26,57 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
     setActiveModal, setActiveDeliveryOrderId
   } = usePosStore();
 
-  const cartTotal = getCartTotal();
+  const cartTotal = useMemo(() => getCartTotal(), [getCartTotal, cart]);
+
+  const handleOrderModeChange = useCallback((mode: 'table' | 'delivery') => {
+    setOrderMode(mode);
+    setSelectedTable('');
+    setActiveDeliveryOrderId(null);
+  }, [setOrderMode, setSelectedTable, setActiveDeliveryOrderId]);
+
+  const handleTableChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedTable(e.target.value);
+  }, [setSelectedTable]);
+
+  const handleCustomerNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomerName(e.target.value);
+  }, [setCustomerName]);
+
+  const handleDeliverySubTypeChange = useCallback((type: 'delivery' | 'pickup') => {
+    setDeliverySubType(type);
+    if (type === 'pickup') {
+      setDeliveryInfo(prev => ({ ...prev, address: '' }));
+    }
+  }, [setDeliverySubType, setDeliveryInfo]);
+
+  const handleOpenDeliveryModal = useCallback(() => {
+    setActiveModal('delivery_info');
+  }, [setActiveModal]);
+
+  const handleClearDeliveryInfo = useCallback(() => {
+    setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'delivery' });
+  }, [setDeliveryInfo]);
+
+  const handleQuantityChange = useCallback((cartItemId: string | undefined, delta: number) => {
+    if (cartItemId) {
+      updateQuantity(cartItemId, delta);
+    }
+  }, [updateQuantity]);
+
+  const handleCloseTable = useCallback((orderId: string | undefined) => {
+    if (orderId) {
+      navigate(`/pos/checkout/${orderId}`);
+    } else {
+      toast.error("Pedido não localizado.");
+    }
+  }, [navigate]);
+
+  const tableInfo = useMemo(() => {
+    if (orderMode === 'table' && selectedTable) {
+      return tablesSummary.find(t => t.number === parseInt(selectedTable));
+    }
+    return null;
+  }, [orderMode, selectedTable, tablesSummary]);
 
   return (
     <aside className="w-[320px] bg-white border-r border-slate-200 flex flex-col shadow-xl z-20">
@@ -42,13 +92,15 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
           </div>
           <div className="flex bg-slate-200/50 p-0.5 rounded-md border border-slate-200">
             <button 
-              onClick={() => { setOrderMode('table'); setSelectedTable(''); setActiveDeliveryOrderId(null); }} 
+              onClick={() => handleOrderModeChange('table')}
+              aria-pressed={orderMode === 'table'}
               className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}
             >
               Mesa
             </button>
             <button 
-              onClick={() => { setOrderMode('delivery'); setSelectedTable(''); setActiveDeliveryOrderId(null); }} 
+              onClick={() => handleOrderModeChange('delivery')}
+              aria-pressed={orderMode === 'delivery'}
               className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}
             >
               Direta
@@ -56,31 +108,19 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
           </div>
         </div>
 
-        {orderMode === 'table' && selectedTable && (
-          (() => {
-            const tableInfo = tablesSummary.find(t => t.number === parseInt(selectedTable));
-            if (tableInfo && tableInfo.status !== 'free') {
-              return (
-                <div className="mb-3 p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-between animate-in zoom-in-95">
-                  <div>
-                    <p className="text-[7px] font-black text-emerald-600 uppercase tracking-widest">Conta Aberta</p>
-                    <p className="text-xs font-black text-emerald-900 italic">R$ {tableInfo.totalAmount.toFixed(2)}</p>
-                  </div>
-                  <button 
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-[8px] font-black uppercase italic h-7 px-3 rounded-md shadow-md"
-                    onClick={() => {
-                      const orderId = tableInfo.tabs?.[0]?.orderId;
-                      if (orderId) navigate(`/pos/checkout/${orderId}`);
-                      else toast.error("Pedido não localizado.");
-                    }}
-                  >
-                    FECHAR MESA
-                  </button>
-                </div>
-              );
-            }
-            return null;
-          })()
+        {orderMode === 'table' && selectedTable && tableInfo && tableInfo.status !== 'free' && (
+          <div className="mb-3 p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-between animate-in zoom-in-95">
+            <div>
+              <p className="text-[7px] font-black text-emerald-600 uppercase tracking-widest">Conta Aberta</p>
+              <p className="text-xs font-black text-emerald-900 italic">R$ {tableInfo.totalAmount.toFixed(2)}</p>
+            </div>
+            <button 
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[8px] font-black uppercase italic h-7 px-3 rounded-md shadow-md"
+              onClick={() => handleCloseTable(tableInfo.tabs?.[0]?.orderId)}
+            >
+              FECHAR MESA
+            </button>
+          </div>
         )}
 
         {orderMode === 'table' ? (
@@ -88,7 +128,8 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
             <div className="relative">
               <select 
                 value={selectedTable} 
-                onChange={e => setSelectedTable(e.target.value)} 
+                onChange={handleTableChange}
+                aria-label="Selecionar mesa"
                 className="w-full h-8 px-2 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-bold outline-none focus:border-orange-500 appearance-none cursor-pointer"
               >
                 <option value="">Mesa...</option>
@@ -99,22 +140,25 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
             <input 
               placeholder="Identificação / Comanda" 
               value={customerName} 
-              onChange={e => setCustomerName(e.target.value)}
+              onChange={handleCustomerNameChange}
               className="w-full h-8 px-2 rounded border border-slate-200 text-[10px] font-bold outline-none focus:border-orange-500"
+              aria-label="Nome do cliente ou identificação"
             />
           </div>
         ) : (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-1.5">
               <button 
-                onClick={() => setDeliverySubType('delivery')} 
+                onClick={() => handleDeliverySubTypeChange('delivery')}
+                aria-pressed={deliverySubType === 'delivery'}
                 className={cn("flex items-center justify-center h-8 rounded border transition-all gap-1.5", deliverySubType === 'delivery' ? "bg-orange-50 border-orange-400 text-orange-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}
               >
                 <Bike size={14} />
                 <span className="text-[8px] font-black uppercase">Entrega</span>
               </button>
               <button 
-                onClick={() => { setDeliverySubType('pickup'); setDeliveryInfo({ ...deliveryInfo, address: '' }); }} 
+                onClick={() => handleDeliverySubTypeChange('pickup')}
+                aria-pressed={deliverySubType === 'pickup'}
                 className={cn("flex items-center justify-center h-8 rounded border transition-all gap-1.5", deliverySubType === 'pickup' ? "bg-blue-50 border-blue-400 text-blue-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}
               >
                 <ShoppingBag size={14} />
@@ -124,8 +168,9 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
 
             <div className="flex gap-1">
               <button 
-                onClick={() => setActiveModal('delivery_info')} 
+                onClick={handleOpenDeliveryModal}
                 className="flex-1 h-9 border border-slate-200 rounded px-3 flex items-center justify-between hover:border-orange-500 hover:bg-orange-50/30 transition-all bg-white overflow-hidden"
+                aria-label={deliverySubType === 'delivery' ? 'Selecionar endereço de entrega' : 'Selecionar cliente'}
               >
                 <div className="min-w-0 flex flex-col items-start">
                   <span className="text-[7px] font-black text-orange-600 uppercase tracking-widest leading-none mb-0.5">{deliverySubType === 'delivery' ? 'Endereço' : 'Cliente'}</span>
@@ -135,8 +180,9 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
               </button>
               {deliveryInfo.name && (
                 <button 
-                  onClick={() => { setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'delivery' }); }} 
+                  onClick={handleClearDeliveryInfo}
                   className="w-9 h-9 rounded border border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center bg-white transition-all"
+                  aria-label="Limpar informações de entrega"
                 >
                   <X size={14} />
                 </button>
@@ -166,9 +212,21 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
             <div className="flex items-center justify-between mt-1.5">
               <span className="text-[8px] font-bold text-slate-400 italic">R$ {item.price.toFixed(2)}/un</span>
               <div className="flex items-center gap-1.5 bg-slate-50 p-0.5 rounded border border-slate-100">
-                <button onClick={() => updateQuantity(item.cartItemId!, -1)} className="w-5 h-5 flex items-center justify-center rounded bg-white border border-slate-200 hover:text-rose-500 transition-all"><Minus size={10} strokeWidth={3} /></button>
+                <button 
+                  onClick={() => handleQuantityChange(item.cartItemId, -1)}
+                  className="w-7 h-7 flex items-center justify-center rounded bg-white border border-slate-200 hover:text-rose-500 transition-all"
+                  aria-label={`Diminuir quantidade de ${item.name}`}
+                >
+                  <Minus size={10} strokeWidth={3} />
+                </button>
                 <span className="text-[10px] font-black w-4 text-center italic">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.cartItemId!, 1)} className="w-5 h-5 flex items-center justify-center rounded bg-white border border-slate-200 hover:text-emerald-500 transition-all"><Plus size={10} strokeWidth={3} /></button>
+                <button 
+                  onClick={() => handleQuantityChange(item.cartItemId, 1)}
+                  className="w-7 h-7 flex items-center justify-center rounded bg-white border border-slate-200 hover:text-emerald-500 transition-all"
+                  aria-label={`Aumentar quantidade de ${item.name}`}
+                >
+                  <Plus size={10} strokeWidth={3} />
+                </button>
               </div>
             </div>
           </div>
@@ -189,4 +247,4 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ tables, tablesSummary,
       </div>
     </aside>
   );
-};
+});

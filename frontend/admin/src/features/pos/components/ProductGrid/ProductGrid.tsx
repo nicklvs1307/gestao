@@ -1,7 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import { Search, ShoppingCart } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import { usePosStore } from '../../hooks/usePosStore';
+import { useDebounce } from '../../../../hooks/useDebounce';
 import { Product, Category } from '../../../../types';
 
 interface ProductGridProps {
@@ -10,19 +11,29 @@ interface ProductGridProps {
   onProductClick: (product: Product) => void;
 }
 
-export const ProductGrid: React.FC<ProductGridProps> = ({ products, categories, onProductClick }) => {
+export const ProductGrid = React.memo<ProductGridProps>(({ products, categories, onProductClick }) => {
   const { searchTerm, setSearchTerm, selectedCategory, setSelectedCategory } = usePosStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchCat = selectedCategory === 'all' || p.categories?.some(c => c?.id === selectedCategory);
       const nameMatch = (p.name || '').toLowerCase();
-      const termMatch = (searchTerm || '').toLowerCase();
+      const termMatch = (debouncedSearchTerm || '').toLowerCase();
       const matchSearch = nameMatch.includes(termMatch);
       return matchCat && matchSearch;
     });
-  }, [products, selectedCategory, searchTerm]);
+  }, [products, selectedCategory, debouncedSearchTerm]);
+
+  const handleCategoryClick = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+  }, [setSelectedCategory]);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, [setSearchTerm]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -35,7 +46,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, categories, 
             className="w-full h-9 pl-10 pr-4 rounded-lg bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white outline-none font-bold text-[11px] transition-all" 
             placeholder="Buscar produto pelo nome ou código..." 
             value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
+            onChange={handleSearchChange}
+            aria-label="Buscar produtos"
           />
         </div>
         <div className="flex gap-1 overflow-x-auto no-scrollbar pb-0.5">
@@ -44,7 +56,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, categories, 
               "px-3 h-7 rounded-md text-[8px] font-black uppercase tracking-wider transition-all whitespace-nowrap", 
               selectedCategory === 'all' ? "bg-slate-900 text-white shadow-md" : "bg-slate-50 text-slate-500 border border-slate-200"
             )} 
-            onClick={() => setSelectedCategory('all')}
+            onClick={() => handleCategoryClick('all')}
+            aria-pressed={selectedCategory === 'all'}
           >
             Todos
           </button>
@@ -55,7 +68,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, categories, 
                 "px-3 h-7 rounded-md text-[8px] font-black uppercase tracking-wider transition-all whitespace-nowrap border", 
                 selectedCategory === cat.id ? "bg-orange-500 border-orange-500 text-white shadow-sm" : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
               )} 
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() => handleCategoryClick(cat.id)}
+              aria-pressed={selectedCategory === cat.id}
+              aria-label={`Categoria ${cat.name}`}
             >
               {cat.name}
             </button>
@@ -69,6 +84,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, categories, 
               key={p.id} 
               className="group flex flex-col bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-orange-500 hover:shadow-md transition-all active:scale-[0.98] shadow-sm relative" 
               onClick={() => onProductClick(p)}
+              aria-label={`Adicionar ${p.name} - R$ ${p.price.toFixed(2)}`}
             >
               <div className="aspect-square bg-slate-50 border-b border-slate-100 overflow-hidden relative">
                 {p.imageUrl ? (
@@ -91,4 +107,4 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, categories, 
       </div>
     </div>
   );
-};
+});

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { cn } from '../../../../lib/utils';
 import { TableSummary } from '../../../../types';
 
@@ -7,14 +7,19 @@ interface TableGridProps {
   onTableClick: (table: TableSummary) => void;
 }
 
-export const TableGrid: React.FC<TableGridProps> = ({ tablesSummary, onTableClick }) => {
+export const TableGrid = React.memo<TableGridProps>(({ tablesSummary, onTableClick }) => {
+  const handleTableClick = useCallback((table: TableSummary) => {
+    onTableClick(table);
+  }, [onTableClick]);
+
   return (
     <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-12 gap-3">
         {tablesSummary.map(t => (
           <button 
             key={t.id} 
-            onClick={() => onTableClick(t)} 
+            onClick={() => handleTableClick(t)}
+            aria-label={`Mesa ${t.number} - ${t.status === 'free' ? 'livre' : `ocupada - R$ ${(t.totalAmount || 0).toFixed(2)}`}`}
             className={cn(
               "flex flex-col rounded-xl border p-3 transition-all hover:scale-105 active:scale-95 shadow-sm min-h-[90px] relative overflow-hidden group", 
               t.status === 'free' ? "bg-white border-slate-200 hover:border-emerald-400" : "bg-rose-50 border-rose-200 hover:border-rose-400"
@@ -31,4 +36,4 @@ export const TableGrid: React.FC<TableGridProps> = ({ tablesSummary, onTableClic
       </div>
     </div>
   );
-};
+});

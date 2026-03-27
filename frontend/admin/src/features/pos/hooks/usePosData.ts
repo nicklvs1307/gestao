@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     getProducts, getCategories, getTables, getAdminOrders,
     getSettings, getCashierStatus, getPaymentMethods, getPosTableSummary
@@ -20,29 +20,37 @@ export const usePosData = () => {
     const [loading, setLoading] = useState(true);
 
     const { on, off } = useSocket();
+    const isMountedRef = useRef(true);
 
     const loadTableSummary = useCallback(async () => {
+        if (!isMountedRef.current) return;
         try {
             const summary = await getPosTableSummary();
-            setTablesSummary(summary);
+            if (isMountedRef.current) {
+                setTablesSummary(summary);
+            }
         } catch (error) {
             console.error("Erro ao carregar mesas:", error);
         }
     }, []);
 
     const loadOrders = useCallback(async () => {
+        if (!isMountedRef.current) return;
         try {
             const ordersData = await getAdminOrders();
-            setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY'));
+            if (isMountedRef.current) {
+                setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY'));
+            }
         } catch (error) {
             console.error("Erro ao carregar pedidos:", error);
         }
     }, []);
 
     const loadCashierStatus = useCallback(async () => {
+        if (!isMountedRef.current) return;
         try {
             const cashierData = await getCashierStatus();
-            if (cashierData) {
+            if (isMountedRef.current && cashierData) {
                 setIsCashierOpen(cashierData.isOpen);
                 setCashierSession(cashierData.session);
             }
@@ -68,6 +76,8 @@ export const usePosData = () => {
                 getAdminOrders()
             ]);
 
+            if (!isMountedRef.current) return;
+
             setProducts(productsData || []);
             setCategories(categoriesData || []);
             setTables(tablesData || []);
@@ -86,28 +96,37 @@ export const usePosData = () => {
         } catch (error) {
             console.error("Erro ao carregar dados do PDV:", error);
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) {
+                setLoading(false);
+            }
         }
     }, [loadTableSummary]);
 
     useEffect(() => {
+        isMountedRef.current = true;
+        
         loadInitialData();
 
-        const cleanupOrderUpdate = on('order_update', () => {
+        const handleOrderUpdate = () => {
             loadTableSummary();
             loadOrders();
-        });
+        };
 
-        const cleanupNewOrder = on('new_order', () => {
+        const handleNewOrder = () => {
             loadTableSummary();
             loadOrders();
-        });
+        };
 
-        const cleanupCashierUpdate = on('cashier_update', () => {
+        const handleCashierUpdate = () => {
             loadCashierStatus();
-        });
+        };
+
+        const cleanupOrderUpdate = on('order_update', handleOrderUpdate);
+        const cleanupNewOrder = on('new_order', handleNewOrder);
+        const cleanupCashierUpdate = on('cashier_update', handleCashierUpdate);
 
         return () => {
+            isMountedRef.current = false;
             cleanupOrderUpdate?.();
             cleanupNewOrder?.();
             cleanupCashierUpdate?.();

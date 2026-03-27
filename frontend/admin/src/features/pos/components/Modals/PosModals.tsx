@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { TableDetailsModal } from './TableDetailsModal';
 import { CheckoutModal } from './CheckoutModal';
-import { CashierOpenModal } from './CashierOpenModal';
-import { TablePaymentModal } from './TablePaymentModal';
-import { TableTransferModal } from './TableTransferModal';
 import { CustomerSelectionModal } from '../../../../components/CustomerSelectionModal';
 import { usePosStore } from '../../hooks/usePosStore';
 import { TableSummary, PaymentMethod } from '../../../../types';
+
+const TableDetailsModal = lazy(() => import('./TableDetailsModal').then(module => ({ default: module.TableDetailsModal })));
+const TablePaymentModal = lazy(() => import('./TablePaymentModal').then(module => ({ default: module.TablePaymentModal })));
+const TableTransferModal = lazy(() => import('./TableTransferModal').then(module => ({ default: module.TableTransferModal })));
+const CashierOpenModal = lazy(() => import('./CashierOpenModal').then(module => ({ default: module.CashierOpenModal })));
+
+const ModalSkeleton = () => null;
 
 interface PosModalsProps {
   viewingTable: TableSummary | null;
@@ -31,31 +34,49 @@ export const PosModals: React.FC<PosModalsProps> = ({
 
   return (
     <AnimatePresence>
-      <TableDetailsModal 
-        viewingTable={viewingTable} 
-        setViewingTable={setViewingTable} 
-        onRefreshTables={onRefreshTables} 
-      />
+      {activeModal === 'table_details' && (
+        <Suspense fallback={<ModalSkeleton />}>
+          <TableDetailsModal 
+            viewingTable={viewingTable} 
+            setViewingTable={setViewingTable} 
+            onRefreshTables={onRefreshTables} 
+          />
+        </Suspense>
+      )}
       
-      <CheckoutModal 
-        paymentMethods={paymentMethods} 
-        onSubmitOrder={onSubmitOrder} 
-      />
+      {activeModal === 'pos_checkout' && (
+        <CheckoutModal 
+          paymentMethods={paymentMethods} 
+          onSubmitOrder={onSubmitOrder} 
+        />
+      )}
 
-      <TablePaymentModal 
-        viewingTable={viewingTable} 
-        paymentMethods={paymentMethods} 
-        onCheckout={onCheckoutTable} 
-      />
+      {activeModal === 'table_payment' && (
+        <Suspense fallback={<ModalSkeleton />}>
+          <TablePaymentModal 
+            viewingTable={viewingTable} 
+            paymentMethods={paymentMethods} 
+            onCheckout={onCheckoutTable} 
+          />
+        </Suspense>
+      )}
 
-      <TableTransferModal 
-        viewingTable={viewingTable} 
-        onTransferTable={onTransferTable} 
-      />
+      {activeModal === 'transfer_table' && (
+        <Suspense fallback={<ModalSkeleton />}>
+          <TableTransferModal 
+            viewingTable={viewingTable} 
+            onTransferTable={onTransferTable} 
+          />
+        </Suspense>
+      )}
 
-      <CashierOpenModal 
-        onOpenCashier={onOpenCashier} 
-      />
+      {activeModal === 'cashier_open' && (
+        <Suspense fallback={<ModalSkeleton />}>
+          <CashierOpenModal 
+            onOpenCashier={onOpenCashier} 
+          />
+        </Suspense>
+      )}
 
       {activeModal === 'delivery_info' && (
         <CustomerSelectionModal 

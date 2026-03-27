@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { X, ShoppingBag, Calculator, Wallet, Info, CheckCircle, MoveRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../../lib/utils';
@@ -25,11 +25,55 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
   } = usePosStore();
 
   const { getCartTotal } = useCartStore();
-  const cartTotal = getCartTotal();
+  const cartTotal = useMemo(() => getCartTotal(), [getCartTotal]);
 
   if (activeModal !== 'pos_checkout') return null;
 
-  const totalGeral = cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0');
+  const totalGeral = useMemo(() => {
+    return cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0');
+  }, [cartTotal, posExtraCharge, posDeliveryFee, posDiscountValue]);
+
+  const handleDeliveryFeeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPosDeliveryFee(e.target.value);
+  }, [setPosDeliveryFee]);
+
+  const handleExtraChargeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPosExtraCharge(e.target.value);
+  }, [setPosExtraCharge]);
+
+  const handleDiscountValueChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setPosDiscountValue(val);
+    const numVal = parseFloat(val) || 0;
+    const perc = cartTotal > 0 ? ((numVal / cartTotal) * 100).toFixed(2) : '0';
+    setPosDiscountPercentage(perc === 'Infinity' || perc === 'NaN' ? '0' : perc);
+  }, [setPosDiscountValue, setPosDiscountPercentage, cartTotal]);
+
+  const handleDiscountPercentageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const perc = e.target.value;
+    setPosDiscountPercentage(perc);
+    const numPerc = parseFloat(perc) || 0;
+    const val = ((numPerc / 100) * cartTotal).toFixed(2);
+    setPosDiscountValue(val);
+  }, [setPosDiscountPercentage, setPosDiscountValue, cartTotal]);
+
+  const handleObservationsChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPosObservations(e.target.value);
+  }, [setPosObservations]);
+
+  const handlePaymentMethodSelect = useCallback((methodId: string) => {
+    setPosPaymentMethodId(methodId);
+  }, [setPosPaymentMethodId]);
+
+  const handleCloseModal = useCallback(() => {
+    setActiveModal('none');
+  }, [setActiveModal]);
+
+  const handleSubmitOrder = useCallback(() => {
+    if (posPaymentMethodId) {
+      onSubmitOrder();
+    }
+  }, [onSubmitOrder, posPaymentMethodId]);
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
@@ -90,7 +134,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
                 <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Entrega (R$)</label>
                 <input 
                   type="number" step="0.01" value={posDeliveryFee} 
-                  onChange={e => setPosDeliveryFee(e.target.value)} 
+                  onChange={handleDeliveryFeeChange}
                   className="w-full h-9 bg-white border border-slate-200 rounded-lg px-3 font-bold text-xs text-blue-600 outline-none focus:border-blue-500 shadow-sm" 
                 />
               </div>
@@ -98,7 +142,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
                 <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Acréscimo (R$)</label>
                 <input 
                   type="number" step="0.01" value={posExtraCharge} 
-                  onChange={e => setPosExtraCharge(e.target.value)} 
+                  onChange={handleExtraChargeChange}
                   className="w-full h-9 bg-white border border-slate-200 rounded-lg px-3 font-bold text-xs text-rose-500 outline-none focus:border-rose-500 shadow-sm" 
                 />
               </div>
@@ -111,13 +155,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-[10px]">R$</span>
                   <input 
                     type="number" step="0.01" value={posDiscountValue} 
-                    onChange={e => {
-                      const val = e.target.value;
-                      setPosDiscountValue(val);
-                      const numVal = parseFloat(val) || 0;
-                      const perc = cartTotal > 0 ? ((numVal / cartTotal) * 100).toFixed(2) : '0';
-                      setPosDiscountPercentage(perc === 'Infinity' || perc === 'NaN' ? '0' : perc);
-                    }}
+                    onChange={handleDiscountValueChange}
                     className="w-full h-9 bg-white border border-slate-200 rounded-lg pl-7 pr-3 font-bold text-xs text-emerald-600 outline-none focus:border-emerald-500 shadow-sm"
                   />
                 </div>
@@ -125,13 +163,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
                   <span className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-[10px]">%</span>
                   <input 
                     type="number" step="0.01" value={posDiscountPercentage}
-                    onChange={e => {
-                      const perc = e.target.value;
-                      setPosDiscountPercentage(perc);
-                      const numPerc = parseFloat(perc) || 0;
-                      const val = ((numPerc / 100) * cartTotal).toFixed(2);
-                      setPosDiscountValue(val);
-                    }}
+                    onChange={handleDiscountPercentageChange}
                     className="w-full h-9 bg-white border border-slate-200 rounded-lg px-3 font-bold text-xs text-emerald-600 outline-none focus:border-emerald-500 shadow-sm"
                   />
                 </div>
@@ -141,7 +173,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
             <div className="space-y-1.5 mt-auto">
               <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Observações do Pedido</label>
               <textarea 
-                value={posObservations} onChange={e => setPosObservations(e.target.value)}
+                value={posObservations} onChange={handleObservationsChange}
                 className="w-full h-20 bg-white border border-slate-200 rounded-lg p-3 font-medium text-[11px] outline-none focus:border-orange-500 shadow-sm resize-none"
                 placeholder="Instruções de entrega ou preparo..."
               />
@@ -165,7 +197,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
                 {paymentMethods.map(m => (
                   <button 
                     key={m.id} 
-                    onClick={() => setPosPaymentMethodId(m.id)}
+                    onClick={() => handlePaymentMethodSelect(m.id)}
+                    aria-pressed={posPaymentMethodId === m.id}
+                    aria-label={`Selecionar ${m.name} como forma de pagamento`}
                     className={cn(
                       "h-14 flex items-center px-4 gap-3 rounded-xl border-2 transition-all group relative overflow-hidden",
                       posPaymentMethodId === m.id 
@@ -201,11 +235,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setActiveModal('none')} className="h-12 px-6 rounded-xl border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-widest">
+                <Button variant="outline" onClick={handleCloseModal} className="h-12 px-6 rounded-xl border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-widest">
                   Cancelar
                 </Button>
                 <Button 
-                  onClick={onSubmitOrder} 
+                  onClick={handleSubmitOrder}
                   disabled={!posPaymentMethodId}
                   className="h-12 px-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-widest shadow-xl disabled:opacity-30 disabled:grayscale transition-all"
                 >

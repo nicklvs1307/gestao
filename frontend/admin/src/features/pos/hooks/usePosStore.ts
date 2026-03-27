@@ -127,3 +127,11 @@ export const usePosStore = create<PosState>((set) => ({
     posObservations: ''
   })
 }));
+
+export const usePosOrderMode = () => usePosStore(state => state.orderMode);
+export const usePosSelectedTable = () => usePosStore(state => state.selectedTable);
+export const usePosActiveTab = () => usePosStore(state => state.activeTab);
+export const usePosActiveModal = () => usePosStore(state => state.activeModal);
+export const usePosSearchTerm = () => usePosStore(state => state.searchTerm);
+export const usePosSelectedCategory = () => usePosStore(state => state.selectedCategory);
+export const usePosDeliveryInfo = () => usePosStore(state => state.deliveryInfo);
