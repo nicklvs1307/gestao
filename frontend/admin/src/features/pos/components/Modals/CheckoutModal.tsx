@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';
-import { useCartStore } from '../../hooks/useCartStore';
+import { useCartTotal } from '../../hooks/useCartStore';
 import { PaymentMethod } from '../../../../types';
 
 interface CheckoutModalProps {
@@ -24,8 +24,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ paymentMethods, on
     posObservations, setPosObservations
   } = usePosStore();
 
-  const { getCartTotal } = useCartStore();
-  const cartTotal = useMemo(() => getCartTotal(), [getCartTotal]);
+  const cartTotal = useCartTotal();
 
   if (activeModal !== 'pos_checkout') return null;
 
