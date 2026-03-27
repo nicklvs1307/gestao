@@ -10,7 +10,7 @@ import { calculateProductPrice } from '../../utils/priceCalculator';
 import { toast } from 'sonner';
 import { CartItem } from '../../../../types';
 
-export const ProductDrawer = React.memo<React.FC>(() => {
+export const ProductDrawer = React.memo(function ProductDrawer() {
   const { 
     showProductDrawer, setShowProductDrawer,
     selectedProductForAdd,
