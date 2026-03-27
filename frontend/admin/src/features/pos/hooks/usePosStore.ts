@@ -28,6 +28,7 @@ interface PosState {
   posDiscountPercentage: string;
   posPaymentMethodId: string;
   posObservations: string;
+  isSubmitting: boolean;
 
   setOrderMode: (mode: 'table' | 'delivery') => void;
   setDeliverySubType: (type: 'delivery' | 'pickup') => void;
@@ -51,6 +52,7 @@ interface PosState {
   setPosDiscountPercentage: (percentage: string) => void;
   setPosPaymentMethodId: (id: string) => void;
   setPosObservations: (obs: string) => void;
+  setIsSubmitting: (submitting: boolean) => void;
   resetPos: () => void;
 }
 
@@ -82,6 +84,7 @@ export const usePosStore = create<PosState>((set) => ({
   posDiscountPercentage: '0',
   posPaymentMethodId: '',
   posObservations: '',
+  isSubmitting: false,
 
   setOrderMode: (orderMode) => set({ orderMode }),
   setDeliverySubType: (deliverySubType) => set({ deliverySubType }),
@@ -105,6 +108,7 @@ export const usePosStore = create<PosState>((set) => ({
   setPosDiscountPercentage: (posDiscountPercentage) => set({ posDiscountPercentage }),
   setPosPaymentMethodId: (posPaymentMethodId) => set({ posPaymentMethodId }),
   setPosObservations: (posObservations) => set({ posObservations }),
+  setIsSubmitting: (isSubmitting) => set({ isSubmitting }),
   resetPos: () => set({
     orderMode: 'table',
     selectedTable: '',
@@ -124,7 +128,8 @@ export const usePosStore = create<PosState>((set) => ({
     posDiscountValue: '0',
     posDiscountPercentage: '0',
     posPaymentMethodId: '',
-    posObservations: ''
+    posObservations: '',
+    isSubmitting: false
   })
 }));
 

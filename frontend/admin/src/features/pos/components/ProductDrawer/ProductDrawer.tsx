@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Minus, Plus, CheckCircle, Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
@@ -10,7 +10,7 @@ import { calculateProductPrice } from '../../utils/priceCalculator';
 import { toast } from 'sonner';
 import { CartItem } from '../../../../types';
 
-export const ProductDrawer: React.FC = () => {
+export const ProductDrawer = React.memo<React.FC>(() => {
   const { 
     showProductDrawer, setShowProductDrawer,
     selectedProductForAdd,
@@ -23,6 +23,7 @@ export const ProductDrawer: React.FC = () => {
   const [addonSearch, setAddonSearch] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { addToCart } = useCartStore();
+  const shouldReduceMotion = useReducedMotion();
 
   // Atalho Alt + F para focar na busca
   useEffect(() => {
@@ -89,12 +90,17 @@ export const ProductDrawer: React.FC = () => {
     toast.success("Item adicionado!");
   };
 
+  const drawerTransition = shouldReduceMotion 
+    ? { duration: 0.1 }
+    : { type: "spring", damping: 35, stiffness: 300 };
+
   return (
     <div className="fixed inset-0 z-[150] flex justify-end">
       <motion.div 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }} 
+        exit={{ opacity: 0 }}
+        transition={shouldReduceMotion ? { duration: 0.1 } : { duration: 0.2 }}
         onClick={() => setShowProductDrawer(false)} 
         className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
       />
@@ -102,7 +108,7 @@ export const ProductDrawer: React.FC = () => {
         initial={{ x: '100%' }} 
         animate={{ x: 0 }} 
         exit={{ x: '100%' }} 
-        transition={{ type: "spring", damping: 35, stiffness: 300 }} 
+        transition={drawerTransition}
         className="relative w-[calc(100%-400px)] bg-white shadow-2xl flex flex-col h-full"
       >
         <header className="h-20 border-b border-slate-100 px-10 flex items-center justify-between shrink-0 bg-white sticky top-0 z-10">
@@ -273,4 +279,4 @@ export const ProductDrawer: React.FC = () => {
       </motion.div>
     </div>
   );
-};
+});

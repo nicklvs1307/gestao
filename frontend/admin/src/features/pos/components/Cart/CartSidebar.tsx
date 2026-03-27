@@ -1,12 +1,30 @@
-import React, { useMemo, useCallback } from 'react';
-import { ShoppingCart, Minus, Plus, Bike, ShoppingBag, User, X, ChevronRight, CheckCircle } from 'lucide-react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import { ShoppingCart, Minus, Plus, Bike, ShoppingBag, User, X, ChevronRight, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
-import { useCartStore } from '../../hooks/useCartStore';
+import { useCartStore, useCartTotal } from '../../hooks/useCartStore';
 import { usePosStore } from '../../hooks/usePosStore';
 import { Button } from '../../../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TableSummary } from '../../../../types';
+import { TableSummary, Addon } from '../../../../types';
+
+const usePrefersReducedMotion = () => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+};
 
 interface CartSidebarProps {
   tables: any[];
@@ -16,7 +34,25 @@ interface CartSidebarProps {
 
 export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary, onOpenCheckout }) => {
   const navigate = useNavigate();
-  const { cart, updateQuantity, getCartTotal } = useCartStore();
+  const { cart, updateQuantity } = useCartStore();
+  const cartTotal = useCartTotal();
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const { isSubmitting } = usePosStore();
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  const parseAddons = useCallback((addonsJson: string | null | undefined): Addon[] => {
+    if (!addonsJson) return [];
+    try {
+      return JSON.parse(addonsJson);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const toggleExpand = useCallback((itemId: string | undefined) => {
+    setExpandedItemId(prev => prev === itemId ? null : (itemId || null));
+  }, []);
+
   const { 
     orderMode, setOrderMode, 
     selectedTable, setSelectedTable, 
@@ -25,8 +61,6 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
     deliveryInfo, setDeliveryInfo,
     setActiveModal, setActiveDeliveryOrderId
   } = usePosStore();
-
-  const cartTotal = useMemo(() => getCartTotal(), [getCartTotal, cart]);
 
   const handleOrderModeChange = useCallback((mode: 'table' | 'delivery') => {
     setOrderMode(mode);
@@ -94,14 +128,14 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
             <button 
               onClick={() => handleOrderModeChange('table')}
               aria-pressed={orderMode === 'table'}
-              className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}
+              className={cn("px-2 py-1 text-[10px] font-bold uppercase rounded-sm transition-all", orderMode === 'table' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500")}
             >
               Mesa
             </button>
             <button 
               onClick={() => handleOrderModeChange('delivery')}
               aria-pressed={orderMode === 'delivery'}
-              className={cn("px-2 py-1 text-[8px] font-black uppercase rounded-sm transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}
+              className={cn("px-2 py-1 text-[10px] font-bold uppercase rounded-sm transition-all", orderMode === 'delivery' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}
             >
               Direta
             </button>
@@ -109,13 +143,13 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
         </div>
 
         {orderMode === 'table' && selectedTable && tableInfo && tableInfo.status !== 'free' && (
-          <div className="mb-3 p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-between animate-in zoom-in-95">
+          <div className={cn("mb-3 p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-between", !prefersReducedMotion && "animate-in zoom-in-95")}>
             <div>
-              <p className="text-[7px] font-black text-emerald-600 uppercase tracking-widest">Conta Aberta</p>
-              <p className="text-xs font-black text-emerald-900 italic">R$ {tableInfo.totalAmount.toFixed(2)}</p>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Conta Aberta</p>
+              <p className="text-sm font-bold text-emerald-900">R$ {tableInfo.totalAmount.toFixed(2)}</p>
             </div>
             <button 
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[8px] font-black uppercase italic h-7 px-3 rounded-md shadow-md"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase h-7 px-3 rounded-md shadow-md"
               onClick={() => handleCloseTable(tableInfo.tabs?.[0]?.orderId)}
             >
               FECHAR MESA
@@ -130,18 +164,18 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                 value={selectedTable} 
                 onChange={handleTableChange}
                 aria-label="Selecionar mesa"
-                className="w-full h-8 px-2 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-bold outline-none focus:border-orange-500 appearance-none cursor-pointer"
+                className="w-full h-9 px-2 rounded border border-slate-200 bg-white text-slate-700 text-xs font-medium outline-none focus:border-orange-500 appearance-none cursor-pointer"
               >
                 <option value="">Mesa...</option>
                 {tables.map(t => <option key={t.id} value={t.number}>Mesa {t.number}</option>)}
               </select>
-              <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 rotate-90" size={10} />
+              <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 rotate-90" size={12} />
             </div>
             <input 
               placeholder="Identificação / Comanda" 
               value={customerName} 
               onChange={handleCustomerNameChange}
-              className="w-full h-8 px-2 rounded border border-slate-200 text-[10px] font-bold outline-none focus:border-orange-500"
+              className="w-full h-9 px-2 rounded border border-slate-200 text-xs font-medium outline-none focus:border-orange-500"
               aria-label="Nome do cliente ou identificação"
             />
           </div>
@@ -151,18 +185,18 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
               <button 
                 onClick={() => handleDeliverySubTypeChange('delivery')}
                 aria-pressed={deliverySubType === 'delivery'}
-                className={cn("flex items-center justify-center h-8 rounded border transition-all gap-1.5", deliverySubType === 'delivery' ? "bg-orange-50 border-orange-400 text-orange-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}
+                className={cn("flex items-center justify-center h-9 rounded border transition-all gap-1.5", deliverySubType === 'delivery' ? "bg-orange-50 border-orange-400 text-orange-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}
               >
-                <Bike size={14} />
-                <span className="text-[8px] font-black uppercase">Entrega</span>
+                <Bike size={16} />
+                <span className="text-[10px] font-bold uppercase">Entrega</span>
               </button>
               <button 
                 onClick={() => handleDeliverySubTypeChange('pickup')}
                 aria-pressed={deliverySubType === 'pickup'}
-                className={cn("flex items-center justify-center h-8 rounded border transition-all gap-1.5", deliverySubType === 'pickup' ? "bg-blue-50 border-blue-400 text-blue-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}
+                className={cn("flex items-center justify-center h-9 rounded border transition-all gap-1.5", deliverySubType === 'pickup' ? "bg-blue-50 border-blue-400 text-blue-700 shadow-sm" : "bg-white border-slate-200 text-slate-400")}
               >
-                <ShoppingBag size={14} />
-                <span className="text-[8px] font-black uppercase">Balcão</span>
+                <ShoppingBag size={16} />
+                <span className="text-[10px] font-bold uppercase">Balcão</span>
               </button>
             </div>
 
@@ -173,8 +207,8 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                 aria-label={deliverySubType === 'delivery' ? 'Selecionar endereço de entrega' : 'Selecionar cliente'}
               >
                 <div className="min-w-0 flex flex-col items-start">
-                  <span className="text-[7px] font-black text-orange-600 uppercase tracking-widest leading-none mb-0.5">{deliverySubType === 'delivery' ? 'Endereço' : 'Cliente'}</span>
-                  <span className="text-[10px] font-bold text-slate-700 truncate w-full text-left">{deliveryInfo.name || 'Vincular Cliente...'}</span>
+                  <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest leading-none mb-0.5">{deliverySubType === 'delivery' ? 'Endereço' : 'Cliente'}</span>
+                  <span className="text-xs font-medium text-slate-700 truncate w-full text-left">{deliveryInfo.name || 'Vincular Cliente...'}</span>
                 </div>
                 <User size={14} className="text-orange-400 shrink-0" />
               </button>
@@ -194,23 +228,63 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar bg-slate-50/30">
         {cart.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-30 space-y-1">
-            <ShoppingCart size={24} />
-            <p className="text-[7px] font-black uppercase tracking-widest italic">Vazio</p>
+          <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-30 space-y-2">
+            <ShoppingCart size={32} />
+            <p className="text-xs font-bold uppercase tracking-widest">Carrinho vazio</p>
           </div>
-        ) : cart.map(item => (
-          <div key={item.cartItemId} className="p-2 bg-white border border-slate-200 rounded shadow-sm animate-in slide-in-from-left-1">
+        ) : cart.map(item => {
+          const itemAddons = parseAddons(item.addonsJson);
+          const isExpanded = expandedItemId === item.cartItemId;
+          const hasDetails = itemAddons.length > 0 || item.selectedSize;
+
+          return (
+          <div key={item.cartItemId} className={cn("p-2 bg-white border border-slate-200 rounded shadow-sm", !prefersReducedMotion && "animate-in slide-in-from-left-1")}>
             <div className="flex justify-between items-start gap-1">
-              <div className="min-w-0">
-                <span className="font-black text-[9px] text-slate-900 block uppercase italic leading-none truncate">{item.name}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <span className="font-bold text-xs text-slate-900 block truncate">{item.name}</span>
+                  {hasDetails && (
+                    <button 
+                      onClick={() => toggleExpand(item.cartItemId)}
+                      className="p-0.5 hover:bg-slate-100 rounded transition-colors"
+                      aria-label={isExpanded ? 'Fechar detalhes' : 'Ver detalhes'}
+                    >
+                      {isExpanded ? <ChevronUp size={12} className="text-orange-500" /> : <ChevronDown size={12} className="text-slate-400" />}
+                    </button>
+                  )}
+                </div>
                 {item.observation && (
-                  <span className="inline-block mt-0.5 text-[7px] text-amber-600 font-bold uppercase truncate max-w-full">[{item.observation}]</span>
+                  <span className="inline-block mt-0.5 text-[10px] text-amber-600 font-medium truncate max-w-full">Obs: {item.observation}</span>
                 )}
               </div>
-              <span className="font-black text-[9px] text-slate-900 italic shrink-0">R$ {(item.price * item.quantity).toFixed(2)}</span>
+              <span className="font-bold text-xs text-slate-900 shrink-0">R$ {(item.price * item.quantity).toFixed(2)}</span>
             </div>
+            
+            {isExpanded && hasDetails && (
+              <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                {item.selectedSize && (
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-slate-500">Tamanho:</span>
+                    <span className="text-slate-700 font-medium">{item.selectedSize.name}</span>
+                  </div>
+                )}
+                {itemAddons.map((addon, idx) => (
+                  <div key={idx} className="flex justify-between text-[10px]">
+                    <span className="text-slate-500">+ {addon.name}</span>
+                    <span className="text-emerald-600 font-medium">{addon.price > 0 ? `R$ ${addon.price.toFixed(2)}` : 'Grátis'}</span>
+                  </div>
+                ))}
+                {item.price * item.quantity > item.price * item.quantity - itemAddons.reduce((sum, a) => sum + (a.price || 0), 0) && (
+                  <div className="flex justify-between text-[10px] pt-1 border-t border-slate-50">
+                    <span className="text-slate-400">Subtotal item:</span>
+                    <span className="text-slate-600 font-medium">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-between mt-1.5">
-              <span className="text-[8px] font-bold text-slate-400 italic">R$ {item.price.toFixed(2)}/un</span>
+              <span className="text-[10px] font-medium text-slate-400">R$ {item.price.toFixed(2)}/un</span>
               <div className="flex items-center gap-1.5 bg-slate-50 p-0.5 rounded border border-slate-100">
                 <button 
                   onClick={() => handleQuantityChange(item.cartItemId, -1)}
@@ -219,7 +293,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                 >
                   <Minus size={10} strokeWidth={3} />
                 </button>
-                <span className="text-[10px] font-black w-4 text-center italic">{item.quantity}</span>
+                <span className="text-[10px] font-bold w-4 text-center">{item.quantity}</span>
                 <button 
                   onClick={() => handleQuantityChange(item.cartItemId, 1)}
                   className="w-7 h-7 flex items-center justify-center rounded bg-white border border-slate-200 hover:text-emerald-500 transition-all"
@@ -230,19 +304,20 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="p-3 bg-white border-t border-slate-100">
         <div className="flex justify-between items-center mb-3">
           <div className="flex flex-col">
-            <span className="text-[7px] font-black uppercase text-slate-400 tracking-widest leading-none mb-0.5">Total Carrinho</span>
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{cart.length} registro(s)</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest leading-none mb-0.5">Total Carrinho</span>
+            <span className="text-xs font-medium text-slate-500">{cart.length} item(s)</span>
           </div>
-          <div className="text-xl font-black italic text-slate-900 tracking-tighter leading-none">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
+          <div className="text-xl font-bold text-slate-900 leading-none">R$ {cartTotal.toFixed(2).replace('.', ',')}</div>
         </div>
-        <Button onClick={onOpenCheckout} disabled={cart.length === 0} fullWidth size="lg" className="h-10 rounded-lg text-[9px] uppercase tracking-widest font-black italic gap-2 shadow-md">
-          PAGAMENTO <CheckCircle size={14} strokeWidth={3} />
+        <Button onClick={onOpenCheckout} disabled={cart.length === 0 || isSubmitting} isLoading={isSubmitting} fullWidth size="lg" className="h-10 rounded-lg text-xs uppercase tracking-widest font-bold gap-2 shadow-md">
+          IR PARA PAGAMENTO <CheckCircle size={16} strokeWidth={3} />
         </Button>
       </div>
     </aside>

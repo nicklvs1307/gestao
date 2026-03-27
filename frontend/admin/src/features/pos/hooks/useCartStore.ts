@@ -7,10 +7,9 @@ interface CartState {
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, delta: number) => void;
   clearCart: () => void;
-  getCartTotal: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+export const useCartStore = create<CartState>((set) => ({
   cart: [],
   
   addToCart: (item) => set((state) => ({
@@ -31,10 +30,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     }).filter((item) => item.quantity > 0)
   })),
 
-  clearCart: () => set({ cart: [] }),
-
-  getCartTotal: () => {
-    const { cart } = get();
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  }
+  clearCart: () => set({ cart: [] })
 }));
+
+export const useCartTotal = () => {
+  const cart = useCartStore((state) => state.cart);
+  return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+};
