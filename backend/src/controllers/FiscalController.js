@@ -1,7 +1,9 @@
 const prisma = require('../lib/prisma');
 const logger = require('../config/logger');
 const FiscalService = require('../services/FiscalService');
+const axios = require('axios');
 const AdmZip = require('adm-zip');
+const forge = require('node-forge');
 
 // Obter Configurações Fiscais
 exports.getFiscalConfig = async (req, res) => {
@@ -164,7 +166,7 @@ exports.emitInvoice = async (req, res) => {
 // Fechamento Mensal: Exportar XMLs para o contador
 exports.exportMonthlyXmls = async (req, res) => {
     const { restaurantId } = req;
-    const { month, year } = req.query; // Ex: month=10, year=2025
+    const { month, year } = req.query;
 
     if (!month || !year) return res.status(400).json({ error: 'Mês e ano são obrigatórios.' });
 
@@ -187,7 +189,7 @@ exports.exportMonthlyXmls = async (req, res) => {
         const zip = new AdmZip();
         
         invoices.forEach(inv => {
-            const xmlContent = inv.xml || `<!-- XML Placeholder para nota ${inv.number} (conteúdo não encontrado) -->`;
+            const xmlContent = inv.xml || `<!-- XML Placeholder para nota ${inv.number} -->`;
             zip.addFile(`${inv.accessKey}.xml`, Buffer.from(xmlContent, 'utf-8'));
         });
 
@@ -200,5 +202,346 @@ exports.exportMonthlyXmls = async (req, res) => {
     } catch (error) {
         logger.error(error);
         res.status(500).json({ error: 'Erro ao exportar XMLs.' });
+    }
+};
+
+// Status do Certificado (validade e aviso de expiração)
+exports.getCertificateStatus = async (req, res) => {
+    const { restaurantId } = req;
+    try {
+        const config = await prisma.restaurantFiscalConfig.findUnique({
+            where: { restaurantId }
+        });
+
+        if (!config?.certificate) {
+            return res.json({ installed: false });
+        }
+
+        try {
+            const pfxDer = Buffer.from(config.certificate, 'base64');
+            const pfxAsn1 = forge.asn1.fromDer(forge.util.decode64(config.certificate));
+            const pfx = forge.pkcs12.pkcs12FromAsn1(pfxAsn1, config.certPassword);
+            
+            const certBags = pfx.getBags({ bagType: forge.pki.oids.certBag });
+            const certBag = certBags[forge.pki.oids.certBag][0];
+            const cert = certBag.cert;
+            
+            const validNotBefore = cert.validity.notBefore;
+            const validNotAfter = cert.validity.notAfter;
+            const now = new Date();
+            const daysUntilExpiry = Math.ceil((validNotAfter - now) / (1000 * 60 * 60 * 24));
+            
+            res.json({
+                installed: true,
+                validNotBefore: validNotBefore.toISOString(),
+                validNotAfter: validNotAfter.toISOString(),
+                daysUntilExpiry,
+                isExpired: daysUntilExpiry < 0,
+                warning: daysUntilExpiry > 0 && daysUntilExpiry <= 30,
+                subject: cert.subject.attributes.map(a => a.value).join(', ')
+            });
+        } catch (e) {
+            res.json({ installed: true, parseError: true });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao verificar certificado.' });
+    }
+};
+
+// Obter nota por ID com detalhes de erro
+exports.getInvoiceById = async (req, res) => {
+    const { restaurantId } = req;
+    const { id } = req.params;
+    try {
+        const invoice = await prisma.invoice.findFirst({
+            where: { id, restaurantId },
+            include: { order: true }
+        });
+        if (!invoice) {
+            return res.status(404).json({ error: 'Nota não encontrada.' });
+        }
+        res.json(invoice);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar nota.' });
+    }
+};
+
+// Cancelar/Inutilizar NFC-e
+exports.cancelInvoice = async (req, res) => {
+    const { restaurantId } = req;
+    const { invoiceId, reason } = req.body;
+
+    if (!invoiceId || !reason) {
+        return res.status(400).json({ error: 'ID da nota e motivo são obrigatórios.' });
+    }
+
+    try {
+        const invoice = await prisma.invoice.findFirst({
+            where: { id: invoiceId, restaurantId }
+        });
+
+        if (!invoice) {
+            return res.status(404).json({ error: 'Nota não encontrada.' });
+        }
+
+        if (invoice.status !== 'AUTHORIZED') {
+            return res.status(400).json({ error: 'Apenas notas autorizadas podem ser canceladas.' });
+        }
+
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({
+            where: { restaurantId }
+        });
+
+        if (!fiscalConfig?.certificate) {
+            return res.status(400).json({ error: 'Certificado não configurado.' });
+        }
+
+        // Chama serviço de cancelamento
+        const result = await FiscalService.cancelNfce(invoice, fiscalConfig, reason);
+
+        if (result.success) {
+            await prisma.invoice.update({
+                where: { id: invoiceId },
+                data: { 
+                    status: 'CANCELED',
+                    errorMessage: `Cancelada: ${reason} - Protocolo: ${result.protocol}`,
+                    updatedAt: new Date()
+                }
+            });
+            
+            logger.info(`NFC-e ${invoice.number} cancelada com sucesso. Protocolo: ${result.protocol}`);
+            res.json({ success: true, message: 'NFC-e cancelada com sucesso!', protocol: result.protocol });
+        } else {
+            res.status(400).json({ error: result.error });
+        }
+    } catch (error) {
+        logger.error('Erro ao cancelar NFC-e:', error);
+        res.status(500).json({ error: 'Erro ao processar cancelamento.' });
+    }
+};
+
+// Consultar recibo na SEFAZ
+exports.consultReceipt = async (req, res) => {
+    const { restaurantId } = req;
+    const { recibo } = req.params;
+
+    if (!recibo) {
+        return res.status(400).json({ error: 'Número do recibo é obrigatório.' });
+    }
+
+    try {
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({
+            where: { restaurantId }
+        });
+
+        if (!fiscalConfig?.certificate) {
+            return res.status(400).json({ error: 'Certificado não configurado.' });
+        }
+
+        const result = await FiscalService.consultReceipt(recibo, fiscalConfig);
+
+        if (result.success) {
+            const protNFe = result.data?.protNFe;
+            const cStat = protNFe?.cStat;
+            
+            // Atualiza status da nota se encontrou
+            if (cStat === '100' || cStat === '150') {
+                const invoice = await prisma.invoice.findFirst({
+                    where: { restaurantId, accessKey: result.accessKey }
+                });
+                
+                if (invoice) {
+                    await prisma.invoice.update({
+                        where: { id: invoice.id },
+                        data: { 
+                            status: 'AUTHORIZED',
+                            protocol: protNFe?.nProt,
+                            updatedAt: new Date()
+                        }
+                    });
+                }
+            }
+            
+            res.json({ success: true, status: cStat, data: result.data });
+        } else {
+            res.status(400).json({ error: result.error });
+        }
+    } catch (error) {
+        logger.error('Erro ao consultar recibo:', error);
+        res.status(500).json({ error: 'Erro ao consultar SEFAZ.' });
+    }
+};
+
+// Relatório mensal resumido
+exports.getMonthlyReport = async (req, res) => {
+    const { restaurantId } = req;
+    const { month, year } = req.query;
+
+    if (!month || !year) return res.status(400).json({ error: 'Mês e ano são obrigatórios.' });
+
+    try {
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0, 23, 59, 59);
+
+        const invoices = await prisma.invoice.findMany({
+            where: {
+                restaurantId,
+                issuedAt: { gte: startDate, lte: endDate }
+            },
+            include: { order: true }
+        });
+
+        const authorized = invoices.filter(inv => inv.status === 'AUTHORIZED');
+        const rejected = invoices.filter(inv => inv.status === 'REJECTED');
+        const canceled = invoices.filter(inv => inv.status === 'CANCELED');
+        const pending = invoices.filter(inv => inv.status === 'PENDING' || inv.status === 'PROCESSING');
+
+        res.json({
+            period: { month: parseInt(month), year: parseInt(year) },
+            summary: {
+                total: invoices.length,
+                authorized: authorized.length,
+                rejected: rejected.length,
+                canceled: canceled.length,
+                pending: pending.length,
+                successRate: invoices.length > 0 ? (authorized.length / invoices.length * 100).toFixed(1) : 0
+            },
+            invoices: invoices.map(inv => ({
+                id: inv.id,
+                number: inv.number,
+                status: inv.status,
+                accessKey: inv.accessKey,
+                issuedAt: inv.issuedAt,
+                errorMessage: inv.errorMessage
+            }))
+        });
+    } catch (error) {
+        logger.error(error);
+        res.status(500).json({ error: 'Erro ao gerar relatório.' });
+    }
+};
+
+// Gerar PDF DANFE
+exports.generatePdf = async (req, res) => {
+    const { restaurantId } = req;
+    const { id } = req.params;
+
+    try {
+        const invoice = await prisma.invoice.findFirst({
+            where: { id, restaurantId },
+            include: { order: { include: { items: { include: { product: true } } } } }
+        });
+
+        if (!invoice) {
+            return res.status(404).json({ error: 'Nota não encontrada.' });
+        }
+
+        if (invoice.status !== 'AUTHORIZED') {
+            return res.status(400).json({ error: 'Apenas notas autorizadas podem gerar PDF.' });
+        }
+
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({
+            where: { restaurantId }
+        });
+
+        const pdfBuffer = await FiscalService.generateDanfePdf(invoice, fiscalConfig, invoice.order);
+
+        res.set('Content-Type', 'application/pdf');
+        res.set('Content-Disposition', `attachment; filename=DANFE_${invoice.number}.pdf`);
+        res.send(pdfBuffer);
+    } catch (error) {
+        logger.error('Erro ao gerar PDF:', error);
+        res.status(500).json({ error: 'Erro ao gerar PDF.' });
+    }
+};
+
+// Validar CNPJ na ReceitaWS
+exports.validateCnpj = async (req, res) => {
+    const { cnpj } = req.params;
+    const cleanCnpj = cnpj.replace(/\D/g, '');
+
+    if (cleanCnpj.length !== 14) {
+        return res.status(400).json({ valid: false, error: 'CNPJ deve ter 14 dígitos.' });
+    }
+
+    // Validação de dígitos
+    let sum = 0;
+    let weight = 2;
+    for (let i = 11; i >= 0; i--) {
+        sum += parseInt(cleanCnpj[i]) * weight;
+        weight = weight === 9 ? 2 : weight + 1;
+    }
+    const digit1 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    
+    sum = 0;
+    weight = 2;
+    for (let i = 12; i >= 0; i--) {
+        sum += parseInt(cleanCnpj[i]) * weight;
+        weight = weight === 9 ? 2 : weight + 1;
+    }
+    const digit2 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+
+    if (parseInt(cleanCnpj[12]) !== digit1 || parseInt(cleanCnpj[13]) !== digit2) {
+        return res.json({ valid: false, error: 'Dígitos verificadores inválidos.' });
+    }
+
+    // Consulta simplews (opcional - pode falhar)
+    try {
+        const response = await axios.get(`https://ws.sintegra.gov.br/consulta/cnpj/${cleanCnpj}/json`, {
+            timeout: 5000
+        });
+        if (response.data) {
+            return res.json({ 
+                valid: true, 
+                data: {
+                    cnpj: cleanCnpj,
+                    nome: response.data.nome || response.data.razaoSocial,
+                    fantasia: response.data.fantasia,
+                    situacao: response.data.situacao,
+                    logradouro: response.data.logradouro,
+                    numero: response.data.numero,
+                    bairro: response.data.bairro,
+                    municipio: response.data.municipio,
+                    uf: response.data.uf,
+                    cep: response.data.cep
+                }
+            });
+        }
+    } catch (e) {
+        // Se falhar a consulta, retorna só válido pelos dígitos
+    }
+
+    res.json({ valid: true, checked: false });
+};
+
+// Buscar CEP no ViaCEP
+exports.searchCep = async (req, res) => {
+    const { cep } = req.params;
+    const cleanCep = cep.replace(/\D/g, '');
+
+    if (cleanCep.length !== 8) {
+        return res.status(400).json({ error: 'CEP inválido.' });
+    }
+
+    try {
+        const response = await axios.get(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        if (response.data.erro) {
+            return res.status(404).json({ error: 'CEP não encontrado.' });
+        }
+        
+        // Busca código IBGE
+        const ibgeResponse = await axios.get(`https://servicodados.ibge.gov.br/api/v3/municipios/${response.data.uf}/${response.data.localidade}`);
+        
+        res.json({
+            cep: response.data.cep,
+            logradouro: response.data.logradouro,
+            complemento: response.data.complemento,
+            bairro: response.data.bairro,
+            cidade: response.data.localidade,
+            estado: response.data.uf,
+            ibgeCode: response.data.ibge || (ibgeResponse.data[0]?.id)
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar CEP.' });
     }
 };

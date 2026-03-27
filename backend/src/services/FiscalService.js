@@ -337,6 +337,145 @@ class FiscalService {
             throw new Error('Falha na comunicação com SEFAZ: ' + (err.response?.data || err.message));
         }
     }
+
+    /**
+     * Cancela/Inutiliza NFC-e
+     */
+    async cancelNfce(invoice, config, reason) {
+        try {
+            const certData = this._extractCertData(config.certificate, config.certPassword);
+            
+            const state = config.state || 'MG';
+            const stateConfig = this.endpoints[state] || this.endpoints['MG'];
+            const url = config.environment === 'production' 
+                ? stateConfig.production.replace('NFeAutorizacao4', 'NFeInutilizacao4')
+                : stateConfig.homologation.replace('NFeAutorizacao4', 'NFeInutilizacao4');
+
+            const httpsAgent = new https.Agent({
+                cert: certData.certificatePem,
+                key: certData.privateKeyPem,
+                rejectUnauthorized: false
+            });
+
+            const nProt = invoice.protocol || '';
+            const nNF = invoice.number;
+            const serie = invoice.series || 1;
+
+            // Gera XML de inutilização
+            const inutXML = `<?xml version="1.0" encoding="UTF-8"?>
+                <inutNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+                    <infInut Id="ID${state}20${nProt}">
+                        <tpAmb>${config.environment === 'production' ? '1' : '2'}</tpAmb>
+                        <xServ>INUTILIZAR</xServ>
+                        <cUF>${state === 'SP' ? '35' : '31'}</cUF>
+                        <ano>${new Date().getFullYear().toString().slice(-2)}</ano>
+                        <CNPJ>${config.cnpj.replace(/\D/g, '')}</CNPJ>
+                        <mod>65</mod>
+                        <serie>${serie}</serie>
+                        <nNFIni>${nNF}</nNFIni>
+                        <nNFFin>${nNF}</nNFFin>
+                        <xJust>${reason.substring(0, 255)}</xJust>
+                    </infInut>
+                </inutNFe>`;
+
+            const signedXml = this.signXml(inutXML, 'infInut', certData);
+
+            const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
+                <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+                    <soap12:Body>
+                        <nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4">
+                            ${signedXml}
+                        </nfeDadosMsg>
+                    </soap12:Body>
+                </soap12:Envelope>`;
+
+            const response = await axios.post(url, soapEnvelope, {
+                headers: { 'Content-Type': 'application/soap+xml; charset=utf-8' },
+                httpsAgent,
+                timeout: 30000
+            });
+
+            const resObj = this.parser.parse(response.data);
+            const body = resObj['soap:Envelope']?.['soap:Body'] || resObj['Envelope']?.['Body'];
+            const retInut = body?.['nfeInutilizacaoNFSeResultMsg']?.['retInutNFe'] || body?.['retInutNFe'];
+
+            if (retInut?.cStat === '102' || retInut?.cStat === '561') {
+                return { 
+                    success: true, 
+                    protocol: retInut?.nProt,
+                    message: retInut?.xMotivo
+                };
+            } else {
+                return { success: false, error: retInut?.xMotivo || 'Erro no cancelamento' };
+            }
+        } catch (error) {
+            logger.error('Erro ao cancelar NFC-e:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Consulta recibo de autorização
+     */
+    async consultReceipt(recibo, config) {
+        try {
+            const certData = this._extractCertData(config.certificate, config.certPassword);
+            
+            const state = config.state || 'MG';
+            const stateConfig = this.endpoints[state] || this.endpoints['MG'];
+            const url = config.environment === 'production' 
+                ? stateConfig.production.replace('NFeAutorizacao4', 'NFeRetAutorizacao4')
+                : stateConfig.homologation.replace('NFeAutorizacao4', 'NFeRetAutorizacao4');
+
+            const httpsAgent = new https.Agent({
+                cert: certData.certificatePem,
+                key: certData.privateKeyPem,
+                rejectUnauthorized: false
+            });
+
+            const soapEnvelope = `<?xml version="1.0" encoding="UTF-8"?>
+                <soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+                    <soap12:Body>
+                        <nfeConsReciP xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeRetAutorizacao4">
+                            <tpAmb>${config.environment === 'production' ? '1' : '2'}</tpAmb>
+                            <nRec>${recibo}</nRec>
+                        </nfeConsReciP>
+                    </soap12:Body>
+                </soap12:Envelope>`;
+
+            const response = await axios.post(url, soapEnvelope, {
+                headers: { 'Content-Type': 'application/soap+xml; charset=utf-8' },
+                httpsAgent,
+                timeout: 30000
+            });
+
+            const resObj = this.parser.parse(response.data);
+            const body = resObj['soap:Envelope']?.['soap:Body'] || resObj['Envelope']?.['Body'];
+            const prot = body?.['nfeRetAutorizacaoLoteResultMsg']?.['protNFe'] || body?.['protNFe'];
+
+            return { 
+                success: true, 
+                data: prot,
+                accessKey: prot?.chNFe
+            };
+        } catch (error) {
+            logger.error('Erro ao consultar recibo:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Gera DANFE em PDF (simplificado - só retorna buffer)
+     * Para produção, considere usar pdfmake ou similar
+     */
+    async generateDanfePdf(invoice, config, order) {
+        // Este é um placeholder - para implementação completa,
+        // seria necessário integrar com pdfmake ou similar
+        logger.info(`Gerando DANFE para nota ${invoice.number}`);
+        
+        // Por agora, retorna um PDF simples ou erro
+        throw new Error('Geração de PDF em desenvolvimento. Use a URL do XML para consultar.');
+    }
 }
 
 module.exports = new FiscalService();
