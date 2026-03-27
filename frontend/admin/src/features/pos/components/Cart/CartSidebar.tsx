@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { ShoppingCart, Minus, Plus, Bike, ShoppingBag, User, X, ChevronRight, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import { useCartStore, useCartTotal } from '../../hooks/useCartStore';
@@ -7,24 +7,7 @@ import { Button } from '../../../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TableSummary, Addon } from '../../../../types';
-
-const usePrefersReducedMotion = () => {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  return prefersReducedMotion;
-};
+import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 
 interface CartSidebarProps {
   tables: any[];

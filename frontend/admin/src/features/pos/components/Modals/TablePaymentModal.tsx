@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { X, CreditCard, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../../components/ui/Button';
@@ -7,24 +7,7 @@ import { Input } from '../../../../components/ui/Input';
 import { usePosStore } from '../../hooks/usePosStore';
 import { TableSummary, PaymentMethod } from '../../../../types';
 import { cn } from '../../../../lib/utils';
-
-const usePrefersReducedMotion = () => {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  return prefersReducedMotion;
-};
+import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 
 interface TablePaymentModalProps {
   viewingTable: TableSummary | null;

@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { X, Utensils, List, Trash2, Printer, MoveRight, Receipt, ChevronRight, ArrowRightLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '../../../../components/ui/Button';
@@ -8,24 +8,7 @@ import { TableSummary } from '../../../../types';
 import { removeOrderItem, getPosTableSummary } from '../../../../services/api';
 import { printOrder } from '../../../../services/printing';
 import { toast } from 'sonner';
-
-const usePrefersReducedMotion = () => {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  return prefersReducedMotion;
-};
+import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 
 interface TableDetailsModalProps {
   viewingTable: TableSummary | null;
