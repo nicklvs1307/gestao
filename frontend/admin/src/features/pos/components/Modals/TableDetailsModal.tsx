@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { X, Utensils, List, Trash2, Printer, MoveRight, Receipt, ChevronRight, ArrowRightLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '../../../../components/ui/Button';
@@ -9,98 +9,224 @@ import { removeOrderItem, getPosTableSummary } from '../../../../services/api';
 import { printOrder } from '../../../../services/printing';
 import { toast } from 'sonner';
 
+const usePrefersReducedMotion = () => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+};
+
 interface TableDetailsModalProps {
   viewingTable: TableSummary | null;
   setViewingTable: (table: TableSummary | null) => void;
   onRefreshTables: () => void;
 }
 
-export const TableDetailsModal: React.FC<TableDetailsModalProps> = ({ 
+export const TableDetailsModal: React.FC<TableDetailsModalProps> = React.memo(({ 
   viewingTable, setViewingTable, onRefreshTables 
 }) => {
   const { activeModal, setActiveModal } = usePosStore();
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  const backdropTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.2 };
+  const modalTransition = prefersReducedMotion ? { duration: 0.1 } : { type: "spring", damping: 25, stiffness: 300 };
 
   if (activeModal !== 'table_details' || !viewingTable) return null;
 
+  const handleRemoveItem = useCallback(async (itemId: string) => {
+    if(confirm('Remover este item do pedido?')) {
+      await removeOrderItem(viewingTable.id, itemId);
+      toast.success('Item removido');
+      onRefreshTables();
+      const updated = await getPosTableSummary();
+      const table = updated.find((t: TableSummary) => t.id === viewingTable.id);
+      if(table) setViewingTable(table);
+    }
+  }, [viewingTable.id, onRefreshTables, setViewingTable]);
+
+  const handlePrintPreBill = useCallback(async () => {
+    try {
+      const config = JSON.parse(localStorage.getItem('printer_config') || '{}');
+      await printOrder(viewingTable as any, config);
+      toast.success('Pré-conta enviada!');
+    } catch (e) { 
+      toast.error('Erro ao imprimir'); 
+    }
+  }, [viewingTable]);
+
+  const handleTransferTable = useCallback(() => {
+    setActiveModal('transfer_table');
+  }, [setActiveModal]);
+
+  const handleOpenPayment = useCallback(() => {
+    setActiveModal('payment_method');
+  }, [setActiveModal]);
+
+  const handleClose = useCallback(() => {
+    setActiveModal('none');
+  }, [setActiveModal]);
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveModal('none')} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <header className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        transition={backdropTransition}
+        onClick={handleClose} 
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" 
+      />
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }} 
+        exit={{ scale: 0.95, opacity: 0 }} 
+        transition={modalTransition}
+        className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200"
+      >
+        <header className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-100"><Utensils size={24} /></div>
+            <div className="p-4 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-100">
+              <Utensils size={28} />
+            </div>
             <div>
-              <h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tighter leading-none">Mesa 0{viewingTable.number}</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Gestão de Consumo</p>
+              <h3 className="text-2xl font-bold uppercase text-slate-900 tracking-tight leading-none">
+                Mesa {viewingTable.number < 10 ? `0${viewingTable.number}` : viewingTable.number}
+              </h3>
+              <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mt-1">Gestão de Consumo</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setActiveModal('none')} className="bg-white rounded-full"><X size={24} /></Button>
+          <button 
+            onClick={handleClose} 
+            className="p-3 bg-white rounded-full hover:bg-slate-100 transition-colors"
+            aria-label="Fechar"
+          >
+            <X size={24} />
+          </button>
         </header>
         
-        <div className="flex-1 overflow-y-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-10 custom-scrollbar">
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><List size={14} /> Itens Consumidos</h4>
-            <div className="space-y-2">
+        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8 custom-scrollbar">
+          <div className="space-y-5">
+            <h4 className="text-sm font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
+              <List size={18} /> Itens Consumidos
+            </h4>
+            <div className="space-y-3">
               {viewingTable.items?.map((item: any) => (
-                <Card key={item.id} className="p-4 border-slate-50 group hover:border-orange-200 transition-all">
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-black text-slate-800 uppercase italic">0{item.quantity}x {item.product.name}</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {item.sizeJson && <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{JSON.parse(item.sizeJson).name}</span>}
-                        {item.addonsJson && JSON.parse(item.addonsJson).map((a:any) => <span key={a.id} className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">+{a.name}</span>)}
+                <Card key={item.id} className="p-4 border-slate-200 hover:border-orange-300 transition-all">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-sm font-bold text-slate-800 uppercase">
+                        {item.quantity < 10 ? `0${item.quantity}` : item.quantity}x {item.product?.name || item.name}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {item.sizeJson && (
+                          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-medium uppercase">
+                            {JSON.parse(item.sizeJson).name}
+                          </span>
+                        )}
+                        {item.addonsJson && JSON.parse(item.addonsJson).map((a: any, idx: number) => (
+                          <span key={idx} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-medium uppercase">
+                            +{a.name}
+                          </span>
+                        ))}
                       </div>
-                      {item.observations && <p className="text-[8px] text-amber-600 font-bold mt-1 uppercase italic">Obs: {item.observations}</p>}
+                      {item.observations && (
+                        <p className="text-xs text-amber-600 font-medium mt-2 uppercase italic">
+                          Obs: {item.observations}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="font-black text-xs italic text-slate-900">R$ {(item.quantity * (item.priceAtTime || 0)).toFixed(2)}</span>
+                      <span className="font-bold text-base text-slate-900 whitespace-nowrap">
+                        R$ {(item.quantity * (item.priceAtTime || 0)).toFixed(2)}
+                      </span>
                       <button 
-                        onClick={async () => {
-                          if(confirm('Remover este item do pedido?')) {
-                            await removeOrderItem(viewingTable.id, item.id);
-                            toast.success('Item removido');
-                            onRefreshTables();
-                            const updated = await getPosTableSummary();
-                            const table = updated.find((t:any) => t.id === viewingTable.id);
-                            if(table) setViewingTable(table);
-                          }
-                        }}
-                        className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                        aria-label={`Remover ${item.product?.name || item.name}`}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
                 </Card>
               ))}
               {(!viewingTable.items || viewingTable.items.length === 0) && (
-                <p className="text-center py-10 text-slate-300 font-black uppercase text-[10px] italic">Nenhum item pendente</p>
+                <div className="py-12 text-center">
+                  <p className="text-slate-400 font-medium uppercase text-sm">Nenhum item pendente</p>
+                </div>
               )}
             </div>
-            <div className="p-6 bg-slate-900 text-white rounded-[2rem] shadow-xl relative overflow-hidden">
+            <div className="p-6 bg-slate-900 text-white rounded-2xl shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
               <div className="flex justify-between items-center relative z-10">
-                <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Total Acumulado</span>
-                <span className="text-3xl font-black italic text-emerald-400 tracking-tighter">R$ {(viewingTable.totalAmount || 0).toFixed(2).replace('.', ',')}</span>
+                <span className="text-sm font-bold uppercase text-slate-400 tracking-wider">Total Acumulado</span>
+                <span className="text-4xl font-bold text-emerald-400 tracking-tight">
+                  R$ {(viewingTable.totalAmount || 0).toFixed(2).replace('.', ',')}
+                </span>
               </div>
             </div>
           </div>
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 italic"><ArrowRightLeft size={14} /> Ações da Mesa</h4>
+          <div className="space-y-5">
+            <h4 className="text-sm font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
+              <ArrowRightLeft size={18} /> Ações da Mesa
+            </h4>
             <div className="grid grid-cols-1 gap-3">
-              <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={async () => {
-                try {
-                  const config = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                  await printOrder(viewingTable as any, config);
-                  toast.success('Pré-conta enviada!');
-                } catch (e) { toast.error('Erro ao imprimir'); }
-              }}><div className="flex items-center gap-3"><Printer size={18} className="text-blue-500" /><span>Imprimir Pré-Conta</span></div><ChevronRight size={16} /></Button>
-              <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('transfer_table')}><div className="flex items-center gap-3"><MoveRight size={18} className="text-orange-500" /><span>Transferir Mesa</span></div><ChevronRight size={16} /></Button>
-              <Button variant="outline" className="h-14 rounded-2xl justify-between px-6 bg-slate-50 border-slate-100" onClick={() => setActiveModal('payment_method')}><div className="flex items-center gap-3"><Receipt size={18} className="text-emerald-500" /><span>Encerrar e Pagar</span></div><ChevronRight size={16} /></Button>
+              <Button 
+                variant="outline" 
+                className="h-16 rounded-2xl justify-between px-6 bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-blue-300" 
+                onClick={handlePrintPreBill}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+                    <Printer size={20} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">Imprimir Pré-Conta</span>
+                </div>
+                <ChevronRight size={20} className="text-slate-400" />
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-16 rounded-2xl justify-between px-6 bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-orange-300" 
+                onClick={handleTransferTable}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-orange-100 text-orange-600 rounded-xl">
+                    <MoveRight size={20} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">Transferir Mesa</span>
+                </div>
+                <ChevronRight size={20} className="text-slate-400" />
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-16 rounded-2xl justify-between px-6 bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-emerald-300" 
+                onClick={handleOpenPayment}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
+                    <Receipt size={20} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">Encerrar e Pagar</span>
+                </div>
+                <ChevronRight size={20} className="text-slate-400" />
+              </Button>
             </div>
           </div>
         </div>
       </motion.div>
     </div>
   );
-};
+});
