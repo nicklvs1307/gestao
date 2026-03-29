@@ -36,7 +36,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
                   <h3 className="text-base font-black text-slate-900 uppercase tracking-tighter italic">
                     Acertos Pendentes
                   </h3>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
                     Pedidos entregues sem fechamento financeiro
                   </p>
                 </div>
@@ -92,22 +92,22 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
 
             <footer className="p-6 bg-white border-t border-slate-100 flex flex-col gap-4">
               <div className="p-4 bg-slate-900 rounded-2xl text-white flex justify-between items-center shadow-xl">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
                   Total Pendente
                 </span>
-                <span className="text-xl font-black italic tabular-nums">
+                <span className="text-xl font-bold tabular-nums">
                   R$ {totalPending.toFixed(2)}
                 </span>
               </div>
-              <p className="text-[9px] text-slate-400 font-bold uppercase text-center tracking-widest leading-relaxed italic">
+              <p className="text-xs text-slate-400 font-bold uppercase text-center tracking-widest leading-relaxed">
                 Para fechar o caixa, você deve realizar o acerto financeiro{' '}
                 <br /> desses pedidos no menu{' '}
-                <span className="text-rose-500">"Gestão de Acertos"</span>.
+                <span className="text-rose-500 font-bold">"Gestão de Acertos"</span>.
               </p>
               <Button
                 fullWidth
                 onClick={onClose}
-                className="h-12 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-black uppercase text-[10px] tracking-widest"
+                className="h-12 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-bold uppercase text-xs tracking-widest"
               >
                 ENTENDI, VOU VERIFICAR
               </Button>

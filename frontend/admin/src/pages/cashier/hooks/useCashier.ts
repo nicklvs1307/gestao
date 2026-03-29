@@ -110,6 +110,9 @@ export function useCashier() {
   const [moneyCountDetails, setMoneyCountDetails] = useState<Record<string, number>>({});
   const [cashLeftover, setCashLeftover] = useState<string>('0');
 
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Transaction modal
   const [transactionModalType, setTransactionModalType] = useState<TransactionModalState>('none');
   const [transAmount, setTransAmount] = useState('');
@@ -170,9 +173,9 @@ export function useCashier() {
     [closingValues]
   );
 
-  const cashInHand = parseFloat(closingValues['cash'] || '0');
-  const floatNext = parseFloat(cashLeftover || '0');
-  const safeDeposit = Math.max(0, cashInHand - floatNext);
+  const cashInHand = useMemo(() => parseFloat(closingValues['cash'] || '0'), [closingValues]);
+  const floatNext = useMemo(() => parseFloat(cashLeftover || '0'), [cashLeftover]);
+  const safeDeposit = useMemo(() => Math.max(0, cashInHand - floatNext), [cashInHand, floatNext]);
 
   // --- Filtered orders per selected method ---
 
@@ -186,9 +189,22 @@ export function useCashier() {
       const method = normalize(
         o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other'
       );
-      return method === selId || method === selLabel || method === selType;
+      const methodMatch = method === selId || method === selLabel || method === selType;
+      
+      if (!methodMatch) return false;
+      
+      if (!searchTerm) return true;
+      
+      const term = searchTerm.toLowerCase();
+      return (
+        o.id.toLowerCase().includes(term) ||
+        (o.dailyOrderNumber?.toString().includes(term)) ||
+        (o.deliveryOrder?.name?.toLowerCase().includes(term)) ||
+        (o.customerName?.toLowerCase().includes(term)) ||
+        (o.tableNumber?.toString().includes(term))
+      );
     });
-  }, [sessionOrders, selectedMethod, paymentMethods]);
+  }, [sessionOrders, selectedMethod, paymentMethods, searchTerm]);
 
   // --- Expected value for audit ---
 
@@ -244,6 +260,24 @@ export function useCashier() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Auto-refresh session orders every 30s when cashier is open
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        const ordersData = await apiClient.get('/cashier/orders').then(r => r.data).catch(() => null);
+        if (Array.isArray(ordersData)) {
+          setSessionOrders(ordersData);
+        }
+      } catch {
+        // Silently fail polling errors
+      }
+    }, 30000);
+
+    return () => clearInterval(pollInterval);
+  }, [isOpen]);
 
   // --- Handlers ---
 
@@ -410,6 +444,10 @@ export function useCashier() {
     setClosingValues,
     cashLeftover,
     setCashLeftover,
+
+    // Search
+    searchTerm,
+    setSearchTerm,
 
     // ERP
     showMoneyCounter,

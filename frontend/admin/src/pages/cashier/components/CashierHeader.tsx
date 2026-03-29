@@ -35,14 +35,14 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
           </h2>
           {isOpen && (
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+              <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                 <Clock size={12} className="text-slate-300" />{' '}
                 Aberto às{' '}
                 {session?.openedAt
                   ? format(new Date(session.openedAt), 'HH:mm')
                   : '--:--'}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+              <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                 <User size={12} className="text-slate-300" />{' '}
                 {authUser?.name || 'Operador'}
               </span>
@@ -58,7 +58,7 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
               variant="outline"
               size="sm"
               onClick={onIncome}
-              className="h-8 text-[10px] font-bold border-emerald-100 text-emerald-600 hover:bg-emerald-50 bg-emerald-50/30"
+              className="h-10 text-xs font-bold border-emerald-100 text-emerald-600 hover:bg-emerald-50 bg-emerald-50/30"
             >
               <Plus size={14} className="mr-1" /> REFORÇO
             </Button>
@@ -66,7 +66,7 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
               variant="outline"
               size="sm"
               onClick={onExpense}
-              className="h-8 text-[10px] font-bold border-rose-100 text-rose-600 hover:bg-rose-50 bg-rose-50/30"
+              className="h-10 text-xs font-bold border-rose-100 text-rose-600 hover:bg-rose-50 bg-rose-50/30"
             >
               <Minus size={14} className="mr-1" /> SANGRIA
             </Button>

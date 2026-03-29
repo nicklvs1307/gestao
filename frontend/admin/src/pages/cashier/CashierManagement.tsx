@@ -54,6 +54,8 @@ const CashierManagement: React.FC = () => {
     totalInformed,
     cashInHand,
     safeDeposit,
+    searchTerm,
+    setSearchTerm,
     filteredOrders,
     fetchData,
     handleOpen,
@@ -153,6 +155,8 @@ const CashierManagement: React.FC = () => {
                 selectedMethod={selectedMethod}
                 filteredOrders={filteredOrders}
                 onUpdatePayment={handleUpdatePayment}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
               />
             </div>
           </motion.div>
