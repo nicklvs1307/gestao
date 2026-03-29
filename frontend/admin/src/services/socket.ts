@@ -39,13 +39,6 @@ export function getSocket(): Socket {
     autoConnect: false,
   });
 
-  // Garante que a conexão seja estabelecida automaticamente ao obter o socket
-  try {
-    socket.connect();
-  } catch (e) {
-    // Se já estiver conectado, ignore
-  }
-
   return socket;
 }
 

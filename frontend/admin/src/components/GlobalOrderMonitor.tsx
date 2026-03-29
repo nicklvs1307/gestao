@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printing';
@@ -8,7 +8,6 @@ import TableRequestAlert from './TableRequestAlert';
 import { Bell, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Helper to get the base URL for the API
 const getApiBaseUrl = () => {
   return import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || window.location.origin;
 };
@@ -26,18 +25,20 @@ const GlobalOrderMonitor: React.FC = () => {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   
   const lastOrderIdsRef = useRef<Set<string>>(new Set());
+  const printedIdsRef = useRef<Set<string>>(new Set());
+  const pendingRequestsCountRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const playNotificationSound = () => {
+  const playNotificationSound = useCallback(() => {
     try {
       if (!audioRef.current) {
         audioRef.current = new Audio('/notification.mp3');
       }
       audioRef.current.play().catch(() => {});
     } catch (e) {}
-  };
+  }, []);
 
-  const hasUser = () => {
+  const hasUser = useCallback(() => {
     const userStr = localStorage.getItem('user');
     const selectedRestaurantId = localStorage.getItem('selectedRestaurantId');
     if (!userStr) return false;
@@ -45,7 +46,7 @@ const GlobalOrderMonitor: React.FC = () => {
     if (user?.isSuperAdmin && !selectedRestaurantId) return false;
     if (!user?.restaurantId && !selectedRestaurantId) return false;
     return true;
-  }
+  }, []);
 
   // Effect for fetching initial data and settings
   useEffect(() => {
@@ -67,6 +68,10 @@ const GlobalOrderMonitor: React.FC = () => {
             if (Array.isArray(ordersData)) {
               setAllOrders(ordersData);
               lastOrderIdsRef.current = new Set(ordersData.map((o: Order) => o.id));
+              // Mark already-printed orders so autoPrint skips them
+              ordersData.forEach((o: Order) => {
+                if (o.isPrinted) printedIdsRef.current.add(o.id);
+              });
             } else {
               setAllOrders([]);
             }
@@ -79,43 +84,45 @@ const GlobalOrderMonitor: React.FC = () => {
     };
 
     loadInitialData();
-  }, [isKdsPage]);
+  }, [isKdsPage, hasUser]);
 
-  // Effect for polling table requests (can be refactored to SSE later)
+  // Effect for polling table requests - stable interval, no re-creation
   useEffect(() => {
     if (isKdsPage || !hasUser()) return;
 
     const fetchRequests = async () => {
-        try {
-            const requestsData = await getTableRequests();
-            if (Array.isArray(requestsData)) {
-                if (requestsData.length > (pendingRequests?.length || 0)) {
-                    playNotificationSound();
-                    setIsRequestModalOpen(true);
-                }
-                setPendingRequests(requestsData);
-            } else {
-                setPendingRequests([]);
-            }
-        } catch (e) { 
-            console.warn("Monitor: Falha ao carregar chamados", e); 
-            setPendingRequests([]);
+      try {
+        const requestsData = await getTableRequests();
+        if (Array.isArray(requestsData)) {
+          if (requestsData.length > pendingRequestsCountRef.current) {
+            playNotificationSound();
+            setIsRequestModalOpen(true);
+          }
+          pendingRequestsCountRef.current = requestsData.length;
+          setPendingRequests(requestsData);
+        } else {
+          pendingRequestsCountRef.current = 0;
+          setPendingRequests([]);
         }
+      } catch (e) { 
+        console.warn("Monitor: Falha ao carregar chamados", e); 
+        setPendingRequests([]);
+      }
     };
     
     fetchRequests();
-    const requestInterval = setInterval(fetchRequests, 20000); // Polls less frequently
+    const requestInterval = setInterval(fetchRequests, 20000);
     return () => clearInterval(requestInterval);
+  }, [isKdsPage, hasUser, playNotificationSound]);
 
-  }, [isKdsPage, pendingRequests.length]);
-
-
-  // SSE Effect for real-time order updates
+  // SSE Effect - Socket.io is primary, SSE as backup with dedup
   useEffect(() => {
     if (isKdsPage || !hasUser()) return;
 
     let eventSource: EventSource | null = null;
-    let reconnectTimeout: any = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let reconnectDelay = 5000;
+    const MAX_RECONNECT_DELAY = 60000;
 
     const connectSSE = () => {
       try {
@@ -134,16 +141,14 @@ const GlobalOrderMonitor: React.FC = () => {
         eventSource = new EventSource(`${getApiBaseUrl()}/api/admin/orders/events?token=${token}&restaurantId=${restaurantId}`);
 
         eventSource.onopen = () => {
-          console.log('[SSE] Order events stream opened');
+          reconnectDelay = 5000; // Reset backoff on successful connection
         };
+
         eventSource.onmessage = (event) => {
           try {
             const eventData = JSON.parse(event.data);
 
-            if (eventData.type === 'CONNECTION_ESTABLISHED') {
-              console.log('[SSE] Conexão estabelecida com o servidor.');
-              return;
-            }
+            if (eventData.type === 'CONNECTION_ESTABLISHED') return;
 
             const updatedOrder = eventData.payload as Order;
             if (!updatedOrder || !updatedOrder.id) return;
@@ -154,16 +159,14 @@ const GlobalOrderMonitor: React.FC = () => {
               const existingOrderIndex = newOrders.findIndex(o => o.id === updatedOrder.id);
               
               if (existingOrderIndex > -1) {
-                // Update existing order
                 newOrders[existingOrderIndex] = updatedOrder;
               } else {
-                // Add new order
                 newOrders.unshift(updatedOrder);
                 lastOrderIdsRef.current.add(updatedOrder.id);
                 playNotificationSound();
-                 if (!isAutoAccept && updatedOrder.status === 'PENDING') {
-                    setIsOrderModalOpen(true);
-                 }
+                if (!isAutoAccept && updatedOrder.status === 'PENDING') {
+                  setIsOrderModalOpen(true);
+                }
               }
               return newOrders;
             });
@@ -172,14 +175,14 @@ const GlobalOrderMonitor: React.FC = () => {
           }
         };
 
-        eventSource.onerror = (error) => {
-          console.error('SSE Error. Reconnecting...', error);
+        eventSource.onerror = () => {
           if (eventSource) {
             eventSource.close();
             eventSource = null;
           }
-          // Tenta reconectar após 5 segundos
-          reconnectTimeout = setTimeout(connectSSE, 5000);
+          // Exponential backoff: 5s -> 10s -> 20s -> 40s -> 60s max
+          reconnectTimeout = setTimeout(connectSSE, reconnectDelay);
+          reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
         };
       } catch (err) {
         console.error('SSE Setup Error:', err);
@@ -196,34 +199,33 @@ const GlobalOrderMonitor: React.FC = () => {
         clearTimeout(reconnectTimeout);
       }
     };
-  }, [isKdsPage, isAutoAccept]);
+  }, [isKdsPage, hasUser, isAutoAccept, playNotificationSound]);
 
-
-  // --- DERIVED STATE AND MEMOIZED VALUES ---
+  // --- MEMOIZED VALUES ---
   const pendingOrders = useMemo(() => allOrders.filter(o => o.status === 'PENDING'), [allOrders]);
 
-  // --- PRINTING LOGIC ---
+  // --- PRINTING LOGIC - uses ref to avoid re-triggering on every allOrders change ---
   useEffect(() => {
+    if (!isAutoPrint) return;
+
+    const toPrintProduction = allOrders.filter(o => o.status === 'PREPARING' && !o.isPrinted && !printedIdsRef.current.has(o.id));
+    const toPrintFinal = allOrders.filter(o => o.status === 'COMPLETED' && o.orderType === 'DELIVERY' && !o.isPrinted && !printedIdsRef.current.has(o.id));
+    const allToPrint = [...toPrintProduction, ...toPrintFinal];
+
+    if (allToPrint.length === 0) return;
+
     const processPrinting = async () => {
-      if (!isAutoPrint) return; // Trava aqui se a impressão estiver desativada
-
-      const toPrintProduction = allOrders.filter(o => o.status === 'PREPARING' && !o.isPrinted);
-      const toPrintFinal = allOrders.filter(o => o.status === 'COMPLETED' && o.orderType === 'DELIVERY' && !o.isPrinted);
-      const allToPrint = [...toPrintProduction, ...toPrintFinal];
-
-      if (allToPrint.length === 0) return;
-
       for (const order of allToPrint) {
+        // Mark immediately to prevent re-processing
+        printedIdsRef.current.add(order.id);
+        
         console.log(`[AUTOPRINT] Iniciando impressão automática: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
         try {
           const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
           
-          // Busca as configurações de layout atualizadas em tempo real
           const sLayout = localStorage.getItem('receipt_layout');
           const sSettings = localStorage.getItem('receipt_settings');
           const receiptSettings = sLayout ? JSON.parse(sLayout) : (sSettings ? JSON.parse(sSettings) : {});
-
-          console.log(`[AUTOPRINT DEBUG] Logo=${receiptSettings.showLogo}, Fonte=${receiptSettings.fontSize}`);
 
           const settingsData = await getSettings();
           const restaurantInfo = {
@@ -234,24 +236,24 @@ const GlobalOrderMonitor: React.FC = () => {
           await printOrder(order, printerConfig, receiptSettings, restaurantInfo);
           await markOrderAsPrinted(order.id);
           
-          // Update local state to reflect print status immediately
           setAllOrders(prev => prev.map(o => o.id === order.id ? {...o, isPrinted: true} : o));
-
         } catch (printErr) {
           console.error("Falha na impressão:", printErr);
+          // Remove from ref on failure so it can be retried
+          printedIdsRef.current.delete(order.id);
           toast.error(`Falha ao imprimir pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
         }
       }
     };
     processPrinting();
-  }, [allOrders]);
+  }, [allOrders, isAutoPrint]);
 
-
-  const handleResolveRequest = async (id: string) => {
+  const handleResolveRequest = useCallback(async (id: string) => {
     try {
         await resolveTableRequest(id);
         setPendingRequests(prev => {
             const updated = prev.filter(r => r.id !== id);
+            pendingRequestsCountRef.current = updated.length;
             if (updated.length === 0) setIsRequestModalOpen(false);
             return updated;
         });
@@ -260,7 +262,7 @@ const GlobalOrderMonitor: React.FC = () => {
         console.error(e);
         toast.error("Erro ao resolver chamado.");
     }
-  };
+  }, []);
 
   const hasAlerts = (pendingOrders.length > 0 || pendingRequests.length > 0) && !isKdsPage;
   if (!hasAlerts) return null;
@@ -272,8 +274,8 @@ const GlobalOrderMonitor: React.FC = () => {
             <div onClick={() => setIsRequestModalOpen(true)} className="pointer-events-auto bg-indigo-600 text-white rounded-2xl shadow-xl border-2 border-white flex items-center gap-3 p-1.5 pr-4 animate-bounce-subtle cursor-pointer hover:scale-105 transition-all">
                 <div className="bg-white text-indigo-600 p-2 rounded-xl"><UserCheck size={20} /></div>
                 <div className="flex flex-col">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-indigo-100 leading-tight">Chamado</p>
-                    <p className="text-sm font-black italic leading-none">{pendingRequests.length} Mesa(s)</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100 leading-tight">Chamado</p>
+                    <p className="text-sm font-bold italic leading-none">{pendingRequests.length} Mesa(s)</p>
                 </div>
             </div>
         )}
@@ -282,16 +284,16 @@ const GlobalOrderMonitor: React.FC = () => {
             <div onClick={() => setIsOrderModalOpen(true)} className="pointer-events-auto bg-orange-600 text-white rounded-2xl shadow-xl border-2 border-white flex items-center gap-3 p-1.5 pr-4 animate-bounce-subtle cursor-pointer hover:scale-105 transition-all">
                 <div className="bg-white text-orange-600 p-2 rounded-xl animate-ring"><Bell size={20} /></div>
                 <div className="flex flex-col">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-orange-100 text-left leading-tight">Pedido</p>
-                    <p className="text-sm font-black italic text-left leading-none">{pendingOrders.length} Novo(s)</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-orange-100 text-left leading-tight">Pedido</p>
+                    <p className="text-sm font-bold italic text-left leading-none">{pendingOrders.length} Novo(s)</p>
                 </div>
             </div>
         )}
       </div>
 
       <div className="fixed top-0 left-0 right-0 z-[200] pointer-events-none flex flex-col">
-          {pendingRequests.length > 0 && <div className="bg-indigo-600 text-white text-[8px] font-black uppercase tracking-[0.2em] py-1 text-center shadow-lg animate-pulse">CHAMADO DE MESA PENDENTE</div>}
-          {pendingOrders.length > 0 && !isAutoAccept && <div className="bg-red-600 text-white text-[8px] font-black uppercase tracking-[0.2em] py-1 text-center shadow-lg animate-pulse">PEDIDO AGUARDANDO ACEITE</div>}
+          {pendingRequests.length > 0 && <div className="bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-1 text-center shadow-lg animate-pulse">CHAMADO DE MESA PENDENTE</div>}
+          {pendingOrders.length > 0 && !isAutoAccept && <div className="bg-red-600 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-1 text-center shadow-lg animate-pulse">PEDIDO AGUARDANDO ACEITE</div>}
       </div>
 
       {isOrderModalOpen && (
@@ -299,12 +301,10 @@ const GlobalOrderMonitor: React.FC = () => {
             orders={pendingOrders}
             onAccept={async (id) => {
                 await updateOrderStatus(id, 'PREPARING');
-                // State will update via SSE
                 if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
             }}
             onReject={async (id) => {
                 await updateOrderStatus(id, 'CANCELED');
-                // State will update via SSE
                 if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
             }}
             onClose={() => setIsOrderModalOpen(false)}

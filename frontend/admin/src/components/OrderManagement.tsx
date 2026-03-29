@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OrderKanbanBoard from './OrderKanbanBoard';
 import OrderListView from './OrderListView';
@@ -18,41 +18,55 @@ type OrderSegment = 'ALL' | 'TABLE' | 'DELIVERY';
 
 import { useSocket } from '../hooks/useSocket';
 
+const ACTIVE_STATUSES = ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'];
+
+const STATUS_FLOW: Record<string, string> = {
+  'PENDING': 'PREPARING',
+  'PREPARING': 'READY',
+  'READY': 'SHIPPED',
+  'SHIPPED': 'DELIVERED',
+  'DELIVERED': 'COMPLETED'
+};
+
+const STATUS_FLOW_BACK: Record<string, string> = {
+  'PREPARING': 'PENDING',
+  'READY': 'PREPARING',
+  'SHIPPED': 'READY',
+  'DELIVERED': 'SHIPPED',
+  'COMPLETED': 'DELIVERED'
+};
+
 const OrderManagement: React.FC = () => {
   const navigate = useNavigate();
   const { on, off } = useSocket();
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeSegment, setActiveSegment] = useState<OrderSegment>('DELIVERY');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
-  // Estados para Trava de Motorista
   const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
   const [orderIdPendingDriver, setOrderIdPendingDriver] = useState<string | null>(null);
   const [newStatusPendingDriver, setNewStatusPendingDriver] = useState<string | null>(null);
 
-  const handleOpenOrder = async (order: Order) => {
-    try {
-      // Se já tiver items (ex: veio via Socket), não precisa buscar
-      if (Array.isArray(order.items) && order.items.length > 0) {
-        setSelectedOrder(order);
-        return;
-      }
-      const fullOrder = await getOrder(order.id);
-      setSelectedOrder(fullOrder);
-    } catch (error) {
-      toast.error("Erro ao carregar detalhes do pedido.");
-    }
-  };
+  // Debounce search input
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+    }, 300);
+  }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await getAdminOrders();
-      // Filtrar apenas pedidos DELIVERY conforme solicitado
       const deliveryOrders = data.filter((o: Order) => o.orderType === 'DELIVERY');
       const sortedOrders = deliveryOrders.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setAllOrders(sortedOrders);
@@ -62,16 +76,26 @@ const OrderManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const handleOpenOrder = useCallback(async (order: Order) => {
+    try {
+      if (Array.isArray(order.items) && order.items.length > 0) {
+        setSelectedOrder(order);
+        return;
+      }
+      const fullOrder = await getOrder(order.id);
+      setSelectedOrder(fullOrder);
+    } catch (error) {
+      toast.error("Erro ao carregar detalhes do pedido.");
+    }
+  }, []);
 
   useEffect(() => {
     fetchOrders();
 
-    // Socket.io for real-time updates
     const handleOrderUpdate = (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
-      
-      // Apenas processar se for DELIVERY
       if (updatedOrder.orderType !== 'DELIVERY') return;
 
       setAllOrders(prevOrders => {
@@ -85,7 +109,6 @@ const OrderManagement: React.FC = () => {
         return newOrders;
       });
 
-      // Atualiza o pedido selecionado se for o mesmo que mudou, usando a forma funcional
       setSelectedOrder(current => {
         if (current && current.id === updatedOrder.id) {
           return updatedOrder;
@@ -98,17 +121,16 @@ const OrderManagement: React.FC = () => {
 
     return () => {
       off('order_update', handleOrderUpdate);
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
-  }, [on, off]); // Removido selectedOrder para evitar loops
+  }, [on, off, fetchOrders]);
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
-    // TRAVA DE SEGURANÇA: Aguardando Entrega (READY) -> Saiu p/ Entrega (SHIPPED)
+  const handleStatusChange = useCallback(async (orderId: string, newStatus: string) => {
     if (newStatus === 'SHIPPED') {
       const order = allOrders.find(o => o.id === orderId);
       const isDelivery = order?.orderType === 'DELIVERY' || !!order?.deliveryOrder;
       const isPickup = order?.deliveryOrder?.deliveryType === 'pickup';
       
-      // Se for entrega e não tiver motorista, abre o modal
       if (isDelivery && !isPickup && !order?.deliveryOrder?.driverId) {
         setOrderIdPendingDriver(orderId);
         setNewStatusPendingDriver(newStatus);
@@ -118,29 +140,24 @@ const OrderManagement: React.FC = () => {
     }
 
     try {
-      // Optimistic update
       setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status: newStatus });
-      }
+      setSelectedOrder(current => current && current.id === orderId ? { ...current, status: newStatus } : current);
       
       await updateOrderStatus(orderId, newStatus);
-      // No need to fetchOrders(), SSE will handle the confirmation from server
       toast.success(`Pedido #${orderId.slice(-4).toUpperCase()} atualizado!`);
     } catch (error) { 
       toast.error("Erro ao atualizar status");
-      fetchOrders(); // Revert on error
+      fetchOrders();
     }
-  };
+  }, [allOrders, fetchOrders]);
 
-  const handleDriverSelect = async (driverId: string) => {
+  const handleDriverSelect = useCallback(async (driverId: string) => {
     if (!orderIdPendingDriver) return;
     
     try {
       setIsLoading(true);
       await assignDriver(orderIdPendingDriver, driverId);
       
-      // Atualiza o estado local para refletir o driver vinculado
       setAllOrders(prev => prev.map(o => o.id === orderIdPendingDriver ? { 
         ...o, 
         deliveryOrder: o.deliveryOrder ? { ...o.deliveryOrder, driverId } : { driverId } as any 
@@ -148,11 +165,9 @@ const OrderManagement: React.FC = () => {
 
       toast.success("Entregador vinculado!");
       
-      // Agora prossegue com a mudança de status
       const targetStatus = newStatusPendingDriver;
       const targetId = orderIdPendingDriver;
       
-      // Limpa estados de pendência antes de chamar o status change para evitar loops
       setIsDriverModalOpen(false);
       setOrderIdPendingDriver(null);
       setNewStatusPendingDriver(null);
@@ -165,169 +180,148 @@ const OrderManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [orderIdPendingDriver, newStatusPendingDriver, handleStatusChange]);
 
-  const handleBulkStatusChange = async (newStatus: string) => {
-      if (selectedOrderIds.length === 0) return;
-      try {
-          const idsToProcess = [...selectedOrderIds];
-          setSelectedOrderIds([]); 
-          
-          // Se for SHIPPED, precisamos verificar individualmente devido à trava
-          if (newStatus === 'SHIPPED') {
-              for (const id of idsToProcess) {
-                  await handleStatusChange(id, newStatus);
-              }
-          } else {
-              setAllOrders(prev => prev.map(o => idsToProcess.includes(o.id) ? { ...o, status: newStatus } : o));
-              await Promise.all(idsToProcess.map(id => updateOrderStatus(id, newStatus)));
-              toast.success(`${idsToProcess.length} pedidos atualizados!`);
-          }
-      } catch (error) {
-          fetchOrders();
-      }
-  };
-
-  const handleBulkAdvance = async () => {
+  const handleBulkStatusChange = useCallback(async (newStatus: string) => {
     if (selectedOrderIds.length === 0) return;
-    
-    const statusFlow: Record<string, string> = {
-      'PENDING': 'PREPARING',
-      'PREPARING': 'READY',
-      'READY': 'SHIPPED',
-      'SHIPPED': 'DELIVERED',
-      'DELIVERED': 'COMPLETED'
-    };
+    try {
+      const idsToProcess = [...selectedOrderIds];
+      setSelectedOrderIds([]); 
+      
+      if (newStatus === 'SHIPPED') {
+        for (const id of idsToProcess) {
+          await handleStatusChange(id, newStatus);
+        }
+      } else {
+        setAllOrders(prev => prev.map(o => idsToProcess.includes(o.id) ? { ...o, status: newStatus } : o));
+        await Promise.all(idsToProcess.map(id => updateOrderStatus(id, newStatus)));
+        toast.success(`${idsToProcess.length} pedidos atualizados!`);
+      }
+    } catch (error) {
+      fetchOrders();
+    }
+  }, [selectedOrderIds, handleStatusChange, fetchOrders]);
 
+  const handleBulkAdvance = useCallback(async () => {
+    if (selectedOrderIds.length === 0) return;
     const idsToProcess = [...selectedOrderIds];
     setSelectedOrderIds([]);
 
     for (const id of idsToProcess) {
       const order = allOrders.find(o => o.id === id);
       if (order) {
-        const nextStatus = statusFlow[order.status];
+        const nextStatus = STATUS_FLOW[order.status];
         if (nextStatus) {
           await handleStatusChange(id, nextStatus);
         }
       }
     }
     toast.success("Ações em massa processadas!");
-  };
+  }, [selectedOrderIds, allOrders, handleStatusChange]);
 
-  const handleBulkBack = async () => {
+  const handleBulkBack = useCallback(async () => {
     if (selectedOrderIds.length === 0) return;
-    
-    const statusFlow: Record<string, string> = {
-      'PREPARING': 'PENDING',
-      'READY': 'PREPARING',
-      'SHIPPED': 'READY',
-      'DELIVERED': 'SHIPPED',
-      'COMPLETED': 'DELIVERED'
-    };
-
     const idsToProcess = [...selectedOrderIds];
     setSelectedOrderIds([]);
 
     for (const id of idsToProcess) {
       const order = allOrders.find(o => o.id === id);
       if (order) {
-        const prevStatus = statusFlow[order.status];
+        const prevStatus = STATUS_FLOW_BACK[order.status];
         if (prevStatus) {
           await handleStatusChange(id, prevStatus);
         }
       }
     }
-  };
+  }, [selectedOrderIds, allOrders, handleStatusChange]);
 
-  const toggleSelectOrder = (id: string) => {
-      setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
+  const toggleSelectOrder = useCallback((id: string) => {
+    setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  }, []);
 
-  const filteredOrders = allOrders.filter(o => {
-      const isStatusMatch = ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'].includes(o.status);
+  // Memoized filtered orders
+  const filteredOrders = useMemo(() => {
+    return allOrders.filter(o => {
+      const isStatusMatch = ACTIVE_STATUSES.includes(o.status);
       const isSegmentMatch = activeSegment === 'ALL' || o.orderType === activeSegment;
-      const isSearchMatch = !searchTerm || 
-        o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (o.customerName && o.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (o.deliveryOrder?.name && o.deliveryOrder.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (o.tableNumber && o.tableNumber.toString().includes(searchTerm));
+      const isSearchMatch = !debouncedSearch || 
+        o.id.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+        (o.customerName && o.customerName.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+        (o.deliveryOrder?.name && o.deliveryOrder.name.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+        (o.tableNumber && o.tableNumber.toString().includes(debouncedSearch));
       
       return isStatusMatch && isSegmentMatch && isSearchMatch;
-  });
+    });
+  }, [allOrders, activeSegment, debouncedSearch]);
 
-  const counts = {
-      DELIVERY: allOrders.filter(o => o.orderType === 'DELIVERY' && ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'].includes(o.status)).length,
-  };
+  // Memoized counts
+  const counts = useMemo(() => ({
+    DELIVERY: allOrders.filter(o => o.orderType === 'DELIVERY' && ACTIVE_STATUSES.includes(o.status)).length,
+  }), [allOrders]);
 
   if (isLoading && allOrders.length === 0) return (
     <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
-      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Monitorando Pedidos em Tempo Real...</span>
+      <span className="text-xs font-bold uppercase tracking-[0.2em]">Monitorando Pedidos em Tempo Real...</span>
     </div>
   );
 
   return (
     <div className="space-y-2 animate-in fade-in duration-500 -m-2">
       
-      {/* Header Compacto com Ferramentas */}
+      {/* Header Compacto */}
       <div className="flex flex-col lg:flex-row items-center gap-2 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
         
         <div className="flex flex-1 w-full lg:w-auto items-center gap-2">
-            {/* Search Bar */}
             <div className="relative flex-1 lg:max-w-[300px]">
                 <input 
                     type="text" 
                     placeholder="BUSCAR PEDIDO OU MESA..." 
-                    className="w-full h-9 pl-9 pr-4 bg-slate-100 border-none rounded-xl text-[9px] font-black uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-400"
+                    className="w-full h-9 pl-9 pr-4 bg-slate-100 border-none rounded-xl text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-400"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={handleSearchChange}
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                 {searchTerm && (
-                    <button onClick={() => setSearchTerm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <button onClick={() => { setSearchTerm(''); setDebouncedSearch(''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                         <X size={12} />
                     </button>
                 )}
             </div>
 
-            {/* Ações em Massa - Compactas e Poderosas */}
             {selectedOrderIds.length > 0 && (
                 <div className="flex items-center gap-1.5 animate-in slide-in-from-left-4 duration-300 bg-orange-50 p-1 rounded-xl border border-orange-100 shadow-sm">
-                    <span className="text-[9px] font-black text-orange-600 px-2 uppercase italic">{selectedOrderIds.length}</span>
+                    <span className="text-xs font-bold text-orange-600 px-2 uppercase italic">{selectedOrderIds.length}</span>
                     
-                    <button onClick={handleBulkBack} className="h-7 w-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-orange-600 flex items-center justify-center transition-all" title="Recuar Status"><ChevronLeft size={14} /></button>
+                    <button onClick={handleBulkBack} className="h-8 w-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-orange-600 flex items-center justify-center transition-all" title="Recuar Status"><ChevronLeft size={14} /></button>
                     
-                    <button onClick={handleBulkAdvance} className="h-7 px-3 rounded-lg bg-orange-500 text-white text-[8px] font-black uppercase italic hover:bg-orange-600 transition-all flex items-center gap-1">AVANÇAR <ChevronRight size={10} /></button>
+                    <button onClick={handleBulkAdvance} className="h-8 px-3 rounded-lg bg-orange-500 text-white text-[10px] font-bold uppercase italic hover:bg-orange-600 transition-all flex items-center gap-1">AVANÇAR <ChevronRight size={10} /></button>
                     
-                    <button onClick={() => handleBulkStatusChange('READY')} className="h-7 px-3 rounded-lg bg-emerald-600 text-white text-[8px] font-black uppercase hover:bg-emerald-500 italic transition-all">PRONTOS</button>
+                    <button onClick={() => handleBulkStatusChange('READY')} className="h-8 px-3 rounded-lg bg-emerald-600 text-white text-[10px] font-bold uppercase hover:bg-emerald-500 italic transition-all">PRONTOS</button>
                     
-                    <button onClick={() => handleBulkStatusChange('COMPLETED')} className="h-7 px-3 rounded-lg bg-slate-900 text-white text-[8px] font-black uppercase italic transition-all">FINALIZAR</button>
+                    <button onClick={() => handleBulkStatusChange('COMPLETED')} className="h-8 px-3 rounded-lg bg-slate-900 text-white text-[10px] font-bold uppercase italic transition-all">FINALIZAR</button>
                     
-                    <button onClick={() => setSelectedOrderIds([])} className="h-7 w-7 rounded-lg text-slate-400 hover:bg-slate-200 flex items-center justify-center transition-all"><X size={14} /></button>
+                    <button onClick={() => setSelectedOrderIds([])} className="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-200 flex items-center justify-center transition-all"><X size={14} /></button>
                 </div>
             )}
         </div>
         
         <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
-            {/* Filtro de Segmento - Apenas Delivery conforme solicitado */}
             <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 shadow-inner">
                 {[
                     { id: 'DELIVERY', label: 'PEDIDOS DELIVERY', icon: Package, count: counts.DELIVERY }
                 ].map(seg => (
                     <button 
                         key={seg.id}
-                        className={cn(
-                            "px-3 py-1.5 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap bg-white text-slate-900 shadow-sm"
-                        )}
+                        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap bg-white text-slate-900 shadow-sm"
                     >
                         <seg.icon size={10} /> 
                         {seg.label}
-                        <span className="ml-0.5 px-1 py-0.2 rounded text-[7px] bg-slate-900 text-white">{seg.count}</span>
+                        <span className="ml-0.5 px-1 py-0.2 rounded text-[10px] bg-slate-900 text-white">{seg.count}</span>
                     </button>
                 ))}
             </div>
 
-            {/* Alternador de Visão - Compacto */}
             <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200">
                 <button onClick={() => setViewMode('kanban')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><Kanban size={14} /></button>
                 <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><List size={14} /></button>
@@ -337,7 +331,7 @@ const OrderManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Conteúdo Principal (Kanban ou Lista) */}
+      {/* Conteúdo Principal */}
       <div className="flex-1 min-h-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 shadow-inner p-1">
         {viewMode === 'kanban' ? (
           <OrderKanbanBoard 
@@ -365,7 +359,6 @@ const OrderManagement: React.FC = () => {
         />
       )}
 
-      {/* Modal de Seleção de Motorista */}
       <DriverSelectionModal 
         isOpen={isDriverModalOpen}
         onClose={() => {
