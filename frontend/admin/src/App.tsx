@@ -36,7 +36,7 @@ const FinancialSuppliers = lazy(() => import('./pages/financial/FinancialSupplie
 const FinancialBankAccounts = lazy(() => import('./pages/financial/FinancialBankAccounts'));
 const FinancialEntries = lazy(() => import('./pages/FinancialEntries'));
 
-const CashierManagement = lazy(() => import('./components/CashierManagement'));
+const CashierManagement = lazy(() => import('./pages/cashier'));
 const StockLayout = lazy(() => import('./pages/stock/StockLayout'));
 const StockDashboard = lazy(() => import('./pages/stock/StockDashboard'));
 const StockIngredients = lazy(() => import('./pages/stock/StockIngredients'));

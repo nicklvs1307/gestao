@@ -1,6 +1,7 @@
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const AppError = require('../utils/AppError');
+const CASHIER_CONSTANTS = require('../constants/cashier');
 
 class CashierService {
   /**
@@ -8,7 +9,7 @@ class CashierService {
    */
   async getActiveSessionStatus(restaurantId) {
     const session = await prisma.cashierSession.findFirst({
-      where: { restaurantId, status: 'OPEN' },
+      where: { restaurantId, status: CASHIER_CONSTANTS.STATUS.OPEN },
       include: { user: { select: { name: true } } }
     });
 
@@ -22,7 +23,7 @@ class CashierService {
 
     // Calcula saldo em dinheiro (Dinheiro em mãos)
     const cashInHand = transactions.reduce((acc, t) => {
-      if (t.paymentMethod === 'cash') {
+      if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) {
         return t.type === 'INCOME' ? acc + t.amount : acc - t.amount;
       }
       return acc;
@@ -39,8 +40,8 @@ class CashierService {
 
     // Sangrias e Reforços
     const adjustments = transactions.reduce((acc, t) => {
-      if (t.description.includes('[SANGRIA]')) acc.sangria += t.amount;
-      if (t.description.includes('[REFORÇO]')) acc.reforco += t.amount;
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA)) acc.sangria += t.amount;
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO)) acc.reforco += t.amount;
       return acc;
     }, { sangria: 0, reforco: 0 });
 
@@ -94,7 +95,7 @@ class CashierService {
    */
   async getPendingSettlements(restaurantId) {
     const session = await prisma.cashierSession.findFirst({
-        where: { restaurantId, status: 'OPEN' }
+        where: { restaurantId, status: CASHIER_CONSTANTS.STATUS.OPEN }
     });
     if (!session) return [];
 
@@ -128,20 +129,22 @@ class CashierService {
    * Abre uma nova sessão de caixa.
    */
   async openSession(restaurantId, userId, initialAmount) {
-    const existing = await prisma.cashierSession.findFirst({
-      where: { restaurantId, status: 'OPEN' }
-    });
+    return await prisma.$transaction(async (tx) => {
+      const existing = await tx.cashierSession.findFirst({
+        where: { restaurantId, status: CASHIER_CONSTANTS.STATUS.OPEN }
+      });
 
-    if (existing) throw new Error("Já existe um caixa aberto para este restaurante.");
+      if (existing) throw new AppError("Já existe um caixa aberto para este restaurante.", 400);
 
-    return await prisma.cashierSession.create({
-      data: {
-        restaurantId,
-        userId,
-        initialAmount: parseFloat(initialAmount) || 0,
-        status: 'OPEN',
-        openedAt: new Date()
-      }
+      return await tx.cashierSession.create({
+        data: {
+          restaurantId,
+          userId,
+          initialAmount: parseFloat(initialAmount) || 0,
+          status: CASHIER_CONSTANTS.STATUS.OPEN,
+          openedAt: new Date()
+        }
+      });
     });
   }
 
@@ -150,7 +153,7 @@ class CashierService {
    */
   async closeSession(restaurantId, { finalAmount, notes, closingDetails, cashLeftover, moneyCountJson }) {
     const session = await prisma.cashierSession.findFirst({
-      where: { restaurantId, status: 'OPEN' }
+      where: { restaurantId, status: CASHIER_CONSTANTS.STATUS.OPEN }
     });
 
     if (!session) throw new AppError("Nenhum caixa aberto encontrado.", 404);
@@ -202,10 +205,10 @@ class CashierService {
     transactions.forEach(t => {
         if (t.type === 'INCOME') {
             systemTotal += t.amount;
-            if (t.paymentMethod === 'cash') systemCash += t.amount;
+            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash += t.amount;
         } else {
             systemTotal -= t.amount;
-            if (t.paymentMethod === 'cash') systemCash -= t.amount;
+            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash -= t.amount;
         }
     });
 
@@ -236,12 +239,12 @@ class CashierService {
         if (safeDepositAmount > 0) {
             // Busca ou cria a conta Cofre
             let safeAccount = await tx.bankAccount.findFirst({
-                where: { restaurantId, name: 'Cofre Loja' }
+                where: { restaurantId, name: CASHIER_CONSTANTS.ACCOUNTS.SAFE }
             });
 
             if (!safeAccount) {
                 safeAccount = await tx.bankAccount.create({
-                    data: { restaurantId, name: 'Cofre Loja', type: 'SAFE', balance: 0 }
+                    data: { restaurantId, name: CASHIER_CONSTANTS.ACCOUNTS.SAFE, type: 'SAFE', balance: 0 }
                 });
             }
 
@@ -250,11 +253,11 @@ class CashierService {
                 data: {
                     restaurantId,
                     cashierId: session.id, // Vincula a esta sessão que está fechando
-                    description: `[FECHAMENTO] Sangria automática para Cofre`,
+                    description: CASHIER_CONSTANTS.TRANSACTION_PREFIXES.CLOSING_SAFE_EXPENSE,
                     amount: safeDepositAmount,
                     type: 'EXPENSE',
                     status: 'PAID',
-                    paymentMethod: 'cash',
+                    paymentMethod: CASHIER_CONSTANTS.METHODS.CASH,
                     dueDate: new Date(),
                     paymentDate: new Date(),
                 }
@@ -265,7 +268,7 @@ class CashierService {
                 data: {
                     restaurantId,
                     bankAccountId: safeAccount.id,
-                    description: `[FECHAMENTO] Entrada do Caixa (Sessão ${session.id.slice(-4)})`,
+                    description: CASHIER_CONSTANTS.TRANSACTION_PREFIXES.CLOSING_SAFE_INCOME(session.id),
                     amount: safeDepositAmount,
                     type: 'INCOME',
                     status: 'PAID',
@@ -285,7 +288,7 @@ class CashierService {
         return await tx.cashierSession.update({
             where: { id: session.id },
             data: {
-                status: 'CLOSED',
+                status: CASHIER_CONSTANTS.STATUS.CLOSED,
                 closedAt: new Date(),
                 finalAmount: parseFloat(finalAmount) || 0,
                 notes: notes || '',

@@ -4,6 +4,7 @@ const CashierService = require('../services/CashierService');
 const asyncHandler = require('../middlewares/asyncHandler');
 const AppError = require('../utils/AppError');
 const { CloseCashierSchema, OpenCashierSchema, CashierTransactionSchema } = require('../schemas/cashierSchema');
+const CASHIER_CONSTANTS = require('../constants/cashier');
 
 class CashierController {
 
@@ -29,14 +30,6 @@ class CashierController {
   close = asyncHandler(async (req, res) => {
     logger.info('[CASHIER_CONTROLLER] Iniciando fechamento:', req.body);
     
-    // Importação dinâmica para evitar dependência circular ou erro de carregamento
-    const { CloseCashierSchema } = require('../schemas/cashierSchema');
-    
-    if (!CloseCashierSchema) {
-        logger.error('[CASHIER_CONTROLLER] ERRO: CloseCashierSchema está undefined!');
-        throw new AppError("Erro interno ao carregar validador de caixa.", 500);
-    }
-
     // Validação Manual e Segura
     const result = CloseCashierSchema.safeParse(req.body);
     
@@ -61,7 +54,7 @@ class CashierController {
   getSummary = asyncHandler(async (req, res) => {
     const restaurantId = req.restaurantId;
     const session = await prisma.cashierSession.findFirst({
-      where: { restaurantId, status: 'OPEN' }
+      where: { restaurantId, status: CASHIER_CONSTANTS.STATUS.OPEN }
     });
 
     if (!session) {
@@ -79,7 +72,7 @@ class CashierController {
     });
 
     const salesTransactions = transactions.filter(t => 
-      t.type === 'INCOME' && !t.description.includes('[REFORÇO]') && !t.description.includes('[SANGRIA]')
+      t.type === 'INCOME' && !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO) && !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA)
     );
 
     const normalize = (str) => {
@@ -104,8 +97,8 @@ class CashierController {
     }, {});
 
     const adjustments = transactions.reduce((acc, t) => {
-      if (t.description.includes('[SANGRIA]')) acc.sangria += t.amount;
-      if (t.description.includes('[REFORÇO]')) acc.reforco += t.amount;
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA)) acc.sangria += t.amount;
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO)) acc.reforco += t.amount;
       return acc;
     }, { sangria: 0, reforco: 0 });
 
@@ -132,12 +125,12 @@ class CashierController {
     const { amount, type, description } = result.data;
     
     const session = await prisma.cashierSession.findFirst({
-      where: { restaurantId: req.restaurantId, status: 'OPEN' }
+      where: { restaurantId: req.restaurantId, status: CASHIER_CONSTANTS.STATUS.OPEN }
     });
 
     if (!session) throw new AppError("Nenhum caixa aberto.", 400);
 
-    const categoryName = type === 'INCOME' ? 'Reforço de Caixa' : 'Sangria de Caixa';
+    const categoryName = type === 'INCOME' ? CASHIER_CONSTANTS.CATEGORIES.REFORCO : CASHIER_CONSTANTS.CATEGORIES.SANGRIA;
     let category = await prisma.transactionCategory.findFirst({
         where: { restaurantId: req.restaurantId, name: categoryName }
     });
@@ -158,13 +151,13 @@ class CashierController {
         restaurantId: req.restaurantId,
         cashierId: session.id,
         categoryId: category.id,
-        description: type === 'INCOME' ? `[REFORÇO] ${description}` : `[SANGRIA] ${description}`,
+        description: type === 'INCOME' ? `${CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO} ${description}` : `${CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA} ${description}`,
         amount: amount,
         type: type,
         status: 'PAID',
         dueDate: new Date(),
         paymentDate: new Date(),
-        paymentMethod: 'cash'
+        paymentMethod: CASHIER_CONSTANTS.METHODS.CASH
       }
     });
 
@@ -185,7 +178,7 @@ class CashierController {
   // GET /api/cashier/orders
   getSessionOrders = asyncHandler(async (req, res) => {
     const session = await prisma.cashierSession.findFirst({
-      where: { restaurantId: req.restaurantId, status: 'OPEN' }
+      where: { restaurantId: req.restaurantId, status: CASHIER_CONSTANTS.STATUS.OPEN }
     });
 
     if (!session) throw new AppError("Nenhum caixa aberto.", 404);
