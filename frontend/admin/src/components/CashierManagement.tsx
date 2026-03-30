@@ -197,7 +197,7 @@ const CashierManagement: React.FC = () => {
             // Imprime o relatório de fechamento antes de enviar ao servidor
             try {
                 const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                await printCashierClosure(summary, undefined, printerConfig);
+                await printCashierClosure(summary, undefined, printerConfig, sanitizedDetails, sessionOrders);
             } catch (printError) {
                 console.error('[PRINT_ERROR]: Falha ao imprimir fechamento:', printError);
             }

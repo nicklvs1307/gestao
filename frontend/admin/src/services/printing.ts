@@ -595,7 +595,9 @@ export const printTableCheckout = async (
 export const printCashierClosure = async (
   summary: Record<string, unknown>,
   restaurantInfo?: RestaurantInfo,
-  printerConfig?: { cashierPrinters: string[] }
+  printerConfig?: { cashierPrinters: string[] },
+  closingDetails?: Record<string, string>,
+  sessionOrders?: any[]
 ) => {
   const status = await checkAgentStatus();
   if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
@@ -603,77 +605,310 @@ export const printCashierClosure = async (
   const config = printerConfig || { cashierPrinters: [] };
   const info = restaurantInfo || getRestaurantInfoFromStorage();
 
-  // Usar PDF para fechamento de caixa (layout mais complexo)
+  const baseSize = 9;
+  const leftMargin = 5;
+  const rightMargin = 75;
   const centerX = 40;
-  const leftMargin = 10;
-  const rightMargin = 74;
-  const lineHeight = 5;
+  const lineHeight = baseSize * 0.42;
+
+  // Agregar itens dos pedidos da sessão
+  const itemMap: Record<string, { name: string; qty: number; total: number; addons: Record<string, { qty: number; total: number }> }> = {};
+  let totalOrders = 0;
+  let totalItems = 0;
+
+  (sessionOrders || []).forEach((order: any) => {
+    if (order.status === 'CANCELED') return;
+    totalOrders++;
+    (order.items || []).forEach((item: any) => {
+      totalItems += (item.quantity || 0);
+      const productName = item.product?.name || 'Produto';
+      const key = productName.toUpperCase();
+
+      if (!itemMap[key]) {
+        itemMap[key] = { name: productName, qty: 0, total: 0, addons: {} };
+      }
+      itemMap[key].qty += (item.quantity || 0);
+      itemMap[key].total += (item.priceAtTime || 0) * (item.quantity || 0);
+
+      // Agregar adicionais
+      if (item.addonsJson) {
+        try {
+          const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
+          if (Array.isArray(addons)) {
+            addons.forEach((a: { name: string; price?: number; quantity?: number }) => {
+              const addonName = (a.name || 'Adicional').toUpperCase();
+              const addonQty = (a.quantity || 1) * (item.quantity || 1);
+              const addonPrice = (a.price || 0) * addonQty;
+              if (!itemMap[key].addons[addonName]) {
+                itemMap[key].addons[addonName] = { qty: 0, total: 0 };
+              }
+              itemMap[key].addons[addonName].qty += addonQty;
+              itemMap[key].addons[addonName].total += addonPrice;
+            });
+          }
+        } catch { /* empty */ }
+      }
+    });
+  });
+
+  const methodMap: Record<string, string> = {
+    cash: 'DINHEIRO', dinheiro: 'DINHEIRO',
+    credit_card: 'CARTÃO CRÉDITO', credito: 'CARTÃO CRÉDITO',
+    debit_card: 'CARTÃO DÉBITO', debito: 'CARTÃO DÉBITO',
+    pix: 'PIX',
+    meal_voucher: 'VALE REFEIÇÃO', vale_refeicao: 'VALE REFEIÇÃO',
+    card: 'CARTÃO (PDV)',
+    other: 'OUTROS'
+  };
 
   const drawContent = (doc: jsPDF): number => {
-    let y = 12;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text("FECHAMENTO DE CAIXA", centerX, y, { align: 'center' });
-    y += lineHeight + 2;
+    let y = 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(baseSize);
 
-    doc.setFontSize(10);
-    doc.text(info.name.toUpperCase(), leftMargin, y);
+    // Header do Restaurante
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(baseSize + 1);
+    doc.text(info.name?.toUpperCase() || 'KICARDÁPIO', centerX, y, { align: 'center' });
     y += lineHeight;
 
+    doc.setFontSize(baseSize - 1);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    if (info.cnpj) {
+      doc.text(`CNPJ: ${info.cnpj}`, centerX, y, { align: 'center' });
+      y += lineHeight;
+    }
+    if (info.address) {
+      const addrLines = doc.splitTextToSize(info.address, 70);
+      doc.text(addrLines, centerX, y, { align: 'center' });
+      y += (addrLines.length * lineHeight);
+    }
+    if (info.phone) {
+      doc.text(`TEL: ${info.phone}`, centerX, y, { align: 'center' });
+      y += lineHeight;
+    }
+    y += 1;
+
+    // Título
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFontSize(baseSize + 4);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FECHAMENTO DE CAIXA', centerX, y, { align: 'center' });
+    y += lineHeight + 1;
+
+    // Dados da sessão
+    doc.setFontSize(baseSize - 1);
+    doc.setFont('helvetica', 'normal');
     doc.text(`ABERTURA: ${format(new Date(summary.openedAt as string), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
     y += lineHeight;
     doc.text(`FECHAMENTO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
-    y += lineHeight + 2;
+    y += lineHeight;
 
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // Resumo de quantidade
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL DE PEDIDOS: ${totalOrders}`, leftMargin, y);
+    y += lineHeight;
+    doc.text(`TOTAL DE ITENS: ${totalItems}`, leftMargin, y);
+    y += lineHeight;
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // Detalhamento de Produtos
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(baseSize);
+    doc.text('PRODUTOS VENDIDOS', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
     doc.setFont('helvetica', 'bold');
-    doc.text("RESUMO DE VENDAS", leftMargin, y);
+    doc.text('QTD  DESCRIÇÃO', leftMargin, y);
+    doc.text('VALOR', rightMargin, y, { align: 'right' });
     y += lineHeight;
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    const sortedItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty);
+    sortedItems.forEach(item => {
+      // Nome do produto
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(baseSize);
+      const productText = `${item.qty}x ${item.name.toUpperCase()}`;
+      const productLines = doc.splitTextToSize(productText, 55);
+      doc.text(productLines, leftMargin, y);
+      doc.text(item.total.toFixed(2), rightMargin, y, { align: 'right' });
+      y += (productLines.length * lineHeight);
+
+      // Adicionais do produto
+      doc.setFontSize(baseSize - 2);
+      Object.entries(item.addons).forEach(([addonName, addonData]) => {
+        doc.setFont('helvetica', 'normal');
+        const addonText = `[+] ${addonData.qty}x ${addonName}`;
+        const addonLines = doc.splitTextToSize(addonText, 50);
+        doc.text(addonLines, leftMargin + 3, y);
+        doc.text(addonData.total.toFixed(2), rightMargin, y, { align: 'right' });
+        y += (addonLines.length * lineHeight);
+      });
+
+      y += 1;
+    });
+
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // Resumo de Vendas
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(baseSize);
+    doc.text('RESUMO DE VENDAS', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
     doc.setFont('helvetica', 'normal');
-    const methodMap: Record<string, string> = { cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO', pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)' };
-    Object.entries(summary.salesByMethod as Record<string, number> || {}).forEach(([method, amount]) => {
+    const salesByMethod = summary.salesByMethod as Record<string, number> || {};
+    Object.entries(salesByMethod).forEach(([method, amount]) => {
       doc.text(methodMap[method] || method.toUpperCase(), leftMargin, y);
-      doc.text(`R$ ${amount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      doc.text(`R$ ${(amount as number).toFixed(2)}`, rightMargin, y, { align: 'right' });
       y += lineHeight;
     });
 
-    y += 2;
+    y += 1;
     doc.setFont('helvetica', 'bold');
-    doc.text("TOTAL VENDIDO", leftMargin, y);
-    doc.text(`R$ ${(summary.totalSales as number).toFixed(2)}`, rightMargin, y, { align: 'right' });
-    y += lineHeight + 2;
-
-    doc.text('--------------------------------------------', centerX, y, { align: 'center' });
+    doc.text('TOTAL VENDAS', leftMargin, y);
+    doc.text(`R$ ${(summary.totalSales as number || 0).toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight;
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
-    doc.text("SALDO FINAL", leftMargin, y);
+    // Valores Informados na Contagem
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(baseSize);
+    doc.text('VALORES INFORMADOS', centerX, y, { align: 'center' });
     y += lineHeight;
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
     doc.setFont('helvetica', 'normal');
-    doc.text("Fundo de Caixa (Inicial)", leftMargin, y);
-    doc.text(`+ R$ ${(summary.initialAmount as number).toFixed(2)}`, rightMargin, y, { align: 'right' });
+    if (closingDetails) {
+      Object.entries(closingDetails).forEach(([method, value]) => {
+        const numVal = parseFloat(value) || 0;
+        if (numVal > 0) {
+          doc.text(methodMap[method] || method.toUpperCase(), leftMargin, y);
+          doc.text(`R$ ${numVal.toFixed(2)}`, rightMargin, y, { align: 'right' });
+          y += lineHeight;
+        }
+      });
+    }
+
+    const totalInformed = closingDetails
+      ? Object.values(closingDetails).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)
+      : 0;
+
+    y += 1;
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL INFORMADO', leftMargin, y);
+    doc.text(`R$ ${totalInformed.toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight;
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
 
+    // Saldo Final
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    const totalGeral = (summary.totalSales as number || 0) + (summary.initialAmount as number || 0);
-    doc.text("TOTAL EM CAIXA", leftMargin, y);
-    doc.text(`R$ ${totalGeral.toFixed(2)}`, rightMargin, y, { align: 'right' });
-    y += lineHeight * 2;
+    doc.setFontSize(baseSize);
+    doc.text('SALDO FINAL', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
 
-    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Fundo de Caixa (Inicial)', leftMargin, y);
+    doc.text(`+ R$ ${(summary.initialAmount as number || 0).toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight;
+    doc.text('Total de Vendas', leftMargin, y);
+    doc.text(`+ R$ ${(summary.totalSales as number || 0).toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight;
+
+    const adjustments = summary.adjustments as { sangria: number; reforco: number } || { sangria: 0, reforco: 0 };
+    if (adjustments.reforco > 0) {
+      doc.text('Reforços (+)', leftMargin, y);
+      doc.text(`+ R$ ${adjustments.reforco.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      y += lineHeight;
+    }
+    if (adjustments.sangria > 0) {
+      doc.text('Sangrias (-)', leftMargin, y);
+      doc.text(`- R$ ${adjustments.sangria.toFixed(2)}`, rightMargin, y, { align: 'right' });
+      y += lineHeight;
+    }
+
+    const expectedAmount = (summary.initialAmount as number || 0) + (summary.totalSales as number || 0) + adjustments.reforco - adjustments.sangria;
+    y += 1;
+    doc.setFontSize(baseSize);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ESPERADO PELO SISTEMA', leftMargin, y);
+    doc.text(`R$ ${expectedAmount.toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight;
+
+    doc.text('INFORMADO POR VOCÊ', leftMargin, y);
+    doc.text(`R$ ${totalInformed.toFixed(2)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight;
+
+    // Diferença / Inconsistência
+    const difference = Math.round((totalInformed - expectedAmount) * 100) / 100;
+    if (difference !== 0) {
+      doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
+      if (difference > 0) {
+        doc.setTextColor(0, 128, 0);
+        doc.text(`SOBRA: + R$ ${difference.toFixed(2)}`, centerX, y, { align: 'center' });
+      } else {
+        doc.setTextColor(200, 0, 0);
+        doc.text(`FALTA: - R$ ${Math.abs(difference).toFixed(2)}`, centerX, y, { align: 'center' });
+      }
+      doc.setTextColor(0, 0, 0);
+      y += lineHeight;
+    } else {
+      doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+      y += lineHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.text('CAIXA CONFERE - SEM INCONSISTÊNCIAS', centerX, y, { align: 'center' });
+      y += lineHeight;
+    }
+
+    doc.setFontSize(baseSize - 1);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // Observações
+    if (summary.notes) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('OBSERVAÇÕES:', leftMargin, y);
+      y += lineHeight;
+      doc.setFont('helvetica', 'normal');
+      const noteLines = doc.splitTextToSize((summary.notes as string).toUpperCase(), 70);
+      doc.text(noteLines, leftMargin, y);
+      y += (noteLines.length * lineHeight) + 2;
+    }
+
+    // Assinatura
+    doc.setFontSize(baseSize - 1);
     doc.text("ASSINATURA RESPONSÁVEL:", leftMargin, y);
     y += 15;
     doc.text('____________________________________', centerX, y, { align: 'center' });
     y += lineHeight;
+    doc.setFont('helvetica', 'bold');
     doc.text('KICARDÁPIO@', centerX, y, { align: 'center' });
     y += 10;
+
     return y;
   };
 
