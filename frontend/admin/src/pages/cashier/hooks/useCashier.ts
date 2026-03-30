@@ -321,7 +321,8 @@ export function useCashier() {
       };
 
       try {
-        await printCashierClosure(summary);
+        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+        await printCashierClosure(summary, undefined, printerConfig);
       } catch (printError) {
         console.error('[PRINT_ERROR]:', printError);
       }
