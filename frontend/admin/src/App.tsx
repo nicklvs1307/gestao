@@ -10,6 +10,7 @@ import AdminLayout from './components/AdminLayout';
 import GlobalModals from './components/GlobalModals';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ProductManagement = lazy(() => import('./components/ProductManagement'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
@@ -195,6 +196,7 @@ function App() {
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/waiter" element={<ProtectedRoute permission="waiter:pos"><WaiterPos /></ProtectedRoute>} />
                 <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
                 <Route path="/driver/dashboard" element={<ProtectedRoute permission="delivery:manage"><DriverDashboard /></ProtectedRoute>} />

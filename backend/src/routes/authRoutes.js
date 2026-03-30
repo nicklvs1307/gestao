@@ -20,6 +20,8 @@ router.post('/users', needsAdmin, AuthController.createUser);
 router.put('/users/:id', needsAdmin, AuthController.updateUser);
 router.delete('/users/:id', needsAdmin, AuthController.deleteUser);
 router.get('/roles', needsAdmin, AuthController.getAvailableRoles); 
+router.post('/send-reset-email', needsAdmin, AuthController.sendResetEmail);
+router.post('/reset-password', AuthController.resetPassword);
 
 router.get('/permissions', needsAdmin, async (req, res) => {
     try {

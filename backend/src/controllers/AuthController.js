@@ -2,7 +2,9 @@ const prisma = require('../lib/prisma');
 const logger = require('../config/logger');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { validatePassword } = require('../utils/passwordValidator');
+const { sendPasswordResetEmail } = require('../services/EmailService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -373,11 +375,76 @@ const deleteUser = async (req, res) => {
     }
 };
 
+const sendResetEmail = async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+        const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
+        if (!isRequesterSuperAdmin && user.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Acesso negado: Este usuário pertence a outro restaurante.' });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { resetToken, resetTokenExpiry }
+        });
+
+        await sendPasswordResetEmail(user.email, user.name, resetToken);
+
+        res.json({ message: `Email de redefinição enviado para ${user.email}.` });
+    } catch (error) {
+        logger.error("Erro ao enviar email de reset:", error);
+        res.status(500).json({ error: error.message || 'Erro ao enviar email de redefinição.' });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    const { token, password } = req.body;
+    try {
+        if (!token) return res.status(400).json({ error: 'Token é obrigatório.' });
+
+        const passwordError = validatePassword(password);
+        if (passwordError) return res.status(400).json({ error: passwordError });
+
+        const user = await prisma.user.findFirst({
+            where: {
+                resetToken: token,
+                resetTokenExpiry: { gt: new Date() }
+            }
+        });
+
+        if (!user) return res.status(400).json({ error: 'Token inválido ou expirado.' });
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordHash,
+                resetToken: null,
+                resetTokenExpiry: null
+            }
+        });
+
+        res.json({ message: 'Senha redefinida com sucesso.' });
+    } catch (error) {
+        logger.error("Erro ao redefinir senha:", error);
+        res.status(500).json({ error: 'Erro ao redefinir senha.' });
+    }
+};
+
 module.exports = {
     login,
     getUsers,
     createUser,
     updateUser,
     deleteUser,
-    getAvailableRoles
+    getAvailableRoles,
+    sendResetEmail,
+    resetPassword
 };

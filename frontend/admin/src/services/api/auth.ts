@@ -42,3 +42,13 @@ export const getAvailablePermissions = async () => {
     const response = await apiClient.get('/auth/permissions');
     return response.data;
 };
+
+export const sendResetEmail = async (userId: string) => {
+    const response = await apiClient.post('/auth/send-reset-email', { userId });
+    return response.data;
+};
+
+export const resetPassword = async (token: string, password: string) => {
+    const response = await apiClient.post('/auth/reset-password', { token, password });
+    return response.data;
+};

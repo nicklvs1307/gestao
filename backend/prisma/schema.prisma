@@ -39,6 +39,9 @@ model User {
   
   permissions  Permission[] @relation("UserPermissions")
 
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+
   cashierSessions CashierSession[] // Relação inversa para sessões de caixa
   deliveries   DeliveryOrder[] // Relação inversa para entregas realizadas
   createdOrders Order[]        @relation("CreatedOrders") // Relação inversa para pedidos criados
@@ -225,8 +228,14 @@ model RestaurantSettings {
   // Configurações de Delivery
   deliveryFee  Float?   @default(0)
   deliveryTime String?  @default("30-40 min")
+  minOrderValue Float?  @default(0)
   autoAcceptOrders Boolean @default(false)
   autoPrintEnabled Boolean @default(true)
+  
+  // Abertura Automática Delivery
+  autoOpenDelivery Boolean @default(false)
+  deliveryOpeningTime String?
+  deliveryClosingTime String?
 
   // === Configurações de Marketing/Fidelidade ===
   loyaltyEnabled      Boolean @default(false)

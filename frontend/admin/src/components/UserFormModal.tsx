@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { createUser, updateUser, getRoles, getAvailablePermissions } from '../services/api';
+import { createUser, updateUser, getRoles, getAvailablePermissions, sendResetEmail } from '../services/api';
 import { 
     X, User, Mail, Lock, CheckCircle, Loader2, Award, 
     ChevronRight, ChevronLeft, ShieldCheck, CheckSquare, Square,
     Layout, ShoppingCart, DollarSign, Package, PieChart, Settings, Users,
-    ClipboardCheck, Map
+    ClipboardCheck, Map, Send
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
@@ -42,6 +42,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   const [availablePermissions, setAvailablePermissions] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   
   const isEditing = !!userToEdit;
 
@@ -96,6 +97,19 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
     setSelectedPermissionIds(prev => 
         prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
+  };
+
+  const handleSendResetEmail = async () => {
+    if (!userToEdit) return;
+    setIsSendingReset(true);
+    try {
+      await sendResetEmail(userToEdit.id);
+      toast.success(`Email de redefinição enviado para ${userToEdit.email}`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Erro ao enviar email.');
+    } finally {
+      setIsSendingReset(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -199,6 +213,18 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                 value={password} 
                                 onChange={e => setPassword(e.target.value)} 
                             />
+
+                            {isEditing && (
+                                <button
+                                    type="button"
+                                    onClick={handleSendResetEmail}
+                                    disabled={isSendingReset}
+                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 text-slate-500 hover:text-orange-600 transition-all text-[10px] font-bold uppercase tracking-widest"
+                                >
+                                    {isSendingReset ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                    {isSendingReset ? 'ENVIANDO...' : 'ENVIAR EMAIL DE REDEFINIÇÃO DE SENHA'}
+                                </button>
+                            )}
                         </div>
 
                         <div className="space-y-4">
