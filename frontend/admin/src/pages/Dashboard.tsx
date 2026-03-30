@@ -72,6 +72,21 @@ const Dashboard: React.FC = () => {
             navigate('/waiter');
             return;
         }
+        // Se for caixa e não tiver acesso a relatórios, manda pro caixa
+        if ((permissions.includes('cashier:manage') || normalizedRole.includes('caixa')) && !permissions.includes('reports:view')) {
+            navigate('/cashier');
+            return;
+        }
+        // Se for cozinha e não tiver acesso a relatórios, manda pro KDS
+        if ((permissions.includes('kds:view') || normalizedRole.includes('cozinha')) && !permissions.includes('reports:view')) {
+            navigate('/kds');
+            return;
+        }
+        // Se for atendente e não tiver acesso a relatórios, manda pro PDV
+        if ((permissions.includes('pos:access') || normalizedRole.includes('atendente')) && !permissions.includes('reports:view')) {
+            navigate('/pos');
+            return;
+        }
     }
 
     try {
@@ -119,18 +134,18 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return (
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Sincronizando dados...</p>
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-muted-foreground font-bold uppercase text-xs tracking-[0.2em]">Sincronizando dados...</p>
         </div>
     );
   }
 
   if (error) {
     return (
-        <Card className="p-8 border-red-100 bg-red-50/50 flex flex-col items-center text-center">
-            <AlertCircle size={40} className="text-red-500 mb-4" />
-            <h3 className="text-red-900 font-black uppercase italic tracking-tighter">Ocorreu um erro</h3>
-            <p className="text-red-600 text-sm mt-2">{error}</p>
+        <Card className="p-8 border-destructive/10 bg-destructive/10 flex flex-col items-center text-center">
+            <AlertCircle size={40} className="text-destructive mb-4" />
+            <h3 className="text-destructive font-bold uppercase tracking-tight">Ocorreu um erro</h3>
+            <p className="text-destructive text-sm mt-2">{error}</p>
             <Button variant="danger" className="mt-6" onClick={() => window.location.reload()}>Tentar Novamente</Button>
         </Card>
     );
@@ -197,7 +212,7 @@ const Dashboard: React.FC = () => {
       {/* Header do Dashboard */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-              <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase italic leading-none">Visão Geral</h1>
+              <h1 className="text-3xl font-bold text-foreground tracking-tight uppercase leading-none">Visão Geral</h1>
               <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
                   <Clock size={14} className="text-primary" /> Atualizado em tempo real
               </p>
@@ -218,8 +233,8 @@ const Dashboard: React.FC = () => {
               <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
               <div className="relative z-10 flex flex-col lg:flex-row gap-10 items-center">
                   <div className="flex-1 text-center lg:text-left">
-                      <span className="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Configuração Pendente</span>
-                      <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-3">Vamos turbinar sua loja?</h2>
+                      <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Configuração Pendente</span>
+                      <h2 className="text-3xl font-bold text-white uppercase tracking-tight mb-3">Vamos turbinar sua loja?</h2>
                       <p className="text-muted-foreground text-sm font-medium max-w-md">Complete os passos abaixo para ativar seu cardápio e começar a faturar.</p>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full lg:w-auto">
