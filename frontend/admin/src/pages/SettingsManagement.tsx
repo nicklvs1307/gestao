@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printing';
 import PrinterLayoutEditor, { type ReceiptLayout } from '../components/PrinterLayoutEditor';
-import { Save, Settings } from 'lucide-react';
+import { Save, Settings, Palette, Link, Printer, Sliders } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
@@ -21,14 +21,13 @@ const SettingsManagement: React.FC = () => {
     loyalty,
     pixels,
     appearance,
-    originalSlug,
-    isSlugAvailable,
-    isCheckingSlug,
     isLoading,
     isSaving,
     availablePrinters,
     agentStatus,
     categories,
+    isSlugAvailable,
+    isCheckingSlug,
     setGeneral,
     setOperation,
     setOperatingHours,
@@ -80,46 +79,78 @@ const SettingsManagement: React.FC = () => {
     setGeneral(prev => ({ ...prev, slug }));
   };
 
+  const tabs = [
+    { id: 'general', label: 'GERAL', icon: Sliders },
+    { id: 'appearance', label: 'VISUAL', icon: Palette },
+    { id: 'printing', label: 'IMPRESSÃO', icon: Printer },
+    { id: 'links', label: 'LINKS', icon: Link },
+  ] as const;
+
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] opacity-30">
-        <Settings size={32} className="animate-spin text-primary mb-4" />
-        <span className="text-[10px] font-black uppercase tracking-widest">Sincronizando Dados...</span>
+      <div className="flex flex-col items-center justify-center h-[60vh]">
+        <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center animate-pulse">
+          <Settings size={28} className="text-slate-300" />
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">SINCRONIZANDO DADOS...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-500 pb-10 max-w-[1400px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 bg-background/90 backdrop-blur-md z-40 py-4 border-b border-border px-1">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-900 text-white rounded-xl shadow-lg"><Settings size={18}/></div>
+    <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-10 max-w-[1400px] mx-auto">
+      {/* HEADER - ERP Premium */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/20">
+            <Settings size={22} />
+          </div>
           <div>
-            <h1 className="text-lg font-black text-foreground tracking-tighter uppercase italic leading-none">Configurações</h1>
-            <p className="text-muted-foreground text-[8px] font-bold uppercase tracking-widest mt-1">Gestão de Identidade e Operação</p>
+            <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
+              Configurações <span className="text-primary">Sistema</span>
+            </h1>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+              Gestão de Identidade e Operação
+            </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="hidden lg:flex bg-muted p-0.5 rounded-lg gap-0.5">
-            {['general', 'appearance', 'printing', 'links'].map((tab) => (
-              <button 
-                key={tab} 
-                onClick={() => navigate(`/settings/${tab}`)}
-                className={cn("px-4 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all", activeTab === tab ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:bg-white/50")}
-              >
-                {tab === 'general' ? 'Geral' : tab === 'appearance' ? 'Visual' : tab === 'printing' ? 'Impressão' : 'Links'}
-              </button>
-            ))}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 w-full lg:w-auto">
+          {/* Tabs estilo Pill/Slide */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button 
+                  key={tab.id}
+                  onClick={() => navigate(`/settings/${tab.id}`)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-300",
+                    activeTab === tab.id 
+                      ? "bg-white text-slate-900 shadow-md" 
+                      : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                  )}
+                >
+                  <Icon size={12} />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-          <Button onClick={handleSaveChanges} disabled={isSaving} isLoading={isSaving} className="flex-1 md:flex-none px-6 h-10 rounded-xl shadow-lg italic font-black text-[10px] uppercase tracking-widest bg-slate-900 text-white hover:bg-black transition-all">
-            <Save size={14} className="mr-2" /> ATUALIZAR SISTEMA
+          
+          <Button 
+            onClick={handleSaveChanges} 
+            disabled={isSaving} 
+            isLoading={isSaving} 
+            className="h-9 px-6 rounded-lg shadow-lg shadow-primary/20 text-[9px] font-black uppercase tracking-widest"
+          >
+            <Save size={14} className="mr-2" /> 
+            {isSaving ? 'SALVANDO' : 'ATUALIZAR'}
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs Content */}
       {activeTab === 'general' && (
         <SettingsGeneralTab
           general={general}
