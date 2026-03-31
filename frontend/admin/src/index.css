@@ -17,6 +17,12 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -28,87 +34,49 @@
 
 @layer base {
   :root {
-    /* KiCardapio Clean Premium Theme (Fixed) */
-    
-    /* Background: Soft Light Gray */
-    --background: 210 40% 98%; /* slate-50 */
-    
-    /* Foreground: Deep Slate/Black */
-    --foreground: 222.2 47.4% 11.2%; /* slate-950 */
+    --background: 210 40% 98%;
+    --foreground: 222.2 47.4% 11.2%;
 
-    /* Card: Pure White */
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
 
-    /* Popover: White */
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
 
-    /* Primary: Deep Burnt Orange */
-    --primary: 24.6 95% 45%; /* orange-700 approx */
+    --primary: 24.6 95% 45%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Light Blue Slate */
-    --secondary: 215 25% 27%; /* slate-800 */
+    --secondary: 215 25% 27%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted: Gray */
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Accent: Deep Orange Light */
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
-    /* Destructive: Deep Red */
     --destructive: 0 84.2% 45%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Border: Light Gray */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 24.6 95% 45%;
 
     --radius: 0.75rem;
 
-    /* Legacy CSS variables used by App.css (mapped to Tailwind tokens) */
-    --bg-app: hsl(210 40% 98%);
-    --bg-card: hsl(0 0% 100%);
-    --bg-surface: hsl(0 0% 100%);
-    --text-main: hsl(222.2 47.4% 11.2%);
-    --text-secondary: hsl(215.4 16.3% 46.9%);
-    --text-muted: hsl(215.4 16.3% 46.9%);
-    --border-subtle: 1px solid hsl(214.3 31.8% 91.4%);
-    --success: hsl(142 76% 36%);
-    --warning: hsl(38 92% 50%);
-    --accent: hsl(210 40% 96.1%);
-  }
-}
-
-@layer components {
-  /* UI Components Refined */
-  .ui-card {
-    @apply bg-card text-card-foreground rounded-2xl border border-border shadow-sm transition-all hover:shadow-md;
-  }
-  
-  .ui-button-primary {
-    @apply h-11 px-6 bg-primary text-primary-foreground font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-primary/10 disabled:opacity-50;
-  }
-
-  .ui-button-secondary {
-    @apply h-11 px-6 bg-slate-900 text-white font-bold rounded-xl border border-slate-800 hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm;
-  }
-
-  .ui-input {
-    @apply h-11 px-4 bg-white border border-slate-200 rounded-xl font-medium text-sm outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-primary/10 focus:border-primary;
-  }
-  
-  .ui-modal-overlay {
-    @apply fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4;
-  }
-
-  .ui-modal-content {
-    @apply relative bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden;
+    --z-dropdown: 50;
+    --z-overlay: 100;
+    --z-modal: 200;
+    --z-toast: 300;
   }
 }
 
@@ -123,7 +91,7 @@
   }
 }
 
-/* Scrollbar Refined */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
 }
@@ -131,17 +99,18 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30 transition-colors;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+  height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
 }
 
 .custom-scrollbar-white::-webkit-scrollbar {
@@ -162,7 +131,6 @@
   scrollbar-width: none;
 }
 
-/* Staggered list animation */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -177,4 +145,3 @@
 .animate-fade-in-up {
   animation: fadeInUp 0.25s ease-out both;
 }
-

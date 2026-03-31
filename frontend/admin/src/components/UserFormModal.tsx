@@ -359,7 +359,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
             </div>
         </div>
 
-        <div className="flex-1 overflow-hidden flex">
+        {/* Body com scroll interno */}
+        <div className="flex-1 overflow-hidden min-h-0">
             <AnimatePresence mode="wait">
                 {step === 1 ? (
                     <motion.div 
@@ -367,7 +368,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className="w-full overflow-y-auto custom-scrollbar"
+                        className="h-full overflow-y-auto custom-scrollbar"
                     >
                         <div className="p-8 space-y-8 max-w-2xl mx-auto">
                             {/* Seção Dados */}
@@ -462,11 +463,11 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        className="flex w-full h-full"
+                        className="flex h-full min-h-0"
                     >
                         {/* Sidebar de Categorias */}
-                        <div className="w-64 border-r border-slate-100 bg-slate-50/50 p-4 shrink-0 overflow-y-auto custom-scrollbar">
-                            <div className="space-y-2">
+                        <div className="w-56 border-r border-slate-100 bg-slate-50/50 p-3 shrink-0 overflow-y-auto custom-scrollbar">
+                            <div className="space-y-1.5">
                                 <div className="px-3 py-2">
                                     <h5 className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Categorias</h5>
                                 </div>
@@ -513,9 +514,9 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         </div>
 
                         {/* Conteúdo Principal */}
-                        <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-white">
+                        <div className="flex-1 p-5 overflow-y-auto custom-scrollbar bg-white min-h-0">
                             {isLoadingData ? (
-                                <div className="flex flex-col items-center justify-center h-full gap-4">
+                                <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
                                     <Loader2 className="animate-spin text-orange-500" size={32} />
                                     <span className="text-[10px] font-black uppercase text-slate-400">Carregando permissões...</span>
                                 </div>
