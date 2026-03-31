@@ -18,7 +18,8 @@ export const usePosActions = (
     setViewingTable: (table: TableSummary | null) => void
 ) => {
     const pos = usePosStore();
-    const { cart, clearCart, getCartTotal } = useCartStore();
+    const { cart, clearCart } = useCartStore();
+    const cartTotal = useCartTotal();
 
     const handleProductClick = useCallback((product: Product, isCashierOpen: boolean) => {
         if (!isCashierOpen) return toast.error("Abra o caixa antes de vender!");
@@ -50,7 +51,7 @@ export const usePosActions = (
         }
 
         const method = paymentMethods.find(m => m.id === pos.posPaymentMethodId);
-        const cartTotal = getCartTotal();
+        const cartTotalValue = cartTotal();
         
         try {
             const finalDiscount = parseFloat(pos.posDiscountValue || '0');
@@ -81,7 +82,7 @@ export const usePosActions = (
                 } : null,
                 discount: finalDiscount,
                 extraCharge: finalExtra,
-                totalAmount: Number((cartTotal + finalExtra + finalDelivery - finalDiscount).toFixed(2))
+                totalAmount: Number((cartTotalValue + finalExtra + finalDelivery - finalDiscount).toFixed(2))
             };
 
             if (pos.orderMode === 'table') {
@@ -123,7 +124,7 @@ export const usePosActions = (
         } catch (e) {
             toast.error("Erro ao enviar pedido");
         }
-    }, [pos, cart, paymentMethods, tablesSummary, deliveryOrders, getCartTotal, clearCart, refreshTables, refreshData]);
+    }, [pos, cart, paymentMethods, tablesSummary, deliveryOrders, cartTotal, clearCart, refreshTables, refreshData]);
 
     const handleToggleStore = useCallback(async (isStoreOpen: boolean) => {
         const newState = !isStoreOpen;
