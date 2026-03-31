@@ -97,23 +97,36 @@ export const usePosActions = (
 
             // ─── LÓGICA DE ENVIO POR MODO ───
 
-            // MESA: Adiciona itens à comanda existente + imprime os itens novos (cozinha)
+            // MESA: Adiciona itens à comanda existente OU cria nova comanda
             if (pos.activeTab === 'table') {
                 const tableInfo = tablesSummary.find(t => t.number === parseInt(pos.selectedTable));
                 const activeOrderId = tableInfo?.tabs?.[0]?.orderId;
+                const customerName = pos.customerName?.trim() || '';
 
-                if (activeOrderId && tableInfo.status !== 'free') {
-                    // Adiciona itens ao pedido existente
-                    await addItemsToOrder(activeOrderId, orderPayload.items);
+                // Se tem nome de cliente e já existe comanda com nome diferente, cria nova comanda
+                // Se não tem nome, usa a comanda existente (genérica)
+                let targetOrderId = activeOrderId;
+                if (customerName && tableInfo?.tabs) {
+                    const existingTab = tableInfo.tabs.find(tab => 
+                        tab.customerName === customerName && tab.items.length > 0
+                    );
+                    if (existingTab) {
+                        targetOrderId = existingTab.orderId;
+                    }
+                }
+
+                if (targetOrderId && tableInfo?.status !== 'free') {
+                    // Adiciona itens à comanda existente
+                    await addItemsToOrder(targetOrderId, orderPayload.items);
                     if (finalDiscount > 0 || finalExtra > 0) {
-                        const newTotal = tableInfo.totalAmount + orderPayload.totalAmount;
-                        await updateOrderFinancials(activeOrderId, { discount: finalDiscount, surcharge: finalExtra, total: newTotal });
+                        const tabInfo = tableInfo.tabs.find(t => t.orderId === targetOrderId);
+                        const newTotal = (tabInfo?.totalAmount || 0) + orderPayload.totalAmount;
+                        await updateOrderFinancials(targetOrderId, { discount: finalDiscount, surcharge: finalExtra, total: newTotal });
                     }
                     
                     // Imprime os itens novos na cozinha/bar
                     try {
                         const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                        // Busca dados completos dos produtos para roteamento correto (cozinha/bar)
                         const itemsWithProducts = cart.map(item => {
                             const fullProduct = products.find(p => p.id === item.productId);
                             return {
@@ -125,14 +138,15 @@ export const usePosActions = (
                         
                         const orderForPrint = {
                             ...orderPayload,
-                            id: activeOrderId,
+                            id: targetOrderId,
                             orderType: 'TABLE' as const,
                             status: 'PENDING' as const,
                             tableNumber: parseInt(pos.selectedTable),
+                            customerName: customerName || `Mesa ${pos.selectedTable}`,
                             items: itemsWithProducts,
                         };
                         await printOrder(orderForPrint as any, printerConfig);
-                        toast.success("Itens adicionados e impressos na cozinha!");
+                        toast.success(`Itens de ${customerName || 'Mesa'} impressos na cozinha!`);
                     } catch (err) {
                         console.error('[submitOrder] Erro ao imprimir itens:', err);
                         toast.success("Itens adicionados ao pedido!");
@@ -189,18 +203,41 @@ export const usePosActions = (
 
     const handleTableCheckout = useCallback(async (viewingTable: TableSummary, checkoutData: any) => {
         try {
-            // Imprime o fechamento detalhado da mesa ANTES de finalizar
+            // Imprime o fechamento detalhado de cada comanda ANTES de finalizar
             try {
                 const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                const orderForPrint = {
-                    ...viewingTable,
-                    orderType: 'TABLE' as const,
-                    status: 'COMPLETED' as const,
-                    items: viewingTable.items || [],
-                    totalAmount: viewingTable.totalAmount,
-                    tableNumber: viewingTable.number,
-                };
-                await printOrder(orderForPrint as any, printerConfig);
+                const tabs = viewingTable.tabs || [];
+                
+                if (tabs.length > 0) {
+                    // Imprime cada comanda separadamente
+                    for (const tab of tabs) {
+                        const orderForPrint = {
+                            id: tab.orderId,
+                            orderType: 'TABLE' as const,
+                            status: 'COMPLETED' as const,
+                            tableNumber: viewingTable.number,
+                            customerName: tab.customerName,
+                            totalAmount: tab.totalAmount,
+                            items: (tab.items || []).map((item: any) => ({
+                                ...item,
+                                product: item.product || { name: item.name, categories: [] },
+                                priceAtTime: item.priceAtTime || 0,
+                            })),
+                        };
+                        await printOrder(orderForPrint as any, printerConfig);
+                    }
+                } else {
+                    // Fallback: imprime todos os itens juntos
+                    const orderForPrint = {
+                        ...viewingTable,
+                        orderType: 'TABLE' as const,
+                        status: 'COMPLETED' as const,
+                        items: viewingTable.items || [],
+                        totalAmount: viewingTable.totalAmount,
+                        tableNumber: viewingTable.number,
+                    };
+                    await printOrder(orderForPrint as any, printerConfig);
+                }
             } catch (err) {
                 console.error('[handleTableCheckout] Erro ao imprimir fechamento:', err);
             }
