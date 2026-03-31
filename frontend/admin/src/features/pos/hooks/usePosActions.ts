@@ -5,7 +5,7 @@ import {
     toggleStoreStatus, openCashier, checkoutTable, transferTable 
 } from '../../../services/api';
 import { usePosStore } from './usePosStore';
-import { useCartStore } from './useCartStore';
+import { useCartStore, useCartTotal } from './useCartStore';
 import { Product, TableSummary, PaymentMethod, Order } from '../../../types';
 
 export const usePosActions = (
