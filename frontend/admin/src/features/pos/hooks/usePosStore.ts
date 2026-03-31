@@ -129,7 +129,8 @@ export const usePosStore = create<PosState>((set) => ({
     posDiscountPercentage: '0',
     posPaymentMethodId: '',
     posObservations: '',
-    isSubmitting: false
+    isSubmitting: false,
+    activeModal: 'none'
   })
 }));
 
