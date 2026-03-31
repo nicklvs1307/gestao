@@ -63,6 +63,7 @@ export const usePosActions = (
             // Determinar orderType baseado na aba ativa
             const orderType = pos.activeTab === 'table' ? 'TABLE' : 'DELIVERY';
             const isDelivery = pos.activeTab === 'delivery';
+            const isCounter = pos.activeTab === 'counter';
 
             const orderPayload = {
                 items: cart.map(item => ({
@@ -77,7 +78,7 @@ export const usePosActions = (
                 orderType,
                 tableNumber: pos.activeTab === 'table' ? parseInt(pos.selectedTable) : null,
                 paymentMethod: method?.name || 'OUTRO',
-                customerName: pos.activeTab === 'table' ? pos.customerName : pos.deliveryInfo.name,
+                customerName: pos.activeTab === 'table' ? pos.customerName : (isCounter ? (pos.customerName || 'Balcão') : pos.deliveryInfo.name),
                 deliveryInfo: isDelivery ? {
                     name: pos.deliveryInfo.name,
                     phone: pos.deliveryInfo.phone,

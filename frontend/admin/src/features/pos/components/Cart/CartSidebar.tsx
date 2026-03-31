@@ -175,15 +175,24 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
           </div>
         )}
 
-        {/* Balcão não precisa de campos extras */}
+        {/* Balcão: nome + telefone opcionais */}
         {activeTab === 'counter' && (
-          <input 
-            placeholder="Nome do cliente (opcional)" 
-            value={customerName} 
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-            aria-label="Nome do cliente"
-          />
+          <div className="space-y-2">
+            <input 
+              placeholder="Nome do cliente (opcional)" 
+              value={customerName} 
+              onChange={(e) => setCustomerName(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+              aria-label="Nome do cliente"
+            />
+            <input 
+              placeholder="Telefone (opcional)" 
+              value={deliveryInfo.phone || ''} 
+              onChange={(e) => setDeliveryInfo(prev => ({ ...prev, phone: e.target.value }))}
+              className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+              aria-label="Telefone do cliente"
+            />
+          </div>
         )}
       </div>
 
