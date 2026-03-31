@@ -51,7 +51,7 @@ export const usePosActions = (
         }
 
         const method = paymentMethods.find(m => m.id === pos.posPaymentMethodId);
-        const cartTotalValue = cartTotal();
+        const cartTotalValue = cartTotal;
         
         try {
             const finalDiscount = parseFloat(pos.posDiscountValue || '0');
