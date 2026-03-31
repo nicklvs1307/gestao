@@ -89,7 +89,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto max-h-[500px] p-4 space-y-3 bg-slate-50/30">
+      <div className="flex-1 overflow-y-auto max-h-[350px] p-3 space-y-2 bg-slate-50/30">
         {filteredOrders.length > 0 ? (
           <div className="grid grid-cols-1 gap-3">
             {filteredOrders.map((order: any, index: number) => {

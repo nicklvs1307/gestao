@@ -60,7 +60,7 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+      <div className="divide-y divide-slate-100 max-h-[320px] overflow-y-auto">
         {paymentMethods.map(m => {
           const isSelected = selectedMethod === m.id;
           const MethodIcon = getMethodIcon(m.id);

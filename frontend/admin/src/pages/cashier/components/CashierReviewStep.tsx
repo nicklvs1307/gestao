@@ -72,7 +72,7 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
           </Button>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-5 space-y-4 md:space-y-5">
           {/* 1. Balanço por Modalidade */}
           <div className="space-y-4">
             <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 px-1">

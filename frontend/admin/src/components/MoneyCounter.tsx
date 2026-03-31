@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { Banknote, Coins, X, Check, Calculator, Trash2 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/ConfirmDialog';
@@ -15,7 +15,7 @@ interface MoneyCounterProps {
 const BILLS = [200, 100, 50, 20, 10, 5, 2];
 const COINS = [1, 0.50, 0.25, 0.10, 0.05];
 
-const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm, initialDetails }) => {
+const MoneyCounter: React.FC<MoneyCounterProps> = memo(({ isOpen, onClose, onConfirm, initialDetails }) => {
     const [counts, setCounts] = useState<Record<string, number>>({});
     const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
@@ -27,44 +27,47 @@ const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm,
         }
     }, [isOpen, initialDetails]);
 
-    const handleCountChange = (value: number, count: string) => {
+    const handleCountChange = useCallback((value: number, count: string) => {
         const qty = parseInt(count) || 0;
         setCounts(prev => ({ ...prev, [value.toString()]: qty }));
-    };
+    }, []);
 
-    const getTotal = () => {
+    const getTotal = useCallback(() => {
         let total = 0;
         Object.entries(counts).forEach(([val, qty]) => {
             total += parseFloat(val) * qty;
         });
         return total;
-    };
+    }, [counts]);
 
-    const handleConfirm = () => {
+    const handleConfirm = useCallback(() => {
         onConfirm(getTotal(), counts);
         onClose();
-    };
+    }, [onConfirm, getTotal, counts, onClose]);
 
-    const clearAll = () => {
+    const clearAll = useCallback(() => {
         setConfirmData({open: true, title: 'Confirmar', message: 'Limpar toda a contagem?', onConfirm: () => {
             setCounts({});
             setConfirmData(prev => ({...prev, open: false}));
         }});
-    };
+    }, []);
+
+    const handleCloseClick = useCallback(() => onClose(), [onClose]);
+    const handleClearClick = useCallback(() => clearAll(), [clearAll]);
 
     if (!isOpen) return null;
 
     return (
-        <>
-            <AnimatePresence>
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 bg-slate-900/60 backdrop-blur-sm">
+        <AnimatePresence>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
                 <motion.div 
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200"
+                    transition={{ duration: 0.2 }}
+                    className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200"
                 >
-                    {/* HEADER COMPACTO */}
+                    {/* HEADER */}
                     <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-slate-900 text-white rounded-xl shadow-lg">
@@ -76,112 +79,107 @@ const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm,
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={clearAll} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Limpar Tudo"><Trash2 size={18}/></button>
-                            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><X size={22}/></button>
+                            <button onClick={handleClearClick} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Limpar Tudo"><Trash2 size={18}/></button>
+                            <button onClick={handleCloseClick} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><X size={22}/></button>
                         </div>
                     </header>
 
-                    {/* CONTEÚDO EM DUAS COLUNAS DENSAS */}
-                    <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        {/* COLUNA CÉDULAS */}
-                        <section className="space-y-3">
-                            <div className="flex items-center gap-3 mb-4 px-1">
-                                <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg"><Banknote size={16}/></div>
-                                <h4 className="text-[11px] font-black uppercase text-slate-600 tracking-widest italic">Cédulas (Papel)</h4>
-                                <div className="flex-1 h-px bg-slate-200 ml-2"></div>
-                            </div>
+                    {/* CONTEÚDO */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             
-                            <div className="space-y-1.5">
-                                {BILLS.map(bill => (
-                                    <div key={bill} className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-emerald-300 transition-all">
-                                        <div className="flex items-center gap-3 w-28">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Valor</span>
-                                            <span className="text-sm font-black text-slate-900 italic">R$ {bill},00</span>
-                                        </div>
-                                        
-                                        <div className="flex-1 max-w-[100px] relative">
-                                            <input 
-                                                type="number" 
-                                                min="0"
-                                                className="w-full h-10 bg-slate-50 border-2 border-slate-100 rounded-xl text-center text-sm font-black text-slate-900 focus:bg-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-300"
-                                                value={counts[bill.toString()] || ''}
-                                                onChange={(e) => handleCountChange(bill, e.target.value)}
-                                                placeholder="0"
-                                            />
-                                            <div className="absolute -top-2 -right-1 bg-slate-900 text-white text-[8px] px-1.5 rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity">QTD</div>
-                                        </div>
-
-                                        <div className="w-28 text-right">
-                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Subtotal</p>
-                                            <p className="text-xs font-black text-emerald-600 italic leading-none">
-                                                R$ {((counts[bill.toString()] || 0) * bill).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                        {/* COLUNA MOEDAS */}
-                        <section className="space-y-3">
-                            <div className="flex items-center gap-3 mb-4 px-1">
-                                <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg"><Coins size={16}/></div>
-                                <h4 className="text-[11px] font-black uppercase text-slate-600 tracking-widest italic">Moedas (Metal)</h4>
-                                <div className="flex-1 h-px bg-slate-200 ml-2"></div>
-                            </div>
-                            
-                            <div className="space-y-1.5">
-                                {COINS.map(coin => (
-                                    <div key={coin} className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-amber-300 transition-all">
-                                        <div className="flex items-center gap-3 w-28">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Valor</span>
-                                            <span className="text-sm font-black text-slate-900 italic">R$ {coin.toFixed(2)}</span>
-                                        </div>
-                                        
-                                        <div className="flex-1 max-w-[100px] relative">
-                                            <input 
-                                                type="number" 
-                                                min="0"
-                                                className="w-full h-10 bg-slate-50 border-2 border-slate-100 rounded-xl text-center text-sm font-black text-slate-900 focus:bg-white focus:border-amber-500 outline-none transition-all placeholder:text-slate-300"
-                                                value={counts[coin.toString()] || ''}
-                                                onChange={(e) => handleCountChange(coin, e.target.value)}
-                                                placeholder="0"
-                                            />
-                                            <div className="absolute -top-2 -right-1 bg-slate-900 text-white text-[8px] px-1.5 rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity">QTD</div>
-                                        </div>
-
-                                        <div className="w-28 text-right">
-                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Subtotal</p>
-                                            <p className="text-xs font-black text-amber-600 italic leading-none">
-                                                R$ {((counts[coin.toString()] || 0) * coin).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            
-                            {/* MINI RESUMO DA CONTAGEM */}
-                            <div className="mt-8 p-6 bg-slate-900 rounded-[2rem] text-white shadow-2xl space-y-4">
-                                <div className="flex justify-between items-end border-b border-slate-800 pb-4">
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-2">Total de Unidades</p>
-                                        <p className="text-xl font-black italic leading-none">{Object.values(counts).reduce((a, b) => a + (b || 0), 0)} <span className="text-[10px] text-slate-400 not-italic">PEÇAS</span></p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-2">Valor Total</p>
-                                        <p className="text-3xl font-black italic leading-none tracking-tighter text-emerald-400">R$ {getTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                                    </div>
+                            {/* CÉDULAS */}
+                            <section className="space-y-2">
+                                <div className="flex items-center gap-2 mb-3 px-1">
+                                    <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg"><Banknote size={16}/></div>
+                                    <h4 className="text-[11px] font-black uppercase text-slate-600 tracking-widest italic">Cédulas</h4>
+                                    <div className="flex-1 h-px bg-slate-200 ml-2"></div>
                                 </div>
-                                <Button onClick={handleConfirm} className="w-full h-14 bg-white hover:bg-slate-100 text-slate-900 font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl transition-all">
-                                    <Check size={18} className="mr-2"/> Confirmar e Salvar
-                                </Button>
+                                
+                                <div className="space-y-2">
+                                    {BILLS.map(bill => (
+                                        <div key={bill} className="bg-white p-2 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-emerald-300 transition-all">
+                                            <div className="flex items-center gap-2 w-24">
+                                                <span className="text-xs font-black text-slate-900">R$ {bill},00</span>
+                                            </div>
+                                            
+                                            <div className="flex-1 max-w-[80px]">
+                                                <input 
+                                                    type="number" 
+                                                    min="0"
+                                                    className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg text-center text-sm font-bold text-slate-900 focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                                                    value={counts[bill.toString()] || ''}
+                                                    onChange={(e) => handleCountChange(bill, e.target.value)}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+
+                                            <div className="w-20 text-right">
+                                                <p className="text-xs font-bold text-emerald-600">
+                                                    R$ {((counts[bill.toString()] || 0) * bill).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* MOEDAS */}
+                            <section className="space-y-2">
+                                <div className="flex items-center gap-2 mb-3 px-1">
+                                    <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg"><Coins size={16}/></div>
+                                    <h4 className="text-[11px] font-black uppercase text-slate-600 tracking-widest italic">Moedas</h4>
+                                    <div className="flex-1 h-px bg-slate-200 ml-2"></div>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    {COINS.map(coin => (
+                                        <div key={coin} className="bg-white p-2 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-amber-300 transition-all">
+                                            <div className="flex items-center gap-2 w-24">
+                                                <span className="text-xs font-black text-slate-900">R$ {coin.toFixed(2)}</span>
+                                            </div>
+                                            
+                                            <div className="flex-1 max-w-[80px]">
+                                                <input 
+                                                    type="number" 
+                                                    min="0"
+                                                    className="w-full h-9 bg-slate-50 border border-slate-200 rounded-lg text-center text-sm font-bold text-slate-900 focus:bg-white focus:border-amber-500 outline-none transition-all"
+                                                    value={counts[coin.toString()] || ''}
+                                                    onChange={(e) => handleCountChange(coin, e.target.value)}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+
+                                            <div className="w-20 text-right">
+                                                <p className="text-xs font-bold text-amber-600">
+                                                    R$ {((counts[coin.toString()] || 0) * coin).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+                        
+                        {/* RESUMO */}
+                        <div className="mt-6 p-4 bg-slate-900 rounded-xl text-white">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Total de Unidades</p>
+                                    <p className="text-lg font-black">{Object.values(counts).reduce((a, b) => a + (b || 0), 0)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-bold text-emerald-400 uppercase">Valor Total</p>
+                                    <p className="text-2xl font-black text-emerald-400">R$ {getTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                </div>
                             </div>
-                        </section>
+                            <Button onClick={handleConfirm} fullWidth className="h-11 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-lg">
+                                <Check size={18} className="mr-2"/> Confirmar
+                            </Button>
+                        </div>
                     </div>
                 </motion.div>
             </div>
-            </AnimatePresence>
 
             <ConfirmDialog
                 isOpen={confirmData.open}
@@ -191,8 +189,9 @@ const MoneyCounter: React.FC<MoneyCounterProps> = ({ isOpen, onClose, onConfirm,
                 message={confirmData.message}
                 variant="warning"
             />
-        </>
+        </AnimatePresence>
     );
-};
+});
 
+MoneyCounter.displayName = 'MoneyCounter';
 export default MoneyCounter;

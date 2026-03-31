@@ -89,7 +89,7 @@ const CashierManagement: React.FC = memo(() => {
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300 pb-10">
+    <div className="space-y-3 md:space-y-4 pb-4">
       {/* Header Premium */}
       <CashierHeader
         isOpen={isOpen}
