@@ -10,7 +10,8 @@ import { TableSummary, Addon } from '../../../../types';
 import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 
 interface CartSidebarProps {
-  tables: unknown[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tables: any[];
   tablesSummary: TableSummary[];
   onOpenCheckout: () => void;
 }
