@@ -6,6 +6,19 @@ import { generateEscPosReceipt, escPosToBase64 } from './escpos';
 
 const AGENT_URL = 'http://localhost:4676';
 
+// ─── HELPERS ──────────────────────────────────────────────────────────────
+const getPrinterConfigFromStorage = (): PrinterConfig => {
+  try {
+    const config = localStorage.getItem('printer_config');
+    if (config) {
+      return JSON.parse(config);
+    }
+  } catch (e) {
+    console.error('Erro ao ler config de impressão:', e);
+  }
+  return { cashierPrinters: [], kitchenPrinters: [], barPrinters: [], categoryMapping: {} };
+};
+
 // ─── CONFIGURAÇÃO DO AGENTE ───────────────────────────────────────────
 const getAgentUrl = () => AGENT_URL;
 const getAgentToken = () => 'kicardapio-printer-2024'; // Deve bater com o server.js
@@ -423,7 +436,12 @@ const generateOrderReceiptPdf = (
 
   const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
   const finalHeight = drawContent(tempDoc);
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, finalHeight] });
+  const doc = new jsPDF({ 
+    orientation: 'portrait', 
+    unit: 'mm', 
+    format: [80, finalHeight],
+    margin: { top: 10, bottom: 10, left: 5, right: 5 }
+  });
   drawContent(doc);
   return doc.output('datauristring').split(',')[1];
 };
@@ -914,13 +932,225 @@ export const printCashierClosure = async (
 
   const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
   const finalHeight = drawContent(tempDoc);
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, finalHeight] });
+  const doc = new jsPDF({ 
+    orientation: 'portrait', 
+    unit: 'mm', 
+    format: [80, finalHeight],
+    margin: { top: 10, bottom: 10, left: 5, right: 5 }
+  });
   drawContent(doc);
   const pdf = doc.output('datauristring').split(',')[1];
 
   if (config.cashierPrinters && config.cashierPrinters.length > 0) {
     for (const p of config.cashierPrinters) {
       await sendToAgent(p, pdf, 'pdf');
+    }
+  }
+};
+
+// ─── IMPRESSÃO DE ACERTO DE ENTREGADOR ─────────────────────────────────
+export interface DriverSettlementData {
+  driverId: string;
+  driverName: string;
+  totalOrders: number;
+  cash: number;
+  card: number;
+  pix: number;
+  deliveryFees: number;
+  totalToPay: number;
+  storeNet: number;
+  orders?: any[];
+}
+
+export const printDriverSettlement = async (
+  settlement: DriverSettlementData,
+  date: string,
+  startTime: string,
+  endTime: string,
+  restaurantInfo?: RestaurantInfo
+) => {
+  const status = await checkAgentStatus();
+  if (!status) { 
+    toast.error("Agente de impressão não encontrado!"); 
+    return; 
+  }
+
+  const info = restaurantInfo || getRestaurantInfoFromStorage();
+  const baseSize = 9;
+  const leftMargin = 5;
+  const rightMargin = 75;
+  const centerX = 40;
+  const lineHeight = baseSize * 0.42;
+
+  const formatCurrency = (value: number) => 
+    `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+  const drawContent = (doc: jsPDF): number => {
+    let y = 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(baseSize);
+
+    // Header do Restaurante
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(baseSize + 1);
+    doc.text(info.name?.toUpperCase() || 'KICARDÁPIO', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    doc.setFontSize(baseSize - 1);
+    doc.setFont('helvetica', 'normal');
+    if (info.cnpj) {
+      doc.text(`CNPJ: ${info.cnpj}`, centerX, y, { align: 'center' });
+      y += lineHeight;
+    }
+    if (info.address) {
+      const addrLines = doc.splitTextToSize(info.address, 70);
+      doc.text(addrLines, centerX, y, { align: 'center' });
+      y += (addrLines.length * lineHeight);
+    }
+    y += 1;
+
+    // Título
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFontSize(baseSize + 4);
+    doc.setFont('helvetica', 'bold');
+    doc.text('COMPROVANTE DE ACERTO', centerX, y, { align: 'center' });
+    y += lineHeight + 1;
+
+    // Dados do período
+    doc.setFontSize(baseSize - 1);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`DATA: ${date}`, leftMargin, y);
+    y += lineHeight;
+    doc.text(`PERÍODO: ${startTime} às ${endTime}`, leftMargin, y);
+    y += lineHeight + 1;
+
+    // Dados do entregador
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFont('helvetica', 'bold');
+    doc.text('ENTREGADOR', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFontSize(baseSize + 1);
+    doc.text(settlement.driverName.toUpperCase(), centerX, y, { align: 'center' });
+    y += lineHeight + 1;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(baseSize - 1);
+    doc.text(`ID: ${settlement.driverId.slice(0, 8)}`, leftMargin, y);
+    y += lineHeight + 1;
+
+    // Resumo de entregas
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFont('helvetica', 'bold');
+    doc.text('RESUMO DAS ENTREGAS', centerX, y, { align: 'center' });
+    y += lineHeight + 1;
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(`TOTAL DE ENTREGAS: ${settlement.totalOrders}`, leftMargin, y);
+    y += lineHeight + 1;
+
+    // Detalhamento por método de pagamento
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.setFont('helvetica', 'bold');
+    doc.text('DETALHAMENTO FINANCEIRO', centerX, y, { align: 'center' });
+    y += lineHeight + 1;
+
+    doc.setFont('helvetica', 'normal');
+    // Dinheiro
+    doc.text('DINHEIRO (MÃO):', leftMargin, y);
+    doc.text(formatCurrency(settlement.cash), rightMargin, y, { align: 'right' });
+    y += lineHeight;
+    
+    // Cartão
+    doc.text('CARTÃO (MACHINE):', leftMargin, y);
+    doc.text(formatCurrency(settlement.card), rightMargin, y, { align: 'right' });
+    y += lineHeight;
+    
+    // PIX
+    doc.text('PIX (TRANSFERÊNCIA):', leftMargin, y);
+    doc.text(formatCurrency(settlement.pix), rightMargin, y, { align: 'right' });
+    y += lineHeight;
+
+    // Taxa de entrega
+    doc.text('TAXAS DE ENTREGA:', leftMargin, y);
+    doc.text(`- ${formatCurrency(settlement.deliveryFees)}`, rightMargin, y, { align: 'right' });
+    y += lineHeight + 1;
+
+    // Linha separadora
+    doc.text('─────────────────────────────────────────────────', centerX, y, { align: 'center' });
+    y += lineHeight;
+
+    // Totais
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(baseSize + 1);
+    
+    // Total a receber (repasse)
+    doc.text('TOTAL A RECEBER:', leftMargin, y);
+    doc.text(formatCurrency(settlement.totalToPay), rightMargin, y, { align: 'right' });
+    y += lineHeight;
+
+    // Líquido loja
+    doc.text('LÍQUIDO LOJA:', leftMargin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(baseSize - 1);
+    doc.text(`(${settlement.totalOrders > 0 ? formatCurrency(settlement.storeNet / settlement.totalOrders) + '/ent' : '-'})`, rightMargin + 15, y, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(baseSize + 1);
+    doc.text(formatCurrency(settlement.storeNet), rightMargin, y, { align: 'right' });
+    y += lineHeight + 2;
+
+    // Assinatura
+    doc.text('─────────────────────────────────────────────────', centerX, y, { align: 'center' });
+    y += lineHeight + 4;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(baseSize - 1);
+    doc.text('ASSINATUREA DO ENTREGADOR:', centerX, y, { align: 'center' });
+    y += lineHeight + 6;
+    doc.text('_________________________________________', centerX, y, { align: 'center' });
+    y += lineHeight + 4;
+    
+    doc.text('ASSINATUREA DO CAIXA:', centerX, y, { align: 'center' });
+    y += lineHeight + 6;
+    doc.text('_________________________________________', centerX, y, { align: 'center' });
+    y += lineHeight + 2;
+
+    // Rodapé
+    doc.setFontSize(baseSize - 2);
+    doc.text('------------------------------------------------', centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.text(`Emitido em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, centerX, y, { align: 'center' });
+    y += lineHeight;
+    doc.text('KICARDÁPIO - Sistema de Gestão', centerX, y, { align: 'center' });
+    y += 10;
+
+    return y;
+  };
+
+  const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
+  const finalHeight = drawContent(tempDoc);
+  const doc = new jsPDF({ 
+    orientation: 'portrait', 
+    unit: 'mm', 
+    format: [80, finalHeight],
+    margin: { top: 10, bottom: 10, left: 5, right: 5 }
+  });
+  drawContent(doc);
+  const pdf = doc.output('datauristring').split(',')[1];
+
+  // Imprime na impressora do caixa
+  const config = getPrinterConfigFromStorage();
+  if (config.cashierPrinters && config.cashierPrinters.length > 0) {
+    for (const p of config.cashierPrinters) {
+      await sendToAgent(p, pdf, 'pdf');
+    }
+  } else {
+    // Fallback: abre em nova aba para impressão manual
+    const pdfWindow = window.open('', '_blank');
+    if (pdfWindow) {
+      pdfWindow.document.write(`<iframe src="${doc.output('dataurlstring')}" style="width:100%;height:100%;border:none;"></iframe>`);
     }
   }
 };

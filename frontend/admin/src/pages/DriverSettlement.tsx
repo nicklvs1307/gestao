@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { api, payDriverSettlement } from '../services/api';
+import { printDriverSettlement } from '../services/printing';
 import { 
   Truck, DollarSign, CreditCard, Building2, 
   Calendar, RefreshCw, User, Package, Wallet, CheckCircle, 
@@ -73,6 +74,16 @@ const DriverSettlement: React.FC = () => {
         }
       }
     });
+  };
+
+  const handleExportAll = async () => {
+    if (filteredData.length === 0) return;
+    
+    // Imprime um comprovante para cada entregador
+    for (const settlement of filteredData) {
+      await printDriverSettlement(settlement, date, startTime, endTime);
+    }
+    toast.success(`${filteredData.length} comprovante(s) enviado(s) para impressão!`);
   };
 
   useEffect(() => {
@@ -363,7 +374,13 @@ const DriverSettlement: React.FC = () => {
                   <td className="px-4 py-3 text-primary">{formatCurrency(totals.toPay)}</td>
                   <td className="px-4 py-3 text-slate-700 bg-slate-200">{formatCurrency(totals.net)}</td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="outline" size="sm" className="h-7 text-[8px] font-black uppercase tracking-widest gap-1.5 border-slate-300 hover:bg-slate-800 hover:text-white">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-[8px] font-black uppercase tracking-widest gap-1.5 border-slate-300 hover:bg-slate-800 hover:text-white"
+                      onClick={() => handleExportAll()}
+                      disabled={filteredData.length === 0}
+                    >
                       <FileDown size={12} /> EXPORTAR
                     </Button>
                   </td>
