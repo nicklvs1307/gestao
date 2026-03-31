@@ -10,6 +10,7 @@ import {
   ShoppingBag, 
   RefreshCw, 
   Wallet,
+  LayoutGrid,
 } from 'lucide-react';
 
 interface PosHeaderProps {
@@ -25,9 +26,9 @@ export const PosHeader = React.memo<PosHeaderProps>(({
   const navigate = useNavigate();
   const { activeTab, setActiveTab, setActiveModal } = usePosStore();
 
-  const handleTabChange = useCallback((tab: 'table' | 'counter' | 'delivery') => {
+  const handleTabChange = useCallback((tab: 'table' | 'counter' | 'delivery' | 'tables') => {
     setActiveTab(tab);
-    if (tab === 'table') {
+    if (tab === 'table' || tab === 'tables') {
       onRefreshTables();
     }
   }, [setActiveTab, onRefreshTables]);
@@ -40,6 +41,7 @@ export const PosHeader = React.memo<PosHeaderProps>(({
     { id: 'table' as const, label: 'Mesa', icon: UtensilsCrossed, color: 'emerald' },
     { id: 'counter' as const, label: 'Balcão', icon: ShoppingBag, color: 'blue' },
     { id: 'delivery' as const, label: 'Entrega', icon: Bike, color: 'orange' },
+    { id: 'tables' as const, label: 'Mesas', icon: LayoutGrid, color: 'purple' },
   ];
 
   return (

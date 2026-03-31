@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type PosTab = 'table' | 'counter' | 'delivery';
+export type PosTab = 'table' | 'counter' | 'delivery' | 'tables';
 
 export interface DeliveryInfo {
   name: string;
@@ -28,7 +28,7 @@ interface PosState {
   activeTab: PosTab;
   
   // Modal ativo
-  activeModal: 'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items' | 'pos_checkout';
+  activeModal: 'none' | 'cashier_open' | 'delivery_info' | 'pos_checkout';
   
   // Contexto Mesa
   selectedTable: string;

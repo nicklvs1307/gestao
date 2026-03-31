@@ -16,7 +16,6 @@ export const usePosActions = (
     paymentMethods: PaymentMethod[],
     deliveryOrders: Order[],
     deliveryFee: number,
-    setViewingTable: (table: TableSummary | null) => void,
     products: Product[]
 ) => {
     const pos = usePosStore();
@@ -246,26 +245,24 @@ export const usePosActions = (
             await checkoutTable(viewingTable.id, checkoutData);
             toast.success("Mesa finalizada com sucesso!");
             pos.setActiveModal('none');
-            setViewingTable(null);
             refreshTables();
             refreshData();
         } catch (error) {
             toast.error("Erro ao finalizar mesa.");
         }
-    }, [pos, setViewingTable, refreshTables, refreshData]);
+    }, [pos, refreshTables, refreshData]);
 
     const handleTransferTable = useCallback(async (viewingTable: TableSummary, newTableNumber: number) => {
         try {
             await transferTable(viewingTable.id, newTableNumber);
             toast.success(`Mesa transferida para ${newTableNumber}`);
             pos.setActiveModal('none');
-            setViewingTable(null);
             refreshTables();
             refreshData();
         } catch (error) {
             toast.error("Erro ao transferir mesa.");
         }
-    }, [pos, setViewingTable, refreshTables, refreshData]);
+    }, [pos, refreshTables, refreshData]);
 
     return {
         handleProductClick,

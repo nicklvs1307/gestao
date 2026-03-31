@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePosData } from '../features/pos/hooks/usePosData';
 import { usePosStore } from '../features/pos/hooks/usePosStore';
 import { usePosActions } from '../features/pos/hooks/usePosActions';
@@ -9,9 +10,9 @@ import { TableGrid } from '../features/pos/components/TableGrid/TableGrid';
 import { PosHeader } from '../features/pos/components/Header/PosHeader';
 import { ProductDrawer } from '../features/pos/components/ProductDrawer/ProductDrawer';
 import { PosModals } from '../features/pos/components/Modals/PosModals';
-import { TableSummary } from '../types';
 
 const PosPage: React.FC = () => {
+    const navigate = useNavigate();
     const {
         products, categories, tables, tablesSummary, paymentMethods,
         deliveryOrders, isStoreOpen, isCashierOpen, deliveryFee,
@@ -19,15 +20,13 @@ const PosPage: React.FC = () => {
     } = usePosData();
 
     const pos = usePosStore();
-    const [viewingTable, setViewingTable] = useState<TableSummary | null>(null);
 
     const {
         handleProductClick, handleTableClick, submitOrder,
         handleToggleStore, handleOpenCashier, handleOpenCheckout,
-        handleTableCheckout, handleTransferTable
     } = usePosActions(
         refreshTables, refreshData, tablesSummary, paymentMethods, 
-        deliveryOrders, deliveryFee, setViewingTable, products
+        deliveryOrders, deliveryFee, products
     );
 
     const {
@@ -75,9 +74,12 @@ const PosPage: React.FC = () => {
                     <TableGrid 
                         tablesSummary={tablesSummary}
                         onTableClick={(t) => {
-                            setViewingTable(t);
                             if (t.status === 'free') handleTableClick(t);
-                            else pos.setActiveModal('table_details');
+                            else {
+                                // Navega para a página de checkout com o primeiro orderId da mesa
+                                const firstOrderId = t.tabs?.[0]?.orderId;
+                                if (firstOrderId) navigate(`/pos/checkout/${firstOrderId}`);
+                            }
                         }}
                     />
                 )}
@@ -85,13 +87,8 @@ const PosPage: React.FC = () => {
                 <ProductDrawer />
 
                 <PosModals 
-                    viewingTable={viewingTable}
-                    setViewingTable={setViewingTable}
-                    onRefreshTables={refreshTables}
                     paymentMethods={paymentMethods}
                     onSubmitOrder={submitOrder}
-                    onCheckoutTable={(data) => viewingTable && handleTableCheckout(viewingTable, data)}
-                    onTransferTable={(newNum) => viewingTable && handleTransferTable(viewingTable, newNum)}
                     onOpenCashier={handleOpenCashier}
                     customerAddresses={customerAddresses}
                     handleSelectCustomer={handleSelectCustomer}
