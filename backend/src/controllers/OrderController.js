@@ -64,7 +64,7 @@ class OrderController {
     const validatedData = CreateDeliveryOrderSchema.parse(req.body);
     
     const type = (validatedData.orderType || 'TABLE').toUpperCase();
-    const isDelivery = ['DELIVERY', 'PICKUP'].includes(type);
+    const isDeliveryType = ['DELIVERY', 'PICKUP'].includes(type);
 
     // Sobrescreve paymentMethod se vier no corpo principal
     const paymentMethod = validatedData.paymentMethod || validatedData.deliveryInfo?.paymentMethod;
@@ -72,7 +72,7 @@ class OrderController {
     const order = await OrderService.createOrder({
       restaurantId,
       items: validatedData.items, 
-      orderType: isDelivery ? 'DELIVERY' : 'TABLE',
+      orderType: type,  // Preserva o tipo original: DELIVERY, PICKUP ou TABLE
       deliveryInfo: validatedData.deliveryInfo,
       paymentMethod,
       tableNumber: validatedData.tableNumber,

@@ -16,7 +16,8 @@ export const usePosActions = (
     paymentMethods: PaymentMethod[],
     deliveryOrders: Order[],
     deliveryFee: number,
-    setViewingTable: (table: TableSummary | null) => void
+    setViewingTable: (table: TableSummary | null) => void,
+    products: Product[]
 ) => {
     const pos = usePosStore();
     const { cart, clearCart } = useCartStore();
@@ -62,7 +63,8 @@ export const usePosActions = (
             const finalDelivery = parseFloat(pos.posDeliveryFee || '0');
 
             // Determinar orderType baseado na aba ativa
-            const orderType = pos.activeTab === 'table' ? 'TABLE' : 'DELIVERY';
+            // table = TABLE, delivery = DELIVERY, counter = PICKUP
+            const orderType = pos.activeTab === 'table' ? 'TABLE' : (pos.activeTab === 'counter' ? 'PICKUP' : 'DELIVERY');
             const isDelivery = pos.activeTab === 'delivery';
             const isCounter = pos.activeTab === 'counter';
 
@@ -111,21 +113,28 @@ export const usePosActions = (
                     // Imprime os itens novos na cozinha/bar
                     try {
                         const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+                        // Busca dados completos dos produtos para roteamento correto (cozinha/bar)
+                        const itemsWithProducts = cart.map(item => {
+                            const fullProduct = products.find(p => p.id === item.productId);
+                            return {
+                                ...item,
+                                product: fullProduct || { name: item.name, categories: [] },
+                                priceAtTime: item.price,
+                            };
+                        });
+                        
                         const orderForPrint = {
                             ...orderPayload,
                             id: activeOrderId,
                             orderType: 'TABLE' as const,
                             status: 'PENDING' as const,
                             tableNumber: parseInt(pos.selectedTable),
-                            items: cart.map(item => ({
-                                ...item,
-                                product: { name: item.name, categories: [] },
-                                priceAtTime: item.price,
-                            })),
+                            items: itemsWithProducts,
                         };
                         await printOrder(orderForPrint as any, printerConfig);
                         toast.success("Itens adicionados e impressos na cozinha!");
-                    } catch {
+                    } catch (err) {
+                        console.error('[submitOrder] Erro ao imprimir itens:', err);
                         toast.success("Itens adicionados ao pedido!");
                     }
                 } else {
@@ -147,7 +156,7 @@ export const usePosActions = (
         } catch (e) {
             toast.error("Erro ao enviar pedido");
         }
-    }, [pos, cart, paymentMethods, tablesSummary, deliveryOrders, cartTotal, clearCart, refreshTables, refreshData]);
+    }, [pos, cart, paymentMethods, tablesSummary, deliveryOrders, cartTotal, clearCart, refreshTables, refreshData, products]);
 
     const handleToggleStore = useCallback(async (isStoreOpen: boolean) => {
         const newState = !isStoreOpen;

@@ -27,7 +27,7 @@ const PosPage: React.FC = () => {
         handleTableCheckout, handleTransferTable
     } = usePosActions(
         refreshTables, refreshData, tablesSummary, paymentMethods, 
-        deliveryOrders, deliveryFee, setViewingTable
+        deliveryOrders, deliveryFee, setViewingTable, products
     );
 
     const {
