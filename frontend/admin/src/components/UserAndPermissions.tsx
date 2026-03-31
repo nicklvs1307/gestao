@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getUsers, deleteUser } from '../services/api';
 import { 
     Plus, Trash2, Edit2, Loader2, Mail, User, ShieldCheck, 
@@ -7,17 +8,15 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
-import UserFormModal from './UserFormModal';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 const UserAndPermissions: React.FC = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [userToEdit, setUserToEdit] = useState<any | null>(null);
   const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -236,7 +235,7 @@ const UserAndPermissions: React.FC = () => {
                       </div>
                       
                       <div className="flex gap-2 pt-4 border-t border-slate-50 relative z-10">
-                          <Button variant="secondary" className="flex-1 h-10 text-[10px] rounded-xl font-black uppercase tracking-widest" onClick={() => { setUserToEdit(u); setIsUserModalOpen(true); }}>
+                          <Button variant="secondary" className="flex-1 h-10 text-[10px] rounded-xl font-black uppercase tracking-widest" onClick={() => navigate(`/users/${u.id}`)}>
                               CONFIGURAR
                           </Button>
                           <Button variant="ghost" size="icon" className="h-10 w-10 bg-slate-50 hover:bg-rose-50 hover:text-rose-500 rounded-xl transition-colors" onClick={() => handleDeleteUser(u.id)}>
@@ -248,7 +247,7 @@ const UserAndPermissions: React.FC = () => {
               ))}
 
               <button 
-                onClick={() => { setUserToEdit(null); setIsUserModalOpen(true); }}
+                onClick={() => navigate('/users/new')}
                 className="p-6 border-2 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center gap-4 text-slate-300 hover:border-orange-500/20 hover:text-orange-500 transition-all bg-slate-50/30 group"
               >
                 <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-current flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -269,12 +268,6 @@ const UserAndPermissions: React.FC = () => {
           </Card>
       )}
 
-      <UserFormModal
-        isOpen={isUserModalOpen}
-        onClose={() => setIsUserModalOpen(false)}
-        onSave={fetchData}
-        userToEdit={userToEdit}
-      />
       <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>
   );

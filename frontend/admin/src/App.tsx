@@ -27,6 +27,7 @@ const AddonFormPage = lazy(() => import('./pages/AddonFormPage'));
 
 const IntegrationManagement = lazy(() => import('./components/IntegrationManagement'));
 const UserAndPermissions = lazy(() => import('./components/UserAndPermissions'));
+const UserPermissionPage = lazy(() => import('./pages/UserPermissionPage'));
 const DriverManagement = lazy(() => import('./components/DriverManagement'));
 const WaiterManagement = lazy(() => import('./pages/WaiterManagement'));
 const WaiterPos = lazy(() => import('./pages/WaiterPos'));
@@ -144,6 +145,7 @@ function AdminRoutes() {
           <Route path="/settings/*" element={<ProtectedRoute permission="settings:view"><SettingsManagement /></ProtectedRoute>} />
           <Route path="/integrations" element={<ProtectedRoute permission="integrations:manage"><IntegrationManagement /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute permission="users:manage"><UserAndPermissions /></ProtectedRoute>} />
+          <Route path="/users/:id" element={<ProtectedRoute permission="users:manage"><UserPermissionPage /></ProtectedRoute>} />
 
           <Route path="/pos" element={<ProtectedRoute permission="pos:access"><PosPage /></ProtectedRoute>} />
           <Route path="/cashier" element={<ProtectedRoute permission="cashier:manage"><CashierManagement /></ProtectedRoute>} />
