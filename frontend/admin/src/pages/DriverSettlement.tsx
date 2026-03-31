@@ -61,6 +61,10 @@ const DriverSettlement: React.FC = () => {
       message: `CONFIRMAR ACERTO: R$ ${settlement.totalToPay.toFixed(2)} com ${settlement.driverName}?\n\nIsso lançará os valores no caixa aberto e finalizará o ciclo de liquidação.`, 
       onConfirm: async () => {
         try {
+          // 1. Imprime o comprovante ANTES de liquidar
+          await printDriverSettlement(settlement, date, startTime, endTime);
+          
+          // 2. Registra o acerto no backend
           await payDriverSettlement({
             driverName: settlement.driverName,
             amount: settlement.totalToPay,
