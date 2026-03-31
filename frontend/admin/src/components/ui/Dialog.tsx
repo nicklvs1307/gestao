@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 interface DialogProps {
   isOpen: boolean;
@@ -29,12 +30,16 @@ export const Dialog: React.FC<DialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white rounded-2xl shadow-2xl border border-slate-200 w-full ${sizes[size]} animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
-          <h2 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">{title}</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+    <div className={cn('fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4')}>
+      <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={onClose} />
+      <div className={cn(
+        'relative bg-card text-card-foreground rounded-2xl shadow-2xl border border-border w-full',
+        sizes[size],
+        'animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]'
+      )}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <h2 className="text-sm font-bold text-foreground uppercase tracking-tight">{title}</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -42,7 +47,7 @@ export const Dialog: React.FC<DialogProps> = ({
           {children}
         </div>
         {footer && (
-          <div className="px-6 py-4 border-t border-slate-100 shrink-0 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-border shrink-0 flex justify-end gap-3">
             {footer}
           </div>
         )}

@@ -194,6 +194,20 @@ class OrderService {
 
     const finalOrderType = (deliveryInfo || orderType === 'DELIVERY' || orderType === 'PICKUP') ? 'DELIVERY' : 'TABLE';
 
+    // === VALIDAÇÕES DE DELIVERY ===
+    if (finalOrderType === 'DELIVERY') {
+        if (restaurant.settings && restaurant.settings.isOpen === false) {
+            throw new Error('A loja está fechada para delivery no momento.');
+        }
+
+        const isDeliveryMode = deliveryInfo && deliveryInfo.deliveryType === 'delivery';
+        if (isDeliveryMode && restaurant.settings && restaurant.settings.minOrderValue > 0) {
+            if (orderTotal < restaurant.settings.minOrderValue) {
+                throw new Error(`O valor mínimo para entrega é R$ ${restaurant.settings.minOrderValue.toFixed(2)}.`);
+            }
+        }
+    }
+
     let coords = null;
     let fullAddress = 'Retirada no Balcão';
 

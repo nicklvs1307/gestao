@@ -1,7 +1,8 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   fullWidth?: boolean;
@@ -20,11 +21,13 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles = "inline-flex items-center justify-center rounded-xl font-bold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
   
   const variants = {
-    primary: "bg-primary text-white shadow-lg shadow-primary/30 hover:brightness-110 border border-transparent",
+    primary: "bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110 border border-transparent",
     secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-transparent",
     outline: "border-2 border-primary text-primary hover:bg-primary/10",
     ghost: "text-primary hover:bg-primary/10 border-transparent",
-    danger: "bg-red-500 text-white shadow-lg shadow-red-500/30 hover:bg-red-600 border border-transparent"
+    danger: "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30 hover:brightness-110 border border-transparent",
+    success: "bg-success text-success-foreground shadow-lg shadow-success/30 hover:brightness-110 border border-transparent",
+    warning: "bg-warning text-warning-foreground shadow-lg shadow-warning/30 hover:brightness-110 border border-transparent",
   };
 
   const sizes = {
@@ -34,11 +37,9 @@ export const Button: React.FC<ButtonProps> = ({
     icon: "h-10 w-10 p-2"
   };
 
-  const widthClass = fullWidth ? 'w-full' : '';
-
   return (
     <button 
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
+      className={cn(baseStyles, variants[variant], sizes[size], fullWidth && 'w-full', className)}
       disabled={disabled || isLoading}
       {...props}
     >

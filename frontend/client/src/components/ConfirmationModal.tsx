@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LocalCartItem } from '../types';
-import './ConfirmationModal.css';
+import { Button } from './ui/Button';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -24,28 +24,28 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <div className="modal-header">
-          <h2>Confirme seu Pedido</h2>
+    <div className="fixed inset-0 bg-foreground/70 backdrop-blur-sm flex items-center justify-center z-[var(--z-modal)]">
+      <div className="bg-card p-8 rounded-2xl w-[90%] max-w-[500px] shadow-2xl">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-foreground">Confirme seu Pedido</h2>
         </div>
-        <div className="modal-body">
-          <div className="order-summary">
-            <h3>Resumo do Pedido</h3>
-            <div className="order-items">
-              {items.map(item => (
-                <div key={item.localId} className="order-item">
-                  <span>{item.quantity}x {item.product.name}</span>
-                  <span>R$ {item.priceAtTime.toFixed(2).replace('.', ',')}</span>
-                </div>
-              ))}
-            </div>
-            <div className="order-total">
-              <strong>Total:</strong>
-              <strong>R$ {total.toFixed(2).replace('.', ',')}</strong>
-            </div>
-            <hr />
-            <h4>Detalhes da Entrega</h4>
+        <div className="mb-6">
+          <h3 className="text-sm font-bold text-foreground border-b border-border pb-2 mb-3 uppercase tracking-wide">Resumo do Pedido</h3>
+          <div className="space-y-2 mt-3">
+            {items.map(item => (
+              <div key={item.localId} className="flex justify-between text-sm">
+                <span className="text-foreground">{item.quantity}x {item.product.name}</span>
+                <span className="font-semibold text-foreground">R$ {item.priceAtTime.toFixed(2).replace('.', ',')}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between text-lg font-bold mt-4 pt-4 border-t border-border">
+            <span className="text-foreground">Total:</span>
+            <span className="text-primary">R$ {total.toFixed(2).replace('.', ',')}</span>
+          </div>
+          <hr className="my-4 border-border" />
+          <h4 className="text-sm font-bold text-foreground uppercase tracking-wide mb-3">Detalhes da Entrega</h4>
+          <div className="space-y-1.5 text-sm text-foreground">
             <p><strong>Nome:</strong> {deliveryInfo.name}</p>
             <p><strong>Telefone:</strong> {deliveryInfo.phone}</p>
             <p><strong>Endereço:</strong> {deliveryInfo.address}</p>
@@ -53,9 +53,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
             {deliveryInfo.paymentMethod === 'dinheiro' && deliveryInfo.changeFor && <p><strong>Troco para:</strong> R$ {deliveryInfo.changeFor}</p>}
           </div>
         </div>
-        <div className="modal-footer">
-          <button onClick={onClose} className="btn-secondary">Voltar</button>
-          <button onClick={onConfirm} className="btn-primary">Confirmar Pedido</button>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose}>Voltar</Button>
+          <Button variant="success" onClick={onConfirm}>Confirmar Pedido</Button>
         </div>
       </div>
     </div>

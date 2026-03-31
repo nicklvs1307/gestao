@@ -35,8 +35,8 @@ const OrderTimer = memo(({ createdAt, status }: { createdAt: string; status: str
 
   return (
     <div className={cn(
-      "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tighter shadow-sm",
-      status === 'PENDING' ? "bg-rose-500 text-white animate-pulse" : "bg-slate-100 text-slate-500"
+      "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-tight shadow-sm",
+      status === 'PENDING' ? "bg-rose-500 text-white animate-pulse" : "bg-muted text-muted-foreground"
     )}>
       <Clock size={10} /> {timeElapsedStr}
     </div>
