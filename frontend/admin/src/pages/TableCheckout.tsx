@@ -72,7 +72,7 @@ const TableCheckout: React.FC = () => {
             
             // Busca configurações para taxa de serviço
             try {
-                const restRes = await api.get(`/admin/settings`);
+                const restRes = await api.get(`/settings`);
                 const settings = restRes.data.settings || restRes.data;
                 setServiceTaxRate(settings.serviceTaxPercentage || 10);
             } catch (e) { setServiceTaxRate(10); }
