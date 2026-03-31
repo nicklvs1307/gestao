@@ -3,7 +3,6 @@ import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';
 import { useNavigate } from 'react-router-dom';
-import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 import { 
   UtensilsCrossed, 
   Store, 
@@ -11,7 +10,6 @@ import {
   ShoppingBag, 
   RefreshCw, 
   Wallet,
-  Power
 } from 'lucide-react';
 
 interface PosHeaderProps {
@@ -26,7 +24,6 @@ export const PosHeader = React.memo<PosHeaderProps>(({
 }) => {
   const navigate = useNavigate();
   const { activeTab, setActiveTab, setActiveModal } = usePosStore();
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   const handleTabChange = useCallback((tab: 'table' | 'counter' | 'delivery') => {
     setActiveTab(tab);
@@ -47,45 +44,14 @@ export const PosHeader = React.memo<PosHeaderProps>(({
 
   return (
     <div className="px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between gap-4 z-10 shrink-0">
-      {/* Branding + Status */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
-            <UtensilsCrossed size={20} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-sm font-black uppercase text-slate-900 tracking-tight leading-none">PDV</h1>
-            <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">Ponto de Venda</p>
-          </div>
+      {/* Branding */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
+          <UtensilsCrossed size={20} className="text-white" />
         </div>
-
-        <div className="h-8 w-px bg-slate-200" />
-
-        {/* Status Badges */}
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={onToggleStore} 
-            className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border transition-all", 
-              isStoreOpen 
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" 
-                : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
-            )}
-            aria-pressed={isStoreOpen}
-          >
-            <Power size={12} />
-            {isStoreOpen ? 'Aberta' : 'Fechada'}
-          </button>
-          <div className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border", 
-            isCashierOpen 
-              ? "bg-blue-50 text-blue-700 border-blue-200" 
-              : "bg-slate-50 text-slate-500 border-slate-200"
-          )}>
-            <Wallet size={12} />
-            <div className={cn("w-1.5 h-1.5 rounded-full", isCashierOpen ? "bg-blue-500 animate-pulse" : "bg-slate-400")} />
-            {isCashierOpen ? 'Caixa Aberto' : 'Caixa Fechado'}
-          </div>
+        <div>
+          <h1 className="text-sm font-black uppercase text-slate-900 tracking-tight leading-none">PDV</h1>
+          <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">Ponto de Venda</p>
         </div>
       </div>
       

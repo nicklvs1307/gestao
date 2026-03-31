@@ -98,7 +98,7 @@ interface PosState {
 }
 
 const initialState = {
-  activeTab: 'table' as PosTab,
+  activeTab: 'delivery' as PosTab,
   activeModal: 'none' as PosState['activeModal'],
   selectedTable: '',
   customerName: '',

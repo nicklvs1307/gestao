@@ -145,56 +145,26 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
 
         {activeTab === 'delivery' && (
           <div className="space-y-2">
-            {/* Sub-tipo: Entrega ou Retirada */}
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                onClick={() => setDeliverySubType('delivery')}
-                aria-pressed={deliverySubType === 'delivery'}
-                className={cn(
-                  "flex items-center justify-center h-10 rounded-lg border transition-all gap-2 text-xs font-bold uppercase",
-                  deliverySubType === 'delivery' 
-                    ? "bg-orange-50 border-orange-400 text-orange-700 shadow-sm" 
-                    : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
-                )}
-              >
-                <Bike size={14} />
-                Entrega
-              </button>
-              <button 
-                onClick={() => setDeliverySubType('pickup')}
-                aria-pressed={deliverySubType === 'pickup'}
-                className={cn(
-                  "flex items-center justify-center h-10 rounded-lg border transition-all gap-2 text-xs font-bold uppercase",
-                  deliverySubType === 'pickup' 
-                    ? "bg-blue-50 border-blue-400 text-blue-700 shadow-sm" 
-                    : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
-                )}
-              >
-                <ShoppingBag size={14} />
-                Retirada
-              </button>
-            </div>
-
             {/* Cliente / Endereço */}
             <div className="flex gap-2">
               <button 
                 onClick={() => setActiveModal('delivery_info')}
                 className="flex-1 h-10 border border-slate-200 rounded-lg px-3 flex items-center justify-between hover:border-orange-500 hover:bg-orange-50/30 transition-all bg-white overflow-hidden"
-                aria-label={deliverySubType === 'delivery' ? 'Selecionar endereço' : 'Selecionar cliente'}
+                aria-label="Selecionar cliente/endereço"
               >
                 <div className="min-w-0 flex flex-col items-start">
                   <span className="text-[9px] font-bold text-orange-600 uppercase tracking-wider leading-none">
-                    {deliverySubType === 'delivery' ? 'Endereço' : 'Cliente'}
+                    {deliveryInfo.address ? 'Endereço' : 'Cliente'}
                   </span>
                   <span className="text-xs font-medium text-slate-700 truncate w-full text-left">
-                    {deliveryInfo.name || 'Vincular cliente...'}
+                    {deliveryInfo.name ? (deliveryInfo.address ? deliveryInfo.address.substring(0, 30) + '...' : deliveryInfo.name) : 'Vincular cliente...'}
                   </span>
                 </div>
                 <User size={14} className="text-orange-400 shrink-0" />
               </button>
               {deliveryInfo.name && (
                 <button 
-                  onClick={() => setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' })}
+                  onClick={() => setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'delivery' })}
                   className="w-10 h-10 rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center bg-white transition-all"
                   aria-label="Limpar informações"
                 >
