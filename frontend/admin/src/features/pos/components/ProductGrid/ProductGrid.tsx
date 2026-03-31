@@ -31,22 +31,19 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
     setSelectedCategory(categoryId);
   }, [setSelectedCategory]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, [setSearchTerm]);
-
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Search + Categorias */}
       <div className="p-4 bg-white border-b border-slate-100 flex flex-col gap-3 shrink-0">
         <div className="relative group w-full">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={18} />
           <input 
             ref={searchInputRef} 
             type="text" 
-            className="w-full h-11 pl-11 pr-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white outline-none font-medium text-sm transition-all" 
+            className="w-full h-11 pl-11 pr-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-100 outline-none font-medium text-sm transition-all" 
             placeholder="Buscar produto pelo nome ou código..." 
             value={searchTerm} 
-            onChange={handleSearchChange}
+            onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="Buscar produtos"
           />
         </div>
@@ -54,7 +51,7 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
           <button 
             className={cn(
               "px-4 h-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap", 
-              selectedCategory === 'all' ? "bg-slate-900 text-white shadow-md" : "bg-slate-50 text-slate-600 border border-slate-200"
+              selectedCategory === 'all' ? "bg-slate-900 text-white shadow-md" : "bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300"
             )} 
             onClick={() => handleCategoryClick('all')}
             aria-pressed={selectedCategory === 'all'}
@@ -77,12 +74,14 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
           ))}
         </div>
       </div>
+
+      {/* Grid de Produtos */}
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-10 gap-3">
           {filteredProducts.map(p => (
             <button 
               key={p.id} 
-              className="group flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-orange-500 hover:shadow-lg transition-all active:scale-[0.98] shadow-sm relative" 
+              className="group flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-orange-500 hover:shadow-lg hover:shadow-orange-100/50 transition-all active:scale-[0.98] shadow-sm relative" 
               onClick={() => onProductClick(p)}
               aria-label={`Adicionar ${p.name} - R$ ${p.price.toFixed(2)}`}
             >
@@ -94,6 +93,7 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
                     <ShoppingCart size={24} />
                   </div>
                 )}
+                {/* Preço overlay */}
                 <div className="absolute bottom-0 right-0 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 rounded-tl-lg border-t border-l border-slate-100">
                   <span className="font-bold text-xs text-orange-600">R$ {p.price.toFixed(2)}</span>
                 </div>
@@ -104,6 +104,13 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
             </button>
           ))}
         </div>
+        {filteredProducts.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+            <ShoppingCart size={40} className="mb-4 text-slate-200" />
+            <p className="text-sm font-bold uppercase tracking-wider text-slate-400">Nenhum produto encontrado</p>
+            <p className="text-xs text-slate-300 mt-1">Tente buscar por outro termo ou categoria</p>
+          </div>
+        )}
       </div>
     </div>
   );

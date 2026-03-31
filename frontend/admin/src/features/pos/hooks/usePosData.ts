@@ -10,7 +10,7 @@ export const usePosData = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-    const [tables, setTables] = useState<unknown[]>([]);
+    const [tables, setTables] = useState<any[]>([]);
     const [tablesSummary, setTablesSummary] = useState<TableSummary[]>([]);
     const [deliveryOrders, setDeliveryOrders] = useState<Order[]>([]);
     const [isStoreOpen, setIsStoreOpen] = useState(false);

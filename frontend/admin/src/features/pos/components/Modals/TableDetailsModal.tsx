@@ -77,68 +77,71 @@ export const TableDetailsModal: React.FC<TableDetailsModalProps> = React.memo(({
         transition={modalTransition}
         className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200"
       >
-        <header className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        {/* Header */}
+        <header className="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-100">
-              <Utensils size={28} />
+            <div className="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-200">
+              <Utensils size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-bold uppercase text-slate-900 tracking-tight leading-none">
+              <h3 className="text-xl font-black uppercase text-slate-900 tracking-tight leading-none">
                 Mesa {viewingTable.number < 10 ? `0${viewingTable.number}` : viewingTable.number}
               </h3>
-              <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mt-1">Gestão de Consumo</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão de Consumo</p>
             </div>
           </div>
           <button 
             onClick={handleClose} 
-            className="p-3 bg-white rounded-full hover:bg-slate-100 transition-colors"
+            className="p-2.5 bg-white rounded-xl hover:bg-slate-100 transition-colors border border-slate-200"
             aria-label="Fechar"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </header>
         
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8 custom-scrollbar">
-          <div className="space-y-5">
-            <h4 className="text-sm font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
-              <List size={18} /> Itens Consumidos
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-6 custom-scrollbar">
+          {/* Coluna Esquerda - Itens */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+              <List size={14} /> Itens Consumidos
             </h4>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {viewingTable.items?.map((item: any) => (
-                <Card key={item.id} className="p-4 border-slate-200 hover:border-orange-300 transition-all">
-                  <div className="flex justify-between items-start gap-4">
+                <Card key={item.id} className="p-3 border-slate-200 hover:border-orange-300 transition-all group">
+                  <div className="flex justify-between items-start gap-3">
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-sm font-bold text-slate-800 uppercase">
+                      <span className="text-xs font-bold text-slate-800 uppercase">
                         {item.quantity < 10 ? `0${item.quantity}` : item.quantity}x {item.product?.name || item.name}
                       </span>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {item.sizeJson && (
-                          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-medium uppercase">
+                          <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">
                             {JSON.parse(item.sizeJson).name}
                           </span>
                         )}
                         {item.addonsJson && JSON.parse(item.addonsJson).map((a: any, idx: number) => (
-                          <span key={idx} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-medium uppercase">
+                          <span key={idx} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">
                             +{a.name}
                           </span>
                         ))}
                       </div>
                       {item.observations && (
-                        <p className="text-xs text-amber-600 font-medium mt-2 uppercase italic">
+                        <p className="text-[9px] text-amber-600 font-medium mt-1.5 uppercase italic">
                           Obs: {item.observations}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="font-bold text-base text-slate-900 whitespace-nowrap">
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="font-bold text-sm text-slate-900 whitespace-nowrap">
                         R$ {(item.quantity * (item.priceAtTime || 0)).toFixed(2)}
                       </span>
                       <button 
                         onClick={() => handleRemoveItem(item.id)}
-                        className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         aria-label={`Remover ${item.product?.name || item.name}`}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -146,65 +149,78 @@ export const TableDetailsModal: React.FC<TableDetailsModalProps> = React.memo(({
               ))}
               {(!viewingTable.items || viewingTable.items.length === 0) && (
                 <div className="py-12 text-center">
-                  <p className="text-slate-400 font-medium uppercase text-sm">Nenhum item pendente</p>
+                  <p className="text-slate-400 font-medium uppercase text-xs">Nenhum item pendente</p>
                 </div>
               )}
             </div>
-            <div className="p-6 bg-slate-900 text-white rounded-2xl shadow-xl relative overflow-hidden">
+            
+            {/* Total Acumulado */}
+            <div className="p-5 bg-slate-900 text-white rounded-2xl shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] -mr-16 -mt-16 rounded-full" />
               <div className="flex justify-between items-center relative z-10">
-                <span className="text-sm font-bold uppercase text-slate-400 tracking-wider">Total Acumulado</span>
-                <span className="text-4xl font-bold text-emerald-400 tracking-tight">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Acumulado</span>
+                <span className="text-3xl font-black text-emerald-400 tracking-tight">
                   R$ {(viewingTable.totalAmount || 0).toFixed(2).replace('.', ',')}
                 </span>
               </div>
             </div>
           </div>
-          <div className="space-y-5">
-            <h4 className="text-sm font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
-              <ArrowRightLeft size={18} /> Ações da Mesa
+
+          {/* Coluna Direita - Ações */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+              <ArrowRightLeft size={14} /> Ações da Mesa
             </h4>
             <div className="grid grid-cols-1 gap-3">
               <Button 
                 variant="outline" 
-                className="h-16 rounded-2xl justify-between px-6 bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-blue-300" 
+                className="h-16 rounded-2xl justify-between px-5 bg-white border-slate-200 hover:bg-slate-50 hover:border-blue-300 transition-all" 
                 onClick={handlePrintPreBill}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
                     <Printer size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-700">Imprimir Pré-Conta</span>
+                  <div className="text-left">
+                    <span className="text-xs font-bold text-slate-700 block">Imprimir Pré-Conta</span>
+                    <span className="text-[9px] text-slate-400">Imprime os itens consumidos</span>
+                  </div>
                 </div>
-                <ChevronRight size={20} className="text-slate-400" />
+                <ChevronRight size={18} className="text-slate-400" />
               </Button>
               
               <Button 
                 variant="outline" 
-                className="h-16 rounded-2xl justify-between px-6 bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-orange-300" 
+                className="h-16 rounded-2xl justify-between px-5 bg-white border-slate-200 hover:bg-slate-50 hover:border-orange-300 transition-all" 
                 onClick={handleTransferTable}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-orange-100 text-orange-600 rounded-xl">
+                  <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center">
                     <MoveRight size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-700">Transferir Mesa</span>
+                  <div className="text-left">
+                    <span className="text-xs font-bold text-slate-700 block">Transferir Mesa</span>
+                    <span className="text-[9px] text-slate-400">Move consumo para outra mesa</span>
+                  </div>
                 </div>
-                <ChevronRight size={20} className="text-slate-400" />
+                <ChevronRight size={18} className="text-slate-400" />
               </Button>
               
               <Button 
                 variant="outline" 
-                className="h-16 rounded-2xl justify-between px-6 bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-emerald-300" 
+                className="h-16 rounded-2xl justify-between px-5 bg-white border-slate-200 hover:bg-slate-50 hover:border-emerald-300 transition-all" 
                 onClick={handleOpenPayment}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
+                  <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
                     <Receipt size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-700">Encerrar e Pagar</span>
+                  <div className="text-left">
+                    <span className="text-xs font-bold text-slate-700 block">Encerrar e Pagar</span>
+                    <span className="text-[9px] text-slate-400">Finaliza a conta da mesa</span>
+                  </div>
                 </div>
-                <ChevronRight size={20} className="text-slate-400" />
+                <ChevronRight size={18} className="text-slate-400" />
               </Button>
             </div>
           </div>

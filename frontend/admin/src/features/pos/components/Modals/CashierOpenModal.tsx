@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { X, Wallet, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '../../../../components/ui/Button';
-import { Input } from '../../../../components/ui/Input';
 import { usePosStore } from '../../hooks/usePosStore';
 import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 
@@ -43,52 +42,53 @@ export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ o
         animate={{ scale: 1, opacity: 1 }} 
         exit={{ scale: 0.95, opacity: 0 }} 
         transition={modalTransition}
-        className="relative w-full max-w-sm bg-white rounded-2xl p-8 shadow-2xl border border-slate-200"
+        className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200"
       >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-lg">
-              <Wallet size={28} />
+        {/* Header */}
+        <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+              <Wallet size={20} />
             </div>
-            <h3 className="text-xl font-bold uppercase text-slate-900 tracking-tight leading-none">
-              Abertura de Caixa
-            </h3>
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-tight leading-none">Abertura de Caixa</h3>
+              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Fundo de caixa inicial</p>
+            </div>
           </div>
-          <button 
-            onClick={handleClose}
-            className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
-            aria-label="Fechar"
-          >
-            <X size={22} />
+          <button onClick={handleClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Fechar">
+            <X size={18} />
           </button>
         </div>
         
-        <div className="space-y-6">
-          <Input 
-            label="Fundo de Caixa Inicial (R$)" 
-            type="number" 
-            placeholder="0,00" 
-            value={cashierAmount} 
-            onChange={(e) => setCashierAmount(e.target.value)}
-            className="text-2xl font-bold text-emerald-600" 
-          />
+        {/* Content */}
+        <div className="p-5 space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold uppercase text-slate-500 tracking-wider ml-1">Valor Inicial (R$)</label>
+            <input 
+              type="number" 
+              placeholder="0,00" 
+              value={cashierAmount} 
+              onChange={(e) => setCashierAmount(e.target.value)}
+              className="w-full h-14 bg-white border border-slate-200 rounded-xl px-4 font-black text-2xl text-emerald-600 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 shadow-sm transition-all"
+            />
+          </div>
           
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-1">
             <Button 
               variant="outline"
               fullWidth 
               onClick={handleClose}
-              className="h-14 rounded-xl border-slate-200 text-slate-600 font-bold uppercase text-sm"
+              className="h-12 rounded-xl border-slate-200 text-slate-600 font-bold uppercase text-xs"
             >
               Cancelar
             </Button>
             <Button 
               fullWidth 
               size="lg" 
-              className="h-14 rounded-xl gap-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold uppercase text-sm" 
+              className="h-12 rounded-xl gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold uppercase text-xs transition-all" 
               onClick={handleOpenCashier}
             >
-              <CheckCircle size={20} /> Abrir Turno
+              <CheckCircle size={16} /> Abrir Turno
             </Button>
           </div>
         </div>

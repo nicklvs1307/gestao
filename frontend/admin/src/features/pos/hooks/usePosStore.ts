@@ -1,27 +1,57 @@
 import { create } from 'zustand';
 
+export type PosTab = 'table' | 'counter' | 'delivery';
+
+export interface DeliveryInfo {
+  name: string;
+  phone: string;
+  address: string;
+  deliveryType: 'delivery' | 'pickup';
+}
+
+export interface CartItem {
+  cartItemId: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  observation?: string;
+  selectedSize?: { id: string; name: string; price: number };
+  selectedSizeDbId?: string;
+  sizeJson?: string;
+  selectedAddonDbIds?: string[];
+  addonsJson?: string;
+}
+
 interface PosState {
-  orderMode: 'table' | 'delivery';
-  deliverySubType: 'delivery' | 'pickup';
+  // Tab ativa: mesa, balcão ou delivery
+  activeTab: PosTab;
+  
+  // Modal ativo
+  activeModal: 'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items' | 'pos_checkout';
+  
+  // Contexto Mesa
   selectedTable: string;
   customerName: string;
-  deliveryInfo: {
-    name: string;
-    phone: string;
-    address: string;
-    deliveryType: 'delivery' | 'pickup';
-  };
-  activeTab: 'pos' | 'tables';
-  activeModal: 'none' | 'cashier_open' | 'cashier_close' | 'delivery_info' | 'table_details' | 'payment_method' | 'transfer_table' | 'transfer_items' | 'pos_checkout';
+  
+  // Contexto Delivery
+  deliveryInfo: DeliveryInfo;
+  deliverySubType: 'delivery' | 'pickup';
   activeDeliveryOrderId: string | null;
+  
+  // Catálogo
   searchTerm: string;
   selectedCategory: string;
+  
+  // Drawer de produto
   selectedProductForAdd: any | null;
   tempQty: number;
   tempObs: string;
   selectedSizeId: string;
   selectedAddonIds: string[];
   showProductDrawer: boolean;
+  
+  // Checkout
   posDeliveryFee: string;
   posExtraCharge: string;
   posDiscountValue: string;
@@ -30,22 +60,32 @@ interface PosState {
   posObservations: string;
   isSubmitting: boolean;
 
-  setOrderMode: (mode: 'table' | 'delivery') => void;
-  setDeliverySubType: (type: 'delivery' | 'pickup') => void;
+  // Actions
+  setActiveTab: (tab: PosTab) => void;
+  setActiveModal: (modal: PosState['activeModal']) => void;
+  
+  // Mesa
   setSelectedTable: (table: string) => void;
   setCustomerName: (name: string) => void;
-  setDeliveryInfo: (info: any) => void;
-  setActiveTab: (tab: 'pos' | 'tables') => void;
-  setActiveModal: (modal: any) => void;
+  
+  // Delivery
+  setDeliveryInfo: (info: DeliveryInfo) => void;
+  setDeliverySubType: (type: 'delivery' | 'pickup') => void;
   setActiveDeliveryOrderId: (id: string | null) => void;
+  
+  // Catálogo
   setSearchTerm: (term: string) => void;
   setSelectedCategory: (category: string) => void;
+  
+  // Drawer
   setSelectedProductForAdd: (product: any | null) => void;
   setTempQty: (qty: number) => void;
   setTempObs: (obs: string) => void;
   setSelectedSizeId: (id: string) => void;
   setSelectedAddonIds: (ids: string[]) => void;
   setShowProductDrawer: (show: boolean) => void;
+  
+  // Checkout
   setPosDeliveryFee: (fee: string) => void;
   setPosExtraCharge: (charge: string) => void;
   setPosDiscountValue: (value: string) => void;
@@ -53,23 +93,23 @@ interface PosState {
   setPosPaymentMethodId: (id: string) => void;
   setPosObservations: (obs: string) => void;
   setIsSubmitting: (submitting: boolean) => void;
+  
   resetPos: () => void;
 }
 
-export const usePosStore = create<PosState>((set) => ({
-  orderMode: 'table',
-  deliverySubType: 'delivery',
+const initialState = {
+  activeTab: 'table' as PosTab,
+  activeModal: 'none' as PosState['activeModal'],
   selectedTable: '',
   customerName: '',
   deliveryInfo: {
     name: '',
     phone: '',
     address: '',
-    deliveryType: 'pickup'
+    deliveryType: 'pickup' as const
   },
-  activeTab: 'pos',
-  activeModal: 'none',
-  activeDeliveryOrderId: null,
+  deliverySubType: 'delivery' as const,
+  activeDeliveryOrderId: null as string | null,
   searchTerm: '',
   selectedCategory: 'all',
   selectedProductForAdd: null,
@@ -85,23 +125,31 @@ export const usePosStore = create<PosState>((set) => ({
   posPaymentMethodId: '',
   posObservations: '',
   isSubmitting: false,
+};
 
-  setOrderMode: (orderMode) => set({ orderMode }),
-  setDeliverySubType: (deliverySubType) => set({ deliverySubType }),
-  setSelectedTable: (selectedTable) => set({ selectedTable }),
-  setCustomerName: (customerName) => set({ customerName }),
-  setDeliveryInfo: (deliveryInfo) => set({ deliveryInfo }),
+export const usePosStore = create<PosState>((set) => ({
+  ...initialState,
+
   setActiveTab: (activeTab) => set({ activeTab }),
   setActiveModal: (activeModal) => set({ activeModal }),
+  
+  setSelectedTable: (selectedTable) => set({ selectedTable }),
+  setCustomerName: (customerName) => set({ customerName }),
+  
+  setDeliveryInfo: (deliveryInfo) => set({ deliveryInfo }),
+  setDeliverySubType: (deliverySubType) => set({ deliverySubType }),
   setActiveDeliveryOrderId: (activeDeliveryOrderId) => set({ activeDeliveryOrderId }),
+  
   setSearchTerm: (searchTerm) => set({ searchTerm }),
   setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
+  
   setSelectedProductForAdd: (selectedProductForAdd) => set({ selectedProductForAdd }),
   setTempQty: (tempQty) => set({ tempQty }),
   setTempObs: (tempObs) => set({ tempObs }),
   setSelectedSizeId: (selectedSizeId) => set({ selectedSizeId }),
   setSelectedAddonIds: (selectedAddonIds) => set({ selectedAddonIds }),
   setShowProductDrawer: (showProductDrawer) => set({ showProductDrawer }),
+  
   setPosDeliveryFee: (posDeliveryFee) => set({ posDeliveryFee }),
   setPosExtraCharge: (posExtraCharge) => set({ posExtraCharge }),
   setPosDiscountValue: (posDiscountValue) => set({ posDiscountValue }),
@@ -109,35 +157,14 @@ export const usePosStore = create<PosState>((set) => ({
   setPosPaymentMethodId: (posPaymentMethodId) => set({ posPaymentMethodId }),
   setPosObservations: (posObservations) => set({ posObservations }),
   setIsSubmitting: (isSubmitting) => set({ isSubmitting }),
-  resetPos: () => set({
-    orderMode: 'table',
-    selectedTable: '',
-    customerName: '',
-    deliveryInfo: { name: '', phone: '', address: '', deliveryType: 'pickup' },
-    activeDeliveryOrderId: null,
-    searchTerm: '',
-    selectedCategory: 'all',
-    selectedProductForAdd: null,
-    tempQty: 1,
-    tempObs: '',
-    selectedSizeId: '',
-    selectedAddonIds: [],
-    showProductDrawer: false,
-    posDeliveryFee: '0',
-    posExtraCharge: '0',
-    posDiscountValue: '0',
-    posDiscountPercentage: '0',
-    posPaymentMethodId: '',
-    posObservations: '',
-    isSubmitting: false,
-    activeModal: 'none'
-  })
+  
+  resetPos: () => set(initialState)
 }));
 
-export const usePosOrderMode = () => usePosStore(state => state.orderMode);
-export const usePosSelectedTable = () => usePosStore(state => state.selectedTable);
-export const usePosActiveTab = () => usePosStore(state => state.activeTab);
-export const usePosActiveModal = () => usePosStore(state => state.activeModal);
-export const usePosSearchTerm = () => usePosStore(state => state.searchTerm);
-export const usePosSelectedCategory = () => usePosStore(state => state.selectedCategory);
-export const usePosDeliveryInfo = () => usePosStore(state => state.deliveryInfo);
+// Selectors
+export const usePosActiveTab = () => usePosStore(s => s.activeTab);
+export const usePosActiveModal = () => usePosStore(s => s.activeModal);
+export const usePosSelectedTable = () => usePosStore(s => s.selectedTable);
+export const usePosSearchTerm = () => usePosStore(s => s.searchTerm);
+export const usePosSelectedCategory = () => usePosStore(s => s.selectedCategory);
+export const usePosDeliveryInfo = () => usePosStore(s => s.deliveryInfo);

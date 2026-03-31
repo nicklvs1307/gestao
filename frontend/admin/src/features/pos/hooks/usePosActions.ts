@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { 
     createOrder, addItemsToOrder, updateOrderFinancials, 
@@ -33,8 +33,7 @@ export const usePosActions = (
 
     const handleTableClick = useCallback((table: TableSummary) => {
         pos.setSelectedTable(table.number.toString());
-        pos.setOrderMode('table');
-        pos.setActiveTab('pos');
+        pos.setActiveTab('table');
         
         if (table.status !== 'free') {
             toast.info(`Mesa ${table.number} selecionada. Itens adicionados serão somados à conta atual.`);
@@ -42,10 +41,13 @@ export const usePosActions = (
     }, [pos]);
 
     const submitOrder = useCallback(async () => {
-        if (pos.orderMode === 'table' && !pos.selectedTable) {
+        // Validações por modo
+        if (pos.activeTab === 'table' && !pos.selectedTable) {
             return toast.error("Por favor, selecione uma mesa");
         }
-
+        if (pos.activeTab === 'delivery' && !pos.deliveryInfo.name) {
+            return toast.error("Vincule um cliente para delivery");
+        }
         if (!pos.posPaymentMethodId) {
             return toast.error("Selecione uma forma de pagamento");
         }
@@ -58,6 +60,10 @@ export const usePosActions = (
             const finalExtra = parseFloat(pos.posExtraCharge || '0');
             const finalDelivery = parseFloat(pos.posDeliveryFee || '0');
 
+            // Determinar orderType baseado na aba ativa
+            const orderType = pos.activeTab === 'table' ? 'TABLE' : 'DELIVERY';
+            const isDelivery = pos.activeTab === 'delivery';
+
             const orderPayload = {
                 items: cart.map(item => ({
                     productId: item.productId,
@@ -68,11 +74,11 @@ export const usePosActions = (
                     sizeJson: item.sizeJson,
                     addonsJson: item.addonsJson,
                 })),
-                orderType: pos.orderMode === 'table' ? 'TABLE' : 'DELIVERY',
-                tableNumber: pos.orderMode === 'table' ? parseInt(pos.selectedTable) : null,
+                orderType,
+                tableNumber: pos.activeTab === 'table' ? parseInt(pos.selectedTable) : null,
                 paymentMethod: method?.name || 'OUTRO',
-                customerName: pos.orderMode === 'table' ? pos.customerName : pos.deliveryInfo.name,
-                deliveryInfo: pos.orderMode === 'delivery' ? {
+                customerName: pos.activeTab === 'table' ? pos.customerName : pos.deliveryInfo.name,
+                deliveryInfo: isDelivery ? {
                     name: pos.deliveryInfo.name,
                     phone: pos.deliveryInfo.phone,
                     address: pos.deliveryInfo.address, 
@@ -85,7 +91,8 @@ export const usePosActions = (
                 totalAmount: Number((cartTotalValue + finalExtra + finalDelivery - finalDiscount).toFixed(2))
             };
 
-            if (pos.orderMode === 'table') {
+            // Lógica de envio por modo
+            if (pos.activeTab === 'table') {
                 const tableInfo = tablesSummary.find(t => t.number === parseInt(pos.selectedTable));
                 const activeOrderId = tableInfo?.tabs?.[0]?.orderId;
 
@@ -100,7 +107,7 @@ export const usePosActions = (
                     await createOrder(orderPayload);
                     toast.success("Pedido enviado!");
                 }
-            } else if (pos.orderMode === 'delivery' && pos.activeDeliveryOrderId) {
+            } else if (isDelivery && pos.activeDeliveryOrderId) {
                 await addItemsToOrder(pos.activeDeliveryOrderId, orderPayload.items);
                 const currentOrder = deliveryOrders.find(o => o.id === pos.activeDeliveryOrderId);
                 if (currentOrder && (finalDiscount > 0 || finalExtra > 0)) {
@@ -143,7 +150,9 @@ export const usePosActions = (
     const handleOpenCheckout = useCallback(() => {
         if (cart.length === 0) return toast.error("Carrinho vazio!");
         
-        pos.setPosDeliveryFee(pos.orderMode === 'delivery' && pos.deliverySubType === 'delivery' ? deliveryFee.toString() : '0');
+        // Taxa de entrega só para delivery com entrega
+        const isDeliveryWithFee = pos.activeTab === 'delivery' && pos.deliverySubType === 'delivery';
+        pos.setPosDeliveryFee(isDeliveryWithFee ? deliveryFee.toString() : '0');
         pos.setPosExtraCharge('0');
         pos.setPosDiscountValue('0');
         pos.setPosDiscountPercentage('0');

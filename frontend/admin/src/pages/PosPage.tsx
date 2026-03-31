@@ -45,6 +45,10 @@ const PosPage: React.FC = () => {
         );
     }
 
+    // Abas 'table', 'counter', 'delivery' mostram catálogo
+    // Aba 'tables' mostra grid de mesas (gerenciamento)
+    const showCatalog = pos.activeTab !== 'tables';
+
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden font-sans selection:bg-orange-100 selection:text-orange-900">
             <CartSidebar 
@@ -61,7 +65,7 @@ const PosPage: React.FC = () => {
                     onRefreshTables={refreshTables}
                 />
 
-                {pos.activeTab === 'pos' ? (
+                {showCatalog ? (
                     <ProductGrid 
                         products={products}
                         categories={categories}
