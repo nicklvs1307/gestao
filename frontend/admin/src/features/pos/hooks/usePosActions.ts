@@ -7,6 +7,7 @@ import {
 import { usePosStore } from './usePosStore';
 import { useCartStore, useCartTotal } from './useCartStore';
 import { Product, TableSummary, PaymentMethod, Order } from '../../../types';
+import { printOrder } from '../../../services/printing';
 
 export const usePosActions = (
     refreshTables: () => void, 
@@ -92,35 +93,49 @@ export const usePosActions = (
                 totalAmount: Number((cartTotalValue + finalExtra + finalDelivery - finalDiscount).toFixed(2))
             };
 
-            // Lógica de envio por modo
+            // ─── LÓGICA DE ENVIO POR MODO ───
+
+            // MESA: Adiciona itens à comanda existente + imprime os itens novos (cozinha)
             if (pos.activeTab === 'table') {
                 const tableInfo = tablesSummary.find(t => t.number === parseInt(pos.selectedTable));
                 const activeOrderId = tableInfo?.tabs?.[0]?.orderId;
 
                 if (activeOrderId && tableInfo.status !== 'free') {
+                    // Adiciona itens ao pedido existente
                     await addItemsToOrder(activeOrderId, orderPayload.items);
                     if (finalDiscount > 0 || finalExtra > 0) {
                         const newTotal = tableInfo.totalAmount + orderPayload.totalAmount;
                         await updateOrderFinancials(activeOrderId, { discount: finalDiscount, surcharge: finalExtra, total: newTotal });
                     }
-                    toast.success("Itens adicionados ao pedido!");
+                    
+                    // Imprime os itens novos na cozinha/bar
+                    try {
+                        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+                        const orderForPrint = {
+                            ...orderPayload,
+                            id: activeOrderId,
+                            orderType: 'TABLE' as const,
+                            status: 'PENDING' as const,
+                            tableNumber: parseInt(pos.selectedTable),
+                            items: cart.map(item => ({
+                                ...item,
+                                product: { name: item.name, categories: [] },
+                                priceAtTime: item.price,
+                            })),
+                        };
+                        await printOrder(orderForPrint as any, printerConfig);
+                        toast.success("Itens adicionados e impressos na cozinha!");
+                    } catch {
+                        toast.success("Itens adicionados ao pedido!");
+                    }
                 } else {
+                    // Novo pedido de mesa
                     await createOrder(orderPayload);
                     toast.success("Pedido enviado!");
                 }
-            } else if (isDelivery && pos.activeDeliveryOrderId) {
-                await addItemsToOrder(pos.activeDeliveryOrderId, orderPayload.items);
-                const currentOrder = deliveryOrders.find(o => o.id === pos.activeDeliveryOrderId);
-                if (currentOrder && (finalDiscount > 0 || finalExtra > 0)) {
-                    const newTotal = currentOrder.total + orderPayload.totalAmount;
-                    await updateOrderFinancials(pos.activeDeliveryOrderId, {
-                        discount: finalDiscount,
-                        surcharge: finalExtra,
-                        total: newTotal
-                    });
-                }
-                toast.success("Itens adicionados ao pedido existente!");
-            } else {
+            } 
+            // DELIVERY / BALCÃO: SEMPRE cria pedido NOVO (nunca junta com existente)
+            else {
                 await createOrder(orderPayload);
                 toast.success("Pedido enviado!");
             }
@@ -165,6 +180,23 @@ export const usePosActions = (
 
     const handleTableCheckout = useCallback(async (viewingTable: TableSummary, checkoutData: any) => {
         try {
+            // Imprime o fechamento detalhado da mesa ANTES de finalizar
+            try {
+                const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+                const orderForPrint = {
+                    ...viewingTable,
+                    orderType: 'TABLE' as const,
+                    status: 'COMPLETED' as const,
+                    items: viewingTable.items || [],
+                    totalAmount: viewingTable.totalAmount,
+                    tableNumber: viewingTable.number,
+                };
+                await printOrder(orderForPrint as any, printerConfig);
+            } catch (err) {
+                console.error('[handleTableCheckout] Erro ao imprimir fechamento:', err);
+            }
+
+            // Finaliza a mesa no backend
             await checkoutTable(viewingTable.id, checkoutData);
             toast.success("Mesa finalizada com sucesso!");
             pos.setActiveModal('none');
