@@ -7,7 +7,8 @@ import {
     ClipboardCheck, Map, Send, Layers, FolderOpen, FileText, 
     ShoppingBag, UtensilsCrossed, Receipt, CreditCard, TrendingUp,
     Warehouse, PackagePlus, ClipboardList, FileBarChart, UsersRound,
-    Settings2, Zap, Eye, Pencil, Trash2, PlusCircle
+    Settings2, Zap, Eye, Pencil, Trash2, PlusCircle, Search, Filter,
+    Check, ToggleLeft, LockOpen, Info
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
@@ -179,6 +180,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   const [roleId, setRoleId] = useState<string | null>(null);
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('vendas');
+  const [permissionSearch, setPermissionSearch] = useState('');
   
   const [availableRoles, setAvailableRoles] = useState<any[]>([]);
   const [availablePermissions, setAvailablePermissions] = useState<any[]>([]);
@@ -290,13 +292,23 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
     }
   };
 
-  // Agrupar permissões por estrutura hierárquica
+  // Agrupar permissões por estrutura hierárquica com filtro de busca
   const permissionsByCategory = useMemo(() => {
     return PERMISSION_STRUCTURE.map(cat => {
       const pages = cat.pages.map(page => {
-        const pagePerms = availablePermissions.filter(p => 
+        let pagePerms = availablePermissions.filter(p => 
           page.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()))
         );
+        
+        // Filtrar por busca
+        if (permissionSearch.trim()) {
+          const searchLower = permissionSearch.toLowerCase();
+          pagePerms = pagePerms.filter(p => 
+            p.name.toLowerCase().includes(searchLower) ||
+            (p.description && p.description.toLowerCase().includes(searchLower))
+          );
+        }
+        
         return {
           ...page,
           permissions: pagePerms,
@@ -312,7 +324,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         selectedCount: pages.reduce((acc, p) => acc + p.selectedCount, 0)
       };
     }).filter(cat => cat.pages.length > 0);
-  }, [availablePermissions, selectedPermissionIds]);
+  }, [availablePermissions, selectedPermissionIds, permissionSearch]);
+
+  // Contagem total real (sem filtro de busca)
+  const totalPermissionsCount = useMemo(() => {
+    return availablePermissions.length;
+  }, [availablePermissions]);
 
   const currentCategory = permissionsByCategory.find(c => c.id === activeCategory);
   const totalSelected = selectedPermissionIds.length;
@@ -326,21 +343,30 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }} 
         animate={{ scale: 1, opacity: 1 }}
-        className="relative w-full max-w-5xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="relative w-full max-w-6xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
       >
-        {/* Header Master */}
-        <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center shrink-0 bg-gradient-to-r from-slate-50 to-white">
+        {/* Header Master - Estilo DriverSettlement */}
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center shrink-0 bg-gradient-to-r from-slate-50 to-white">
             <div className="flex items-center gap-4">
-                <div className="bg-slate-900 text-white p-2.5 rounded-xl shadow-lg shadow-slate-900/20">
-                    <ShieldCheck size={20} />
+                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/20">
+                    <ShieldCheck size={22} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter leading-none">
-                        {isEditing ? 'Configurar Membro' : 'Novo Integrante'}
+                    <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter leading-none flex items-center gap-2">
+                        {isEditing ? 'Configurar' : 'Novo'} <span className="text-primary">Colaborador</span>
                     </h3>
-                    <div className="flex items-center gap-2 mt-1.5">
-                        <div className={cn("h-1 w-8 rounded-full", step === 1 ? "bg-orange-500" : "bg-slate-100")} />
-                        <div className={cn("h-1 w-8 rounded-full", step === 2 ? "bg-orange-500" : "bg-slate-100")} />
+                    <div className="flex items-center gap-3 mt-2">
+                        <div className={cn(
+                            "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest",
+                            step === 1 ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600"
+                        )}>
+                            {step === 1 ? <User size={10} /> : <Check size={10} />}
+                            {step === 1 ? 'Dados Pessoais' : 'Permissões'}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className={cn("w-6 h-1 rounded-full", step === 1 ? "bg-orange-500" : "bg-emerald-500")} />
+                            <div className={cn("w-6 h-1 rounded-full", step === 2 ? "bg-orange-500" : "bg-slate-200")} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -349,7 +375,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                 <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-100">
                   <Zap size={14} className="text-orange-500" />
                   <span className="text-[10px] font-black text-orange-700 uppercase">
-                    {totalSelected} permissões
+                    {selectedPermissionIds.length} permissões
                   </span>
                 </div>
               )}
@@ -466,15 +492,38 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         className="flex h-full min-h-0"
                     >
                         {/* Sidebar de Categorias */}
-                        <div className="w-56 border-r border-slate-100 bg-slate-50/50 p-3 shrink-0 overflow-y-auto custom-scrollbar">
-                            <div className="space-y-1.5">
-                                <div className="px-3 py-2">
-                                    <h5 className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Categorias</h5>
+                        <div className="w-64 border-r border-slate-100 bg-slate-50/50 p-4 shrink-0 flex flex-col gap-4">
+                            {/* Search Bar */}
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input 
+                                    type="text" 
+                                    placeholder="Buscar permissão..." 
+                                    value={permissionSearch}
+                                    onChange={(e) => setPermissionSearch(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all"
+                                />
+                            </div>
+
+                            {/* Status Badge */}
+                            <div className="flex items-center gap-2 px-3 py-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex-1">
+                                    {selectedPermissionIds.length} de {totalPermissionsCount}
+                                </span>
+                                <span className="text-[8px] font-bold text-slate-400 uppercase">selecionadas</span>
+                            </div>
+
+                            {/* Categories List */}
+                            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                                <div className="px-1 py-2">
+                                    <h5 className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Módulos</h5>
                                 </div>
                                 
                                 {permissionsByCategory.map(cat => {
                                     const isActive = activeCategory === cat.id;
                                     const Icon = cat.icon;
+                                    const progress = cat.totalPerms > 0 ? (cat.selectedCount / cat.totalPerms) * 100 : 0;
                                     
                                     return (
                                         <button
@@ -483,15 +532,15 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                             className={cn(
                                                 "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
                                                 isActive 
-                                                    ? "bg-white shadow-md border border-slate-200" 
-                                                    : "hover:bg-white hover:shadow-sm border border-transparent"
+                                                    ? "bg-white shadow-md border-2 border-primary/20" 
+                                                    : "hover:bg-white hover:shadow-sm border-2 border-transparent"
                                             )}
                                         >
                                             <div className={cn(
-                                                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                                                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                                                 isActive ? cat.color : "bg-slate-100 text-slate-400"
                                             )}>
-                                                <Icon size={16} />
+                                                <Icon size={18} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <span className={cn(
@@ -500,13 +549,18 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                                 )}>
                                                     {cat.name}
                                                 </span>
-                                                <span className="text-[8px] text-slate-400">
-                                                    {cat.selectedCount}/{cat.totalPerms} permissões
-                                                </span>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full bg-orange-500 rounded-full transition-all"
+                                                            style={{ width: `${progress}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-[7px] text-slate-400 shrink-0">
+                                                        {cat.selectedCount}/{cat.totalPerms}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            {isActive && (
-                                                <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
-                                            )}
                                         </button>
                                     );
                                 })}
@@ -524,16 +578,24 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                 <div className="space-y-6">
                                     {/* Header da Categoria */}
                                     <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-                                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", currentCategory.color)}>
-                                            <currentCategory.icon size={24} />
+                                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", currentCategory.color)}>
+                                            <currentCategory.icon size={28} />
                                         </div>
-                                        <div>
-                                            <h4 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter">
+                                        <div className="flex-1">
+                                            <h4 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">
                                                 {currentCategory.name}
                                             </h4>
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                                {currentCategory.selectedCount} de {currentCategory.totalPerms} permissões selecionadas
-                                            </p>
+                                            <div className="flex items-center gap-3 mt-2">
+                                                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden max-w-[200px]">
+                                                    <div 
+                                                        className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full transition-all"
+                                                        style={{ width: `${currentCategory.totalPerms > 0 ? (currentCategory.selectedCount / currentCategory.totalPerms) * 100 : 0}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    {currentCategory.selectedCount} de {currentCategory.totalPerms} concedidas
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -545,80 +607,93 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                             const someSelected = page.selectedCount > 0 && !allSelected;
                                             
                                             return (
-                                                <div key={page.id} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/30 hover:border-slate-200 transition-all">
+                                                <div key={page.id} className="p-5 rounded-2xl border-2 border-slate-100 bg-slate-50/30 hover:border-slate-200 hover:shadow-lg transition-all">
                                                     {/* Header da Página */}
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-500">
-                                                                <Icon size={16} />
+                                                    <div className="flex items-center justify-between mb-5">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 rounded-xl bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500 shadow-sm">
+                                                                <Icon size={22} />
                                                             </div>
                                                             <div>
-                                                                <h5 className="text-xs font-black text-slate-900 uppercase italic tracking-tight">
+                                                                <h5 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">
                                                                     {page.name}
                                                                 </h5>
-                                                                <span className="text-[8px] text-slate-400">
-                                                                    {page.selectedCount}/{page.permissions.length} permissões
-                                                                </span>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <span className={cn(
+                                                                        "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
+                                                                        allSelected ? "bg-emerald-100 text-emerald-600" : 
+                                                                        someSelected ? "bg-amber-100 text-amber-600" :
+                                                                        "bg-slate-100 text-slate-400"
+                                                                    )}>
+                                                                        {allSelected ? 'Completo' : someSelected ? 'Parcial' : 'Vazio'}
+                                                                    </span>
+                                                                    <span className="text-[7px] text-slate-400">
+                                                                        {page.selectedCount}/{page.permissions.length} permissões
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         
                                                         <button
                                                             onClick={() => toggleAllInPage(page.keywords)}
                                                             className={cn(
-                                                                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                                                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all hover:scale-105",
                                                                 allSelected 
-                                                                    ? "bg-orange-500 text-white"
+                                                                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
                                                                     : someSelected
-                                                                        ? "bg-orange-100 text-orange-700 border border-orange-200"
-                                                                        : "bg-white text-slate-400 border border-slate-200 hover:border-orange-300"
+                                                                        ? "bg-amber-100 text-amber-700 border-2 border-amber-200"
+                                                                        : "bg-white text-slate-500 border-2 border-slate-200 hover:border-orange-300 hover:text-orange-600"
                                                             )}
                                                         >
                                                             {allSelected ? (
                                                                 <>
-                                                                    <CheckSquare size={12} />
-                                                                   Todos
+                                                                    <CheckSquare size={14} />
+                                                                    Conceder Tudo
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <Square size={12} />
-                                                                    {someSelected ? 'Parcial' : 'Selecionar'}
+                                                                    <Square size={14} />
+                                                                    {someSelected ? 'Ajustar' : 'Conceder'}
                                                                 </>
                                                             )}
                                                         </button>
                                                     </div>
 
                                                     {/* Grid de Permissões */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                                                        {page.permissions.map(p => {
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                        {page.permissions.map((p, idx) => {
                                                             const isSelected = selectedPermissionIds.includes(p.id);
                                                             
                                                             return (
-                                                                <button
+                                                                <motion.button
                                                                     key={p.id}
+                                                                    initial={{ opacity: 0, y: 5 }}
+                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                    transition={{ delay: idx * 0.02 }}
                                                                     onClick={() => togglePermission(p.id)}
                                                                     className={cn(
-                                                                        "flex items-start gap-2.5 p-3 rounded-xl border-2 transition-all text-left hover:scale-[1.01]",
+                                                                        "flex items-start gap-3 p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02] group",
                                                                         isSelected 
-                                                                            ? "bg-orange-50 border-orange-200 shadow-sm" 
+                                                                            ? "bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-md" 
                                                                             : "bg-white border-slate-100 hover:border-slate-200"
                                                                     )}
                                                                 >
                                                                     <div className={cn(
-                                                                        "w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5",
-                                                                        isSelected ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-300"
+                                                                        "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-all",
+                                                                        isSelected ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 text-slate-300 group-hover:bg-slate-200"
                                                                     )}>
-                                                                        {isSelected ? <CheckSquare size={12} /> : <Square size={12} />}
+                                                                        {isSelected ? <CheckSquare size={14} /> : <Square size={14} />}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
                                                                         <span className={cn(
-                                                                            "text-[9px] font-bold uppercase tracking-tight block truncate",
+                                                                            "text-[9px] font-bold uppercase tracking-tight block",
                                                                             isSelected ? "text-orange-900" : "text-slate-700"
                                                                         )}>
                                                                             {p.description || p.name}
                                                                         </span>
-                                                                        <span className="text-[7px] text-slate-400 block truncate mt-0.5">{p.name}</span>
+                                                                        <span className="text-[7px] text-slate-400 block truncate mt-1">{p.name}</span>
                                                                     </div>
-                                                                </button>
+                                                                </motion.button>
                                                             );
                                                         })}
                                                     </div>
@@ -640,7 +715,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         </div>
 
         {/* Rodapé Fixo */}
-        <div className="px-8 py-5 bg-white border-t border-slate-100 flex gap-3 shrink-0 shadow-lg shadow-slate-100/50">
+        <div className="px-6 py-4 bg-white border-t border-slate-100 flex gap-3 shrink-0 shadow-lg shadow-slate-100/50">
             {step === 1 ? (
                 <>
                     <Button 
