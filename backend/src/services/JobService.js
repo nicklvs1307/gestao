@@ -1,6 +1,10 @@
 const cron = require('node-cron');
 const checklistReportService = require('./ChecklistReportService');
 const logger = require('../config/logger');
+const prisma = require('../lib/prisma');
+const socketLib = require('../lib/socket');
+const { format, parse } = require('date-fns');
+const { ptBR } = require('date-fns/locale');
 
 class JobService {
   constructor() {
@@ -13,14 +17,12 @@ class JobService {
     let lockTimeout = null;
 
     // Cron Job para Relatórios de Checklist (Verifica a cada 5 minutos)
-    // Reduzido de 1 minuto para 5 minutos - suficiente para HH:mm checks
     const checklistReportJob = cron.schedule('*/5 * * * *', async () => {
       if (isRunningChecklist) return;
 
       try {
         isRunningChecklist = true;
 
-        // Timeout de segurança: libera o lock após 4 minutos
         lockTimeout = setTimeout(() => {
           isRunningChecklist = false;
           logger.warn('[JobService] Lock de relatórios liberado por timeout (4min).');
@@ -37,6 +39,79 @@ class JobService {
     });
 
     this.jobs.push({ name: 'ChecklistReport', job: checklistReportJob });
+
+    // Cron Job para Abertura/Fechamento Automático de Delivery (Verifica a cada 1 minuto)
+    const autoDeliveryJob = cron.schedule('* * * * *', async () => {
+      try {
+        const now = new Date();
+        const currentTimeInt = now.getHours() * 60 + now.getMinutes();
+        const currentDay = now.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
+
+        // Buscar todas as configurações com autoOpenDelivery ativado
+        const settings = await prisma.restaurantSettings.findMany({
+          where: { autoOpenDelivery: true }
+        });
+
+        for (const setting of settings) {
+          try {
+            let shouldBeOpen = false;
+
+            // Prioridade 1: Horário por dia (operatingHours)
+            if (setting.operatingHours && Array.isArray(setting.operatingHours)) {
+              const todaySchedule = setting.operatingHours.find(h => h.dayOfWeek === currentDay);
+              
+              if (todaySchedule) {
+                if (todaySchedule.isClosed) {
+                  shouldBeOpen = false;
+                } else {
+                  const [openH, openM] = todaySchedule.openingTime.split(':').map(Number);
+                  const [closeH, closeM] = todaySchedule.closingTime.split(':').map(Number);
+                  const openTimeInt = openH * 60 + openM;
+                  const closeTimeInt = closeH * 60 + closeM;
+
+                  if (openTimeInt <= closeTimeInt) {
+                    shouldBeOpen = currentTimeInt >= openTimeInt && currentTimeInt < closeTimeInt;
+                  } else {
+                    shouldBeOpen = currentTimeInt >= openTimeInt || currentTimeInt < closeTimeInt;
+                  }
+                }
+              }
+            }
+            // Fallback: Horário único legado
+            else if (setting.deliveryOpeningTime && setting.deliveryClosingTime) {
+              const [openH, openM] = setting.deliveryOpeningTime.split(':').map(Number);
+              const [closeH, closeM] = setting.deliveryClosingTime.split(':').map(Number);
+              const openTimeInt = openH * 60 + openM;
+              const closeTimeInt = closeH * 60 + closeM;
+
+              if (openTimeInt <= closeTimeInt) {
+                shouldBeOpen = currentTimeInt >= openTimeInt && currentTimeInt < closeTimeInt;
+              } else {
+                shouldBeOpen = currentTimeInt >= openTimeInt || currentTimeInt < closeTimeInt;
+              }
+            }
+
+            if (setting.isOpen !== shouldBeOpen) {
+              await prisma.restaurantSettings.update({
+                where: { id: setting.id },
+                data: { isOpen: shouldBeOpen }
+              });
+
+              logger.info(`[JobService] Loja ${setting.restaurantId} alternada para ${shouldBeOpen ? 'ABERTA' : 'FECHADA'}`);
+              
+              // Emitir evento para clientes conectados
+              socketLib.emitToRestaurant(setting.restaurantId, 'restaurantUpdate', { isOpen: shouldBeOpen });
+            }
+          } catch (err) {
+             logger.error(`[JobService] Erro ao processar loja ${setting.restaurantId}:`, err);
+          }
+        }
+      } catch (error) {
+        logger.error('[JobService] Erro ao processar abertura automática:', error);
+      }
+    });
+
+    this.jobs.push({ name: 'AutoDeliveryOpenClose', job: autoDeliveryJob });
 
     logger.info('[JobService] Tarefas agendadas com sucesso.');
   }

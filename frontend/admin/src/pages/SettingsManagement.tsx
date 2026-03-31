@@ -38,12 +38,24 @@ const SettingsManagement: React.FC = () => {
   const [general, setGeneral] = useState({
     name: '', address: '', phone: '', city: '', state: '', 
     latitude: '', longitude: '', slug: '', openingHours: '',
-    serviceTax: 10, deliveryFee: 0, deliveryTime: '30-40 min'
+    serviceTax: 10, deliveryFee: 0, deliveryTime: '30-40 min', minOrderValue: 0
   });
 
   const [operation, setOperation] = useState({
-    isOpen: false, autoAccept: false, autoPrint: true
+    isOpen: false, autoAccept: false, autoPrint: true,
+    autoOpenDelivery: false, deliveryOpeningTime: '', deliveryClosingTime: ''
   });
+
+  const defaultOperatingHours = [
+    { dayOfWeek: 0, openingTime: '18:00', closingTime: '23:00', isClosed: false },
+    { dayOfWeek: 1, openingTime: '18:00', closingTime: '23:00', isClosed: false },
+    { dayOfWeek: 2, openingTime: '18:00', closingTime: '23:00', isClosed: false },
+    { dayOfWeek: 3, openingTime: '18:00', closingTime: '23:00', isClosed: false },
+    { dayOfWeek: 4, openingTime: '18:00', closingTime: '23:00', isClosed: false },
+    { dayOfWeek: 5, openingTime: '18:00', closingTime: '23:00', isClosed: false },
+    { dayOfWeek: 6, openingTime: '00:00', closingTime: '00:00', isClosed: true },
+  ];
+  const [operatingHours, setOperatingHours] = useState(defaultOperatingHours);
 
   const [loyalty, setLoyalty] = useState({
     enabled: false, pointsPerReal: 1, cashback: 0
@@ -114,14 +126,20 @@ const SettingsManagement: React.FC = () => {
         openingHours: settingsData.openingHours || '',
         serviceTax: settingsData.serviceTaxPercentage || 10,
         deliveryFee: settingsData.settings?.deliveryFee || 0,
-        deliveryTime: settingsData.settings?.deliveryTime || '30-40 min'
+        deliveryTime: settingsData.settings?.deliveryTime || '30-40 min',
+        minOrderValue: settingsData.settings?.minOrderValue || 0
       });
 
       setOperation({
         isOpen: settingsData.settings?.isOpen || false,
         autoAccept: settingsData.settings?.autoAcceptOrders || false,
-        autoPrint: settingsData.settings?.autoPrintEnabled !== undefined ? settingsData.settings.autoPrintEnabled : true
+        autoPrint: settingsData.settings?.autoPrintEnabled !== undefined ? settingsData.settings.autoPrintEnabled : true,
+        autoOpenDelivery: settingsData.settings?.autoOpenDelivery || false,
+        deliveryOpeningTime: settingsData.settings?.deliveryOpeningTime || '',
+        deliveryClosingTime: settingsData.settings?.deliveryClosingTime || ''
       });
+
+      setOperatingHours(settingsData.settings?.operatingHours || defaultOperatingHours);
 
       setLoyalty({
         enabled: settingsData.settings?.loyaltyEnabled || false,
@@ -195,10 +213,13 @@ const SettingsManagement: React.FC = () => {
         primaryColor: appearance.primary, secondaryColor: appearance.secondary, backgroundColor: appearance.background,
         backgroundImageUrl: appearance.cover.replace(/^\/api/, ''), 
         isOpen: operation.isOpen, deliveryFee: general.deliveryFee, deliveryTime: general.deliveryTime,
+        minOrderValue: general.minOrderValue,
         autoAcceptOrders: operation.autoAccept, autoPrintEnabled: operation.autoPrint,
+        autoOpenDelivery: operation.autoOpenDelivery, deliveryOpeningTime: operation.deliveryOpeningTime, deliveryClosingTime: operation.deliveryClosingTime,
         loyaltyEnabled: loyalty.enabled, pointsPerReal: loyalty.pointsPerReal, cashbackPercentage: loyalty.cashback,
         videoBanners: appearance.videoBanners,
-        metaPixelId: pixels.metaPixelId, googleAnalyticsId: pixels.googleAnalyticsId, internalPixelId: pixels.internalPixelId
+        metaPixelId: pixels.metaPixelId, googleAnalyticsId: pixels.googleAnalyticsId, internalPixelId: pixels.internalPixelId,
+        operatingHours
       });
       setOriginalSlug(general.slug);
       localStorage.setItem('printer_config', JSON.stringify(printerConfig));
@@ -264,10 +285,6 @@ const SettingsManagement: React.FC = () => {
                     <input type="number" className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.serviceTax} onChange={e => setGeneral({...general, serviceTax: parseFloat(e.target.value)})} />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Horário de Funcionamento</label>
-                  <input className="w-full h-9 px-3 rounded-lg bg-background border border-border text-[11px] font-bold" value={general.openingHours} onChange={e => setGeneral({...general, openingHours: e.target.value})} placeholder="Seg a Sex 18h-23h" />
-                </div>
               </div>
             </Card>
 
@@ -310,16 +327,85 @@ const SettingsManagement: React.FC = () => {
                 <h3 className="text-[10px] font-black uppercase text-orange-900 italic flex items-center gap-2">
                   <Navigation size={14} className="text-orange-500"/> Entrega
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Taxa Fixa (R$)</label>
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Taxa (R$)</label>
                     <input type="number" className="w-full h-9 px-3 rounded-lg bg-white border border-orange-100 text-[11px] font-bold" value={general.deliveryFee} onChange={e => setGeneral({...general, deliveryFee: parseFloat(e.target.value)})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Tempo Médio</label>
                     <input className="w-full h-9 px-3 rounded-lg bg-white border border-orange-100 text-[11px] font-bold" value={general.deliveryTime} onChange={e => setGeneral({...general, deliveryTime: e.target.value})} />
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Mínimo (R$)</label>
+                    <input type="number" className="w-full h-9 px-3 rounded-lg bg-white border border-orange-100 text-[11px] font-bold" value={general.minOrderValue} onChange={e => setGeneral({...general, minOrderValue: parseFloat(e.target.value)})} />
+                  </div>
                 </div>
+              </Card>
+
+              <Card className="p-4 space-y-3 border-border">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-black uppercase text-foreground italic flex items-center gap-2">
+                    <Clock size={14} className="text-primary"/> Horário de Funcionamento
+                  </h3>
+                  <button
+                    onClick={() => setOperation({...operation, autoOpenDelivery: !operation.autoOpenDelivery})}
+                    className={cn("w-10 h-5 rounded-full relative transition-all", operation.autoOpenDelivery ? "bg-emerald-500" : "bg-slate-300")}
+                  >
+                    <div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", operation.autoOpenDelivery ? "left-6" : "left-1")} />
+                  </button>
+                </div>
+                <p className={cn("text-[8px] font-bold uppercase tracking-widest", operation.autoOpenDelivery ? "text-emerald-600" : "text-muted-foreground")}>
+                  {operation.autoOpenDelivery ? 'AGENDAMENTO ATIVADO' : 'AGENDAMENTO DESATIVADO'}
+                </p>
+
+                {operation.autoOpenDelivery && (
+                  <div className="space-y-1.5 pt-2 border-t border-border">
+                    {operatingHours.map((schedule, index) => {
+                      const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                      return (
+                        <div key={schedule.dayOfWeek} className="flex items-center gap-2 p-1.5 bg-background rounded-lg">
+                          <span className="text-[9px] font-black uppercase text-muted-foreground w-8 shrink-0">
+                            {dayLabels[schedule.dayOfWeek]}
+                          </span>
+                          <input
+                            type="time"
+                            disabled={schedule.isClosed}
+                            value={schedule.openingTime}
+                            onChange={e => {
+                              const updated = [...operatingHours];
+                              updated[index] = {...updated[index], openingTime: e.target.value};
+                              setOperatingHours(updated);
+                            }}
+                            className="flex-1 h-8 px-2 rounded-md bg-white border border-border text-[11px] font-bold disabled:opacity-30"
+                          />
+                          <span className="text-[8px] text-muted-foreground">às</span>
+                          <input
+                            type="time"
+                            disabled={schedule.isClosed}
+                            value={schedule.closingTime}
+                            onChange={e => {
+                              const updated = [...operatingHours];
+                              updated[index] = {...updated[index], closingTime: e.target.value};
+                              setOperatingHours(updated);
+                            }}
+                            className="flex-1 h-8 px-2 rounded-md bg-white border border-border text-[11px] font-bold disabled:opacity-30"
+                          />
+                          <button
+                            onClick={() => {
+                              const updated = [...operatingHours];
+                              updated[index] = {...updated[index], isClosed: !updated[index].isClosed};
+                              setOperatingHours(updated);
+                            }}
+                            className={cn("w-8 h-8 rounded-md flex items-center justify-center transition-all text-[8px] font-black uppercase", schedule.isClosed ? "bg-rose-500 text-white" : "bg-slate-100 text-slate-400 hover:bg-slate-200")}
+                          >
+                            {schedule.isClosed ? 'X' : 'OK'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </Card>
 
               <Card className="p-4 space-y-3 border-border">

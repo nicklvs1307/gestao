@@ -388,6 +388,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
           isOpen={isStoreClosedModalOpen}
           onClose={() => setStoreClosedModalOpen(false)}
           restaurantName={restaurant.name}
+          operatingHours={restaurant?.settings?.operatingHours}
         />
 
         {pixData && (

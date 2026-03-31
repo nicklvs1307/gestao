@@ -243,6 +243,10 @@ model RestaurantSettings {
   cashbackPercentage  Float   @default(0) // Ex: 5% de cashback
   videoBanners        String[] @default([]) // Array de URLs dos vídeos para o carrossel
 
+  // === Horário de Funcionamento por Dia ===
+  // Formato JSON: [{ dayOfWeek: 0-6 (Dom-Sáb), openingTime: "HH:mm", closingTime: "HH:mm", isClosed: false }]
+  operatingHours Json?
+
   // === Configurações de Pixels e Analytics ===
   metaPixelId         String?  // Meta/Facebook Pixel ID
   googleAnalyticsId   String?  // Google Analytics 4 ID (G-XXXXXXXXXX)

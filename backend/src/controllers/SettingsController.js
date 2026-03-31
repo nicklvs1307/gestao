@@ -47,9 +47,11 @@ const updateSettings = async (req, res) => {
         latitude, longitude,
         primaryColor, secondaryColor, backgroundColor, backgroundType, 
         backgroundImageUrl, isOpen, deliveryFee, deliveryTime, autoAcceptOrders,
+        minOrderValue, autoOpenDelivery, deliveryOpeningTime, deliveryClosingTime, // Novos campos de Delivery
         welcomeMessage, menuUrl, allowTakeaway,
         loyaltyEnabled, pointsPerReal, cashbackPercentage, videoBanners, autoPrintEnabled,
-        metaPixelId, googleAnalyticsId, internalPixelId
+        metaPixelId, googleAnalyticsId, internalPixelId,
+        operatingHours
     } = req.body;
 
     try {
@@ -104,6 +106,10 @@ const updateSettings = async (req, res) => {
                     deliveryFee: deliveryFee !== undefined ? parseFloat(deliveryFee) : undefined,
                     deliveryTime,
                     autoAcceptOrders,
+                    minOrderValue: minOrderValue !== undefined ? parseFloat(minOrderValue) : undefined,
+                    autoOpenDelivery,
+                    deliveryOpeningTime,
+                    deliveryClosingTime,
                     autoPrintEnabled,
                     welcomeMessage,
                     menuUrl,
@@ -114,7 +120,8 @@ const updateSettings = async (req, res) => {
                     videoBanners,
                     metaPixelId,
                     googleAnalyticsId,
-                    internalPixelId
+                    internalPixelId,
+                    operatingHours
                 } 
             })
         ]);

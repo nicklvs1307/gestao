@@ -1,15 +1,43 @@
 import React from 'react';
-import { X, Clock, ShoppingBag } from 'lucide-react';
+import { X, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
+import { OperatingHour } from '../types';
 
 interface StoreClosedModalProps {
   isOpen: boolean;
   onClose: () => void;
   restaurantName?: string;
+  operatingHours?: OperatingHour[];
 }
 
-const StoreClosedModal: React.FC<StoreClosedModalProps> = ({ isOpen, onClose, restaurantName }) => {
+const getNextOpening = (operatingHours?: OperatingHour[]): string => {
+  if (!operatingHours || operatingHours.length === 0) return '';
+  
+  const now = new Date();
+  const currentDay = now.getDay();
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  const dayLabels = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  
+  for (let i = 0; i < 7; i++) {
+    const checkDay = (currentDay + i) % 7;
+    const schedule = operatingHours.find(h => h.dayOfWeek === checkDay);
+    if (schedule && !schedule.isClosed) {
+      if (i === 0) {
+        const [openH, openM] = schedule.openingTime.split(':').map(Number);
+        if (currentTime < openH * 60 + openM) {
+          return `Hoje às ${schedule.openingTime}`;
+        }
+      }
+      return `${dayLabels[checkDay]} às ${schedule.openingTime}`;
+    }
+  }
+  return '';
+};
+
+const StoreClosedModal: React.FC<StoreClosedModalProps> = ({ isOpen, onClose, restaurantName, operatingHours }) => {
+  const nextOpening = getNextOpening(operatingHours);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -40,11 +68,16 @@ const StoreClosedModal: React.FC<StoreClosedModalProps> = ({ isOpen, onClose, re
             <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-2 leading-none">
                 Estamos Fechados
             </h3>
-            <p className="text-slate-500 text-sm font-bold uppercase tracking-tight leading-relaxed mb-8">
-                Desculpe, o {restaurantName || 'restaurante'} não está aceitando novos pedidos no momento. 
-                <br />
-                <span className="text-slate-400 text-[10px] mt-2 block">Você ainda pode navegar pelo nosso cardápio e conhecer nossas delícias!</span>
+            <p className="text-slate-500 text-sm font-bold uppercase tracking-tight leading-relaxed mb-2">
+                Desculpe, o {restaurantName || 'restaurante'} não está aceitando novos pedidos no momento.
             </p>
+            {nextOpening ? (
+              <p className="text-emerald-600 text-xs font-black uppercase tracking-wider mb-6">
+                Abriremos {nextOpening}
+              </p>
+            ) : (
+              <span className="text-slate-400 text-[10px] mt-2 block mb-6">Você ainda pode navegar pelo nosso cardápio e conhecer nossas delícias!</span>
+            )}
 
             <div className="space-y-3">
                 <Button 

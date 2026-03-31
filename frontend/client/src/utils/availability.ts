@@ -1,4 +1,4 @@
-import { Category } from '../types';
+import { Category, OperatingHour } from '../types';
 
 export const isCategoryAvailable = (category: Category): boolean => {
   const now = new Date();
@@ -39,4 +39,25 @@ export const isCategoryAvailable = (category: Category): boolean => {
   }
 
   return true;
+};
+
+export const isRestaurantOpen = (operatingHours?: OperatingHour[]): boolean => {
+  if (!operatingHours || operatingHours.length === 0) return true;
+
+  const now = new Date();
+  const currentDay = now.getDay(); // 0=Dom ... 6=Sáb
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+
+  const todaySchedule = operatingHours.find(h => h.dayOfWeek === currentDay);
+  if (!todaySchedule || todaySchedule.isClosed) return false;
+
+  const [startH, startM] = todaySchedule.openingTime.split(':').map(Number);
+  const [endH, endM] = todaySchedule.closingTime.split(':').map(Number);
+  const startTime = startH * 60 + startM;
+  const endTime = endH * 60 + endM;
+
+  if (startTime > endTime) {
+    return currentTime >= startTime || currentTime < endTime;
+  }
+  return currentTime >= startTime && currentTime < endTime;
 };

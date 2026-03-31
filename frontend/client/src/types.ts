@@ -1,3 +1,10 @@
+export interface OperatingHour {
+  dayOfWeek: number; // 0=Dom, 1=Seg, ..., 6=Sáb
+  openingTime: string;
+  closingTime: string;
+  isClosed: boolean;
+}
+
 export interface AddonOption {
   id: string;
   name: string;
@@ -227,6 +234,10 @@ export interface RestaurantSettings {
   metaPixelId?: string;
   googleAnalyticsId?: string;
   internalPixelId?: string;
+  autoOpenDelivery?: boolean;
+  deliveryOpeningTime?: string;
+  deliveryClosingTime?: string;
+  operatingHours?: OperatingHour[];
   restaurant: Restaurant;
 }
 

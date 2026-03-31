@@ -298,6 +298,7 @@ const TableMenu: React.FC<TableMenuProps> = ({
           isOpen={isStoreClosedModalOpen}
           onClose={() => setStoreClosedModalOpen(false)}
           restaurantName={restaurantSettings?.restaurant?.name}
+          operatingHours={restaurantSettings?.operatingHours}
         />
 
         <OrderSuccessModal isOpen={isOrderSuccessModalOpen} onClose={closeOrderSuccessModal} />
