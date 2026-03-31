@@ -439,8 +439,7 @@ const generateOrderReceiptPdf = (
   const doc = new jsPDF({ 
     orientation: 'portrait', 
     unit: 'mm', 
-    format: [80, finalHeight],
-    margin: { top: 10, bottom: 10, left: 5, right: 5 }
+    format: [80, finalHeight]
   });
   drawContent(doc);
   return doc.output('datauristring').split(',')[1];
@@ -935,8 +934,7 @@ export const printCashierClosure = async (
   const doc = new jsPDF({ 
     orientation: 'portrait', 
     unit: 'mm', 
-    format: [80, finalHeight],
-    margin: { top: 10, bottom: 10, left: 5, right: 5 }
+    format: [80, finalHeight]
   });
   drawContent(doc);
   const pdf = doc.output('datauristring').split(',')[1];
@@ -976,8 +974,14 @@ export const printDriverSettlement = async (
   }
 
   const info = restaurantInfo || getRestaurantInfoFromStorage();
+  
+  // Margens reais (em mm) - 12mm = 1.2cm
+  const TOP_MARGIN = 12;
+  const BOTTOM_MARGIN = 12;
+  const LEFT_MARGIN = 5;
+  
   const baseSize = 9;
-  const leftMargin = 5;
+  const leftMargin = LEFT_MARGIN;
   const rightMargin = 75;
   const centerX = 40;
   const lineHeight = baseSize * 0.42;
@@ -985,8 +989,8 @@ export const printDriverSettlement = async (
   const formatCurrency = (value: number) => 
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-  const drawContent = (doc: jsPDF): number => {
-    let y = 8;
+  const drawContent = (doc: jsPDF, startY: number): number => {
+    let y = startY;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(baseSize);
 
@@ -1107,12 +1111,12 @@ export const printDriverSettlement = async (
     y += lineHeight + 4;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(baseSize - 1);
-    doc.text('ASSINATUREA DO ENTREGADOR:', centerX, y, { align: 'center' });
+    doc.text('ASSINATURA DO ENTREGADOR:', centerX, y, { align: 'center' });
     y += lineHeight + 6;
     doc.text('_________________________________________', centerX, y, { align: 'center' });
     y += lineHeight + 4;
     
-    doc.text('ASSINATUREA DO CAIXA:', centerX, y, { align: 'center' });
+    doc.text('ASSINATURA DO CAIXA:', centerX, y, { align: 'center' });
     y += lineHeight + 6;
     doc.text('_________________________________________', centerX, y, { align: 'center' });
     y += lineHeight + 2;
@@ -1129,28 +1133,56 @@ export const printDriverSettlement = async (
     return y;
   };
 
+  // 1. Medir altura do conteúdo com margem superior
   const tempDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 2000] });
-  const finalHeight = drawContent(tempDoc);
+  const contentBottom = drawContent(tempDoc, TOP_MARGIN);
+  const contentHeight = contentBottom; // altura desde y=0 até o fim do conteúdo
+  
+  // 2. Criar PDF com tamanho exato + margem inferior
+  const totalHeight = contentHeight + BOTTOM_MARGIN;
   const doc = new jsPDF({ 
     orientation: 'portrait', 
     unit: 'mm', 
-    format: [80, finalHeight],
-    margin: { top: 10, bottom: 10, left: 5, right: 5 }
+    format: [80, totalHeight]
   });
-  drawContent(doc);
+  
+  // 3. Desenhar conteúdo com margem superior
+  drawContent(doc, TOP_MARGIN);
   const pdf = doc.output('datauristring').split(',')[1];
+
+  console.log('[printDriverSettlement] PDF gerado:', contentHeight.toFixed(1), 'mm conteúdo,', totalHeight.toFixed(1), 'mm total');
+  console.log('[printDriverSettlement] Margens: topo=' + TOP_MARGIN + 'mm, rodapé=' + BOTTOM_MARGIN + 'mm');
 
   // Imprime na impressora do caixa
   const config = getPrinterConfigFromStorage();
   if (config.cashierPrinters && config.cashierPrinters.length > 0) {
     for (const p of config.cashierPrinters) {
+      console.log('[printDriverSettlement] Enviando para impressora:', p);
       await sendToAgent(p, pdf, 'pdf');
     }
+    toast.success(`Comprovante de ${settlement.driverName} enviado para impressão!`);
   } else {
+    console.log('[printDriverSettlement] Nenhuma impressora de caixa configurada, abrindo fallback');
     // Fallback: abre em nova aba para impressão manual
-    const pdfWindow = window.open('', '_blank');
-    if (pdfWindow) {
-      pdfWindow.document.write(`<iframe src="${doc.output('dataurlstring')}" style="width:100%;height:100%;border:none;"></iframe>`);
+    try {
+      const pdfDataUri = doc.output('datauristring');
+      const pdfWindow = window.open('', '_blank');
+      if (pdfWindow) {
+        pdfWindow.document.write(`
+          <html>
+            <head><title>Comprovante - ${settlement.driverName}</title></head>
+            <body style="margin:0;display:flex;justify-content:center;">
+              <iframe src="${pdfDataUri}" style="width:100%;height:100vh;border:none;"></iframe>
+            </body>
+          </html>
+        `);
+        pdfWindow.document.close();
+      } else {
+        toast.error('Pop-up bloqueado! Permita pop-ups para imprimir.');
+      }
+    } catch (err) {
+      console.error('[printDriverSettlement] Erro no fallback:', err);
+      toast.error('Erro ao abrir comprovante para impressão.');
     }
   }
 };
