@@ -5,7 +5,7 @@ import { usePosStore } from '../../hooks/usePosStore';
 import { useNavigate } from 'react-router-dom';
 import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 import { 
-  UtensilsCross, 
+  UtensilsCrossed, 
   Store, 
   Bike, 
   ShoppingBag, 
@@ -40,7 +40,7 @@ export const PosHeader = React.memo<PosHeaderProps>(({
   }, [setActiveModal]);
 
   const tabs = [
-    { id: 'table' as const, label: 'Mesa', icon: UtensilsCross, color: 'emerald' },
+    { id: 'table' as const, label: 'Mesa', icon: UtensilsCrossed, color: 'emerald' },
     { id: 'counter' as const, label: 'Balcão', icon: ShoppingBag, color: 'blue' },
     { id: 'delivery' as const, label: 'Entrega', icon: Bike, color: 'orange' },
   ];
@@ -51,7 +51,7 @@ export const PosHeader = React.memo<PosHeaderProps>(({
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
-            <UtensilsCross size={20} className="text-white" />
+            <UtensilsCrossed size={20} className="text-white" />
           </div>
           <div>
             <h1 className="text-sm font-black uppercase text-slate-900 tracking-tight leading-none">PDV</h1>

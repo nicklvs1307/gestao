@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { X, ArrowRightLeft, UtensilsCross } from 'lucide-react';
+import { X, ArrowRightLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';

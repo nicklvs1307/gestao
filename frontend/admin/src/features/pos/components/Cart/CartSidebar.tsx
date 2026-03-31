@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import { 
   ShoppingCart, Minus, Plus, Bike, ShoppingBag, User, X, 
-  ChevronDown, ChevronUp, UtensilsCross, Store
+  ChevronDown, ChevronUp, UtensilsCrossed, Store
 } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import { useCartStore, useCartTotal } from '../../hooks/useCartStore';
@@ -62,7 +62,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
   }, [activeTab, selectedTable, tablesSummary]);
 
   const tabConfig: Record<PosTab, { label: string; color: string; icon: React.ReactNode }> = {
-    table: { label: `Mesa ${selectedTable || '?'}`, color: 'emerald', icon: <UtensilsCross size={16} /> },
+    table: { label: `Mesa ${selectedTable || '?'}`, color: 'emerald', icon: <UtensilsCrossed size={16} /> },
     counter: { label: 'Balcão', color: 'blue', icon: <Store size={16} /> },
     delivery: { label: 'Entrega', color: 'orange', icon: <Bike size={16} /> },
   };
