@@ -7,7 +7,7 @@ import {
     ChevronLeft, Printer, Loader2, X,
     ShoppingCart, Users, Receipt, Wallet, Banknote,
     QrCode, CreditCard, Percent, FileText, CheckCircle2,
-    ArrowRightLeft, Split, Layers
+    ArrowRightLeft, Split, Layers, Clock
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -712,7 +712,7 @@ const TableCheckout: React.FC = () => {
                         <Layers size={14} /> Comandas: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{tabs.length}</span>
                     </div>
                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400">
-                        <History size={14} /> Pagamentos: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{order.payments?.length || 0}</span>
+                        <Clock size={14} /> Pagamentos: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{order.payments?.length || 0}</span>
                     </div>
                 </div>
             </footer>
