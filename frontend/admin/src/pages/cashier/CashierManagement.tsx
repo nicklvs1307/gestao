@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCashier } from './hooks/useCashier';
@@ -19,7 +19,7 @@ const stepVariants = {
   exit: { opacity: 0, x: -40 },
 };
 
-const CashierManagement: React.FC = () => {
+const CashierManagement: React.FC = memo(() => {
   const {
     authUser,
     loading,
@@ -73,6 +73,10 @@ const CashierManagement: React.FC = () => {
     closeSettlementsModal,
   } = useCashier();
 
+  const handleSetStep = useCallback((newStep: 'COUNT' | 'REVIEW') => setStep(newStep), [setStep]);
+  const handleSetShowMoneyCounter = useCallback((val: boolean) => setShowMoneyCounter(val), [setShowMoneyCounter]);
+  const handleCloseValueChange = useCallback((id: string, val: string) => setClosingValues(prev => ({ ...prev, [id]: val })), [setClosingValues]);
+
   if (loading && !isOpen && !session) {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
@@ -86,7 +90,7 @@ const CashierManagement: React.FC = () => {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300 pb-10">
-      {/* Header */}
+      {/* Header Premium */}
       <CashierHeader
         isOpen={isOpen}
         session={session}
@@ -138,9 +142,7 @@ const CashierManagement: React.FC = () => {
                 selectedMethod={selectedMethod}
                 onMethodSelect={setSelectedMethod}
                 closingValues={closingValues}
-                onClosingValueChange={(id, val) =>
-                  setClosingValues(prev => ({ ...prev, [id]: val }))
-                }
+                onClosingValueChange={handleCloseValueChange}
                 onOpenMoneyCounter={() => setShowMoneyCounter(true)}
                 totalInformed={totalInformed}
                 hasBlocks={hasBlocks}
@@ -224,6 +226,7 @@ const CashierManagement: React.FC = () => {
       />
     </div>
   );
-};
+});
 
+CashierManagement.displayName = 'CashierManagement';
 export default CashierManagement;

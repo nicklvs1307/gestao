@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { AlertCircle, HelpCircle, Truck } from 'lucide-react';
+import React, { memo, useCallback } from 'react';
+import { AlertCircle, HelpCircle, Truck, ArrowRight } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 
 interface CashierAlertsProps {
@@ -17,16 +17,23 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
 
   if (!hasBlocks) return null;
 
+  const handleShowSettlements = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    onShowSettlements();
+  }, [onShowSettlements]);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {session.activeOrdersCount > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg animate-in slide-in-from-top-2">
-          <AlertCircle size={18} className="text-amber-600 shrink-0" />
-          <div>
-            <p className="text-[11px] font-bold text-amber-900 uppercase tracking-tight leading-none mb-1">
+        <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-2xl hover:shadow-lg transition-all">
+          <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
+            <AlertCircle size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-black text-amber-900 uppercase italic leading-none">
               Pedidos Ativos
             </p>
-            <p className="text-[10px] text-amber-600 font-bold uppercase">
+            <p className="text-[9px] text-amber-600 font-bold uppercase mt-1">
               {session.activeOrdersCount} pendentes. Finalize-os para fechar.
             </p>
           </div>
@@ -34,13 +41,15 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
       )}
 
       {session.openTablesCount > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg animate-in slide-in-from-top-2">
-          <HelpCircle size={18} className="text-indigo-600 shrink-0" />
-          <div>
-            <p className="text-[11px] font-bold text-indigo-900 uppercase tracking-tight leading-none mb-1">
+        <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-indigo-50 to-white border-2 border-indigo-200 rounded-2xl hover:shadow-lg transition-all">
+          <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+            <HelpCircle size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-black text-indigo-900 uppercase italic leading-none">
               Mesas Abertas
             </p>
-            <p className="text-[10px] text-indigo-600 font-bold uppercase">
+            <p className="text-[9px] text-indigo-600 font-bold uppercase mt-1">
               {session.openTablesCount} mesas ocupadas.
             </p>
           </div>
@@ -48,14 +57,16 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
       )}
 
       {session.pendingDriverSettlementsCount > 0 && (
-        <div className="flex items-center justify-between p-3 bg-rose-50 border border-rose-200 rounded-lg animate-in slide-in-from-top-2">
-          <div className="flex items-center gap-3">
-            <Truck size={18} className="text-rose-600 shrink-0" />
+        <div className="flex items-center justify-between p-4 bg-gradient-to-br from-rose-50 to-white border-2 border-rose-200 rounded-2xl hover:shadow-lg transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center shrink-0">
+              <Truck size={20} />
+            </div>
             <div>
-              <p className="text-[11px] font-bold text-rose-900 uppercase tracking-tight leading-none mb-1">
+              <p className="text-xs font-black text-rose-900 uppercase italic leading-none">
                 Acertos Pendentes
               </p>
-              <p className="text-[10px] text-rose-600 font-bold uppercase">
+              <p className="text-[9px] text-rose-600 font-bold uppercase mt-1">
                 {session.pendingDriverSettlementsCount} motoboy(s) aguardando acerto.
               </p>
             </div>
@@ -63,10 +74,10 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
           <Button
             variant="ghost"
             size="sm"
-            onClick={onShowSettlements}
-            className="h-8 text-[10px] font-bold text-rose-600 hover:bg-rose-100 uppercase"
+            onClick={handleShowSettlements}
+            className="h-9 text-[10px] font-black text-rose-600 hover:bg-rose-100 uppercase tracking-widest rounded-xl"
           >
-            Exibir Detalhes
+            Ver <ArrowRight size={12} className="ml-1" />
           </Button>
         </div>
       )}
