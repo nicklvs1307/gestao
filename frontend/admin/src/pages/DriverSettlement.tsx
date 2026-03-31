@@ -6,7 +6,7 @@ import {
   Truck, DollarSign, CreditCard, Building2, 
   Calendar, RefreshCw, User, Package, Wallet, CheckCircle, 
   Clock, ArrowRightLeft, FileDown, Printer, Filter, TrendingUp,
-  TrendingDown, MoreHorizontal, Search, X, ChevronDown
+  TrendingDown, MoreHorizontal, Search, X, ChevronDown, Printer as PrinterIcon
 } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,6 +38,8 @@ const DriverSettlement: React.FC = () => {
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedDriver, setExpandedDriver] = useState<string | null>(null);
+  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set());
+  const [printing, setPrinting] = useState(false);
 
   const fetchSettlement = async () => {
     setLoading(true);
@@ -88,6 +90,44 @@ const DriverSettlement: React.FC = () => {
       await printDriverSettlement(settlement, date, startTime, endTime);
     }
     toast.success(`${filteredData.length} comprovante(s) enviado(s) para impressão!`);
+  };
+
+  const handlePrintSelected = async () => {
+    const selected = filteredData.filter(d => selectedDrivers.has(d.driverId));
+    if (selected.length === 0) {
+      toast.warning('Selecione pelo menos um entregador!');
+      return;
+    }
+    
+    setPrinting(true);
+    try {
+      for (const settlement of selected) {
+        await printDriverSettlement(settlement, date, startTime, endTime);
+      }
+      toast.success(`${selected.length} comprovante(s) enviado(s) para impressão!`);
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedDrivers.size === filteredData.length) {
+      setSelectedDrivers(new Set());
+    } else {
+      setSelectedDrivers(new Set(filteredData.map(d => d.driverId)));
+    }
+  };
+
+  const toggleSelectDriver = (driverId: string) => {
+    setSelectedDrivers(prev => {
+      const next = new Set(prev);
+      if (next.has(driverId)) {
+        next.delete(driverId);
+      } else {
+        next.add(driverId);
+      }
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -268,6 +308,14 @@ const DriverSettlement: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900 text-white">
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic w-10">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedDrivers.size === filteredData.length && filteredData.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded cursor-pointer accent-primary"
+                  />
+                </th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic w-12">#</th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic">Entregador</th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-center">Entregas</th>
@@ -288,7 +336,18 @@ const DriverSettlement: React.FC = () => {
                 ))
               ) : filteredData.length > 0 ? filteredData.map((settlement, idx) => (
                 <React.Fragment key={settlement.driverId}>
-                  <tr className="hover:bg-slate-50/80 transition-colors group">
+                  <tr className={cn(
+                    "hover:bg-slate-50/80 transition-colors group",
+                    selectedDrivers.has(settlement.driverId) && "bg-primary/5"
+                  )}>
+                    <td className="px-4 py-4">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedDrivers.has(settlement.driverId)}
+                        onChange={() => toggleSelectDriver(settlement.driverId)}
+                        className="w-4 h-4 rounded cursor-pointer accent-primary"
+                      />
+                    </td>
                     <td className="px-4 py-4">
                       <span className="text-[9px] font-black text-slate-300">{String(idx + 1).padStart(2, '0')}</span>
                     </td>
@@ -370,7 +429,7 @@ const DriverSettlement: React.FC = () => {
             {filteredData.length > 0 && (
               <tfoot className="bg-slate-100 font-black border-t border-slate-200">
                 <tr>
-                  <td className="px-4 py-3 text-[9px] uppercase tracking-widest text-slate-500" colSpan={2}>TOTAL PERÍODO</td>
+                  <td className="px-4 py-3 text-[9px] uppercase tracking-widest text-slate-500" colSpan={3}>TOTAL PERÍODO</td>
                   <td className="px-4 py-3 text-center text-slate-700">{totals.orders}</td>
                   <td className="px-4 py-3 text-emerald-600">{formatCurrency(totals.cash)}</td>
                   <td className="px-4 py-3 text-slate-600">{formatCurrency(totals.card)}</td>
@@ -378,15 +437,29 @@ const DriverSettlement: React.FC = () => {
                   <td className="px-4 py-3 text-primary">{formatCurrency(totals.toPay)}</td>
                   <td className="px-4 py-3 text-slate-700 bg-slate-200">{formatCurrency(totals.net)}</td>
                   <td className="px-4 py-3 text-right">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-7 text-[8px] font-black uppercase tracking-widest gap-1.5 border-slate-300 hover:bg-slate-800 hover:text-white"
-                      onClick={() => handleExportAll()}
-                      disabled={filteredData.length === 0}
-                    >
-                      <FileDown size={12} /> EXPORTAR
-                    </Button>
+                    <div className="flex justify-end items-center gap-2">
+                      {selectedDrivers.size > 0 && (
+                        <Button 
+                          variant="primary" 
+                          size="sm" 
+                          className="h-7 text-[8px] font-black uppercase tracking-widest gap-1.5"
+                          onClick={handlePrintSelected}
+                          disabled={printing}
+                        >
+                          <PrinterIcon size={12} className={cn(printing && "animate-spin")} /> 
+                          IMPRIMIR {selectedDrivers.size}
+                        </Button>
+                      )}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[8px] font-black uppercase tracking-widest gap-1.5 border-slate-300 hover:bg-slate-800 hover:text-white"
+                        onClick={() => handleExportAll()}
+                        disabled={filteredData.length === 0}
+                      >
+                        <FileDown size={12} /> TODOS
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               </tfoot>
