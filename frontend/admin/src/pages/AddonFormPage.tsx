@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup, Addon } from '../services/api/addonService';
@@ -7,7 +7,8 @@ import {
     ArrowLeft, Plus, Trash2, Save, X, GripVertical, 
     Loader2, Settings, CheckCircle, Info, Copy, 
     Image as ImageIcon, Upload, List, Hash, ChefHat,
-    ChevronRight
+    ChevronRight, DollarSign, TrendingUp, Camera, Tag,
+    Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -370,6 +371,15 @@ const AddonFormPage: React.FC = () => {
         setFormData({ ...formData, addons: newAddons });
     };
 
+    // KPI computations
+    const totalAddons = formData.addons.length;
+    const avgCost = useMemo(() => {
+        const costs = formData.addons.map(a => a.costPrice || 0);
+        return costs.length > 0 ? costs.reduce((a, b) => a + b, 0) / costs.length : 0;
+    }, [formData.addons]);
+    const itemsWithPhoto = useMemo(() => formData.addons.filter(a => a.imageUrl).length, [formData.addons]);
+    const itemsWithPromo = useMemo(() => formData.addons.filter(a => a.promoPrice && a.promoPrice > 0).length, [formData.addons]);
+
     if (isLoading) return (
         <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
@@ -378,15 +388,26 @@ const AddonFormPage: React.FC = () => {
     );
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sticky top-0 bg-slate-50/90 backdrop-blur-md z-40 py-4 border-b border-slate-200">
+        <motion.div 
+            className="space-y-6 pb-10"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+            {/* HEADER - ERP Premium */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/addons')} className="rounded-xl bg-white border border-slate-200 h-10 w-10 shadow-sm"><ArrowLeft size={20}/></Button>
+                    <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/20">
+                        <Settings size={22} />
+                    </div>
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-                            {id && id !== 'new' ? 'Editar Grupo' : 'Nova Biblioteca'}
+                        <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
+                            {id && id !== 'new' ? 'Editar Grupo' : 'Nova Biblioteca'} <span className="text-orange-500">Complementos</span>
                         </h1>
-                        <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.2em] mt-1 italic">Personalização de Itens e Regras de Escolha</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 italic">
+                            Personalização de Itens e Regras de Escolha
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 w-full lg:w-auto">
@@ -397,9 +418,67 @@ const AddonFormPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* KPIs DENSOS */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Card className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Hash size={14} className="text-orange-400" />
+                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Itens</span>
+                    </div>
+                    <p className="text-lg font-black italic tracking-tighter">{totalAddons}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[7px] font-bold text-orange-400 uppercase">Adicionais cadastrados</span>
+                    </div>
+                </Card>
+
+                <Card className="p-4 bg-white border border-slate-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <DollarSign size={14} className="text-blue-500" />
+                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Custo Médio</span>
+                    </div>
+                    <p className="text-lg font-black italic tracking-tighter text-blue-600">
+                        R$ {avgCost.toFixed(2)}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[7px] font-bold text-slate-400 uppercase">Por item</span>
+                    </div>
+                </Card>
+
+                <Card className="p-4 bg-white border border-slate-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Camera size={14} className="text-emerald-500" />
+                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Itens com Foto</span>
+                    </div>
+                    <p className="text-lg font-black italic tracking-tighter text-emerald-600">{itemsWithPhoto}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[7px] font-bold text-slate-400 uppercase">
+                            {totalAddons > 0 ? `${((itemsWithPhoto / totalAddons) * 100).toFixed(0)}% coberto` : 'Nenhum item'}
+                        </span>
+                    </div>
+                </Card>
+
+                <Card className="p-4 bg-white border border-slate-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Percent size={14} className="text-amber-500" />
+                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Itens em Promoção</span>
+                    </div>
+                    <p className="text-lg font-black italic tracking-tighter text-amber-600">{itemsWithPromo}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[7px] font-bold text-slate-400 uppercase">Preço promocional ativo</span>
+                    </div>
+                </Card>
+            </div>
+
             <div className="space-y-4">
                 {/* CONFIGURAÇÕES DO GRUPO - TOPO COMPACTO */}
                 <Card className="p-4 border-slate-200 bg-white shadow-sm">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-1 h-6 bg-orange-500 rounded-full" />
+                        <div>
+                            <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-xs">Configurações do Grupo</h3>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Defina regras, tipo e parâmetros da biblioteca</p>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-6 gap-4 items-end">
                         <div className="lg:col-span-2">
                             <Input 
@@ -494,6 +573,7 @@ const AddonFormPage: React.FC = () => {
                 <div className="space-y-4">
                     <div className="flex justify-between items-center px-1">
                         <div className="flex items-center gap-2">
+                            <div className="w-1 h-6 bg-orange-500 rounded-full" />
                             <h3 className="text-xs font-black uppercase italic text-slate-900 tracking-widest flex items-center gap-2">
                                 <List size={14} className="text-orange-500" /> Itens da Biblioteca
                             </h3>
@@ -517,7 +597,7 @@ const AddonFormPage: React.FC = () => {
                             }
                         }}
                     >
-                        <div className="bg-slate-100/50 rounded-t-xl border border-slate-200 p-1.5 flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-slate-500">
+                        <div className="bg-slate-900 rounded-t-xl p-1.5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest italic text-slate-300">
                             <div className="w-6 shrink-0"></div>
                             <div className="flex-1 grid grid-cols-12 gap-2">
                                 <div className="col-span-3 pl-2">Nome do Item</div>
@@ -554,7 +634,26 @@ const AddonFormPage: React.FC = () => {
                     </DndContext>
                 </div>
             </div>
-        </div>
+
+            {/* STATUS BAR */}
+            <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sistema Online</span>
+                    </div>
+                    <div className="w-px h-4 bg-slate-200" />
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                        {totalAddons} itens · {itemsWithPhoto} com foto · {itemsWithPromo} em promoção
+                    </span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                        Editor de Complementos v2.0
+                    </span>
+                </div>
+            </div>
+        </motion.div>
     );
 };
 

@@ -12,6 +12,7 @@ import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { motion } from 'framer-motion';
 
 interface AddonGroupRowProps {
     group: AddonGroup;
@@ -204,6 +205,12 @@ const AddonManagement: React.FC = () => {
     );
   }, [groups, searchTerm]);
 
+  // KPI computations
+  const totalItems = useMemo(() => groups.reduce((acc, g) => acc + g.addons.length, 0), [groups]);
+  const syncedGroups = useMemo(() => groups.filter(g => g.saiposIntegrationCode).length, [groups]);
+  const flavorGroups = useMemo(() => groups.filter(g => g.isFlavorGroup).length, [groups]);
+  const pendingGroups = useMemo(() => groups.filter(g => !g.saiposIntegrationCode).length, [groups]);
+
   if (loading && groups.length === 0) return (
       <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
@@ -212,24 +219,97 @@ const AddonManagement: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10 max-w-[1600px] mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Biblioteca de Complementos</h1>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-            <Layers size={12} className="text-orange-500" /> Gestão Centralizada de Adicionais e Sabores
-          </p>
+    <motion.div 
+      className="space-y-6 pb-10 max-w-[1600px] mx-auto"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
+      {/* HEADER - ERP Premium */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/20">
+            <Layers size={22} />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
+              Biblioteca de <span className="text-orange-500">Complementos</span>
+            </h1>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+              Gestão Centralizada de Adicionais, Sabores e Regras de Escolha
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        
+        <div className="flex gap-2 w-full lg:w-auto">
             <Button variant="outline" className="bg-white rounded-xl h-11 px-4 border-slate-200 text-slate-400 hover:text-orange-500 transition-all" onClick={fetchData}>
                 <RefreshCw size={16} className={cn(loading && "animate-spin")} />
             </Button>
-            <Button onClick={() => navigate('/addons/new')} className="flex-1 md:flex-none rounded-xl px-6 italic font-black h-11 shadow-lg shadow-orange-900/10 text-xs gap-2 uppercase">
+            <Button onClick={() => navigate('/addons/new')} className="flex-1 lg:flex-none rounded-xl px-6 italic font-black h-11 shadow-lg shadow-orange-900/10 text-xs gap-2 uppercase">
                 <Plus size={18} /> NOVO GRUPO
             </Button>
         </div>
       </div>
 
+      {/* KPIs DENSOS */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <Card className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none">
+          <div className="flex items-center gap-2 mb-2">
+            <ListTree size={14} className="text-orange-400" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Grupos</span>
+          </div>
+          <p className="text-lg font-black italic tracking-tighter">{groups.length}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[7px] font-bold text-orange-400 uppercase">Bibliotecas ativas</span>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border border-slate-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Hash size={14} className="text-blue-500" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Itens</span>
+          </div>
+          <p className="text-lg font-black italic tracking-tighter text-blue-600">{totalItems}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[7px] font-bold text-slate-400 uppercase">Addons/Sabores</span>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border border-slate-200">
+          <div className="flex items-center gap-2 mb-2">
+            <CheckCircle2 size={14} className="text-emerald-500" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Sincronizados ERP</span>
+          </div>
+          <p className="text-lg font-black italic tracking-tighter text-emerald-600">{syncedGroups}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[7px] font-bold text-slate-400 uppercase">Integração ativa</span>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border border-slate-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers size={14} className="text-amber-500" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Grupos de Sabores</span>
+          </div>
+          <p className="text-lg font-black italic tracking-tighter text-amber-600">{flavorGroups}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[7px] font-bold text-slate-400 uppercase">Variações de sabor</span>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border border-slate-200">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle size={14} className="text-rose-500" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Pendentes</span>
+          </div>
+          <p className="text-lg font-black italic tracking-tighter text-rose-600">{pendingGroups}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[7px] font-bold text-slate-400 uppercase">Sem código ERP</span>
+          </div>
+        </Card>
+      </div>
+
+      {/* SEARCH BAR */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
@@ -243,17 +323,28 @@ const AddonManagement: React.FC = () => {
         </div>
       </div>
 
+      {/* TABELA PREMIUM */}
       <Card className="p-0 overflow-hidden border border-slate-200 shadow-xl bg-white rounded-2xl" noPadding>
+        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-8 bg-orange-500 rounded-full" />
+            <div>
+              <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Relação de Grupos</h3>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{filteredGroups.length} grupos encontrados</p>
+            </div>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
-              <tr>
-                <th className="w-[30%] px-6 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Grupo / Identificação</th>
-                <th className="w-[15%] px-4 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Regras Técnicas</th>
-                <th className="w-[12%] px-4 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Seleção Mín/Máx</th>
-                <th className="w-[20%] px-4 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Mix de Itens</th>
-                <th className="w-[10%] px-4 py-4 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Cód. Integração</th>
-                <th className="w-[13%] px-6 py-4 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest italic">Ações</th>
+            <thead>
+              <tr className="bg-slate-900 text-white">
+                <th className="w-[30%] px-6 py-3 text-[9px] font-black uppercase tracking-widest italic">Grupo / Identificação</th>
+                <th className="w-[15%] px-4 py-3 text-center text-[9px] font-black uppercase tracking-widest italic">Regras Técnicas</th>
+                <th className="w-[12%] px-4 py-3 text-center text-[9px] font-black uppercase tracking-widest italic">Seleção Mín/Máx</th>
+                <th className="w-[20%] px-4 py-3 text-[9px] font-black uppercase tracking-widest italic">Mix de Itens</th>
+                <th className="w-[10%] px-4 py-3 text-center text-[9px] font-black uppercase tracking-widest italic">Cód. Integração</th>
+                <th className="w-[13%] px-6 py-3 text-right text-[9px] font-black uppercase tracking-widest italic">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -275,25 +366,27 @@ const AddonManagement: React.FC = () => {
         )}
       </Card>
 
-      <div className="flex flex-col md:flex-row justify-between items-center px-4 py-4 bg-slate-50/50 rounded-2xl border border-slate-100 gap-4">
-        <div className="flex items-center gap-6">
+      {/* STATUS BAR */}
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Info size={14} className="text-blue-400" />
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Total de Grupos: <b className="text-slate-900">{groups.length}</b></span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sistema Online</span>
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={14} className="text-emerald-400" />
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Sincronizados: <b className="text-slate-900">{groups.filter(g => g.saiposIntegrationCode).length}</b></span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertCircle size={14} className="text-rose-400" />
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Pendentes: <b className="text-slate-900">{groups.filter(g => !g.saiposIntegrationCode).length}</b></span>
-          </div>
+          <div className="w-px h-4 bg-slate-200" />
+          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+            {groups.length} grupos · {totalItems} itens · {syncedGroups} sincronizados
+          </span>
         </div>
-        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Sistema de Gestão Industrial v2.0</p>
+        <div className="flex items-center gap-2">
+          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+            Biblioteca de Complementos v2.0
+          </span>
+        </div>
       </div>
+
       <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
-    </div>
+    </motion.div>
   );
 };
 
