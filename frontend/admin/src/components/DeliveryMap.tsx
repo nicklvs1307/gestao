@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import type { Coords } from '../../types';
 
 // Fix para ícones do Leaflet
