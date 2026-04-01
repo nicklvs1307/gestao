@@ -27,7 +27,7 @@ interface OrderDetailModalProps {
 
 const STATUS_OPTIONS = [
     { value: 'PENDING', label: 'Pendente', icon: Circle, color: 'text-amber-500', bg: 'bg-amber-500', border: 'border-amber-200', lightBg: 'bg-amber-50' },
-    { value: 'PREPARING', label: 'Produção', icon: PlayCircle, color: 'text-blue-500', bg: 'bg-blue-500', border: 'border-blue-200', lightBg: 'bg-blue-50' },
+    { value: 'PREPARING', label: 'Cozinha', icon: PlayCircle, color: 'text-blue-500', bg: 'bg-blue-500', border: 'border-blue-200', lightBg: 'bg-blue-50' },
     { value: 'READY', label: 'Pronto', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500', border: 'border-emerald-200', lightBg: 'bg-emerald-50' },
     { value: 'SHIPPED', label: 'Em Rota', icon: Truck, color: 'text-indigo-500', bg: 'bg-indigo-500', border: 'border-indigo-200', lightBg: 'bg-indigo-50' },
     { value: 'DELIVERED', label: 'Entregue', icon: Package, color: 'text-slate-500', bg: 'bg-slate-500', border: 'border-slate-200', lightBg: 'bg-slate-50' },
@@ -170,31 +170,21 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                         <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 relative overflow-hidden group">
                             <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:scale-110 transition-transform"><ShoppingCart size={100} /></div>
                             
-                            {isDelivery ? (
-                                <div className="space-y-5">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white rounded-2xl border border-slate-200 flex items-center justify-center text-slate-900 shadow-sm"><User size={24} strokeWidth={2.5}/></div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-black text-slate-900 uppercase italic truncate tracking-tight">{order.deliveryOrder?.name || 'Consumidor'}</p>
-                                            <p className="text-xs font-bold text-blue-600 flex items-center gap-1.5 mt-0.5"><Phone size={12}/> {order.deliveryOrder?.phone || 'Sem Telefone'}</p>
-                                        </div>
-                                    </div>
-                                    {order.deliveryOrder?.address && (
-                                        <div className="space-y-2">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12} className="text-rose-500"/> Local de Entrega</p>
-                                            <p className="text-xs font-bold text-slate-600 uppercase italic leading-relaxed bg-white/60 p-4 rounded-2xl border border-white shadow-sm">{order.deliveryOrder.address}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-6">
-                                    <div className="w-16 h-16 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center shadow-2xl transform -rotate-6"><Utensils size={32} /></div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Serviço Local</p>
-                                        <p className="text-4xl font-black text-slate-900 italic tracking-tighter leading-none">MESA {order.tableNumber}</p>
+                            <div className="space-y-5">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white rounded-2xl border border-slate-200 flex items-center justify-center text-slate-900 shadow-sm"><User size={24} strokeWidth={2.5}/></div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-black text-slate-900 uppercase italic truncate tracking-tight">{order.deliveryOrder?.name || 'Consumidor'}</p>
+                                        <p className="text-xs font-bold text-blue-600 flex items-center gap-1.5 mt-0.5"><Phone size={12}/> {order.deliveryOrder?.phone || 'Sem Telefone'}</p>
                                     </div>
                                 </div>
-                            )}
+                                {order.deliveryOrder?.address && (
+                                    <div className="space-y-2">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12} className="text-rose-500"/> Local de Entrega</p>
+                                        <p className="text-xs font-bold text-slate-600 uppercase italic leading-relaxed bg-white/60 p-4 rounded-2xl border border-white shadow-sm">{order.deliveryOrder.address}</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import type { Order } from '../types';
 import { format } from 'date-fns';
-import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag } from 'lucide-react';
+import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag, Truck } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NewOrderAlertProps {
@@ -53,10 +53,10 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onRejec
                             <div>
                                 <div className="flex items-center gap-1.5 mb-1.5">
                                     <span className={cn(
-                                        "text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider",
-                                        order.orderType === 'DELIVERY' ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
+                                        "text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1",
+                                        "bg-blue-50 text-blue-600"
                                     )}>
-                                        {order.orderType === 'DELIVERY' ? '🚀 Delivery' : '🍽️ Mesa ' + (order.tableNumber || '?')}
+                                        <Truck size={10} /> Delivery
                                     </span>
                                     <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
                                         #{order.id.slice(-4).toUpperCase()}
@@ -82,7 +82,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onRejec
                                 <div>
                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Localização</p>
                                     <p className="text-xs font-bold text-slate-700">
-                                        {order.deliveryOrder?.address || (order.tableNumber ? `Mesa ${order.tableNumber}` : 'Retirada')}
+                                        {order.deliveryOrder?.address || 'Retirada no Balcão'}
                                     </p>
                                 </div>
                             </div>

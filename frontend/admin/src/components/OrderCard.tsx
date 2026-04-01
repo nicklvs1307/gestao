@@ -166,7 +166,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                     {!isDelivery ? <Utensils size={14} /> : (isPickup ? <ShoppingBag size={14} /> : <Truck size={14} />)}
                 </div>
                 <span className="text-xs font-bold text-slate-600 uppercase">
-                  {!isDelivery ? `Mesa ${order.tableNumber || '?'}` : (isPickup ? 'Retirada' : 'Entrega')}
+                  {isPickup ? 'Retirada' : 'Entrega'}
                 </span>
               </div>
               {deliveryData?.phone && (
@@ -225,7 +225,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
             
             <button 
               onClick={handleOpenDetails}
-              className="flex-1 h-10 bg-slate-200/50 hover:bg-slate-200 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+              className="flex-1 h-10 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-sm"
             >
               <Eye size={12} /> Detalhes
             </button>

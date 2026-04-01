@@ -107,7 +107,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, se
                                         {!isDelivery ? <UtensilsCrossed size={8} /> : (isPickup ? <ShoppingBag size={8} /> : <Truck size={8} />)}
                                     </div>
                                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">
-                                        {!isDelivery ? `Mesa ${order.tableNumber || '?'}` : (isPickup ? 'Retirada' : 'Entrega')}
+                                        {isPickup ? 'Retirada' : 'Entrega'}
                                     </span>
                                 </div>
                             </div>

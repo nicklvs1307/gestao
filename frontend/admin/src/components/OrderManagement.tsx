@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import OrderKanbanBoard from './OrderKanbanBoard';
 import OrderListView from './OrderListView';
-import OrderDetailModal from './OrderDetailModal';
 import OrderEditor from './OrderEditor';
 import DriverSelectionModal from './DriverSelectionModal';
 import { getAdminOrders, updateOrderStatus, getOrder, assignDriver } from '../services/api';
@@ -247,8 +246,7 @@ const OrderManagement: React.FC = () => {
       const isSearchMatch = !debouncedSearch || 
         o.id.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
         (o.customerName && o.customerName.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
-        (o.deliveryOrder?.name && o.deliveryOrder.name.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
-        (o.tableNumber && o.tableNumber.toString().includes(debouncedSearch));
+        (o.deliveryOrder?.name && o.deliveryOrder.name.toLowerCase().includes(debouncedSearch.toLowerCase()));
       
       return isStatusMatch && isSegmentMatch && isSearchMatch;
     });
@@ -276,7 +274,7 @@ const OrderManagement: React.FC = () => {
             <div className="relative flex-1 lg:max-w-[300px]">
                 <input 
                     type="text" 
-                    placeholder="BUSCAR PEDIDO OU MESA..." 
+                    placeholder="BUSCAR PEDIDO..." 
                     className="w-full h-9 pl-9 pr-4 bg-slate-100 border-none rounded-xl text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-400"
                     value={searchTerm}
                     onChange={handleSearchChange}

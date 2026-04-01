@@ -35,8 +35,8 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
   onClose,
 }) => {
   return (
-    <div className="fixed inset-0 z-[300] flex justify-end animate-in fade-in duration-200">
-      <div onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />
+    <div className="fixed inset-0 z-[350] flex justify-end animate-in fade-in duration-200">
+      <div onClick={onClose} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
       <div className="relative w-[500px] bg-white shadow-2xl flex flex-col h-full border-l border-slate-200 animate-in slide-in-from-right duration-300">
         <header className="h-12 border-b border-slate-100 px-6 flex items-center justify-between shrink-0 bg-slate-50">
           <h3 className="text-[12px] font-black text-slate-900 uppercase italic tracking-tighter leading-none">
@@ -111,20 +111,20 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
           </div>
         </div>
 
-        <footer className="h-20 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 shrink-0">
-          <div className="flex items-center bg-slate-800 rounded-lg p-0.5 border border-slate-700">
-            <button onClick={() => onQtyChange(Math.max(1, tempQty - 1))} className="w-8 h-8 flex items-center justify-center rounded bg-slate-900 text-white hover:bg-slate-700 transition-all">
+        <footer className="h-20 bg-slate-50 border-t border-slate-200 flex items-center justify-between px-6 shrink-0">
+          <div className="flex items-center bg-white rounded-lg p-0.5 border border-slate-200 shadow-sm">
+            <button onClick={() => onQtyChange(Math.max(1, tempQty - 1))} className="w-8 h-8 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-orange-500 hover:text-white transition-all">
               <Minus size={14} />
             </button>
-            <span className="w-10 text-center text-sm font-black text-white italic">{tempQty}</span>
-            <button onClick={() => onQtyChange(tempQty + 1)} className="w-8 h-8 flex items-center justify-center rounded bg-slate-900 text-white hover:bg-slate-700 transition-all">
+            <span className="w-10 text-center text-sm font-black text-slate-900 italic">{tempQty}</span>
+            <button onClick={() => onQtyChange(tempQty + 1)} className="w-8 h-8 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-orange-500 hover:text-white transition-all">
               <Plus size={14} />
             </button>
           </div>
           <div className="flex items-center gap-4 text-right">
             <div className="flex flex-col">
-              <span className="text-[8px] font-black text-slate-500 uppercase italic leading-none">Subtotal</span>
-              <span className="text-xl font-black text-white italic tracking-tighter leading-none">R$ {calculatedPrice.toFixed(2)}</span>
+              <span className="text-[8px] font-black text-slate-400 uppercase italic leading-none">Subtotal</span>
+              <span className="text-xl font-black text-slate-900 italic tracking-tighter leading-none">R$ {calculatedPrice.toFixed(2).replace('.', ',')}</span>
             </div>
             <button
               onClick={onConfirm}

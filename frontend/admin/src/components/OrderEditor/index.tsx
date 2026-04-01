@@ -9,12 +9,14 @@ import { format } from 'date-fns';
 import {
   CheckCircle, Printer,
   Loader2, FileText, User, MapPin,
-  Search, Plus, Trash2, ArrowLeft
+  Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { calculateProductPrice } from '../../features/pos/utils/priceCalculator';
+import { getSettings, markOrderAsPrinted } from '../../services/api';
+import { printOrder } from '../../services/printing';
 import { OrderEditorProductDrawer } from './OrderEditorProductDrawer';
 import { OrderEditorPayment } from './OrderEditorPayment';
 
@@ -80,6 +82,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
   const [, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -253,6 +256,25 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       }
   };
 
+  const handlePrint = async () => {
+    setIsPrinting(true);
+    try {
+      const settingsData = await getSettings();
+      const restaurantInfo = {
+        name: settingsData.name, address: settingsData.address, phone: settingsData.phone,
+        cnpj: settingsData.fiscalConfig?.cnpj, logoUrl: settingsData.logoUrl
+      };
+      const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+      await printOrder(order, printerConfig, undefined, restaurantInfo);
+      await markOrderAsPrinted(order.id);
+      toast.success("Impressão enviada!");
+    } catch {
+      toast.error("Falha na impressão.");
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   const handleUpdateDeliveryType = async (type: 'delivery' | 'pickup') => {
     try {
       await updateDeliveryType(order.id, type);
@@ -279,10 +301,17 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
 
   return (
-    <div className="fixed inset-0 z-[250] bg-slate-100 flex flex-col animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[300] flex flex-col animate-in fade-in duration-300">
+      {/* Overlay escuro com backdrop blur */}
+      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Modal Container */}
+      <div className="relative z-10 w-full h-full flex flex-col bg-slate-100 m-2 rounded-3xl overflow-hidden shadow-2xl border border-slate-200/50">
+      
+      {/* Header */}
       <div className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors" title="Voltar">
                 <ArrowLeft size={20} className="text-slate-600" />
             </button>
             <div className="flex flex-col">
@@ -296,14 +325,56 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             </div>
         </div>
         <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 bg-blue-600 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-blue-700 transition-all shadow-md">
-                <Printer size={14} /> Imprimir Caixa
+            <button 
+              onClick={handlePrint} 
+              disabled={isPrinting} 
+              className="flex items-center gap-2 bg-slate-800 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-slate-900 transition-all shadow-md disabled:opacity-50"
+            >
+                {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />} Imprimir
             </button>
-            <button onClick={handleSaveFinancials} disabled={isSaving} className="flex items-center gap-2 bg-emerald-600 text-white h-9 px-6 rounded-xl font-black text-[10px] uppercase italic hover:bg-emerald-700 transition-all shadow-md disabled:opacity-50">
+            <button onClick={handleSaveFinancials} disabled={isSaving} className="flex items-center gap-2 bg-orange-600 text-white h-9 px-6 rounded-xl font-black text-[10px] uppercase italic hover:bg-orange-700 transition-all shadow-md disabled:opacity-50">
                 {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />} SALVAR
             </button>
-            <button onClick={onClose} className="bg-slate-200 text-slate-600 h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-slate-300 transition-all">FECHAR</button>
         </div>
+      </div>
+
+      {/* Tab Bar */}
+      <div className="h-12 bg-white border-b border-slate-100 flex items-center px-6 gap-1 shrink-0">
+        <button
+          onClick={() => setActiveTab('items')}
+          className={cn(
+            "flex items-center gap-2 h-9 px-5 rounded-xl text-[10px] font-black uppercase italic tracking-widest transition-all",
+            activeTab === 'items'
+              ? "bg-orange-600 text-white shadow-md"
+              : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+          )}
+        >
+          <List size={14} /> Itens do Pedido
+        </button>
+        <button
+          onClick={() => setActiveTab('payment')}
+          className={cn(
+            "flex items-center gap-2 h-9 px-5 rounded-xl text-[10px] font-black uppercase italic tracking-widest transition-all",
+            activeTab === 'payment'
+              ? "bg-orange-600 text-white shadow-md"
+              : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+          )}
+        >
+          <CreditCard size={14} /> Pagamento
+        </button>
+        <div className="flex-1" />
+        {remainingToPay > 0 && (
+          <div className="flex items-center gap-2 px-4 py-1.5 bg-rose-50 border border-rose-200 rounded-xl">
+            <span className="text-[8px] font-black text-rose-500 uppercase italic">A Pagar:</span>
+            <span className="text-sm font-black text-rose-600 italic">R$ {remainingToPay.toFixed(2).replace('.', ',')}</span>
+          </div>
+        )}
+        {remainingToPay <= 0 && order.payments && order.payments.length > 0 && (
+          <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+            <CheckCircle size={14} className="text-emerald-600" />
+            <span className="text-[9px] font-black text-emerald-600 uppercase italic">Pago</span>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -332,17 +403,16 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                     </p>
                                 )}
                                 <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-black uppercase">{isDelivery ? 'Delivery' : 'Mesa ' + order.tableNumber}</span>
+                                    <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-black uppercase flex items-center gap-1">
+                                      <Truck size={8} /> Delivery
+                                    </span>
                                     {order.deliveryOrder?.phone && <span className="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg font-black italic">{order.deliveryOrder.phone}</span>}
                                 </div>
                             </>
                         )}
                     </div>
                     {!isEditingCustomer && (
-                        <div className="flex flex-col gap-1 ml-3">
-                            <button onClick={() => setIsEditingCustomer(true)} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"><User size={14} /></button>
-                            <button onClick={() => setIsEditingCustomer(true)} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm" title="Editar Cliente"><FileText size={14} /></button>
-                        </div>
+                        <button onClick={() => setIsEditingCustomer(true)} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm ml-3" title="Editar Cliente"><FileText size={14} /></button>
                     )}
                 </div>
             </div>
@@ -373,13 +443,10 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             </div>
 
             <div className="p-5 bg-slate-900 text-white space-y-3">
-                <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-slate-500 uppercase italic">Valor Total</span>
-                    <span className="text-2xl font-black text-white italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
-                </div>
-                <button onClick={() => setActiveTab(activeTab === 'items' ? 'payment' : 'items')} className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase italic tracking-widest transition-all shadow-lg active:scale-95 border-b-4 border-blue-800 active:border-b-0">
-                    {activeTab === 'items' ? 'IR PARA PAGAMENTO' : 'ADICIONAR MAIS ITENS'}
-                </button>
+            <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-slate-400 uppercase italic">Valor Total</span>
+                <span className="text-2xl font-black text-white italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
+            </div>
             </div>
         </div>
 
@@ -459,6 +526,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
               onClose={() => setShowProductDrawer(false)}
           />
       )}
+      </div>
     </div>
   );
 };
