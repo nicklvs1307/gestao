@@ -1,19 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { Order, Product, Category, PaymentMethod as PaymentMethodType } from '@/types/index.ts';
 import {
     getDrivers, assignDriver, getProducts, getCategories,
     getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem,
-    updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType,
-    getSettings, markOrderAsPrinted, emitInvoice
+    updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType
 } from '../../services/api';
-import { printOrder } from '../../services/printing';
 import { format } from 'date-fns';
 import {
   CheckCircle, Printer,
   Loader2, FileText, User, MapPin,
-  Search, Plus, Trash2, ArrowLeft, ArrowRight, ShieldCheck,
-  Circle, PlayCircle, XCircle, Package, Truck
+  Search, Plus, Trash2, ArrowLeft
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
@@ -29,13 +25,13 @@ interface OrderEditorProps {
 }
 
 const STATUS_OPTIONS = [
-    { value: 'PENDING', label: 'Pendente', icon: Circle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-    { value: 'PREPARING', label: 'Cozinha', icon: PlayCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-    { value: 'READY', label: 'Pronto', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { value: 'SHIPPED', label: 'Em Rota', icon: Truck, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
-    { value: 'DELIVERED', label: 'Entregue', icon: Package, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
-    { value: 'COMPLETED', label: 'Finalizado', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { value: 'CANCELED', label: 'Cancelado', icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
+    { value: 'PENDING', label: 'Pendente', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+    { value: 'PREPARING', label: 'Cozinha', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+    { value: 'READY', label: 'Pronto', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+    { value: 'SHIPPED', label: 'Em Rota', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+    { value: 'DELIVERED', label: 'Entregue', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
+    { value: 'COMPLETED', label: 'Finalizado', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+    { value: 'CANCELED', label: 'Cancelado', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
 ];
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -48,7 +44,6 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'items' | 'payment'>('items');
   const [products, setProducts] = useState<Product[]>([]);
@@ -85,8 +80,6 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
   const [, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [isEmitting, setIsEmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -284,36 +277,6 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
   const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
-  const isPaid = order.status === 'COMPLETED' || (order.payments && order.payments.length > 0);
-
-  const handlePrint = async () => {
-    setIsPrinting(true);
-    try {
-        const settingsData = await getSettings();
-        const restaurantInfo = {
-            name: settingsData.name, address: settingsData.address, phone: settingsData.phone,
-            cnpj: settingsData.fiscalConfig?.cnpj, logoUrl: settingsData.logoUrl
-        };
-        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-        await printOrder(order, printerConfig, undefined, restaurantInfo);
-        await markOrderAsPrinted(order.id);
-        toast.success("Impressão enviada!");
-    } catch (error) { toast.error("Falha na impressão."); }
-    finally { setIsPrinting(false); }
-  };
-
-  const handleEmitInvoice = async () => {
-      setIsEmitting(true);
-      try {
-          const res = await emitInvoice(order.id);
-          toast.success("Nota emitida com sucesso!");
-          if (res.pdfUrl) window.open(res.pdfUrl, '_blank');
-      } catch (e: any) {
-          toast.error(e.message || "Erro ao emitir nota.");
-      } finally {
-          setIsEmitting(false);
-      }
-  };
 
   return (
     <div className="fixed inset-0 z-[250] bg-slate-100 flex flex-col animate-in fade-in duration-200">
@@ -331,57 +294,11 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             <div className={cn("px-2.5 py-1 rounded-lg text-[8px] font-black border uppercase tracking-widest ml-2", currentStatus.bg, currentStatus.color, currentStatus.border)}>
                 {currentStatus.label} - {format(new Date(order.createdAt), "dd/MMM 'às' HH:mm")}
             </div>
-            <div className="h-6 w-px bg-slate-200 mx-1" />
-            <div className="flex items-center gap-1">
-                {STATUS_OPTIONS.map((status) => {
-                    const isActive = order.status === status.value;
-                    const isDisabled = (status.value === 'COMPLETED' && !isPaid);
-                    const StatusIcon = status.icon;
-                    return (
-                        <button
-                            key={status.value}
-                            onClick={async () => {
-                                try {
-                                    const { updateOrderStatus } = await import('../../services/api');
-                                    await updateOrderStatus(order.id, status.value);
-                                    toast.success(`Status atualizado para ${status.label}!`);
-                                    onRefresh();
-                                } catch {
-                                    toast.error("Erro ao atualizar status.");
-                                }
-                            }}
-                            disabled={isActive || isDisabled}
-                            className={cn(
-                                "flex items-center gap-1 h-7 px-2.5 rounded-lg text-[8px] uppercase tracking-wider font-black transition-all border",
-                                isActive
-                                    ? cn(status.bg, status.color, status.border, "shadow-sm")
-                                    : isDisabled
-                                        ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
-                                        : "bg-white border-slate-200 text-slate-400 hover:border-slate-400 hover:text-slate-600"
-                            )}
-                            title={status.label}
-                        >
-                            <StatusIcon size={10} strokeWidth={isActive ? 3 : 2} />
-                            <span className="hidden xl:inline">{status.label}</span>
-                        </button>
-                    );
-                })}
-            </div>
         </div>
         <div className="flex items-center gap-3">
-            <button onClick={handlePrint} disabled={isPrinting} className="flex items-center gap-2 bg-blue-600 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-blue-700 transition-all shadow-md disabled:opacity-50">
-                {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />} Imprimir
+            <button className="flex items-center gap-2 bg-blue-600 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-blue-700 transition-all shadow-md">
+                <Printer size={14} /> Imprimir Caixa
             </button>
-            {!isPaid && (
-                <button onClick={() => navigate(`/pos/checkout/${order.id}`)} className="flex items-center gap-2 bg-indigo-600 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-indigo-700 transition-all shadow-md">
-                    <ArrowRight size={14} /> Pagamento
-                </button>
-            )}
-            {isPaid && order.status === 'COMPLETED' && (
-                <button onClick={handleEmitInvoice} disabled={isEmitting} className="flex items-center gap-2 bg-white border-2 border-slate-900 text-slate-900 h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-slate-900 hover:text-white transition-all shadow-sm disabled:opacity-50">
-                    {isEmitting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} {order.invoice ? 'NF-e' : 'Emitir NF-e'}
-                </button>
-            )}
             <button onClick={handleSaveFinancials} disabled={isSaving} className="flex items-center gap-2 bg-emerald-600 text-white h-9 px-6 rounded-xl font-black text-[10px] uppercase italic hover:bg-emerald-700 transition-all shadow-md disabled:opacity-50">
                 {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />} SALVAR
             </button>
