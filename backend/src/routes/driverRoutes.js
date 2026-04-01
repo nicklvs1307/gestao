@@ -8,8 +8,9 @@ router.get('/orders', needsAuth, checkPermission('delivery:manage'), DriverContr
 router.get('/history', needsAuth, checkPermission('delivery:manage'), DriverController.getHistory);
 router.patch('/orders/:orderId/status', needsAuth, checkPermission('delivery:manage'), DriverController.updateOrderStatus);
 router.patch('/orders/:orderId/payment-method', needsAuth, checkPermission('delivery:manage'), DriverController.updatePaymentMethod);
+router.patch('/status', needsAuth, checkPermission('delivery:manage'), DriverController.updateOnlineStatus);
 
-// Novas: Mapas centralizados no backend
+// Geolocalização e roteirização centralizadas no backend
 router.post('/geocode', needsAuth, checkPermission('delivery:manage'), DriverController.geocode);
 router.post('/route', needsAuth, checkPermission('delivery:manage'), DriverController.getRoute);
 

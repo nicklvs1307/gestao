@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReportsSummary, getAdminOrders, getSalesHistory, getPaymentMethodsReport, api } from '../services/api';
 import { Line } from 'react-chartjs-2';
@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (user?.isSuperAdmin && !localStorage.getItem('selectedRestaurantId')) {
         navigate('/super-admin');
         return;
@@ -129,7 +129,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   if (loading) {
     return (
@@ -153,7 +153,8 @@ const Dashboard: React.FC = () => {
 
   const isConfigComplete = stats?.hasCategories && stats?.hasProducts && stats?.hasPayments;
 
-  const chartData = {
+  // Memoize chart data to prevent unnecessary re-renders
+  const chartData = useMemo(() => ({
     labels: salesHistory.length > 0 ? salesHistory.map(d => new Date(d.date).toLocaleDateString('pt-BR', { weekday: 'short' })) : ['-'],
     datasets: [
       {
@@ -171,9 +172,10 @@ const Dashboard: React.FC = () => {
         pointHoverRadius: 6,
       },
     ],
-  };
+  }), [salesHistory]);
 
-  const chartOptions = {
+  // Memoize chart options to prevent unnecessary re-renders
+  const chartOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -204,7 +206,7 @@ const Dashboard: React.FC = () => {
         ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' as const } }
       }
     }
-  };
+  }), []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">

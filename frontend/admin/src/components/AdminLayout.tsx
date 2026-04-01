@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import TopbarAdmin from './TopbarAdmin';
 import NavigationLauncher from './NavigationLauncher';
 import GlobalOrderMonitor from './GlobalOrderMonitor';
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -13,10 +14,9 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     const [isMenuOpen, setMenuOpen] = useState(false);
     const location = useLocation();
-    
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-    const isWaiter = user?.role === 'waiter';
+    const { user } = useAuth();
+
+    const isWaiter = useMemo(() => user?.role === 'waiter', [user?.role]);
 
     // Rota Fullscreen (como KDS)
     const isFullscreenPage = location.pathname === '/kds';

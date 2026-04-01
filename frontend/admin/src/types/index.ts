@@ -232,3 +232,70 @@ export interface PaymentMethod {
   updatedAt: string;
 
 }
+
+// ============================================================
+// Types para Driver Dashboard
+// ============================================================
+
+export interface DriverUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  restaurantId: string | null;
+  isSuperAdmin: boolean;
+  permissions: string[];
+  bonusPerDelivery?: number;
+}
+
+export interface DriverOrder {
+  id: string;
+  dailyOrderNumber?: number;
+  status: 'PENDING' | 'READY' | 'SHIPPED' | 'COMPLETED' | 'CANCELED';
+  total: number;
+  orderType: string;
+  createdAt: string;
+  updatedAt: string;
+  deliveryOrder: DriverDeliveryData | null;
+  items?: Array<{
+    id: string;
+    quantity: number;
+    observations?: string;
+    priceAtTime: number;
+    product?: { id: string; name: string };
+  }>;
+  payments?: Array<{
+    id: string;
+    amount: number;
+    method: string;
+    createdAt: string;
+  }>;
+}
+
+export interface DriverDeliveryData {
+  id: string;
+  name?: string;
+  phone?: string;
+  address?: string;
+  deliveryType?: string;
+  paymentMethod?: string;
+  changeFor?: number;
+  deliveryFee: number;
+  notes?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  orderId: string;
+  driverId?: string | null;
+  customer?: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+}
+
+export type Coords = [number, number];
+
+export type DriverView = 'list' | 'detail';
+export type DriverTab = 'home' | 'history' | 'profile';
+export type DriverHomeSubTab = 'my' | 'queue';

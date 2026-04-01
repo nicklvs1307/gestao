@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, Building2, Wallet, CheckCircle, Store, Monitor, ShoppingBag, Power, PowerOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -29,18 +29,35 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   const [isStoreOpen, setIsStoreOpen] = useState(false);
   const [isStoreLoading, setIsStoreLoading] = useState(false);
 
-  const loadData = async () => {
+  // Ref para AbortController do polling
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const cancelPendingRequests = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
+
+  const loadData = useCallback(async () => {
+      cancelPendingRequests();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      const signal = controller.signal;
+
       const selectedRestaurantId = localStorage.getItem('selectedRestaurantId');
-      
+
       if (selectedRestaurantId || user?.restaurantId) {
           try {
-              const res = await apiClient.get('/settings');
+              const res = await apiClient.get('/settings', { signal });
               setCurrentRestaurant({
                   name: res.data.name,
                   logoUrl: res.data.logoUrl
               });
               setIsStoreOpen(res.data.settings?.isOpen ?? false);
-          } catch (e) { console.warn("Erro ao buscar dados da loja", e); }
+          } catch (e: any) {
+              if (e.name !== 'AbortError') console.warn("Erro ao buscar dados da loja", e);
+          }
       }
 
       if (user?.isSuperAdmin && !selectedRestaurantId) return;
@@ -50,13 +67,15 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
           const [orders, requests, cashierRes] = await Promise.all([
               getAdminOrders(),
               getTableRequests(),
-              apiClient.get('/cashier/status')
+              apiClient.get('/cashier/status', { signal })
           ]);
           const pending = orders.filter((o: any) => o.status === 'PENDING');
           setNotifCount(pending.length + requests.length);
           setCashierStatus(cashierRes.data);
-      } catch (e) { console.warn(e); }
-  };
+      } catch (e: any) {
+          if (e.name !== 'AbortError') console.warn(e);
+      }
+  }, [user?.restaurantId, cancelPendingRequests]);
 
   const toggleStoreStatus = async () => {
     try {
@@ -84,8 +103,11 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   useEffect(() => {
       loadData();
       const interval = setInterval(loadData, 30000);
-      return () => clearInterval(interval);
-  }, [user?.restaurantId]);
+      return () => {
+          clearInterval(interval);
+          cancelPendingRequests();
+      };
+  }, [loadData, cancelPendingRequests]);
 
   const displayLogo = currentRestaurant?.logoUrl || user?.logoUrl;
   const displayName = currentRestaurant?.name || 'Sua Unidade';
