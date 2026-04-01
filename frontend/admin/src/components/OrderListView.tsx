@@ -36,10 +36,10 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, se
     <div className="h-full overflow-hidden flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm">
       <div className="flex-1 overflow-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
-            <thead className="text-[9px] uppercase bg-slate-50 text-slate-400 border-b border-slate-100 sticky top-0 z-10 backdrop-blur-sm font-black tracking-widest">
+            <thead className="text-[9px] uppercase bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-10 font-black tracking-widest italic">
             <tr>
                 <th className="px-4 py-3 w-10">
-                    <div className="w-4 h-4 rounded border-2 border-slate-200 bg-white" />
+                    <div className="w-4 h-4 rounded border-2 border-slate-600 bg-slate-800" />
                 </th>
                 <th className="px-4 py-3">Pedido / Ref</th>
                 <th className="px-4 py-3">Cliente / Tipo</th>
@@ -69,8 +69,8 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, se
                         <tr 
                             key={order.id} 
                             className={cn(
-                                "hover:bg-slate-50/80 transition-all group cursor-pointer",
-                                selectedOrderIds.includes(order.id) && "bg-orange-50/50"
+                                "hover:bg-orange-50/60 transition-all duration-150 group cursor-pointer border-b border-slate-50/50 last:border-b-0",
+                                selectedOrderIds.includes(order.id) && "bg-orange-50/50 border-orange-100"
                             )}
                             onClick={() => onOpenDetails(order)}
                         >

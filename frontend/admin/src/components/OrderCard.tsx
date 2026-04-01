@@ -121,7 +121,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
     <div ref={setNodeRef} style={style}>
       <Card 
         className={cn(
-          "group relative flex flex-col gap-2.5 transition-shadow duration-200",
+          "group relative flex flex-col gap-2 transition-shadow duration-200",
           isDragging ? "shadow-2xl ring-2 ring-orange-200" : "hover:shadow-md hover:border-orange-500/30",
           isSelected ? "border-orange-500 bg-orange-50/30" : "bg-white",
           order.status === 'PENDING' && !isSelected && "border-rose-100 bg-rose-50/30"
@@ -129,84 +129,82 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
         noPadding
       >
         {/* Header: Checkbox, ID e Timer */}
-        <div className="flex justify-between items-start px-4 pt-3">
-            <div className="flex items-center gap-2.5">
+        <div className="flex justify-between items-start px-3.5 pt-3 pb-1">
+            <div className="flex items-center gap-2">
                 <button 
                   onClick={handleSelect}
                   aria-label={isSelected ? "Desselecionar pedido" : "Selecionar pedido"}
                   className={cn(
-                      "w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0",
+                      "w-4 h-4 rounded border-2 flex items-center justify-center transition-all shrink-0",
                       isSelected ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-200" : "bg-white border-slate-200 hover:border-slate-400"
                   )}
                 >
-                  {isSelected && <CheckCircle size={12} strokeWidth={3} />}
+                  {isSelected && <CheckCircle size={10} strokeWidth={3} />}
                 </button>
                 <div>
-                  <span className="block text-sm font-bold text-slate-900 leading-tight">
-                    #{order.dailyOrderNumber || '0'} <span className="text-xs font-medium text-slate-500">- {deliveryData?.name || order.customerName || 'Consumidor'}</span>
+                  <span className="block text-sm font-black text-slate-900 leading-tight italic">
+                    #{order.dailyOrderNumber || '0'}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    ID: {order.id.slice(-6).toUpperCase()}
+                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest truncate block max-w-[120px]">
+                    {deliveryData?.name || order.customerName || 'Consumidor'}
                   </span>
                 </div>
             </div>
             <OrderTimer createdAt={order.createdAt} status={order.status} />
         </div>
 
-        {/* Info: Entrega/Mesa */}
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing px-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  "p-1.5 rounded-lg border",
-                  isDelivery 
-                    ? (isPickup ? "text-blue-500 bg-blue-50 border-blue-100" : "text-rose-500 bg-rose-50 border-rose-100") 
-                    : "text-emerald-500 bg-emerald-50 border-emerald-100"
-                )}>
-                    {!isDelivery ? <Utensils size={14} /> : (isPickup ? <ShoppingBag size={14} /> : <Truck size={14} />)}
-                </div>
-                <span className="text-xs font-bold text-slate-600 uppercase">
-                  {!isDelivery ? `Mesa ${order.tableNumber || '?'}` : (isPickup ? 'Retirada' : 'Entrega')}
-                </span>
+        {/* Info: Entrega */}
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing px-3.5 space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className={cn(
+                "p-1 rounded-md",
+                isDelivery 
+                  ? (isPickup ? "text-blue-500 bg-blue-50" : "text-rose-500 bg-rose-50") 
+                  : "text-emerald-500 bg-emerald-50"
+              )}>
+                  {!isDelivery ? <Utensils size={12} /> : (isPickup ? <ShoppingBag size={12} /> : <Truck size={12} />)}
               </div>
+              <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider italic">
+                {isPickup ? 'Retirada' : 'Entrega'}
+              </span>
               {deliveryData?.phone && (
-                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                  <Phone size={10} /> {deliveryData.phone}
-                </div>
+                <span className="text-[8px] font-bold text-slate-400 ml-auto flex items-center gap-0.5">
+                  <Phone size={8} /> {deliveryData.phone}
+                </span>
               )}
             </div>
             
             {isDelivery && !isPickup && deliveryData?.address && (
-                <div className="p-2 bg-slate-50 rounded-lg border border-slate-100/50">
-                  <div className="flex items-start gap-1.5 text-[10px] font-medium text-slate-500 leading-tight">
-                      <MapPin size={11} className="text-orange-500 shrink-0 mt-px" />
+                <div className="p-1.5 bg-slate-50 rounded-md border border-slate-100/50">
+                  <div className="flex items-start gap-1 text-[8px] font-medium text-slate-500 leading-tight">
+                      <MapPin size={9} className="text-orange-500 shrink-0 mt-px" />
                       <span className="line-clamp-1 uppercase">{deliveryData.address}</span>
                   </div>
                 </div>
             )}
 
             {/* Itens do Pedido */}
-            <div className="px-1 space-y-1">
+            <div className="space-y-0.5">
                 {Array.isArray(order.items) && order.items.slice(0, 2).map((item, idx) => (
-                    <div key={idx} className="flex justify-between text-xs text-slate-500">
-                        <span className="truncate pr-2"><b className="text-orange-500">{item.quantity}x</b> {item.product?.name}</span>
-                        <span className="shrink-0 text-slate-400">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
+                    <div key={idx} className="flex justify-between text-[10px] text-slate-500">
+                        <span className="truncate pr-2"><b className="text-orange-500 font-black">{item.quantity}x</b> {item.product?.name}</span>
+                        <span className="shrink-0 text-slate-400 font-bold">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
                     </div>
                 ))}
                 {Array.isArray(order.items) && order.items.length > 2 && (
-                    <p className="text-[10px] font-bold text-slate-300 uppercase">+ {order.items.length - 2} itens...</p>
+                    <p className="text-[8px] font-bold text-slate-300 uppercase">+ {order.items.length - 2} itens...</p>
                 )}
             </div>
 
             {/* Financeiro */}
-            <div className="flex justify-between items-center py-1 px-1 border-t border-slate-50">
-                <div className="flex items-center gap-1.5">
-                  <CreditCard size={11} className="text-slate-300" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[100px]">
+            <div className="flex justify-between items-center py-1 border-t border-slate-50">
+                <div className="flex items-center gap-1">
+                  <CreditCard size={10} className="text-slate-300" />
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[90px] italic">
                     {deliveryData?.paymentMethod || 'PENDENTE'}
                   </span>
                 </div>
-                <span className="text-base font-bold text-slate-900">
+                <span className="text-sm font-black text-slate-900 italic tracking-tighter">
                   R$ {orderTotal.toFixed(2).replace('.', ',')}
                 </span>
             </div>
@@ -218,24 +216,24 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
               onClick={handleQuickPrint}
               disabled={isPrinting}
               aria-label="Imprimir pedido"
-              className="h-10 w-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-500 hover:text-orange-600 transition-colors"
+              className="h-8 w-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all"
             >
-              {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+              {isPrinting ? <Loader2 size={12} className="animate-spin" /> : <Printer size={12} />}
             </button>
             
             <button 
               onClick={handleOpenDetails}
-              className="flex-1 h-10 bg-slate-200/50 hover:bg-slate-200 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+              className="flex-1 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1 transition-all text-slate-600"
             >
-              <Eye size={12} /> Detalhes
+              <Eye size={11} /> Detalhes
             </button>
 
             <button 
               onClick={handleAdvance}
               aria-label="Avançar status"
-              className="h-10 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center transition-all shadow-sm"
+              className="h-8 w-8 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center transition-all shadow-sm"
             >
-              <ChevronRight size={16} strokeWidth={3} />
+              <ChevronRight size={14} strokeWidth={3} />
             </button>
         </div>
       </Card>
