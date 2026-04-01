@@ -131,28 +131,6 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  if (loading) {
-    return (
-        <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-muted-foreground font-bold uppercase text-xs tracking-[0.2em]">Sincronizando dados...</p>
-        </div>
-    );
-  }
-
-  if (error) {
-    return (
-        <Card className="p-8 border-destructive/10 bg-destructive/10 flex flex-col items-center text-center">
-            <AlertCircle size={40} className="text-destructive mb-4" />
-            <h3 className="text-destructive font-bold uppercase tracking-tight">Ocorreu um erro</h3>
-            <p className="text-destructive text-sm mt-2">{error}</p>
-            <Button variant="danger" className="mt-6" onClick={() => window.location.reload()}>Tentar Novamente</Button>
-        </Card>
-    );
-  }
-
-  const isConfigComplete = stats?.hasCategories && stats?.hasProducts && stats?.hasPayments;
-
   // Memoize chart data to prevent unnecessary re-renders
   const chartData = useMemo(() => ({
     labels: salesHistory.length > 0 ? salesHistory.map(d => new Date(d.date).toLocaleDateString('pt-BR', { weekday: 'short' })) : ['-'],
@@ -207,6 +185,28 @@ const Dashboard: React.FC = () => {
       }
     }
   }), []);
+
+  if (loading) {
+    return (
+        <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-muted-foreground font-bold uppercase text-xs tracking-[0.2em]">Sincronizando dados...</p>
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <Card className="p-8 border-destructive/10 bg-destructive/10 flex flex-col items-center text-center">
+            <AlertCircle size={40} className="text-destructive mb-4" />
+            <h3 className="text-destructive font-bold uppercase tracking-tight">Ocorreu um erro</h3>
+            <p className="text-destructive text-sm mt-2">{error}</p>
+            <Button variant="danger" className="mt-6" onClick={() => window.location.reload()}>Tentar Novamente</Button>
+        </Card>
+    );
+  }
+
+  const isConfigComplete = stats?.hasCategories && stats?.hasProducts && stats?.hasPayments;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
