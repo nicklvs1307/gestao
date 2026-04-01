@@ -62,6 +62,11 @@ const Dashboard: React.FC = () => {
     const normalizedRole = user?.role?.toLowerCase() || '';
 
     if (!user?.isSuperAdmin && !permissions.includes('all:manage')) {
+        // Se for caixa e não tiver acesso a relatórios, manda pro PDV
+        if ((permissions.includes('cashier:manage') || normalizedRole.includes('caixa')) && !permissions.includes('reports:view')) {
+            navigate('/pos');
+            return;
+        }
         // Se for entregador e não tiver acesso a relatórios, manda pro dashboard de driver
         if ((permissions.includes('delivery:manage') || normalizedRole.includes('driver')) && !permissions.includes('reports:view')) {
             navigate('/driver/dashboard');
@@ -70,11 +75,6 @@ const Dashboard: React.FC = () => {
         // Se for garçom e não tiver acesso a relatórios, manda pro PDV de garçom
         if ((permissions.includes('waiter:pos') || normalizedRole.includes('waiter')) && !permissions.includes('reports:view')) {
             navigate('/waiter');
-            return;
-        }
-        // Se for caixa e não tiver acesso a relatórios, manda pro caixa
-        if ((permissions.includes('cashier:manage') || normalizedRole.includes('caixa')) && !permissions.includes('reports:view')) {
-            navigate('/cashier');
             return;
         }
         // Se for cozinha e não tiver acesso a relatórios, manda pro KDS

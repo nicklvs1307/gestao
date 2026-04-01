@@ -34,10 +34,10 @@ const LoginPage: React.FC = () => {
           navigate('/dashboard');
       } else if (permissions.includes('waiter:pos') || normalizedRole.includes('waiter')) {
           navigate('/waiter');
+      } else if (permissions.includes('cashier:manage') || normalizedRole.includes('caixa')) {
+          navigate('/pos');
       } else if (permissions.includes('delivery:manage') || normalizedRole.includes('driver')) {
           navigate('/driver/dashboard');
-      } else if (permissions.includes('cashier:manage') || normalizedRole.includes('caixa')) {
-          navigate('/cashier');
       } else if (permissions.includes('kds:view') || normalizedRole.includes('cozinha')) {
           navigate('/kds');
       } else if (permissions.includes('pos:access') || normalizedRole.includes('atendente')) {
