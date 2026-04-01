@@ -277,6 +277,8 @@ const updateUser = async (req, res) => {
                 return res.status(400).json({ error: passwordError });
             }
             data.passwordHash = await bcrypt.hash(password, 10);
+            data.resetToken = null;
+            data.resetTokenExpiry = null;
         }
         if (finalRoleId !== undefined) {
             data.roleId = finalRoleId;
@@ -387,19 +389,70 @@ const sendResetEmail = async (req, res) => {
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+        const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
         await prisma.user.update({
             where: { id: userId },
-            data: { resetToken, resetTokenExpiry }
+            data: { resetToken: hashedToken, resetTokenExpiry }
         });
 
-        await sendPasswordResetEmail(user.email, user.name, resetToken);
+        try {
+            await sendPasswordResetEmail(user.email, user.name, resetToken);
+        } catch (emailError) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: { resetToken: null, resetTokenExpiry: null }
+            });
+            throw emailError;
+        }
+
+        logger.info(`[AUDIT] Reset email enviado para usuário ${user.id} (${user.email}) por ${req.user.id}`);
 
         res.json({ message: `Email de redefinição enviado para ${user.email}.` });
     } catch (error) {
         logger.error("Erro ao enviar email de reset:", error);
         res.status(500).json({ error: error.message || 'Erro ao enviar email de redefinição.' });
+    }
+};
+
+const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        if (!email) return res.status(400).json({ error: 'Email é obrigatório.' });
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.json({ message: 'Se o email estiver cadastrado, você receberá um link de redefinição.' });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { resetToken: hashedToken, resetTokenExpiry }
+        });
+
+        try {
+            await sendPasswordResetEmail(user.email, user.name, resetToken);
+            logger.info(`[AUDIT] Reset self-service solicitado para ${user.email}`);
+        } catch (emailError) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { resetToken: null, resetTokenExpiry: null }
+            });
+            throw emailError;
+        }
+
+        res.json({ message: 'Se o email estiver cadastrado, você receberá um link de redefinição.' });
+    } catch (error) {
+        logger.error("Erro no forgot-password:", error);
+        res.status(500).json({ error: error.message || 'Erro ao processar solicitação.' });
     }
 };
 
@@ -411,9 +464,11 @@ const resetPassword = async (req, res) => {
         const passwordError = validatePassword(password);
         if (passwordError) return res.status(400).json({ error: passwordError });
 
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
         const user = await prisma.user.findFirst({
             where: {
-                resetToken: token,
+                resetToken: hashedToken,
                 resetTokenExpiry: { gt: new Date() }
             }
         });
@@ -431,6 +486,8 @@ const resetPassword = async (req, res) => {
             }
         });
 
+        logger.info(`[AUDIT] Senha redefinida com sucesso para usuário ${user.id} (${user.email})`);
+
         res.json({ message: 'Senha redefinida com sucesso.' });
     } catch (error) {
         logger.error("Erro ao redefinir senha:", error);
@@ -446,5 +503,6 @@ module.exports = {
     deleteUser,
     getAvailableRoles,
     sendResetEmail,
+    forgotPassword,
     resetPassword
 };

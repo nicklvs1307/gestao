@@ -1,40 +1,33 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { resetPassword } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { forgotPassword } from '../services/api';
 import logoImg from '../assets/logo.png';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Lock, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { Mail, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const ResetPasswordPage: React.FC = () => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+const ForgotPasswordPage: React.FC = () => {
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
-  const { token } = useParams<{ token: string }>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!token) {
-      toast.error('Token de redefinição inválido ou ausente.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('As senhas não coincidem.');
+    if (!email) {
+      toast.error('Email é obrigatório.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await resetPassword(token, password);
+      await forgotPassword(email);
       setIsSuccess(true);
-      toast.success('Senha redefinida com sucesso!');
+      toast.success('Se o email estiver cadastrado, você receberá um link de redefinição.');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Erro ao redefinir senha.');
+      toast.error(err.response?.data?.error || 'Erro ao processar solicitação.');
     } finally {
       setIsSubmitting(false);
     }
@@ -69,24 +62,8 @@ const ResetPasswordPage: React.FC = () => {
                 <CheckCircle size={40} className="text-emerald-500" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Senha Redefinida</h2>
-                <p className="text-sm text-slate-500">Sua senha foi alterada com sucesso. Você já pode fazer login com a nova senha.</p>
-              </div>
-              <Button
-                onClick={() => navigate('/login')}
-                className="w-full h-14 rounded-2xl shadow-xl uppercase tracking-widest font-black text-xs gap-2"
-              >
-                IR PARA LOGIN <ArrowLeft size={16} />
-              </Button>
-            </div>
-          ) : !token ? (
-            <div className="text-center space-y-8">
-              <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto">
-                <Lock size={40} className="text-rose-500" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Link Inválido</h2>
-                <p className="text-sm text-slate-500">Este link de redefinição é inválido ou está ausente. Solicite um novo link de redefinição.</p>
+                <h2 className="text-3xl font-black uppercase tracking-tighter">Email Enviado</h2>
+                <p className="text-sm text-slate-500">Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.</p>
               </div>
               <Button
                 onClick={() => navigate('/login')}
@@ -98,28 +75,18 @@ const ResetPasswordPage: React.FC = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Redefinir Senha</h2>
-                <p className="text-sm text-slate-500">Escolha uma nova senha para acessar o sistema.</p>
+                <h2 className="text-3xl font-black uppercase tracking-tighter">Esqueci a Senha</h2>
+                <p className="text-sm text-slate-500">Informe seu email para receber um link de redefinição.</p>
               </div>
 
-              <div className="space-y-4">
-                <Input
-                  label="Nova Senha"
-                  type="password"
-                  icon={Lock}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                />
-                <Input
-                  label="Confirmar Nova Senha"
-                  type="password"
-                  icon={Lock}
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                />
-              </div>
+              <Input
+                label="Email"
+                type="email"
+                icon={Mail}
+                placeholder="seu@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
 
               <Button
                 type="submit"
@@ -127,7 +94,16 @@ const ResetPasswordPage: React.FC = () => {
                 isLoading={isSubmitting}
                 className="w-full h-14 rounded-2xl shadow-xl uppercase tracking-widest font-black text-xs"
               >
-                REDEFINIR SENHA
+                ENVIAR LINK
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => navigate('/login')}
+                className="w-full h-14 rounded-2xl uppercase tracking-widest font-black text-xs gap-2"
+              >
+                VOLTAR AO LOGIN <ArrowLeft size={16} />
               </Button>
             </form>
           )}
@@ -137,4 +113,4 @@ const ResetPasswordPage: React.FC = () => {
   );
 };
 
-export default ResetPasswordPage;
+export default ForgotPasswordPage;

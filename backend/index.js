@@ -59,11 +59,33 @@ app.use('/api/', globalLimiter);
 
 // 5. SEGURANÇA: Rate Limiting Específico para Login
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20, // Aumentado para 20 tentativas para evitar falsos positivos
-  message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' }
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' }
 });
 app.use('/api/auth/login', loginLimiter);
+
+// 6. SEGURANÇA: Rate Limiting para Reset de Senha
+const sendResetEmailLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Muitas solicitações de reset. Tente novamente mais tarde.' }
+});
+app.use('/api/auth/send-reset-email', sendResetEmailLimiter);
+
+const resetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Muitas tentativas de redefinição. Tente novamente mais tarde.' }
+});
+app.use('/api/auth/reset-password', resetPasswordLimiter);
+
+const forgotPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: { error: 'Muitas solicitações. Tente novamente mais tarde.' }
+});
+app.use('/api/auth/forgot-password', forgotPasswordLimiter);
 
 // Arquivos Estáticos (Imagens)
 // Serve tanto via /uploads quanto via /api/uploads para compatibilidade com Proxy

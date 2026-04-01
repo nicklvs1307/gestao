@@ -8,6 +8,7 @@ const validatePassword = (password) => {
   if (!/[A-Z]/.test(password)) return 'Senha deve conter ao menos uma letra maiúscula.';
   if (!/[a-z]/.test(password)) return 'Senha deve conter ao menos uma letra minúscula.';
   if (!/[0-9]/.test(password)) return 'Senha deve conter ao menos um número.';
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Senha deve conter ao menos um caractere especial.';
   return null;
 };
 
