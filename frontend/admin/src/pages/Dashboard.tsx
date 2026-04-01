@@ -125,7 +125,7 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate, user]);
 
   useEffect(() => {
     fetchDashboardData();
