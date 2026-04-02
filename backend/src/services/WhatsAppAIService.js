@@ -4,7 +4,7 @@ const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const { normalizePhone } = require('../lib/phoneUtils');
-const skillRegistry = require('./skills/SkillRegistry');
+const skillRegistry = require('./skills/registry');
 
 class WhatsAppAIService {
   constructor() {
@@ -49,9 +49,9 @@ class WhatsAppAIService {
    */
   async init() {
     if (this.skillsReady) return;
-    await skillRegistry.discoverAndRegister();
+    await skillRegistry.loadSkills();
     this.skillsReady = true;
-    logger.info(`[WhatsAppAI] ${skillRegistry.size} skills carregadas: ${skillRegistry.getDebugInfo().map(s => s.name).join(', ')}`);
+    logger.info(`[WhatsAppAI] Skills inicializadas: ${[...skillRegistry.docs.keys()].join(', ')}`);
   }
 
   // ============================================================
@@ -169,14 +169,25 @@ class WhatsAppAIService {
         return null;
       }
 
-      // Histórico dinâmico: mais mensagens se a conversa tem pedido em andamento
+      // Histórico para detecção de intent
       const history = await prisma.whatsAppChatMessage.findMany({
         where: { restaurantId, customerPhone },
         orderBy: { timestamp: 'desc' },
         take: this._determineHistorySize(restaurantId, customerPhone)
       });
 
-      // Monta system prompt dinâmico com skills
+      const historyTexts = history.reverse().map(msg => msg.content);
+
+      // Detecta skills relevantes e carrega documentação
+      const { skills, tools, prompt: skillsPrompt } = await skillRegistry.processMessage(
+        messageContent,
+        historyTexts,
+        { restaurantId, customerPhone }
+      );
+
+      logger.info(`[WhatsAppAI] Skills detectadas para esta mensagem: ${skills.join(', ')}`);
+
+      // Monta system prompt dinâmico com skills relevantes
       const basePrompt = `Você é ${settings.agentName || 'o assistente virtual'}, o assistente virtual do restaurante ${restaurant.name}.
 Seu objetivo é atender o cliente de forma rápida, educada e eficiente.
 
@@ -194,8 +205,6 @@ DADOS DO RESTAURANTE:
 - Taxa de Entrega: R$ ${restaurant.settings?.deliveryFee || 0}
 - Tempo Estimado: ${restaurant.settings?.deliveryTime || '30-40 min'}`;
 
-      const skillsPrompt = skillRegistry.buildSystemPrompt({ restaurant, settings });
-
       const systemPrompt = basePrompt + '\n\n' + skillsPrompt;
 
       // Formata histórico cronológico
@@ -210,14 +219,14 @@ DADOS DO RESTAURANTE:
         { role: 'user', content: messageContent }
       ];
 
-      // Chama OpenAI com retry
+      // Chama OpenAI com retry - usando tools das skills detectadas
       const response = await this._callOpenAIWithRetry({
         // openai/gpt-4o-mini - Original (comentado)
         // model: 'gpt-4o-mini',
         // qwen/qwen3.6-plus:free - OpenRouter ativo
         model: 'qwen/qwen3.6-plus:free',
         messages,
-        tools: skillRegistry.getAllTools(),
+        tools,
         tool_choice: 'auto',
       });
 
@@ -239,16 +248,13 @@ DADOS DO RESTAURANTE:
             tool_call_id: toolCall.id,
             role: 'tool',
             name: toolCall.function.name,
-            content: toolResult,
+            content: JSON.stringify(toolResult),
           });
         }
 
         // Segunda chamada com resultados das tools
         const secondResponse = await this._callOpenAIWithRetry({
-          // openai/gpt-4o-mini - Original (comentado)
-        // model: 'gpt-4o-mini',
-        // qwen/qwen3.6-plus:free - OpenRouter ativo
-        model: 'qwen/qwen3.6-plus:free',
+          model: 'qwen/qwen3.6-plus:free',
           messages,
         });
         responseMessage = secondResponse.choices[0].message;
