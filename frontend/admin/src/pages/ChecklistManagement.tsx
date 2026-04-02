@@ -124,10 +124,16 @@ const ChecklistManagement: React.FC = () => {
                 getSectors(),
                 getChecklistReportSettings().catch(() => ({ enabled: false, recipientPhone: '', sendTime: '22:00' }))
             ]);
-            setChecklists(Array.isArray(checklistsData) ? checklistsData : []);
-            setSectors(Array.isArray(sectorsData) ? sectorsData : []);
-            setReportSettings(reportData);
+            
+            // Ensure we always have arrays
+            const safeChecklists = Array.isArray(checklistsData) ? checklistsData : [];
+            const safeSectors = Array.isArray(sectorsData) ? sectorsData : [];
+            
+            setChecklists(safeChecklists);
+            setSectors(safeSectors);
+            setReportSettings(reportData || { enabled: false, recipientPhone: '', sendTime: '22:00', reportFormat: 'PDF' });
         } catch (error) {
+            console.error('Error loading checklist data:', error);
             toast.error("Erro ao carregar dados do Checklist");
             setChecklists([]);
             setSectors([]);
