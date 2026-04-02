@@ -6,6 +6,38 @@ const morgan = require('morgan');
 const logger = require('./src/config/logger');
 require('dotenv').config();
 const path = require('path');
+const fs = require('fs');
+
+// Suporte para Docker Secrets em produção
+// DATABASE_URL
+if (!process.env.DATABASE_URL && fs.existsSync('/run/secrets/db_connection_string')) {
+  process.env.DATABASE_URL = fs.readFileSync('/run/secrets/db_connection_string', 'utf8').trim();
+}
+
+// JWT_SECRET
+if (!process.env.JWT_SECRET && fs.existsSync('/run/secrets/jwt_secret')) {
+  process.env.JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
+}
+
+// OPENROUTER_API_KEY (WhatsApp AI)
+if (!process.env.OPENROUTER_API_KEY && fs.existsSync('/run/secrets/openrouter_api_key')) {
+  process.env.OPENROUTER_API_KEY = fs.readFileSync('/run/secrets/openrouter_api_key', 'utf8').trim();
+}
+
+// OPENAI_API_KEY (mantido para possível uso)
+if (!process.env.OPENAI_API_KEY && fs.existsSync('/run/secrets/openai_api_key')) {
+  process.env.OPENAI_API_KEY = fs.readFileSync('/run/secrets/openai_api_key', 'utf8').trim();
+}
+
+// EVOLUTION_API_URL
+if (!process.env.EVOLUTION_API_URL && fs.existsSync('/run/secrets/evolution_api_url')) {
+  process.env.EVOLUTION_API_URL = fs.readFileSync('/run/secrets/evolution_api_url', 'utf8').trim();
+}
+
+// EVOLUTION_API_KEY
+if (!process.env.EVOLUTION_API_KEY && fs.existsSync('/run/secrets/evolution_api_key')) {
+  process.env.EVOLUTION_API_KEY = fs.readFileSync('/run/secrets/evolution_api_key', 'utf8').trim();
+}
 
 if (!process.env.JWT_SECRET) {
   throw new Error('ERRO FATAL: JWT_SECRET não está definido. Verifique seu arquivo .env.');
