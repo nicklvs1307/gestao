@@ -1,4 +1,5 @@
-const OpenAI = require('openai');
+// const OpenAI = require('openai'); // OPENAI - Mantido para possível uso futuro
+const OpenAI = require('openai'); // OPENROUTER - Ativo
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
@@ -7,12 +8,25 @@ const skillRegistry = require('./skills/SkillRegistry');
 
 class WhatsAppAIService {
   constructor() {
-    if (!process.env.OPENAI_API_KEY) {
-      logger.warn('OPENAI_API_KEY não definida no ambiente. O agente AI pode não funcionar.');
+    // OPENAI ORIGINAL (comentado)
+    // if (!process.env.OPENAI_API_KEY) {
+    //   logger.warn('OPENAI_API_KEY não definida no ambiente. O agente AI pode não funcionar.');
+    // }
+    // this.openaiClient = new OpenAI({ 
+    //   apiKey: process.env.OPENAI_API_KEY || 'placeholder' 
+    // });
+
+    // OPENROUTER - Ativo
+    if (!process.env.OPENROUTER_API_KEY) {
+      logger.warn('OPENROUTER_API_KEY não definida no ambiente. O agente AI pode não funcionar.');
     }
-    // Passa apiKey como undefined se não existir, evita crash no startup
-    this.openaiClient = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY || 'placeholder' 
+    this.openaiClient = new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: process.env.OPENROUTER_API_KEY || 'placeholder',
+      defaultHeaders: {
+        'HTTP-Referer': 'https://cardapiotablets.com',
+        'X-OpenRouter-Title': 'CardapioTablets',
+      },
     });
 
     // Rate limiting em memória
@@ -119,7 +133,7 @@ class WhatsAppAIService {
 
   async handleMessage(restaurantId, customerPhone, messageContent, messageId = null) {
     try {
-      if (!process.env.OPENAI_API_KEY) return 'Erro: API Key não configurada.';
+      if (!process.env.OPENROUTER_API_KEY) return 'Erro: API Key não configurada.';
 
       // Inicializa skills se ainda não fez
       if (!this.skillsReady) {
@@ -198,7 +212,10 @@ DADOS DO RESTAURANTE:
 
       // Chama OpenAI com retry
       const response = await this._callOpenAIWithRetry({
-        model: 'gpt-4o-mini',
+        // openai/gpt-4o-mini - Original (comentado)
+        // model: 'gpt-4o-mini',
+        // qwen/qwen3.6-plus:free - OpenRouter ativo
+        model: 'qwen/qwen3.6-plus:free',
         messages,
         tools: skillRegistry.getAllTools(),
         tool_choice: 'auto',
@@ -228,7 +245,10 @@ DADOS DO RESTAURANTE:
 
         // Segunda chamada com resultados das tools
         const secondResponse = await this._callOpenAIWithRetry({
-          model: 'gpt-4o-mini',
+          // openai/gpt-4o-mini - Original (comentado)
+        // model: 'gpt-4o-mini',
+        // qwen/qwen3.6-plus:free - OpenRouter ativo
+        model: 'qwen/qwen3.6-plus:free',
           messages,
         });
         responseMessage = secondResponse.choices[0].message;

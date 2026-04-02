@@ -20,6 +20,7 @@ services:
       ADMIN_URL: https://kicardapio.towersfy.com
       API_URL: https://apikicardapio.towersfy.com
       ALLOWED_ORIGINS: "*"
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
       OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
       EVOLUTION_API_URL_FILE: /run/secrets/evolution_api_url
       EVOLUTION_API_KEY_FILE: /run/secrets/evolution_api_key
@@ -37,6 +38,7 @@ services:
     secrets:
       - db_connection_string
       - jwt_secret
+      - openrouter_api_key
       - openai_api_key
       - evolution_api_url
       - evolution_api_key
@@ -128,6 +130,8 @@ secrets:
   db_connection_string:
     external: true
   jwt_secret:
+    external: true
+  openrouter_api_key:
     external: true
   openai_api_key:
     external: true
