@@ -124,11 +124,13 @@ const ChecklistManagement: React.FC = () => {
                 getSectors(),
                 getChecklistReportSettings().catch(() => ({ enabled: false, recipientPhone: '', sendTime: '22:00' }))
             ]);
-            setChecklists(checklistsData);
-            setSectors(sectorsData);
+            setChecklists(Array.isArray(checklistsData) ? checklistsData : []);
+            setSectors(Array.isArray(sectorsData) ? sectorsData : []);
             setReportSettings(reportData);
         } catch (error) {
             toast.error("Erro ao carregar dados do Checklist");
+            setChecklists([]);
+            setSectors([]);
         } finally {
             setLoading(false);
         }
@@ -137,10 +139,12 @@ const ChecklistManagement: React.FC = () => {
     const loadExecutions = async () => {
         try {
             const data = await apiClient.get('/checklists/history', { params: filters });
-            setExecutions(data.data);
+            const executionsData = data.data.data || data.data;
+            setExecutions(Array.isArray(executionsData) ? executionsData : []);
             setCurrentPage(1);
         } catch (error) {
             toast.error("Erro ao carregar histórico");
+            setExecutions([]);
         }
     };
 
@@ -240,20 +244,23 @@ const ChecklistManagement: React.FC = () => {
     };
 
     const filteredChecklists = useMemo(() => {
+        if (!Array.isArray(checklists)) return [];
         return checklists.filter(c =>
-            c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             c.sector?.name?.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [checklists, searchQuery]);
 
     const filteredSectors = useMemo(() => {
+        if (!Array.isArray(sectors)) return [];
         return sectors.filter(s =>
-            s.name.toLowerCase().includes(sectorSearch.toLowerCase())
+            s.name?.toLowerCase().includes(sectorSearch.toLowerCase())
         );
     }, [sectors, sectorSearch]);
 
-    const totalExecutionPages = Math.ceil(executions.length / ITEMS_PER_PAGE);
+    const totalExecutionPages = Math.ceil((executions?.length || 0) / ITEMS_PER_PAGE);
     const paginatedExecutions = useMemo(() => {
+        if (!Array.isArray(executions)) return [];
         let sorted = [...executions].sort((a, b) => {
             const aVal = a[sortField];
             const bVal = b[sortField];
@@ -263,9 +270,9 @@ const ChecklistManagement: React.FC = () => {
                     : new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime();
             }
             if (sortDirection === 'desc') {
-                return String(bVal).localeCompare(String(aVal));
+                return String(bVal || '').localeCompare(String(aVal || ''));
             }
-            return String(aVal).localeCompare(String(bVal));
+            return String(aVal || '').localeCompare(String(bVal || ''));
         });
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
         return sorted.slice(start, start + ITEMS_PER_PAGE);
@@ -281,16 +288,19 @@ const ChecklistManagement: React.FC = () => {
     };
 
     const stats = useMemo(() => {
-        const totalChecklists = checklists.length;
-        const totalExecutions = executions.length;
-        const avgConformity = executions.length > 0
-            ? Math.round(executions.reduce((acc, exec) => {
+        const safeChecklists = Array.isArray(checklists) ? checklists : [];
+        const safeExecutions = Array.isArray(executions) ? executions : [];
+        
+        const totalChecklists = safeChecklists.length;
+        const totalExecutions = safeExecutions.length;
+        const avgConformity = safeExecutions.length > 0
+            ? Math.round(safeExecutions.reduce((acc, exec) => {
                 const total = exec.responses?.length || 0;
                 const ok = exec.responses?.filter((r: any) => r.isOk).length || 0;
                 return acc + (total > 0 ? (ok / total) * 100 : 0);
-            }, 0) / executions.length)
+            }, 0) / safeExecutions.length)
             : 0;
-        const todayExecutions = executions.filter(e => {
+        const todayExecutions = safeExecutions.filter(e => {
             const today = new Date();
             const execDate = new Date(e.completedAt);
             return execDate.toDateString() === today.toDateString();
