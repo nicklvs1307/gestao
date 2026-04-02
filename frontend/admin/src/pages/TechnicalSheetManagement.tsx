@@ -10,6 +10,7 @@ import { getIngredients } from '../services/api/stock';
 import { getProducts, updateProduct } from '../services/api/products';
 import { addonService } from '../services/api/addonService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const { 
     Search, Layers, Package, Plus, Trash2, 
@@ -31,6 +32,9 @@ const CompositionModal = ({
     availableIngredients: any[] 
 }) => {
     const [localIngredients, setLocalIngredients] = useState<any[]>(target.ingredients || []);
+    const isOpen = !!target;
+
+    useScrollLock(isOpen);
 
     const addIngredient = () => {
         setLocalIngredients([...localIngredients, { ingredientId: '', quantity: 0 }]);

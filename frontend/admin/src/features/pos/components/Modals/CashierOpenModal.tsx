@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';
 import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
+import { useScrollLock } from '../../../../hooks/useScrollLock';
 
 interface CashierOpenModalProps {
   onOpenCashier: (amount: string) => void;
@@ -13,6 +14,8 @@ export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ o
   const { activeModal, setActiveModal } = usePosStore();
   const [cashierAmount, setCashierAmount] = useState('');
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  useScrollLock(activeModal === 'cashier_open');
 
   const backdropTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.2 };
   const modalTransition = prefersReducedMotion ? { duration: 0.1 } : { type: "spring", damping: 25, stiffness: 300 };

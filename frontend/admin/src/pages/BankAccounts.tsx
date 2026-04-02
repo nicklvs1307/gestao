@@ -7,12 +7,15 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const BankAccounts: React.FC = () => {
     const [accounts, setAccounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<any>({ name: '', type: 'BANK', balance: 0 });
+
+    useScrollLock(showForm);
 
     const loadAccounts = async () => {
         setLoading(true);

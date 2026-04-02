@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const StockIngredients: React.FC = () => {
     const [ingredients, setIngredients] = useState<any[]>([]);
@@ -14,6 +15,8 @@ const StockIngredients: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingIngredient, setEditingIngredient] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
+
+    useScrollLock(isModalOpen);
 
     const [formData, setFormData] = useState({
         name: '',
