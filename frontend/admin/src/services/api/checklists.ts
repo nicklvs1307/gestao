@@ -22,7 +22,8 @@ export const deleteSector = async (id: string) => {
 
 export const getChecklists = async () => {
     const response = await apiClient.get('/checklists');
-    return response.data.data || response.data;
+    const data = response.data.data || response.data;
+    return Array.isArray(data) ? data : [];
 };
 
 export const createChecklist = async (data: Record<string, unknown>) => {
@@ -47,7 +48,8 @@ export const submitChecklistExecution = async (data: Record<string, unknown>) =>
 
 export const getChecklistExecutions = async (params?: Record<string, unknown>) => {
     const response = await apiClient.get('/checklists/history', { params });
-    return response.data.data || response.data;
+    const data = response.data.data || response.data;
+    return Array.isArray(data) ? data : [];
 };
 
 export const getChecklistStats = async (params?: Record<string, unknown>) => {
