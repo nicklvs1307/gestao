@@ -138,8 +138,10 @@ const ChecklistManagement: React.FC = () => {
 
     const loadExecutions = async () => {
         try {
-            const data = await apiClient.get('/checklists/history', { params: filters });
-            const executionsData = data.data.data || data.data;
+            const response = await apiClient.get('/checklists/history', { params: filters });
+            // response.data is the axios response body
+            // Backend returns { data: [...], total: N, page: X, ... }
+            const executionsData = response.data?.data || response.data;
             setExecutions(Array.isArray(executionsData) ? executionsData : []);
             setCurrentPage(1);
         } catch (error) {
