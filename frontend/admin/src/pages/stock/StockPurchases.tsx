@@ -14,7 +14,9 @@ import { Input } from '../../components/ui/Input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useScrollLock } from '../../hooks/useScrollLock';: React.FC = () => {
+import { useScrollLock } from '../../hooks/useScrollLock';
+
+const StockPurchases: React.FC = () => {
     const [purchases, setPurchases] = useState<any[]>([]);
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [ingredients, setIngredients] = useState<any[]>([]);
