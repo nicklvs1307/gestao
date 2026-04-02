@@ -15,11 +15,7 @@ import {
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { Card } from './ui/Card';
-import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
 
-type UserType = any;
 
 interface UserFormModalProps {
   isOpen: boolean;
