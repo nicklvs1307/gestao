@@ -8,11 +8,121 @@ const { ptBR } = require('date-fns/locale');
 const fs = require('fs');
 
 class ChecklistReportService {
-  // Auxiliar para obter a data/hora atual em São Paulo
   getSaoPauloDate() {
     const now = new Date();
-    // Converte para o fuso de São Paulo (Brasília)
     return new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  }
+
+  // Helper para obter todos os destinatários
+  getRecipients(settings) {
+    const recipients = [];
+    
+    // Número principal
+    if (settings.recipientPhone) {
+      const normalized = normalizePhone(settings.recipientPhone);
+      if (normalized) recipients.push(normalized);
+    }
+    
+    // Números adicionais (JSON array ou string separada por vírgula)
+    if (settings.recipientPhones) {
+      try {
+        let phones = [];
+        if (typeof settings.recipientPhones === 'string') {
+          // Tentar parse JSON primeiro
+          try {
+            phones = JSON.parse(settings.recipientPhones);
+          } catch {
+            // Se não for JSON, separar por vírgula
+            phones = settings.recipientPhones.split(',').map(p => p.trim()).filter(Boolean);
+          }
+        } else if (Array.isArray(settings.recipientPhones)) {
+          phones = settings.recipientPhones;
+        }
+        
+        phones.forEach(phone => {
+          const normalized = normalizePhone(phone);
+          if (normalized && !recipients.includes(normalized)) {
+            recipients.push(normalized);
+          }
+        });
+      } catch (error) {
+        logger.error(`[ChecklistReport] Erro ao parsear recipientPhones:`, error);
+      }
+    }
+    
+    return recipients;
+  }
+
+  // Helper para montar mensagem com template customizado
+  buildMessage(template, data) {
+    if (template) {
+      // Substituir placeholders no template customizado
+      return template
+        .replace(/\{date\}/g, data.dateStr || '')
+        .replace(/\{totalChecklists\}/g, data.totalChecklists || '0')
+        .replace(/\{executedToday\}/g, data.executedToday || '0')
+        .replace(/\{conformityRate\}/g, data.conformityRate || '0')
+        .replace(/\{checklistName\}/g, data.checklistName || '')
+        .replace(/\{sectorName\}/g, data.sectorName || '')
+        .replace(/\{executorName\}/g, data.executorName || '')
+        .replace(/\{completionTime\}/g, data.completionTime || '')
+        .replace(/\{individualRate\}/g, data.individualRate || '0');
+    }
+    return null; // Retorna null para usar mensagem padrão
+  }
+
+  // Helper para logar envio
+  async logReport(restaurantId, type, recipientPhone, status, options = {}) {
+    try {
+      await prisma.checklistReportLog.create({
+        data: {
+          restaurantId,
+          type,
+          checklistId: options.checklistId || null,
+          recipientPhone,
+          status,
+          errorMessage: options.errorMessage || null,
+          retryCount: options.retryCount || 0,
+          summary: options.summary || null
+        }
+      });
+    } catch (error) {
+      logger.error(`[ChecklistReport] Erro ao logar envio:`, error);
+    }
+  }
+
+  // Helper para enviar com retry
+  async sendWithRetry(instanceName, recipient, message, pdfPath, pdfFilename, pdfCaption, maxRetries = 2) {
+    let lastError = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Enviar texto
+        await evolutionService.sendText(instanceName, recipient, message);
+
+        // Enviar PDF se houver
+        if (pdfPath && fs.existsSync(pdfPath)) {
+          await evolutionService.sendMedia(
+            instanceName,
+            recipient,
+            pdfPath,
+            pdfFilename,
+            pdfCaption
+          );
+        }
+        return { success: true, attempts: attempt + 1 };
+      } catch (error) {
+        lastError = error;
+        logger.warn(`[ChecklistReport] Tentativa ${attempt + 1} falhou para ${recipient}:`, error.message);
+        
+        if (attempt < maxRetries) {
+          // Esperar exponencialmente mais entre tentativas
+          await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, attempt)));
+        }
+      }
+    }
+    
+    return { success: false, error: lastError, attempts: maxRetries + 1 };
   }
 
   async generateDailyReport(restaurantId) {
@@ -20,19 +130,14 @@ class ChecklistReportService {
     const start = startOfDay(today);
     const end = endOfDay(today);
 
-    // 1. Busca as configurações de relatório
     const settings = await prisma.checklistReportSettings.findUnique({
       where: { restaurantId },
     });
 
-    if (!settings || !settings.enabled || !settings.recipientPhone) {
+    if (!settings || !settings.enabled) {
       return;
     }
 
-    const recipient = normalizePhone(settings.recipientPhone);
-    if (!recipient) return;
-
-    // 2. Busca a instância do WhatsApp conectada
     const instance = await prisma.whatsAppInstance.findUnique({
       where: { restaurantId },
     });
@@ -42,7 +147,12 @@ class ChecklistReportService {
       return;
     }
 
-    // 3. Busca os checklists ativos do restaurante
+    const recipients = this.getRecipients(settings);
+    if (recipients.length === 0) {
+      logger.warn(`[ChecklistReport] Nenhum destinatário configurado para restaurante ${restaurantId}`);
+      return;
+    }
+
     const checklists = await prisma.checklist.findMany({
       where: { restaurantId, isActive: true },
       include: {
@@ -51,7 +161,6 @@ class ChecklistReportService {
       }
     });
 
-    // 4. Busca as execuções de hoje
     const executions = await prisma.checklistExecution.findMany({
       where: {
         restaurantId,
@@ -64,7 +173,6 @@ class ChecklistReportService {
       }
     });
 
-    // 5. Processa os dados
     const totalChecklists = checklists.length;
     const executedToday = executions.length;
     
@@ -80,74 +188,78 @@ class ChecklistReportService {
 
     const conformityRate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(1) : 0;
     const dateStr = format(today, "dd 'de' MMMM", { locale: ptBR });
+    const formatType = settings.reportFormat || "PDF";
 
-    // 6. Define o que será enviado com base nas configurações
-    const formatType = settings.reportFormat || "PDF"; // "PDF", "TEXT", "BOTH"
+    // Montar mensagem com template customizado ou padrão
+    const templateData = {
+      dateStr,
+      totalChecklists,
+      executedToday,
+      conformityRate
+    };
 
-    // 7. Monta a mensagem de texto (Resumo Geral)
-    let summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
-    summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
-    summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
-    summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
+    let summaryMessage = this.buildMessage(settings.customMessage, { ...templateData, type: 'daily' });
 
-    // 8. Se for TEXT ou BOTH, adiciona os detalhes das execuções no texto
-    if (formatType === "TEXT" || formatType === "BOTH") {
-      summaryMessage += `*━━━━━━━━━━━━━━━━━━*\n`;
-      summaryMessage += `*📋 DETALHAMENTO POR SETOR*\n`;
-      
-      executions.forEach(exe => {
-        const exeOk = exe.responses.filter(r => r.isOk).length;
-        const exeTotal = exe.responses.length;
-        const exeRate = exeTotal > 0 ? ((exeOk / exeTotal) * 100).toFixed(0) : 0;
-        const time = format(exe.completedAt, "HH:mm");
+    if (!summaryMessage) {
+      // Mensagem padrão
+      summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+      summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
+      summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+      summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
+
+      if (formatType === "TEXT" || formatType === "BOTH") {
+        summaryMessage += `*━━━━━━━━━━━━━━━━━━*\n`;
+        summaryMessage += `*📋 DETALHAMENTO POR SETOR*\n`;
         
-        summaryMessage += `\n📍 *${exe.checklist.title.toUpperCase()}*\n`;
-        summaryMessage += ` setor: _${exe.checklist.sector.name}_\n`;
-        summaryMessage += ` 🕒 ${time} | 📊 Conformidade: *${exeRate}%*\n`;
-        summaryMessage += ` 👤 Executor: ${exe.user?.name || exe.externalUserName || 'N/A'}\n`;
-        
-        // Adiciona itens irregulares ou com fotos
-        exe.responses.forEach(res => {
-          if (!res.isOk || (res.task?.type === "PHOTO" && res.value)) {
-            const status = res.isOk ? "✅" : "❌";
-            summaryMessage += `\n   ${status} *${res.task?.content}*\n`;
-            
-            if (res.notes) {
-              summaryMessage += `     └ 📝 _Nota: ${res.notes}_\n`;
+        executions.forEach(exe => {
+          const exeOk = exe.responses.filter(r => r.isOk).length;
+          const exeTotal = exe.responses.length;
+          const exeRate = exeTotal > 0 ? ((exeOk / exeTotal) * 100).toFixed(0) : 0;
+          const time = format(exe.completedAt, "HH:mm");
+          
+          summaryMessage += `\n📍 *${exe.checklist.title.toUpperCase()}*\n`;
+          summaryMessage += `  setor: _${exe.checklist.sector.name}_\n`;
+          summaryMessage += `  🕒 ${time} | 📊 Conformidade: *${exeRate}%*\n`;
+          summaryMessage += `  👤 Executor: ${exe.user?.name || exe.externalUserName || 'N/A'}\n`;
+          
+          exe.responses.forEach(res => {
+            if (!res.isOk || (res.task?.type === "PHOTO" && res.value)) {
+              const status = res.isOk ? "✅" : "❌";
+              summaryMessage += `\n   ${status} *${res.task?.content}*\n`;
+              
+              if (res.notes) {
+                summaryMessage += `     └ 📝 _Nota: ${res.notes}_\n`;
+              }
+              
+              if (res.value && res.task?.type === "PHOTO") {
+                try {
+                  const photos = JSON.parse(res.value);
+                  const baseUrl = process.env.API_URL; 
+                  if (Array.isArray(photos) && baseUrl) {
+                    photos.forEach((p, idx) => {
+                      summaryMessage += `     └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
+                    });
+                  }
+                } catch (e) {}
+              }
             }
-            
-            // Link das fotos com URL de produção
-            if (res.value && res.task?.type === "PHOTO") {
-              try {
-                const photos = JSON.parse(res.value);
-                const baseUrl = process.env.API_URL; 
-                if (Array.isArray(photos) && baseUrl) {
-                  photos.forEach((p, idx) => {
-                    summaryMessage += `     └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
-                  });
-                }
-              } catch (e) {}
-            }
-          }
+          });
+          summaryMessage += `\n----------------------------------\n`;
         });
-        summaryMessage += `\n----------------------------------\n`;
-      });
 
-      if (formatType === "BOTH") {
-        summaryMessage += `\n_O relatório técnico oficial segue em PDF abaixo._`;
+        if (formatType === "BOTH") {
+          summaryMessage += `\n_O relatório técnico oficial segue em PDF abaixo._`;
+        }
+      } else {
+        summaryMessage += `_O relatório detalhado segue em PDF abaixo._`;
       }
-    } else {
-      summaryMessage += `_O relatório detalhado segue em PDF abaixo._`;
     }
 
-    // 9. Processa envios
+    // Gerar PDF se necessário
     let pdfPath = null;
-    try {
-      // Envia Mensagem de Texto
-      await evolutionService.sendText(instance.name, recipient, summaryMessage);
-
-      // Envia PDF (Se não for apenas TEXT)
-      if (formatType === "PDF" || formatType === "BOTH") {
+    let pdfFilename = null;
+    if (formatType === "PDF" || formatType === "BOTH") {
+      try {
         pdfPath = await pdfService.generateDailyGeneralPDF({
           dateStr,
           totalChecklists,
@@ -155,23 +267,39 @@ class ChecklistReportService {
           conformityRate,
           executions
         });
-
-        await evolutionService.sendMedia(
-          instance.name, 
-          recipient, 
-          pdfPath, 
-          `Resumo_Geral_${format(today, 'yyyy-MM-dd')}.pdf`,
-          `Relatório Detalhado - ${dateStr}`
-        );
+        pdfFilename = `Resumo_Geral_${format(today, 'yyyy-MM-dd')}.pdf`;
+      } catch (error) {
+        logger.error(`[ChecklistReport] Erro ao gerar PDF:`, error);
       }
+    }
 
-      logger.info(`[ChecklistReport] Relatório (${formatType}) enviado para ${recipient} (Restaurante: ${restaurantId})`);
-    } catch (error) {
-      logger.error(`[ChecklistReport] Erro ao enviar relatório:`, error);
-    } finally {
-      if (pdfPath && fs.existsSync(pdfPath)) {
-        fs.unlinkSync(pdfPath); // Remove arquivo temporário
+    // Enviar para todos os destinatários
+    for (const recipient of recipients) {
+      const result = await this.sendWithRetry(
+        instance.name,
+        recipient,
+        summaryMessage,
+        pdfPath,
+        pdfFilename,
+        `Relatório Detalhado - ${dateStr}`
+      );
+
+      await this.logReport(restaurantId, 'DAILY', recipient, result.success ? 'SUCCESS' : 'FAILED', {
+        errorMessage: result.error?.message,
+        retryCount: result.attempts - 1,
+        summary: `Resumo: ${executedToday}/${totalChecklists} checklists, ${conformityRate}% conformidade`
+      });
+
+      if (result.success) {
+        logger.info(`[ChecklistReport] Relatório (${formatType}) enviado para ${recipient}`);
+      } else {
+        logger.error(`[ChecklistReport] Falha ao enviar para ${recipient}: ${result.error?.message}`);
       }
+    }
+
+    // Limpar PDF temporário
+    if (pdfPath && fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
     }
   }
 
@@ -179,7 +307,6 @@ class ChecklistReportService {
     const now = this.getSaoPauloDate();
     const currentTime = format(now, "HH:mm");
 
-    // Busca todos os restaurantes que tem relatório habilitado para este horário
     const activeSettings = await prisma.checklistReportSettings.findMany({
       where: {
         enabled: true,
@@ -194,8 +321,6 @@ class ChecklistReportService {
 
   async sendIndividualReport(checklistId) {
     const now = this.getSaoPauloDate();
-    const start = startOfDay(now);
-    const end = endOfDay(now);
 
     const checklist = await prisma.checklist.findUnique({
       where: { id: checklistId },
@@ -215,20 +340,20 @@ class ChecklistReportService {
     const settings = checklist.restaurant.checklistReportSettings;
     const instance = checklist.restaurant.whatsappInstance;
 
-    if (!settings || !settings.enabled || !settings.recipientPhone) {
+    if (!settings || !settings.enabled) {
       throw new Error("Relatórios não configurados para este restaurante");
     }
     if (!instance || instance.status !== 'CONNECTED') {
       throw new Error("WhatsApp não conectado");
     }
 
-    const recipient = normalizePhone(settings.recipientPhone);
+    const recipients = this.getRecipients(settings);
+    if (recipients.length === 0) {
+      throw new Error("Nenhum destinatário configurado");
+    }
 
-    // 2. Busca a ÚLTIMA execução (removido filtro de data 'hoje')
     const execution = await prisma.checklistExecution.findFirst({
-      where: {
-        checklistId: checklist.id
-      },
+      where: { checklistId: checklist.id },
       include: {
         checklist: { include: { sector: true, tasks: true, restaurant: true } },
         responses: { include: { task: true } },
@@ -238,7 +363,7 @@ class ChecklistReportService {
     });
 
     if (!execution) {
-      throw new Error("Nenhuma execução encontrada para este checklist na história");
+      throw new Error("Nenhuma execução encontrada para este checklist");
     }
 
     const okTasks = execution.responses.filter(r => r.isOk).length;
@@ -247,56 +372,88 @@ class ChecklistReportService {
     const time = format(execution.completedAt, "HH:mm");
     const formatType = settings.reportFormat || "PDF";
 
-    let message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
-    message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
-    message += `📊 Conformidade: *${rate}%*\n`;
-    message += `🕒 Concluído às: ${time}\n`;
-    message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+    // Montar mensagem com template ou padrão
+    const templateData = {
+      checklistName: checklist.title,
+      sectorName: checklist.sector.name,
+      executorName: execution.user?.name || execution.externalUserName || 'N/A',
+      completionTime: time,
+      individualRate: rate
+    };
 
-    if (formatType === "TEXT" || formatType === "BOTH") {
-      message += `*DETALHAMENTO DOS ITENS:*\n`;
-      execution.responses.forEach(res => {
-        const status = res.isOk ? "✅" : "❌";
-        message += `\n ${status} *${res.task?.content}*\n`;
-        if (res.notes) message += `    └ 📝 _Nota: ${res.notes}_\n`;
-        
-        if (res.value && res.task?.type === "PHOTO") {
-          try {
-            const photos = JSON.parse(res.value);
-            const baseUrl = process.env.API_URL || "https://api.kicardapio.com.br";
-            if (Array.isArray(photos)) {
-              photos.forEach((p, idx) => {
-                message += `    └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
-              });
-            }
-          } catch (e) {}
-        }
-      });
-      if (formatType === "BOTH") message += `\n_O detalhamento técnico segue em PDF._`;
-    } else {
-      message += `_O detalhamento técnico segue em PDF._`;
+    let message = this.buildMessage(settings.customMessage, { ...templateData, type: 'individual' });
+
+    if (!message) {
+      message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
+      message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
+      message += `📊 Conformidade: *${rate}%*\n`;
+      message += `🕒 Concluído às: ${time}\n`;
+      message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+
+      if (formatType === "TEXT" || formatType === "BOTH") {
+        message += `*DETALHAMENTO DOS ITENS:*\n`;
+        execution.responses.forEach(res => {
+          const status = res.isOk ? "✅" : "❌";
+          message += `\n ${status} *${res.task?.content}*\n`;
+          if (res.notes) message += `    └ 📝 _Nota: ${res.notes}_\n`;
+          
+          if (res.value && res.task?.type === "PHOTO") {
+            try {
+              const photos = JSON.parse(res.value);
+              const baseUrl = process.env.API_URL || "https://api.kicardapio.com.br";
+              if (Array.isArray(photos)) {
+                photos.forEach((p, idx) => {
+                  message += `    └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
+                });
+              }
+            } catch (e) {}
+          }
+        });
+        if (formatType === "BOTH") message += `\n_O detalhamento técnico segue em PDF._`;
+      } else {
+        message += `_O detalhamento técnico segue em PDF._`;
+      }
     }
 
     let pdfPath = null;
-    try {
-      await evolutionService.sendText(instance.name, recipient, message);
-
-      if (formatType === "PDF" || formatType === "BOTH") {
+    let pdfFilename = null;
+    if (formatType === "PDF" || formatType === "BOTH") {
+      try {
         pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
-        await evolutionService.sendMedia(
-          instance.name,
-          recipient,
-          pdfPath,
-          `Auditoria_Manual_${checklist.id}_${format(now, 'HHmm')}.pdf`,
-          `Auditoria Detalhada - ${checklist.title}`
-        );
-      }
-      return true;
-    } finally {
-      if (pdfPath && fs.existsSync(pdfPath)) {
-        fs.unlinkSync(pdfPath);
+        pdfFilename = `Auditoria_${checklist.id}_${format(now, 'HHmm')}.pdf`;
+      } catch (error) {
+        logger.error(`[ChecklistReport] Erro ao gerar PDF individual:`, error);
       }
     }
+
+    // Enviar para todos os destinatários
+    const results = [];
+    for (const recipient of recipients) {
+      const result = await this.sendWithRetry(
+        instance.name,
+        recipient,
+        message,
+        pdfPath,
+        pdfFilename,
+        `Auditoria Detalhada - ${checklist.title}`
+      );
+
+      await this.logReport(checklist.restaurantId, 'INDIVIDUAL', recipient, result.success ? 'SUCCESS' : 'FAILED', {
+        checklistId,
+        errorMessage: result.error?.message,
+        retryCount: result.attempts - 1,
+        summary: `${checklist.title}: ${rate}% conformidade, executor: ${execution.user?.name || execution.externalUserName}`
+      });
+
+      results.push({ recipient, success: result.success });
+    }
+
+    // Limpar PDF
+    if (pdfPath && fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
+    }
+
+    return results;
   }
 
   async checkIndividualDeadlines() {
@@ -305,7 +462,6 @@ class ChecklistReportService {
     const start = startOfDay(now);
     const end = endOfDay(now);
 
-    // 1. Busca todos os checklists que tem horário limite para AGORA
     const checklistsWithDeadline = await prisma.checklist.findMany({
       where: {
         isActive: true,
@@ -322,7 +478,6 @@ class ChecklistReportService {
       }
     });
 
-    // 2. Batch: Busca todas as execuções de hoje para todos os checklists de uma vez
     const checklistIds = checklistsWithDeadline.map(c => c.id);
     const executions = checklistIds.length > 0
       ? await prisma.checklistExecution.findMany({
@@ -338,7 +493,6 @@ class ChecklistReportService {
         })
       : [];
 
-    // 3. Cria um map para lookup rápido
     const executionMap = {};
     executions.forEach(exec => {
       if (!executionMap[exec.checklistId]) {
@@ -353,51 +507,72 @@ class ChecklistReportService {
       if (!settings || !settings.enabled || !settings.recipientPhone) continue;
       if (!instance || instance.status !== 'CONNECTED') continue;
 
-      const recipient = normalizePhone(settings.recipientPhone);
+      const recipients = this.getRecipients(settings);
       const execution = executionMap[checklist.id];
 
-      if (!execution) {
-        let message = `*⚠️ ALERTA DE OPERAÇÃO EM ATRASO*\n\n`;
-        message += `O checklist *${checklist.title}* do setor *${checklist.sector.name}* ainda não foi realizado hoje.\n\n`;
-        message += `⏰ Horário Limite: ${checklist.deadlineTime}\n`;
-        message += `📍 Status: *PENDENTE*\n\n`;
-        message += `\n\n_Notificação automática KiCardapio_`;
+      for (const recipient of recipients) {
+        if (!execution) {
+          let message = `*⚠️ ALERTA DE OPERAÇÃO EM ATRASO*\n\n`;
+          message += `O checklist *${checklist.title}* do setor *${checklist.sector.name}* ainda não foi realizado hoje.\n\n`;
+          message += `⏰ Horário Limite: ${checklist.deadlineTime}\n`;
+          message += `📍 Status: *PENDENTE*\n\n`;
+          message += `_Notificação automática KiCardapio_`;
 
-        try {
-          await evolutionService.sendText(instance.name, recipient, message);
-        } catch (error) {
-          logger.error(`[ChecklistDeadline] Erro ao enviar alerta de atraso:`, error);
-        }
-      } else {
-        const okTasks = execution.responses.filter(r => r.isOk).length;
-        const totalTasks = execution.responses.length;
-        const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
-        const time = format(execution.completedAt, "HH:mm");
+          try {
+            await evolutionService.sendText(instance.name, recipient, message);
+            await this.logReport(checklist.restaurantId, 'DEADLINE_ALERT', recipient, 'SUCCESS', {
+              checklistId: checklist.id,
+              summary: `Alerta atraso: ${checklist.title} - ${checklist.sector.name}`
+            });
+          } catch (error) {
+            logger.error(`[ChecklistDeadline] Erro ao enviar alerta:`, error);
+            await this.logReport(checklist.restaurantId, 'DEADLINE_ALERT', recipient, 'FAILED', {
+              checklistId: checklist.id,
+              errorMessage: error.message
+            });
+          }
+        } else {
+          const okTasks = execution.responses.filter(r => r.isOk).length;
+          const totalTasks = execution.responses.length;
+          const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
+          const time = format(execution.completedAt, "HH:mm");
 
-        let message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
-        message += `O checklist *${checklist.title}* foi concluído.\n\n`;
-        message += `📊 Conformidade: *${rate}%*\n`;
-        message += `🕒 Concluído às: ${time}\n`;
-        message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
-        message += `_O detalhamento técnico segue em PDF._`;
+          let message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
+          message += `O checklist *${checklist.title}* foi concluído.\n\n`;
+          message += `📊 Conformidade: *${rate}%*\n`;
+          message += `🕒 Concluído às: ${time}\n`;
+          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+          message += `_O detalhamento técnico segue em PDF._`;
 
-        let pdfPath = null;
-        try {
-          pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
+          let pdfPath = null;
+          try {
+            pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
+            
+            const result = await this.sendWithRetry(
+              instance.name,
+              recipient,
+              message,
+              pdfPath,
+              `Auditoria_${checklist.id}_${format(now, 'HHmm')}.pdf`,
+              `Auditoria Detalhada - ${checklist.title}`
+            );
 
-          await evolutionService.sendText(instance.name, recipient, message);
-          await evolutionService.sendMedia(
-            instance.name,
-            recipient,
-            pdfPath,
-            `Auditoria_${checklist.id}_${format(now, 'HHmm')}.pdf`,
-            `Auditoria Detalhada - ${checklist.title}`
-          );
-        } catch (error) {
-          logger.error(`[ChecklistDeadline] Erro ao enviar PDF individual:`, error);
-        } finally {
-          if (pdfPath && fs.existsSync(pdfPath)) {
-            fs.unlinkSync(pdfPath);
+            await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, result.success ? 'SUCCESS' : 'FAILED', {
+              checklistId: checklist.id,
+              errorMessage: result.error?.message,
+              retryCount: result.attempts - 1,
+              summary: `${checklist.title}: ${rate}% conformidade`
+            });
+          } catch (error) {
+            logger.error(`[ChecklistDeadline] Erro ao enviar PDF:`, error);
+            await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, 'FAILED', {
+              checklistId: checklist.id,
+              errorMessage: error.message
+            });
+          } finally {
+            if (pdfPath && fs.existsSync(pdfPath)) {
+              fs.unlinkSync(pdfPath);
+            }
           }
         }
       }

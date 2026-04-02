@@ -1366,10 +1366,37 @@ model ChecklistReportSettings {
   restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
 
   enabled          Boolean  @default(false)
-  recipientPhone   String?  // Numero que recebe o relatorio via WhatsApp
+  recipientPhone   String?  // Numero principal que recebe o relatorio via WhatsApp
+  recipientPhones  String?  // Numeros adicionais separados por virgula (JSON array)
   sendTime         String   @default("22:00") // Horário de envio (HH:mm)
   reportFormat     String   @default("PDF")   // "PDF", "TEXT", "BOTH"
+  customMessage    String?  // Mensagem personalizada para o relatório (template)
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  // Histórico de envios
+  sentReports      ChecklistReportLog[]
+}
+
+// Log de envio de relatórios
+model ChecklistReportLog {
+  id               String   @id @default(cuid())
+  restaurantId     String
+  settings         ChecklistReportSettings @relation(fields: [restaurantId], references: [restaurantId])
+  
+  type             String   // "DAILY", "INDIVIDUAL", "DEADLINE_ALERT", "DEADLINE_OK"
+  checklistId      String?  // Para relatórios individuais
+  recipientPhone   String   // Numero que recebeu
+  status           String   // "SUCCESS", "FAILED", "RETRY"
+  errorMessage     String?  // Erro se falhou
+  retryCount       Int      @default(0)
+  sentAt           DateTime @default(now())
+  
+  // Resumo do que foi enviado
+  summary          String?  // Texto resumido do relatório enviado
+  
+  @@index([restaurantId])
+  @@index([sentAt])
+  @@index([type])
 }

@@ -1236,9 +1236,19 @@ const ChecklistManagement: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowExecutionDetail(false)} className="w-10 h-10 bg-muted text-muted-foreground rounded-lg flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-all">
-                                <X size={20} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={`/checklist/report/${selectedExecution.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="h-10 px-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-all"
+                                >
+                                    <Eye size={16} /> Relatório
+                                </a>
+                                <button onClick={() => setShowExecutionDetail(false)} className="w-10 h-10 bg-muted text-muted-foreground rounded-lg flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-all">
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </header>
                         <div className="flex-1 overflow-y-auto p-6 space-y-4">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

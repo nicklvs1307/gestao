@@ -22,7 +22,7 @@ export const deleteSector = async (id: string) => {
 
 export const getChecklists = async () => {
     const response = await apiClient.get('/checklists');
-    return response.data;
+    return response.data.data || response.data;
 };
 
 export const createChecklist = async (data: Record<string, unknown>) => {
@@ -47,6 +47,11 @@ export const submitChecklistExecution = async (data: Record<string, unknown>) =>
 
 export const getChecklistExecutions = async (params?: Record<string, unknown>) => {
     const response = await apiClient.get('/checklists/history', { params });
+    return response.data.data || response.data;
+};
+
+export const getChecklistStats = async (params?: Record<string, unknown>) => {
+    const response = await apiClient.get('/checklists/stats', { params });
     return response.data;
 };
 export const getChecklistReportSettings = async () => {
@@ -66,5 +71,10 @@ export const sendManualDailyReport = async () => {
 
 export const sendManualIndividualReport = async (id: string) => {
     const response = await apiClient.post(`/checklists/${id}/reports/individual`);
+    return response.data;
+};
+
+export const getReportLogs = async (params?: Record<string, unknown>) => {
+    const response = await apiClient.get('/checklists/settings/report/logs', { params });
     return response.data;
 };

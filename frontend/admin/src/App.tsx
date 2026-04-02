@@ -57,6 +57,7 @@ const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
 const GlobalSizesPage = lazy(() => import('./pages/GlobalSizesPage'));
 const ChecklistManagement = lazy(() => import('./pages/ChecklistManagement'));
 const ChecklistFill = lazy(() => import('./pages/ChecklistFill'));
+const ChecklistReportView = lazy(() => import('./pages/ChecklistReportView'));
 const TableCheckout = lazy(() => import('./pages/TableCheckout'));
 const WhatsAppManagement = lazy(() => import('./pages/WhatsAppManagement'));
 
@@ -203,6 +204,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/waiter" element={<ProtectedRoute permission="waiter:pos"><WaiterPos /></ProtectedRoute>} />
                 <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
+                <Route path="/checklist/report/:id" element={<ChecklistReportView />} />
                 <Route path="/driver/dashboard" element={<ProtectedRoute permission="delivery:manage"><DriverDashboard /></ProtectedRoute>} />
                 <Route path="/*" element={<ProtectedRoute><AdminRoutes /></ProtectedRoute>} />
               </Routes>

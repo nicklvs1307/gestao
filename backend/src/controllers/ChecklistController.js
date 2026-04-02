@@ -246,7 +246,32 @@ class ChecklistController {
 
   executions = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { checklistId, startDate, endDate, page = '1', limit = '10' } = req.query;
+    const { checklistId, startDate, endDate, executionId, page = '1', limit = '10' } = req.query;
+
+    // If executionId is provided, return just that execution
+    if (executionId) {
+      const execution = await prisma.checklistExecution.findUnique({
+        where: { id: executionId },
+        include: {
+          checklist: {
+            include: {
+              sector: true
+            }
+          },
+          user: { select: { name: true } },
+          responses: {
+            include: { task: true }
+          }
+        }
+      });
+
+      if (!execution) {
+        res.status(404);
+        throw new Error("Execução não encontrada");
+      }
+
+      return res.json({ data: execution });
+    }
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
@@ -373,12 +398,12 @@ class ChecklistController {
 
   updateReportSettings = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { enabled, recipientPhone, sendTime, reportFormat } = req.body;
+    const { enabled, recipientPhone, recipientPhones, sendTime, reportFormat, customMessage } = req.body;
 
     const settings = await prisma.checklistReportSettings.upsert({
       where: { restaurantId },
-      update: { enabled, recipientPhone, sendTime, reportFormat },
-      create: { restaurantId, enabled, recipientPhone, sendTime, reportFormat }
+      update: { enabled, recipientPhone, recipientPhones, sendTime, reportFormat, customMessage },
+      create: { restaurantId, enabled, recipientPhone, recipientPhones, sendTime, reportFormat, customMessage }
     });
 
     res.json(settings);
@@ -389,8 +414,71 @@ class ChecklistController {
       res.status(400);
       throw new Error("Nenhum arquivo enviado");
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl });
+
+    const sharp = require('sharp');
+    const path = require('path');
+    const fs = require('fs');
+
+    const originalPath = req.file.path;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'].includes(ext);
+
+    let finalUrl = `/uploads/${req.file.filename}`;
+
+    if (isImage) {
+      // Converter para WebP com qualidade otimizada
+      const webpFilename = req.file.filename.replace(/\.[^.]+$/, '.webp');
+      const webpPath = path.join(path.dirname(originalPath), webpFilename);
+
+      try {
+        await sharp(originalPath)
+          .webp({ quality: 80, effort: 6 })
+          .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+          .toFile(webpPath);
+
+        // Remover arquivo original para economizar espaço
+        fs.unlinkSync(originalPath);
+
+        finalUrl = `/uploads/${webpFilename}`;
+      } catch (error) {
+        // Se falhar conversão, manter original
+        console.error('Erro ao converter imagem para WebP:', error);
+      }
+    }
+
+    res.json({ url: finalUrl });
+  });
+
+  // Histórico de envios de relatórios
+  getReportLogs = asyncHandler(async (req, res) => {
+    const { restaurantId } = req;
+    const { page = '1', limit = '20', type } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const whereClause = {
+      restaurantId,
+      ...(type && { type })
+    };
+
+    const [logs, totalCount] = await Promise.all([
+      prisma.checklistReportLog.findMany({
+        where: whereClause,
+        orderBy: { sentAt: 'desc' },
+        skip,
+        take: limitNum
+      }),
+      prisma.checklistReportLog.count({ where: whereClause })
+    ]);
+
+    res.json({
+      data: logs,
+      total: totalCount,
+      page: pageNum,
+      totalPages: Math.ceil(totalCount / limitNum)
+    });
   });
 }
 
