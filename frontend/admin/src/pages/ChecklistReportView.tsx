@@ -25,15 +25,15 @@ const ChecklistReportView: React.FC = () => {
 
     const loadExecution = async () => {
         try {
-            const response = await axios.get(`${API_URL}/checklists/history`, { params: { executionId: id } });
-            const data = response.data.data;
-            if (data) {
-                setExecution(data);
+            const response = await axios.get(`${API_URL}/checklists/report/${id}`);
+            if (response.data) {
+                setExecution(response.data);
             } else {
                 toast.error("Execução não encontrada");
             }
-        } catch (error) {
-            toast.error("Erro ao carregar relatório");
+        } catch (error: any) {
+            console.error('Error loading report:', error);
+            toast.error(error.response?.data?.message || "Erro ao carregar relatório");
         } finally {
             setLoading(false);
         }

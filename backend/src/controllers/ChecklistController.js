@@ -70,6 +70,32 @@ class ChecklistController {
     res.json(checklist);
   });
 
+  getExecutionReport = asyncHandler(async (req, res) => {
+    const { executionId } = req.params;
+    
+    const execution = await prisma.checklistExecution.findUnique({
+      where: { id: executionId },
+      include: {
+        checklist: {
+          include: {
+            sector: true
+          }
+        },
+        user: { select: { name: true } },
+        responses: {
+          include: { task: true }
+        }
+      }
+    });
+
+    if (!execution) {
+      res.status(404);
+      throw new Error("Execução não encontrada");
+    }
+
+    res.json(execution);
+  });
+
   store = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
     const { title, description, frequency, sectorId, tasks, deadlineTime } = req.body;

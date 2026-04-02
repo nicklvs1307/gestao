@@ -98,6 +98,17 @@ const ChecklistManagement: React.FC = () => {
         }
     };
 
+    // Lock body scroll when modals are open
+    const isAnyModalOpen = isEditingChecklist || showQRCodeModal || showExecutionDetail;
+    useEffect(() => {
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isAnyModalOpen]);
+
     useEffect(() => {
         loadData();
     }, []);

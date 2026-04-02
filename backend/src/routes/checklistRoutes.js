@@ -17,6 +17,7 @@ const submitLimiter = rateLimit({
 router.get('/', needsAuth, checkPermission('checklists:view'), ChecklistController.index);
 router.get('/history', needsAuth, checkPermission('checklists:view'), ChecklistController.executions);
 router.get('/stats', needsAuth, checkPermission('checklists:view'), ChecklistController.stats);
+router.get('/report/:executionId', ChecklistController.getExecutionReport); // Público para compartilhamento de relatórios
 router.get('/:id', ChecklistController.show); // Público para QR Code
 
 router.post('/', 
