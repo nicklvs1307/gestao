@@ -3,6 +3,7 @@ import { X, Bike, Search, Loader2, CheckCircle, Phone } from 'lucide-react';
 import { getDrivers } from '../services/api';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface DriverSelectionModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface DriverSelectionModalProps {
 }
 
 const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onClose, onSelect, orderId }) => {
+  useScrollLock(isOpen);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

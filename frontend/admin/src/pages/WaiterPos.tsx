@@ -16,6 +16,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const WaiterPos: React.FC = () => {
     const { logout } = useAuth();
@@ -35,6 +36,9 @@ const WaiterPos: React.FC = () => {
 
     // Estados de Personalização (Sincronizados com PDV)
     const [productWithOptions, setProductWithOptions] = useState<Product | null>(null);
+
+    useScrollLock(!!productWithOptions);
+
     const [selectedSizeId, setSelectedSizeId] = useState<string>('');
     const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
     const [tempQty, setTempQty] = useState(1);

@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import type { Order } from '../types';
 import { format } from 'date-fns';
 import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag, Truck } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface NewOrderAlertProps {
   orders: Order[];
@@ -13,13 +14,7 @@ interface NewOrderAlertProps {
 
 const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onReject, onClose }) => {
   
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
+  useScrollLock(Array.isArray(orders) && orders.length > 0);
 
   if (!Array.isArray(orders) || orders.length === 0) return null;
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Bell, UserCheck, CreditCard, X, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface TableRequest {
   id: string;
@@ -18,6 +19,7 @@ interface TableRequestAlertProps {
 }
 
 const TableRequestAlert: React.FC<TableRequestAlertProps> = ({ requests, onResolve, onClose }) => {
+  useScrollLock(requests.length > 0);
   if (requests.length === 0) return null;
 
   return (

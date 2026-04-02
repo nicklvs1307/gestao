@@ -3,6 +3,7 @@ import { Minus, Plus, X, DollarSign } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../../../hooks/useScrollLock';
 import type { TransactionModalState } from '../hooks/useCashier';
 
 interface TransactionModalProps {
@@ -24,6 +25,7 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
   onSubmit,
   onClose,
 }) => {
+  useScrollLock(isOpen !== 'none');
   const isIncome = isOpen === 'INCOME';
 
   const handleSubmit = useCallback((e: React.FormEvent) => {

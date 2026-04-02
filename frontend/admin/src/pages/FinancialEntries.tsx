@@ -16,6 +16,7 @@ import { Input } from '../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface Transaction {
   id: string;
@@ -38,6 +39,9 @@ const FinancialEntries: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
+
+  useScrollLock(showForm || showTransferForm);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
   

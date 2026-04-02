@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface Category {
   id: string;
@@ -23,6 +24,9 @@ const FinancialCategories: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+
+  useScrollLock(showForm);
+
   const [formData, setFormData] = useState<Partial<Category>>({ type: 'EXPENSE' });
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});

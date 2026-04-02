@@ -5,6 +5,7 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { toast } from 'sonner';
 import { api } from '../services/api';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface Permission {
   id: string;
@@ -53,6 +54,7 @@ const CATEGORIES = [
 const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({ 
   isOpen, onClose, roleId, roleName, currentPermissionIds, onSave 
 }) => {
+  useScrollLock(isOpen);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);

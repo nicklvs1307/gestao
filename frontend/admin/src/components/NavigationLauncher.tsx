@@ -4,6 +4,7 @@ import { X, Star, History, ShoppingCart, Bell, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { usePermission } from '../hooks/usePermission';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { NAV_CATEGORIES, NavCategory, NavItem } from '../config/navigation';
 
 interface NavItem {
@@ -25,6 +26,7 @@ interface NavigationLauncherProps {
 }
 
 const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose }) => {
+    useScrollLock(isOpen);
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const { hasPermission, isSuperAdmin } = usePermission();

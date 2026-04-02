@@ -14,6 +14,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { ptBR } from 'date-fns/locale';
 
 const FiscalManagement: React.FC = () => {
@@ -36,6 +37,8 @@ const FiscalManagement: React.FC = () => {
     const [exportMonth, setExportMonth] = useState(new Date().getMonth() + 1);
     const [exportYear, setExportYear] = useState(new Date().getFullYear());
     const [exporting, setExporting] = useState(false);
+
+    useScrollLock(cancelData.open || showReport);
 
     const filteredInvoices = useMemo(() => {
         let filtered = invoices;

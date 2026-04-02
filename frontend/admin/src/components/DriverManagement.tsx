@@ -3,11 +3,15 @@ import { getUsers, createUser, updateUser, deleteUser } from '../services/api';
 import { Truck, Plus, Trash2, Edit2, Loader2, Phone, Mail, User, DollarSign, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ConfirmDialog } from './ui/ConfirmDialog';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const DriverManagement: React.FC = () => {
   const [drivers, setDrivers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useScrollLock(isModalOpen);
+
   const [editingDriver, setEditingDriver] = useState<any>(null);
 
   // Form states

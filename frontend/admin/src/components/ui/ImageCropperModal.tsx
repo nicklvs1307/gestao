@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, ZoomIn, ZoomOut, Check, RotateCw, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './Button';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface ImageCropperModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export function ImageCropperModal({
   onCropComplete, 
   aspectRatio = 1 
 }: ImageCropperModalProps) {
+  useScrollLock(isOpen);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);

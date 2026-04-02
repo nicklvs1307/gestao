@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface Supplier {
   id: string;
@@ -26,6 +27,9 @@ const FinancialSuppliers: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+
+  useScrollLock(showForm);
+
   const [formData, setFormData] = useState<Partial<Supplier>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});

@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { CheckCircle, Truck, X, AlertTriangle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../../../hooks/useScrollLock';
 
 interface PendingSettlementsModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
   settlements,
   onClose,
 }) => {
+  useScrollLock(isOpen);
   const totalPending = settlements.reduce((acc, i) => acc + i.order.total, 0);
 
   const handleClose = useCallback((e: React.MouseEvent) => {

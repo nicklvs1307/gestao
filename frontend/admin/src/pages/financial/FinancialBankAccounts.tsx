@@ -13,6 +13,7 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface BankAccount {
   id: string;
@@ -27,6 +28,9 @@ const FinancialBankAccounts: React.FC = () => {
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+
+  useScrollLock(showForm);
+
   const [formData, setFormData] = useState<Partial<BankAccount>>({ balance: 0 });
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
   const [saving, setSaving] = useState(false);

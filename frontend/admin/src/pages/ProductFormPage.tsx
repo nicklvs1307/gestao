@@ -17,6 +17,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { getImageUrl } from '../utils/image';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const { 
     ArrowLeft, Plus, Trash2, CheckCircle, Pizza, 
@@ -539,6 +540,8 @@ function AddonGroupSelector({ availableGroups, selectedGroups, onUpdate, inherit
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearching, setIsSearch] = useState(false);
     const [viewingItems, setViewingItems] = useState<AddonGroup | null>(null);
+
+    useScrollLock(!!viewingItems);
 
     const filteredAvailable = availableGroups.filter(g => 
         !selectedGroups.find(sg => sg.id === g.id) && 

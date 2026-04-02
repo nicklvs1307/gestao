@@ -11,6 +11,7 @@ import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { searchCustomers, createCustomer } from '../services/api';
 import { toast } from 'sonner';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface Address {
     street: string;
@@ -50,6 +51,7 @@ interface CustomerSelectionModalProps {
 }
 
 export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ isOpen, onClose, onSelectCustomer }) => {
+    useScrollLock(isOpen);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [results, setResults] = useState<Customer[]>([]);

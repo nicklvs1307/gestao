@@ -5,6 +5,7 @@ import { Wallet, User, Disc, Building2, Plus, Trash2, Receipt, CreditCard, X, Ch
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -22,6 +23,9 @@ const FinancialManagement: React.FC = () => {
 
     // Form States
     const [showForm, setShowForm] = useState(false);
+
+    useScrollLock(showForm);
+
     const [formData, setFormData] = useState<any>({});
 
     useEffect(() => {
