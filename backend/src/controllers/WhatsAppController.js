@@ -280,6 +280,71 @@ const WhatsAppController = {
     res.json({ message: 'Conhecimento removido com sucesso.' });
   }),
 
+  updateKnowledge: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const restaurantId = req.restaurantId;
+    const { question, answer, category } = req.body;
+
+    const entry = await prisma.storeKnowledge.update({
+      where: { id, restaurantId },
+      data: {
+        question: question || undefined,
+        answer: answer || undefined,
+        category: category || undefined
+      }
+    });
+
+    res.json(entry);
+  }),
+
+  // Métricas do Agente
+  getMetrics: asyncHandler(async (req, res) => {
+    const restaurantId = req.restaurantId;
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [totalConversations, activeConversations, totalMessages, todayMessages, weekMessages, monthMessages, ordersCreatedByAI, settings] = await Promise.all([
+      prisma.whatsAppConversation.count({ where: { restaurantId } }),
+      prisma.whatsAppConversation.count({ where: { restaurantId, lastMessageAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }),
+      prisma.whatsAppChatMessage.count({ where: { restaurantId } }),
+      prisma.whatsAppChatMessage.count({ where: { restaurantId, timestamp: { gte: startOfDay } } }),
+      prisma.whatsAppChatMessage.count({ where: { restaurantId, timestamp: { gte: startOfWeek } } }),
+      prisma.whatsAppChatMessage.count({ where: { restaurantId, timestamp: { gte: startOfMonth } } }),
+      prisma.order.count({
+        where: {
+          restaurantId,
+          customerName: { not: null },
+          createdAt: { gte: startOfMonth }
+        }
+      }),
+      prisma.whatsAppSettings.findUnique({ where: { restaurantId } })
+    ]);
+
+    // Conta conversas com agente ativo vs humano
+    const agentEnabledCount = await prisma.whatsAppConversation.count({
+      where: { restaurantId, isAgentEnabled: true }
+    });
+
+    res.json({
+      totalConversations,
+      activeConversations, // últimas 24h
+      totalMessages,
+      todayMessages,
+      weekMessages,
+      monthMessages,
+      ordersCreatedByAI,
+      agentEnabled: settings?.agentEnabled || false,
+      agentName: settings?.agentName || 'N/A',
+      conversationsWithAgent: agentEnabledCount,
+      conversationsWithHuman: totalConversations - agentEnabledCount,
+      debug: aiService.getDebugInfo()
+    });
+  }),
+
   // Limpar histórico de conversa
   clearHistory: asyncHandler(async (req, res) => {
     const restaurantId = req.restaurantId;
@@ -418,6 +483,20 @@ const WhatsAppController = {
    */
   webhook: asyncHandler(async (req, res) => {
     const { event, data, instance } = req.body;
+
+    // === VALIDAÇÃO DE INPUT ===
+    if (!event || !instance) {
+      logger.warn('[Webhook] Payload inválido recebido (sem event ou instance)');
+      return res.status(400).json({ error: 'Payload inválido: event e instance são obrigatórios.' });
+    }
+
+    // Sanitiza o evento
+    const validEvents = ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED', 'MESSAGES_UPDATE', 'CALL'];
+    const normalizedEvent = event.toUpperCase().replace(/\./g, '_');
+    if (!validEvents.includes(normalizedEvent)) {
+      logger.debug(`[Webhook] Evento desconhecido ignorado: ${event}`);
+      return res.sendStatus(200);
+    }
     
     // Log inicial para debug de recebimento
     logger.info(`[Webhook Evolution] Recebido: ${event} | Instância: ${instance}`);
@@ -438,8 +517,6 @@ const WhatsAppController = {
     }
 
     const restaurantId = dbInstance.restaurantId;
-    // Normaliza o evento para maiúsculas e troca pontos por underscores para compatibilidade
-    const normalizedEvent = event.toUpperCase().replace(/\./g, '_');
 
     // 1. Tratamento de Atualização de Conexão
     if (normalizedEvent === 'CONNECTION_UPDATE') {
@@ -590,9 +667,19 @@ const WhatsAppController = {
         });
 
         const debouncerKey = `${customerPhone}_${restaurantId}`;
+        const messageId = data.key?.id;
+
+        // Previne processar mensagem duplicada da Evolution API
+        if (messageId && aiService.isMessageProcessed(messageId)) {
+          logger.info(`[WhatsApp] Mensagem duplicada ignorada: ${messageId}`);
+          return res.sendStatus(200);
+        }
         
         // 2. Se o agente estiver desabilitado para este contato, encerra
-        if (!conversation.isAgentEnabled) {
+        const conv = await prisma.whatsAppConversation.findUnique({
+          where: { customerPhone_restaurantId: { customerPhone, restaurantId } }
+        });
+        if (!conv || !conv.isAgentEnabled) {
           logger.info(`[WhatsApp] Agente pausado para ${customerPhone}. Aguardando intervenção humana.`);
           return res.sendStatus(200);
         }
@@ -615,14 +702,22 @@ const WhatsAppController = {
             return;
           }
 
+          // Envia indicador de "digitando..." enquanto processa
+          try {
+            await evolutionService.sendTypingIndicator(instance, customerPhone, 8000);
+          } catch (e) {
+            // Ignora erro no typing indicator
+          }
+
           const aiResponse = await aiService.handleMessage(
             restaurantId,
             customerPhone,
-            finalContent
+            finalContent,
+            messageId
           );
 
           if (aiResponse) {
-            // Envia a resposta completa em uma única mensagem
+            // Envia a resposta completa em uma única mensagem com simulação de digitação
             const typingTime = Math.min(Math.max(aiResponse.length * 50, 2000), 10000);
             await evolutionService.sendText(instance, customerPhone, aiResponse, typingTime);
           }

@@ -16,7 +16,12 @@ import {
   Trash2,
   BookOpen,
   Plus,
-  Info
+  Info,
+  Edit2,
+  BarChart3,
+  TrendingUp,
+  Users,
+  MessageCircle
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -30,6 +35,8 @@ const KnowledgeBase: React.FC<{ restaurantId: string, getHeaders: any }> = ({ re
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [newEntry, setNewEntry] = useState({ question: '', answer: '', category: 'faq' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editEntry, setEditEntry] = useState({ question: '', answer: '', category: 'faq' });
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
   useEffect(() => {
@@ -74,6 +81,27 @@ const KnowledgeBase: React.FC<{ restaurantId: string, getHeaders: any }> = ({ re
         toast.error('Erro ao remover informação');
       }
     }});
+  };
+
+  const handleEdit = (item: any) => {
+    setEditingId(item.id);
+    setEditEntry({ question: item.question, answer: item.answer, category: item.category });
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    if (!editEntry.question || !editEntry.answer) return;
+    try {
+      await axios.put(`${API_URL}/whatsapp/knowledge/${id}`, editEntry, getHeaders());
+      setKnowledge(knowledge.map(k => k.id === id ? { ...k, ...editEntry } : k));
+      setEditingId(null);
+      toast.success('Informação atualizada!');
+    } catch (error) {
+      toast.error('Erro ao atualizar informação');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
   };
 
   return (
@@ -147,20 +175,67 @@ const KnowledgeBase: React.FC<{ restaurantId: string, getHeaders: any }> = ({ re
             </div>
           ) : (
             knowledge.map((item) => (
-              <div key={item.id} className="group flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded uppercase">{item.category}</span>
-                    <h4 className="font-bold text-gray-800 text-sm">{item.question}</h4>
+              <div key={item.id} className="group p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition">
+                {editingId === item.id ? (
+                  // Modo edição
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={editEntry.question}
+                        onChange={e => setEditEntry({ ...editEntry, question: e.target.value })}
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 outline-none"
+                        placeholder="Pergunta"
+                      />
+                      <select
+                        value={editEntry.category}
+                        onChange={e => setEditEntry({ ...editEntry, category: e.target.value })}
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 outline-none"
+                      >
+                        <option value="faq">FAQ / Geral</option>
+                        <option value="delivery">Entrega / Taxas</option>
+                        <option value="policy">Políticas / Cancelamento</option>
+                        <option value="promo">Promoções</option>
+                      </select>
+                    </div>
+                    <textarea
+                      value={editEntry.answer}
+                      onChange={e => setEditEntry({ ...editEntry, answer: e.target.value })}
+                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                      rows={2}
+                      placeholder="Resposta"
+                    />
+                    <div className="flex space-x-2 justify-end">
+                      <button onClick={handleCancelEdit} className="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition">Cancelar</button>
+                      <button onClick={() => handleSaveEdit(item.id)} className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center space-x-1"><Save size={14} /><span>Salvar</span></button>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600">{item.answer}</p>
-                </div>
-                <button 
-                  onClick={() => handleDelete(item.id)}
-                  className="text-gray-300 hover:text-red-500 p-2 transition"
-                >
-                  <Trash2 size={18} />
-                </button>
+                ) : (
+                  // Modo visualização
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded uppercase">{item.category}</span>
+                        <h4 className="font-bold text-gray-800 text-sm">{item.question}</h4>
+                      </div>
+                      <p className="text-sm text-gray-600">{item.answer}</p>
+                    </div>
+                    <div className="flex items-center space-x-1 ml-2">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="text-gray-300 hover:text-blue-500 p-2 transition"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="text-gray-300 hover:text-red-500 p-2 transition"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -192,6 +267,8 @@ const WhatsAppManagement: React.FC = () => {
   const [clearingHistory, setClearingHistory] = useState(false);
   const [actionLoading, setActionLoading] = useState(false); // Para ações de controle
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
+  const [metrics, setMetrics] = useState<any>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(false);
 
   // Helper para headers
   const getHeaders = () => ({
@@ -362,12 +439,25 @@ const WhatsAppManagement: React.FC = () => {
         setClearingHistory(true);
         await axios.post(`${API_URL}/whatsapp/clear-history`, { all: true }, getHeaders());
         toast.success('Histórico de conversas reiniciado!');
+        fetchMetrics(); // Atualiza métricas após limpar
       } catch (error) {
         toast.error('Erro ao limpar histórico');
       } finally {
         setClearingHistory(false);
       }
     }});
+  };
+
+  const fetchMetrics = async () => {
+    try {
+      setLoadingMetrics(true);
+      const res = await axios.get(`${API_URL}/whatsapp/metrics`, getHeaders());
+      setMetrics(res.data);
+    } catch (error) {
+      console.error('Erro ao buscar métricas:', error);
+    } finally {
+      setLoadingMetrics(false);
+    }
   };
 
   if (loading) {
@@ -514,6 +604,94 @@ const WhatsAppManagement: React.FC = () => {
               <p>
                 {isNotCreated ? 'Clique em "Criar Instância" para começar' : 'Instância desconectada ou aguardando QR Code.'}
               </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Métricas do Agente */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+              <BarChart3 size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">Métricas do Agente</h3>
+              <p className="text-xs text-gray-500 italic">Acompanhe o desempenho do seu agente de IA</p>
+            </div>
+          </div>
+          <button
+            onClick={fetchMetrics}
+            disabled={loadingMetrics}
+            className="text-primary text-sm font-bold flex items-center space-x-1 hover:underline"
+          >
+            {loadingMetrics ? <Loader2 className="animate-spin" size={14} /> : <RefreshCw size={14} />}
+            <span>Atualizar</span>
+          </button>
+        </div>
+
+        <div className="p-6">
+          {metrics ? (
+            <>
+              {/* Cards de Métricas */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Users size={18} className="text-blue-600" />
+                    <span className="text-xs font-bold text-blue-600 uppercase">Conversas</span>
+                  </div>
+                  <p className="text-2xl font-black text-blue-800">{metrics.totalConversations}</p>
+                  <p className="text-[10px] text-blue-500 mt-1">{metrics.activeConversations} ativas (24h)</p>
+                </div>
+
+                <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <MessageCircle size={18} className="text-purple-600" />
+                    <span className="text-xs font-bold text-purple-600 uppercase">Mensagens</span>
+                  </div>
+                  <p className="text-2xl font-black text-purple-800">{metrics.monthMessages}</p>
+                  <p className="text-[10px] text-purple-500 mt-1">{metrics.todayMessages} hoje</p>
+                </div>
+
+                <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <CheckCircle2 size={18} className="text-green-600" />
+                    <span className="text-xs font-bold text-green-600 uppercase">Pedidos (mês)</span>
+                  </div>
+                  <p className="text-2xl font-black text-green-800">{metrics.ordersCreatedByAI}</p>
+                  <p className="text-[10px] text-green-500 mt-1">Via agente IA</p>
+                </div>
+
+                <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <TrendingUp size={18} className="text-orange-600" />
+                    <span className="text-xs font-bold text-orange-600 uppercase">Status</span>
+                  </div>
+                  <p className="text-lg font-black text-orange-800">{metrics.agentEnabled ? 'Ativo' : 'Inativo'}</p>
+                  <p className="text-[10px] text-orange-500 mt-1">{metrics.conversationsWithAgent} com IA | {metrics.conversationsWithHuman} humano</p>
+                </div>
+              </div>
+
+              {/* Skills Ativas */}
+              {metrics.debug?.skills && (
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 mb-3">Skills Ativas ({metrics.debug.skills.length})</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {metrics.debug.skills.map((skill: any) => (
+                      <div key={skill.name} className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span className="text-xs font-bold text-gray-700 capitalize">{skill.name}</span>
+                        <span className="text-[10px] text-gray-400 ml-2">({skill.tools.length} tools)</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center p-8 text-gray-400">
+              <BarChart3 size={40} className="mx-auto mb-2 opacity-20" />
+              <p className="text-sm">Clique em "Atualizar" para ver as métricas do agente</p>
             </div>
           )}
         </div>

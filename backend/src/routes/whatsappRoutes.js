@@ -21,12 +21,16 @@ router.post('/send-message', needsAuth, WhatsAppController.sendMessage);
 // Gestão de Base de Conhecimento (RAG)
 router.get('/knowledge', needsAuth, WhatsAppController.getKnowledge);
 router.post('/knowledge', needsAuth, WhatsAppController.addKnowledge);
+router.put('/knowledge/:id', needsAuth, WhatsAppController.updateKnowledge);
 router.delete('/knowledge/:id', needsAuth, WhatsAppController.deleteKnowledge);
 
 // Novas rotas de controle de instância
 router.post('/logout', needsAuth, WhatsAppController.logout);
 router.post('/restart', needsAuth, WhatsAppController.restart);
 router.delete('/delete', needsAuth, WhatsAppController.delete);
+
+// Métricas do Agente
+router.get('/metrics', needsAuth, WhatsAppController.getMetrics);
 
 // Rota pública (Webhook da Evolution API)
 router.post('/webhook', WhatsAppController.webhook);

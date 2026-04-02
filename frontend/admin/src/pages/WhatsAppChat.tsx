@@ -71,6 +71,8 @@ const WhatsAppChat: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDetails, setShowDetails] = useState(false);
   const [newLabel, setNewLabel] = useState('');
+  const [agentFilter, setAgentFilter] = useState<'all' | 'agent' | 'human'>('all');
+  const [isAITyping, setIsAITyping] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const selectedChatRef = useRef<Conversation | null>(null);
@@ -119,6 +121,18 @@ const WhatsAppChat: React.FC = () => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
+
+          // Se a mensagem é do cliente e o agente está ativo, mostra indicador de typing
+          if (!data.key.fromMe && currentSelected.isAgentEnabled) {
+            setIsAITyping(true);
+            // Esconde após 15s (tempo máximo estimado de resposta da IA)
+            setTimeout(() => setIsAITyping(false), 15000);
+          }
+
+          // Se a mensagem é do assistente (resposta da IA), esconde o indicador
+          if (data.key.fromMe) {
+            setIsAITyping(false);
+          }
         }
       }
     });
@@ -239,11 +253,21 @@ const WhatsAppChat: React.FC = () => {
     }
   };
 
-  const filteredConversations = conversations.filter(c => 
-    c.customerPhone.includes(searchQuery) || 
-    (c.customerName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    c.labels.some(l => l.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredConversations = conversations.filter(c => {
+    // Filtro por texto
+    const matchesSearch = 
+      c.customerPhone.includes(searchQuery) || 
+      (c.customerName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      c.labels.some(l => l.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    // Filtro por status do agente
+    const matchesAgentFilter = 
+      agentFilter === 'all' ||
+      (agentFilter === 'agent' && c.isAgentEnabled) ||
+      (agentFilter === 'human' && !c.isAgentEnabled);
+
+    return matchesSearch && matchesAgentFilter;
+  });
 
   return (
     <div className="flex h-[calc(100vh-120px)] bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
@@ -251,7 +275,7 @@ const WhatsAppChat: React.FC = () => {
       <div className="w-80 md:w-96 border-r border-gray-100 flex flex-col bg-gray-50/30">
         <div className="p-4 bg-white border-b border-gray-50">
           <h2 className="text-xl font-black italic uppercase text-foreground mb-4 tracking-tighter">Atendimentos</h2>
-          <div className="relative">
+          <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
@@ -260,6 +284,27 @@ const WhatsAppChat: React.FC = () => {
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
             />
+          </div>
+          {/* Filtro por status do agente */}
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setAgentFilter('all')}
+              className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-md transition ${agentFilter === 'all' ? 'bg-white shadow-sm text-foreground' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setAgentFilter('agent')}
+              className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-md transition ${agentFilter === 'agent' ? 'bg-green-100 shadow-sm text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              🤖 Agente
+            </button>
+            <button
+              onClick={() => setAgentFilter('human')}
+              className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-md transition ${agentFilter === 'human' ? 'bg-primary/10 shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              👤 Humano
+            </button>
           </div>
         </div>
 
@@ -430,6 +475,18 @@ const WhatsAppChat: React.FC = () => {
                     <div className="mb-3 px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl flex items-center space-x-3">
                       <Bot size={16} className="text-blue-500" />
                       <p className="text-[10px] font-bold text-blue-600 uppercase">O agente está respondendo automaticamente. Pause o agente para intervir sem interferência.</p>
+                    </div>
+                  )}
+                  
+                  {/* Indicador de digitação da IA */}
+                  {isAITyping && (
+                    <div className="mb-3 px-4 py-2 bg-green-50 border border-green-100 rounded-xl flex items-center space-x-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                      <p className="text-[10px] font-bold text-green-600 uppercase">Agente IA está digitando...</p>
                     </div>
                   )}
                   <form onSubmit={handleSendMessage} className="flex items-center space-x-3">

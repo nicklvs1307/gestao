@@ -215,4 +215,12 @@ socketLib.init(server);
 const JobService = require('./src/services/JobService');
 JobService.init();
 
+// Inicializa o sistema de Skills do Agente WhatsApp
+const aiService = require('./src/services/WhatsAppAIService');
+aiService.init().then(() => {
+  logger.info('[Bootstrap] Skills do Agente WhatsApp inicializadas com sucesso');
+}).catch(err => {
+  logger.error('[Bootstrap] Erro ao inicializar Skills do Agente WhatsApp:', err);
+});
+
 server.listen(PORT, () => logger.info(`Servidor rodando em http://localhost:${PORT}`));

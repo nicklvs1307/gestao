@@ -223,6 +223,26 @@ class EvolutionService {
   }
 
   /**
+   * Simula "digitando..." sem enviar mensagem visível
+   * Usa a presença 'composing' da Evolution API
+   */
+  async sendTypingIndicator(instanceName, number, duration = 3000) {
+    try {
+      const remoteJid = number.includes('@') ? number : `${number.replace(/\D/g, '')}@s.whatsapp.net`;
+      
+      // Envia presença de composing com delay igual à duração
+      await this.api.post(`/chat/sendPresence/${instanceName}`, {
+        number: remoteJid,
+        delay: duration,
+        presence: 'composing'
+      });
+    } catch (error) {
+      // Fallback: ignora erro pois é apenas indicador visual
+      logger.debug(`[Evolution] Typing indicator fallback para ${number}`);
+    }
+  }
+
+  /**
    * Transcreve áudio recebido via OpenAI Whisper
    */
   async transcribeAudio(instanceName, messageKey) {
