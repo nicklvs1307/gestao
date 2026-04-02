@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface DialogProps {
   isOpen: boolean;
@@ -19,6 +20,8 @@ export const Dialog: React.FC<DialogProps> = ({
   size = 'md',
   footer,
 }) => {
+  useScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const sizes = {

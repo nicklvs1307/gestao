@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { X, Calculator, Wallet, CheckCircle, MoveRight, Banknote, Smartphone, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../../lib/utils';
@@ -7,6 +7,7 @@ import { usePosStore } from '../../hooks/usePosStore';
 import { useCartTotal } from '../../hooks/useCartStore';
 import { PaymentMethod } from '../../../../types';
 import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
+import { useScrollLock } from '../../../../hooks/useScrollLock';
 
 interface CheckoutModalProps {
   paymentMethods: PaymentMethod[];
@@ -34,6 +35,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
 
   const cartTotal = useCartTotal();
   const prefersReducedMotion = usePrefersReducedMotion();
+  const isCheckoutOpen = activeModal === 'checkout';
+
+  useScrollLock(isCheckoutOpen);
 
   const backdropTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.2 };
   const modalTransition = prefersReducedMotion ? { duration: 0.1 } : { type: "spring", damping: 25, stiffness: 300 };

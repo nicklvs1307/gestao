@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createUser, updateUser, getRoles, getAvailablePermissions, sendResetEmail } from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { 
     X, User, Mail, Lock, CheckCircle, Loader2, Award, 
     ChevronRight, ChevronLeft, ShieldCheck, CheckSquare, Square,
@@ -189,6 +191,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   const [isSendingReset, setIsSendingReset] = useState(false);
   
   const isEditing = !!userToEdit;
+
+  useScrollLock(isOpen);
 
   useEffect(() => {
     const fetchData = async () => {

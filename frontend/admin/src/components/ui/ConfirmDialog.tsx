@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, Trash2, Info } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from '../../lib/utils';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelText = 'Cancelar',
   isLoading = false,
 }) => {
+  useScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const icons = {

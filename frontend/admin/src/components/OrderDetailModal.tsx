@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Order } from '@/types/index.ts';
 import { useNavigate } from 'react-router-dom';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { 
     getDrivers, assignDriver, getSettings, updateDeliveryType, 
     markOrderAsPrinted, emitInvoice 
@@ -38,10 +39,7 @@ const STATUS_OPTIONS = [
 const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onStatusChange }) => {
   const navigate = useNavigate();
   
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = 'unset'; };
-  }, []);
+  useScrollLock(true);
 
   if (!order) return null;
 

@@ -18,6 +18,7 @@ import { calculateProductPrice } from '../../features/pos/utils/priceCalculator'
 import { getSettings, markOrderAsPrinted } from '../../services/api';
 import { printOrder } from '../../services/printing';
 import { OrderEditorProductDrawer } from './OrderEditorProductDrawer';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { OrderEditorPayment } from './OrderEditorPayment';
 
 interface OrderEditorProps {
@@ -84,10 +85,10 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const [isSaving, setIsSaving] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
+  useScrollLock(true);
+
   useEffect(() => {
     loadData();
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = 'unset'; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
