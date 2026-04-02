@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import {
-    ClipboardCheck, Plus, Search, LayoutGrid, Trash2,
+    ClipboardCheck, Plus, Search, Trash2,
     Edit, ChevronRight, CheckCircle2, AlertCircle, Clock,
     Camera, Type, Hash, CheckSquare, Loader2, X, QrCode, Printer,
     Filter, Settings2, Check, ArrowRight, Save, Copy, HelpCircle,
-    Link as LinkIcon, Video, Image as ImageIcon, MessageCircle, Send
+    Link as LinkIcon, Video, Image as ImageIcon, MessageCircle, Send,
+    ChevronLeft, ChevronDown, ChevronUp, BarChart3, Users, FileText,
+    AlertTriangle, Calendar, TrendingUp, Eye, MoreVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
@@ -13,7 +15,7 @@ import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { 
+import {
     getChecklists, createChecklist, updateChecklist, deleteChecklist,
     getSectors, createSector, deleteSector,
     getChecklistReportSettings, updateChecklistReportSettings,
@@ -22,10 +24,12 @@ import {
 import apiClient from '../services/api/client';
 import { cn } from '../lib/utils';
 
+const ITEMS_PER_PAGE = 10;
+
 const ChecklistManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'checklists' | 'sectors' | 'executions' | 'report'>('checklists');
-    
+
     const [checklists, setChecklists] = useState<any[]>([]);
     const [sectors, setSectors] = useState<any[]>([]);
     const [executions, setExecutions] = useState<any[]>([]);
@@ -35,7 +39,7 @@ const ChecklistManagement: React.FC = () => {
         sendTime: '22:00',
         reportFormat: 'PDF'
     });
-    
+
     const [isEditingChecklist, setIsEditingChecklist] = useState(false);
     const [showQRCodeModal, setShowQRCodeModal] = useState(false);
     const [showExecutionDetail, setShowExecutionDetail] = useState(false);
@@ -59,8 +63,15 @@ const ChecklistManagement: React.FC = () => {
 
     const [isEditingSector, setIsEditingSector] = useState(false);
     const [newSectorName, setNewSectorName] = useState('');
+    const [sectorSearch, setSectorSearch] = useState('');
     const [sendingReport, setSendingReport] = useState<string | null>(null);
-    const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
+    const [confirmData, setConfirmData] = useState<{ open: boolean, title: string, message: string, onConfirm: () => void }>({ open: false, title: '', message: '', onConfirm: () => { } });
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [sortField, setSortField] = useState<string>('completedAt');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+    const [skeletonVisible, setSkeletonVisible] = useState(true);
 
     const handleSendManualDailyReport = async () => {
         setSendingReport('daily');
@@ -97,6 +108,14 @@ const ChecklistManagement: React.FC = () => {
         }
     }, [activeTab, filters]);
 
+    useEffect(() => {
+        if (loading) {
+            const timer = setTimeout(() => setSkeletonVisible(false), 800);
+            return () => clearTimeout(timer);
+        }
+        setSkeletonVisible(false);
+    }, [loading]);
+
     const loadData = async () => {
         setLoading(true);
         try {
@@ -119,6 +138,7 @@ const ChecklistManagement: React.FC = () => {
         try {
             const data = await apiClient.get('/checklists/history', { params: filters });
             setExecutions(data.data);
+            setCurrentPage(1);
         } catch (error) {
             toast.error("Erro ao carregar histórico");
         }
@@ -146,7 +166,7 @@ const ChecklistManagement: React.FC = () => {
     };
 
     const handleDeleteSector = async (id: string) => {
-        setConfirmData({open: true, title: 'Confirmar', message: 'Excluir setor?', onConfirm: async () => {
+        setConfirmData({ open: true, title: 'Confirmar', message: 'Excluir setor?', onConfirm: async () => {
             try {
                 await deleteSector(id);
                 toast.success("Setor removido");
@@ -162,10 +182,10 @@ const ChecklistManagement: React.FC = () => {
             ...currentChecklist,
             tasks: [
                 ...currentChecklist.tasks,
-                { 
-                    content: '', 
-                    type: 'CHECKBOX', 
-                    isRequired: true, 
+                {
+                    content: '',
+                    type: 'CHECKBOX',
+                    isRequired: true,
                     order: currentChecklist.tasks.length,
                     procedureType: 'NONE',
                     procedureContent: ''
@@ -219,52 +239,214 @@ const ChecklistManagement: React.FC = () => {
         setTimeout(() => { windowPrint.print(); windowPrint.close(); }, 500);
     };
 
-    const filteredChecklists = checklists.filter(c => 
-        c.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredChecklists = useMemo(() => {
+        return checklists.filter(c =>
+            c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.sector?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [checklists, searchQuery]);
+
+    const filteredSectors = useMemo(() => {
+        return sectors.filter(s =>
+            s.name.toLowerCase().includes(sectorSearch.toLowerCase())
+        );
+    }, [sectors, sectorSearch]);
+
+    const totalExecutionPages = Math.ceil(executions.length / ITEMS_PER_PAGE);
+    const paginatedExecutions = useMemo(() => {
+        let sorted = [...executions].sort((a, b) => {
+            const aVal = a[sortField];
+            const bVal = b[sortField];
+            if (sortField === 'completedAt') {
+                return sortDirection === 'desc'
+                    ? new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+                    : new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime();
+            }
+            if (sortDirection === 'desc') {
+                return String(bVal).localeCompare(String(aVal));
+            }
+            return String(aVal).localeCompare(String(bVal));
+        });
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return sorted.slice(start, start + ITEMS_PER_PAGE);
+    }, [executions, currentPage, sortField, sortDirection]);
+
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('desc');
+        }
+    };
+
+    const stats = useMemo(() => {
+        const totalChecklists = checklists.length;
+        const totalExecutions = executions.length;
+        const avgConformity = executions.length > 0
+            ? Math.round(executions.reduce((acc, exec) => {
+                const total = exec.responses?.length || 0;
+                const ok = exec.responses?.filter((r: any) => r.isOk).length || 0;
+                return acc + (total > 0 ? (ok / total) * 100 : 0);
+            }, 0) / executions.length)
+            : 0;
+        const todayExecutions = executions.filter(e => {
+            const today = new Date();
+            const execDate = new Date(e.completedAt);
+            return execDate.toDateString() === today.toDateString();
+        }).length;
+
+        return { totalChecklists, totalExecutions, avgConformity, todayExecutions };
+    }, [checklists, executions]);
+
+    const getFrequencyLabel = (freq: string) => {
+        const labels: Record<string, string> = { DAILY: 'Diária', WEEKLY: 'Semanal', MONTHLY: 'Mensal' };
+        return labels[freq] || freq;
+    };
+
+    const getFrequencyColor = (freq: string) => {
+        const colors: Record<string, string> = {
+            DAILY: 'bg-blue-50 text-blue-700 border-blue-200',
+            WEEKLY: 'bg-purple-50 text-purple-700 border-purple-200',
+            MONTHLY: 'bg-amber-50 text-amber-700 border-amber-200'
+        };
+        return colors[freq] || 'bg-gray-50 text-gray-700';
+    };
+
+    const SkeletonCard = () => (
+        <div className="bg-white p-5 rounded-xl border border-border shadow-sm animate-pulse">
+            <div className="flex justify-between items-start mb-3">
+                <div className="h-5 w-20 bg-gray-200 rounded" />
+                <div className="flex gap-2">
+                    <div className="h-8 w-8 bg-gray-200 rounded-lg" />
+                    <div className="h-8 w-8 bg-gray-200 rounded-lg" />
+                </div>
+            </div>
+            <div className="h-5 w-3/4 bg-gray-200 rounded mb-2" />
+            <div className="h-4 w-1/2 bg-gray-100 rounded mb-4" />
+            <div className="flex justify-between pt-4 border-t border-border/50">
+                <div className="h-4 w-24 bg-gray-100 rounded" />
+                <div className="h-4 w-20 bg-gray-100 rounded" />
+            </div>
+        </div>
+    );
+
+    const SkeletonRow = () => (
+        <tr className="animate-pulse">
+            <td className="px-6 py-4"><div className="h-4 w-32 bg-gray-200 rounded mb-2" /><div className="h-3 w-20 bg-gray-100 rounded" /></td>
+            <td className="px-6 py-4"><div className="h-4 w-24 bg-gray-200 rounded" /></td>
+            <td className="px-6 py-4"><div className="h-4 w-28 bg-gray-200 rounded" /></td>
+            <td className="px-6 py-4"><div className="h-4 w-16 bg-gray-200 rounded mx-auto" /></td>
+            <td className="px-6 py-4"><div className="h-4 w-4 bg-gray-200 rounded ml-auto" /></td>
+        </tr>
+    );
+
+    const EmptyState = ({ icon: Icon, title, description, action }: { icon: any, title: string, description: string, action?: { label: string, onClick: () => void } }) => (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+                <Icon size={28} className="text-gray-400" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-1">{title}</h3>
+            <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{description}</p>
+            {action && (
+                <Button onClick={action.onClick} className="h-10 px-5">
+                    <Plus size={16} className="mr-2" />
+                    {action.label}
+                </Button>
+            )}
+        </div>
     );
 
     if (loading && !isEditingChecklist) {
         return (
             <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
-                <Loader2 className="w-8 h-8 animate-spin text-foreground" />
-                <p className="text-muted-foreground font-bold uppercase text-[9px] tracking-widest">Sincronizando...</p>
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="text-muted-foreground text-sm">Carregando checklists...</p>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-300 max-w-[1600px] mx-auto px-4 lg:px-8 py-6">
+        <div className="flex flex-col gap-6 max-w-[1600px] mx-auto px-4 lg:px-8 py-6">
             {/* Header */}
             <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
+                    <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
                         <ClipboardCheck size={22} />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black text-foreground uppercase tracking-tight leading-none">Gestão Operacional</h1>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Auditoria & Treinamento Integrado</p>
+                        <h1 className="text-xl font-bold text-foreground">Checklists & Rotinas</h1>
+                        <p className="text-sm text-muted-foreground mt-0.5">Gerencie modelos, acompanhe execuções e configure alertas</p>
                     </div>
                 </div>
-                <Button 
+                <Button
                     onClick={() => {
                         setCurrentChecklist({ title: '', description: '', frequency: 'DAILY', sectorId: '', deadlineTime: '', tasks: [] });
                         setIsEditingChecklist(true);
-                    }} 
-                    className="h-10 px-5 rounded-xl text-[10px] font-extrabold uppercase bg-slate-900 italic"
+                    }}
+                    className="h-10 px-5"
                 >
-                    <Plus size={16} /> Novo Modelo
+                    <Plus size={16} className="mr-2" /> Novo Modelo
                 </Button>
             </header>
 
-            {/* Compact Tabs */}
-            <div className="flex items-center gap-1 bg-muted p-1 rounded-xl self-start">
-                {['checklists', 'sectors', 'executions', 'report'].map(tab => (
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <FileText size={18} className="text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-foreground">{stats.totalChecklists}</p>
+                            <p className="text-xs text-muted-foreground">Modelos Ativos</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-50 rounded-lg">
+                            <CheckCircle2 size={18} className="text-green-600" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-foreground">{stats.todayExecutions}</p>
+                            <p className="text-xs text-muted-foreground">Execuções Hoje</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-50 rounded-lg">
+                            <BarChart3 size={18} className="text-purple-600" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-foreground">{stats.avgConformity}%</p>
+                            <p className="text-xs text-muted-foreground">Conformidade Média</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <Users size={18} className="text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-foreground">{sectors.length}</p>
+                            <p className="text-xs text-muted-foreground">Setores</p>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-1 bg-muted p-1 rounded-lg self-start">
+                {(['checklists', 'sectors', 'executions', 'report'] as const).map(tab => (
                     <button
                         key={tab}
-                        onClick={() => setActiveTab(tab as any)}
+                        onClick={() => setActiveTab(tab)}
                         className={cn(
-                            "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                            activeTab === tab ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"
+                            "px-4 py-2 rounded-md text-sm font-medium transition-all",
+                            activeTab === tab ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
                         {tab === 'checklists' ? 'Modelos' : tab === 'sectors' ? 'Setores' : tab === 'executions' ? 'Histórico' : 'Alertas'}
@@ -275,359 +457,848 @@ const ChecklistManagement: React.FC = () => {
             {/* Content Area */}
             <div className="flex flex-col gap-4">
                 {activeTab === 'checklists' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredChecklists.map(checklist => (
-                            <div key={checklist.id} className="bg-white p-5 rounded-2xl border border-border shadow-sm hover:border-border transition-all group">
-                                <div className="flex justify-between items-start mb-3">
-                                    <span className="px-2 py-0.5 bg-slate-900 text-white text-[8px] font-black uppercase rounded tracking-widest">
-                                        {checklist.sector?.name}
-                                    </span>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); handleSendManualIndividualReport(checklist.id); }} 
-                                            disabled={sendingReport === checklist.id}
-                                            className={cn("p-1.5 transition-all", sendingReport === checklist.id ? "text-blue-500 animate-pulse" : "text-muted-foreground hover:text-blue-600")}
-                                            title="Enviar Relatório de Hoje via WhatsApp"
-                                        >
-                                            {sendingReport === checklist.id ? <Loader2 size={14} className="animate-spin" /> : <Send size={14}/>}
-                                        </button>
-                                        <button onClick={() => { setSelectedChecklist(checklist); setShowQRCodeModal(true); }} className="p-1.5 text-muted-foreground hover:text-foreground transition-all"><QrCode size={14}/></button>
-                                        <button onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }} className="p-1.5 text-muted-foreground hover:text-blue-600 transition-all"><Edit size={14}/></button>
-                                        <button onClick={() => { setConfirmData({open: true, title: 'Confirmar', message: 'Excluir?', onConfirm: async () => { await deleteChecklist(checklist.id); loadData(); }}); }} className="p-1.5 text-muted-foreground hover:text-rose-600 transition-all"><Trash2 size={14}/></button>
-                                    </div>
-                                </div>
-                                <h3 className="text-sm font-black text-foreground uppercase italic mb-1">{checklist.title}</h3>
-                                {checklist.deadlineTime && (
-                                    <div className="flex items-center gap-1.5 text-rose-500 mb-4">
-                                        <Clock size={12} strokeWidth={3} />
-                                        <span className="text-[9px] font-black uppercase tracking-tighter">Limite: {checklist.deadlineTime}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-1 text-[9px] font-black text-muted-foreground uppercase"><Clock size={10} /> {checklist.frequency}</div>
-                                        <div className="flex items-center gap-1 text-[9px] font-black text-muted-foreground uppercase pl-3 border-l border-border"><HelpCircle size={10} /> {checklist.tasks?.length || 0} Itens</div>
-                                    </div>
-                                    <button onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }} className="text-[9px] font-black uppercase text-foreground flex items-center gap-1">Gestão <ArrowRight size={10}/></button>
-                                </div>
+                    <>
+                        {/* Search Bar */}
+                        <div className="relative max-w-sm">
+                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Buscar modelos..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full h-10 pl-10 pr-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                            />
+                        </div>
+
+                        {skeletonVisible ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
                             </div>
-                        ))}
-                    </div>
+                        ) : filteredChecklists.length === 0 ? (
+                            <EmptyState
+                                icon={FileText}
+                                title={searchQuery ? "Nenhum modelo encontrado" : "Nenhum modelo criado"}
+                                description={searchQuery ? "Tente buscar com outros termos" : "Crie seu primeiro modelo de checklist para começar a auditoria operacional"}
+                                action={!searchQuery ? { label: "Criar Modelo", onClick: () => setIsEditingChecklist(true) } : undefined}
+                            />
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <AnimatePresence mode="popLayout">
+                                    {filteredChecklists.map(checklist => (
+                                        <motion.div
+                                            key={checklist.id}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            className="bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition-all group"
+                                        >
+                                            <div className="p-5">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-md">
+                                                        {checklist.sector?.name}
+                                                    </span>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleSendManualIndividualReport(checklist.id); }}
+                                                            disabled={sendingReport === checklist.id}
+                                                            className={cn(
+                                                                "p-2 rounded-lg transition-all",
+                                                                sendingReport === checklist.id
+                                                                    ? "text-blue-500 animate-pulse"
+                                                                    : "text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                                                            )}
+                                                            title="Enviar Relatório via WhatsApp"
+                                                        >
+                                                            {sendingReport === checklist.id ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setSelectedChecklist(checklist); setShowQRCodeModal(true); }}
+                                                            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-gray-50 transition-all"
+                                                            title="Gerar QR Code"
+                                                        >
+                                                            <QrCode size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }}
+                                                            className="p-2 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-50 transition-all"
+                                                            title="Editar"
+                                                        >
+                                                            <Edit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setConfirmData({ open: true, title: 'Confirmar exclusão', message: `Tem certeza que deseja excluir "${checklist.title}"?`, onConfirm: async () => { await deleteChecklist(checklist.id); toast.success("Checklist excluído"); loadData(); } }); }}
+                                                            className="p-2 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 transition-all"
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <h3 className="text-base font-semibold text-foreground mb-1">{checklist.title}</h3>
+                                                {checklist.description && (
+                                                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{checklist.description}</p>
+                                                )}
+
+                                                {checklist.deadlineTime && (
+                                                    <div className="flex items-center gap-1.5 text-rose-600 mb-3">
+                                                        <Clock size={14} />
+                                                        <span className="text-xs font-medium">Limite: {checklist.deadlineTime}</span>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className={cn(
+                                                            "px-2 py-0.5 text-xs font-medium rounded border",
+                                                            getFrequencyColor(checklist.frequency)
+                                                        )}>
+                                                            {getFrequencyLabel(checklist.frequency)}
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                            <CheckSquare size={14} />
+                                                            {checklist.tasks?.length || 0} itens
+                                                        </span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }}
+                                                        className="text-sm font-medium text-primary flex items-center gap-1 hover:underline"
+                                                    >
+                                                        Editar <ArrowRight size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {activeTab === 'sectors' && (
-                    <div className="max-w-2xl space-y-3">
-                        <div className="bg-white p-4 rounded-2xl border border-border flex items-center gap-4">
-                            <input placeholder="Novo Setor..." className="flex-1 bg-transparent border-none outline-none font-bold text-sm text-foreground" value={newSectorName} onChange={e => setNewSectorName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSaveSector()} />
-                            <Button onClick={handleSaveSector} size="sm" className="bg-slate-900 italic h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest">Criar Setor</Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {sectors.map(sector => (
-                                <div key={sector.id} className="bg-white p-3 px-5 rounded-2xl border border-border flex items-center justify-between group">
-                                    <span className="text-xs font-black text-foreground uppercase italic tracking-tight">{sector.name}</span>
-                                    <button onClick={() => handleDeleteSector(sector.id)} className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={16}/></button>
+                    <div className="max-w-2xl space-y-4">
+                        <Card className="p-4">
+                            <div className="flex items-center gap-3">
+                                <input
+                                    placeholder="Nome do novo setor..."
+                                    className="flex-1 h-10 px-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    value={newSectorName}
+                                    onChange={e => setNewSectorName(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleSaveSector()}
+                                />
+                                <Button onClick={handleSaveSector} disabled={!newSectorName} className="h-10 px-5">
+                                    <Plus size={16} className="mr-2" /> Criar
+                                </Button>
+                            </div>
+                        </Card>
+
+                        {sectors.length === 0 ? (
+                            <EmptyState
+                                icon={Users}
+                                title="Nenhum setor criado"
+                                description="Crie setores para organizar seus checklists por área de atuação (ex: Cozinha, Salão, Bar)"
+                            />
+                        ) : (
+                            <>
+                                {/* Sector Search */}
+                                <div className="relative max-w-sm">
+                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar setores..."
+                                        value={sectorSearch}
+                                        onChange={e => setSectorSearch(e.target.value)}
+                                        className="w-full h-9 pl-9 pr-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    />
                                 </div>
-                            ))}
-                        </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <AnimatePresence>
+                                        {filteredSectors.map(sector => (
+                                            <motion.div
+                                                key={sector.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="bg-white p-3 px-4 rounded-lg border border-border flex items-center justify-between group hover:border-primary/30 transition-all"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                                        <Users size={16} className="text-primary" />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-foreground">{sector.name}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDeleteSector(sector.id)}
+                                                    className="p-2 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
                 {activeTab === 'executions' && (
-                    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[800px]">
-                            <thead className="bg-background border-b border-border">
-                                <tr>
-                                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Modelo</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Executor</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Conclusão</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">Conformidade</th>
-                                    <th className="px-6 py-4"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {executions.map(exec => {
-                                    const total = exec.responses?.length || 0;
-                                    const ok = exec.responses?.filter((r: any) => r.isOk).length || 0;
-                                    const perc = total > 0 ? Math.round((ok/total)*100) : 0;
-                                    return (
-                                        <tr key={exec.id} className="hover:bg-background/50 transition-colors cursor-pointer" onClick={() => { setSelectedExecution(exec); setShowExecutionDetail(true); }}>
-                                            <td className="px-6 py-4">
-                                                <p className="text-xs font-black text-foreground uppercase italic tracking-tight">{exec.checklist?.title}</p>
-                                                <p className="text-[9px] font-bold text-muted-foreground uppercase">{exec.checklist?.sector?.name}</p>
-                                            </td>
-                                            <td className="px-6 py-4 text-[10px] font-extrabold text-foreground/60 uppercase tracking-tight">{exec.user?.name || exec.externalUserName || 'Executor Anônimo'}</td>
-                                            <td className="px-6 py-4 text-[10px] font-bold text-muted-foreground">{new Date(exec.completedAt).toLocaleString('pt-BR')}</td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                                        <div className={cn("h-full rounded-full", perc > 80 ? "bg-emerald-500" : perc > 50 ? "bg-primary" : "bg-rose-500")} style={{ width: `${perc}%` }} />
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-foreground tabular-nums">{perc}%</span>
+                    <div className="space-y-4">
+                        {/* Filters */}
+                        <div className="flex flex-wrap gap-3">
+                            <select
+                                value={filters.checklistId}
+                                onChange={e => setFilters({ ...filters, checklistId: e.target.value })}
+                                className="h-10 px-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                            >
+                                <option value="">Todos os modelos</option>
+                                {checklists.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                            </select>
+                            <input
+                                type="date"
+                                value={filters.startDate}
+                                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+                                className="h-10 px-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                placeholder="Data início"
+                            />
+                            <input
+                                type="date"
+                                value={filters.endDate}
+                                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                                className="h-10 px-4 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                placeholder="Data fim"
+                            />
+                            {(filters.checklistId || filters.startDate || filters.endDate) && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setFilters({ checklistId: '', startDate: '', endDate: '' })}
+                                    className="h-10 px-4"
+                                >
+                                    <X size={16} className="mr-2" /> Limpar filtros
+                                </Button>
+                            )}
+                        </div>
+
+                        <Card noPadding>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-muted/50 border-b border-border">
+                                        <tr>
+                                            <th
+                                                className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                                                onClick={() => handleSort('checklist')}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    Modelo
+                                                    {sortField === 'checklist' && (sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right text-slate-300"><ChevronRight size={16} /></td>
+                                            </th>
+                                            <th className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Executor</th>
+                                            <th
+                                                className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                                                onClick={() => handleSort('completedAt')}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    Data/Hora
+                                                    {sortField === 'completedAt' && (sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                                                </div>
+                                            </th>
+                                            <th className="px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center">Conformidade</th>
+                                            <th className="px-6 py-3 w-10"></th>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/50">
+                                        {skeletonVisible ? (
+                                            Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+                                        ) : paginatedExecutions.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5}>
+                                                    <EmptyState
+                                                        icon={BarChart3}
+                                                        title="Nenhuma execução encontrada"
+                                                        description="As execuções de checklists aparecerão aqui quando forem preenchidas"
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            paginatedExecutions.map(exec => {
+                                                const total = exec.responses?.length || 0;
+                                                const ok = exec.responses?.filter((r: any) => r.isOk).length || 0;
+                                                const perc = total > 0 ? Math.round((ok / total) * 100) : 0;
+                                                return (
+                                                    <tr
+                                                        key={exec.id}
+                                                        className="hover:bg-muted/30 transition-colors cursor-pointer"
+                                                        onClick={() => { setSelectedExecution(exec); setShowExecutionDetail(true); }}
+                                                    >
+                                                        <td className="px-6 py-4">
+                                                            <p className="text-sm font-medium text-foreground">{exec.checklist?.title}</p>
+                                                            <p className="text-xs text-muted-foreground">{exec.checklist?.sector?.name}</p>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-7 h-7 bg-primary/10 rounded-full flex items-center justify-center">
+                                                                    <span className="text-xs font-medium text-primary">
+                                                                        {(exec.user?.name || exec.externalUserName || 'A').charAt(0).toUpperCase()}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="text-sm text-foreground">{exec.user?.name || exec.externalUserName || 'Executor Anônimo'}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-muted-foreground">
+                                                            {new Date(exec.completedAt).toLocaleString('pt-BR', {
+                                                                day: '2-digit',
+                                                                month: '2-digit',
+                                                                year: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={cn(
+                                                                            "h-full rounded-full transition-all",
+                                                                            perc >= 80 ? "bg-emerald-500" : perc >= 50 ? "bg-amber-500" : "bg-rose-500"
+                                                                        )}
+                                                                        style={{ width: `${perc}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className={cn(
+                                                                    "text-sm font-semibold tabular-nums",
+                                                                    perc >= 80 ? "text-emerald-600" : perc >= 50 ? "text-amber-600" : "text-rose-600"
+                                                                )}>{perc}%</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right text-muted-foreground">
+                                                            <ChevronRight size={18} />
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination */}
+                            {totalExecutionPages > 1 && (
+                                <div className="flex items-center justify-between px-6 py-3 border-t border-border bg-muted/30">
+                                    <p className="text-sm text-muted-foreground">
+                                        Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, executions.length)} de {executions.length}
+                                    </p>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="p-2 rounded-lg border border-border hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                        {Array.from({ length: totalExecutionPages }, (_, i) => i + 1).map(page => (
+                                            <button
+                                                key={page}
+                                                onClick={() => setCurrentPage(page)}
+                                                className={cn(
+                                                    "w-8 h-8 rounded-lg text-sm font-medium transition-all",
+                                                    currentPage === page
+                                                        ? "bg-primary text-white"
+                                                        : "hover:bg-white border border-transparent"
+                                                )}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.min(totalExecutionPages, p + 1))}
+                                            disabled={currentPage === totalExecutionPages}
+                                            className="p-2 rounded-lg border border-border hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
                     </div>
                 )}
 
                 {activeTab === 'report' && (
                     <div className="max-w-2xl space-y-4">
-                        <div className="bg-white p-8 rounded-3xl border border-border shadow-sm space-y-6">
+                        <Card className="p-6 space-y-6">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-slate-900 text-white rounded-2xl"><Settings2 size={24} /></div>
+                                <div className="p-3 bg-primary/10 rounded-xl">
+                                    <Settings2 size={24} className="text-primary" />
+                                </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-foreground uppercase italic tracking-tighter">Central de Alertas</h3>
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronização via WhatsApp Business</p>
+                                    <h3 className="text-lg font-semibold text-foreground">Central de Alertas</h3>
+                                    <p className="text-sm text-muted-foreground">Configuração de relatórios automáticos via WhatsApp</p>
                                 </div>
                             </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Input label="WhatsApp Destino (55...)" value={reportSettings.recipientPhone} onChange={e => setReportSettings({...reportSettings, recipientPhone: e.target.value})} className="h-11 font-bold" />
+                                <Input
+                                    label="WhatsApp Destino"
+                                    placeholder="5511999999999"
+                                    value={reportSettings.recipientPhone}
+                                    onChange={e => setReportSettings({ ...reportSettings, recipientPhone: e.target.value })}
+                                />
                                 <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Horário do Resumo Geral</label>
-                                    <input type="time" className="w-full h-11 px-4 bg-background rounded-xl text-xs font-bold outline-none" value={reportSettings.sendTime} onChange={e => setReportSettings({...reportSettings, sendTime: e.target.value})} />
+                                    <label className="block text-sm font-semibold text-foreground mb-1.5 uppercase tracking-wide">
+                                        Horário do Resumo Geral
+                                    </label>
+                                    <input
+                                        type="time"
+                                        className="w-full h-11 px-4 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all"
+                                        value={reportSettings.sendTime}
+                                        onChange={e => setReportSettings({ ...reportSettings, sendTime: e.target.value })}
+                                    />
                                 </div>
                             </div>
-                            
+
                             <div className="space-y-3">
-                                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Formato do Relatório WhatsApp</label>
-                                <div className="flex gap-2">
+                                <label className="block text-sm font-semibold text-foreground uppercase tracking-wide">
+                                    Formato do Relatório
+                                </label>
+                                <div className="grid grid-cols-3 gap-3">
                                     {[
                                         { id: 'PDF', label: 'PDF Detalhado', desc: 'Arquivo formal anexado' },
-                                        { id: 'TEXT', label: 'Texto Detalhado', desc: 'Lista de itens na mensagem' },
+                                        { id: 'TEXT', label: 'Texto Detalhado', desc: 'Lista na mensagem' },
                                         { id: 'BOTH', label: 'Ambos', desc: 'Texto + PDF completo' }
                                     ].map(f => (
-                                        <button 
-                                            key={f.id} 
-                                            onClick={() => setReportSettings({...reportSettings, reportFormat: f.id})}
+                                        <button
+                                            key={f.id}
+                                            onClick={() => setReportSettings({ ...reportSettings, reportFormat: f.id })}
                                             className={cn(
-                                                "flex-1 p-3 rounded-2xl border-2 transition-all text-left",
-                                                reportSettings.reportFormat === f.id ? "border-slate-900 bg-background" : "border-border/50 bg-white"
+                                                "p-4 rounded-xl border-2 transition-all text-left",
+                                                reportSettings.reportFormat === f.id
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border hover:border-primary/30"
                                             )}
                                         >
-                                            <p className={cn("text-[10px] font-black uppercase italic", reportSettings.reportFormat === f.id ? "text-foreground" : "text-muted-foreground")}>{f.label}</p>
-                                            <p className="text-[8px] font-bold text-muted-foreground uppercase mt-0.5">{f.desc}</p>
+                                            <p className={cn(
+                                                "text-sm font-semibold mb-1",
+                                                reportSettings.reportFormat === f.id ? "text-foreground" : "text-muted-foreground"
+                                            )}>{f.label}</p>
+                                            <p className="text-xs text-muted-foreground">{f.desc}</p>
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-background rounded-2xl">
-                                <div><p className="text-[10px] font-black uppercase italic">Habilitar Monitoramento Automático</p></div>
-                                <button onClick={() => setReportSettings({...reportSettings, enabled: !reportSettings.enabled})} className={cn("w-12 h-6 rounded-full relative transition-all duration-300", reportSettings.enabled ? "bg-slate-900" : "bg-slate-300")}><div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", reportSettings.enabled ? "left-7" : "left-1")} /></button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 pt-2">
-                                <Button onClick={handleSaveReportSettings} className="flex-1 bg-slate-900 italic h-12 uppercase text-[10px] font-black tracking-widest rounded-2xl">Salvar Configuração</Button>
-                                <Button 
-                                    onClick={handleSendManualDailyReport} 
-                                    disabled={sendingReport === 'daily'}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 italic h-12 uppercase text-[10px] font-black tracking-widest rounded-2xl gap-2"
+                            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
+                                <div>
+                                    <p className="text-sm font-semibold text-foreground">Monitoramento Automático</p>
+                                    <p className="text-xs text-muted-foreground">Enviar relatórios no horário configurado</p>
+                                </div>
+                                <button
+                                    onClick={() => setReportSettings({ ...reportSettings, enabled: !reportSettings.enabled })}
+                                    className={cn(
+                                        "w-12 h-6 rounded-full relative transition-all duration-300",
+                                        reportSettings.enabled ? "bg-primary" : "bg-gray-300"
+                                    )}
                                 >
-                                    {sendingReport === 'daily' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                                    <div className={cn(
+                                        "absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all",
+                                        reportSettings.enabled ? "left-7" : "left-1"
+                                    )} />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <Button onClick={handleSaveReportSettings} className="h-12">
+                                    <Save size={16} className="mr-2" /> Salvar Configuração
+                                </Button>
+                                <Button
+                                    onClick={handleSendManualDailyReport}
+                                    disabled={sendingReport === 'daily'}
+                                    variant="success"
+                                    className="h-12"
+                                >
+                                    {sendingReport === 'daily' ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Send size={16} className="mr-2" />}
                                     Enviar Resumo Agora
                                 </Button>
                             </div>
-                        </div>
-                        <div className="bg-slate-900 p-6 rounded-3xl text-white flex gap-4 items-start shadow-xl">
-                            <AlertCircle size={20} className="text-emerald-400 shrink-0 mt-0.5" />
-                            <p className="text-[10px] font-bold leading-relaxed uppercase tracking-tight opacity-70">O sistema monitora cada checklist individualmente. Se o preenchimento não ocorrer até o horário limite definido no modelo, um alerta de "Operação em Atraso" será enviado automaticamente para o administrador.</p>
+                        </Card>
+
+                        <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 flex gap-4 items-start">
+                            <AlertCircle size={20} className="text-blue-600 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-medium text-blue-900 mb-1">Monitoramento Individual</p>
+                                <p className="text-xs text-blue-700 leading-relaxed">
+                                    O sistema monitora cada checklist individualmente. Se o preenchimento não ocorrer até o horário limite definido no modelo, um alerta de "Operação em Atraso" será enviado automaticamente.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* FULL SCREEN EDIT MODAL */}
+            {/* EDIT MODAL */}
             <AnimatePresence>
                 {isEditingChecklist && (
-                    <motion.div initial={{ opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 100 }} className="fixed inset-0 z-[100] bg-white flex flex-col">
-                        <header className="px-8 py-5 border-b border-border flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2.5 bg-slate-900 text-white rounded-xl"><Plus size={20} /></div>
-                                <div>
-                                    <h2 className="text-xl font-black text-foreground uppercase italic tracking-tighter leading-none">{currentChecklist.id ? 'Refinar Matriz' : 'Nova Matriz de Operação'}</h2>
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Configuração de Critérios e Procedimentos Técnicos</p>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center overflow-y-auto"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.98 }}
+                            className="bg-white w-full max-w-5xl mx-4 my-8 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]"
+                        >
+                            {/* Modal Header */}
+                            <header className="px-6 py-4 border-b border-border flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-primary/10 rounded-xl">
+                                        <CheckSquare size={20} className="text-primary" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-foreground">
+                                            {currentChecklist.id ? 'Editar Modelo' : 'Novo Modelo'}
+                                        </h2>
+                                        <p className="text-xs text-muted-foreground">Configure os critérios e procedimentos</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button variant="ghost" onClick={() => setIsEditingChecklist(false)} className="h-10 px-6 text-[10px] font-black uppercase italic text-muted-foreground">Cancelar</Button>
-                                <Button onClick={handleSaveChecklist} className="h-10 px-8 rounded-xl bg-slate-900 italic text-[10px] font-black uppercase tracking-widest gap-2 shadow-xl"><Save size={16} /> Salvar Modelo</Button>
-                            </div>
-                        </header>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" onClick={() => setIsEditingChecklist(false)} className="h-9 px-4">
+                                        Cancelar
+                                    </Button>
+                                    <Button onClick={handleSaveChecklist} className="h-9 px-6">
+                                        <Save size={16} className="mr-2" /> Salvar
+                                    </Button>
+                                </div>
+                            </header>
 
-                        <div className="flex-1 overflow-y-auto bg-background/30 p-8">
-                            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-                                {/* Configuration */}
-                                <div className="lg:col-span-4 space-y-6">
-                                    <div className="bg-white p-6 rounded-3xl border border-border shadow-sm space-y-4">
-                                        <Input label="Título Técnico" value={currentChecklist.title} onChange={e => setCurrentChecklist({...currentChecklist, title: e.target.value})} className="font-bold h-11" />
-                                        <div className="grid grid-cols-2 gap-3">
+                            {/* Modal Content */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Configuration Panel */}
+                                    <div className="lg:col-span-1 space-y-4">
+                                        <Card className="p-5 space-y-4">
+                                            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Configurações</h4>
+                                            <Input
+                                                label="Título"
+                                                value={currentChecklist.title}
+                                                onChange={e => setCurrentChecklist({ ...currentChecklist, title: e.target.value })}
+                                                placeholder="Ex: Checklist de Abertura"
+                                            />
+
                                             <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Setor</label>
-                                                <select className="w-full h-11 px-4 rounded-xl bg-background text-xs font-bold outline-none" value={currentChecklist.sectorId} onChange={e => setCurrentChecklist({...currentChecklist, sectorId: e.target.value})}>
-                                                    <option value="">Setor...</option>
+                                                <label className="block text-sm font-semibold text-foreground mb-1.5 uppercase tracking-wide">
+                                                    Setor
+                                                </label>
+                                                <select
+                                                    className="w-full h-11 px-4 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all"
+                                                    value={currentChecklist.sectorId}
+                                                    onChange={e => setCurrentChecklist({ ...currentChecklist, sectorId: e.target.value })}
+                                                >
+                                                    <option value="">Selecione...</option>
                                                     {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                                 </select>
                                             </div>
+
                                             <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Frequência</label>
-                                                <select className="w-full h-11 px-4 rounded-xl bg-background text-xs font-bold outline-none" value={currentChecklist.frequency} onChange={e => setCurrentChecklist({...currentChecklist, frequency: e.target.value})}>
+                                                <label className="block text-sm font-semibold text-foreground mb-1.5 uppercase tracking-wide">
+                                                    Frequência
+                                                </label>
+                                                <select
+                                                    className="w-full h-11 px-4 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all"
+                                                    value={currentChecklist.frequency}
+                                                    onChange={e => setCurrentChecklist({ ...currentChecklist, frequency: e.target.value })}
+                                                >
                                                     <option value="DAILY">Diária</option>
                                                     <option value="WEEKLY">Semanal</option>
                                                     <option value="MONTHLY">Mensal</option>
                                                 </select>
                                             </div>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Clock size={12} /> Horário Limite de Alerta</label>
-                                            <input type="time" className="w-full h-11 px-4 bg-background rounded-xl text-xs font-bold outline-none border-2 border-transparent focus:border-rose-100 transition-all" value={currentChecklist.deadlineTime} onChange={e => setCurrentChecklist({...currentChecklist, deadlineTime: e.target.value})} />
-                                            <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-tight mt-1 px-1">Se o checklist não for preenchido até este horário, o administrador será notificado.</p>
-                                        </div>
-                                        <div className="space-y-1.5 pt-2">
-                                            <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Instruções</label>
-                                            <textarea className="w-full h-24 p-4 bg-background rounded-2xl text-xs font-bold outline-none resize-none" placeholder="Contexto geral..." value={currentChecklist.description} onChange={e => setCurrentChecklist({...currentChecklist, description: e.target.value})} />
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {/* Task Builder */}
-                                <div className="lg:col-span-8 space-y-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="text-xs font-black text-foreground uppercase italic tracking-tighter flex items-center gap-2"><CheckSquare size={16} /> Itens & Procedimentos</h4>
-                                        <Button onClick={handleAddTask} variant="outline" className="h-8 px-4 rounded-lg bg-white italic text-[10px] font-black uppercase tracking-widest gap-1.5 border-border"><Plus size={14} /> Adicionar Item</Button>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {(currentChecklist.tasks || []).map((task: any, index: number) => (
-                                            <div key={index} className="bg-white p-5 rounded-3xl border border-border shadow-sm space-y-4 group hover:border-border transition-all">
-                                                <div className="flex items-start gap-4">
-                                                    <span className="w-7 h-7 bg-background rounded-lg flex items-center justify-center text-[10px] font-black text-muted-foreground shrink-0 mt-0.5">{index+1}</span>
-                                                    <div className="flex-1 space-y-4">
-                                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                                            <input className="md:col-span-8 bg-transparent h-9 outline-none font-black text-foreground border-b border-border/50 focus:border-slate-900 transition-all text-sm" placeholder="O que verificar?" value={task.content} onChange={e => handleTaskChange(index, 'content', e.target.value)} />
-                                                            <div className="md:col-span-4 flex items-center justify-end gap-1">
-                                                                {['CHECKBOX', 'PHOTO', 'TEXT', 'NUMBER'].map(t => (
-                                                                    <button key={t} onClick={() => handleTaskChange(index, 'type', t)} className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-all", task.type === t ? "bg-slate-900 text-white" : "bg-background text-slate-300")}>
-                                                                        {t === 'CHECKBOX' ? <CheckSquare size={14}/> : t === 'PHOTO' ? <Camera size={14}/> : t === 'TEXT' ? <Type size={14}/> : <Hash size={14}/>}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Procedure Configuration */}
-                                                        <div className="bg-background/50 p-4 rounded-2xl border border-border space-y-3">
-                                                            <div className="flex items-center gap-3">
-                                                                <HelpCircle size={14} className="text-muted-foreground" />
-                                                                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Guia de Procedimento (Apoio ao Auditor)</span>
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                {[
-                                                                    { id: 'NONE', label: 'Nenhum', icon: <X size={12}/> },
-                                                                    { id: 'TEXT', label: 'Texto', icon: <Type size={12}/> },
-                                                                    { id: 'IMAGE', label: 'Imagem (URL)', icon: <ImageIcon size={12}/> },
-                                                                    { id: 'VIDEO', label: 'Vídeo (YouTube)', icon: <Video size={12}/> }
-                                                                ].map(p => (
-                                                                    <button key={p.id} onClick={() => handleTaskChange(index, 'procedureType', p.id)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 border transition-all", task.procedureType === p.id ? "bg-white text-foreground border-slate-300 shadow-sm" : "bg-transparent text-muted-foreground border-transparent hover:text-foreground/60")}>
-                                                                        {p.icon} {p.label}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                            {task.procedureType !== 'NONE' && (
-                                                                <div className="relative">
-                                                                    <div className="absolute left-3 top-3 text-slate-300"><LinkIcon size={14} /></div>
-                                                                    <textarea 
-                                                                        className="w-full h-20 pl-10 pr-4 py-3 bg-white rounded-xl text-[11px] font-bold outline-none border border-border focus:border-slate-300 transition-all resize-none" 
-                                                                        placeholder={task.procedureType === 'TEXT' ? "Descreva o passo-a-passo detalhado..." : "Insira a URL completa..."} 
-                                                                        value={task.procedureContent} 
-                                                                        onChange={e => handleTaskChange(index, 'procedureContent', e.target.value)} 
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col gap-2 shrink-0">
-                                                        <button onClick={() => handleRemoveTask(index)} className="w-8 h-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={16}/></button>
-                                                        <button onClick={() => handleTaskChange(index, 'isRequired', !task.isRequired)} className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-all border", task.isRequired ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-200 border-border")}><AlertCircle size={16}/></button>
-                                                    </div>
-                                                </div>
+                                            <div className="space-y-1.5">
+                                                <label className="block text-sm font-semibold text-foreground mb-1.5 flex items-center gap-1.5 text-rose-600">
+                                                    <Clock size={14} /> Horário Limite
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    className="w-full h-11 px-4 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all"
+                                                    value={currentChecklist.deadlineTime}
+                                                    onChange={e => setCurrentChecklist({ ...currentChecklist, deadlineTime: e.target.value })}
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Alerta será enviado se não preenchido até este horário
+                                                </p>
                                             </div>
-                                        ))}
+
+                                            <div className="space-y-1.5">
+                                                <label className="block text-sm font-semibold text-foreground mb-1.5 uppercase tracking-wide">
+                                                    Instruções
+                                                </label>
+                                                <textarea
+                                                    className="w-full h-24 p-3 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all resize-none"
+                                                    placeholder="Contexto geral do checklist..."
+                                                    value={currentChecklist.description}
+                                                    onChange={e => setCurrentChecklist({ ...currentChecklist, description: e.target.value })}
+                                                />
+                                            </div>
+                                        </Card>
+                                    </div>
+
+                                    {/* Task Builder */}
+                                    <div className="lg:col-span-2 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
+                                                <CheckSquare size={18} />
+                                                Itens de Verificação ({currentChecklist.tasks?.length || 0})
+                                            </h4>
+                                            <Button onClick={handleAddTask} variant="outline" size="sm">
+                                                <Plus size={14} className="mr-1" /> Adicionar Item
+                                            </Button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <AnimatePresence>
+                                                {(currentChecklist.tasks || []).map((task: any, index: number) => (
+                                                    <motion.div
+                                                        key={index}
+                                                        layout
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -10 }}
+                                                        className="bg-white p-5 rounded-xl border border-border shadow-sm space-y-4"
+                                                    >
+                                                        <div className="flex items-start gap-4">
+                                                            <span className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center text-sm font-semibold text-muted-foreground shrink-0 mt-0.5">
+                                                                {index + 1}
+                                                            </span>
+                                                            <div className="flex-1 space-y-4">
+                                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                                    <div className="md:col-span-2">
+                                                                        <input
+                                                                            className="w-full h-10 px-3 rounded-lg border border-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                                                            placeholder="O que verificar?"
+                                                                            value={task.content}
+                                                                            onChange={e => handleTaskChange(index, 'content', e.target.value)}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {[
+                                                                            { type: 'CHECKBOX', icon: <CheckSquare size={16} /> },
+                                                                            { type: 'PHOTO', icon: <Camera size={16} /> },
+                                                                            { type: 'TEXT', icon: <Type size={16} /> },
+                                                                            { type: 'NUMBER', icon: <Hash size={16} /> }
+                                                                        ].map(t => (
+                                                                            <button
+                                                                                key={t.type}
+                                                                                onClick={() => handleTaskChange(index, 'type', t.type)}
+                                                                                className={cn(
+                                                                                    "p-2 rounded-lg transition-all",
+                                                                                    task.type === t.type
+                                                                                        ? "bg-primary text-white"
+                                                                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                                                )}
+                                                                                title={t.type}
+                                                                            >
+                                                                                {t.icon}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Procedure Configuration */}
+                                                                <div className="bg-muted/50 p-4 rounded-xl space-y-3">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <HelpCircle size={14} className="text-muted-foreground" />
+                                                                        <span className="text-xs font-medium text-muted-foreground">Guia de Procedimento</span>
+                                                                    </div>
+                                                                    <div className="flex gap-2 flex-wrap">
+                                                                        {[
+                                                                            { id: 'NONE', label: 'Nenhum' },
+                                                                            { id: 'TEXT', label: 'Texto' },
+                                                                            { id: 'IMAGE', label: 'Imagem URL' },
+                                                                            { id: 'VIDEO', label: 'YouTube' }
+                                                                        ].map(p => (
+                                                                            <button
+                                                                                key={p.id}
+                                                                                onClick={() => handleTaskChange(index, 'procedureType', p.id)}
+                                                                                className={cn(
+                                                                                    "px-3 py-1.5 rounded-lg text-xs font-medium transition-all border",
+                                                                                    task.procedureType === p.id
+                                                                                        ? "bg-white text-foreground border-primary/30 shadow-sm"
+                                                                                        : "bg-transparent text-muted-foreground border-transparent hover:text-foreground"
+                                                                                )}
+                                                                            >
+                                                                                {p.label}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                    {task.procedureType !== 'NONE' && (
+                                                                        <textarea
+                                                                            className="w-full h-20 p-3 bg-white rounded-lg text-xs font-medium outline-none border border-border focus:border-primary/30 transition-all resize-none"
+                                                                            placeholder={task.procedureType === 'TEXT' ? "Descreva o passo-a-passo..." : "Insira a URL..."}
+                                                                            value={task.procedureContent}
+                                                                            onChange={e => handleTaskChange(index, 'procedureContent', e.target.value)}
+                                                                        />
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col gap-2 shrink-0">
+                                                                <button
+                                                                    onClick={() => handleTaskChange(index, 'isRequired', !task.isRequired)}
+                                                                    className={cn(
+                                                                        "w-8 h-8 rounded-lg flex items-center justify-center transition-all border",
+                                                                        task.isRequired
+                                                                            ? "bg-primary text-white border-primary"
+                                                                            : "bg-white text-muted-foreground border-border hover:border-primary/30"
+                                                                    )}
+                                                                    title={task.isRequired ? "Obrigatório" : "Opcional"}
+                                                                >
+                                                                    <AlertCircle size={16} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleRemoveTask(index)}
+                                                                    className="w-8 h-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                                                                    title="Remover item"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </AnimatePresence>
+
+                                            {(!currentChecklist.tasks || currentChecklist.tasks.length === 0) && (
+                                                <div className="text-center py-12 border-2 border-dashed border-border rounded-xl">
+                                                    <CheckSquare size={32} className="mx-auto text-muted-foreground mb-3" />
+                                                    <p className="text-sm font-medium text-muted-foreground mb-1">Nenhum item adicionado</p>
+                                                    <p className="text-xs text-muted-foreground mb-4">Adicione itens de verificação ao checklist</p>
+                                                    <Button onClick={handleAddTask} variant="outline" size="sm">
+                                                        <Plus size={14} className="mr-1" /> Adicionar Primeiro Item
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
-            
-            {/* ... Modal QR e Detalhe mantidos com UI densa ... */}
+
+            {/* QR Code Modal */}
             <AnimatePresence>
                 {showQRCodeModal && (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowQRCodeModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden p-8 flex flex-col items-center">
-                            <div className="w-full flex justify-end absolute top-6 right-6">
-                                <button onClick={() => setShowQRCodeModal(false)} className="w-8 h-8 rounded-full bg-background flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"><X size={16}/></button>
-                            </div>
-                            <header className="mb-8 text-center">
-                                <h3 className="text-xl font-black text-foreground uppercase italic tracking-tighter leading-none">Ponto de Acesso</h3>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2">Identificação para o setor</p>
-                            </header>
-                            <div className="bg-background p-6 rounded-[2rem] mb-6 border border-border" id="qr-code-to-print">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowQRCodeModal(false)} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden p-8 flex flex-col items-center">
+                            <button onClick={() => setShowQRCodeModal(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all">
+                                <X size={16} />
+                            </button>
+                            <h3 className="text-lg font-bold text-foreground mb-1">QR Code de Acesso</h3>
+                            <p className="text-sm text-muted-foreground mb-6">Escaneie para acessar o checklist</p>
+                            <div className="bg-white p-6 rounded-xl border border-border mb-6" id="qr-code-to-print">
                                 <QRCodeSVG value={`${window.location.origin}/checklist/fill/${selectedChecklist?.id}`} size={200} level="H" includeMargin={true} />
                             </div>
-                            <div className="text-center mb-8">
-                                <h4 className="text-sm font-black text-foreground uppercase italic tracking-tight">{selectedChecklist?.title}</h4>
-                                <span className="px-2 py-0.5 bg-slate-900 text-white text-[8px] font-black uppercase rounded mt-1 inline-block tracking-widest">{selectedChecklist?.sector?.name}</span>
+                            <div className="text-center mb-6">
+                                <h4 className="text-base font-semibold text-foreground">{selectedChecklist?.title}</h4>
+                                <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-md mt-1 inline-block">
+                                    {selectedChecklist?.sector?.name}
+                                </span>
                             </div>
-                            <Button onClick={handlePrintQR} className="w-full h-12 rounded-xl bg-slate-900 italic text-[10px] font-black uppercase tracking-widest gap-2 shadow-xl shadow-slate-100"><Printer size={16} /> Imprimir Identificador</Button>
+                            <Button onClick={handlePrintQR} className="w-full h-11">
+                                <Printer size={16} className="mr-2" /> Imprimir QR Code
+                            </Button>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
 
+            {/* Execution Detail Modal */}
             {showExecutionDetail && selectedExecution && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowExecutionDetail(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-4xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <header className="p-6 bg-white border-b border-border flex items-center justify-between sticky top-0 z-10">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2.5 bg-slate-900 text-white rounded-xl"><CheckSquare size={20} /></div>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowExecutionDetail(false)} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <header className="p-6 border-b border-border flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 rounded-xl">
+                                    <CheckSquare size={20} className="text-primary" />
+                                </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-foreground uppercase italic tracking-tighter leading-none">{selectedExecution.checklist?.title}</h3>
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">{new Date(selectedExecution.completedAt).toLocaleString('pt-BR')} • {selectedExecution.user?.name || selectedExecution.externalUserName || 'Executor Anônimo'}</p>
+                                    <h3 className="text-lg font-bold text-foreground">{selectedExecution.checklist?.title}</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {new Date(selectedExecution.completedAt).toLocaleString('pt-BR')} • {selectedExecution.user?.name || selectedExecution.externalUserName || 'Executor Anônimo'}
+                                    </p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowExecutionDetail(false)} className="w-10 h-10 bg-background text-muted-foreground rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-all"><X size={20}/></button>
+                            <button onClick={() => setShowExecutionDetail(false)} className="w-10 h-10 bg-muted text-muted-foreground rounded-lg flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-all">
+                                <X size={20} />
+                            </button>
                         </header>
                         <div className="flex-1 overflow-y-auto p-6 space-y-4">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                <div className="bg-white p-4 rounded-2xl border border-border text-center">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Conformidade</p>
-                                    <p className="text-sm font-black text-emerald-600 uppercase italic">{(() => { const total = selectedExecution.responses?.length || 0; const ok = selectedExecution.responses?.filter((r: any) => r.isOk).length || 0; return total > 0 ? `${Math.round((ok/total)*100)}%` : '0%'; })()}</p>
-                                </div>
-                                <div className="bg-white p-4 rounded-2xl border border-border text-center">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Duração</p>
-                                    <p className="text-sm font-black text-foreground uppercase italic">{selectedExecution.durationSeconds ? `${Math.floor(selectedExecution.durationSeconds / 60)}m ${selectedExecution.durationSeconds % 60}s` : 'N/A'}</p>
-                                </div>
+                                <Card className="p-4 text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Conformidade</p>
+                                    <p className={cn(
+                                        "text-xl font-bold",
+                                        (() => {
+                                            const total = selectedExecution.responses?.length || 0;
+                                            const ok = selectedExecution.responses?.filter((r: any) => r.isOk).length || 0;
+                                            const perc = total > 0 ? Math.round((ok / total) * 100) : 0;
+                                            return perc >= 80 ? "text-emerald-600" : perc >= 50 ? "text-amber-600" : "text-rose-600";
+                                        })()
+                                    )}>
+                                        {(() => {
+                                            const total = selectedExecution.responses?.length || 0;
+                                            const ok = selectedExecution.responses?.filter((r: any) => r.isOk).length || 0;
+                                            return total > 0 ? `${Math.round((ok / total) * 100)}%` : '0%';
+                                        })()}
+                                    </p>
+                                </Card>
+                                <Card className="p-4 text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Duração</p>
+                                    <p className="text-xl font-bold text-foreground">
+                                        {selectedExecution.durationSeconds ? `${Math.floor(selectedExecution.durationSeconds / 60)}m ${selectedExecution.durationSeconds % 60}s` : 'N/A'}
+                                    </p>
+                                </Card>
+                                <Card className="p-4 text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Itens</p>
+                                    <p className="text-xl font-bold text-foreground">{selectedExecution.responses?.length || 0}</p>
+                                </Card>
+                                <Card className="p-4 text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">Irregulares</p>
+                                    <p className="text-xl font-bold text-rose-600">
+                                        {selectedExecution.responses?.filter((r: any) => !r.isOk).length || 0}
+                                    </p>
+                                </Card>
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {selectedExecution.responses?.map((resp: any, idx: number) => {
                                     const task = resp.task || selectedExecution.checklist?.tasks?.find((t: any) => t.id === resp.taskId);
                                     return (
-                                        <div key={resp.id} className="bg-white p-4 rounded-2xl border border-border flex items-start gap-4">
-                                            <div className="w-7 h-7 bg-background rounded-lg flex items-center justify-center text-[9px] font-black text-slate-300 shrink-0 mt-0.5">{idx + 1}</div>
+                                        <div key={resp.id} className="bg-white p-4 rounded-xl border border-border flex items-start gap-4">
+                                            <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center text-sm font-semibold text-muted-foreground shrink-0 mt-0.5">
+                                                {idx + 1}
+                                            </div>
                                             <div className="flex-1 space-y-3">
                                                 <div className="flex items-center justify-between gap-4">
-                                                    <p className="text-xs font-black text-foreground uppercase tracking-tight leading-none">{task?.content || 'Critério Técnico Removido'}</p>
-                                                    <div className={cn("px-2.5 py-1 rounded text-[8px] font-black uppercase tracking-widest", resp.isOk ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>{resp.isOk ? 'Conforme' : 'Irregular'}</div>
+                                                    <p className="text-sm font-medium text-foreground">{task?.content || 'Item removido'}</p>
+                                                    <span className={cn(
+                                                        "px-2.5 py-1 rounded text-xs font-medium",
+                                                        resp.isOk ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                                                    )}>
+                                                        {resp.isOk ? 'Conforme' : 'Irregular'}
+                                                    </span>
                                                 </div>
                                                 {resp.notes && (
-                                                    <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100/50 flex items-start gap-2">
+                                                    <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 flex items-start gap-2">
                                                         <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
-                                                        <p className="text-[11px] text-amber-900 font-medium leading-relaxed">{resp.notes}</p>
+                                                        <p className="text-sm text-amber-900">{resp.notes}</p>
                                                     </div>
                                                 )}
                                                 {task?.type === 'PHOTO' && resp.value && (
@@ -637,24 +1308,23 @@ const ChecklistManagement: React.FC = () => {
                                                                 const photos = JSON.parse(resp.value);
                                                                 if (Array.isArray(photos)) {
                                                                     return photos.map((url: string, pIdx: number) => (
-                                                                        <div key={pIdx} className="relative rounded-xl overflow-hidden border border-border group w-32 h-32">
-                                                                            <img 
-                                                                                src={`${import.meta.env.VITE_API_URL || ''}${url}`} 
-                                                                                className="w-full h-full object-cover cursor-zoom-in" 
-                                                                                alt="Evidência" 
+                                                                        <div key={pIdx} className="relative rounded-lg overflow-hidden border border-border w-24 h-24">
+                                                                            <img
+                                                                                src={`${import.meta.env.VITE_API_URL || ''}${url}`}
+                                                                                className="w-full h-full object-cover cursor-zoom-in"
+                                                                                alt="Evidência"
                                                                                 onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${url}`, '_blank')}
                                                                             />
                                                                         </div>
                                                                     ));
                                                                 }
                                                             } catch (e) {
-                                                                // Fallback para valor único caso não seja JSON
                                                                 return (
-                                                                    <div className="relative rounded-xl overflow-hidden border border-border group w-32 h-32">
-                                                                        <img 
-                                                                            src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`} 
-                                                                            className="w-full h-full object-cover cursor-zoom-in" 
-                                                                            alt="Evidência" 
+                                                                    <div className="relative rounded-lg overflow-hidden border border-border w-24 h-24">
+                                                                        <img
+                                                                            src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`}
+                                                                            className="w-full h-full object-cover cursor-zoom-in"
+                                                                            alt="Evidência"
                                                                             onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${resp.value}`, '_blank')}
                                                                         />
                                                                     </div>
@@ -673,7 +1343,8 @@ const ChecklistManagement: React.FC = () => {
                     </motion.div>
                 </div>
             )}
-            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
+
+            <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({ ...prev, open: false }))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({ ...prev, open: false })); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
 };

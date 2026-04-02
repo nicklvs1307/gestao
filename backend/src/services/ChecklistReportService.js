@@ -314,7 +314,7 @@ class ChecklistReportService {
       include: {
         sector: true,
         restaurant: {
-          include: { 
+          include: {
             checklistReportSettings: true,
             whatsappInstance: true
           }
@@ -322,38 +322,46 @@ class ChecklistReportService {
       }
     });
 
+    // 2. Batch: Busca todas as execuções de hoje para todos os checklists de uma vez
+    const checklistIds = checklistsWithDeadline.map(c => c.id);
+    const executions = checklistIds.length > 0
+      ? await prisma.checklistExecution.findMany({
+          where: {
+            checklistId: { in: checklistIds },
+            completedAt: { gte: start, lte: end }
+          },
+          include: {
+            checklist: { include: { sector: true, tasks: true } },
+            responses: { include: { task: true } },
+            user: { select: { name: true } }
+          }
+        })
+      : [];
+
+    // 3. Cria um map para lookup rápido
+    const executionMap = {};
+    executions.forEach(exec => {
+      if (!executionMap[exec.checklistId]) {
+        executionMap[exec.checklistId] = exec;
+      }
+    });
+
     for (const checklist of checklistsWithDeadline) {
       const settings = checklist.restaurant.checklistReportSettings;
       const instance = checklist.restaurant.whatsappInstance;
 
-      // Só envia se tiver configuração de envio e WhatsApp conectado
       if (!settings || !settings.enabled || !settings.recipientPhone) continue;
       if (!instance || instance.status !== 'CONNECTED') continue;
 
       const recipient = normalizePhone(settings.recipientPhone);
-
-      // 2. Verifica se houve execução HOJE para este checklist
-      const execution = await prisma.checklistExecution.findFirst({
-        where: {
-          checklistId: checklist.id,
-          completedAt: { gte: start, lte: end }
-        },
-        include: {
-          checklist: { include: { sector: true, tasks: true } },
-          responses: { include: { task: true } },
-          user: { select: { name: true } }
-        },
-        orderBy: { completedAt: 'desc' }
-      });
+      const execution = executionMap[checklist.id];
 
       if (!execution) {
-        // Alerta de ATRASO (Apenas texto)
         let message = `*⚠️ ALERTA DE OPERAÇÃO EM ATRASO*\n\n`;
         message += `O checklist *${checklist.title}* do setor *${checklist.sector.name}* ainda não foi realizado hoje.\n\n`;
         message += `⏰ Horário Limite: ${checklist.deadlineTime}\n`;
         message += `📍 Status: *PENDENTE*\n\n`;
         message += `\n\n_Notificação automática KiCardapio_`;
-
 
         try {
           await evolutionService.sendText(instance.name, recipient, message);
@@ -361,7 +369,6 @@ class ChecklistReportService {
           logger.error(`[ChecklistDeadline] Erro ao enviar alerta de atraso:`, error);
         }
       } else {
-        // Relatório de CONFORMIDADE INDIVIDUAL (Texto + PDF)
         const okTasks = execution.responses.filter(r => r.isOk).length;
         const totalTasks = execution.responses.length;
         const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
@@ -377,7 +384,7 @@ class ChecklistReportService {
         let pdfPath = null;
         try {
           pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
-          
+
           await evolutionService.sendText(instance.name, recipient, message);
           await evolutionService.sendMedia(
             instance.name,

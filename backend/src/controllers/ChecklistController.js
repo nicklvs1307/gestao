@@ -21,28 +21,34 @@ class ChecklistController {
 
   index = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { sectorId } = req.query;
+    const { sectorId, search } = req.query;
 
-    const checklists = await prisma.checklist.findMany({
-      where: { 
-        restaurantId,
-        ...(sectorId && { sectorId })
-      },
-      include: { 
-        sector: true,
-        tasks: { 
-          where: { isActive: true },
-          orderBy: { order: 'asc' } 
+    const whereClause = {
+      restaurantId,
+      ...(sectorId && { sectorId })
+    };
+
+    const [checklists, totalCount] = await Promise.all([
+      prisma.checklist.findMany({
+        where: whereClause,
+        include: {
+          sector: true,
+          tasks: {
+            where: { isActive: true },
+            orderBy: { order: 'asc' }
+          },
+          _count: {
+            select: {
+              tasks: { where: { isActive: true } }
+            }
+          }
         },
-        _count: { 
-          select: { 
-            tasks: { where: { isActive: true } } 
-          } 
-        }
-      },
-      orderBy: { title: 'asc' }
-    });
-    res.json(checklists);
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.checklist.count({ where: whereClause })
+    ]);
+
+    res.json({ data: checklists, total: totalCount });
   });
 
   show = asyncHandler(async (req, res) => {
@@ -240,30 +246,119 @@ class ChecklistController {
 
   executions = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { checklistId, startDate, endDate } = req.query;
+    const { checklistId, startDate, endDate, page = '1', limit = '10' } = req.query;
 
-    const history = await prisma.checklistExecution.findMany({
-      where: {
-        restaurantId,
-        ...(checklistId && { checklistId }),
-        ...(startDate && endDate && {
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const whereClause = {
+      restaurantId,
+      ...(checklistId && { checklistId }),
+      ...(startDate && endDate && {
+        completedAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate)
+        }
+      })
+    };
+
+    const [history, totalCount] = await Promise.all([
+      prisma.checklistExecution.findMany({
+        where: whereClause,
+        include: {
+          checklist: {
+            include: {
+              sector: true
+            }
+          },
+          user: { select: { name: true } },
+          responses: {
+            include: { task: true }
+          }
+        },
+        orderBy: { completedAt: 'desc' },
+        skip,
+        take: limitNum
+      }),
+      prisma.checklistExecution.count({ where: whereClause })
+    ]);
+
+    res.json({
+      data: history,
+      total: totalCount,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(totalCount / limitNum)
+    });
+  });
+
+  stats = asyncHandler(async (req, res) => {
+    const { restaurantId } = req;
+    const { startDate, endDate } = req.query;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const dateFilter = startDate && endDate
+      ? {
           completedAt: {
             gte: new Date(startDate),
             lte: new Date(endDate)
           }
-        })
-      },
-      include: {
-        checklist: true,
-        user: { select: { name: true } },
-        responses: {
-            include: { task: true }
         }
-      },
-      orderBy: { completedAt: 'desc' }
+      : {};
+
+    const [
+      totalChecklists,
+      totalExecutions,
+      todayExecutions,
+      executionsWithResponses
+    ] = await Promise.all([
+      prisma.checklist.count({
+        where: { restaurantId, isActive: true }
+      }),
+      prisma.checklistExecution.count({
+        where: { restaurantId, ...dateFilter }
+      }),
+      prisma.checklistExecution.count({
+        where: {
+          restaurantId,
+          completedAt: {
+            gte: today,
+            lt: tomorrow
+          }
+        }
+      }),
+      prisma.checklistExecution.findMany({
+        where: { restaurantId, ...dateFilter },
+        include: {
+          responses: { select: { isOk: true } }
+        }
+      })
+    ]);
+
+    let totalTasks = 0;
+    let okTasks = 0;
+    executionsWithResponses.forEach(exec => {
+      exec.responses.forEach(resp => {
+        totalTasks++;
+        if (resp.isOk) okTasks++;
+      });
     });
 
-    res.json(history);
+    const avgConformity = totalTasks > 0 ? Math.round((okTasks / totalTasks) * 100) : 0;
+
+    res.json({
+      totalChecklists,
+      totalExecutions,
+      todayExecutions,
+      avgConformity,
+      totalTasks,
+      okTasks
+    });
   });
 
   getReportSettings = asyncHandler(async (req, res) => {
