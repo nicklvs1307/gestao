@@ -785,10 +785,6 @@ const ReportController = {
                 createdAt: { gte: start, lte: end },
             };
 
-            if (orderTypesFilter.length > 0) {
-                whereClause.orderType = { in: orderTypesFilter };
-            }
-
             const orders = await prisma.order.findMany({
                 where: whereClause,
                 select: {
@@ -843,15 +839,19 @@ const ReportController = {
                 const day = dailyData[dateKey];
                 if (!day) return;
 
+                const deliveryType = order.deliveryOrder?.deliveryType;
+                const isPickup = order.orderType === 'PICKUP' || deliveryType === 'pickup';
+                const isDelivery = order.orderType === 'DELIVERY' || deliveryType === 'delivery';
+
+                if (orderTypesFilter.length > 0) {
+                    const orderTypeValue = isPickup ? 'PICKUP' : isDelivery ? 'DELIVERY' : 'TABLE';
+                    if (!orderTypesFilter.includes(orderTypeValue)) return;
+                }
+                
                 const isCompleted = order.status === 'COMPLETED';
                 const isCanceled = order.status === 'CANCELED';
                 const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
-                const deliveryType = order.deliveryOrder?.deliveryType;
 
-                // Contagem por tipo (verifica orderType e deliveryType)
-                const isPickup = order.orderType === 'PICKUP' || deliveryType === 'pickup';
-                const isDelivery = order.orderType === 'DELIVERY' || deliveryType === 'delivery';
-                
                 if (isPickup) day.pickupOrders++;
                 else if (isDelivery) day.deliveryOrders++;
                 else day.tableOrders++;
@@ -878,11 +878,11 @@ const ReportController = {
             });
 
             // Calcular acumulado
-            Object.keys(dailyData).sort().forEach(date => {
+            const sortedDates = Object.keys(dailyData).sort((a, b) => b.localeCompare(a));
+            sortedDates.forEach(date => {
                 dailyData[date].accumulated = accumulatedRevenue;
-                // Recalcular acumulado até aquela data
                 let acc = 0;
-                Object.keys(dailyData).sort().forEach(d => {
+                sortedDates.forEach(d => {
                     if (d <= date) {
                         acc += dailyData[d].revenue;
                         dailyData[d].accumulated = acc;
@@ -892,7 +892,7 @@ const ReportController = {
 
             const result = Object.values(dailyData).filter(d => 
                 !excludeDaysFilter.includes(d.dayOfWeek)
-            ).sort((a, b) => a.date.localeCompare(b.date));
+            ).sort((a, b) => b.date.localeCompare(a.date));
 
             // Calcular totais
             const totals = result.reduce((acc, day) => ({
