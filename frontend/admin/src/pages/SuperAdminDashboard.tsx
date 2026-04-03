@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { getRestaurantModules, updateRestaurantModules, syncRestaurantModulesToPlan } from '../services/api/superAdmin';
+import { getRestaurantModules, updateRestaurantModules, syncRestaurantModulesToPlan, getSubscriptionPlans, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan } from '../services/api/superAdmin';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Store, Briefcase, Shield, X, Check, CheckCircle, BarChart3, DollarSign, Settings, Users, Key, Calendar, RefreshCw, ChevronRight, LayoutDashboard, Loader2, ArrowUpRight, Target, ShieldCheck, Puzzle, RotateCcw, Lock, Unlock } from 'lucide-react';
+import { Plus, Store, Briefcase, Shield, X, Check, CheckCircle, BarChart3, DollarSign, Settings, Users, Key, Calendar, RefreshCw, ChevronRight, LayoutDashboard, Loader2, ArrowUpRight, Target, ShieldCheck, Puzzle, RotateCcw, Lock, Unlock, CreditCard, Trash2, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -27,13 +27,22 @@ const SuperAdminDashboard: React.FC = () => {
     const [isFranchiseModalOpen, setIsFranchiseModalOpen] = useState(false);
     const [isRestaurantModalOpen, setIsRestaurantModalOpen] = useState(false);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-    const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+    const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
     const [selectedStore, setSelectedStore] = useState<any | null>(null);
 
     const [restaurantModules, setRestaurantModules] = useState<any[]>([]);
     const [modulesLoading, setModulesLoading] = useState(false);
     const [selectedModuleStore, setSelectedModuleStore] = useState<any | null>(null);
-    const [moduleOverrides, setModuleOverrides] = useState<Record<string, boolean>>({});
+
+    const [localModuleState, setLocalModuleState] = useState<any[]>([]);
+
+    const [plans, setPlans] = useState<any[]>([]);
+    const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+    const [editingPlan, setEditingPlan] = useState<any | null>(null);
+    const [planFormData, setPlanFormData] = useState({
+        name: '', slug: '', price: '', description: '',
+        modules: [] as string[], isActive: true, isDefault: false
+    });
 
     // Form States
     const [formData, setFormData] = useState({
@@ -46,16 +55,18 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [fRes, rRes, pRes, rolesRes] = await Promise.all([
+            const [fRes, rRes, pRes, rolesRes, plansRes] = await Promise.all([
                 api.get('/super-admin/franchises'),
                 api.get('/super-admin/restaurants'),
                 api.get('/super-admin/permissions'),
-                api.get('/super-admin/roles')
+                api.get('/super-admin/roles'),
+                api.get('/super-admin/plans')
             ]);
             setFranchises(fRes.data);
             setRestaurants(rRes.data);
             setPermissions(pRes.data);
             setRoles(rolesRes.data);
+            setPlans(plansRes.data);
         } catch (error) { toast.error("Erro ao sincronizar dados globais."); }
         finally { setLoading(false); }
     };
@@ -67,11 +78,105 @@ const SuperAdminDashboard: React.FC = () => {
         try {
             const data = await getRestaurantModules(restaurantId);
             setRestaurantModules(data.modules);
+            setLocalModuleState(data.modules);
         } catch {
             toast.error("Erro ao carregar módulos.");
         } finally {
             setModulesLoading(false);
         }
+    };
+
+    const toggleModule = async (modId: string) => {
+        setLocalModuleState(prev => {
+            const updated = prev.map(m => 
+                m.id === modId ? { ...m, enabled: !m.enabled } : m
+            );
+            
+            const enabledIds = updated.filter(m => m.enabled).map(m => m.id);
+            updateRestaurantModules(selectedModuleStore.id, enabledIds)
+                .then(() => {
+                    toast.success(`Módulo atualizado!`);
+                    loadRestaurantModules(selectedModuleStore.id);
+                })
+                .catch(() => {
+                    toast.error("Erro ao atualizar módulo.");
+                    setLocalModuleState(prev);
+                });
+            
+            return updated;
+        });
+    };
+
+    const handleSyncToPlan = async () => {
+        try {
+            await syncRestaurantModulesToPlan(selectedModuleStore.id);
+            toast.success("Módulos restaurados ao plano!");
+            loadRestaurantModules(selectedModuleStore.id);
+        } catch {
+            toast.error("Erro ao restaurar módulos.");
+        }
+    };
+
+    const openPlanModal = (plan?: any) => {
+        if (plan) {
+            setEditingPlan(plan);
+            setPlanFormData({
+                name: plan.name,
+                slug: plan.slug,
+                price: plan.price?.toString() || '',
+                description: plan.description || '',
+                modules: Array.isArray(plan.modules) ? plan.modules : [],
+                isActive: plan.isActive,
+                isDefault: plan.isDefault
+            });
+        } else {
+            setEditingPlan(null);
+            setPlanFormData({ name: '', slug: '', price: '', description: '', modules: [], isActive: true, isDefault: false });
+        }
+        setIsPlanModalOpen(true);
+    };
+
+    const handleSavePlan = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            if (editingPlan) {
+                await updateSubscriptionPlan(editingPlan.id, {
+                    ...planFormData,
+                    price: planFormData.price ? Number(planFormData.price) : null
+                });
+                toast.success("Plano atualizado!");
+            } else {
+                await createSubscriptionPlan({
+                    ...planFormData,
+                    price: planFormData.price ? Number(planFormData.price) : null
+                });
+                toast.success("Plano criado!");
+            }
+            setIsPlanModalOpen(false);
+            fetchData();
+        } catch {
+            toast.error(editingPlan ? "Erro ao atualizar plano." : "Erro ao criar plano.");
+        }
+    };
+
+    const handleDeletePlan = async (plan: any) => {
+        if (!confirm(`Excluir o plano "${plan.name}"?`)) return;
+        try {
+            await deleteSubscriptionPlan(plan.id);
+            toast.success("Plano excluído!");
+            fetchData();
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || "Erro ao excluir plano.");
+        }
+    };
+
+    const togglePlanModule = (moduleId: string) => {
+        setPlanFormData(prev => ({
+            ...prev,
+            modules: prev.modules.includes(moduleId)
+                ? prev.modules.filter(m => m !== moduleId)
+                : [...prev.modules, moduleId]
+        }));
     };
 
     const togglePermission = (id: string) => {
@@ -125,7 +230,7 @@ const SuperAdminDashboard: React.FC = () => {
                 expiresAt: formData.editExpiresAt || null
             });
             toast.success("Assinatura atualizada!");
-            setIsPlanModalOpen(false);
+            setIsSubscriptionModalOpen(false);
             fetchData();
         } catch (error) { toast.error("Erro ao atualizar assinatura."); }
     };
@@ -163,7 +268,7 @@ const SuperAdminDashboard: React.FC = () => {
                                             <td className="px-8 py-5"><span className="text-[9px] font-black px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 shadow-sm">{r.plan}</span></td>
                                             <td className="px-8 py-5"><span className={cn("text-[9px] font-black px-2 py-1 rounded-lg border shadow-sm", r.status === 'ACTIVE' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-rose-50 text-rose-600 border-rose-100")}>{r.status}</span></td>
                                             <td className="px-8 py-5 text-[10px] font-bold text-slate-500 italic uppercase">{r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : 'VITALÍCIO'}</td>
-                                            <td className="px-8 py-5 text-right"><Button variant="ghost" size="icon" className="bg-slate-100 text-slate-400 hover:text-orange-600 rounded-xl" onClick={() => { setSelectedStore(r); setFormData({...formData, editPlan: r.plan, editStatus: r.status, editExpiresAt: r.expiresAt?.split('T')[0] || ''}); setIsPlanModalOpen(true); }}><Settings size={16} /></Button></td>
+                                            <td className="px-8 py-5 text-right"><Button variant="ghost" size="icon" className="bg-slate-100 text-slate-400 hover:text-orange-600 rounded-xl" onClick={() => { setSelectedStore(r); setFormData({...formData, editPlan: r.plan, editStatus: r.status, editExpiresAt: r.expiresAt?.split('T')[0] || ''}); setIsSubscriptionModalOpen(true); }}><Settings size={16} /></Button></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -273,7 +378,7 @@ const SuperAdminDashboard: React.FC = () => {
                             </div>
                         )}
 
-                        {selectedModuleStore && restaurantModules.length > 0 && (
+                        {selectedModuleStore && localModuleState.length > 0 && (
                             <Card className="p-8 border-slate-200 shadow-xl bg-white mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="flex items-center justify-between mb-8">
                                     <div>
@@ -290,38 +395,20 @@ const SuperAdminDashboard: React.FC = () => {
                                             variant="outline" 
                                             size="sm" 
                                             className="rounded-xl text-[8px] font-black uppercase italic tracking-widest gap-1"
-                                            onClick={async () => {
-                                                try {
-                                                    await syncRestaurantModulesToPlan(selectedModuleStore.id);
-                                                    toast.success("Módulos restaurados ao plano!");
-                                                    loadRestaurantModules(selectedModuleStore.id);
-                                                } catch {
-                                                    toast.error("Erro ao restaurar módulos.");
-                                                }
-                                            }}
+                                            onClick={handleSyncToPlan}
                                         >
                                             <RotateCcw size={12} /> RESTAURAR AO PLANO
                                         </Button>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {restaurantModules.map((mod: any) => {
-                                        const isOverridden = mod.isOverride;
+                                    {localModuleState.map((mod: any) => {
                                         return (
                                             <motion.button
                                                 key={mod.id}
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
-                                                onClick={async () => {
-                                                    const newEnabled = mod.enabled ? restaurantModules.filter((m: any) => m.id !== mod.id).map((m: any) => m.id) : [...restaurantModules.filter((m: any) => m.enabled).map((m: any) => m.id), mod.id];
-                                                    try {
-                                                        await updateRestaurantModules(selectedModuleStore.id, newEnabled);
-                                                        toast.success(`Módulo ${mod.label} ${mod.enabled ? 'desativado' : 'ativado'}!`);
-                                                        loadRestaurantModules(selectedModuleStore.id);
-                                                    } catch {
-                                                        toast.error("Erro ao atualizar módulo.");
-                                                    }
-                                                }}
+                                                onClick={() => toggleModule(mod.id)}
                                                 className={cn(
                                                     "p-5 rounded-2xl border-2 text-left transition-all relative",
                                                     mod.enabled 
@@ -339,7 +426,7 @@ const SuperAdminDashboard: React.FC = () => {
                                                             <X size={14} />
                                                         </div>
                                                     )}
-                                                    {isOverridden && (
+                                                    {mod.isOverride && (
                                                         <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-100 uppercase tracking-wider">
                                                             Override
                                                         </span>
@@ -367,138 +454,71 @@ const SuperAdminDashboard: React.FC = () => {
                         )}
                     </div>
                 );
-            case 'permissions':
+            case 'plans':
                 return (
                     <div className="space-y-8 animate-in fade-in duration-500">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Shield size={24} className="text-purple-500" /> Gestão de Módulos por Loja</h2>
+                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><CreditCard size={24} className="text-emerald-500" /> Planos de Assinatura</h2>
+                            <Button onClick={() => openPlanModal()} className="rounded-xl px-6 italic"><Plus size={18} /> NOVO PLANO</Button>
                         </div>
-                        <div className="grid grid-cols-1 gap-4">
-                            {restaurants.map(r => (
-                                <Card key={r.id} className="p-6 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-lg bg-white">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center">
-                                                <Store size={20} />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-black text-sm text-slate-900 uppercase italic">{r.name}</h3>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[8px] font-black px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">{r.plan}</span>
-                                                    <span className="text-[8px] font-black text-slate-400 uppercase">
-                                                        {r.franchise?.name || 'Independente'}
-                                                    </span>
-                                                </div>
-                                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {plans.map(plan => (
+                                <Card key={plan.id} className="p-6 border-slate-100 hover:border-emerald-500/20 transition-all duration-300 hover:shadow-xl bg-white relative">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 className="font-black text-lg text-slate-900 uppercase italic">{plan.name}</h3>
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{plan.slug}</p>
                                         </div>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="rounded-xl text-[9px] font-black uppercase italic tracking-widest gap-2"
-                                            onClick={() => {
-                                                setSelectedModuleStore(r);
-                                                loadRestaurantModules(r.id);
-                                            }}
-                                        >
-                                            <Puzzle size={14} /> GERENCIAR MÓDULOS
+                                        <div className="flex items-center gap-1">
+                                            {plan.isDefault && <span className="text-[7px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 uppercase">Padrão</span>}
+                                            {!plan.isActive && <span className="text-[7px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100 uppercase">Inativo</span>}
+                                        </div>
+                                    </div>
+                                    {plan.price && (
+                                        <p className="text-2xl font-black text-emerald-600 italic mb-4">R$ {Number(plan.price).toFixed(2)}</p>
+                                    )}
+                                    {plan.description && (
+                                        <p className="text-[10px] text-slate-500 mb-4 leading-relaxed">{plan.description}</p>
+                                    )}
+                                    <div className="border-t border-slate-50 pt-4">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Módulos ({plan.modules?.length || 0})</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {Array.isArray(plan.modules) && plan.modules.map((m: string) => (
+                                                <span key={m} className="text-[7px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded uppercase">{m}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-4 pt-4 border-t border-slate-50">
+                                        <Button variant="outline" size="sm" className="flex-1 rounded-lg text-[8px] font-black uppercase gap-1" onClick={() => openPlanModal(plan)}>
+                                            <Edit3 size={12} /> Editar
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="rounded-lg text-[8px] font-black uppercase text-rose-500 border-rose-100 hover:bg-rose-50" onClick={() => handleDeletePlan(plan)}>
+                                            <Trash2 size={12} />
                                         </Button>
                                     </div>
                                 </Card>
                             ))}
+                            {plans.length === 0 && (
+                                <Card className="p-10 text-center col-span-full">
+                                    <CreditCard size={48} className="mx-auto text-slate-300 mb-4" />
+                                    <h3 className="text-sm font-black text-slate-400 uppercase italic">Nenhum plano criado</h3>
+                                    <p className="text-xs text-slate-400 mt-2">Crie planos customizados com módulos específicos.</p>
+                                </Card>
+                            )}
                         </div>
-
-                        {selectedModuleStore && restaurantModules.length > 0 && (
-                            <Card className="p-8 border-slate-200 shadow-xl bg-white mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div>
-                                        <h3 className="text-lg font-black text-slate-900 uppercase italic flex items-center gap-3">
-                                            <Puzzle size={20} className="text-orange-500" />
-                                            Módulos — {selectedModuleStore.name}
-                                        </h3>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                                            Plano atual: {selectedModuleStore.plan} — Clique para ativar/desativar
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="rounded-xl text-[8px] font-black uppercase italic tracking-widest gap-1"
-                                            onClick={async () => {
-                                                try {
-                                                    await syncRestaurantModulesToPlan(selectedModuleStore.id);
-                                                    toast.success("Módulos restaurados ao plano!");
-                                                    loadRestaurantModules(selectedModuleStore.id);
-                                                } catch {
-                                                    toast.error("Erro ao restaurar módulos.");
-                                                }
-                                            }}
-                                        >
-                                            <RotateCcw size={12} /> RESTAURAR AO PLANO
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {restaurantModules.map((mod: any) => {
-                                        const isOverridden = mod.isOverride;
-                                        return (
-                                            <motion.button
-                                                key={mod.id}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                onClick={async () => {
-                                                    const newEnabled = mod.enabled ? restaurantModules.filter((m: any) => m.id !== mod.id).map((m: any) => m.id) : [...restaurantModules.filter((m: any) => m.enabled).map((m: any) => m.id), mod.id];
-                                                    try {
-                                                        await updateRestaurantModules(selectedModuleStore.id, newEnabled);
-                                                        toast.success(`Módulo ${mod.label} ${mod.enabled ? 'desativado' : 'ativado'}!`);
-                                                        loadRestaurantModules(selectedModuleStore.id);
-                                                    } catch {
-                                                        toast.error("Erro ao atualizar módulo.");
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "p-5 rounded-2xl border-2 text-left transition-all relative",
-                                                    mod.enabled 
-                                                        ? "bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-md" 
-                                                        : "bg-slate-50 border-slate-100 opacity-60"
-                                                )}
-                                            >
-                                                <div className="flex items-center justify-between mb-3">
-                                                    {mod.enabled ? (
-                                                        <div className="w-7 h-7 bg-orange-500 text-white rounded-lg flex items-center justify-center">
-                                                            <Check size={14} />
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-7 h-7 bg-slate-200 text-slate-400 rounded-lg flex items-center justify-center">
-                                                            <X size={14} />
-                                                        </div>
-                                                    )}
-                                                    {isOverridden && (
-                                                        <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-100 uppercase tracking-wider">
-                                                            Override
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <h4 className={cn("text-[10px] font-black uppercase italic tracking-tight", mod.enabled ? "text-slate-900" : "text-slate-400")}>
-                                                    {mod.label}
-                                                </h4>
-                                                <p className="text-[8px] text-slate-400 mt-1 leading-tight">{mod.description}</p>
-                                                {mod.isPlanDefault && !mod.enabled && (
-                                                    <div className="flex items-center gap-1 mt-2 text-[7px] text-rose-500 font-bold uppercase">
-                                                        <Lock size={8} /> Plano inclui
-                                                    </div>
-                                                )}
-                                                {!mod.isPlanDefault && mod.enabled && (
-                                                    <div className="flex items-center gap-1 mt-2 text-[7px] text-emerald-500 font-bold uppercase">
-                                                        <Unlock size={8} /> Extra ao plano
-                                                    </div>
-                                                )}
-                                            </motion.button>
-                                        );
-                                    })}
-                                </div>
-                            </Card>
-                        )}
+                    </div>
+                );
+            case 'permissions':
+                return (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Shield size={24} className="text-purple-500" /> Gestão de Segurança</h2>
+                        </div>
+                        <Card className="p-10 text-center">
+                            <Shield size={48} className="mx-auto text-slate-300 mb-4" />
+                            <h3 className="text-lg font-black text-slate-400 uppercase italic">Em desenvolvimento</h3>
+                            <p className="text-xs text-slate-400 mt-2">Logs de auditoria e gestão de acesso avançado.</p>
+                        </Card>
                     </div>
                 );
             default:
@@ -563,7 +583,7 @@ const SuperAdminDashboard: React.FC = () => {
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 border-b border-slate-200 pb-8">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-                        {activeTab === 'super-admin' ? 'Controle Mestre' : activeTab === 'franchises' ? 'Rede de Franquias' : activeTab === 'restaurants' ? 'Portfólio de Lojas' : activeTab === 'subscriptions' ? 'Gestão Financeira SaaS' : 'Painel'}
+                        {activeTab === 'super-admin' ? 'Controle Mestre' : activeTab === 'franchises' ? 'Rede de Franquias' : activeTab === 'restaurants' ? 'Portfólio de Lojas' : activeTab === 'subscriptions' ? 'Gestão Financeira SaaS' : activeTab === 'plans' ? 'Planos de Assinatura' : activeTab === 'modules' ? 'Módulos por Loja' : 'Painel'}
                     </h1>
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.3em] mt-3 flex items-center gap-2"><ShieldCheck size={16} className="text-orange-500" /> Administrador Global do Sistema</p>
                 </div>
@@ -574,6 +594,7 @@ const SuperAdminDashboard: React.FC = () => {
                         { id: 'franchises', label: 'Franquias', icon: Briefcase },
                         { id: 'restaurants', label: 'Unidades', icon: Store },
                         { id: 'subscriptions', label: 'Contratos', icon: DollarSign },
+                        { id: 'plans', label: 'Planos', icon: CreditCard },
                         { id: 'modules', label: 'Módulos', icon: Puzzle },
                         { id: 'permissions', label: 'Segurança', icon: Shield },
                     ].map(tab => (
@@ -618,7 +639,18 @@ const SuperAdminDashboard: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <Input label="Nome da Unidade" required value={formData.restaurantName} onChange={e => setFormData({...formData, restaurantName: e.target.value})} placeholder="Ex: Unidade Shopping Centro"/>
                                         <Input label="Slug / Identificador" required value={formData.restaurantSlug} onChange={e => setFormData({...formData, restaurantSlug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} placeholder="unidade-centro"/>
-                                        <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Plano do Contrato</label><select className="ui-input w-full h-12" value={formData.restaurantPlan} onChange={e => setFormData({...formData, restaurantPlan: e.target.value})}><option value="FREE">FREE (Limitado)</option><option value="SILVER">SILVER (Standard)</option><option value="GOLD">GOLD (Premium)</option><option value="DIAMOND">DIAMOND (Unlimited)</option></select></div>
+                                        <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Plano do Contrato</label><select className="ui-input w-full h-12" value={formData.restaurantPlan} onChange={e => setFormData({...formData, restaurantPlan: e.target.value})}>
+                                            {plans.filter(p => p.isActive).length > 0 ? (
+                                                plans.filter(p => p.isActive).map(p => <option key={p.id} value={p.name}>{p.name} — {p.modules?.length || 0} módulos{p.price ? ` — R$ ${Number(p.price).toFixed(2)}` : ''}</option>)
+                                            ) : (
+                                                <>
+                                                    <option value="FREE">FREE (Limitado)</option>
+                                                    <option value="SILVER">SILVER (Standard)</option>
+                                                    <option value="GOLD">GOLD (Premium)</option>
+                                                    <option value="DIAMOND">DIAMOND (Unlimited)</option>
+                                                </>
+                                            )}
+                                        </select></div>
                                         <Input label="Validade Contratual" type="date" value={formData.restaurantExpiresAt} onChange={e => setFormData({...formData, restaurantExpiresAt: e.target.value})}/>
                                         <div className="md:col-span-2 space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Franquia Vinculada (Opcional)</label><select className="ui-input w-full h-12" value={formData.restaurantFranchiseId} onChange={e => setFormData({...formData, restaurantFranchiseId: e.target.value})}><option value="">LOJA INDEPENDENTE</option>{franchises.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
                                     </div>
@@ -637,12 +669,12 @@ const SuperAdminDashboard: React.FC = () => {
                 )}
 
                 {/* Modal Assinatura (Plano) */}
-                {isPlanModalOpen && (
+                {isSubscriptionModalOpen && (
                     <div className="ui-modal-overlay">
                         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><DollarSign size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Plano</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{selectedStore?.name}</p></div></div>
-                                <Button variant="ghost" size="icon" onClick={() => setIsPlanModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
+                                <Button variant="ghost" size="icon" onClick={() => setIsSubscriptionModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
                             </header>
                             <form onSubmit={handleUpdateSubscription} className="p-10 space-y-6 bg-slate-50/30">
                                 <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Plano Ativo</label><select className="ui-input w-full h-12" value={formData.editPlan} onChange={e => setFormData({...formData, editPlan: e.target.value})}><option value="FREE">FREE</option><option value="SILVER">SILVER</option><option value="GOLD">GOLD</option><option value="DIAMOND">DIAMOND</option></select></div>
@@ -650,6 +682,62 @@ const SuperAdminDashboard: React.FC = () => {
                                 <Input label="Nova Validade" type="date" value={formData.editExpiresAt} onChange={e => setFormData({...formData, editExpiresAt: e.target.value})}/>
                                 <div className="pt-6"><Button fullWidth size="lg" className="h-14 rounded-2xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 bg-emerald-600 hover:bg-emerald-500">SALVAR ALTERAÇÕES</Button></div>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+
+                {/* Modal Plano Customizável */}
+                {isPlanModalOpen && (
+                    <div className="ui-modal-overlay">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-3xl overflow-hidden flex flex-col">
+                            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><CreditCard size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{editingPlan ? 'Editar Plano' : 'Novo Plano'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Configuração de módulos</p></div></div>
+                                <Button variant="ghost" size="icon" onClick={() => setIsPlanModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
+                            </header>
+                            <form onSubmit={handleSavePlan} className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <Input label="Nome do Plano" required value={planFormData.name} onChange={e => setPlanFormData({...planFormData, name: e.target.value})} placeholder="Ex: Profissional"/>
+                                    <Input label="Slug" required value={planFormData.slug} onChange={e => setPlanFormData({...planFormData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')})} placeholder="ex: profissional"/>
+                                    <Input label="Preço Mensal (R$)" type="number" value={planFormData.price} onChange={e => setPlanFormData({...planFormData, price: e.target.value})} placeholder="99.90"/>
+                                    <Input label="Descrição" value={planFormData.description} onChange={e => setPlanFormData({...planFormData, description: e.target.value})} placeholder="Descrição do plano"/>
+                                </div>
+                                <div className="space-y-4">
+                                    <h4 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-100 pb-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Módulos Incluídos</h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        {['orders', 'pos', 'products', 'settings', 'delivery', 'financial', 'reports', 'customers', 'coupons', 'kds', 'checklists', 'stock', 'dashboards', 'whatsapp', 'fiscal', 'integrations', 'franchise'].map(modId => (
+                                            <label key={modId} className={cn(
+                                                "flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all",
+                                                planFormData.modules.includes(modId)
+                                                    ? "bg-emerald-50 border-emerald-200"
+                                                    : "bg-white border-slate-100 hover:border-slate-200"
+                                            )}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={planFormData.modules.includes(modId)}
+                                                    onChange={() => togglePlanModule(modId)}
+                                                    className="w-4 h-4 text-emerald-600 rounded border-slate-300"
+                                                />
+                                                <span className="text-[9px] font-bold uppercase text-slate-700">{modId}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-[9px] text-slate-400 font-bold">{planFormData.modules.length} módulos selecionados</p>
+                                </div>
+                                <div className="flex items-center gap-6">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={planFormData.isActive} onChange={e => setPlanFormData({...planFormData, isActive: e.target.checked})} className="w-4 h-4 text-emerald-600 rounded border-slate-300" />
+                                        <span className="text-[9px] font-black uppercase text-slate-600">Ativo</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={planFormData.isDefault} onChange={e => setPlanFormData({...planFormData, isDefault: e.target.checked})} className="w-4 h-4 text-emerald-600 rounded border-slate-300" />
+                                        <span className="text-[9px] font-black uppercase text-slate-600">Plano Padrão</span>
+                                    </label>
+                                </div>
+                            </form>
+                            <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+                                <Button variant="ghost" onClick={() => setIsPlanModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button>
+                                <Button type="submit" onClick={handleSavePlan} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black bg-emerald-600 hover:bg-emerald-500">{editingPlan ? 'SALVAR ALTERAÇÕES' : 'CRIAR PLANO'}</Button>
+                            </footer>
                         </motion.div>
                     </div>
                 )}

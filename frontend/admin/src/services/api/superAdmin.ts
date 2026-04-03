@@ -44,3 +44,23 @@ export const syncRestaurantModulesToPlan = async (restaurantId: string) => {
     const response = await apiClient.post(`/super-admin/restaurants/${restaurantId}/modules/sync-plan`);
     return response.data;
 };
+
+export const getSubscriptionPlans = async () => {
+    const response = await apiClient.get('/super-admin/plans');
+    return response.data;
+};
+
+export const createSubscriptionPlan = async (data: Record<string, unknown>) => {
+    const response = await apiClient.post('/super-admin/plans', data);
+    return response.data;
+};
+
+export const updateSubscriptionPlan = async (id: string, data: Record<string, unknown>) => {
+    const response = await apiClient.put(`/super-admin/plans/${id}`, data);
+    return response.data;
+};
+
+export const deleteSubscriptionPlan = async (id: string) => {
+    const response = await apiClient.delete(`/super-admin/plans/${id}`);
+    return response.data;
+};

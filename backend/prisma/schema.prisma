@@ -115,10 +115,12 @@ model Restaurant {
   longitude    Float?
   
   // === Gestão de Assinatura ===
-  plan      String   @default("FREE") // FREE, SILVER, GOLD, DIAMOND
+  plan      String   @default("FREE") // FREE, SILVER, GOLD, DIAMOND ou nome de plano customizado
   status    String   @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL
   expiresAt DateTime? // Data de expiração da assinatura
   enabledModules Json? // Módulos habilitados para este restaurante (array de strings)
+  planId    String?  // Referência a um plano customizado (opcional)
+  planRef   SubscriptionPlan? @relation(fields: [planId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1401,4 +1403,21 @@ model ChecklistReportLog {
   @@index([restaurantId])
   @@index([sentAt])
   @@index([type])
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique // Ex: "Básico", "Profissional", "Enterprise"
+  slug        String   @unique // Ex: "basico", "profissional"
+  price       Float?   // Preço mensal
+  description String?  // Descrição do plano
+  modules     Json     // Módulos incluídos (array de strings)
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false) // Plano padrão para novos restaurantes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  restaurants Restaurant[]
+  
+  @@index([isActive])
 }

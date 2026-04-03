@@ -20,6 +20,13 @@ router.patch('/restaurants/:id/subscription', SuperAdminController.updateRestaur
 router.get('/restaurants/:id/modules', SuperAdminController.getRestaurantModules);
 router.put('/restaurants/:id/modules', SuperAdminController.updateRestaurantModules);
 router.post('/restaurants/:id/modules/sync-plan', SuperAdminController.syncRestaurantModulesToPlan);
+router.post('/restaurants/:id/apply-plan', SuperAdminController.applyPlanToRestaurant);
+
+// Planos Customizáveis
+router.get('/plans', SuperAdminController.getSubscriptionPlans);
+router.post('/plans', SuperAdminController.createSubscriptionPlan);
+router.put('/plans/:id', SuperAdminController.updateSubscriptionPlan);
+router.delete('/plans/:id', SuperAdminController.deleteSubscriptionPlan);
 
 // Usuários
 router.post('/users', SuperAdminController.createGlobalUser);

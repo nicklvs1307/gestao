@@ -343,6 +343,152 @@ const getAllPermissionsWithModules = async (req, res) => {
     }
 };
 
+// --- Gestão de Planos Customizáveis ---
+
+const getSubscriptionPlans = async (req, res) => {
+    try {
+        const plans = await prisma.subscriptionPlan.findMany({
+            orderBy: { createdAt: 'asc' }
+        });
+        res.json(plans);
+    } catch (error) {
+        logger.error("Erro ao buscar planos:", error);
+        res.status(500).json({ error: 'Erro ao buscar planos.' });
+    }
+};
+
+const createSubscriptionPlan = async (req, res) => {
+    const { name, slug, price, description, modules, isActive, isDefault } = req.body;
+    try {
+        if (!name || !slug || !modules || !Array.isArray(modules)) {
+            return res.status(400).json({ error: 'name, slug e modules (array) são obrigatórios.' });
+        }
+
+        const allModules = getAllModules();
+        const invalidModules = modules.filter(m => !allModules.includes(m));
+        if (invalidModules.length > 0) {
+            return res.status(400).json({ error: `Módulos inválidos: ${invalidModules.join(', ')}` });
+        }
+
+        if (isDefault) {
+            await prisma.subscriptionPlan.updateMany({
+                where: { isDefault: true },
+                data: { isDefault: false }
+            });
+        }
+
+        const plan = await prisma.subscriptionPlan.create({
+            data: {
+                name,
+                slug,
+                price: price !== undefined ? Number(price) : null,
+                description: description || null,
+                modules,
+                isActive: isActive !== false,
+                isDefault: isDefault === true
+            }
+        });
+        res.status(201).json(plan);
+    } catch (error) {
+        logger.error("Erro ao criar plano:", error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'Já existe um plano com este nome ou slug.' });
+        }
+        res.status(500).json({ error: 'Erro ao criar plano.' });
+    }
+};
+
+const updateSubscriptionPlan = async (req, res) => {
+    const { id } = req.params;
+    const { name, slug, price, description, modules, isActive, isDefault } = req.body;
+    try {
+        if (modules && !Array.isArray(modules)) {
+            return res.status(400).json({ error: 'modules deve ser um array.' });
+        }
+
+        if (modules) {
+            const allModules = getAllModules();
+            const invalidModules = modules.filter(m => !allModules.includes(m));
+            if (invalidModules.length > 0) {
+                return res.status(400).json({ error: `Módulos inválidos: ${invalidModules.join(', ')}` });
+            }
+        }
+
+        if (isDefault) {
+            await prisma.subscriptionPlan.updateMany({
+                where: { isDefault: true, id: { not: id } },
+                data: { isDefault: false }
+            });
+        }
+
+        const data = {};
+        if (name !== undefined) data.name = name;
+        if (slug !== undefined) data.slug = slug;
+        if (price !== undefined) data.price = price !== null ? Number(price) : null;
+        if (description !== undefined) data.description = description;
+        if (modules !== undefined) data.modules = modules;
+        if (isActive !== undefined) data.isActive = isActive;
+        if (isDefault !== undefined) data.isDefault = isDefault;
+
+        const plan = await prisma.subscriptionPlan.update({
+            where: { id },
+            data
+        });
+        res.json(plan);
+    } catch (error) {
+        logger.error("Erro ao atualizar plano:", error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'Já existe um plano com este nome ou slug.' });
+        }
+        res.status(500).json({ error: 'Erro ao atualizar plano.' });
+    }
+};
+
+const deleteSubscriptionPlan = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
+        if (!plan) {
+            return res.status(404).json({ error: 'Plano não encontrado.' });
+        }
+
+        const restaurantsUsing = await prisma.restaurant.count({ where: { planId: id } });
+        if (restaurantsUsing > 0) {
+            return res.status(400).json({ error: `Não é possível excluir: ${restaurantsUsing} restaurante(s) usam este plano.` });
+        }
+
+        await prisma.subscriptionPlan.delete({ where: { id } });
+        res.json({ message: 'Plano excluído com sucesso.' });
+    } catch (error) {
+        logger.error("Erro ao excluir plano:", error);
+        res.status(500).json({ error: 'Erro ao excluir plano.' });
+    }
+};
+
+const applyPlanToRestaurant = async (req, res) => {
+    const { id } = req.params;
+    const { planId } = req.body;
+    try {
+        const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+        if (!plan) {
+            return res.status(404).json({ error: 'Plano não encontrado.' });
+        }
+
+        const restaurant = await prisma.restaurant.update({
+            where: { id },
+            data: {
+                planId,
+                plan: plan.name,
+                enabledModules: plan.modules
+            }
+        });
+        res.json({ message: 'Plano aplicado com sucesso.', restaurant });
+    } catch (error) {
+        logger.error("Erro ao aplicar plano:", error);
+        res.status(500).json({ error: 'Erro ao aplicar plano.' });
+    }
+};
+
 module.exports = {
     createFranchise,
     getFranchises,
@@ -357,5 +503,10 @@ module.exports = {
     getRestaurantModules,
     updateRestaurantModules,
     syncRestaurantModulesToPlan,
-    getAllPermissionsWithModules
+    getAllPermissionsWithModules,
+    getSubscriptionPlans,
+    createSubscriptionPlan,
+    updateSubscriptionPlan,
+    deleteSubscriptionPlan,
+    applyPlanToRestaurant
 };
