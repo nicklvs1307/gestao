@@ -576,16 +576,16 @@ const ReportController = {
     async getConsumedItems(req, res) {
         try {
             const { restaurantId } = req;
-            const { startDate, endDate } = req.query;
-            const start = startDate ? new Date(startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
-            const end = endDate ? new Date(endDate) : new Date();
+            const { start, end } = req.query;
+            const startDate = start ? new Date(start) : new Date(new Date().setDate(new Date().getDate() - 30));
+            const endDate = end ? new Date(end) : new Date();
 
             const items = await prisma.orderItem.findMany({
                 where: {
                     order: {
                         restaurantId,
                         status: 'COMPLETED',
-                        createdAt: { gte: start, lte: end }
+                        createdAt: { gte: startDate, lte: endDate }
                     }
                 },
                 include: {

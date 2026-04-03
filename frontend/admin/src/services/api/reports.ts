@@ -56,7 +56,7 @@ export const getDashboardStats = async () => {
 
 export const getConsumedItems = async (startDate?: string, endDate?: string) => {
     const response = await apiClient.get('/admin/reports/consumed-items', {
-        params: { startDate, endDate }
+        params: { start: startDate, end: endDate }
     });
     return response.data;
 };
