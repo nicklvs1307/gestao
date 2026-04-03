@@ -3,8 +3,10 @@ const router = express.Router();
 const StockController = require('../controllers/StockController');
 const StockLossController = require('../controllers/StockLossController');
 const { needsAuth, checkPermission } = require('../middlewares/auth');
+const { checkModuleEnabled } = require('../middlewares/moduleGate');
 
 router.use(needsAuth);
+router.use(checkModuleEnabled('stock'));
 router.use(checkPermission('stock:manage'));
 
 // Stock Entries

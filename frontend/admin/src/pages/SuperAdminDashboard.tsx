@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { getRestaurantModules, updateRestaurantModules, syncRestaurantModulesToPlan } from '../services/api/superAdmin';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Store, Briefcase, Shield, X, Check, CheckCircle, BarChart3, DollarSign, Settings, Users, Key, Calendar, RefreshCw, ChevronRight, LayoutDashboard, Loader2, ArrowUpRight, Target, ShieldCheck } from 'lucide-react';
+import { Plus, Store, Briefcase, Shield, X, Check, CheckCircle, BarChart3, DollarSign, Settings, Users, Key, Calendar, RefreshCw, ChevronRight, LayoutDashboard, Loader2, ArrowUpRight, Target, ShieldCheck, Puzzle, RotateCcw, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -29,6 +30,11 @@ const SuperAdminDashboard: React.FC = () => {
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
     const [selectedStore, setSelectedStore] = useState<any | null>(null);
 
+    const [restaurantModules, setRestaurantModules] = useState<any[]>([]);
+    const [modulesLoading, setModulesLoading] = useState(false);
+    const [selectedModuleStore, setSelectedModuleStore] = useState<any | null>(null);
+    const [moduleOverrides, setModuleOverrides] = useState<Record<string, boolean>>({});
+
     // Form States
     const [formData, setFormData] = useState({
         franchiseName: '', franchiseSlug: '', restaurantName: '', restaurantSlug: '',
@@ -55,6 +61,18 @@ const SuperAdminDashboard: React.FC = () => {
     };
 
     useEffect(() => { fetchData(); }, [token]);
+
+    const loadRestaurantModules = async (restaurantId: string) => {
+        setModulesLoading(true);
+        try {
+            const data = await getRestaurantModules(restaurantId);
+            setRestaurantModules(data.modules);
+        } catch {
+            toast.error("Erro ao carregar módulos.");
+        } finally {
+            setModulesLoading(false);
+        }
+    };
 
     const togglePermission = (id: string) => {
         setFormData(prev => ({
@@ -209,6 +227,280 @@ const SuperAdminDashboard: React.FC = () => {
                         </div>
                     </div>
                 );
+            case 'modules':
+                return (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Puzzle size={24} className="text-orange-500" /> Gestão de Módulos por Loja</h2>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                            {restaurants.map(r => (
+                                <Card key={r.id} className="p-6 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-lg bg-white">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center">
+                                                <Store size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-black text-sm text-slate-900 uppercase italic">{r.name}</h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[8px] font-black px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">{r.plan}</span>
+                                                    <span className="text-[8px] font-black text-slate-400 uppercase">
+                                                        {r.franchise?.name || 'Independente'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="rounded-xl text-[9px] font-black uppercase italic tracking-widest gap-2"
+                                            onClick={() => {
+                                                setSelectedModuleStore(r);
+                                                loadRestaurantModules(r.id);
+                                            }}
+                                        >
+                                            <Puzzle size={14} /> GERENCIAR MÓDULOS
+                                        </Button>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        {modulesLoading && (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="animate-spin text-orange-500" size={24} />
+                            </div>
+                        )}
+
+                        {selectedModuleStore && restaurantModules.length > 0 && (
+                            <Card className="p-8 border-slate-200 shadow-xl bg-white mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-900 uppercase italic flex items-center gap-3">
+                                            <Puzzle size={20} className="text-orange-500" />
+                                            Módulos — {selectedModuleStore.name}
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                            Plano atual: {selectedModuleStore.plan} — Clique para ativar/desativar
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="rounded-xl text-[8px] font-black uppercase italic tracking-widest gap-1"
+                                            onClick={async () => {
+                                                try {
+                                                    await syncRestaurantModulesToPlan(selectedModuleStore.id);
+                                                    toast.success("Módulos restaurados ao plano!");
+                                                    loadRestaurantModules(selectedModuleStore.id);
+                                                } catch {
+                                                    toast.error("Erro ao restaurar módulos.");
+                                                }
+                                            }}
+                                        >
+                                            <RotateCcw size={12} /> RESTAURAR AO PLANO
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {restaurantModules.map((mod: any) => {
+                                        const isOverridden = mod.isOverride;
+                                        return (
+                                            <motion.button
+                                                key={mod.id}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={async () => {
+                                                    const newEnabled = mod.enabled ? restaurantModules.filter((m: any) => m.id !== mod.id).map((m: any) => m.id) : [...restaurantModules.filter((m: any) => m.enabled).map((m: any) => m.id), mod.id];
+                                                    try {
+                                                        await updateRestaurantModules(selectedModuleStore.id, newEnabled);
+                                                        toast.success(`Módulo ${mod.label} ${mod.enabled ? 'desativado' : 'ativado'}!`);
+                                                        loadRestaurantModules(selectedModuleStore.id);
+                                                    } catch {
+                                                        toast.error("Erro ao atualizar módulo.");
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "p-5 rounded-2xl border-2 text-left transition-all relative",
+                                                    mod.enabled 
+                                                        ? "bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-md" 
+                                                        : "bg-slate-50 border-slate-100 opacity-60"
+                                                )}
+                                            >
+                                                <div className="flex items-center justify-between mb-3">
+                                                    {mod.enabled ? (
+                                                        <div className="w-7 h-7 bg-orange-500 text-white rounded-lg flex items-center justify-center">
+                                                            <Check size={14} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-7 h-7 bg-slate-200 text-slate-400 rounded-lg flex items-center justify-center">
+                                                            <X size={14} />
+                                                        </div>
+                                                    )}
+                                                    {isOverridden && (
+                                                        <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-100 uppercase tracking-wider">
+                                                            Override
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <h4 className={cn("text-[10px] font-black uppercase italic tracking-tight", mod.enabled ? "text-slate-900" : "text-slate-400")}>
+                                                    {mod.label}
+                                                </h4>
+                                                <p className="text-[8px] text-slate-400 mt-1 leading-tight">{mod.description}</p>
+                                                {mod.isPlanDefault && !mod.enabled && (
+                                                    <div className="flex items-center gap-1 mt-2 text-[7px] text-rose-500 font-bold uppercase">
+                                                        <Lock size={8} /> Plano inclui
+                                                    </div>
+                                                )}
+                                                {!mod.isPlanDefault && mod.enabled && (
+                                                    <div className="flex items-center gap-1 mt-2 text-[7px] text-emerald-500 font-bold uppercase">
+                                                        <Unlock size={8} /> Extra ao plano
+                                                    </div>
+                                                )}
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            </Card>
+                        )}
+                    </div>
+                );
+            case 'permissions':
+                return (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Shield size={24} className="text-purple-500" /> Gestão de Módulos por Loja</h2>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                            {restaurants.map(r => (
+                                <Card key={r.id} className="p-6 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-lg bg-white">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center">
+                                                <Store size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-black text-sm text-slate-900 uppercase italic">{r.name}</h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[8px] font-black px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">{r.plan}</span>
+                                                    <span className="text-[8px] font-black text-slate-400 uppercase">
+                                                        {r.franchise?.name || 'Independente'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="rounded-xl text-[9px] font-black uppercase italic tracking-widest gap-2"
+                                            onClick={() => {
+                                                setSelectedModuleStore(r);
+                                                loadRestaurantModules(r.id);
+                                            }}
+                                        >
+                                            <Puzzle size={14} /> GERENCIAR MÓDULOS
+                                        </Button>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        {selectedModuleStore && restaurantModules.length > 0 && (
+                            <Card className="p-8 border-slate-200 shadow-xl bg-white mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-900 uppercase italic flex items-center gap-3">
+                                            <Puzzle size={20} className="text-orange-500" />
+                                            Módulos — {selectedModuleStore.name}
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                            Plano atual: {selectedModuleStore.plan} — Clique para ativar/desativar
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="rounded-xl text-[8px] font-black uppercase italic tracking-widest gap-1"
+                                            onClick={async () => {
+                                                try {
+                                                    await syncRestaurantModulesToPlan(selectedModuleStore.id);
+                                                    toast.success("Módulos restaurados ao plano!");
+                                                    loadRestaurantModules(selectedModuleStore.id);
+                                                } catch {
+                                                    toast.error("Erro ao restaurar módulos.");
+                                                }
+                                            }}
+                                        >
+                                            <RotateCcw size={12} /> RESTAURAR AO PLANO
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {restaurantModules.map((mod: any) => {
+                                        const isOverridden = mod.isOverride;
+                                        return (
+                                            <motion.button
+                                                key={mod.id}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={async () => {
+                                                    const newEnabled = mod.enabled ? restaurantModules.filter((m: any) => m.id !== mod.id).map((m: any) => m.id) : [...restaurantModules.filter((m: any) => m.enabled).map((m: any) => m.id), mod.id];
+                                                    try {
+                                                        await updateRestaurantModules(selectedModuleStore.id, newEnabled);
+                                                        toast.success(`Módulo ${mod.label} ${mod.enabled ? 'desativado' : 'ativado'}!`);
+                                                        loadRestaurantModules(selectedModuleStore.id);
+                                                    } catch {
+                                                        toast.error("Erro ao atualizar módulo.");
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "p-5 rounded-2xl border-2 text-left transition-all relative",
+                                                    mod.enabled 
+                                                        ? "bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-md" 
+                                                        : "bg-slate-50 border-slate-100 opacity-60"
+                                                )}
+                                            >
+                                                <div className="flex items-center justify-between mb-3">
+                                                    {mod.enabled ? (
+                                                        <div className="w-7 h-7 bg-orange-500 text-white rounded-lg flex items-center justify-center">
+                                                            <Check size={14} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-7 h-7 bg-slate-200 text-slate-400 rounded-lg flex items-center justify-center">
+                                                            <X size={14} />
+                                                        </div>
+                                                    )}
+                                                    {isOverridden && (
+                                                        <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-100 uppercase tracking-wider">
+                                                            Override
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <h4 className={cn("text-[10px] font-black uppercase italic tracking-tight", mod.enabled ? "text-slate-900" : "text-slate-400")}>
+                                                    {mod.label}
+                                                </h4>
+                                                <p className="text-[8px] text-slate-400 mt-1 leading-tight">{mod.description}</p>
+                                                {mod.isPlanDefault && !mod.enabled && (
+                                                    <div className="flex items-center gap-1 mt-2 text-[7px] text-rose-500 font-bold uppercase">
+                                                        <Lock size={8} /> Plano inclui
+                                                    </div>
+                                                )}
+                                                {!mod.isPlanDefault && mod.enabled && (
+                                                    <div className="flex items-center gap-1 mt-2 text-[7px] text-emerald-500 font-bold uppercase">
+                                                        <Unlock size={8} /> Extra ao plano
+                                                    </div>
+                                                )}
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            </Card>
+                        )}
+                    </div>
+                );
             default:
                 return (
                     <div className="space-y-10 animate-in fade-in duration-700">
@@ -282,6 +574,7 @@ const SuperAdminDashboard: React.FC = () => {
                         { id: 'franchises', label: 'Franquias', icon: Briefcase },
                         { id: 'restaurants', label: 'Unidades', icon: Store },
                         { id: 'subscriptions', label: 'Contratos', icon: DollarSign },
+                        { id: 'modules', label: 'Módulos', icon: Puzzle },
                         { id: 'permissions', label: 'Segurança', icon: Shield },
                     ].map(tab => (
                         <button key={tab.id} onClick={() => navigate(tab.id === 'super-admin' ? '/super-admin' : `/super-admin/${tab.id}`)} className={cn("px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all whitespace-nowrap", activeTab === tab.id ? "bg-white text-slate-900 shadow-md scale-[1.02]" : "text-slate-500 hover:text-slate-700")}>

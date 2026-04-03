@@ -3,9 +3,11 @@ const router = express.Router();
 const FinancialController = require('../controllers/FinancialController');
 const BankAccountController = require('../controllers/BankAccountController');
 const { needsAuth, checkPermission } = require('../middlewares/auth');
+const { checkModuleEnabled } = require('../middlewares/moduleGate');
 
 // Proteção global do módulo para quem tem pelo menos visualização
 router.use(needsAuth);
+router.use(checkModuleEnabled('financial'));
 router.use(checkPermission('financial:view'));
 
 // Suppliers

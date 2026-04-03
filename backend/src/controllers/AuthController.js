@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { validatePassword } = require('../utils/passwordValidator');
 const { sendPasswordResetEmail } = require('../services/EmailService');
+const { getModulesForPlan } = require('../config/planModules');
+const { getPermissionsForModules } = require('../config/modulePermissions');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -74,22 +76,51 @@ const login = async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { email },
             include: { 
-                restaurant: { include: { settings: true } },
+                restaurant: { 
+                    include: { 
+                        settings: true,
+                    } 
+                },
                 roleRef: {
                     include: { permissions: true }
                 },
-                permissions: true // Permissões diretas
+                permissions: true
             },
         });
         
         if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
             return res.status(400).json({ error: 'Credenciais inválidas.' });
         }
+
+        if (user.restaurant && user.restaurant.status === 'SUSPENDED') {
+            return res.status(403).json({ 
+                error: 'Restaurante suspenso. Entre em contato com o suporte.' 
+            });
+        }
+
+        if (user.restaurant && user.restaurant.expiresAt && new Date(user.restaurant.expiresAt) < new Date()) {
+            return res.status(403).json({ 
+                error: 'Assinatura expirada. Entre em contato com o suporte.' 
+            });
+        }
         
-        // Junta as permissões do Cargo + Permissões Diretas do Usuário
+        let enabledModules = user.restaurant?.enabledModules;
+        if (!enabledModules && user.restaurant?.plan) {
+            enabledModules = getModulesForPlan(user.restaurant.plan);
+        }
+        if (!enabledModules) {
+            enabledModules = getModulesForPlan('FREE');
+        }
+
+        const modulePermissions = getPermissionsForModules(enabledModules);
+
         const rolePermissions = user.roleRef?.permissions?.map(p => p.name) || [];
         const directPermissions = user.permissions?.map(p => p.name) || [];
-        const finalPermissions = [...new Set([...rolePermissions, ...directPermissions])];
+        const allUserPermissions = [...new Set([...rolePermissions, ...directPermissions])];
+        
+        const finalPermissions = user.isSuperAdmin 
+            ? allUserPermissions 
+            : allUserPermissions.filter(p => modulePermissions.includes(p));
 
         const normalizedRole = normalizeRole(user.roleRef?.name || null, user.isSuperAdmin);
         
@@ -100,7 +131,10 @@ const login = async (req, res) => {
             restaurantId: user.restaurantId,
             isSuperAdmin: user.isSuperAdmin,
             franchiseId: user.franchiseId,
-            permissions: finalPermissions
+            permissions: finalPermissions,
+            enabledModules,
+            restaurantStatus: user.restaurant?.status || 'ACTIVE',
+            plan: user.restaurant?.plan || 'FREE'
         };
 
         const token = jwt.sign(tokenData, JWT_SECRET, { expiresIn: '8h' });
@@ -116,6 +150,9 @@ const login = async (req, res) => {
                 restaurantId: user.restaurantId,
                 franchiseId: user.franchiseId,
                 permissions: finalPermissions,
+                enabledModules,
+                restaurantStatus: user.restaurant?.status || 'ACTIVE',
+                plan: user.restaurant?.plan || 'FREE',
                 logoUrl: user.restaurant?.logoUrl,
                 menuUrl: user.restaurant?.settings?.menuUrl 
             } 
@@ -161,15 +198,32 @@ const getUsers = async (req, res) => {
             } 
         });
 
-        const mappedUsers = users.map(u => ({
-            ...u,
-            role: normalizeRole(u.roleRef?.name || null, u.isSuperAdmin),
-            // Mescla permissões para o frontend saber o que o usuário realmente pode fazer
-            allPermissions: [...new Set([
-                ...(u.roleRef?.permissions?.map(p => p.name) || []),
-                ...(u.permissions?.map(p => p.name) || [])
-            ])]
-        }));
+        let restaurantModules = req.user.enabledModules || [];
+        if (!restaurantModules.length && !isUserSuperAdmin) {
+            const restaurant = await prisma.restaurant.findUnique({
+                where: { id: req.restaurantId },
+                select: { enabledModules: true, plan: true }
+            });
+            if (restaurant) {
+                restaurantModules = restaurant.enabledModules || getModulesForPlan(restaurant.plan);
+            }
+        }
+
+        const modulePermissions = isUserSuperAdmin ? [] : getPermissionsForModules(restaurantModules);
+
+        const mappedUsers = users.map(u => {
+            const rolePerms = u.roleRef?.permissions?.map(p => p.name) || [];
+            const directPerms = u.permissions?.map(p => p.name) || [];
+            const allPerms = [...new Set([...rolePerms, ...directPerms])];
+            
+            const filteredPerms = isUserSuperAdmin ? allPerms : allPerms.filter(p => modulePermissions.includes(p));
+            
+            return {
+                ...u,
+                role: normalizeRole(u.roleRef?.name || null, u.isSuperAdmin),
+                allPermissions: filteredPerms
+            };
+        });
 
         res.json(mappedUsers); 
     } catch (error) { 
@@ -184,10 +238,8 @@ const createUser = async (req, res) => {
         const isRequesterSuperAdmin = req.user.isSuperAdmin || req.user.role === 'superadmin';
         const targetRestaurantId = isRequesterSuperAdmin ? (req.body.restaurantId || req.restaurantId) : req.restaurantId;
 
-        // --- Mapeamento Automático de Role por Nome ---
         let finalRoleId = await _findRoleId(role, roleId);
 
-        // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
         const permError = await _checkPermissionHierarchy(permissionIds, isRequesterSuperAdmin, req.user.permissions);
         if (permError) {
             return res.status(permError.status).json({ error: permError.error });
@@ -205,6 +257,26 @@ const createUser = async (req, res) => {
             return res.status(400).json({ error: passwordError });
         }
 
+        let finalPermissionIds = permissionIds;
+        if (!isRequesterSuperAdmin && permissionIds && permissionIds.length > 0 && targetRestaurantId) {
+            const restaurant = await prisma.restaurant.findUnique({
+                where: { id: targetRestaurantId },
+                select: { enabledModules: true, plan: true }
+            });
+            if (restaurant) {
+                const restaurantModules = restaurant.enabledModules || getModulesForPlan(restaurant.plan);
+                const allowedPerms = getPermissionsForModules(restaurantModules);
+                
+                const allPermRecords = await prisma.permission.findMany({
+                    where: { id: { in: permissionIds } }
+                });
+                
+                finalPermissionIds = allPermRecords
+                    .filter(p => allowedPerms.includes(p.name))
+                    .map(p => p.id);
+            }
+        }
+
         const passwordHash = await bcrypt.hash(password, 10);
         const newUser = await prisma.user.create({ 
             data: { 
@@ -219,8 +291,8 @@ const createUser = async (req, res) => {
                 restaurantId: targetRestaurantId,
                 roleId: finalRoleId || undefined,
                 isSuperAdmin: false,
-                permissions: permissionIds ? {
-                    connect: permissionIds.map(id => ({ id }))
+                permissions: finalPermissionIds ? {
+                    connect: finalPermissionIds.map(id => ({ id }))
                 } : undefined
             } 
         });
@@ -252,13 +324,25 @@ const updateUser = async (req, res) => {
             return res.status(403).json({ error: 'Acesso negado: Este usuário pertence a outro restaurante.' });
         }
 
-        // --- Mapeamento Automático de Role por Nome ---
         let finalRoleId = await _findRoleId(role, roleId === undefined ? undefined : roleId);
 
-        // --- TRAVA DE SEGURANÇA: HIERARQUIA DE PERMISSÕES ---
         const permError = await _checkPermissionHierarchy(permissionIds, isRequesterSuperAdmin, req.user.permissions);
         if (permError) {
             return res.status(permError.status).json({ error: permError.error });
+        }
+
+        if (!isRequesterSuperAdmin && permissionIds && permissionIds.length > 0) {
+            const restaurant = await prisma.restaurant.findUnique({
+                where: { id: req.restaurantId },
+                select: { enabledModules: true, plan: true }
+            });
+            if (restaurant) {
+                const restaurantModules = restaurant.enabledModules || getModulesForPlan(restaurant.plan);
+                const allowedPerms = getPermissionsForModules(restaurantModules);
+                const invalidPerms = permissionIds.filter(pid => {
+                    return true;
+                });
+            }
         }
 
         const data = { 
@@ -284,11 +368,37 @@ const updateUser = async (req, res) => {
             data.roleId = finalRoleId;
         }
 
-        // Atualiza permissões diretas (substitui as antigas pelas novas enviadas)
         if (permissionIds) {
-            data.permissions = {
-                set: permissionIds.map(pid => ({ id: pid }))
-            };
+            if (!isRequesterSuperAdmin) {
+                const restaurant = await prisma.restaurant.findUnique({
+                    where: { id: req.restaurantId },
+                    select: { enabledModules: true, plan: true }
+                });
+                if (restaurant) {
+                    const restaurantModules = restaurant.enabledModules || getModulesForPlan(restaurant.plan);
+                    const allowedPerms = getPermissionsForModules(restaurantModules);
+                    
+                    const allPermRecords = await prisma.permission.findMany({
+                        where: { id: { in: permissionIds } }
+                    });
+                    
+                    const validPermIds = allPermRecords
+                        .filter(p => allowedPerms.includes(p.name))
+                        .map(p => ({ id: p.id }));
+                    
+                    data.permissions = {
+                        set: validPermIds
+                    };
+                } else {
+                    data.permissions = {
+                        set: permissionIds.map(pid => ({ id: pid }))
+                    };
+                }
+            } else {
+                data.permissions = {
+                    set: permissionIds.map(pid => ({ id: pid }))
+                };
+            }
         }
 
         const updated = await prisma.user.update({
@@ -308,7 +418,6 @@ const getAvailableRoles = async (req, res) => {
         const user = req.user;
         const isUserSuperAdmin = user.isSuperAdmin || user.role === 'superadmin';
 
-        // Busca roles do sistema (isSystem: true) ou da franquia do usuário
         const orConditions = [{ isSystem: true }];
         
         if (user.franchiseId) {
@@ -319,7 +428,6 @@ const getAvailableRoles = async (req, res) => {
             OR: orConditions
         };
 
-        // Filtro Crítico: Se não for SuperAdmin, não pode ver roles de SuperAdmin
         if (!isUserSuperAdmin) {
             whereClause = {
                 AND: [
@@ -338,6 +446,24 @@ const getAvailableRoles = async (req, res) => {
             include: { permissions: true },
             orderBy: { name: 'asc' }
         });
+
+        if (!isUserSuperAdmin && req.restaurantId) {
+            const restaurant = await prisma.restaurant.findUnique({
+                where: { id: req.restaurantId },
+                select: { enabledModules: true, plan: true }
+            });
+            if (restaurant) {
+                const restaurantModules = restaurant.enabledModules || getModulesForPlan(restaurant.plan);
+                const allowedPerms = getPermissionsForModules(restaurantModules);
+                
+                const filteredRoles = roles.map(role => ({
+                    ...role,
+                    permissions: role.permissions.filter(p => allowedPerms.includes(p.name))
+                }));
+                
+                return res.json(filteredRoles);
+            }
+        }
         
         res.json(roles);
     } catch (error) {

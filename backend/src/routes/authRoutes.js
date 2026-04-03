@@ -6,6 +6,8 @@ const { needsAdmin, needsAuth } = require('../middlewares/auth');
 const prisma = require('../lib/prisma');
 const validate = require('../middlewares/validate');
 const { z } = require('zod');
+const { getModulesForPlan } = require('../config/planModules');
+const { getPermissionsForModules } = require('../config/modulePermissions');
 
 const loginSchema = z.object({
   body: z.object({
@@ -30,15 +32,31 @@ router.get('/permissions', needsAdmin, async (req, res) => {
             orderBy: { name: 'asc' }
         });
 
-        // Se for SuperAdmin, retorna tudo
-        if (req.user.isSuperAdmin || req.user.role === 'superadmin' || req.user.permissions.includes('all:manage')) {
+        if (req.user.isSuperAdmin || req.user.role === 'superadmin' || req.user.permissions?.includes('all:manage')) {
             return res.json(allPermissions);
         }
 
-        // Se for Admin comum, retorna apenas as permissões que ele mesmo possui
-        const filtered = allPermissions.filter(p => req.user.permissions.includes(p.name));
+        let enabledModules = req.user.enabledModules;
+        if (!enabledModules && req.restaurantId) {
+            const restaurant = await prisma.restaurant.findUnique({
+                where: { id: req.restaurantId },
+                select: { enabledModules: true, plan: true }
+            });
+            if (restaurant) {
+                enabledModules = restaurant.enabledModules || getModulesForPlan(restaurant.plan);
+            }
+        }
+
+        if (enabledModules && enabledModules.length > 0) {
+            const allowedPermNames = getPermissionsForModules(enabledModules);
+            const filtered = allPermissions.filter(p => allowedPermNames.includes(p.name));
+            return res.json(filtered);
+        }
+
+        const filtered = allPermissions.filter(p => req.user.permissions?.includes(p.name));
         res.json(filtered);
     } catch (e) {
+        logger.error("Erro ao buscar permissões:", e);
         res.status(500).json({ error: 'Erro ao buscar permissões.' });
     }
 });

@@ -4,6 +4,7 @@ import { X, Star, History, ShoppingCart, Bell, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { usePermission } from '../hooks/usePermission';
+import { useModules } from '../hooks/useModules';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { NAV_CATEGORIES, NavCategory, NavItem } from '../config/navigation';
 
@@ -30,28 +31,34 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const { hasPermission, isSuperAdmin } = usePermission();
+    const { hasModule } = useModules();
 
     const categories = useMemo(() => {
         return NAV_CATEGORIES.map(cat => {
             let items = cat.items;
 
-            // Super Admin - mostra todos os itens
             if (cat.title === "Super Admin") {
                 if (!isSuperAdmin) return { ...cat, items: [] };
                 return cat;
             }
 
-            // Franquia - verifica permissão específica
             if (cat.title === "Gestão de Franquia") {
                 items = items.filter(item => !item.permission || hasPermission(item.permission));
                 return { ...cat, items };
             }
 
-            // Demais categorias - filtra por permissão
-            items = items.filter(item => !item.permission || hasPermission(item.permission));
+            if (!isSuperAdmin && cat.module && !hasModule(cat.module)) {
+                return { ...cat, items: [] };
+            }
+
+            items = items.filter(item => {
+                if (item.permission && !hasPermission(item.permission)) return false;
+                if (item.module && !isSuperAdmin && !hasModule(item.module)) return false;
+                return true;
+            });
             return { ...cat, items };
         }).filter(cat => cat.items.length > 0);
-    }, [hasPermission, isSuperAdmin]);
+    }, [hasPermission, isSuperAdmin, hasModule]);
 
     const handleNavigate = (path: string) => {
         navigate(path);

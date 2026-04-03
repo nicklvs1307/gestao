@@ -118,6 +118,7 @@ model Restaurant {
   plan      String   @default("FREE") // FREE, SILVER, GOLD, DIAMOND
   status    String   @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL
   expiresAt DateTime? // Data de expiração da assinatura
+  enabledModules Json? // Módulos habilitados para este restaurante (array de strings)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

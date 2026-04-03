@@ -2,6 +2,8 @@ const { validatePassword } = require('../utils/passwordValidator');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
+const { getModulesForPlan, PLAN_MODULES, MODULE_LABELS, MODULE_DESCRIPTIONS, getAllModules } = require('../config/planModules');
+const { getPermissionsForModules } = require('../config/modulePermissions');
 
 // --- Gestão de Franquias ---
 
@@ -51,6 +53,7 @@ const createRestaurant = async (req, res) => {
                     franchiseId, 
                     plan: plan || 'FREE',
                     expiresAt: expiresAt ? new Date(expiresAt) : null,
+                    enabledModules: getModulesForPlan(plan || 'FREE'),
                     settings: { create: {} },
                     integrationSettings: { create: {} }
                 }
@@ -220,6 +223,126 @@ const updateRolePermissions = async (req, res) => {
     }
 };
 
+// --- Gestão de Módulos por Restaurante ---
+
+const getRestaurantModules = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { id },
+            select: { id: true, name: true, plan: true, enabledModules: true }
+        });
+
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurante não encontrado.' });
+        }
+
+        const enabledModules = restaurant.enabledModules || getModulesForPlan(restaurant.plan);
+        const allModules = getAllModules();
+        const planModules = getModulesForPlan(restaurant.plan);
+
+        const modules = allModules.map(mod => ({
+            id: mod,
+            label: MODULE_LABELS[mod],
+            description: MODULE_DESCRIPTIONS[mod],
+            enabled: enabledModules.includes(mod),
+            isPlanDefault: planModules.includes(mod),
+            isOverride: enabledModules.includes(mod) !== planModules.includes(mod)
+        }));
+
+        res.json({
+            restaurant: {
+                id: restaurant.id,
+                name: restaurant.name,
+                plan: restaurant.plan
+            },
+            modules,
+            planModules
+        });
+    } catch (error) {
+        logger.error("Erro ao buscar módulos do restaurante:", error);
+        res.status(500).json({ error: 'Erro ao buscar módulos do restaurante.' });
+    }
+};
+
+const updateRestaurantModules = async (req, res) => {
+    const { id } = req.params;
+    const { enabledModules } = req.body;
+    try {
+        if (!Array.isArray(enabledModules)) {
+            return res.status(400).json({ error: 'enabledModules deve ser um array.' });
+        }
+
+        const allModules = getAllModules();
+        const invalidModules = enabledModules.filter(m => !allModules.includes(m));
+        if (invalidModules.length > 0) {
+            return res.status(400).json({ error: `Módulos inválidos: ${invalidModules.join(', ')}` });
+        }
+
+        const restaurant = await prisma.restaurant.update({
+            where: { id },
+            data: { enabledModules }
+        });
+
+        res.json({
+            message: 'Módulos atualizados com sucesso.',
+            enabledModules: restaurant.enabledModules
+        });
+    } catch (error) {
+        logger.error("Erro ao atualizar módulos do restaurante:", error);
+        res.status(500).json({ error: 'Erro ao atualizar módulos do restaurante.' });
+    }
+};
+
+const syncRestaurantModulesToPlan = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { id },
+            select: { plan: true }
+        });
+
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurante não encontrado.' });
+        }
+
+        const planModules = getModulesForPlan(restaurant.plan);
+
+        const updated = await prisma.restaurant.update({
+            where: { id },
+            data: { enabledModules: planModules }
+        });
+
+        res.json({
+            message: `Módulos sincronizados com o plano ${restaurant.plan}.`,
+            enabledModules: updated.enabledModules
+        });
+    } catch (error) {
+        logger.error("Erro ao sincronizar módulos com o plano:", error);
+        res.status(500).json({ error: 'Erro ao sincronizar módulos com o plano.' });
+    }
+};
+
+const getAllPermissionsWithModules = async (req, res) => {
+    try {
+        const permissions = await prisma.permission.findMany({
+            orderBy: { name: 'asc' }
+        });
+
+        const { getModulesForPermission } = require('../config/modulePermissions');
+        
+        const permissionsWithModules = permissions.map(p => ({
+            ...p,
+            modules: getModulesForPermission(p.name)
+        }));
+
+        res.json(permissionsWithModules);
+    } catch (error) {
+        logger.error("Erro ao buscar permissões com módulos:", error);
+        res.status(500).json({ error: 'Erro ao buscar permissões.' });
+    }
+};
+
 module.exports = {
     createFranchise,
     getFranchises,
@@ -230,5 +353,9 @@ module.exports = {
     getPermissions,
     getRoles,
     createRole,
-    updateRolePermissions
+    updateRolePermissions,
+    getRestaurantModules,
+    updateRestaurantModules,
+    syncRestaurantModulesToPlan,
+    getAllPermissionsWithModules
 };

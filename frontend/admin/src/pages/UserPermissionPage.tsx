@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createUser, updateUser, getRoles, getAvailablePermissions, sendResetEmail, getUsers } from '../services/api';
+import { useModules } from '../hooks/useModules';
 import { 
     X, User, Mail, Lock, CheckCircle, Loader2, Award, 
     ChevronRight, ChevronLeft, ShieldCheck, CheckSquare, Square,
@@ -22,11 +23,12 @@ const PERMISSION_STRUCTURE = [
         name: 'Vendas & Pedidos',
         icon: ShoppingCart,
         color: 'text-orange-500 bg-orange-50',
+        module: 'orders',
         pages: [
-            { id: 'pos', name: 'Ponto de Venda (POS)', icon: Receipt, keywords: ['pos', 'pdv', 'venda', 'order.create', 'order.read', 'order.update', 'order.delete'] },
+            { id: 'pos', name: 'Ponto de Venda (POS)', icon: Receipt, keywords: ['pos', 'pdv', 'venda', 'order.create', 'order.read', 'order.update', 'order.delete'], module: 'pos' },
             { id: 'mesas', name: 'Gestão de Mesas', icon: UtensilsCrossed, keywords: ['table', 'mesa', 'waiter'] },
-            { id: 'entregas', name: 'Delivery & Entregas', icon: ShoppingBag, keywords: ['delivery', 'entrega'] },
-            { id: 'cozinha', name: 'Cozinha (KDS)', icon: Layers, keywords: ['kds', 'kitchen', 'cozinha'] }
+            { id: 'entregas', name: 'Delivery & Entregas', icon: ShoppingBag, keywords: ['delivery', 'entrega'], module: 'delivery' },
+            { id: 'cozinha', name: 'Cozinha (KDS)', icon: Layers, keywords: ['kds', 'kitchen', 'cozinha'], module: 'kds' }
         ]
     },
     {
@@ -34,6 +36,7 @@ const PERMISSION_STRUCTURE = [
         name: 'Financeiro',
         icon: DollarSign,
         color: 'text-emerald-500 bg-emerald-50',
+        module: 'financial',
         pages: [
             { id: 'caixa', name: 'Caixa & Fluxo', icon: CreditCard, keywords: ['cashier', 'caixa', 'cash'] },
             { id: 'bancos', name: 'Contas Bancárias', icon: TrendingUp, keywords: ['bank', 'banco', 'account'] },
@@ -46,10 +49,11 @@ const PERMISSION_STRUCTURE = [
         name: 'Estoque & Produtos',
         icon: Package,
         color: 'text-blue-500 bg-blue-50',
+        module: 'products',
         pages: [
             { id: 'produtos', name: 'Cardápio & Produtos', icon: PackagePlus, keywords: ['product', 'produto', 'addon', 'tamanho', 'category.produto'] },
-            { id: 'ingredientes', name: 'Ingredientes', icon: Warehouse, keywords: ['ingredient', 'ingrediente', 'stock.ingredient'] },
-            { id: 'estoque', name: 'Controle de Estoque', icon: ClipboardList, keywords: ['stock', 'estoque', 'purchase', 'compra', 'supplier'] }
+            { id: 'ingredientes', name: 'Ingredientes', icon: Warehouse, keywords: ['ingredient', 'ingrediente', 'stock.ingredient'], module: 'stock' },
+            { id: 'estoque', name: 'Controle de Estoque', icon: ClipboardList, keywords: ['stock', 'estoque', 'purchase', 'compra', 'supplier'], module: 'stock' }
         ]
     },
     {
@@ -57,9 +61,10 @@ const PERMISSION_STRUCTURE = [
         name: 'Operacional',
         icon: ClipboardCheck,
         color: 'text-purple-500 bg-purple-50',
+        module: 'checklists',
         pages: [
             { id: 'checklists', name: 'Checklists & Tarefas', icon: ClipboardList, keywords: ['checklist', 'checklist.fill'] },
-            { id: 'producao', name: 'Produção', icon: Layers, keywords: ['production', 'producao', 'sector', 'setor'] }
+            { id: 'producao', name: 'Produção', icon: Layers, keywords: ['production', 'producao', 'sector', 'setor'], module: 'stock' }
         ]
     },
     {
@@ -68,10 +73,10 @@ const PERMISSION_STRUCTURE = [
         icon: PieChart,
         color: 'text-slate-500 bg-slate-100',
         pages: [
-            { id: 'relatorios', name: 'Relatórios', icon: FileBarChart, keywords: ['report', 'relatorio', 'dashboard', 'sales'] },
+            { id: 'relatorios', name: 'Relatórios', icon: FileBarChart, keywords: ['report', 'relatorio', 'dashboard', 'sales'], module: 'reports' },
             { id: 'usuarios', name: 'Usuários & Equipe', icon: UsersRound, keywords: ['user', 'usuario', 'role', 'permission', 'driver', 'entregador'] },
             { id: 'configuracoes', name: 'Configurações', icon: Settings2, keywords: ['settings', 'config', 'tenant', 'estabelecimento'] },
-            { id: 'integracoes', name: 'Integrações', icon: Zap, keywords: ['integration', 'webhook', 'api'] }
+            { id: 'integracoes', name: 'Integrações', icon: Zap, keywords: ['integration', 'webhook', 'api'], module: 'integrations' }
         ]
     }
 ];
@@ -79,6 +84,7 @@ const PERMISSION_STRUCTURE = [
 const UserPermissionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { hasModule, isSuperAdmin } = useModules();
   const isNewUser = id === 'new' || !id;
   
   const [name, setName] = useState('');
@@ -94,6 +100,12 @@ const UserPermissionPage: React.FC = () => {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
+
+  useEffect(() => {
+    if (permissionsByCategory.length > 0 && !permissionsByCategory.find(c => c.id === activeCategory)) {
+      setActiveCategory(permissionsByCategory[0].id);
+    }
+  }, [permissionsByCategory, activeCategory]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -206,7 +218,15 @@ const UserPermissionPage: React.FC = () => {
 
   const permissionsByCategory = useMemo(() => {
     return PERMISSION_STRUCTURE.map(cat => {
+      if (!isSuperAdmin && cat.module && !hasModule(cat.module)) {
+        return { ...cat, pages: [] };
+      }
+
       const pages = cat.pages.map(page => {
+        if (!isSuperAdmin && page.module && !hasModule(page.module)) {
+          return null;
+        }
+
         let pagePerms = availablePermissions.filter(p => 
           page.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()))
         );
@@ -225,7 +245,7 @@ const UserPermissionPage: React.FC = () => {
           selectedCount: pagePerms.filter(p => selectedPermissionIds.includes(p.id)).length,
           totalCount: pagePerms.length
         };
-      }).filter(p => p.permissions.length > 0);
+      }).filter((p): p is NonNullable<typeof p> => p !== null && p.permissions.length > 0);
       
       return {
         ...cat,
@@ -234,9 +254,9 @@ const UserPermissionPage: React.FC = () => {
         selectedCount: pages.reduce((acc, p) => acc + p.selectedCount, 0)
       };
     }).filter(cat => cat.pages.length > 0);
-  }, [availablePermissions, selectedPermissionIds, permissionSearch]);
+  }, [availablePermissions, selectedPermissionIds, permissionSearch, hasModule, isSuperAdmin]);
 
-  const currentCategory = permissionsByCategory.find(c => c.id === activeCategory);
+  const currentCategory = permissionsByCategory.find(c => c.id === activeCategory) || permissionsByCategory[0];
   const totalPermissionsCount = availablePermissions.length;
 
   return (

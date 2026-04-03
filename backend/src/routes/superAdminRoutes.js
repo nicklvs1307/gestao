@@ -16,12 +16,19 @@ router.post('/restaurants', SuperAdminController.createRestaurant);
 router.get('/restaurants', SuperAdminController.getAllRestaurants);
 router.patch('/restaurants/:id/subscription', SuperAdminController.updateRestaurantSubscription);
 
+// Módulos por Restaurante
+router.get('/restaurants/:id/modules', SuperAdminController.getRestaurantModules);
+router.put('/restaurants/:id/modules', SuperAdminController.updateRestaurantModules);
+router.post('/restaurants/:id/modules/sync-plan', SuperAdminController.syncRestaurantModulesToPlan);
+
 // Usuários
 router.post('/users', SuperAdminController.createGlobalUser);
 
 // Permissões e Roles
 router.get('/permissions', SuperAdminController.getPermissions);
+router.get('/permissions-with-modules', SuperAdminController.getAllPermissionsWithModules);
 router.get('/roles', SuperAdminController.getRoles);
 router.post('/roles', SuperAdminController.createRole);
+router.put('/roles/:id/permissions', SuperAdminController.updateRolePermissions);
 
 module.exports = router;

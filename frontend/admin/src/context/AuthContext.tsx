@@ -12,6 +12,9 @@ interface User {
   permissions: string[];
   logoUrl?: string | null;
   menuUrl?: string;
+  plan?: string;
+  enabledModules?: string[];
+  restaurantStatus?: string;
 }
 
 interface AuthContextType {

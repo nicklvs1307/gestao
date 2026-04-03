@@ -13,11 +13,13 @@ export interface NavItem {
   path: string;
   icon: any;
   permission?: string;
+  module?: string;
 }
 
 export interface NavCategory {
   title: string;
   icon: any;
+  module?: string;
   items: NavItem[];
 }
 
@@ -43,18 +45,20 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Vendas & Operacional",
     icon: ShoppingCart,
+    module: 'orders',
     items: [
       { label: "Monitor de Pedidos", path: "/orders", icon: ListOrdered, permission: 'orders:view' },
       { label: "Central de Atendimento", path: "/whatsapp/chat", icon: MessageSquare, permission: 'orders:view' },
-      { label: "PDV - Frente de Caixa", path: "/pos", icon: Calculator, permission: 'pos:access' },
-      { label: "KDS - Monitor de Cozinha", path: "/kds", icon: ChefHat, permission: 'kds:view' },
-      { label: "Checklists & Rotinas", path: "/checklists", icon: ClipboardList, permission: 'orders:view' },
+      { label: "PDV - Frente de Caixa", path: "/pos", icon: Calculator, permission: 'pos:access', module: 'pos' },
+      { label: "KDS - Monitor de Cozinha", path: "/kds", icon: ChefHat, permission: 'kds:view', module: 'kds' },
+      { label: "Checklists & Rotinas", path: "/checklists", icon: ClipboardList, permission: 'orders:view', module: 'checklists' },
       { label: "Terminal do Garçom", path: "/waiter", icon: Utensils, permission: 'waiter:pos' },
     ]
   },
   {
     title: "Cardápio",
     icon: Utensils,
+    module: 'products',
     items: [
       { label: "Cardápio", path: "/products", icon: Pizza, permission: 'products:view' },
       { label: "Categorias", path: "/categories", icon: Layers, permission: 'categories:manage' },
@@ -66,6 +70,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Financeiro",
     icon: DollarSign,
+    module: 'financial',
     items: [
       { label: "Acerto de Entregadores", path: "/drivers/settlement", icon: Truck, permission: 'driver_settlement:manage' },
       { label: "Acerto de Garçons", path: "/waiters/settlement", icon: Users2, permission: 'waiter_settlement:manage' },
@@ -76,12 +81,13 @@ export const NAV_CATEGORIES: NavCategory[] = [
       { label: "Fornecedores", path: "/financial/suppliers", icon: Users2, permission: 'suppliers:manage' },
       { label: "Frentes de Caixa", path: "/cashier", icon: Calculator, permission: 'cashier:manage' },
       { label: "Lançamentos Financeiros", path: "/financial/entries", icon: Receipt, permission: 'financial:manage' },
-      { label: "Fiscal (NFC-e)", path: "/fiscal", icon: Monitor, permission: 'settings:manage' },
+      { label: "Fiscal (NFC-e)", path: "/fiscal", icon: Monitor, permission: 'settings:manage', module: 'fiscal' },
     ]
   },
   {
     title: "Relacionamento com cliente",
     icon: Users2,
+    module: 'customers',
     items: [
       { label: "Cadastro de Clientes", path: "/customers", icon: UserCog, permission: 'orders:view' },
       { label: "Cupons de Desconto", path: "/coupons", icon: Ticket, permission: 'products:manage' },
@@ -90,6 +96,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Relatórios",
     icon: FileText,
+    module: 'reports',
     items: [
       { label: "Cupons Gerados", path: "/reports/coupons", icon: Ticket, permission: 'reports:view' },
       { label: "Desempenho por Atendente", path: "/reports/staff", icon: Users2, permission: 'reports:performance' },
@@ -109,6 +116,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Estoque",
     icon: Warehouse,
+    module: 'stock',
     items: [
       { label: "Análise e Simulação de CMV", path: "/stock/cmv", icon: Calculator, permission: 'reports:abc' },
       { label: "Ficha Técnica (Mestra)", path: "/production/technical-sheets", icon: ChefHat, permission: 'products:manage' },
@@ -124,6 +132,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Dashboards",
     icon: LayoutDashboard,
+    module: 'dashboards',
     items: [
       { label: "Acompanhamento de Vendas", path: "/dashboard", icon: BarChart3, permission: 'reports:view' },
       { label: "Canais", path: "/dashboard/channels", icon: Share2, permission: 'reports:view' },
@@ -135,22 +144,23 @@ export const NAV_CATEGORIES: NavCategory[] = [
   {
     title: "Opções da Loja",
     icon: Settings,
+    module: 'settings',
     items: [
-      { label: "Áreas de Entrega", path: "/settings/delivery-zones", icon: MapPin, permission: 'settings:manage' },
-      { label: "Canais de Venda e Integrações", path: "/integrations", icon: Share2, permission: 'integrations:manage' },
+      { label: "Áreas de Entrega", path: "/settings/delivery-zones", icon: MapPin, permission: 'settings:manage', module: 'delivery' },
+      { label: "Canais de Venda e Integrações", path: "/integrations", icon: Share2, permission: 'integrations:manage', module: 'integrations' },
       { label: "Comandas", path: "/tables", icon: LayoutDashboard, permission: 'table:manage' },
       { label: "Configurações", path: "/settings/general", icon: Settings, permission: 'settings:manage' },
       { label: "Dados da Loja", path: "/settings", icon: Database, permission: 'settings:view' },
-      { label: "Dados Fiscais", path: "/fiscal", icon: ShieldCheck, permission: 'settings:manage' },
-      { label: "Entregadores", path: "/drivers", icon: Truck, permission: 'driver_settlement:manage' },
+      { label: "Dados Fiscais", path: "/fiscal", icon: ShieldCheck, permission: 'settings:manage', module: 'fiscal' },
+      { label: "Entregadores", path: "/drivers", icon: Truck, permission: 'driver_settlement:manage', module: 'delivery' },
       { label: "Garçons", path: "/auth/waiters", icon: Users2, permission: 'waiter_settlement:manage' },
       { label: "Mesas", path: "/tables", icon: LayoutDashboard, permission: 'table:manage' },
-      { label: "Modelos de Impressão", path: "/settings/printing", icon: FileText, permission: 'integrations:manage' },
+      { label: "Modelos de Impressão", path: "/settings/printing", icon: FileText, permission: 'integrations:manage', module: 'integrations' },
       { label: "Motivos de Cancelamento", path: "/settings/cancellation-reasons", icon: X, permission: 'settings:manage' },
       { label: "Status da Venda", path: "/settings/sale-status", icon: Star, permission: 'settings:manage' },
       { label: "Turnos", path: "/settings/shifts", icon: Clock, permission: 'settings:manage' },
       { label: "Usuários e Permissões", path: "/users", icon: ShieldCheck, permission: 'users:manage' },
-      { label: "WhatsApp & IA", path: "/whatsapp", icon: MessageSquare, permission: 'settings:manage' },
+      { label: "WhatsApp & IA", path: "/whatsapp", icon: MessageSquare, permission: 'settings:manage', module: 'whatsapp' },
     ]
   }
 ];
