@@ -60,6 +60,7 @@ const ChecklistFill = lazy(() => import('./pages/ChecklistFill'));
 const ChecklistReportView = lazy(() => import('./pages/ChecklistReportView'));
 const TableCheckout = lazy(() => import('./pages/TableCheckout'));
 const WhatsAppManagement = lazy(() => import('./pages/WhatsAppManagement'));
+const WhatsAppChat = lazy(() => import('./pages/WhatsAppChat'));
 
 const TechnicalSheetManagement = lazy(() => import('./pages/TechnicalSheetManagement'));
 
@@ -81,6 +82,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/financial': 'Fluxo de Caixa',
   '/payment-methods': 'Formas de Pagamento',
   '/whatsapp': 'WhatsApp & IA',
+  '/whatsapp/chat': 'Central de Atendimento',
 };
 
 const PageLoader = () => (
@@ -180,6 +182,7 @@ function AdminRoutes() {
           <Route path="/production/technical-sheets" element={<ProtectedRoute permission="products:manage"><TechnicalSheetManagement /></ProtectedRoute>} />
           <Route path="/fiscal" element={<ProtectedRoute permission="settings:manage"><FiscalManagement /></ProtectedRoute>} />
           <Route path="/checklists" element={<ProtectedRoute permission="orders:view"><ChecklistManagement /></ProtectedRoute>} />
+          <Route path="/whatsapp/chat" element={<ProtectedRoute permission="orders:view"><WhatsAppChat /></ProtectedRoute>} />
           <Route path="/whatsapp/*" element={<ProtectedRoute permission="settings:manage"><WhatsAppManagement /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
