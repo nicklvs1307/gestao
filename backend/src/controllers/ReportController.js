@@ -924,3 +924,5 @@ const ReportController = {
         }
     }
 };
+
+module.exports = ReportController;
