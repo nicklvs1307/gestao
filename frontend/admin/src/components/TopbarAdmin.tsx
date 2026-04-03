@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { getAdminOrders, getTableRequests } from '../services/api';
 import apiClient from '../services/api/client';
-import { differenceInMinutes, differenceInHours } from 'date-fns';
+import { getElapsedMinutes, getElapsedHours } from '@/lib/timezone';
 import CashierActionModal from './CashierActionModal';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
@@ -93,10 +93,8 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
 
   const getCashierTimeStr = () => {
       if (!cashierStatus?.session?.openedAt) return '';
-      const now = new Date();
-      const opened = new Date(cashierStatus.session.openedAt);
-      const hours = differenceInHours(now, opened);
-      const mins = differenceInMinutes(now, opened) % 60;
+      const hours = getElapsedHours(cashierStatus.session.openedAt);
+      const mins = getElapsedMinutes(cashierStatus.session.openedAt) % 60;
       return `Aberto há ${hours}h e ${mins < 10 ? '0'+mins : mins}min`;
   };
 

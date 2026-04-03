@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -263,7 +263,7 @@ const CashierManagement: React.FC = () => {
                         {isOpen && (
                             <div className="flex items-center gap-3 mt-1">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
-                                    <Clock size={12} className="text-slate-300"/> Aberto às {session?.openedAt ? format(new Date(session.openedAt), 'HH:mm') : '--:--'}
+                                    <Clock size={12} className="text-slate-300"/> Aberto às {session?.openedAt ? formatSP(session.openedAt, 'HH:mm') : '--:--'}
                                 </span>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
                                     <User size={12} className="text-slate-300"/> {authUser?.name || 'Operador'}
@@ -505,7 +505,7 @@ const CashierManagement: React.FC = () => {
                                                                 {order.orderType === 'DELIVERY' ? <Truck size={10} className="text-blue-500"/> : <ShoppingBag size={10} className="text-indigo-500"/>}
                                                                 {order.tableNumber ? `MESA ${order.tableNumber}` : order.deliveryOrder?.name || 'BALCÃO'}
                                                             </h4>
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{format(new Date(order.createdAt), 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}</p>
+                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{formatSP(order.createdAt, 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}</p>
                                                         </div>
                                                     </div>
 
@@ -719,7 +719,7 @@ const CashierManagement: React.FC = () => {
                                             </div>
                                             <div>
                                                 <h4 className="text-xs font-black text-slate-900 uppercase italic leading-none">{item.driver?.name || 'ENTREGADOR NÃO ATRIBUÍDO'}</h4>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{format(new Date(item.order.createdAt), 'HH:mm')} • {format(new Date(item.order.createdAt), 'dd/MM')}</p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{formatSP(item.order.createdAt, 'HH:mm')} • {formatSP(item.order.createdAt, 'dd/MM')}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">

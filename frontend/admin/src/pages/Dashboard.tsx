@@ -30,6 +30,7 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { formatSP } from '@/lib/timezone';
 
 ChartJS.register(
   CategoryScale,
@@ -106,7 +107,11 @@ const Dashboard: React.FC = () => {
       const safeSummary = summaryData || { totalRevenue: 0, totalOrders: 0, activeProducts: 0 };
 
       setStats({
-        ordersToday: safeOrders.filter((order: any) => order.createdAt?.startsWith(new Date().toISOString().split('T')[0])).length,
+        ordersToday: safeOrders.filter((order: any) => {
+          const orderDate = formatSP(order.createdAt, 'yyyy-MM-dd');
+          const today = formatSP(new Date(), 'yyyy-MM-dd');
+          return orderDate === today;
+        }).length,
         revenueToday: safeSummary.totalRevenue || 0,
         activeProducts: safeSummary.activeProducts || 0,
         totalOrders: safeSummary.totalOrders || 0,

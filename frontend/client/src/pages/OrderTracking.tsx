@@ -4,7 +4,7 @@ import { getOrderById } from '../services/api';
 import { getSocket, disconnectSocket } from '../services/socket';
 import { CheckCircle2, Clock, Truck, ShoppingBag, ChevronLeft, MapPin, Loader2, PartyPopper, Bell } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -231,7 +231,7 @@ const OrderTracking: React.FC = () => {
               <div className="flex justify-between items-center mb-8 relative z-10">
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Recibo Digital</h3>
-                    <p className="text-xs font-bold text-slate-400">{format(new Date(order.createdAt), "dd 'de' MMMM, HH:mm")}</p>
+                    <p className="text-xs font-bold text-slate-400">{formatSP(order.createdAt, "dd 'de' MMMM, HH:mm")}</p>
                   </div>
                   <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
                       <ShoppingBag size={20} className="text-primary" />

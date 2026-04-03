@@ -8,7 +8,8 @@ import {
   Clock, ArrowRightLeft, FileDown, Printer, Filter, TrendingUp,
   TrendingDown, MoreHorizontal, Search, X, ChevronDown, Printer as PrinterIcon
 } from 'lucide-react';
-import { format, parseISO, isValid } from 'date-fns';
+import { parseISO, isValid } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -32,7 +33,7 @@ interface SettlementData {
 const DriverSettlement: React.FC = () => {
   const [data, setData] = useState<SettlementData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [date, setDate] = useState(formatSP(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
@@ -477,7 +478,7 @@ const DriverSettlement: React.FC = () => {
           </div>
           <div className="w-px h-4 bg-slate-200" />
           <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-            Última atualização: {format(new Date(), "'às' HH:mm:ss", { locale: ptBR })}
+            Última atualização: {formatSP(new Date(), "'às' HH:mm:ss")}
           </span>
         </div>
         <div className="flex items-center gap-2">

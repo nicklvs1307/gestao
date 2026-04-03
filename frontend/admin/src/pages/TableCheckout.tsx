@@ -13,7 +13,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 
 // ─── TYPES ──────────────────────────────────────────────────────────────
 interface OrderItem {
@@ -453,7 +453,7 @@ const TableCheckout: React.FC = () => {
                             Mesa {order.tableNumber < 10 ? `0${order.tableNumber}` : order.tableNumber}
                         </h1>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
-                            {tabs.length} {tabs.length === 1 ? 'comanda' : 'comandas'} · {format(new Date(order.createdAt), "HH:mm")}
+                            {tabs.length} {tabs.length === 1 ? 'comanda' : 'comandas'} · {formatSP(order.createdAt, "HH:mm")}
                         </p>
                     </div>
                 </div>

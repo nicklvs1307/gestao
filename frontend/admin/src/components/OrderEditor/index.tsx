@@ -5,7 +5,7 @@ import {
     getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem,
     updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType
 } from '../../services/api';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import {
   CheckCircle, Printer,
   Loader2, FileText, User, MapPin,
@@ -322,7 +322,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">ID: {order.id}</p>
             </div>
             <div className={cn("px-2.5 py-1 rounded-lg text-[8px] font-black border uppercase tracking-widest ml-2", currentStatus.bg, currentStatus.color, currentStatus.border)}>
-                {currentStatus.label} - {format(new Date(order.createdAt), "dd/MMM 'às' HH:mm")}
+                {currentStatus.label} - {formatSP(order.createdAt, "dd/MMM 'às' HH:mm")}
             </div>
         </div>
         <div className="flex items-center gap-3">

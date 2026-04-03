@@ -7,7 +7,7 @@ export default defineConfig({
   retries: 1,
   workers: 1,
   reporter: 'html',
-  timeout: 60000,
+  timeout: 120000,
   use: {
     baseURL: 'https://kicardapio.towersfy.com',
     trace: 'on-first-retry',

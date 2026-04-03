@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import type { Order, OrderItem } from '../types';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { toast } from 'sonner';
 import { generateEscPosReceipt, escPosToBase64 } from './escpos';
 
@@ -236,7 +236,7 @@ const generateOrderReceiptPdf = (
 
     doc.setFontSize(baseSize - 1);
     doc.setFont('helvetica', 'normal');
-    const dateStr = format(new Date(order.createdAt), "dd/MM/yyyy HH:mm");
+    const dateStr = formatSP(order.createdAt, "dd/MM/yyyy HH:mm");
     doc.text(dateStr, rightMargin, y, { align: 'right' });
     if (order.user?.name) {
       doc.setFont('helvetica', 'bold');
@@ -717,9 +717,9 @@ export const printCashierClosure = async (
     // Dados da sessão
     doc.setFontSize(baseSize - 1);
     doc.setFont('helvetica', 'normal');
-    doc.text(`ABERTURA: ${format(new Date(summary.openedAt as string), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
+    doc.text(`ABERTURA: ${formatSP(summary.openedAt as string, "dd/MM/yyyy HH:mm")}`, leftMargin, y);
     y += lineHeight;
-    doc.text(`FECHAMENTO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
+    doc.text(`FECHAMENTO: ${formatSP(new Date(), "dd/MM/yyyy HH:mm")}`, leftMargin, y);
     y += lineHeight;
 
     doc.text('------------------------------------------------', centerX, y, { align: 'center' });
@@ -1125,7 +1125,7 @@ export const printDriverSettlement = async (
     doc.setFontSize(baseSize - 2);
     doc.text('------------------------------------------------', centerX, y, { align: 'center' });
     y += lineHeight;
-    doc.text(`Emitido em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, centerX, y, { align: 'center' });
+    doc.text(`Emitido em: ${formatSP(new Date(), "dd/MM/yyyy HH:mm")}`, centerX, y, { align: 'center' });
     y += lineHeight;
     doc.text('KICARDÁPIO - Sistema de Gestão', centerX, y, { align: 'center' });
     y += 10;

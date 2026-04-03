@@ -443,7 +443,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                     {isSelected && isFlavor && <span className="text-[8px] font-black bg-primary text-white px-1 rounded italic">{fractionText}</span>}
                                   </div>
                                   {addon.description && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">{addon.description}</p>}
-                                  {addon.price > 0 && (
+                                  {addon.price > 0 ? (
                                     <div className="flex items-center gap-2 mt-1">
                                       {isPromoActive(addon) ? (
                                         <>
@@ -454,6 +454,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                         <span className="text-[9px] font-black text-slate-500 uppercase italic">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>
                                       )}
                                     </div>
+                                  ) : (
+                                    <span className="inline-block mt-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md uppercase italic">Grátis</span>
                                   )}
                                 </div>
                               </div>

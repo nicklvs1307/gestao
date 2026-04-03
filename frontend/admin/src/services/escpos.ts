@@ -1,5 +1,5 @@
 import type { Order, OrderItem } from '../types';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 
 // ─── COMANDOS ESC/POS BÁSICOS ─────────────────────────────────────────
 const ESC = '\x1b';
@@ -125,7 +125,7 @@ export function generateEscPosReceipt(
   buf += Cmd.ALIGN_LEFT;
 
   // ── INFO DO PEDIDO ──
-  const dateStr = format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm');
+  const dateStr = formatSP(order.createdAt, 'dd/MM/yyyy HH:mm');
   buf += text(dateStr) + '\n';
 
   if (order.user?.name) {

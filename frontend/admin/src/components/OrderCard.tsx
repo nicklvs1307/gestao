@@ -4,29 +4,18 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Order } from '@/types/index.ts';
 import { getSettings, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printing';
-import { format, differenceInMinutes, differenceInDays, differenceInHours } from 'date-fns';
+import { formatElapsed } from '@/lib/timezone';
 import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
 
-// Isolated timer component - only this re-renders every minute
 const OrderTimer = memo(({ createdAt, status }: { createdAt: string; status: string }) => {
   const [timeElapsedStr, setTimeElapsedStr] = useState('');
 
   useEffect(() => {
     const updateTimer = () => {
-      const now = new Date();
-      const created = new Date(createdAt);
-      const days = differenceInDays(now, created);
-      const hours = differenceInHours(now, created) % 24;
-      const mins = differenceInMinutes(now, created) % 60;
-      
-      let str = '';
-      if (days > 0) str += `${days}d `;
-      if (hours > 0 || days > 0) str += `${hours}h`;
-      str += `${mins}m`;
-      setTimeElapsedStr(str);
+      setTimeElapsedStr(formatElapsed(createdAt));
     };
     updateTimer();
     const interval = setInterval(updateTimer, 60000);

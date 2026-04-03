@@ -5,7 +5,8 @@ import {
   TrendingUp, Wallet, ArrowUpRight, Loader2, TrendingDown, Receipt, 
   Percent, FileText, Search, ChevronRight
 } from 'lucide-react';
-import { format, parseISO, isValid } from 'date-fns';
+import { parseISO, isValid } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -25,7 +26,7 @@ interface WaiterSettlementData {
 const WaiterSettlement: React.FC = () => {
   const [data, setData] = useState<WaiterSettlementData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [date, setDate] = useState(formatSP(new Date(), 'yyyy-MM-dd'));
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchSettlement = async () => {
@@ -281,7 +282,7 @@ const WaiterSettlement: React.FC = () => {
           </div>
           <div className="w-px h-4 bg-slate-200" />
           <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-            Última atualização: {format(new Date(), "'às' HH:mm:ss", { locale: ptBR })}
+            Última atualização: {formatSP(new Date(), "'às' HH:mm:ss")}
           </span>
         </div>
         <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 
 interface DateFilterProps {
   startDate: string;
@@ -42,6 +42,6 @@ export const DateFilter: React.FC<DateFilterProps> = ({
 };
 
 export const getDefaultDateRange = (days = 30) => ({
-  start: format(new Date(new Date().setDate(new Date().getDate() - days)), 'yyyy-MM-dd'),
-  end: format(new Date(), 'yyyy-MM-dd'),
+  start: formatSP(new Date().setDate(new Date().getDate() - days), 'yyyy-MM-dd'),
+  end: formatSP(new Date(), 'yyyy-MM-dd'),
 });

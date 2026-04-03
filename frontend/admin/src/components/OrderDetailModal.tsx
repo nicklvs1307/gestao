@@ -7,7 +7,7 @@ import {
     markOrderAsPrinted, emitInvoice 
 } from '../services/api';
 import { printOrder } from '../services/printing';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { 
   X, Clock, MapPin, CheckCircle,
   Circle, PlayCircle, XCircle, Printer, Phone,
@@ -135,7 +135,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                     </div>
                 </div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 flex items-center gap-2">
-                    <Clock size={12} className="text-blue-500" /> Aberto às {format(new Date(order.createdAt), 'HH:mm')} • {format(new Date(order.createdAt), 'dd MMM')}
+                    <Clock size={12} className="text-blue-500" /> Aberto às {formatSP(order.createdAt, 'HH:mm')} • {formatSP(order.createdAt, 'dd MMM')}
                 </p>
             </div>
           </div>

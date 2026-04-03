@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Order } from '@/types/index.ts';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { Eye, UtensilsCrossed, Clock, Truck, ShoppingBag, User, Bike } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -147,10 +147,10 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, se
                             <div className="flex flex-col gap-0.5">
                                 <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase italic">
                                     <Clock size={10} className="text-orange-500" />
-                                    {format(new Date(order.createdAt), 'HH:mm')}
+                                    {formatSP(order.createdAt, 'HH:mm')}
                                 </div>
                                 <span className="text-[7px] font-black text-slate-300 uppercase italic ml-3.5">
-                                    {format(new Date(order.createdAt), 'dd/MM/yy')}
+                                    {formatSP(order.createdAt, 'dd/MM/yy')}
                                 </span>
                             </div>
                         </td>

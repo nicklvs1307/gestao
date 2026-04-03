@@ -4,6 +4,10 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const logger = require('./src/config/logger');
+
+// Force America/Sao_Paulo timezone for the entire backend
+process.env.TZ = 'America/Sao_Paulo';
+
 require('dotenv').config();
 const path = require('path');
 const fs = require('fs');

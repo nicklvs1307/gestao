@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { CheckCircle, Truck, X, AlertTriangle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -79,7 +79,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
                             {item.driver?.name || 'ENTREGADOR NAO ATRIBUIDO'}
                           </h4>
                           <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-2">
-                            {format(new Date(item.order.createdAt), 'HH:mm')} • {format(new Date(item.order.createdAt), 'dd/MM')}
+                            {formatSP(item.order.createdAt, 'HH:mm')} • {formatSP(item.order.createdAt, 'dd/MM')}
                           </p>
                         </div>
                       </div>

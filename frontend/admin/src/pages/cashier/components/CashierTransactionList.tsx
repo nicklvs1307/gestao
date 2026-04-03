@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { Filter, Search, ShoppingBag, Truck, X, Receipt } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import type { PaymentMethod } from '../hooks/useCashier';
@@ -112,7 +112,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                         {orderLabel}
                       </h4>
                       <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                        {format(new Date(order.createdAt), 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}
+                        {formatSP(order.createdAt, 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}
                       </p>
                     </div>
                   </div>

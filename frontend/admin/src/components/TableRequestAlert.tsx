@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bell, UserCheck, CreditCard, X, CheckCircle, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { cn } from '../lib/utils';
 import { useScrollLock } from '../hooks/useScrollLock';
 
@@ -61,7 +61,7 @@ const TableRequestAlert: React.FC<TableRequestAlertProps> = ({ requests, onResol
                             <span className="text-slate-400 text-[8px] font-bold flex items-center gap-1">
                                 <Clock size={10} /> {(() => {
                                     try {
-                                        return format(new Date(req.createdAt), "HH:mm");
+                                        return formatSP(req.createdAt, "HH:mm");
                                     } catch (e) {
                                         return "--:--";
                                     }

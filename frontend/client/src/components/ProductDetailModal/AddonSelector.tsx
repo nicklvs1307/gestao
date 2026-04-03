@@ -218,7 +218,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                             {addon.description}
                           </p>
                         )}
-                        {addon.price > 0 && (
+                        {addon.price > 0 ? (
                           <div className="flex items-center gap-2 mt-1">
                             {isPromoActive(addon) ? (
                               <>
@@ -235,6 +235,8 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                               </span>
                             )}
                           </div>
+                        ) : (
+                          <span className="inline-block mt-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md uppercase italic">Grátis</span>
                         )}
                       </div>
                     </div>

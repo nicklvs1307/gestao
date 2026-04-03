@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Order } from '../types';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag, Truck } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useScrollLock } from '../hooks/useScrollLock';
@@ -61,7 +61,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onRejec
                                     {order.deliveryOrder?.name || 'Novo Pedido'}
                                 </h3>
                                 <p className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
-                                    <Clock size={12}/> {format(new Date(order.createdAt), "HH:mm:ss")}
+                                    <Clock size={12}/> {formatSP(order.createdAt, "HH:mm:ss")}
                                 </p>
                             </div>
                             <div className="text-right">

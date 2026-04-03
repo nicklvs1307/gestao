@@ -12,7 +12,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
@@ -204,7 +204,7 @@ const StockPurchases: React.FC = () => {
                                 ) : filtered.map((p) => (
                                     <tr key={p.id} className="group hover:bg-background/80 transition-all duration-300">
                                         <td className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-tighter italic">
-                                            {format(new Date(p.receivedAt), 'dd/MM/yyyy')}
+                                            {formatSP(p.receivedAt, 'dd/MM/yyyy')}
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-3">

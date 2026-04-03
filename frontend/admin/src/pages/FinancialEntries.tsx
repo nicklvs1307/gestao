@@ -14,7 +14,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { ptBR } from 'date-fns/locale';
 import { useScrollLock } from '../hooks/useScrollLock';
 
@@ -347,7 +347,7 @@ const FinancialEntries: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black text-slate-600 uppercase italic">
-                            {t.dueDate ? format(new Date(t.dueDate), 'dd/MM/yyyy') : '-'}
+                            {t.dueDate ? formatSP(t.dueDate, 'dd/MM/yyyy') : '-'}
                           </span>
                           <span className={cn("text-[7px] font-bold uppercase", t.status === 'PAID' ? "text-emerald-500" : "text-amber-500")}>
                             {t.status === 'PAID' ? 'Liquidado' : 'Pendente'}

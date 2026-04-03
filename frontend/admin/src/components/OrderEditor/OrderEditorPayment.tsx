@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, MapPin, Truck, ShoppingBag, Plus, Trash2, Tag, FileText, Info, DollarSign, Bike, CheckCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
 import type { Order, PaymentMethod } from '../../types';
@@ -132,7 +132,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 <div key={pay.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group/pay hover:border-orange-200 transition-colors">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-slate-800 uppercase">{pay.method}</span>
-                    <span className="text-[8px] font-bold text-slate-400 mt-0.5">{format(new Date(pay.createdAt), 'HH:mm')}</span>
+                    <span className="text-[8px] font-bold text-slate-400 mt-0.5">{formatSP(pay.createdAt, 'HH:mm')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-slate-900">R$ {pay.amount.toFixed(2).replace('.', ',')}</span>

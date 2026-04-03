@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Order } from '../types'; 
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 
 export interface ReceiptSettings {
   showLogo: boolean;
@@ -62,7 +62,7 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
             <p style={{ fontSize: '11px', margin: '5px 0', whiteSpace: 'pre-wrap' }}>{settings.headerText}</p>
         )}
         
-        <p style={{ fontSize: '10px', marginTop: '5px' }}>{format(new Date(), "dd/MM/yyyy HH:mm")}</p>
+        <p style={{ fontSize: '10px', marginTop: '5px' }}>{formatSP(new Date(), "dd/MM/yyyy HH:mm")}</p>
       </div>
 
       {/* Info Pedido */}

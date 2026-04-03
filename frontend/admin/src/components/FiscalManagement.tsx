@@ -13,7 +13,7 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { ptBR } from 'date-fns/locale';
 
@@ -391,7 +391,7 @@ const FiscalManagement: React.FC = () => {
                                                     ? `EXPIRADO há ${Math.abs(certStatus.daysUntilExpiry)} dias` 
                                                     : certStatus.daysUntilExpiry <= 30 
                                                         ? `Expira em ${certStatus.daysUntilExpiry} dias - RENOVE!` 
-                                                        : `Válido até ${format(new Date(certStatus.validNotAfter), 'dd/MM/yyyy')}`}
+                                                        : `Válido até ${formatSP(certStatus.validNotAfter, 'dd/MM/yyyy')}`}
                                             </div>
                                         )}
                                     </div>
@@ -542,11 +542,11 @@ const FiscalManagement: React.FC = () => {
                                                          <Clock size={14} />}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-600 uppercase italic">
-                                                            {inv.issuedAt ? format(new Date(inv.issuedAt), 'dd/MM/yyyy') : '-'}
-                                                        </span>
-                                                        <span className="text-[7px] font-bold text-slate-400 uppercase">
-                                                            {inv.issuedAt ? format(new Date(inv.issuedAt), 'HH:mm:ss') : '-'}
+                                                         <span className="text-[10px] font-black text-slate-600 uppercase italic">
+                                                             {inv.issuedAt ? formatSP(inv.issuedAt, 'dd/MM/yyyy') : '-'}
+                                                         </span>
+                                                         <span className="text-[7px] font-bold text-slate-400 uppercase">
+                                                             {inv.issuedAt ? formatSP(inv.issuedAt, 'HH:mm:ss') : '-'}
                                                         </span>
                                                     </div>
                                                 </div>

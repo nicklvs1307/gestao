@@ -1,7 +1,7 @@
 import { type Page, expect } from '@playwright/test';
 
-const EMAIL = 'papapizza11@kicardapio.com';
-const PASSWORD = 'paPa%pIzZa@2026';
+const EMAIL = 'rafaelferio@gmail.com';
+const PASSWORD = 'rom@pizza@2026';
 
 export async function login(page: Page) {
   await page.goto('/login');
@@ -9,7 +9,8 @@ export async function login(page: Page) {
   await page.getByPlaceholder('••••••••').fill(PASSWORD);
   await page.getByRole('button', { name: 'Entrar no Sistema' }).click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(2000);
 }
 
 export async function openNavigation(page: Page) {
@@ -20,5 +21,6 @@ export async function openNavigation(page: Page) {
 
 export async function navigateTo(page: Page, path: string) {
   await page.goto(path);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(2000);
 }

@@ -8,7 +8,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { toast } from 'sonner';
 import { api } from '../../services/api';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 
 interface PurchasesViewProps {
   purchases: any[];
@@ -93,7 +93,7 @@ const PurchasesView: React.FC<PurchasesViewProps> = ({ purchases, onRefresh }) =
             {filtered.map(purchase => (
               <tr key={purchase.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-4 py-3 text-[10px] font-bold text-slate-500">
-                  {format(new Date(purchase.receivedAt), 'dd/MM/yyyy')}
+                  {formatSP(purchase.receivedAt, 'dd/MM/yyyy')}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">

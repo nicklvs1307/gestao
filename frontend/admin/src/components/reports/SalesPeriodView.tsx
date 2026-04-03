@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { format, startOfMonth } from 'date-fns';
+import { startOfMonth } from 'date-fns';
 import { Calendar, DollarSign, ShoppingBag, TrendingUp, CreditCard, History, RefreshCw } from 'lucide-react';
 import { api } from '../../services/api';
 import { cn } from '../../lib/utils';
+import { formatSP } from '@/lib/timezone';
 import { Button } from '../ui/Button';
 import { KpiCard, ReportPageHeader, ReportTable, DateFilter, LoadingSpinner, EmptyState } from './index';
 
@@ -10,8 +11,8 @@ const SalesPeriodView: React.FC = () => {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [dates, setDates] = useState({
-        start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-        end: format(new Date(), 'yyyy-MM-dd')
+        start: formatSP(startOfMonth(new Date()), 'yyyy-MM-dd'),
+        end: formatSP(new Date(), 'yyyy-MM-dd')
     });
 
     const fetchSales = useCallback(() => {

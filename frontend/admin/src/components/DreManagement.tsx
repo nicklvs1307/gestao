@@ -5,14 +5,15 @@ import {
     ArrowUpCircle, Percent, PieChart, Calendar, ChevronRight, Info, RefreshCw, Loader2, Target, Download, Printer
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 
 const DreManagement: React.FC = () => {
-    const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-    const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+    const [startDate, setStartDate] = useState(formatSP(startOfMonth(new Date()), 'yyyy-MM-dd'));
+    const [endDate, setEndDate] = useState(formatSP(endOfMonth(new Date()), 'yyyy-MM-dd'));
     const [dreData, setDreData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 

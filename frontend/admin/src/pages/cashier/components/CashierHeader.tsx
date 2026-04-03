@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import { format } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { Wallet, Clock, User, Plus, Minus, RefreshCw, Calculator } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Button } from '../../../components/ui/Button';
@@ -53,7 +53,7 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
               <div className="flex items-center gap-2">
                 <Clock size={12} className="text-slate-400" />
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                  Aberto às {format(new Date(session.openedAt), 'HH:mm')}
+                  Aberto às {formatSP(session.openedAt, 'HH:mm')}
                 </span>
               </div>
             )}

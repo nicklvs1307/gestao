@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getPromotions, deletePromotion, updatePromotion } from '../services/api';
 import { Plus, Edit, Trash2, Percent, Calendar, Tag, Loader2, Sparkles, RefreshCw, Ticket, Package, Layers, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { format, parseISO, isAfter, isBefore } from 'date-fns';
+import { parseISO, isAfter, isBefore } from 'date-fns';
+import { formatSP } from '@/lib/timezone';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
@@ -150,7 +151,7 @@ const PromotionManagement: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-xs font-mono text-slate-500">
-                                            {format(parseISO(promo.startDate), 'dd/MM/yy')} - {format(parseISO(promo.endDate), 'dd/MM/yy')}
+                                            {formatSP(promo.startDate, 'dd/MM/yy')} - {formatSP(promo.endDate, 'dd/MM/yy')}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex justify-end items-center gap-2">
