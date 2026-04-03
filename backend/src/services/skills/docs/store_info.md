@@ -1,6 +1,6 @@
 # Store Info Skill
 
-Informações gerais da loja: horários, políticas, FAQ, endereço e dados gerais.
+Informações gerais da loja: horários, políticas, FAQ, endereço e dados gerais via APIs REST.
 
 ## Quando Usar
 
@@ -17,6 +17,8 @@ Informações gerais da loja: horários, políticas, FAQ, endereço e dados gera
 
 Busca informações na base de conhecimento (FAQ, políticas, regras).
 
+**Endpoint:** `GET /api/whatsapp/knowledge?restaurantId={restaurantId}&q={query}`
+
 **Input:**
 ```json
 {
@@ -24,18 +26,22 @@ Busca informações na base de conhecimento (FAQ, políticas, regras).
 }
 ```
 
-**Output:**
+**Output esperado:**
 ```json
-[
-  {
-    "question": "Qual a política de cancelamento?",
-    "answer": "Pedidos podem ser cancelados antes do preparo sem custo. Após o preparo, é necessário contato telefônico.",
-    "category": "políticas"
-  }
-]
+{
+  "knowledge": [
+    {
+      "id": "uuid-kb",
+      "question": "Qual a política de cancelamento?",
+      "answer": "Pedidos podem ser cancelados antes do preparo sem custo. Após o preparo, é necessário contato telefônico.",
+      "category": "políticas",
+      "isActive": true
+    }
+  ]
+}
 ```
 
-**Como usar:** Use para qualquer dúvida sobre políticas, regras, FAQ que não seja sobre cardápio ou pedidos.
+**Como usar:** Use para qualquer dúvida sobre políticas, regras, FAQ que não seja sobre cardápio ou pedidos. Filtre resultados pelo campo `category` ou busque por similaridade no `question` e `answer`.
 
 ---
 
@@ -43,28 +49,35 @@ Busca informações na base de conhecimento (FAQ, políticas, regras).
 
 Retorna horários de funcionamento por dia da semana.
 
+**Endpoint:** `GET /api/settings/{restaurantId}`
+
 **Input:**
 ```json
 {}
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "hours": [
-    { "dayOfWeek": 0, "dayName": "Domingo", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
-    { "dayOfWeek": 1, "dayName": "Segunda", "isClosed": true },
-    { "dayOfWeek": 2, "dayName": "Terça", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
-    { "dayOfWeek": 3, "dayName": "Quarta", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
-    { "dayOfWeek": 4, "dayName": "Quinta", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
-    { "dayOfWeek": 5, "dayName": "Sexta", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
-    { "dayOfWeek": 6, "dayName": "Sábado", "isClosed": false, "openingTime": "18:00", "closingTime": "00:00" }
-  ],
-  "isOpenNow": false
+  "settings": {
+    "operatingHours": [
+      { "dayOfWeek": 0, "dayName": "Domingo", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
+      { "dayOfWeek": 1, "dayName": "Segunda", "isClosed": true },
+      { "dayOfWeek": 2, "dayName": "Terça", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
+      { "dayOfWeek": 3, "dayName": "Quarta", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
+      { "dayOfWeek": 4, "dayName": "Quinta", "isClosed": false, "openingTime": "18:00", "closingTime": "23:00" },
+      { "dayOfWeek": 5, "dayName": "Sexta", "isClosed": false, "openingTime": "18:00", "closingTime": "00:00" },
+      { "dayOfWeek": 6, "dayName": "Sábado", "isClosed": false, "openingTime": "18:00", "closingTime": "00:00" }
+    ]
+  },
+  "restaurant": {
+    "name": "Restaurante Exemplo",
+    "isOpen": true
+  }
 }
 ```
 
-**Como usar:** Use quando cliente perguntar horários ou se está aberto.
+**Como usar:** Use quando cliente perguntar horários ou se está aberto. Compare `dayOfWeek` com o dia atual (0=Domingo, 1=Segunda, ..., 6=Sábado). Verifique `isClosed` para saber se está fechado.
 
 ---
 
@@ -72,19 +85,27 @@ Retorna horários de funcionamento por dia da semana.
 
 Retorna informações básicas do restaurante.
 
+**Endpoint:** `GET /api/settings/{restaurantId}`
+
 **Input:**
 ```json
 {}
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "name": "Restaurante Exemplo",
-  "address": "Rua das Flores, 123",
-  "city": "Cidade",
-  "state": "MG",
-  "phone": "(31) 99999-9999"
+  "restaurant": {
+    "id": "uuid-restaurante",
+    "name": "Restaurante Exemplo",
+    "slug": "restaurante-exemplo",
+    "address": "Rua das Flores, 123",
+    "city": "Cidade",
+    "state": "MG",
+    "phone": "(31) 99999-9999",
+    "logoUrl": "/uploads/logo.jpg",
+    "coverUrl": "/uploads/cover.jpg"
+  }
 }
 ```
 
@@ -124,9 +145,6 @@ Sábado: 18:00 - 00:00
 
 1. Qual a política de cancelamento?
    Pedidos podem ser cancelados antes do preparo sem custo. Após o preparo, é necessário contato telefônico.
-
-2. Como funciona o reembolso?
-   O valor é estornado na mesma forma de pagamento em até 5 dias úteis.
 ```
 
 ### Informação Não Encontrada

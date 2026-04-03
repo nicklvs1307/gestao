@@ -1,6 +1,6 @@
 # Order Skill
 
-Criação, consulta, cancelamento e histórico de pedidos.
+Criação, consulta, cancelamento e histórico de pedidos via APIs REST.
 
 ## Quando Usar
 
@@ -16,6 +16,8 @@ Criação, consulta, cancelamento e histórico de pedidos.
 
 Busca cliente pelo telefone para identificação antes de criar pedido.
 
+**Endpoint:** `GET /api/customers/search?q={phone}`
+
 **Input:**
 ```json
 {
@@ -23,23 +25,34 @@ Busca cliente pelo telefone para identificação antes de criar pedido.
 }
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "id": "uuid-cliente",
-  "name": "João Silva",
-  "phone": "5531999999999",
-  "street": "Rua das Flores",
-  "number": "123",
-  "neighborhood": "Centro",
-  "city": "Cidade",
-  "state": "MG",
-  "loyaltyPoints": 150,
-  "cashbackBalance": 25.00
+  "customers": [
+    {
+      "id": "uuid-cliente",
+      "name": "João Silva",
+      "phone": "5531999999999",
+      "street": "Rua das Flores",
+      "number": "123",
+      "neighborhood": "Centro",
+      "city": "Cidade",
+      "state": "MG",
+      "loyaltyPoints": 150,
+      "cashbackBalance": 25.00
+    }
+  ]
 }
 ```
 
-**Como usar:** SEMPRE chame esta ferramenta ANTES de criar um pedido para identificar o cliente.
+**Se não encontrar:**
+```json
+{
+  "customers": []
+}
+```
+
+**Como usar:** SEMPRE chame esta ferramenta ANTES de criar um pedido para identificar o cliente. Se retornar array vazio, ofereça `create_customer`.
 
 ---
 
@@ -47,9 +60,12 @@ Busca cliente pelo telefone para identificação antes de criar pedido.
 
 Cria novo cadastro de cliente quando não existe.
 
+**Endpoint:** `POST /api/customers`
+
 **Input:**
 ```json
 {
+  "restaurantId": "uuid-restaurante",
   "name": "João Silva",
   "phone": "5531999999999",
   "street": "Rua das Flores",
@@ -60,7 +76,7 @@ Cria novo cadastro de cliente quando não existe.
 }
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
   "id": "uuid-cliente",
@@ -77,45 +93,85 @@ Cria novo cadastro de cliente quando não existe.
 
 **FINALIZA e REGISTRA um pedido no sistema.** Use APENAS após o cliente confirmar TODOS os itens.
 
-**Input:**
+**Endpoint:** `POST /api/delivery/restaurants/{restaurantId}/delivery-orders`
+
+**Input esperado pela API (CreateDeliveryOrderSchema):**
 ```json
 {
   "items": [
     {
       "productId": "uuid-produto",
-      "name": "Pizza Mussarela",
-      "size": "Grande",
       "quantity": 1,
       "observations": "sem cebola",
-      "addons": ["Catupiry"]
+      "sizeId": "uuid-tamanho",
+      "size": { "name": "Grande", "price": 65.90 },
+      "addonsIds": ["uuid-addon-1"],
+      "addons": [
+        { "name": "Catupiry", "price": 5.00, "quantity": 1 }
+      ]
     }
   ],
-  "customerName": "João Silva",
-  "customerPhone": "5531999999999",
-  "deliveryAddress": "Rua das Flores, 123 - Centro",
-  "paymentMethod": "PIX",
   "orderType": "DELIVERY",
-  "changeFor": 100.00,
-  "notes": "tocar campainha"
+  "deliveryInfo": {
+    "name": "João Silva",
+    "phone": "5531999999999",
+    "address": "Rua das Flores, 123 - Centro",
+    "deliveryType": "delivery",
+    "paymentMethod": "PIX",
+    "changeFor": 100.00,
+    "deliveryFee": 5.00
+  }
 }
 ```
 
-**Output:**
+**Campos obrigatórios:**
+- `items[]` - mínimo 1 item, cada item precisa de `productId` e `quantity`
+- `orderType` - "DELIVERY", "PICKUP" ou "TABLE"
+- `deliveryInfo.name` - nome do cliente
+- `deliveryInfo.phone` - telefone do cliente
+
+**Campos opcionais:**
+- `deliveryInfo.address` - endereço (obrigatório para DELIVERY)
+- `deliveryInfo.paymentMethod` - forma de pagamento
+- `deliveryInfo.changeFor` - troco para (se dinheiro)
+- `deliveryInfo.deliveryFee` - taxa de entrega
+- `items[].observations` - observações do item
+- `items[].size` - tamanho selecionado
+- `items[].addons` - adicionais selecionados
+
+**Output esperado (sucesso - 201):**
 ```json
 {
   "id": "uuid-pedido",
   "status": "PENDING",
+  "orderType": "DELIVERY",
   "total": 70.90,
   "items": [...],
+  "deliveryOrder": {
+    "name": "João Silva",
+    "phone": "5531999999999",
+    "address": "Rua das Flores, 123 - Centro",
+    "deliveryType": "delivery",
+    "paymentMethod": "PIX",
+    "deliveryFee": 5.00
+  },
   "createdAt": "2024-01-01T12:00:00Z"
 }
 ```
 
-**Como usar:** 
+**Output esperado (erro - 400):**
+```json
+{
+  "message": "O pedido deve ter pelo menos 1 item",
+  "errors": [...]
+}
+```
+
+**Como usar:**
 - APENAS após apresentar resumo completo E cliente confirmar
-- Inclua TODOS os itens com preços
-- Inclua endereço completo se delivery
-- Inclua forma de pagamento
+- `orderType` deve ser "DELIVERY" para entregas, "PICKUP" para retirada
+- Se `paymentMethod` for "Dinheiro" e `changeFor` > 0, o sistema calcula troco
+- A API calcula o total automaticamente baseado nos preços dos produtos
 
 ---
 
@@ -123,39 +179,40 @@ Cria novo cadastro de cliente quando não existe.
 
 Verifica status do pedido mais recente ou de um pedido específico.
 
+**Endpoint (por orderId):** `GET /api/delivery/order/{orderId}`
+
+**Endpoint (último pedido):** `GET /api/admin/orders?phone={phone}`
+
 **Input:**
 ```json
 {
   "phone": "5531999999999"
 }
-// ou
-{
-  "orderId": "uuid-pedido"
-}
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
   "id": "uuid-pedido",
   "status": "PREPARING",
-  "createdAt": "2024-01-01T12:00:00Z",
+  "orderType": "DELIVERY",
+  "total": 70.90,
   "items": [
     {
       "product": { "name": "Pizza Mussarela" },
-      "quantity": 1
+      "quantity": 1,
+      "priceAtTime": 65.90
     }
   ],
-  "total": 70.90,
   "deliveryOrder": {
     "deliveryType": "delivery",
     "address": "Rua das Flores, 123"
-  }
+  },
+  "createdAt": "2024-01-01T12:00:00Z"
 }
 ```
 
 **Status possíveis:**
-- `BUILDING` - Montando
 - `PENDING` - Aguardando restaurante
 - `PREPARING` - Em preparo
 - `READY` - Pronto
@@ -171,6 +228,8 @@ Verifica status do pedido mais recente ou de um pedido específico.
 
 Retorna histórico de pedidos recentes do cliente.
 
+**Endpoint:** `GET /api/admin/orders?phone={phone}`
+
 **Input:**
 ```json
 {
@@ -178,19 +237,21 @@ Retorna histórico de pedidos recentes do cliente.
 }
 ```
 
-**Output:**
+**Output esperado:**
 ```json
-[
-  {
-    "id": "uuid-pedido",
-    "createdAt": "2024-01-01T12:00:00Z",
-    "status": "DELIVERED",
-    "total": 70.90,
-    "items": [
-      { "product": { "name": "Pizza Mussarela" }, "quantity": 1 }
-    ]
-  }
-]
+{
+  "orders": [
+    {
+      "id": "uuid-pedido",
+      "createdAt": "2024-01-01T12:00:00Z",
+      "status": "DELIVERED",
+      "total": 70.90,
+      "items": [
+        { "product": { "name": "Pizza Mussarela" }, "quantity": 1 }
+      ]
+    }
+  ]
+}
 ```
 
 **Como usar:** Quando cliente perguntar "meus pedidos" ou quiser repetir um pedido.
@@ -201,16 +262,18 @@ Retorna histórico de pedidos recentes do cliente.
 
 Solicita cancelamento de pedido. Apenas se ainda não estiver em preparo.
 
+**Endpoint:** `PUT /api/admin/orders/{orderId}/status`
+
 **Input:**
 ```json
 {
   "orderId": "uuid-pedido",
-  "phone": "5531999999999",
+  "status": "CANCELED",
   "reason": "Cliente pediu"
 }
 ```
 
-**Output:**
+**Output esperado (sucesso):**
 ```json
 {
   "id": "uuid-pedido",
@@ -218,7 +281,14 @@ Solicita cancelamento de pedido. Apenas se ainda não estiver em preparo.
 }
 ```
 
-**Como usar:** Quando cliente pedir para cancelar. Informe se já está em preparo e não pode cancelar.
+**Output esperado (erro - já em preparo):**
+```json
+{
+  "message": "Pedido já está em preparo e não pode ser cancelado"
+}
+```
+
+**Como usar:** Quando cliente pedir para cancelar. Informe se já está em preparo e não pode cancelar. Apenas pedidos com status `PENDING` podem ser cancelados.
 
 ---
 
@@ -264,7 +334,7 @@ Tempo estimado: 30-40 minutos
 5. **Monte o resumo** com TODOS os itens e preços
 6. **Calcule TOTAL** - inclua taxa de entrega se delivery
 7. **Peça CONFIRMAÇÃO** - "Posso confirmar seu pedido?"
-8. **APÓS confirmação** - chame `create_order`
+8. **APÓS confirmação** - chame `create_order` com o formato exato da API
 9. **Informe número do pedido** e tempo estimado
 
 ---
@@ -278,3 +348,5 @@ Tempo estimado: 30-40 minutos
 5. **Confirme forma de pagamento** antes de criar
 6. **Se pagamento em dinheiro**, pergunte sobre troco
 7. **Verifique se produto está disponível** antes de adicionar ao pedido
+8. **orderType** deve ser "DELIVERY" para entregas, "PICKUP" para retirada
+9. **Cada item precisa de productId** - nunca envie apenas o nome do produto

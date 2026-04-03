@@ -1,6 +1,6 @@
 # Delivery Skill
 
-Verifica áreas de entrega, calcula taxas e informa tempo estimado.
+Verifica áreas de entrega, calcula taxas e informa tempo estimado via APIs REST.
 
 ## Quando Usar
 
@@ -16,28 +16,39 @@ Verifica áreas de entrega, calcula taxas e informa tempo estimado.
 
 Verifica se um endereço está dentro da área de entrega do restaurante.
 
+**Endpoint:** `GET /api/delivery-areas?restaurantId={restaurantId}`
+
 **Input:**
 ```json
 {
   "address": "Rua das Flores, 123",
   "neighborhood": "Centro"
 }
-// ou apenas
-{
-  "neighborhood": "Centro"
-}
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "name": "Centro",
-  "fee": 5.00,
-  "type": "AREA"
+  "areas": [
+    {
+      "id": "uuid-area",
+      "name": "Centro",
+      "fee": 5.00,
+      "type": "AREA",
+      "isActive": true
+    },
+    {
+      "id": "uuid-area",
+      "name": "Bairro Novo",
+      "fee": 8.00,
+      "type": "AREA",
+      "isActive": true
+    }
+  ]
 }
 ```
 
-**Como usar:** Quando cliente informar endereço ou bairro. Use para validar se fazemos entrega.
+**Como usar:** Quando cliente informar endereço ou bairro. Compare o bairro informado com o campo `name` das áreas. Se encontrar correspondência, use a taxa daquela área.
 
 ---
 
@@ -45,27 +56,26 @@ Verifica se um endereço está dentro da área de entrega do restaurante.
 
 Retorna a taxa de entrega padrão e taxas por área.
 
+**Endpoint:** `GET /api/settings/{restaurantId}`
+
 **Input:**
 ```json
 {
   "area": "Centro"
 }
-// ou vazio para todas as áreas
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "defaultFee": 5.00,
-  "areas": [
-    { "name": "Centro", "fee": 5.00 },
-    { "name": "Bairro Novo", "fee": 8.00 },
-    { "name": "Zona Rural", "fee": 15.00 }
-  ]
+  "settings": {
+    "deliveryFee": 5.00,
+    "deliveryTime": "30-40 min"
+  }
 }
 ```
 
-**Como usar:** Quando cliente perguntar "quanto custa a entrega?".
+**Como usar:** Quando cliente perguntar "quanto custa a entrega?". A taxa padrão vem de `settings.deliveryFee`. Para taxas por área específica, consulte `check_delivery_area`.
 
 ---
 
@@ -73,15 +83,19 @@ Retorna a taxa de entrega padrão e taxas por área.
 
 Retorna o tempo estimado de entrega.
 
+**Endpoint:** `GET /api/settings/{restaurantId}`
+
 **Input:**
 ```json
 {}
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "deliveryTime": "30-40 min"
+  "settings": {
+    "deliveryTime": "30-40 min"
+  }
 }
 ```
 
@@ -116,7 +130,6 @@ Que tal retirar no local? É rápido e sem taxa! 📦
 
 • Centro: R$ 5,00
 • Bairro Novo: R$ 8,00
-• Zona Rural: R$ 15,00
 
 Taxa padrão: R$ 5,00
 ```
@@ -144,8 +157,8 @@ Em horários de pico (19h-21h), pode levar um pouco mais.
 
 ## Fluxo de Conversa
 
-1. Cliente informa endereço → chame `check_delivery_area`
-2. Se não covered → ofereça pickup
+1. Cliente informa endereço → chame `check_delivery_area` e filtre pelo bairro
+2. Se não coberto → ofereça pickup
 3. Cliente pergunta preço → chame `get_delivery_fee`
 4. Cliente pergunta tempo → chame `get_delivery_time`
 5. Inclua taxa no resumo do pedido antes de confirmar

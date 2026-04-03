@@ -1,6 +1,6 @@
 # Loyalty Skill
 
-Programa de fidelidade: pontos, cashback e benefícios.
+Programa de fidelidade: pontos, cashback e benefícios via APIs REST.
 
 ## Quando Usar
 
@@ -16,33 +16,33 @@ Programa de fidelidade: pontos, cashback e benefícios.
 
 Retorna informações sobre o programa de fidelidade do restaurante.
 
+**Endpoint:** `GET /api/settings/{restaurantId}`
+
 **Input:**
 ```json
 {}
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "enabled": true,
-  "pointsPerReal": 1,
-  "cashbackPercentage": 5,
-  "description": "A cada R$ 1,00 gasto você ganha 1 ponto",
-  "benefits": [
-    "Acumule pontos a cada pedido",
-    "Troque pontos por descontos",
-    "Cashback automático em cada compra"
-  ]
+  "settings": {
+    "loyaltyEnabled": true,
+    "pointsPerReal": 1,
+    "cashbackPercentage": 5
+  }
 }
 ```
 
-**Como usar:** Use quando cliente perguntar sobre o programa de fidelidade, como funciona, vantagens.
+**Como usar:** Use quando cliente perguntar sobre o programa de fidelidade, como funciona, vantagens. Se `loyaltyEnabled` for false, informe que o programa não está ativo.
 
 ---
 
 ### get_loyalty_balance(phone)
 
 Consulta saldo de pontos e cashback de um cliente.
+
+**Endpoint:** `GET /api/customers/search?q={phone}`
 
 **Input:**
 ```json
@@ -51,18 +51,21 @@ Consulta saldo de pontos e cashback de um cliente.
 }
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
-  "name": "João Silva",
-  "loyaltyPoints": 150,
-  "cashbackBalance": 25.00,
-  "nextMilestone": 200,
-  "pointsToNextBenefit": 50
+  "customers": [
+    {
+      "id": "uuid-cliente",
+      "name": "João Silva",
+      "loyaltyPoints": 150,
+      "cashbackBalance": 25.00
+    }
+  ]
 }
 ```
 
-**Como usar:** Use quando cliente perguntar "quantos pontos tenho?" ou "meu saldo".
+**Como usar:** Use quando cliente perguntar "quantos pontos tenho?" ou "meu saldo". Primeiro identifique o cliente com `search_customer`, depois extraia `loyaltyPoints` e `cashbackBalance`.
 
 ---
 
@@ -92,7 +95,7 @@ Faça seu cadastro para começar a acumular!
 Pontos: 150
 💰 Cashback: R$ 25,00
 
-🎯 Faltam apenas 50 pontos para o próximo benefício!
+🎯 Continue acumulando para mais benefícios!
 ```
 
 ### Programa Inativo
@@ -117,6 +120,6 @@ Em breve terá muitas vantagens para nossos clientes!
 ## Fluxo de Conversa
 
 1. Cliente pergunta sobre fidelidade → chame `get_loyalty_info`
-2. Cliente pergunta saldo → chame `get_loyalty_balance`
+2. Cliente pergunta saldo → chame `get_loyalty_balance` (via search_customer)
 3. Cliente não cadastrado → incentive cadastro
 4. Mostre benefícios do programa para fidelizar

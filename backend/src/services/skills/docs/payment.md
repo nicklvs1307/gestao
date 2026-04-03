@@ -1,6 +1,6 @@
 # Payment Skill
 
-Formas de pagamento, cálculo de troco e informações sobre taxas.
+Formas de pagamento, cálculo de troco e informações sobre taxas via APIs REST.
 
 ## Quando Usar
 
@@ -16,45 +16,54 @@ Formas de pagamento, cálculo de troco e informações sobre taxas.
 
 Retorna todas as formas de pagamento aceitas.
 
+**Endpoint:** `GET /api/payment-methods/public/{restaurantId}`
+
 **Input:**
 ```json
 {
   "orderType": "DELIVERY"
 }
-// ou "PICKUP" ou omitido para todos
 ```
 
-**Output:**
+**Output esperado:**
 ```json
-[
-  {
-    "name": "Dinheiro",
-    "type": "CASH",
-    "allowDelivery": true,
-    "allowPos": true,
-    "feePercentage": 0,
-    "daysToReceive": 0
-  },
-  {
-    "name": "PIX",
-    "type": "PIX",
-    "allowDelivery": true,
-    "allowPos": true,
-    "feePercentage": 0,
-    "daysToReceive": 0
-  },
-  {
-    "name": "Crédito",
-    "type": "CREDIT_CARD",
-    "allowDelivery": true,
-    "allowPos": true,
-    "feePercentage": 3.5,
-    "daysToReceive": 30
-  }
-]
+{
+  "methods": [
+    {
+      "id": "uuid-1",
+      "name": "Dinheiro",
+      "type": "CASH",
+      "isActive": true,
+      "allowDelivery": true,
+      "allowPos": true,
+      "feePercentage": 0,
+      "daysToReceive": 0
+    },
+    {
+      "id": "uuid-2",
+      "name": "PIX",
+      "type": "PIX",
+      "isActive": true,
+      "allowDelivery": true,
+      "allowPos": true,
+      "feePercentage": 0,
+      "daysToReceive": 0
+    },
+    {
+      "id": "uuid-3",
+      "name": "Crédito",
+      "type": "CREDIT_CARD",
+      "isActive": true,
+      "allowDelivery": true,
+      "allowPos": true,
+      "feePercentage": 3.5,
+      "daysToReceive": 30
+    }
+  ]
+}
 ```
 
-**Como usar:** Quando cliente perguntar sobre formas de pagamento disponíveis.
+**Como usar:** Quando cliente perguntar sobre formas de pagamento disponíveis. Filtre por `isActive: true` e verifique se `allowDelivery` é true para pedidos de entrega.
 
 ---
 
@@ -79,7 +88,7 @@ Calcula o troco para pagamento em dinheiro.
 }
 ```
 
-**Como usar:** Quando cliente pagar em dinheiro e informar quanto vai entregar.
+**Como usar:** Cálculo local. Use quando cliente pagar em dinheiro e informar quanto vai entregar. Se `paymentAmount < totalAmount`, retorne erro informando valor faltante.
 
 ---
 
@@ -91,7 +100,7 @@ Calcula o troco para pagamento em dinheiro.
 
 💵 Dinheiro
 📱 PIX
-💳 Crédito (3,5% taxa, recebe em 30 dias)
+💳 Crédito
 💳 Débito
 
 Escolha a melhor opção para você!
@@ -104,8 +113,6 @@ Escolha a melhor opção para você!
 Total: R$ 70,90
 Pago: R$ 100,00
 Troco: R$ 29,10
-
-✅ Pagamento confirmado!
 ```
 
 ### Valor Exato
@@ -127,9 +134,8 @@ Faltam: R$ 20,90
 1. **SEMPRE confirme forma de pagamento** antes de criar pedido
 2. **Se pagamento em dinheiro**, pergunte se precisa de troco e para quanto
 3. **Informe taxas de cartão** se aplicável
-4. **PIX é mais rápido** - Incentive o uso
-5. **Alguns métodos têm taxa** - Informe ao cliente
-6. **Dias para recebimento** - Pode variar por método
+4. **PIX é mais rápido** - incentive o uso
+5. **Alguns métodos têm taxa** - informe ao cliente
 
 ---
 
@@ -138,5 +144,5 @@ Faltam: R$ 20,90
 1. Cliente pergunta opções → chame `get_payment_methods`
 2. Cliente escolhe → confirme a forma
 3. Se dinheiro → pergunte "precisa de troco?"
-4. Se sim → chame `calculate_change` com valor
+4. Se sim → calcule com `calculate_change`
 5. Inclua forma de pagamento no resumo do pedido

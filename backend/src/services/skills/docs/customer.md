@@ -1,20 +1,21 @@
 # Customer Skill
 
-Busca, cria, atualiza dados e consulta histórico de clientes.
+Busca, criação e atualização de clientes via APIs REST.
 
 ## Quando Usar
 
-- Cliente quer fazer pedido e não está identificado
-- Cliente pergunta sobre seus dados cadastrais
-- Cliente quer atualizar endereço ou telefone
-- Cliente pergunta sobre pontos de fidelidade
-- Cliente quer saber seu histórico de pedidos
+- Cliente quer se identificar antes de fazer pedido
+- Cliente novo precisa se cadastrar
+- Cliente quer atualizar endereço ou dados
+- Sistema precisa identificar cliente pelo telefone
 
 ## Ferramentas Disponíveis
 
 ### search_customer(phone)
 
-Busca cliente pelo telefone para ver dados cadastrais, endereço e histórico.
+Busca cliente pelo telefone para identificação.
+
+**Endpoint:** `GET /api/customers/search?q={phone}`
 
 **Input:**
 ```json
@@ -23,39 +24,37 @@ Busca cliente pelo telefone para ver dados cadastrais, endereço e histórico.
 }
 ```
 
-**Output:**
+**Output esperado (encontrado):**
 ```json
 {
-  "id": "uuid-cliente",
-  "name": "João Silva",
-  "phone": "5531999999999",
-  "email": "joao@email.com",
-  "street": "Rua das Flores",
-  "number": "123",
-  "neighborhood": "Centro",
-  "city": "Cidade",
-  "state": "MG",
-  "zipCode": "38000-000",
-  "complement": "Apto 401",
-  "reference": "Próximo ao mercado",
-  "loyaltyPoints": 150,
-  "cashbackBalance": 25.00,
-  "createdAt": "2023-01-01T00:00:00Z",
-  "orders": [
+  "customers": [
     {
-      "id": "uuid-pedido",
-      "total": 70.90,
-      "status": "DELIVERED",
-      "createdAt": "2024-01-01T12:00:00Z",
-      "items": [
-        { "product": { "name": "Pizza Mussarela" }, "quantity": 1 }
-      ]
+      "id": "uuid-cliente",
+      "name": "João Silva",
+      "phone": "5531999999999",
+      "email": "joao@email.com",
+      "street": "Rua das Flores",
+      "number": "123",
+      "neighborhood": "Centro",
+      "city": "Cidade",
+      "state": "MG",
+      "zipCode": "30000-000",
+      "complement": "Apto 101",
+      "loyaltyPoints": 150,
+      "cashbackBalance": 25.00
     }
   ]
 }
 ```
 
-**Como usar:** SEMPRE use antes de criar um pedido para identificar o cliente.
+**Output esperado (não encontrado):**
+```json
+{
+  "customers": []
+}
+```
+
+**Como usar:** SEMPRE chame antes de criar pedido. Use os últimos 8 dígitos do telefone para busca. Se retornar array vazio, ofereça `create_customer`.
 
 ---
 
@@ -63,9 +62,12 @@ Busca cliente pelo telefone para ver dados cadastrais, endereço e histórico.
 
 Cria novo cadastro de cliente.
 
+**Endpoint:** `POST /api/customers`
+
 **Input:**
 ```json
 {
+  "restaurantId": "uuid-restaurante",
   "name": "João Silva",
   "phone": "5531999999999",
   "street": "Rua das Flores",
@@ -73,15 +75,20 @@ Cria novo cadastro de cliente.
   "neighborhood": "Centro",
   "city": "Cidade",
   "state": "MG",
-  "zipCode": "38000-000",
-  "complement": "Apto 401",
-  "reference": "Próximo ao mercado"
+  "zipCode": "30000-000",
+  "complement": "Apto 101"
 }
 ```
 
-**Campos obrigatórios:** `name`, `phone`
+**Campos obrigatórios:**
+- `name` - nome do cliente
+- `phone` - telefone normalizado
+- `restaurantId` - ID do restaurante
 
-**Output:**
+**Campos opcionais:**
+- `street`, `number`, `neighborhood`, `city`, `state`, `zipCode`, `complement` - endereço
+
+**Output esperado (sucesso - 201):**
 ```json
 {
   "id": "uuid-cliente",
@@ -90,37 +97,53 @@ Cria novo cadastro de cliente.
 }
 ```
 
-**Como usar:** Use quando o cliente não estiver cadastrado e quiser fazer o primeiro pedido ou se cadastrar.
+**Output esperado (erro - já existe):**
+```json
+{
+  "message": "Cliente já cadastrado"
+}
+```
+
+**Como usar:** Use quando o cliente não estiver cadastrado. Peça nome e endereço mínimo (rua, número, bairro, cidade).
 
 ---
 
-### update_customer(phone, data)
+### update_customer(customerId, data)
 
-Atualiza dados de cliente existente.
+Atualiza dados de um cliente existente.
+
+**Endpoint:** `PUT /api/customers/{customerId}`
 
 **Input:**
 ```json
 {
-  "phone": "5531999999999",
-  "name": "João Silva Santos",
-  "street": "Nova Rua",
-  "number": "456",
-  "neighborhood": "Bairro Novo"
+  "customerId": "uuid-cliente",
+  "data": {
+    "name": "João Silva Santos",
+    "street": "Rua Nova",
+    "number": "456",
+    "neighborhood": "Jardim",
+    "city": "Cidade",
+    "state": "MG"
+  }
 }
 ```
 
-**Output:**
+**Output esperado:**
 ```json
 {
   "id": "uuid-cliente",
   "name": "João Silva Santos",
-  "street": "Nova Rua",
+  "phone": "5531999999999",
+  "street": "Rua Nova",
   "number": "456",
-  "neighborhood": "Bairro Novo"
+  "neighborhood": "Jardim",
+  "city": "Cidade",
+  "state": "MG"
 }
 ```
 
-**Como usar:** Use quando o cliente pedir para alterar dados como endereço, nome, telefone.
+**Como usar:** Use quando cliente quiser alterar endereço ou nome. Só envie os campos que estão sendo alterados.
 
 ---
 
@@ -134,17 +157,10 @@ Nome: João Silva
 Telefone: (31) 99999-9999
 
 📍 Endereço: Rua das Flores, 123 - Centro
-   Complemento: Apto 401
-   Referência: Próximo ao mercado
+   Complemento: Apto 101
 
 💎 Fidelidade: 150 pontos
 💰 Cashback: R$ 25,00
-
-📊 Histórico: 5 pedidos
-   Total gasto: R$ 350,00
-
-Último pedido (#12345):
-  1x Pizza Mussarela - R$ 45,90 - Entregue
 ```
 
 ### Cliente Não Encontrado
@@ -171,11 +187,23 @@ Ganhe mais pontos a cada pedido 💎
 
 ---
 
+## Fluxo de Identificação
+
+1. Recebe mensagem do cliente → extrai telefone
+2. Chama `search_customer(phone)`
+3. Se encontrar → confirma nome: "Olá João! É você mesmo?"
+4. Se não encontrar → ofereça cadastro: "Não te encontrei. Quer se cadastrar?"
+5. Para cadastro → peça nome e endereço completo
+6. Chama `create_customer(data)`
+7. Confirma cadastro: "Cadastro realizado! Agora posso fazer seu pedido."
+
+---
+
 ## Regras Importantes
 
 1. **SEMPRE identifique o cliente** antes de criar um pedido
 2. **Busque pelo telefone** do contato que está conversando
 3. **Se não encontrar**, ofereça criar cadastro
-4. **Mantenha dados atualizados** -pergunte se endereço mudou
+4. **Mantenha dados atualizados** - pergunte se endereço mudou
 5. **Informe pontos de fidelidade** - clientes cadastrados ganham pontos
 6. **Cashback** - alguns clientes têm saldo de cashback para usar
