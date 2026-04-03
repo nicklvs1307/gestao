@@ -25,5 +25,6 @@ router.get('/production-time', ReportController.getProductionTimeReport);
 router.get('/status-time', ReportController.getStatusTimeReport);
 router.get('/coupons', ReportController.getCouponsReport);
 router.get('/sales-heatmap', ReportController.getSalesHeatmap);
+router.get('/billing', ReportController.getBillingReport);
 
 module.exports = router;

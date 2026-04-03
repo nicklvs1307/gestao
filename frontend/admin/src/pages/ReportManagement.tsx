@@ -29,6 +29,7 @@ import DeliveryAreaReportView from '../components/reports/DeliveryAreaReportView
 import CouponsReportView from '../components/reports/CouponsReportView';
 import SalesPeriodView from '../components/reports/SalesPeriodView';
 import PaymentMethodsView from '../components/reports/PaymentMethodsView';
+import BillingReportView from '../components/reports/BillingReportView';
 
 const reportRoutes = [
   { path: '/reports/staff', component: StaffPerformance },
@@ -42,6 +43,7 @@ const reportRoutes = [
   { path: '/reports/coupons', component: CouponsReportView },
   { path: '/reports/sales-period', component: SalesPeriodView },
   { path: '/reports/payment-methods-detail', component: PaymentMethodsView },
+  { path: '/reports/billing', component: BillingReportView },
 ];
 
 const shortcuts = [

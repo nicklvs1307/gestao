@@ -79,3 +79,8 @@ export const getCouponsReport = async () => {
     const response = await apiClient.get('/admin/reports/coupons');
     return response.data;
 };
+
+export const getBillingReport = async (params: { startDate: string; endDate: string; orderTypes?: string; excludeDays?: string }) => {
+    const response = await apiClient.get('/admin/reports/billing', { params });
+    return response.data;
+};

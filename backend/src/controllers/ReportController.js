@@ -755,7 +755,172 @@ const ReportController = {
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar relatório de cupons.' });
         }
+    },
+
+    // GET /api/admin/reports/billing
+    // Parâmetros: startDate, endDate, orderTypes[], excludeDays[]
+    async getBillingReport(req, res) {
+        try {
+            const { restaurantId } = req;
+            const { startDate, endDate, orderTypes, excludeDays } = req.query;
+
+            if (!startDate || !endDate) {
+                return res.status(400).json({ error: 'Datas são obrigatórias' });
+            }
+
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
+            // Parse arrays
+            const orderTypesFilter = orderTypes ? orderTypes.split(',') : [];
+            const excludeDaysFilter = excludeDays ? excludeDays.split(',').map(Number) : [];
+
+            const dayNames = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+
+            // Buscar todos os pedidos no período
+            const whereClause = {
+                restaurantId,
+                createdAt: { gte: start, lte: end },
+            };
+
+            if (orderTypesFilter.length > 0) {
+                whereClause.orderType = { in: orderTypesFilter };
+            }
+
+            const orders = await prisma.order.findMany({
+                where: whereClause,
+                select: {
+                    id: true,
+                    total: true,
+                    discount: true,
+                    extraCharge: true,
+                    status: true,
+                    orderType: true,
+                    createdAt: true,
+                    items: { select: { quantity: true } },
+                    deliveryOrder: {
+                        select: { deliveryFee: true, deliveryType: true }
+                    }
+                }
+            });
+
+            // Agrupar por dia
+            const dailyData = {};
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                const dateKey = d.toISOString().split('T')[0];
+                const dayOfWeek = d.getDay();
+                
+                dailyData[dateKey] = {
+                    date: dateKey,
+                    dayOfWeek,
+                    dayName: dayNames[dayOfWeek],
+                    orders: 0,
+                    revenue: 0,
+                    accumulated: 0,
+                    avgTicket: 0,
+                    itemsCount: 0,
+                    deliveryFee: 0,
+                    extraCharge: 0,
+                    discount: 0,
+                    canceledOrders: 0,
+                    canceledRevenue: 0,
+                    deliveryOrders: 0,
+                    pickupOrders: 0,
+                    tableOrders: 0
+                };
+            }
+
+            let accumulatedRevenue = 0;
+
+            orders.forEach(order => {
+                const dateKey = order.createdAt.toISOString().split('T')[0];
+                const dayOfWeek = new Date(order.createdAt).getDay();
+                
+                if (excludeDaysFilter.includes(dayOfWeek)) return;
+                
+                const day = dailyData[dateKey];
+                if (!day) return;
+
+                const isCompleted = order.status === 'COMPLETED';
+                const isCanceled = order.status === 'CANCELED';
+                const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
+                const deliveryType = order.deliveryOrder?.deliveryType;
+
+                // Contagem por tipo (verifica orderType e deliveryType)
+                const isPickup = order.orderType === 'PICKUP' || deliveryType === 'pickup';
+                const isDelivery = order.orderType === 'DELIVERY' || deliveryType === 'delivery';
+                
+                if (isPickup) day.pickupOrders++;
+                else if (isDelivery) day.deliveryOrders++;
+                else day.tableOrders++;
+
+                // Itens
+                day.itemsCount += order.items.reduce((sum, item) => sum + item.quantity, 0);
+
+                // Taxas
+                day.deliveryFee += deliveryFee;
+                day.extraCharge += order.extraCharge || 0;
+                day.discount += order.discount || 0;
+
+                if (isCompleted) {
+                    day.orders++;
+                    day.revenue += order.total;
+                    accumulatedRevenue += order.total;
+                    day.avgTicket = day.revenue / day.orders;
+                }
+
+                if (isCanceled) {
+                    day.canceledOrders++;
+                    day.canceledRevenue += order.total;
+                }
+            });
+
+            // Calcular acumulado
+            Object.keys(dailyData).sort().forEach(date => {
+                dailyData[date].accumulated = accumulatedRevenue;
+                // Recalcular acumulado até aquela data
+                let acc = 0;
+                Object.keys(dailyData).sort().forEach(d => {
+                    if (d <= date) {
+                        acc += dailyData[d].revenue;
+                        dailyData[d].accumulated = acc;
+                    }
+                });
+            });
+
+            const result = Object.values(dailyData).filter(d => 
+                !excludeDaysFilter.includes(d.dayOfWeek)
+            ).sort((a, b) => a.date.localeCompare(b.date));
+
+            // Calcular totais
+            const totals = result.reduce((acc, day) => ({
+                totalOrders: acc.totalOrders + day.orders,
+                totalRevenue: acc.totalRevenue + day.revenue,
+                totalItems: acc.totalItems + day.itemsCount,
+                totalDeliveryFee: acc.totalDeliveryFee + day.deliveryFee,
+                totalExtraCharge: acc.totalExtraCharge + day.extraCharge,
+                totalDiscount: acc.totalDiscount + day.discount,
+                totalCanceledOrders: acc.totalCanceledOrders + day.canceledOrders,
+                totalCanceledRevenue: acc.totalCanceledRevenue + day.canceledRevenue,
+            }), {
+                totalOrders: 0,
+                totalRevenue: 0,
+                totalItems: 0,
+                totalDeliveryFee: 0,
+                totalExtraCharge: 0,
+                totalDiscount: 0,
+                totalCanceledOrders: 0,
+                totalCanceledRevenue: 0
+            });
+
+            totals.avgTicket = totals.totalOrders > 0 ? totals.totalRevenue / totals.totalOrders : 0;
+
+            res.json({ daily: result, totals });
+        } catch (error) {
+            logger.error('Erro no relatório de faturamento:', error);
+            res.status(500).json({ error: 'Erro ao buscar relatório de faturamento.' });
+        }
     }
 };
-
-module.exports = ReportController;

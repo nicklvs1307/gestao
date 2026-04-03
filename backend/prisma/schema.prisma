@@ -867,6 +867,7 @@ model Payment {
 enum OrderType {
   TABLE
   DELIVERY
+  PICKUP
 }
 
 enum OrderStatus {
