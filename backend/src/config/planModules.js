@@ -50,7 +50,7 @@ function getModulesForPlan(plan) {
 }
 
 function getAllModules() {
-  return Object.keys(PLAN_MODULES.DIAMOND);
+  return [...PLAN_MODULES.DIAMOND];
 }
 
 module.exports = {
