@@ -886,11 +886,12 @@ const ChecklistManagement: React.FC = () => {
                                 <label className="block text-sm font-semibold text-foreground uppercase tracking-wide">
                                     Formato do Relatório
                                 </label>
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-2 gap-3">
                                     {[
                                         { id: 'PDF', label: 'PDF Detalhado', desc: 'Arquivo formal anexado' },
                                         { id: 'TEXT', label: 'Texto Detalhado', desc: 'Lista na mensagem' },
-                                        { id: 'BOTH', label: 'Ambos', desc: 'Texto + PDF completo' }
+                                        { id: 'BOTH', label: 'Ambos', desc: 'Texto + PDF completo' },
+                                        { id: 'LINK', label: 'Resumo + Link', desc: 'Link para relatório web' }
                                     ].map(f => (
                                         <button
                                             key={f.id}

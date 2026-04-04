@@ -66,9 +66,15 @@ class ChecklistReportService {
         .replace(/\{sectorName\}/g, data.sectorName || '')
         .replace(/\{executorName\}/g, data.executorName || '')
         .replace(/\{completionTime\}/g, data.completionTime || '')
-        .replace(/\{individualRate\}/g, data.individualRate || '0');
+        .replace(/\{individualRate\}/g, data.individualRate || '0')
+        .replace(/\{reportLink\}/g, data.reportLink || '');
     }
     return null; // Retorna null para usar mensagem padrão
+  }
+
+  // Helper para construir URL base do frontend
+  getFrontendUrl() {
+    return process.env.FRONTEND_URL || 'http://localhost:5173';
   }
 
   // Helper para logar envio
@@ -202,12 +208,36 @@ class ChecklistReportService {
 
     if (!summaryMessage) {
       // Mensagem padrão
-      summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
-      summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
-      summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
-      summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
+      if (formatType === "LINK") {
+        const frontendUrl = this.getFrontendUrl();
+        summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+        summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
+        summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+        summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
 
-      if (formatType === "TEXT" || formatType === "BOTH") {
+        if (executions.length > 0) {
+          summaryMessage += `*📋 DETALHAMENTO:*\n`;
+          executions.forEach(exe => {
+            const exeOk = exe.responses.filter(r => r.isOk).length;
+            const exeTotal = exe.responses.length;
+            const exeRate = exeTotal > 0 ? ((exeOk / exeTotal) * 100).toFixed(0) : 0;
+            const time = format(exe.completedAt, "HH:mm");
+            const executor = exe.user?.name || exe.externalUserName || 'N/A';
+            const link = `${frontendUrl}/checklist/report/${exe.id}`;
+
+            summaryMessage += `\n📍 *${exe.checklist.title}* - ${exe.checklist.sector.name}\n`;
+            summaryMessage += `  🕒 ${time} | 📊 *${exeRate}%* | 👤 ${executor}\n`;
+            summaryMessage += `  🔗 ${link}\n`;
+          });
+        } else {
+          summaryMessage += `_Nenhum checklist realizado hoje._`;
+        }
+      } else if (formatType === "TEXT" || formatType === "BOTH") {
+        summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+        summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
+        summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+        summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
+
         summaryMessage += `*━━━━━━━━━━━━━━━━━━*\n`;
         summaryMessage += `*📋 DETALHAMENTO POR SETOR*\n`;
         
@@ -251,6 +281,10 @@ class ChecklistReportService {
           summaryMessage += `\n_O relatório técnico oficial segue em PDF abaixo._`;
         }
       } else {
+        summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+        summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
+        summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+        summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
         summaryMessage += `_O relatório detalhado segue em PDF abaixo._`;
       }
     }
@@ -371,6 +405,7 @@ class ChecklistReportService {
     const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
     const time = format(execution.completedAt, "HH:mm");
     const formatType = settings.reportFormat || "PDF";
+    const reportLink = `${this.getFrontendUrl()}/checklist/report/${execution.id}`;
 
     // Montar mensagem com template ou padrão
     const templateData = {
@@ -378,19 +413,27 @@ class ChecklistReportService {
       sectorName: checklist.sector.name,
       executorName: execution.user?.name || execution.externalUserName || 'N/A',
       completionTime: time,
-      individualRate: rate
+      individualRate: rate,
+      reportLink
     };
 
     let message = this.buildMessage(settings.customMessage, { ...templateData, type: 'individual' });
 
     if (!message) {
-      message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
-      message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
-      message += `📊 Conformidade: *${rate}%*\n`;
-      message += `🕒 Concluído às: ${time}\n`;
-      message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+      if (formatType === "LINK") {
+        message = `*✅ CHECKLIST CONCLUÍDO - ${checklist.sector.name}*\n\n`;
+        message += `📋 *${checklist.title.toUpperCase()}*\n`;
+        message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n`;
+        message += `🕒 Concluído às: ${time}\n`;
+        message += `📊 Conformidade: *${rate}%*\n\n`;
+        message += `🔗 Ver relatório completo:\n${reportLink}`;
+      } else if (formatType === "TEXT" || formatType === "BOTH") {
+        message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
+        message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
+        message += `📊 Conformidade: *${rate}%*\n`;
+        message += `🕒 Concluído às: ${time}\n`;
+        message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
 
-      if (formatType === "TEXT" || formatType === "BOTH") {
         message += `*DETALHAMENTO DOS ITENS:*\n`;
         execution.responses.forEach(res => {
           const status = res.isOk ? "✅" : "❌";
@@ -409,8 +452,13 @@ class ChecklistReportService {
             } catch (e) {}
           }
         });
-        if (formatType === "BOTH") message += `\n_O detalhamento técnico segue em PDF._`;
+        if (formatType === "BOTH") message += `\n🔗 Relatório completo: ${reportLink}`;
       } else {
+        message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
+        message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
+        message += `📊 Conformidade: *${rate}%*\n`;
+        message += `🕒 Concluído às: ${time}\n`;
+        message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
         message += `_O detalhamento técnico segue em PDF._`;
       }
     }
@@ -536,42 +584,67 @@ class ChecklistReportService {
           const totalTasks = execution.responses.length;
           const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
           const time = format(execution.completedAt, "HH:mm");
+          const formatType = settings.reportFormat || "PDF";
+          const reportLink = `${this.getFrontendUrl()}/checklist/report/${execution.id}`;
 
-          let message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
-          message += `O checklist *${checklist.title}* foi concluído.\n\n`;
-          message += `📊 Conformidade: *${rate}%*\n`;
-          message += `🕒 Concluído às: ${time}\n`;
-          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
-          message += `_O detalhamento técnico segue em PDF._`;
+          if (formatType === "LINK") {
+            let message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
+            message += `📋 *${checklist.title}*\n`;
+            message += `📊 Conformidade: *${rate}%*\n`;
+            message += `🕒 Concluído às: ${time}\n`;
+            message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+            message += `🔗 Ver relatório completo:\n${reportLink}`;
 
-          let pdfPath = null;
-          try {
-            pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
-            
-            const result = await this.sendWithRetry(
-              instance.name,
-              recipient,
-              message,
-              pdfPath,
-              `Auditoria_${checklist.id}_${format(now, 'HHmm')}.pdf`,
-              `Auditoria Detalhada - ${checklist.title}`
-            );
+            try {
+              await evolutionService.sendText(instance.name, recipient, message);
+              await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, 'SUCCESS', {
+                checklistId: checklist.id,
+                summary: `${checklist.title}: ${rate}% conformidade`
+              });
+            } catch (error) {
+              logger.error(`[ChecklistDeadline] Erro ao enviar mensagem:`, error);
+              await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, 'FAILED', {
+                checklistId: checklist.id,
+                errorMessage: error.message
+              });
+            }
+          } else {
+            let message = `*✅ CHECKLIST REALIZADO - ${checklist.sector.name}*\n\n`;
+            message += `O checklist *${checklist.title}* foi concluído.\n\n`;
+            message += `📊 Conformidade: *${rate}%*\n`;
+            message += `🕒 Concluído às: ${time}\n`;
+            message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+            message += `_O detalhamento técnico segue em PDF._`;
 
-            await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, result.success ? 'SUCCESS' : 'FAILED', {
-              checklistId: checklist.id,
-              errorMessage: result.error?.message,
-              retryCount: result.attempts - 1,
-              summary: `${checklist.title}: ${rate}% conformidade`
-            });
-          } catch (error) {
-            logger.error(`[ChecklistDeadline] Erro ao enviar PDF:`, error);
-            await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, 'FAILED', {
-              checklistId: checklist.id,
-              errorMessage: error.message
-            });
-          } finally {
-            if (pdfPath && fs.existsSync(pdfPath)) {
-              fs.unlinkSync(pdfPath);
+            let pdfPath = null;
+            try {
+              pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
+              
+              const result = await this.sendWithRetry(
+                instance.name,
+                recipient,
+                message,
+                pdfPath,
+                `Auditoria_${checklist.id}_${format(now, 'HHmm')}.pdf`,
+                `Auditoria Detalhada - ${checklist.title}`
+              );
+
+              await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, result.success ? 'SUCCESS' : 'FAILED', {
+                checklistId: checklist.id,
+                errorMessage: result.error?.message,
+                retryCount: result.attempts - 1,
+                summary: `${checklist.title}: ${rate}% conformidade`
+              });
+            } catch (error) {
+              logger.error(`[ChecklistDeadline] Erro ao enviar PDF:`, error);
+              await this.logReport(checklist.restaurantId, 'DEADLINE_OK', recipient, 'FAILED', {
+                checklistId: checklist.id,
+                errorMessage: error.message
+              });
+            } finally {
+              if (pdfPath && fs.existsSync(pdfPath)) {
+                fs.unlinkSync(pdfPath);
+              }
             }
           }
         }
