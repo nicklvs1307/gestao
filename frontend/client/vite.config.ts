@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       '@/types': path.resolve(__dirname, '../../types'),
       '@/shared': path.resolve(__dirname, '../../shared'),
+      '@/lib': path.resolve(__dirname, 'src/lib'),
     }
   },
   server: {
