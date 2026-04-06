@@ -6,54 +6,37 @@ const ESC = '\x1b';
 const GS = '\x1d';
 
 const Cmd = {
-  INIT:          ESC + '@',           // Inicializar impressora
-  BOLD_ON:       ESC + 'E' + '\x01',  // Negrito ligado
-  BOLD_OFF:      ESC + 'E' + '\x00',  // Negrito desligado
-  ALIGN_LEFT:    ESC + 'a' + '\x00',  // Alinhar à esquerda
-  ALIGN_CENTER:  ESC + 'a' + '\x01',  // Centralizar
-  ALIGN_RIGHT:    ESC + 'a' + '\x02',  // Alinhar à direita
-  FONT_NORMAL:   ESC + '!' + '\x00',  // Fonte normal
-  FONT_DOUBLE_H: ESC + '!' + '\x10',  // Altura dupla
-  FONT_DOUBLE_W: ESC + '!' + '\x20',  // Largura dupla
-  FONT_DOUBLE:   ESC + '!' + '\x30',  // Altura + largura dupla
-  UNDERLINE_ON:  ESC + '-' + '\x01',  // Sublinhado ligado
-  UNDERLINE_OFF: ESC + '-' + '\x00',  // Sublinhado desligado
-  FEED_LINES:    (n: number) => ESC + 'd' + String.fromCharCode(n), // Avançar N linhas
-  CUT_PAPER:     GS  + 'V' + '\x00',  // Corte total (sem feed extra)
-  CUT_PAPER_PARTIAL: GS + 'V' + '\x01', // Corte parcial (sem feed extra)
-  LINE_48:       '------------------------------------------------',
-  LINE_32:       '--------------------------------',
+  INIT:          ESC + '@',
+  BOLD_ON:       ESC + 'E' + '\x01',
+  BOLD_OFF:      ESC + 'E' + '\x00',
+  ALIGN_LEFT:    ESC + 'a' + '\x00',
+  ALIGN_CENTER:  ESC + 'a' + '\x01',
+  ALIGN_RIGHT:   ESC + 'a' + '\x02',
+  FONT_NORMAL:   ESC + '!' + '\x00',
+  FONT_SMALL:    ESC + '!' + '\x01',
+  FONT_MEDIUM:   ESC + '!' + '\x11',
+  FONT_BOLD:     ESC + '!' + '\x08',
+  FONT_BOLD_MED: ESC + '!' + '\x18',
+  FONT_DOUBLE_W: ESC + '!' + '\x20',
+  FONT_DOUBLE:   ESC + '!' + '\x30',
+  UNDERLINE_ON:  ESC + '-' + '\x01',
+  UNDERLINE_OFF: ESC + '-' + '\x00',
+  FEED_LINES:    (n: number) => ESC + 'd' + String.fromCharCode(n),
+  CUT_PAPER:     GS + 'V' + '\x00',
+  CUT_PARTIAL:   GS + 'V' + '\x01',
 };
-
-// ─── HELPERS ──────────────────────────────────────────────────────────
-function text(text: string): string {
-  return text;
-}
 
 function line(char: string = '-', width: number = 42): string {
   return char.repeat(width) + '\n';
 }
 
-function center(text: string): string {
-  return Cmd.ALIGN_CENTER + text + '\n' + Cmd.ALIGN_LEFT;
-}
-
-function bold(text: string): string {
-  return Cmd.BOLD_ON + text + Cmd.BOLD_OFF;
-}
-
-function doubleSize(text: string): string {
-  return Cmd.FONT_DOUBLE + text + Cmd.FONT_NORMAL;
-}
-
-// ─── GERADOR DE CUPOM ESC/POS ─────────────────────────────────────────
 interface EscPosSettings {
   showLogo?: boolean;
   showAddress?: boolean;
   headerText?: string;
   footerText?: string;
-  paperFeed?: number; // Linhas para avançar antes do corte (default: 3)
-  useInit?: boolean; // Usar comando INIT (default: false)
+  paperFeed?: number;
+  useInit?: boolean;
 }
 
 interface RestaurantInfo {
@@ -73,201 +56,174 @@ export function generateEscPosReceipt(
 ): string {
   let buf = '';
 
-  // Inicializar (opcional - desabilitado por padrão para evitar problemas com algumas impressoras)
   const shouldUseInit = settings.useInit ?? false;
-  if (shouldUseInit) {
-    buf += Cmd.INIT;
-  }
-  buf += Cmd.ALIGN_LEFT;
-  buf += Cmd.FONT_NORMAL;
+  if (shouldUseInit) buf += Cmd.INIT;
+  buf += Cmd.ALIGN_LEFT + Cmd.FONT_NORMAL;
 
-  const WIDTH = 42; // Largura padrão para impressoras de 80mm
+  const W = 42;
 
-  // ── CABEÇALHO (apenas para via caixa/cliente) ──
+  // ═══════════ CABEÇALHO ═══════════
   if (!isProduction) {
-    buf += Cmd.ALIGN_CENTER;
-    buf += Cmd.FONT_DOUBLE;
-    buf += text((restaurantInfo.name || 'KICARDÁPIO').toUpperCase()) + '\n';
+    buf += Cmd.ALIGN_CENTER + Cmd.FONT_DOUBLE;
+    buf += (restaurantInfo.name || 'KICARDÁPIO').toUpperCase() + '\n';
     buf += Cmd.FONT_NORMAL;
 
     if ((restaurantInfo as RestaurantInfo).cnpj) {
-      buf += text(`CNPJ: ${(restaurantInfo as RestaurantInfo).cnpj}`) + '\n';
-    }
-    if (settings.showAddress && (restaurantInfo as RestaurantInfo).address) {
-      buf += text(String((restaurantInfo as RestaurantInfo).address).substring(0, WIDTH * 2)) + '\n';
-    }
-    if ((restaurantInfo as RestaurantInfo).phone) {
-      buf += text(`TEL: ${(restaurantInfo as RestaurantInfo).phone}`) + '\n';
+      buf += `CNPJ: ${(restaurantInfo as RestaurantInfo).cnpj}\n`;
     }
 
-    buf += Cmd.ALIGN_LEFT;
-    buf += line('-', WIDTH);
+    // Endereço sempre visível se existir
+    const addr = (restaurantInfo as RestaurantInfo).address;
+    if (addr) {
+      const addrStr = String(addr);
+      if (addrStr.length <= W) {
+        buf += addrStr + '\n';
+      } else {
+        // Quebra em 2 linhas se necessário
+        const mid = Math.floor(W / 2);
+        let breakPoint = addrStr.lastIndexOf(' ', mid);
+        if (breakPoint < 10) breakPoint = mid;
+        buf += addrStr.substring(0, breakPoint) + '\n';
+        buf += addrStr.substring(breakPoint + 1, W * 2) + '\n';
+      }
+    }
+
+    if ((restaurantInfo as RestaurantInfo).phone) {
+      buf += `TEL: ${(restaurantInfo as RestaurantInfo).phone}\n`;
+    }
+
+    buf += Cmd.ALIGN_LEFT + line('-', W);
 
     if (settings.headerText) {
-      buf += Cmd.ALIGN_CENTER;
-      buf += Cmd.BOLD_ON;
-      buf += text(settings.headerText.toUpperCase().substring(0, WIDTH)) + '\n';
-      buf += Cmd.BOLD_OFF;
-      buf += Cmd.ALIGN_LEFT;
-      buf += line('-', WIDTH);
+      buf += Cmd.ALIGN_CENTER + Cmd.BOLD_ON;
+      buf += settings.headerText.toUpperCase().substring(0, W) + '\n';
+      buf += Cmd.BOLD_OFF + Cmd.ALIGN_LEFT;
+      buf += line('-', W);
     }
   }
 
-  // ── TIPO DE PEDIDO ──
+  // ═══════════ TIPO DE PEDIDO ═══════════
   const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
   const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
+  let typeLabel = order.orderType === 'TABLE' ? `MESA ${order.tableNumber}` : (isPickup ? 'RETIRADA / BALCÃO' : 'ENTREGA');
 
-  let typeLabel = '';
-  if (order.orderType === 'TABLE') {
-    typeLabel = `MESA ${order.tableNumber}`;
-  } else {
-    typeLabel = isPickup ? 'RETIRADA / BALCÃO' : 'ENTREGA';
-  }
+  buf += Cmd.ALIGN_CENTER + Cmd.FONT_DOUBLE;
+  buf += typeLabel + '\n';
+  buf += Cmd.FONT_NORMAL + Cmd.ALIGN_LEFT;
 
-  buf += Cmd.ALIGN_CENTER;
-  buf += Cmd.FONT_DOUBLE;
-  buf += text(typeLabel) + '\n';
-  buf += Cmd.FONT_NORMAL;
-  buf += Cmd.ALIGN_LEFT;
-
-  // ── INFO DO PEDIDO ──
+  // ═══════════ INFO DO PEDIDO ═══════════
   const dateStr = formatSP(order.createdAt, 'dd/MM/yyyy HH:mm');
-  buf += text(dateStr) + '\n';
+  buf += dateStr + '\n';
 
   if (order.user?.name) {
-    buf += Cmd.BOLD_ON;
-    buf += text(`ATEND: ${order.user.name.toUpperCase()}`) + '\n';
-    buf += Cmd.BOLD_OFF;
+    buf += Cmd.BOLD_ON + `ATEND: ${order.user.name.toUpperCase()}\n` + Cmd.BOLD_OFF;
   }
 
   buf += Cmd.FONT_DOUBLE;
-  buf += text(`PEDIDO: #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}`) + '\n';
+  buf += `PEDIDO: #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}\n`;
   buf += Cmd.FONT_NORMAL;
 
-  // ── DADOS DO CLIENTE ──
+  // ═══════════ DADOS DO CLIENTE ═══════════
   if (order.deliveryOrder) {
-    buf += Cmd.BOLD_ON;
-    buf += text(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
-    buf += Cmd.BOLD_OFF;
+    buf += Cmd.BOLD_ON + `CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}\n` + Cmd.BOLD_OFF;
 
     if (!isProduction) {
-      buf += text(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
+      buf += `FONE: ${order.deliveryOrder.phone || 'N/A'}\n`;
 
       if (!isPickup && order.deliveryOrder.address) {
-        buf += Cmd.BOLD_ON;
-        buf += text(`END: ${order.deliveryOrder.address.toUpperCase()}`) + '\n';
-        buf += Cmd.BOLD_OFF;
+        buf += Cmd.BOLD_ON + `END: ${order.deliveryOrder.address.toUpperCase()}\n` + Cmd.BOLD_OFF;
       }
     }
   }
 
-  buf += line('-', WIDTH);
+  buf += line('-', W);
 
-  // ── TÍTULO DA VIA ──
+  // ═══════════ TÍTULO DA VIA ═══════════
   if (title) {
-    buf += Cmd.ALIGN_CENTER;
-    buf += Cmd.BOLD_ON;
-    buf += text(title.toUpperCase()) + '\n';
-    buf += Cmd.BOLD_OFF;
-    buf += Cmd.ALIGN_LEFT;
-    buf += line('-', WIDTH);
+    buf += Cmd.ALIGN_CENTER + Cmd.BOLD_ON + title.toUpperCase() + '\n' + Cmd.BOLD_OFF + Cmd.ALIGN_LEFT;
+    buf += line('-', W);
   }
 
-  // ── ITENS ──
+  // ═══════════ ITENS ═══════════
   buf += Cmd.BOLD_ON;
   if (isProduction) {
-    buf += text('QTD  PRODUTO\n');
+    buf += 'QTD  PRODUTO\n';
   } else {
-    buf += text('QTD  DESCRIÇÃO                VALOR\n');
+    buf += 'QTD  DESCRIÇÃO'.padEnd(28) + 'VALOR\n';
   }
   buf += Cmd.BOLD_OFF;
-  buf += line('-', WIDTH);
+  buf += line('-', W);
 
   (itemsToPrint || []).forEach(item => {
     const productName = item.product?.name || 'Produto';
     const qty = item.quantity || 1;
 
     if (isProduction) {
-      buf += Cmd.BOLD_ON;
-      buf += text(`${qty}x ${productName.toUpperCase()}\n`);
-      buf += Cmd.BOLD_OFF;
+      buf += Cmd.BOLD_ON + `${qty}x ${productName.toUpperCase()}\n` + Cmd.BOLD_OFF;
     } else {
       const totalItem = ((item.priceAtTime || 0) * qty).toFixed(2);
-      const namePart = `${qty}x ${productName.toUpperCase()}`;
-      const paddedName = namePart.substring(0, 28).padEnd(28);
-      buf += Cmd.BOLD_ON;
-      buf += text(`${paddedName}R$ ${totalItem}\n`);
-      buf += Cmd.BOLD_OFF;
+      buf += Cmd.BOLD_ON + `${qty}x ${productName.toUpperCase()}`.padEnd(28) + `R$ ${totalItem}\n` + Cmd.BOLD_OFF;
     }
 
-    // Sabores
+    // Sabores - NEGRITO
     if (item.flavorsJson) {
       try {
-        const flavors = typeof item.flavorsJson === 'string'
-          ? JSON.parse(item.flavorsJson)
-          : item.flavorsJson;
+        const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
         if (Array.isArray(flavors)) {
           flavors.forEach((f: { name: string }) => {
-            buf += text(`  > SABOR: ${(f.name || '').toUpperCase()}\n`);
+            buf += Cmd.BOLD_ON + `  SABOR: ${(f.name || '').toUpperCase()}\n` + Cmd.BOLD_OFF;
           });
         }
-      } catch { /* ignore */ }
+      } catch { /* empty */ }
     }
 
-    // Tamanho
+    // Tamanho - NEGRITO
     if (item.sizeJson) {
       try {
-        const size = typeof item.sizeJson === 'string'
-          ? JSON.parse(item.sizeJson)
-          : item.sizeJson;
-        buf += text(`  > TAM: ${(size.name || '').toUpperCase()}\n`);
-      } catch { /* ignore */ }
+        const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
+        buf += Cmd.BOLD_ON + `  TAMANHO: ${(size.name || '').toUpperCase()}\n` + Cmd.BOLD_OFF;
+      } catch { /* empty */ }
     }
 
-    // Adicionais
+    // Adicionais - NEGRITO DESTACADO
     if (item.addonsJson) {
       try {
-        const addons = typeof item.addonsJson === 'string'
-          ? JSON.parse(item.addonsJson)
-          : item.addonsJson;
+        const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
         if (Array.isArray(addons)) {
           addons.forEach((a: { name: string; quantity?: number }) => {
             const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-            buf += Cmd.BOLD_ON;
-            buf += text(`  [+] ${prefix}${(a.name || '').toUpperCase()}\n`);
-            buf += Cmd.BOLD_OFF;
+            buf += Cmd.BOLD_ON + `  + ${prefix}${(a.name || '').toUpperCase()}\n` + Cmd.BOLD_OFF;
           });
         }
-      } catch { /* ignore */ }
+      } catch { /* empty */ }
     }
 
-    // Observação do item
+    // Observação do item - NEGRITO + SUBLINHADO
     if (item.observations) {
-      buf += Cmd.UNDERLINE_ON;
-      buf += text(`  (!) OBS: ${item.observations.toUpperCase()}\n`);
-      buf += Cmd.UNDERLINE_OFF;
+      buf += Cmd.BOLD_ON + Cmd.UNDERLINE_ON;
+      buf += `  OBS: ${item.observations.toUpperCase()}\n`;
+      buf += Cmd.UNDERLINE_OFF + Cmd.BOLD_OFF;
     }
 
-    buf += '\n'; // Espaço entre itens
+    buf += '\n';
   });
 
-  buf += line('-', WIDTH);
+  buf += line('-', W);
 
-  // ── OBSERVAÇÃO GERAL ──
-  const generalObs = (order as { notes?: string }).notes ||
-    order.deliveryOrder?.notes;
+  // ═══════════ OBSERVAÇÃO GERAL ═══════════
+  const generalObs = (order as { notes?: string }).notes || order.deliveryOrder?.notes;
   if (generalObs) {
-    buf += Cmd.BOLD_ON;
-    buf += text(`OBS GERAL: ${generalObs.toUpperCase()}\n`);
-    buf += Cmd.BOLD_OFF;
-    buf += line('-', WIDTH);
+    buf += Cmd.BOLD_ON + Cmd.UNDERLINE_ON;
+    buf += `OBS GERAL: ${generalObs.toUpperCase()}\n`;
+    buf += Cmd.UNDERLINE_OFF + Cmd.BOLD_OFF;
+    buf += line('-', W);
   }
 
-  // ── TOTAIS E PAGAMENTO (apenas via caixa) ──
+  // ═══════════ TOTAIS E PAGAMENTO ═══════════
   if (!isProduction) {
     const totalQty = (itemsToPrint || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
-    buf += text(`QTD ITENS: ${totalQty}\n`);
-    buf += line('-', WIDTH);
+    buf += Cmd.BOLD_ON + `QTD ITENS: ${totalQty}\n` + Cmd.BOLD_OFF;
+    buf += line('-', W);
 
     const subtotal = order.total || 0;
     const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
@@ -275,73 +231,53 @@ export function generateEscPosReceipt(
     const extraCharge = (order as { extraCharge?: number }).extraCharge || 0;
     const totalGeral = subtotal + deliveryFee - discount + extraCharge;
 
-    buf += text(`SUBTOTAL`.padEnd(30) + `R$ ${subtotal.toFixed(2)}\n`);
+    buf += `SUBTOTAL`.padEnd(28) + `R$ ${subtotal.toFixed(2)}\n`;
+    if (deliveryFee > 0) buf += `TAXA ENTREGA`.padEnd(28) + `R$ ${deliveryFee.toFixed(2)}\n`;
+    if (discount > 0) buf += `DESCONTO (-)`.padEnd(28) + `R$ ${discount.toFixed(2)}\n`;
 
-    if (deliveryFee > 0) {
-      buf += text(`TAXA ENTREGA`.padEnd(30) + `R$ ${deliveryFee.toFixed(2)}\n`);
-    }
-    if (discount > 0) {
-      buf += text(`DESCONTO (-)`.padEnd(30) + `R$ ${discount.toFixed(2)}\n`);
-    }
-
-    buf += line('-', WIDTH);
+    buf += line('=', W);
     buf += Cmd.FONT_DOUBLE;
-    buf += text(`TOTAL`.padEnd(30) + `R$ ${totalGeral.toFixed(2)}\n`);
+    buf += `TOTAL`.padEnd(28) + `R$ ${totalGeral.toFixed(2)}\n`;
     buf += Cmd.FONT_NORMAL;
-    buf += line('-', WIDTH);
+    buf += line('=', W);
 
     // Pagamento
-    buf += Cmd.BOLD_ON;
-    buf += text('PAGAMENTO:\n');
-    buf += Cmd.BOLD_OFF;
+    buf += Cmd.BOLD_ON + 'PAGAMENTO:\n' + Cmd.BOLD_OFF;
 
     const methodMap: Record<string, string> = {
-      cash: 'DINHEIRO',
-      credit_card: 'CARTÃO CRÉDITO',
-      debit_card: 'CARTÃO DÉBITO',
-      pix: 'PIX',
-      meal_voucher: 'VALE REFEIÇÃO',
-      card: 'CARTÃO (PDV)',
+      cash: 'DINHEIRO', credit_card: 'CARTÃO CRÉDITO', debit_card: 'CARTÃO DÉBITO',
+      pix: 'PIX', meal_voucher: 'VALE REFEIÇÃO', card: 'CARTÃO (PDV)',
     };
 
     if (order.payments && order.payments.length > 0) {
       order.payments.forEach((p: { method: string; amount: number }) => {
         const method = methodMap[p.method] || p.method.toUpperCase();
-        buf += text(`${method.padEnd(30)}R$ ${p.amount.toFixed(2)}\n`);
+        buf += `${method.padEnd(28)}R$ ${p.amount.toFixed(2)}\n`;
       });
     } else if (order.deliveryOrder?.paymentMethod) {
       const method = methodMap[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase();
-      buf += text(`${method}\n`);
+      buf += `${method}\n`;
     } else {
-      buf += text('A PAGAR NO CAIXA\n');
+      buf += 'A PAGAR NO CAIXA\n';
     }
 
-    buf += line('-', WIDTH);
+    buf += line('-', W);
   } else {
-    buf += Cmd.ALIGN_CENTER;
-    buf += Cmd.BOLD_ON;
-    buf += text('*** FIM DA PRODUÇÃO ***\n');
-    buf += Cmd.BOLD_OFF;
-    buf += Cmd.ALIGN_LEFT;
+    buf += Cmd.ALIGN_CENTER + Cmd.BOLD_ON + '*** FIM DA PRODUÇÃO ***\n' + Cmd.BOLD_OFF + Cmd.ALIGN_LEFT;
   }
 
-  // ── RODAPÉ ──
+  // ═══════════ RODAPÉ ═══════════
   if (!isProduction && settings.footerText) {
-    buf += Cmd.ALIGN_CENTER;
-    buf += Cmd.BOLD_ON;
-    buf += text(settings.footerText.toUpperCase().substring(0, WIDTH * 2)) + '\n';
-    buf += Cmd.BOLD_OFF;
-    buf += Cmd.ALIGN_LEFT;
+    buf += Cmd.ALIGN_CENTER + Cmd.BOLD_ON;
+    buf += settings.footerText.toUpperCase().substring(0, W * 2) + '\n';
+    buf += Cmd.BOLD_OFF + Cmd.ALIGN_LEFT;
   }
 
   buf += Cmd.ALIGN_CENTER;
-  buf += text(`ID: ${order.id}\n`);
-  buf += Cmd.BOLD_ON;
-  buf += text('KICARDÁPIO@\n');
-  buf += Cmd.BOLD_OFF;
+  buf += `ID: ${order.id}\n`;
+  buf += Cmd.BOLD_ON + 'KICARDÁPIO@\n' + Cmd.BOLD_OFF;
   buf += Cmd.ALIGN_LEFT;
 
-  // Avançar papel e cortar
   const feedLines = settings.paperFeed ?? 3;
   buf += Cmd.FEED_LINES(feedLines);
   buf += Cmd.CUT_PAPER;
@@ -349,14 +285,12 @@ export function generateEscPosReceipt(
   return buf;
 }
 
-// ─── CONVERSÃO PARA BASE64 (envio via HTTP) ───────────────────────────
+// ─── CONVERSÃO PARA BASE64 ───────────────────────────────────────────
 export function escPosToBase64(escPosString: string): string {
-  // Converte string para bytes (suporta acentos via latin1)
   const bytes = new Uint8Array(escPosString.length);
   for (let i = 0; i < escPosString.length; i++) {
     bytes[i] = escPosString.charCodeAt(i) & 0xff;
   }
-  // Converte bytes para base64
   let binary = '';
   bytes.forEach(byte => binary += String.fromCharCode(byte));
   return btoa(binary);
