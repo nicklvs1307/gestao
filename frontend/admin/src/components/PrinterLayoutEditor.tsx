@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../lib/utils';
-import { Type, Image as ImageIcon, AlignLeft, LayoutPanelTop, LayoutPanelLeft, Hash } from 'lucide-react';
+import { Type, Image as ImageIcon, AlignLeft, LayoutPanelTop, LayoutPanelLeft, Hash, Printer, Scissors } from 'lucide-react';
 
 export interface ReceiptLayout {
     showLogo: boolean;
@@ -10,6 +10,8 @@ export interface ReceiptLayout {
     headerText: string;
     footerText: string;
     itemSpacing: number; // 0 a 10
+    paperFeed: number; // Linhas para avançar antes do corte (0-10)
+    useInit: boolean; // Usar comando INIT ao iniciar impressão
 }
 
 interface Props {
@@ -127,6 +129,61 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                             value={layout.itemSpacing}
                             onChange={e => updateField('itemSpacing', parseInt(e.target.value))}
                         />
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <h3 className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-2">
+                        <Printer size={14} className="text-orange-500" /> Configurações da Impressora
+                    </h3>
+                    
+                    <div className="space-y-3">
+                        {/* Toggle INIT */}
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                    <Printer size={16} className="text-slate-400" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Comando INIT</span>
+                                </div>
+                                <button 
+                                    onClick={() => updateField('useInit', !layout.useInit)}
+                                    className={cn("w-10 h-5 rounded-full relative transition-all", layout.useInit ? "bg-orange-500" : "bg-slate-300")}
+                                >
+                                    <div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", layout.useInit ? "left-6" : "left-1")} />
+                                </button>
+                            </div>
+                            <p className="text-[8px] font-bold text-slate-400 leading-relaxed">
+                                {layout.useInit 
+                                    ? 'Ativado: Reseta a impressora antes de cada impressão. Pode causar avanço excessivo em alguns modelos.'
+                                    : 'Desativado: Recomendado para evitar desperdício de papel na maioria das impressoras.'
+                                }
+                            </p>
+                        </div>
+
+                        {/* Paper Feed Slider */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Scissors size={14} className="text-slate-400" />
+                                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Linhas antes do Corte</label>
+                                </div>
+                                <span className="text-[10px] font-black text-orange-600 italic">{layout.paperFeed} linhas</span>
+                            </div>
+                            <input 
+                                type="range" min="0" max="10" step="1"
+                                className="w-full accent-orange-500"
+                                value={layout.paperFeed}
+                                onChange={e => updateField('paperFeed', parseInt(e.target.value))}
+                            />
+                            <p className="text-[8px] font-bold text-slate-400 mt-2 leading-relaxed">
+                                {layout.paperFeed === 0 
+                                    ? 'Sem avanço. Corte imediato após o conteúdo.'
+                                    : layout.paperFeed <= 3
+                                    ? 'Avanço mínimo. Ideal para a maioria das impressoras.'
+                                    : 'Avanço maior. Use apenas se sua impressora precisar de mais espaço.'
+                                }
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

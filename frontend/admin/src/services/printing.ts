@@ -52,6 +52,8 @@ export interface ReceiptSettings {
   headerText: string;
   footerText: string;
   itemSpacing?: number;
+  paperFeed?: number;
+  useInit?: boolean;
 }
 
 interface RestaurantInfo {
@@ -138,6 +140,9 @@ function getReceiptSettingsFromStorage(): ReceiptSettings {
     fontSize: 'medium',
     headerText: '',
     footerText: '',
+    itemSpacing: 2,
+    paperFeed: 3,
+    useInit: false,
   };
 }
 
@@ -484,7 +489,7 @@ export const printOrder = async (
   } else if (storageSettings) {
     finalSettings = JSON.parse(storageSettings);
   } else {
-    finalSettings = { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '', itemSpacing: 2 };
+    finalSettings = { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '', itemSpacing: 2, paperFeed: 3, useInit: false };
   }
 
   const finalRestaurant = restaurantInfo || getRestaurantInfoFromStorage();

@@ -11,15 +11,16 @@ const Cmd = {
   BOLD_OFF:      ESC + 'E' + '\x00',  // Negrito desligado
   ALIGN_LEFT:    ESC + 'a' + '\x00',  // Alinhar à esquerda
   ALIGN_CENTER:  ESC + 'a' + '\x01',  // Centralizar
-  ALIGN_RIGHT:   ESC + 'a' + '\x02',  // Alinhar à direita
+  ALIGN_RIGHT:    ESC + 'a' + '\x02',  // Alinhar à direita
   FONT_NORMAL:   ESC + '!' + '\x00',  // Fonte normal
   FONT_DOUBLE_H: ESC + '!' + '\x10',  // Altura dupla
   FONT_DOUBLE_W: ESC + '!' + '\x20',  // Largura dupla
   FONT_DOUBLE:   ESC + '!' + '\x30',  // Altura + largura dupla
   UNDERLINE_ON:  ESC + '-' + '\x01',  // Sublinhado ligado
   UNDERLINE_OFF: ESC + '-' + '\x00',  // Sublinhado desligado
-  CUT_PAPER:     GS  + 'V' + '\x41' + '\x03', // Cortar papel (avançar 3 linhas e cortar)
   FEED_LINES:    (n: number) => ESC + 'd' + String.fromCharCode(n), // Avançar N linhas
+  CUT_PAPER:     GS  + 'V' + '\x00',  // Corte total (sem feed extra)
+  CUT_PAPER_PARTIAL: GS + 'V' + '\x01', // Corte parcial (sem feed extra)
   LINE_48:       '------------------------------------------------',
   LINE_32:       '--------------------------------',
 };
@@ -51,6 +52,8 @@ interface EscPosSettings {
   showAddress?: boolean;
   headerText?: string;
   footerText?: string;
+  paperFeed?: number; // Linhas para avançar antes do corte (default: 3)
+  useInit?: boolean; // Usar comando INIT (default: false)
 }
 
 interface RestaurantInfo {
@@ -70,8 +73,11 @@ export function generateEscPosReceipt(
 ): string {
   let buf = '';
 
-  // Inicializar
-  buf += Cmd.INIT;
+  // Inicializar (opcional - desabilitado por padrão para evitar problemas com algumas impressoras)
+  const shouldUseInit = settings.useInit ?? false;
+  if (shouldUseInit) {
+    buf += Cmd.INIT;
+  }
   buf += Cmd.ALIGN_LEFT;
   buf += Cmd.FONT_NORMAL;
 
@@ -337,7 +343,8 @@ export function generateEscPosReceipt(
   buf += Cmd.ALIGN_LEFT;
 
   // Avançar papel e cortar
-  buf += Cmd.FEED_LINES(5);
+  const feedLines = settings.paperFeed ?? 3;
+  buf += Cmd.FEED_LINES(feedLines);
   buf += Cmd.CUT_PAPER;
 
   return buf;

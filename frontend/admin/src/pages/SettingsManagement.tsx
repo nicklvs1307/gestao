@@ -57,7 +57,9 @@ const SettingsManagement: React.FC = () => {
       fontSize: 'medium',
       headerText: '',
       footerText: 'OBRIGADO PELA PREFERÊNCIA!',
-      itemSpacing: 2
+      itemSpacing: 2,
+      paperFeed: 3,
+      useInit: false
     };
   });
 
