@@ -112,7 +112,22 @@ function printLocal(printer, pdfBase64) {
       const pdfBuffer = Buffer.from(pdfBase64, 'base64');
       fs.writeFileSync(tempFile, pdfBuffer);
 
-      ptp.print(tempFile, { printer })
+      const stat = fs.statSync(tempFile);
+      console.log(`[LOCAL] PDF gerado: ${(stat.size / 1024).toFixed(1)}KB`);
+
+      // Usar scale: 'fit' para ajustar o conteúdo ao papel da impressora
+      // Isso evita o feed excessivo quando o driver está configurado com A4/Letter
+      // orientation: 'portrait' garante orientação correta
+      const printOptions = { 
+        printer,
+        scale: 'fit',
+        orientation: 'portrait',
+        silent: true,
+      };
+
+      console.log(`[LOCAL] Imprimindo com opções: scale=fit, orientation=portrait`);
+
+      ptp.print(tempFile, printOptions)
         .then(() => {
           console.log(`[LOCAL] Impressão enviada para ${printer}`);
           // Limpa arquivo temp após um delay (spooler pode ainda estar usando)
@@ -120,10 +135,12 @@ function printLocal(printer, pdfBase64) {
           resolve();
         })
         .catch((err) => {
+          console.error(`[LOCAL] Erro na impressão: ${err.message}`);
           cleanupTempFile(tempFile);
           reject(err);
         });
     } catch (err) {
+      console.error(`[LOCAL] Erro ao processar PDF: ${err.message}`);
       cleanupTempFile(tempFile);
       reject(err);
     }
@@ -262,10 +279,10 @@ async function printRaw(printer, buffer) {
     // Método 2 falhou, tentar método 3
   }
 
-  // Método 3: Fallback - converter para PDF e usar pdf-to-printer
+  // Método 3: Converter ESC/POS para texto simples e gerar PDF
   // Isso funciona com qualquer impressora Windows
   cleanupTempFile(tempFile);
-  console.log(`[RAW] Fallback: convertendo ESC/POS para texto e imprimindo via pdf-to-printer`);
+  console.log(`[RAW] Fallback: convertendo ESC/POS para PDF e imprimindo via pdf-to-printer`);
   throw new Error(`Impressão raw não suportada para "${printer}". Use impressão de rede (IP) ou configure a impressora como compartilhada.`);
 }
 

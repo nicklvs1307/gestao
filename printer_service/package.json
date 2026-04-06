@@ -14,23 +14,26 @@
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "pdf-to-printer": "^1.6.0"
+    "pdf-to-printer": "^5.7.0"
   },
   "devDependencies": {
     "electron": "^31.0.0",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
   },
   "build": {
     "appId": "com.kicardapio.printer",
     "productName": "KiCardapio Printer",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
       "main.js",
       "server.js",
       "index.html",
       "icon.png",
+      "icon.ico",
       "!node_modules/**/*.md",
       "!node_modules/**/*.d.ts",
       "!node_modules/**/test",
@@ -43,10 +46,12 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
-      "icon": "icon.png"
+      "icon": "icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -56,9 +61,9 @@
       "createStartMenuShortcut": true,
       "shortcutName": "KiCardápio Impressão",
       "uninstallDisplayName": "KiCardápio Impressão",
-      "installerIcon": "icon.png",
-      "uninstallerIcon": "icon.png",
-      "installerHeaderIcon": "icon.png"
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico"
     },
     "asar": true,
     "asarUnpack": [
