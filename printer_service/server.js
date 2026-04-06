@@ -6,6 +6,22 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const net = require('net');
+const { exec } = require('child_process');
+
+function listWindowsPrinters() {
+  return new Promise((resolve) => {
+    exec('wmic printer where "Local=TRUE or Network=TRUE" get Name', { timeout: 5000 }, (error, stdout) => {
+      if (error) {
+        console.error('[PRINTERS] Erro wmic:', error.message);
+        return resolve([]);
+      }
+      const lines = stdout.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0 && l !== 'Name');
+      resolve(lines);
+    });
+  });
+}
 
 const app = express();
 const PORT = 4676;
@@ -187,15 +203,13 @@ app.get('/status', (req, res) => {
 // Listar impressoras
 app.get('/printers', async (req, res) => {
   try {
-    const printers = await ptp.getPrinters();
-    // Normalizar: aceitar string[] ou {name}[]
-    const list = printers.map(p =>
-      typeof p === 'string' ? p : (p.name || p.printer || '')
-    ).filter(Boolean);
-    res.json(list);
+    // Usar método nativo do Windows que é mais confiável
+    const printers = await listWindowsPrinters();
+    console.log(`[PRINTERS] ${printers.length} impressoras encontradas:`, printers);
+    res.json(printers);
   } catch (error) {
     console.error('[ERROR] Falha ao listar impressoras:', error.message);
-    res.status(500).json({ error: 'Erro ao listar impressoras' });
+    res.json([]);
   }
 });
 
@@ -204,22 +218,35 @@ app.get('/paper-sizes', async (req, res) => {
   try {
     const { printer } = req.query;
 
+    // getPrinterPaperSizes pode não existir em versões antigas
+    if (typeof ptp.getPrinterPaperSizes !== 'function') {
+      console.log('[PAPER-SIZES] getPrinterPaperSizes não disponível nesta versão');
+      return res.json([]);
+    }
+
     if (printer) {
-      // Listar paper sizes de uma impressora específica
-      const paperSizes = await ptp.getPrinterPaperSizes(printer);
-      res.json({ printer, paperSizes });
+      try {
+        const paperSizes = await ptp.getPrinterPaperSizes(printer);
+        res.json({ printer, paperSizes: Array.isArray(paperSizes) ? paperSizes : [] });
+      } catch (e) {
+        console.log(`[PAPER-SIZES] Erro ao buscar sizes para ${printer}:`, e.message);
+        res.json({ printer, paperSizes: [] });
+      }
     } else {
-      // Listar todas as impressoras com seus paper sizes
       const printers = await ptp.getPrinters();
+      if (!Array.isArray(printers)) {
+        return res.json([]);
+      }
       const list = printers.map(p => {
-        const name = typeof p === 'string' ? p : (p.name || p.printer || '');
-        return { name, paperSizes: p.paperSizes || [] };
+        const name = (typeof p === 'string') ? p : (p && typeof p === 'object' ? (p.name || p.deviceId || p.printer || '') : '');
+        const sizes = (p && typeof p === 'object' && Array.isArray(p.paperSizes)) ? p.paperSizes : [];
+        return { name, paperSizes: sizes };
       }).filter(p => p.name);
       res.json(list);
     }
   } catch (error) {
     console.error('[ERROR] Falha ao listar paper sizes:', error.message);
-    res.status(500).json({ error: 'Erro ao listar tamanhos de papel' });
+    res.json([]);
   }
 });
 

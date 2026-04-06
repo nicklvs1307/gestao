@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
 import PrinterLayoutEditor, { type ReceiptLayout } from '../PrinterLayoutEditor';
-import { getPrinterPaperSizes, type PrinterConfig } from '../../services/printing';
+import { type PrinterConfig } from '../../services/printing';
 import { 
   Printer as PrinterIcon, RefreshCw, CreditCard, ChefHat, LayoutTemplate, 
-  Plus, Trash2, Wifi, WifiOff, CheckCircle, XCircle, Loader2, Zap, Settings,
+  Plus, Trash2, Wifi, WifiOff, CheckCircle, XCircle, Loader2, Zap,
   Printer as PrinterIcon2
 } from 'lucide-react';
 
@@ -70,25 +70,6 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
   operation, onLoadPrinters, onPrinterConfigChange, onReceiptLayoutChange, onOperationChange,
   restaurantName, restaurantLogo, restaurantAddress
 }) => {
-  const [paperSizes, setPaperSizes] = useState<Record<string, string[]>>({});
-
-  useEffect(() => {
-    if (agentStatus === 'online' && availablePrinters.length > 0) {
-      getPrinterPaperSizes().then((sizes) => {
-        const map: Record<string, string[]> = {};
-        sizes.forEach((item: Record<string, unknown>) => {
-          const name = (item.printer as string) || '';
-          const sizesList = (item.paperSizes as string[]) || [];
-          if (name) map[name] = sizesList;
-        });
-        setPaperSizes(map);
-      }).catch(() => {});
-    }
-  }, [agentStatus, availablePrinters]);
-
-  const getSizesForPrinter = (printerName: string): string[] => {
-    return paperSizes[printerName] || [];
-  };
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
       {/* SIDEBAR - Status & Automation */}
@@ -200,44 +181,30 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                 </button>
               </div>
               <div className="space-y-2">
-                {printerConfig.cashierPrinters.map((p, i) => {
-                  const sizes = getSizesForPrinter(p);
-                  return (
-                    <div key={i} className="flex gap-2">
-                      <select 
-                        className="flex-1 h-9 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none px-3 focus:border-primary focus:ring-1 focus:ring-primary/20" 
-                        value={p} 
-                        onChange={e => { 
-                          const n = [...printerConfig.cashierPrinters]; 
-                          n[i] = e.target.value; 
-                          onPrinterConfigChange({...printerConfig, cashierPrinters: n}); 
-                        }}
+                {printerConfig.cashierPrinters.map((p, i) => (
+                  <div key={i} className="flex gap-2">
+                    <select 
+                      className="flex-1 h-9 bg-white border border-slate-200 rounded-lg text-[10px] font-bold outline-none px-3 focus:border-primary focus:ring-1 focus:ring-primary/20" 
+                      value={p} 
+                      onChange={e => { 
+                        const n = [...printerConfig.cashierPrinters]; 
+                        n[i] = e.target.value; 
+                        onPrinterConfigChange({...printerConfig, cashierPrinters: n}); 
+                      }}
+                    >
+                      <option value="">Selecione...</option>
+                      {availablePrinters.map(pr => <option key={pr} value={pr}>{pr}</option>)}
+                    </select>
+                    {i > 0 && (
+                      <button 
+                        onClick={() => onPrinterConfigChange({...printerConfig, cashierPrinters: printerConfig.cashierPrinters.filter((_, idx) => idx !== i)})} 
+                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                       >
-                        <option value="">Selecione...</option>
-                        {availablePrinters.map(pr => <option key={pr} value={pr}>{pr}</option>)}
-                      </select>
-                      {p && sizes.length > 0 && (
-                        <select 
-                          className="w-24 h-9 bg-white border border-slate-200 rounded-lg text-[9px] font-bold outline-none px-2 focus:border-primary focus:ring-1 focus:ring-primary/20"
-                          value={printerConfig.paperSize || ''}
-                          onChange={e => onPrinterConfigChange({...printerConfig, paperSize: e.target.value || undefined})}
-                          title="Tamanho do papel"
-                        >
-                          <option value="">Auto</option>
-                          {sizes.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      )}
-                      {i > 0 && (
-                        <button 
-                          onClick={() => onPrinterConfigChange({...printerConfig, cashierPrinters: printerConfig.cashierPrinters.filter((_, idx) => idx !== i)})} 
-                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={14}/>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                        <Trash2 size={14}/>
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -258,59 +225,40 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                 </button>
               </div>
               <div className="space-y-2">
-                {printerConfig.kitchenPrinters.map((kp, i) => {
-                  const sizes = getSizesForPrinter(kp.printer);
-                  return (
-                    <div key={kp.id} className="grid grid-cols-3 gap-2 bg-white p-2 rounded-lg relative group border border-slate-100">
-                      <input
-                        className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-black uppercase px-3 focus:border-primary outline-none"
-                        value={kp.name}
-                        onChange={e => { 
-                          const n = [...printerConfig.kitchenPrinters]; 
-                          n[i].name = e.target.value; 
-                          onPrinterConfigChange({...printerConfig, kitchenPrinters: n}); 
-                        }} 
-                        placeholder="Nome do Setor"
-                      />
-                      <select 
-                        className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-bold px-3 focus:border-primary outline-none"
-                        value={kp.printer}
-                        onChange={e => { 
-                          const n = [...printerConfig.kitchenPrinters]; 
-                          n[i].printer = e.target.value; 
-                          n[i].paperSize = undefined;
-                          onPrinterConfigChange({...printerConfig, kitchenPrinters: n}); 
-                        }}
+                {printerConfig.kitchenPrinters.map((kp, i) => (
+                  <div key={kp.id} className="grid grid-cols-2 gap-2 bg-white p-2 rounded-lg relative group border border-slate-100">
+                    <input
+                      className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-black uppercase px-3 focus:border-primary outline-none"
+                      value={kp.name}
+                      onChange={e => { 
+                        const n = [...printerConfig.kitchenPrinters]; 
+                        n[i].name = e.target.value; 
+                        onPrinterConfigChange({...printerConfig, kitchenPrinters: n}); 
+                      }} 
+                      placeholder="Nome do Setor"
+                    />
+                    <select 
+                      className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-bold px-3 focus:border-primary outline-none"
+                      value={kp.printer}
+                      onChange={e => { 
+                        const n = [...printerConfig.kitchenPrinters]; 
+                        n[i].printer = e.target.value; 
+                        onPrinterConfigChange({...printerConfig, kitchenPrinters: n}); 
+                      }}
+                    >
+                      <option value="">Selecione...</option>
+                      {availablePrinters.map(pr => <option key={pr} value={pr}>{pr}</option>)}
+                    </select>
+                    {i > 0 && (
+                      <button 
+                        onClick={() => onPrinterConfigChange({...printerConfig, kitchenPrinters: printerConfig.kitchenPrinters.filter((_, idx) => idx !== i)})} 
+                        className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 bg-white shadow-md rounded-full p-1 text-rose-500 transition-opacity hover:bg-rose-50"
                       >
-                        <option value="">Selecione...</option>
-                        {availablePrinters.map(pr => <option key={pr} value={pr}>{pr}</option>)}
-                      </select>
-                      {kp.printer && sizes.length > 0 && (
-                        <select 
-                          className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[8px] font-bold px-2 focus:border-primary outline-none"
-                          value={kp.paperSize || ''}
-                          onChange={e => { 
-                            const n = [...printerConfig.kitchenPrinters]; 
-                            n[i].paperSize = e.target.value || undefined; 
-                            onPrinterConfigChange({...printerConfig, kitchenPrinters: n}); 
-                          }}
-                          title="Tamanho do papel"
-                        >
-                          <option value="">Auto</option>
-                          {sizes.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      )}
-                      {i > 0 && (
-                        <button 
-                          onClick={() => onPrinterConfigChange({...printerConfig, kitchenPrinters: printerConfig.kitchenPrinters.filter((_, idx) => idx !== i)})} 
-                          className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 bg-white shadow-md rounded-full p-1 text-rose-500 transition-opacity hover:bg-rose-50"
-                        >
-                          <Trash2 size={12}/>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                        <Trash2 size={12}/>
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -331,59 +279,40 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                 </button>
               </div>
               <div className="space-y-2">
-                {printerConfig.barPrinters.map((bp, i) => {
-                  const sizes = getSizesForPrinter(bp.printer);
-                  return (
-                    <div key={bp.id} className="grid grid-cols-3 gap-2 bg-white p-2 rounded-lg relative group border border-slate-100">
-                      <input
-                        className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-black uppercase px-3 focus:border-primary outline-none"
-                        value={bp.name}
-                        onChange={e => { 
-                          const n = [...printerConfig.barPrinters]; 
-                          n[i].name = e.target.value; 
-                          onPrinterConfigChange({...printerConfig, barPrinters: n}); 
-                        }} 
-                        placeholder="Nome do Bar"
-                      />
-                      <select 
-                        className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-bold px-3 focus:border-primary outline-none"
-                        value={bp.printer}
-                        onChange={e => { 
-                          const n = [...printerConfig.barPrinters]; 
-                          n[i].printer = e.target.value; 
-                          n[i].paperSize = undefined;
-                          onPrinterConfigChange({...printerConfig, barPrinters: n}); 
-                        }}
+                {printerConfig.barPrinters.map((bp, i) => (
+                  <div key={bp.id} className="grid grid-cols-2 gap-2 bg-white p-2 rounded-lg relative group border border-slate-100">
+                    <input
+                      className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-black uppercase px-3 focus:border-primary outline-none"
+                      value={bp.name}
+                      onChange={e => { 
+                        const n = [...printerConfig.barPrinters]; 
+                        n[i].name = e.target.value; 
+                        onPrinterConfigChange({...printerConfig, barPrinters: n}); 
+                      }} 
+                      placeholder="Nome do Bar"
+                    />
+                    <select 
+                      className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-bold px-3 focus:border-primary outline-none"
+                      value={bp.printer}
+                      onChange={e => { 
+                        const n = [...printerConfig.barPrinters]; 
+                        n[i].printer = e.target.value; 
+                        onPrinterConfigChange({...printerConfig, barPrinters: n}); 
+                      }}
+                    >
+                      <option value="">Selecione...</option>
+                      {availablePrinters.map(pr => <option key={pr} value={pr}>{pr}</option>)}
+                    </select>
+                    {i > 0 && (
+                      <button 
+                        onClick={() => onPrinterConfigChange({...printerConfig, barPrinters: printerConfig.barPrinters.filter((_, idx) => idx !== i)})} 
+                        className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 bg-white shadow-md rounded-full p-1 text-rose-500 transition-opacity hover:bg-rose-50"
                       >
-                        <option value="">Selecione...</option>
-                        {availablePrinters.map(pr => <option key={pr} value={pr}>{pr}</option>)}
-                      </select>
-                      {bp.printer && sizes.length > 0 && (
-                        <select 
-                          className="h-8 bg-slate-50 border border-slate-100 rounded-md text-[8px] font-bold px-2 focus:border-primary outline-none"
-                          value={bp.paperSize || ''}
-                          onChange={e => { 
-                            const n = [...printerConfig.barPrinters]; 
-                            n[i].paperSize = e.target.value || undefined; 
-                            onPrinterConfigChange({...printerConfig, barPrinters: n}); 
-                          }}
-                          title="Tamanho do papel"
-                        >
-                          <option value="">Auto</option>
-                          {sizes.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      )}
-                      {i > 0 && (
-                        <button 
-                          onClick={() => onPrinterConfigChange({...printerConfig, barPrinters: printerConfig.barPrinters.filter((_, idx) => idx !== i)})} 
-                          className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 bg-white shadow-md rounded-full p-1 text-rose-500 transition-opacity hover:bg-rose-50"
-                        >
-                          <Trash2 size={12}/>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                        <Trash2 size={12}/>
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
