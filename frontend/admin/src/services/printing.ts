@@ -354,65 +354,80 @@ export const printCashierClosure = async (
   const FONT_NORMAL = ESC + '!' + '\x00';
   const FONT_DOUBLE = ESC + '!' + '\x30';
   const FONT_DOUBLE_W = ESC + '!' + '\x20';
+  const FONT_SMALL = ESC + '!' + '\x01';
   const FEED = (n: number) => ESC + 'd' + String.fromCharCode(n);
   const CUT = GS + 'V' + '\x00';
-  const LINE = '------------------------------------------\n';
+  const LINE = '================================================\n';
+  const LINE_THIN = '------------------------------------------------\n';
+  const W = 48; // largura do papel 80mm em caracteres
+
+  function row(label: string, value: string): string {
+    return `${label.padEnd(W - 14)}${value}\n`;
+  }
+
+  function rowBold(label: string, value: string): string {
+    return BOLD_ON + row(label, value) + BOLD_OFF;
+  }
 
   let buf = '';
   buf += ALIGN_LEFT + FONT_NORMAL;
 
+  // Header
   buf += ALIGN_CENTER + FONT_DOUBLE + (info.name?.toUpperCase() || 'KICARDÁPIO') + '\n' + FONT_NORMAL + ALIGN_LEFT;
   if (info.cnpj) buf += ALIGN_CENTER + `CNPJ: ${info.cnpj}\n` + ALIGN_LEFT;
-  if (info.address) buf += ALIGN_CENTER + `${info.address.substring(0, 80)}\n` + ALIGN_LEFT;
+  if (info.address) buf += ALIGN_CENTER + `${info.address.substring(0, W)}\n` + ALIGN_LEFT;
   if (info.phone) buf += ALIGN_CENTER + `TEL: ${info.phone}\n` + ALIGN_LEFT;
 
-  buf += LINE;
-  buf += ALIGN_CENTER + FONT_DOUBLE_W + 'FECHAMENTO DE CAIXA' + '\n' + FONT_NORMAL + ALIGN_LEFT + '\n';
-
-  buf += `ABERTURA: ${formatSP(summary.openedAt as string, "dd/MM/yyyy HH:mm")}\n`;
-  buf += `FECHAMENTO: ${formatSP(new Date(), "dd/MM/yyyy HH:mm")}\n`;
+  buf += '\n' + LINE;
+  buf += ALIGN_CENTER + FONT_DOUBLE_W + '  FECHAMENTO DE CAIXA  ' + '\n' + FONT_NORMAL + ALIGN_LEFT;
   buf += LINE;
 
-  buf += BOLD_ON + `TOTAL DE PEDIDOS: ${totalOrders}\n` + BOLD_OFF;
-  buf += BOLD_ON + `TOTAL DE ITENS: ${totalItems}\n` + BOLD_OFF;
-  buf += LINE;
+  // Dados da sessão
+  buf += `Abertura:   ${formatSP(summary.openedAt as string, "dd/MM/yyyy HH:mm")}\n`;
+  buf += `Fechamento: ${formatSP(new Date(), "dd/MM/yyyy HH:mm")}\n`;
+  buf += LINE_THIN;
+  buf += rowBold('TOTAL DE PEDIDOS:', String(totalOrders));
+  buf += rowBold('TOTAL DE ITENS:', String(totalItems));
+  buf += LINE_THIN;
 
+  // Produtos vendidos
   buf += ALIGN_CENTER + BOLD_ON + 'PRODUTOS VENDIDOS' + '\n' + BOLD_OFF + ALIGN_LEFT;
-  buf += LINE;
-  buf += BOLD_ON + 'QTD  DESCRIÇÃO' + ' '.repeat(18) + 'VALOR\n' + BOLD_OFF;
-  buf += LINE;
+  buf += LINE_THIN;
+  buf += BOLD_ON + 'QTD  DESCRIÇÃO'.padEnd(W - 14) + 'VALOR\n' + BOLD_OFF;
+  buf += LINE_THIN;
 
   const sortedItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty);
   sortedItems.forEach(item => {
-    buf += BOLD_ON + `${item.qty}x ${item.name.toUpperCase()}\n` + BOLD_OFF;
-    buf += ALIGN_RIGHT + `R$ ${item.total.toFixed(2)}\n` + ALIGN_LEFT;
+    buf += BOLD_ON + `${item.qty}x ${item.name.toUpperCase()}`.padEnd(W - 14) + `R$ ${item.total.toFixed(2)}\n` + BOLD_OFF;
     Object.entries(item.addons).forEach(([addonName, addonData]) => {
-      buf += `  [+] ${addonData.qty}x ${addonName}\n`;
-      buf += ALIGN_RIGHT + `  R$ ${addonData.total.toFixed(2)}\n` + ALIGN_LEFT;
+      buf += (`  [+] ${addonData.qty}x ${addonName}`).padEnd(W - 14) + `R$ ${addonData.total.toFixed(2)}\n`;
     });
-    buf += '\n';
   });
 
-  buf += LINE;
+  buf += LINE_THIN;
+
+  // Resumo de vendas
   buf += ALIGN_CENTER + BOLD_ON + 'RESUMO DE VENDAS' + '\n' + BOLD_OFF + ALIGN_LEFT;
-  buf += LINE;
+  buf += LINE_THIN;
 
   const salesByMethod = summary.salesByMethod as Record<string, number> || {};
   Object.entries(salesByMethod).forEach(([method, amount]) => {
-    buf += `${(methodMap[method] || method.toUpperCase()).padEnd(28)} R$ ${(amount as number).toFixed(2)}\n`;
+    buf += row((methodMap[method] || method.toUpperCase()), `R$ ${(amount as number).toFixed(2)}`);
   });
-  buf += '\n';
-  buf += BOLD_ON + `TOTAL VENDAS`.padEnd(32) + `R$ ${(summary.totalSales as number || 0).toFixed(2)}\n` + BOLD_OFF;
-  buf += LINE;
 
+  buf += LINE_THIN;
+  buf += rowBold('TOTAL VENDAS:', `R$ ${(summary.totalSales as number || 0).toFixed(2)}`);
+  buf += LINE_THIN;
+
+  // Valores informados
   buf += ALIGN_CENTER + BOLD_ON + 'VALORES INFORMADOS' + '\n' + BOLD_OFF + ALIGN_LEFT;
-  buf += LINE;
+  buf += LINE_THIN;
 
   if (closingDetails) {
     Object.entries(closingDetails).forEach(([method, value]) => {
       const numVal = parseFloat(value) || 0;
       if (numVal > 0) {
-        buf += `${(methodMap[method] || method.toUpperCase()).padEnd(28)} R$ ${numVal.toFixed(2)}\n`;
+        buf += row((methodMap[method] || method.toUpperCase()), `R$ ${numVal.toFixed(2)}`);
       }
     });
   }
@@ -421,27 +436,29 @@ export const printCashierClosure = async (
     ? Object.values(closingDetails).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)
     : 0;
 
-  buf += '\n';
-  buf += BOLD_ON + `TOTAL INFORMADO`.padEnd(32) + `R$ ${totalInformed.toFixed(2)}\n` + BOLD_OFF;
-  buf += LINE;
+  buf += LINE_THIN;
+  buf += rowBold('TOTAL INFORMADO:', `R$ ${totalInformed.toFixed(2)}`);
+  buf += LINE_THIN;
 
+  // Saldo final
   buf += ALIGN_CENTER + BOLD_ON + 'SALDO FINAL' + '\n' + BOLD_OFF + ALIGN_LEFT;
-  buf += LINE;
+  buf += LINE_THIN;
 
   const adjustments = summary.adjustments as { sangria: number; reforco: number } || { sangria: 0, reforco: 0 };
 
-  buf += `Fundo de Caixa (Inicial)`.padEnd(32) + `+ R$ ${(summary.initialAmount as number || 0).toFixed(2)}\n`;
-  buf += `Total de Vendas`.padEnd(32) + `+ R$ ${(summary.totalSales as number || 0).toFixed(2)}\n`;
-  if (adjustments.reforco > 0) buf += `Reforcos (+)`.padEnd(32) + `+ R$ ${adjustments.reforco.toFixed(2)}\n`;
-  if (adjustments.sangria > 0) buf += `Sangrias (-)`.padEnd(32) + `- R$ ${adjustments.sangria.toFixed(2)}\n`;
+  buf += row('Fundo de Caixa (Inicial)', `+ R$ ${(summary.initialAmount as number || 0).toFixed(2)}`);
+  buf += row('Total de Vendas', `+ R$ ${(summary.totalSales as number || 0).toFixed(2)}`);
+  if (adjustments.reforco > 0) buf += row('Reforços (+)', `+ R$ ${adjustments.reforco.toFixed(2)}`);
+  if (adjustments.sangria > 0) buf += row('Sangrias (-)', `- R$ ${adjustments.sangria.toFixed(2)}`);
 
   const expectedAmount = (summary.initialAmount as number || 0) + (summary.totalSales as number || 0) + adjustments.reforco - adjustments.sangria;
-  buf += '\n';
-  buf += BOLD_ON + `ESPERADO PELO SISTEMA`.padEnd(32) + `R$ ${expectedAmount.toFixed(2)}\n` + BOLD_OFF;
-  buf += BOLD_ON + `INFORMADO POR VOCE`.padEnd(32) + `R$ ${totalInformed.toFixed(2)}\n` + BOLD_OFF;
+
+  buf += LINE;
+  buf += rowBold('ESPERADO PELO SISTEMA', `R$ ${expectedAmount.toFixed(2)}`);
+  buf += rowBold('INFORMADO POR VOCÊ', `R$ ${totalInformed.toFixed(2)}`);
+  buf += LINE;
 
   const difference = Math.round((totalInformed - expectedAmount) * 100) / 100;
-  buf += LINE;
   if (difference !== 0) {
     if (difference > 0) {
       buf += ALIGN_CENTER + BOLD_ON + `SOBRA: + R$ ${difference.toFixed(2)}\n` + BOLD_OFF + ALIGN_LEFT;
@@ -449,18 +466,22 @@ export const printCashierClosure = async (
       buf += ALIGN_CENTER + BOLD_ON + `FALTA: - R$ ${Math.abs(difference).toFixed(2)}\n` + BOLD_OFF + ALIGN_LEFT;
     }
   } else {
-    buf += ALIGN_CENTER + 'CAIXA CONFERE - SEM INCONSISTENCIAS\n' + ALIGN_LEFT;
+    buf += ALIGN_CENTER + BOLD_ON + 'CAIXA CONFERE - SEM INCONSISTÊNCIAS\n' + BOLD_OFF + ALIGN_LEFT;
   }
   buf += LINE;
 
   if (summary.notes) {
-    buf += BOLD_ON + 'OBSERVACOES:\n' + BOLD_OFF;
-    buf += `${(summary.notes as string).toUpperCase().substring(0, 120)}\n\n`;
+    buf += BOLD_ON + 'OBSERVAÇÕES:\n' + BOLD_OFF;
+    const notes = (summary.notes as string).toUpperCase();
+    for (let i = 0; i < notes.length; i += W) {
+      buf += notes.substring(i, i + W) + '\n';
+    }
+    buf += '\n';
   }
 
-  buf += '\nASSINATURA RESPONSAVEL:\n';
+  buf += '\nASSINATURA RESPONSÁVEL:\n\n';
   buf += '____________________________________\n\n';
-  buf += ALIGN_CENTER + BOLD_ON + 'KICARDAPIO@\n' + BOLD_OFF + ALIGN_LEFT;
+  buf += ALIGN_CENTER + BOLD_ON + 'KICARDÁPIO@\n' + BOLD_OFF + ALIGN_LEFT;
 
   buf += FEED(5) + CUT;
 
@@ -513,7 +534,17 @@ export const printDriverSettlement = async (
   const FONT_DOUBLE_W = ESC + '!' + '\x20';
   const FEED = (n: number) => ESC + 'd' + String.fromCharCode(n);
   const CUT = GS + 'V' + '\x00';
-  const LINE = '------------------------------------------\n';
+  const LINE = '================================================\n';
+  const LINE_THIN = '------------------------------------------------\n';
+  const W = 48;
+
+  function row(label: string, value: string): string {
+    return `${label.padEnd(W - 14)}${value}\n`;
+  }
+
+  function rowBold(label: string, value: string): string {
+    return BOLD_ON + row(label, value) + BOLD_OFF;
+  }
 
   const formatCurrency = (value: number) => 
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -521,50 +552,59 @@ export const printDriverSettlement = async (
   let buf = '';
   buf += ALIGN_LEFT + FONT_NORMAL;
 
-  buf += ALIGN_CENTER + FONT_DOUBLE + (info.name?.toUpperCase() || 'KICARDAPIO') + '\n' + FONT_NORMAL + ALIGN_LEFT;
+  // Header
+  buf += ALIGN_CENTER + FONT_DOUBLE + (info.name?.toUpperCase() || 'KICARDÁPIO') + '\n' + FONT_NORMAL + ALIGN_LEFT;
   if (info.cnpj) buf += ALIGN_CENTER + `CNPJ: ${info.cnpj}\n` + ALIGN_LEFT;
-  if (info.address) buf += ALIGN_CENTER + `${info.address.substring(0, 80)}\n` + ALIGN_LEFT;
+  if (info.address) buf += ALIGN_CENTER + `${info.address.substring(0, W)}\n` + ALIGN_LEFT;
 
   buf += '\n' + LINE;
-  buf += ALIGN_CENTER + FONT_DOUBLE_W + 'COMPROVANTE DE ACERTO' + '\n' + FONT_NORMAL + ALIGN_LEFT + '\n';
-
-  buf += `DATA: ${date}\n`;
-  buf += `PERIODO: ${startTime} as ${endTime}\n\n`;
-
+  buf += ALIGN_CENTER + FONT_DOUBLE_W + '  COMPROVANTE DE ACERTO  ' + '\n' + FONT_NORMAL + ALIGN_LEFT;
   buf += LINE;
+
+  // Período
+  buf += `Data:     ${date}\n`;
+  buf += `Período:  ${startTime} às ${endTime}\n`;
+  buf += LINE_THIN;
+
+  // Entregador
   buf += ALIGN_CENTER + BOLD_ON + 'ENTREGADOR' + '\n' + BOLD_OFF + ALIGN_LEFT;
-  buf += ALIGN_CENTER + FONT_DOUBLE_W + settlement.driverName.toUpperCase() + '\n' + FONT_NORMAL + ALIGN_LEFT + '\n';
-  buf += `ID: ${settlement.driverId.slice(0, 8)}\n\n`;
+  buf += ALIGN_CENTER + FONT_DOUBLE_W + settlement.driverName.toUpperCase() + '\n' + FONT_NORMAL + ALIGN_LEFT;
+  buf += `ID: ${settlement.driverId.slice(0, 8)}\n`;
+  buf += LINE_THIN;
 
+  // Resumo
+  buf += ALIGN_CENTER + BOLD_ON + 'RESUMO DAS ENTREGAS' + '\n' + BOLD_OFF + ALIGN_LEFT;
+  buf += LINE_THIN;
+  buf += rowBold('TOTAL DE ENTREGAS:', String(settlement.totalOrders));
+  buf += LINE_THIN;
+
+  // Detalhamento financeiro
+  buf += ALIGN_CENTER + BOLD_ON + 'DETALHAMENTO FINANCEIRO' + '\n' + BOLD_OFF + ALIGN_LEFT;
+  buf += LINE_THIN;
+  buf += row('Dinheiro (Mão)', formatCurrency(settlement.cash));
+  buf += row('Cartão (Machine)', formatCurrency(settlement.card));
+  buf += row('PIX (Transferência)', formatCurrency(settlement.pix));
+  buf += row('Taxas de Entrega', `- ${formatCurrency(settlement.deliveryFees)}`);
+  buf += LINE_THIN;
+
+  // Totais
   buf += LINE;
-  buf += ALIGN_CENTER + BOLD_ON + 'RESUMO DAS ENTREGAS' + '\n' + BOLD_OFF + ALIGN_LEFT + '\n';
-  buf += `TOTAL DE ENTREGAS: ${settlement.totalOrders}\n\n`;
-
-  buf += LINE;
-  buf += ALIGN_CENTER + BOLD_ON + 'DETALHAMENTO FINANCEIRO' + '\n' + BOLD_OFF + ALIGN_LEFT + '\n';
-
-  buf += `DINHEIRO (MAO):`.padEnd(32) + formatCurrency(settlement.cash) + '\n';
-  buf += `CARTAO (MACHINE):`.padEnd(32) + formatCurrency(settlement.card) + '\n';
-  buf += `PIX (TRANSFERENCIA):`.padEnd(32) + formatCurrency(settlement.pix) + '\n';
-  buf += `TAXAS DE ENTREGA:`.padEnd(32) + `- ${formatCurrency(settlement.deliveryFees)}` + '\n\n';
-
-  buf += '==========================================\n';
-  buf += BOLD_ON + `TOTAL A RECEBER:`.padEnd(32) + formatCurrency(settlement.totalToPay) + '\n' + BOLD_OFF;
-  buf += BOLD_ON + `LIQUIDO LOJA:`.padEnd(32) + formatCurrency(settlement.storeNet) + '\n' + BOLD_OFF;
+  buf += rowBold('TOTAL A RECEBER:', formatCurrency(settlement.totalToPay));
+  buf += rowBold('LÍQUIDO LOJA:', formatCurrency(settlement.storeNet));
   if (settlement.totalOrders > 0) {
-    buf += ALIGN_RIGHT + `(${formatCurrency(settlement.storeNet / settlement.totalOrders)}/ent)\n` + ALIGN_LEFT;
+    buf += ALIGN_CENTER + `(${formatCurrency(settlement.storeNet / settlement.totalOrders)}/ent)\n` + ALIGN_LEFT;
   }
-  buf += '\n';
-
-  buf += '==========================================\n\n';
-  buf += ALIGN_CENTER + 'ASSINATURA DO ENTREGADOR:\n\n' + ALIGN_LEFT;
-  buf += ALIGN_CENTER + '_________________________________________\n\n' + ALIGN_LEFT;
-  buf += ALIGN_CENTER + 'ASSINATURA DO CAIXA:\n\n' + ALIGN_LEFT;
-  buf += ALIGN_CENTER + '_________________________________________\n\n' + ALIGN_LEFT;
-
   buf += LINE;
+
+  // Assinaturas
+  buf += '\nASSINATURA DO ENTREGADOR:\n\n';
+  buf += '_________________________________________\n\n';
+  buf += 'ASSINATURA DO CAIXA:\n\n';
+  buf += '_________________________________________\n\n';
+
+  buf += LINE_THIN;
   buf += ALIGN_CENTER + `Emitido em: ${formatSP(new Date(), "dd/MM/yyyy HH:mm")}\n` + ALIGN_LEFT;
-  buf += ALIGN_CENTER + 'KICARDAPIO - Sistema de Gestao\n' + ALIGN_LEFT;
+  buf += ALIGN_CENTER + 'KICARDÁPIO - Sistema de Gestão\n' + ALIGN_LEFT;
 
   buf += FEED(5) + CUT;
 

@@ -187,18 +187,17 @@ export function generateEscPosReceipt(
     const productName = item.product?.name || 'Produto';
     const qty = item.quantity || 1;
 
-    // Linha principal do item
-    buf += Cmd.BOLD_ON;
-    buf += text(`${qty}x ${productName.toUpperCase()}\n`);
-    buf += Cmd.BOLD_OFF;
-
-    // Valor (apenas para via caixa)
-    if (!isProduction) {
+    if (isProduction) {
+      buf += Cmd.BOLD_ON;
+      buf += text(`${qty}x ${productName.toUpperCase()}\n`);
+      buf += Cmd.BOLD_OFF;
+    } else {
       const totalItem = ((item.priceAtTime || 0) * qty).toFixed(2);
-      // Alinha o valor à direita na mesma linha do nome (simplificado)
-      buf += Cmd.ALIGN_RIGHT;
-      buf += text(`R$ ${totalItem}\n`);
-      buf += Cmd.ALIGN_LEFT;
+      const namePart = `${qty}x ${productName.toUpperCase()}`;
+      const paddedName = namePart.substring(0, 28).padEnd(28);
+      buf += Cmd.BOLD_ON;
+      buf += text(`${paddedName}R$ ${totalItem}\n`);
+      buf += Cmd.BOLD_OFF;
     }
 
     // Sabores
@@ -276,18 +275,18 @@ export function generateEscPosReceipt(
     const extraCharge = (order as { extraCharge?: number }).extraCharge || 0;
     const totalGeral = subtotal + deliveryFee - discount + extraCharge;
 
-    buf += text(`SUBTOTAL                       R$ ${subtotal.toFixed(2)}\n`);
+    buf += text(`SUBTOTAL`.padEnd(30) + `R$ ${subtotal.toFixed(2)}\n`);
 
     if (deliveryFee > 0) {
-      buf += text(`TAXA ENTREGA                   R$ ${deliveryFee.toFixed(2)}\n`);
+      buf += text(`TAXA ENTREGA`.padEnd(30) + `R$ ${deliveryFee.toFixed(2)}\n`);
     }
     if (discount > 0) {
-      buf += text(`DESCONTO (-)                   R$ ${discount.toFixed(2)}\n`);
+      buf += text(`DESCONTO (-)`.padEnd(30) + `R$ ${discount.toFixed(2)}\n`);
     }
 
     buf += line('-', WIDTH);
     buf += Cmd.FONT_DOUBLE;
-    buf += text(`TOTAL                          R$ ${totalGeral.toFixed(2)}\n`);
+    buf += text(`TOTAL`.padEnd(30) + `R$ ${totalGeral.toFixed(2)}\n`);
     buf += Cmd.FONT_NORMAL;
     buf += line('-', WIDTH);
 
@@ -308,7 +307,7 @@ export function generateEscPosReceipt(
     if (order.payments && order.payments.length > 0) {
       order.payments.forEach((p: { method: string; amount: number }) => {
         const method = methodMap[p.method] || p.method.toUpperCase();
-        buf += text(`${method.padEnd(30)} R$ ${p.amount.toFixed(2)}\n`);
+        buf += text(`${method.padEnd(30)}R$ ${p.amount.toFixed(2)}\n`);
       });
     } else if (order.deliveryOrder?.paymentMethod) {
       const method = methodMap[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase();
