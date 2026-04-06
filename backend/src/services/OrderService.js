@@ -226,6 +226,10 @@ class OrderService {
         }
     }
 
+    if (finalOrderType === 'PICKUP' && deliveryInfo) {
+        fullAddress = 'Retirada no Balcão';
+    }
+
     if (finalOrderType === 'TABLE' && tableNumber) {
         const existingOrder = await prisma.order.findFirst({
             where: {
@@ -293,60 +297,90 @@ class OrderService {
 
         if (finalOrderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
+             const isPickup = deliveryInfo.deliveryType === 'pickup';
              const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
-             const cleanPhone = normalizePhone(deliveryInfo.phone);
+             const cleanPhone = deliveryInfo.phone ? normalizePhone(deliveryInfo.phone) : null;
+             const customerName = deliveryInfo.name || 'Retirada Balcão';
 
-             const customer = await tx.customer.upsert({
-                 where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
-                 update: {
-                     name: deliveryInfo.name, 
-                     address: fullAddress, 
-                     zipCode: addr.zipCode || addr.cep || deliveryInfo.cep || null,
-                     street: addr.street || null, 
-                     number: addr.number || null,
-                     neighborhood: addr.neighborhood || null, 
-                     city: addr.city || null,
-                     state: addr.state || deliveryInfo.state || null, 
-                     complement: addr.complement || deliveryInfo.complement || null,
-                     reference: addr.reference || deliveryInfo.reference || null,
-                     latitude: coords?.lat || null,
-                     longitude: coords?.lng || null
-                 },
-                 create: {
-                     name: deliveryInfo.name, 
-                     phone: cleanPhone, 
-                     address: fullAddress, 
-                     zipCode: addr.zipCode || addr.cep || deliveryInfo.cep || null,
-                     street: addr.street || null, 
-                     number: addr.number || null,
-                     neighborhood: addr.neighborhood || null, 
-                     city: addr.city || null,
-                     state: addr.state || deliveryInfo.state || null, 
-                     complement: addr.complement || deliveryInfo.complement || null,
-                     reference: addr.reference || deliveryInfo.reference || null, 
-                     restaurantId: realRestaurantId,
-                     latitude: coords?.lat || null,
-                     longitude: coords?.lng || null
-                 }
-             });
- 
-             await tx.deliveryOrder.create({
-                 data: {
-                     orderId: createdOrder.id, 
-                     customerId: customer.id, 
-                     name: deliveryInfo.name, 
-                     phone: deliveryInfo.phone,
-                     address: fullAddress, 
-                     deliveryType: deliveryInfo.deliveryType, 
-                     paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
-                     changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
-                     deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
-                     notes: deliveryInfo.notes || null,
-                     latitude: coords?.lat || (deliveryInfo.latitude && !isNaN(parseFloat(deliveryInfo.latitude)) ? parseFloat(deliveryInfo.latitude) : null),
-                     longitude: coords?.lng || (deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.longitude)) ? parseFloat(deliveryInfo.longitude) : null),
-                     status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
-                 }
-             });
+             if (isPickup && !cleanPhone) {
+                 const customer = await tx.customer.create({
+                     data: {
+                         name: customerName,
+                         address: fullAddress,
+                         restaurantId: realRestaurantId
+                     }
+                 });
+
+                 await tx.deliveryOrder.create({
+                     data: {
+                         orderId: createdOrder.id,
+                         customerId: customer.id,
+                         name: customerName,
+                         phone: null,
+                         address: fullAddress,
+                         deliveryType: 'pickup',
+                         paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
+                         changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
+                         deliveryFee: 0,
+                         notes: deliveryInfo.notes || null,
+                         latitude: null,
+                         longitude: null,
+                         status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
+                     }
+                 });
+             } else {
+                 const customer = await tx.customer.upsert({
+                     where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
+                     update: {
+                         name: customerName,
+                         address: fullAddress,
+                         zipCode: addr.zipCode || addr.cep || deliveryInfo.cep || null,
+                         street: addr.street || null,
+                         number: addr.number || null,
+                         neighborhood: addr.neighborhood || null,
+                         city: addr.city || null,
+                         state: addr.state || deliveryInfo.state || null,
+                         complement: addr.complement || deliveryInfo.complement || null,
+                         reference: addr.reference || deliveryInfo.reference || null,
+                         latitude: coords?.lat || null,
+                         longitude: coords?.lng || null
+                     },
+                     create: {
+                         name: customerName,
+                         phone: cleanPhone,
+                         address: fullAddress,
+                         zipCode: addr.zipCode || addr.cep || deliveryInfo.cep || null,
+                         street: addr.street || null,
+                         number: addr.number || null,
+                         neighborhood: addr.neighborhood || null,
+                         city: addr.city || null,
+                         state: addr.state || deliveryInfo.state || null,
+                         complement: addr.complement || deliveryInfo.complement || null,
+                         reference: addr.reference || deliveryInfo.reference || null,
+                         restaurantId: realRestaurantId,
+                         latitude: coords?.lat || null,
+                         longitude: coords?.lng || null
+                     }
+                 });
+
+                 await tx.deliveryOrder.create({
+                     data: {
+                         orderId: createdOrder.id,
+                         customerId: customer.id,
+                         name: customerName,
+                         phone: deliveryInfo.phone || null,
+                         address: fullAddress,
+                         deliveryType: deliveryInfo.deliveryType,
+                         paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
+                         changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
+                         deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
+                         notes: deliveryInfo.notes || null,
+                         latitude: coords?.lat || (deliveryInfo.latitude && !isNaN(parseFloat(deliveryInfo.latitude)) ? parseFloat(deliveryInfo.latitude) : null),
+                         longitude: coords?.lng || (deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.longitude)) ? parseFloat(deliveryInfo.longitude) : null),
+                         status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
+                     }
+                 });
+             }
 
              if (isDelivery && deliveryInfo.deliveryFee > 0) {
                  await tx.order.update({

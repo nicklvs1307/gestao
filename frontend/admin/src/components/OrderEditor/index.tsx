@@ -3,13 +3,13 @@ import type { Order, Product, Category, PaymentMethod as PaymentMethodType } fro
 import {
     getDrivers, assignDriver, getProducts, getCategories,
     getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem,
-    updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType
+    updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType, updateOrderStatus
 } from '../../services/api';
 import { formatSP } from '@/lib/timezone';
 import {
-  CheckCircle, Printer,
-  Loader2, FileText, User, MapPin,
-  Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck
+    CheckCircle, Printer,
+    Loader2, FileText, User, MapPin,
+    Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck, XCircle
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
@@ -285,6 +285,18 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}?`)) return;
+    try {
+      await updateOrderStatus(order.id, 'CANCELED');
+      toast.success("Pedido cancelado!");
+      onRefresh();
+      onClose();
+    } catch {
+      toast.error("Erro ao cancelar pedido.");
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -333,6 +345,14 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             >
                 {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />} Imprimir
             </button>
+            {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
+              <button 
+                onClick={handleCancelOrder}
+                className="flex items-center gap-2 bg-rose-600 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-rose-700 transition-all shadow-md"
+              >
+                <XCircle size={14} /> Cancelar
+              </button>
+            )}
             <button onClick={handleSaveFinancials} disabled={isSaving} className="flex items-center gap-2 bg-orange-600 text-white h-9 px-6 rounded-xl font-black text-[10px] uppercase italic hover:bg-orange-700 transition-all shadow-md disabled:opacity-50">
                 {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />} SALVAR
             </button>

@@ -24,6 +24,7 @@ const KANBAN_COLUMNS: Record<string, string> = {
 interface OrderKanbanBoardProps {
   orders: Order[];
   onStatusChange: (orderId: string, newStatus: string) => void;
+  onCancelOrder?: (orderId: string) => void;
   onOpenDetails: (order: Order) => void;
   selectedOrderIds: string[];
   toggleSelectOrder: (id: string) => void;
@@ -32,6 +33,7 @@ interface OrderKanbanBoardProps {
 const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({ 
     orders, 
     onStatusChange, 
+    onCancelOrder,
     onOpenDetails,
     selectedOrderIds,
     toggleSelectOrder
@@ -119,6 +121,7 @@ const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({
                 orders={columnOrders}
                 onOpenDetails={onOpenDetails}
                 onStatusChange={onStatusChange}
+                onCancelOrder={onCancelOrder}
                 selectedOrderIds={selectedOrderIds}
                 toggleSelectOrder={toggleSelectOrder}
               />

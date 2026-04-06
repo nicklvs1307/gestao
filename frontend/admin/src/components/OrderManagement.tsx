@@ -238,6 +238,18 @@ const OrderManagement: React.FC = () => {
     setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   }, []);
 
+  const handleCancelOrder = useCallback(async (orderId: string) => {
+    try {
+      setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'CANCELED' } : o));
+      setSelectedOrder(current => current && current.id === orderId ? { ...current, status: 'CANCELED' } : current);
+      await updateOrderStatus(orderId, 'CANCELED');
+      toast.success('Pedido cancelado!');
+    } catch (error) {
+      toast.error('Erro ao cancelar pedido');
+      fetchOrders();
+    }
+  }, [fetchOrders]);
+
   // Memoized filtered orders
   const filteredOrders = useMemo(() => {
     return allOrders.filter(o => {
@@ -336,6 +348,7 @@ const OrderManagement: React.FC = () => {
             orders={filteredOrders} 
             onStatusChange={handleStatusChange} 
             onOpenDetails={handleOpenOrder}
+            onCancelOrder={handleCancelOrder}
             selectedOrderIds={selectedOrderIds}
             toggleSelectOrder={toggleSelectOrder}
           />
@@ -343,6 +356,7 @@ const OrderManagement: React.FC = () => {
           <OrderListView 
             orders={allOrders} 
             onOpenDetails={handleOpenOrder}
+            onCancelOrder={handleCancelOrder}
             selectedOrderIds={selectedOrderIds}
             toggleSelectOrder={toggleSelectOrder}
           />

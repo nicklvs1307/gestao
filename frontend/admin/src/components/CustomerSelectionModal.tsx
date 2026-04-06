@@ -142,6 +142,16 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         onClose();
     };
 
+    const handleNoCustomer = () => {
+        onSelectCustomer({
+            name: '',
+            phone: '',
+            addressStr: 'Retirada no Balcão',
+            deliveryType: 'pickup'
+        });
+        onClose();
+    };
+
     const handleSaveNewAddress = (customerId: string) => {
         const customer = results.find(c => c.id === customerId);
         if (customer) {
@@ -151,7 +161,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     };
 
     const handleCreateCustomerAndAddress = async () => {
-        if (!newCustomer.name || !newCustomer.phone) return toast.error("Nome e telefone obrigatórios");
+        if (!newCustomer.name) return toast.error("Nome obrigatório");
         setIsLoading(true);
         try {
             let addrStr = 'Retirada no Balcão';

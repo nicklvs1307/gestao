@@ -20,6 +20,7 @@ interface KanbanColumnProps {
   orders: Order[];
   onOpenDetails: (order: Order) => void;
   onStatusChange: (orderId: string, newStatus: string) => void;
+  onCancelOrder?: (orderId: string) => void;
   selectedOrderIds: string[];
   toggleSelectOrder: (id: string) => void;
 }
@@ -30,6 +31,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
     orders, 
     onOpenDetails,
     onStatusChange,
+    onCancelOrder,
     selectedOrderIds,
     toggleSelectOrder
 }) => {
@@ -126,6 +128,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
                     order={order} 
                     onOpenDetails={onOpenDetails} 
                     onStatusChange={onStatusChange}
+                    onCancelOrder={onCancelOrder}
                     isSelected={selectedOrderIds.includes(order.id)}
                     onSelect={() => toggleSelectOrder(order.id)}
                 />

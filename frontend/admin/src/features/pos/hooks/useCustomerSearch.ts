@@ -60,6 +60,21 @@ export const useCustomerSearch = (deliveryOrders: any[]) => {
         setCustomerSearchTerm('');
     };
 
+    const handleSelectCounterCustomer = (customer: any) => {
+        pos.setCustomerName(customer.name);
+        if (customer.phone) {
+            pos.setDeliveryInfo({
+                ...pos.deliveryInfo,
+                name: customer.name,
+                phone: customer.phone,
+                address: customer.address || 'Retirada no Balcão',
+                deliveryType: 'pickup'
+            });
+        }
+        setCustomerResults([]);
+        setCustomerSearchTerm('');
+    };
+
     return {
         customerSearchTerm,
         customerResults,
@@ -67,6 +82,7 @@ export const useCustomerSearch = (deliveryOrders: any[]) => {
         isSearchingCustomer,
         handleSearchCustomer,
         handleSelectCustomer,
+        handleSelectCounterCustomer,
         setCustomerAddresses
     };
 };

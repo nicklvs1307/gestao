@@ -1,12 +1,13 @@
 import React from 'react';
 import type { Order } from '@/types/index.ts';
 import { formatSP } from '@/lib/timezone';
-import { Eye, UtensilsCrossed, Clock, Truck, ShoppingBag, User, Bike } from 'lucide-react';
+import { Eye, UtensilsCrossed, Clock, Truck, ShoppingBag, User, Bike, XCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface OrderListViewProps {
   orders: Order[];
   onOpenDetails: (order: Order) => void;
+  onCancelOrder?: (orderId: string) => void;
   selectedOrderIds?: string[];
   toggleSelectOrder?: (id: string) => void;
 }
@@ -31,7 +32,7 @@ const STATUS_COLORS: Record<string, string> = {
     CANCELED: 'bg-red-500/10 text-red-600 border-red-200',
 }
 
-const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, selectedOrderIds = [], toggleSelectOrder }) => {
+const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, onCancelOrder, selectedOrderIds = [], toggleSelectOrder }) => {
   return (
     <div className="h-full overflow-hidden flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm">
       <div className="flex-1 overflow-auto custom-scrollbar">
@@ -155,12 +156,28 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, se
                             </div>
                         </td>
                         <td className="px-4 py-3 text-right">
-                            <button 
-                                className="h-8 w-8 rounded-xl bg-slate-100 text-slate-400 hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center shadow-sm" 
-                                onClick={(e) => { e.stopPropagation(); onOpenDetails(order); }}
-                            >
-                                <Eye size={14} />
-                            </button>
+                            <div className="flex items-center justify-end gap-1">
+                                <button 
+                                    className="h-8 w-8 rounded-xl bg-slate-100 text-slate-400 hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center shadow-sm" 
+                                    onClick={(e) => { e.stopPropagation(); onOpenDetails(order); }}
+                                >
+                                    <Eye size={14} />
+                                </button>
+                                {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && onCancelOrder && (
+                                    <button 
+                                        className="h-8 w-8 rounded-xl bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center shadow-sm" 
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            if (window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}?`)) {
+                                                onCancelOrder(order.id);
+                                            }
+                                        }}
+                                        title="Cancelar pedido"
+                                    >
+                                        <XCircle size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </td>
                         </tr>
                     );

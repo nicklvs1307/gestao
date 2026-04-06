@@ -30,7 +30,7 @@ const PosPage: React.FC = () => {
     );
 
     const {
-        customerAddresses, handleSelectCustomer
+        customerAddresses, handleSelectCustomer, handleSelectCounterCustomer
     } = useCustomerSearch(deliveryOrders);
 
     if (loading) {
@@ -92,6 +92,7 @@ const PosPage: React.FC = () => {
                     onOpenCashier={handleOpenCashier}
                     customerAddresses={customerAddresses}
                     handleSelectCustomer={handleSelectCustomer}
+                    handleSelectCounterCustomer={handleSelectCounterCustomer}
                 />
             </main>
         </div>

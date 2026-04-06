@@ -28,7 +28,7 @@ interface PosState {
   activeTab: PosTab;
   
   // Modal ativo
-  activeModal: 'none' | 'cashier_open' | 'delivery_info' | 'pos_checkout';
+  activeModal: 'none' | 'cashier_open' | 'delivery_info' | 'counter_customer' | 'pos_checkout';
   
   // Contexto Mesa
   selectedTable: string;

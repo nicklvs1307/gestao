@@ -176,23 +176,44 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
           </div>
         )}
 
-        {/* Balcão: nome + telefone opcionais */}
+        {/* Balcão: vincular cliente ou sem cliente */}
         {activeTab === 'counter' && (
           <div className="space-y-2">
-            <input 
-              placeholder="Nome do cliente (opcional)" 
-              value={customerName} 
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              aria-label="Nome do cliente"
-            />
-            <input 
-              placeholder="Telefone (opcional)" 
-              value={deliveryInfo.phone || ''} 
-              onChange={(e) => setDeliveryInfo(prev => ({ ...prev, phone: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              aria-label="Telefone do cliente"
-            />
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setActiveModal('counter_customer')}
+                className="flex-1 h-10 border border-slate-200 rounded-lg px-3 flex items-center justify-between hover:border-blue-500 hover:bg-blue-50/30 transition-all bg-white overflow-hidden"
+                aria-label="Selecionar cliente"
+              >
+                <div className="min-w-0 flex flex-col items-start">
+                  <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider leading-none">
+                    {customerName ? 'Cliente' : 'Cliente'}
+                  </span>
+                  <span className="text-xs font-medium text-slate-700 truncate w-full text-left">
+                    {customerName || 'Vincular cliente...'}
+                  </span>
+                </div>
+                <User size={14} className="text-blue-400 shrink-0" />
+              </button>
+              {customerName && (
+                <button 
+                  onClick={() => {
+                    setCustomerName('');
+                    setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' });
+                  }}
+                  className="w-10 h-10 rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center bg-white transition-all"
+                  aria-label="Limpar cliente"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            {!customerName && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                <span className="text-[9px] font-medium text-slate-400">Pedido sem cliente vinculado</span>
+              </div>
+            )}
           </div>
         )}
       </div>

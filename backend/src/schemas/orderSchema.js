@@ -39,7 +39,7 @@ const CreateDeliveryOrderSchema = z.object({
   orderType: z.enum(['DELIVERY', 'PICKUP', 'TABLE']).default('TABLE'),
   
   deliveryInfo: z.object({
-    name: z.string().min(1, 'Nome do cliente é obrigatório'),
+    name: z.string().optional().nullable(),
     phone: z.string().min(8, 'Telefone inválido').optional().nullable(),
     
     // Endereço (Opcional, pode ser string ou objeto)

@@ -13,12 +13,13 @@ interface PosModalsProps {
   onSubmitOrder: () => void;
   onOpenCashier: (amount: string) => void;
   customerAddresses: string[];
-  handleSelectCustomer: (customer: any) => void;
+  handleSelectCustomer: (data: any) => void;
+  handleSelectCounterCustomer?: (data: any) => void;
 }
 
 export const PosModals: React.FC<PosModalsProps> = ({
   paymentMethods, onSubmitOrder, onOpenCashier,
-  customerAddresses, handleSelectCustomer
+  customerAddresses, handleSelectCustomer, handleSelectCounterCustomer
 }) => {
   const { activeModal, setActiveModal } = usePosStore();
 
@@ -47,6 +48,24 @@ export const PosModals: React.FC<PosModalsProps> = ({
               phone: data.phone,
               address: data.addressStr
             });
+            setActiveModal('none');
+          }}
+        />
+      )}
+
+      {activeModal === 'counter_customer' && (
+        <CustomerSelectionModal 
+          isOpen={true}
+          onClose={() => setActiveModal('none')} 
+          onSelectCustomer={(data) => {
+            if (handleSelectCounterCustomer) {
+              handleSelectCounterCustomer({
+                name: data.name,
+                phone: data.phone,
+                address: data.addressStr,
+                deliveryType: data.deliveryType
+              });
+            }
             setActiveModal('none');
           }}
         />

@@ -5,7 +5,7 @@ import type { Order } from '@/types/index.ts';
 import { getSettings, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printing';
 import { formatElapsed } from '@/lib/timezone';
-import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag } from 'lucide-react';
+import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag, XCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
@@ -39,9 +39,10 @@ interface OrderCardProps {
   isSelected?: boolean;
   onSelect?: () => void;
   onStatusChange?: (orderId: string, newStatus: string) => void;
+  onCancelOrder?: (orderId: string) => void;
 }
 
-const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSelected, onSelect, onStatusChange }) => {
+const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSelected, onSelect, onStatusChange, onCancelOrder }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: order.id });
   const [isPrinting, setIsPrinting] = useState(false);
 
@@ -93,6 +94,13 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
     e.stopPropagation();
     onSelect?.();
   }, [onSelect]);
+
+  const handleCancel = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}?`)) {
+      onCancelOrder?.(order.id);
+    }
+  }, [order.id, order.dailyOrderNumber, onCancelOrder]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -226,6 +234,16 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
             >
               <ChevronRight size={16} strokeWidth={3} />
             </button>
+
+            {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
+              <button 
+                onClick={handleCancel}
+                aria-label="Cancelar pedido"
+                className="h-10 w-10 bg-white border border-rose-200 rounded-lg flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+              >
+                <XCircle size={14} />
+              </button>
+            )}
         </div>
       </Card>
     </div>

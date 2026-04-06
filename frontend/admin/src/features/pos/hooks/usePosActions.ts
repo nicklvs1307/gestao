@@ -66,6 +66,7 @@ export const usePosActions = (
             const orderType = pos.activeTab === 'table' ? 'TABLE' : (pos.activeTab === 'counter' ? 'PICKUP' : 'DELIVERY');
             const isDelivery = pos.activeTab === 'delivery';
             const isCounter = pos.activeTab === 'counter';
+            const hasCounterCustomer = isCounter && pos.customerName;
 
             const orderPayload = {
                 items: cart.map(item => ({
@@ -88,7 +89,14 @@ export const usePosActions = (
                     deliveryType: pos.deliverySubType,
                     deliveryFee: finalDelivery,
                     observations: pos.posObservations
-                } : null,
+                } : (hasCounterCustomer && pos.deliveryInfo.name ? {
+                    name: pos.deliveryInfo.name,
+                    phone: pos.deliveryInfo.phone,
+                    address: 'Retirada no Balcão',
+                    deliveryType: 'pickup',
+                    deliveryFee: 0,
+                    observations: pos.posObservations
+                } : null),
                 discount: finalDiscount,
                 extraCharge: finalExtra,
                 totalAmount: Number((cartTotalValue + finalExtra + finalDelivery - finalDiscount).toFixed(2))
