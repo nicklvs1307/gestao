@@ -104,7 +104,7 @@ function printNetwork(printer, buffer) {
 }
 
 // ─── IMPRESSÃO VIA USB/LOCAL (PDF via spooler) ────────────────────────
-function printLocal(printer, pdfBase64) {
+function printLocal(printer, pdfBase64, paperSize) {
   return new Promise((resolve, reject) => {
     const tempFile = path.join(os.tmpdir(), `kicardapio_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`);
 
@@ -115,9 +115,6 @@ function printLocal(printer, pdfBase64) {
       const stat = fs.statSync(tempFile);
       console.log(`[LOCAL] PDF gerado: ${(stat.size / 1024).toFixed(1)}KB`);
 
-      // Usar scale: 'fit' para ajustar o conteúdo ao papel da impressora
-      // Isso evita o feed excessivo quando o driver está configurado com A4/Letter
-      // orientation: 'portrait' garante orientação correta
       const printOptions = { 
         printer,
         scale: 'fit',
@@ -125,7 +122,12 @@ function printLocal(printer, pdfBase64) {
         silent: true,
       };
 
-      console.log(`[LOCAL] Imprimindo com opções: scale=fit, orientation=portrait`);
+      if (paperSize) {
+        printOptions.paperSize = paperSize;
+        console.log(`[LOCAL] paperSize definido: ${paperSize}`);
+      }
+
+      console.log(`[LOCAL] Imprimindo com opções: scale=fit, orientation=portrait${paperSize ? `, paperSize=${paperSize}` : ''}`);
 
       ptp.print(tempFile, printOptions)
         .then(() => {
@@ -197,9 +199,33 @@ app.get('/printers', async (req, res) => {
   }
 });
 
+// Listar tamanhos de papel suportados por uma impressora
+app.get('/paper-sizes', async (req, res) => {
+  try {
+    const { printer } = req.query;
+
+    if (printer) {
+      // Listar paper sizes de uma impressora específica
+      const paperSizes = await ptp.getPrinterPaperSizes(printer);
+      res.json({ printer, paperSizes });
+    } else {
+      // Listar todas as impressoras com seus paper sizes
+      const printers = await ptp.getPrinters();
+      const list = printers.map(p => {
+        const name = typeof p === 'string' ? p : (p.name || p.printer || '');
+        return { name, paperSizes: p.paperSizes || [] };
+      }).filter(p => p.name);
+      res.json(list);
+    }
+  } catch (error) {
+    console.error('[ERROR] Falha ao listar paper sizes:', error.message);
+    res.status(500).json({ error: 'Erro ao listar tamanhos de papel' });
+  }
+});
+
 // Imprimir (ESC/POS ou PDF)
 app.post('/print', async (req, res) => {
-  const { printer, content, type } = req.body;
+  const { printer, content, type, paperSize } = req.body;
 
   if (!printer) {
     return res.status(400).json({ error: 'Nome da impressora não informado' });
@@ -208,7 +234,7 @@ app.post('/print', async (req, res) => {
     return res.status(400).json({ error: 'Conteúdo não informado' });
   }
 
-  console.log(`[PRINT] Recebido job: printer=${printer}, type=${type || 'auto'}, size=${content.length} bytes`);
+  console.log(`[PRINT] Recebido job: printer=${printer}, type=${type || 'auto'}, size=${content.length} bytes${paperSize ? `, paperSize=${paperSize}` : ''}`);
 
   // Adicionar à fila
   const result = await new Promise((resolve) => {
@@ -226,7 +252,7 @@ app.post('/print', async (req, res) => {
           }
         } else {
           // PDF: usar pdf-to-printer
-          await printLocal(printer, content);
+          await printLocal(printer, content, paperSize);
         }
       },
       resolve,

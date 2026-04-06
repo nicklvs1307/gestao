@@ -38,11 +38,13 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
 
 export interface PrinterConfig {
   cashierPrinters: string[];
-  kitchenPrinters: { id: string; name: string; printer: string }[];
-  barPrinters: { id: string; name: string; printer: string }[];
+  kitchenPrinters: { id: string; name: string; printer: string; paperSize?: string }[];
+  barPrinters: { id: string; name: string; printer: string; paperSize?: string }[];
   categoryMapping: Record<string, string>;
   /** Modo de impressão: 'escpos' para térmicas, 'pdf' para fallback */
   printMode?: 'escpos' | 'pdf' | 'auto';
+  /** paperSize global para impressoras PDF (ex: "80mm", "58mm") */
+  paperSize?: string;
 }
 
 export interface ReceiptSettings {
@@ -90,8 +92,24 @@ export const getPrinters = async (): Promise<string[]> => {
   }
 };
 
+export const getPrinterPaperSizes = async (printer?: string): Promise<Record<string, unknown>[]> => {
+  try {
+    const url = printer
+      ? `${getAgentUrl()}/paper-sizes?printer=${encodeURIComponent(printer)}`
+      : `${getAgentUrl()}/paper-sizes`;
+    const res = await fetchWithTimeout(url);
+    const data = await res.json();
+    if (Array.isArray(data)) return data;
+    if (data && data.paperSizes) return [{ printer: data.printer, paperSizes: data.paperSizes }];
+    return [];
+  } catch (e) {
+    console.error('Erro ao buscar paper sizes', e);
+    return [];
+  }
+};
+
 // ─── ENVIO PARA O AGENTE ──────────────────────────────────────────────
-const sendToAgent = async (printer: string, content: string, type: 'escpos' | 'pdf' = 'pdf') => {
+const sendToAgent = async (printer: string, content: string, type: 'escpos' | 'pdf' = 'pdf', paperSize?: string) => {
   if (!printer) return;
 
   await fetchWithTimeout(`${getAgentUrl()}/print`, {
@@ -101,6 +119,7 @@ const sendToAgent = async (printer: string, content: string, type: 'escpos' | 'p
       printer,
       content,
       type,
+      paperSize,
       token: getAgentToken(),
     }),
   }, 8000);
@@ -476,6 +495,7 @@ export const printOrder = async (
     barPrinters: config?.barPrinters || [],
     categoryMapping: config?.categoryMapping || {},
     printMode: config?.printMode || 'auto',
+    paperSize: config?.paperSize,
   };
 
   const storageLayout = localStorage.getItem('receipt_layout');
@@ -509,13 +529,14 @@ export const printOrder = async (
   if (shouldPrintCashier && finalConfig.cashierPrinters?.length > 0) {
     for (const printer of finalConfig.cashierPrinters) {
       const mode = detectPrintMode(printer, finalConfig.printMode);
+      const ps = finalConfig.paperSize;
 
       if (mode === 'escpos') {
         const escPos = generateEscPosReceipt(order, order.items, isTable ? "EXTRATO DE CONTA" : "VIA CAIXA", finalSettings, finalRestaurant, false);
         await sendToAgent(printer, escPosToBase64(escPos), 'escpos');
       } else {
         const pdf = generateOrderReceiptPdf(order, order.items, isTable ? "EXTRATO DE CONTA" : "VIA CAIXA", finalSettings, finalRestaurant, logoBase64, false);
-        await sendToAgent(printer, pdf, 'pdf');
+        await sendToAgent(printer, pdf, 'pdf', ps);
       }
     }
   }
@@ -550,12 +571,13 @@ export const printOrder = async (
       const items = productionGroups[k.id];
       if (items && items.length > 0) {
         const mode = detectPrintMode(k.printer, finalConfig.printMode);
+        const ps = k.paperSize || finalConfig.paperSize;
         if (mode === 'escpos') {
           const escPos = generateEscPosReceipt(order, items, `VIA ${k.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
           await sendToAgent(k.printer, escPosToBase64(escPos), 'escpos');
         } else {
           const pdf = generateOrderReceiptPdf(order, items, `VIA ${k.name.toUpperCase()}`, finalSettings, finalRestaurant, null, true);
-          await sendToAgent(k.printer, pdf, 'pdf');
+          await sendToAgent(k.printer, pdf, 'pdf', ps);
         }
       }
     }
@@ -565,12 +587,13 @@ export const printOrder = async (
       const items = productionGroups[b.id];
       if (items && items.length > 0) {
         const mode = detectPrintMode(b.printer, finalConfig.printMode);
+        const ps = b.paperSize || finalConfig.paperSize;
         if (mode === 'escpos') {
           const escPos = generateEscPosReceipt(order, items, `VIA ${b.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
           await sendToAgent(b.printer, escPosToBase64(escPos), 'escpos');
         } else {
           const pdf = generateOrderReceiptPdf(order, items, `VIA ${b.name.toUpperCase()}`, finalSettings, finalRestaurant, null, true);
-          await sendToAgent(b.printer, pdf, 'pdf');
+          await sendToAgent(b.printer, pdf, 'pdf', ps);
         }
       }
     }
@@ -617,7 +640,7 @@ export const printTableCheckout = async (
 export const printCashierClosure = async (
   summary: Record<string, unknown>,
   restaurantInfo?: RestaurantInfo,
-  printerConfig?: { cashierPrinters: string[] },
+  printerConfig?: { cashierPrinters: string[]; paperSize?: string },
   closingDetails?: Record<string, string>,
   sessionOrders?: any[]
 ) => {
@@ -946,7 +969,7 @@ export const printCashierClosure = async (
 
   if (config.cashierPrinters && config.cashierPrinters.length > 0) {
     for (const p of config.cashierPrinters) {
-      await sendToAgent(p, pdf, 'pdf');
+      await sendToAgent(p, pdf, 'pdf', config.paperSize);
     }
   }
 };
@@ -1163,7 +1186,7 @@ export const printDriverSettlement = async (
   if (config.cashierPrinters && config.cashierPrinters.length > 0) {
     for (const p of config.cashierPrinters) {
       console.log('[printDriverSettlement] Enviando para impressora:', p);
-      await sendToAgent(p, pdf, 'pdf');
+      await sendToAgent(p, pdf, 'pdf', config.paperSize);
     }
     toast.success(`Comprovante de ${settlement.driverName} enviado para impressão!`);
   } else {
