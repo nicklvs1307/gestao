@@ -101,6 +101,46 @@ const UserPermissionPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
 
+  const permissionsByCategory = useMemo(() => {
+    return PERMISSION_STRUCTURE.map(cat => {
+      if (!isSuperAdmin && cat.module && !hasModule(cat.module)) {
+        return { ...cat, pages: [] };
+      }
+
+      const pages = cat.pages.map(page => {
+        if (!isSuperAdmin && page.module && !hasModule(page.module)) {
+          return null;
+        }
+
+        let pagePerms = availablePermissions.filter(p => 
+          page.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()))
+        );
+        
+        if (permissionSearch.trim()) {
+          const searchLower = permissionSearch.toLowerCase();
+          pagePerms = pagePerms.filter(p => 
+            p.name.toLowerCase().includes(searchLower) ||
+            (p.description && p.description.toLowerCase().includes(searchLower))
+          );
+        }
+        
+        return {
+          ...page,
+          permissions: pagePerms,
+          selectedCount: pagePerms.filter(p => selectedPermissionIds.includes(p.id)).length,
+          totalCount: pagePerms.length
+        };
+      }).filter((p): p is NonNullable<typeof p> => p !== null && p.permissions.length > 0);
+      
+      return {
+        ...cat,
+        pages,
+        totalPerms: pages.reduce((acc, p) => acc + p.permissions.length, 0),
+        selectedCount: pages.reduce((acc, p) => acc + p.selectedCount, 0)
+      };
+    }).filter(cat => cat.pages.length > 0);
+  }, [availablePermissions, selectedPermissionIds, permissionSearch, hasModule, isSuperAdmin]);
+
   useEffect(() => {
     if (permissionsByCategory.length > 0 && !permissionsByCategory.find(c => c.id === activeCategory)) {
       setActiveCategory(permissionsByCategory[0].id);
@@ -215,46 +255,6 @@ const UserPermissionPage: React.FC = () => {
       setIsSaving(false);
     }
   };
-
-  const permissionsByCategory = useMemo(() => {
-    return PERMISSION_STRUCTURE.map(cat => {
-      if (!isSuperAdmin && cat.module && !hasModule(cat.module)) {
-        return { ...cat, pages: [] };
-      }
-
-      const pages = cat.pages.map(page => {
-        if (!isSuperAdmin && page.module && !hasModule(page.module)) {
-          return null;
-        }
-
-        let pagePerms = availablePermissions.filter(p => 
-          page.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()))
-        );
-        
-        if (permissionSearch.trim()) {
-          const searchLower = permissionSearch.toLowerCase();
-          pagePerms = pagePerms.filter(p => 
-            p.name.toLowerCase().includes(searchLower) ||
-            (p.description && p.description.toLowerCase().includes(searchLower))
-          );
-        }
-        
-        return {
-          ...page,
-          permissions: pagePerms,
-          selectedCount: pagePerms.filter(p => selectedPermissionIds.includes(p.id)).length,
-          totalCount: pagePerms.length
-        };
-      }).filter((p): p is NonNullable<typeof p> => p !== null && p.permissions.length > 0);
-      
-      return {
-        ...cat,
-        pages,
-        totalPerms: pages.reduce((acc, p) => acc + p.permissions.length, 0),
-        selectedCount: pages.reduce((acc, p) => acc + p.selectedCount, 0)
-      };
-    }).filter(cat => cat.pages.length > 0);
-  }, [availablePermissions, selectedPermissionIds, permissionSearch, hasModule, isSuperAdmin]);
 
   const currentCategory = permissionsByCategory.find(c => c.id === activeCategory) || permissionsByCategory[0];
   const totalPermissionsCount = availablePermissions.length;
