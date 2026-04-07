@@ -41,6 +41,16 @@ export function doubleWidth(text: string): string {
   return ESC_POS.FONT_DOUBLE_W + text + ESC_POS.FONT_NORMAL;
 }
 
+/**
+ * Aplica texto grande (double height/width), quebrando a linha
+ * na metade dos caracteres permitidos (pois a fonte ocupa o dobro de espaço).
+ */
+export function doubleWrapped(text: string, width: number = PAPER_WIDTH): string {
+  const halfWidth = Math.floor(width / 2);
+  const wrapped = wrapText(text, halfWidth).split('\n').filter(Boolean);
+  return wrapped.map(l => ESC_POS.FONT_DOUBLE + ESC_POS.BOLD_ON + l.trim() + ESC_POS.BOLD_OFF + ESC_POS.FONT_NORMAL).join('\n') + '\n';
+}
+
 export function formatCurrency(value: number): string {
   return `R$ ${value.toFixed(2)}`;
 }

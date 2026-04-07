@@ -5,6 +5,7 @@ import {
   alignCenter, 
   bold, 
   double, 
+  doubleWrapped,
   formatCurrency, 
   formatPhone, 
   line, 
@@ -76,18 +77,14 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
   buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
 
   if (!isProduction) {
-    buf += `FONE: ${order.deliveryOrder.phone || 'N/A'}\n`;
+    buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
     
-    // ATENDENDO PEDIDO: Endereço do cliente maior e legível, em negrito.
+    // Endereço sem rótulo, grande e em negrito.
     if (!isPickup && order.deliveryOrder.address) {
       buf += line('-', width);
       buf += ESC_POS.ALIGN_CENTER;
-      buf += ESC_POS.FONT_DOUBLE; // Maior e legível
-      buf += bold('ENDEREÇO DE ENTREGA');
-      buf += '\n';
-      buf += ESC_POS.FONT_NORMAL;
+      buf += doubleWrapped(order.deliveryOrder.address.toUpperCase(), width);
       buf += ESC_POS.ALIGN_LEFT;
-      buf += bold(wrapText(order.deliveryOrder.address.toUpperCase(), width));
     }
   }
 
@@ -105,19 +102,21 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
     const qty = item.quantity || 1;
 
     if (isProduction) {
-      buf += bold(`${qty}x ${productName.toUpperCase()}`) + '\n';
+      // Produto grande na cozinha
+      buf += doubleWrapped(`${qty}x ${productName.toUpperCase()}`, width);
     } else {
+      // Produto em negrito no cupom
       const totalItem = ((item.priceAtTime || 0) * qty);
-      buf += rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width);
+      buf += bold(rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width));
     }
 
-    // Sabores
+    // Sabores (Grande e Negrito)
     if (item.flavorsJson) {
       try {
         const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
         if (Array.isArray(flavors)) {
           flavors.forEach((f: { name: string }) => {
-            buf += bold(`  SABOR: ${(f.name || '').toUpperCase()}`) + '\n';
+            buf += doubleWrapped(`> ${f.name.toUpperCase()}`, width);
           });
         }
       } catch { /* ignore */ }
@@ -131,23 +130,22 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       } catch { /* ignore */ }
     }
 
-    // Adicionais - ATENDENDO PEDIDO: completos e adicionais em destaque negrito com **
+    // Adicionais (Grande e Negrito)
     if (item.addonsJson) {
       try {
         const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
         if (Array.isArray(addons)) {
           addons.forEach((a: { name: string; quantity?: number }) => {
             const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-            // Destaque para adicionais
-            buf += bold(`  ** + ${prefix}${(a.name || '').toUpperCase()} **`) + '\n';
+            buf += doubleWrapped(`+ ${prefix}${a.name.toUpperCase()}`, width);
           });
         }
       } catch { /* ignore */ }
     }
 
-    // Observação do item - ATENDENDO PEDIDO: Destaque com **
+    // Observação do item (Grande e Negrito)
     if (item.observations) {
-      buf += bold(`  ** OBS: ${item.observations.toUpperCase()} **`) + '\n';
+      buf += doubleWrapped(`OBS: ${item.observations.toUpperCase()}`, width);
     }
 
     buf += '\n'; // Espaçamento entre itens
@@ -162,8 +160,8 @@ function buildObservations(order: Order, width: number = PAPER_WIDTH): string {
   
   if (generalObs) {
     buf += line('-', width);
-    buf += alignCenter(double(bold('** OBSERVAÇÕES **')));
-    buf += bold(wrapText(generalObs.toUpperCase(), width));
+    buf += alignCenter(double(bold('** OBSERVACOES **')));
+    buf += doubleWrapped(generalObs.toUpperCase(), width);
     buf += line('-', width);
   }
   
