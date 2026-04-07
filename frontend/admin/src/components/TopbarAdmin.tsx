@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, Building2, Wallet, CheckCircle, Store, Monitor, ShoppingBag, Power, PowerOff } from 'lucide-react';
+import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, Building2, Wallet, CheckCircle, Store, Monitor, ShoppingBag, Power, PowerOff, Link2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -25,7 +25,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   const [isCashierDropdownOpen, setCashierDropdownOpen] = useState(false);
   const [cashierAction, setCashierAction] = useState<{ open: boolean, type: 'INCOME' | 'EXPENSE' }>({ open: false, type: 'INCOME' });
 
-  const [currentRestaurant, setCurrentRestaurant] = useState<{name: string, logoUrl: string | null} | null>(null);
+  const [currentRestaurant, setCurrentRestaurant] = useState<{name: string, logoUrl: string | null, slug?: string} | null>(null);
   const [isStoreOpen, setIsStoreOpen] = useState(false);
   const [isStoreLoading, setIsStoreLoading] = useState(false);
 
@@ -52,7 +52,8 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
               const res = await apiClient.get('/settings', { signal });
               setCurrentRestaurant({
                   name: res.data.name,
-                  logoUrl: res.data.logoUrl
+                  logoUrl: res.data.logoUrl,
+                  slug: res.data.slug
               });
               setIsStoreOpen(res.data.settings?.isOpen ?? false);
           } catch (e: any) {
@@ -96,6 +97,22 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
       const hours = getElapsedHours(cashierStatus.session.openedAt);
       const mins = getElapsedMinutes(cashierStatus.session.openedAt) % 60;
       return `Aberto há ${hours}h e ${mins < 10 ? '0'+mins : mins}min`;
+  };
+
+  const handleCopyDeliveryLink = () => {
+    const baseUrl = user?.menuUrl || window.location.origin.replace('admin.', '').replace(':5173', ':5174');
+    const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    let finalLink = sanitizedBaseUrl;
+
+    if (sanitizedBaseUrl.includes('localhost') || sanitizedBaseUrl.includes('127.0.0.1')) {
+      finalLink = `${sanitizedBaseUrl}/${currentRestaurant?.slug || user?.restaurantId || ''}`;
+    }
+
+    navigator.clipboard.writeText(finalLink).then(() => {
+      toast.success('Link do cardápio delivery copiado!');
+    }).catch(() => {
+      toast.error('Erro ao copiar link');
+    });
   };
 
   useEffect(() => {
@@ -163,6 +180,16 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                         title="Gestor de Pedidos"
                     >
                         <ShoppingBag size={20} />
+                    </Button>
+
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={handleCopyDeliveryLink}
+                        className="rounded-xl bg-background border-border text-foreground/60 hover:text-primary hover:border-primary/20 transition-all"
+                        title="Copiar link do cardápio delivery"
+                    >
+                        <Link2 size={20} />
                     </Button>
                 </div>
 
