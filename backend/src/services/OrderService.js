@@ -897,27 +897,25 @@ class OrderService {
         let cash = 0; let card = 0; let pix = 0; let deliveryFees = 0; let totalOrdersValue = 0;
         d.deliveries.forEach(del => {
             const order = del.order; if (!order) return;
-            // Usar valor líquido (sem taxa de entrega)
-            const orderNetValue = money.subtract(order.total, del.deliveryFee || 0);
+            // Usar valor BRUTO (com taxa de entrega incluída) - o estabelecimento paga a entrega
             deliveryFees = money.add(deliveryFees, del.deliveryFee || 0);
             totalOrdersValue = money.add(totalOrdersValue, order.total);
             const method = del.paymentMethod?.toLowerCase() || '';
-            // Classificar método de pagamento pelo valor líquido
-            if (method.includes('dinheiro') || method.includes('cash')) cash = money.add(cash, orderNetValue);
-            else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card = money.add(card, orderNetValue);
-            else if (method.includes('pix')) pix = money.add(pix, orderNetValue);
-            else cash = money.add(cash, orderNetValue); 
+            // Classificar método de pagamento pelo valor BRUTO (com taxa)
+            if (method.includes('dinheiro') || method.includes('cash')) cash = money.add(cash, order.total);
+            else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card = money.add(card, order.total);
+            else if (method.includes('pix')) pix = money.add(pix, order.total);
+            else cash = money.add(cash, order.total); 
         });
         const totalDeliveries = d.deliveries.length;
         const baseRate = Number(d.baseRate) || 0;
         const bonusPerDelivery = Number(d.bonusPerDelivery) || 0;
         const totalCommission = money.multiply(bonusPerDelivery, d.deliveries.length);
         const totalToPay = money.add(baseRate, totalCommission);
-        // Liquido da loja: total pedidos - taxas entrega - comissões
-        const totalOrdersNet = money.subtract(totalOrdersValue, deliveryFees);
-        const storeNet = money.subtract(totalOrdersNet, totalToPay);
+        // Lucro da loja: total bruto - comissões dos entregadores
+        const storeNet = money.subtract(totalOrdersValue, totalToPay);
         
-        logger.info(`[SETTLEMENT] Cálculos para ${d.name}: totalOrdersValue=${totalOrdersValue}, deliveryFees=${deliveryFees}, totalOrdersNet=${totalOrdersNet}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
+        logger.info(`[SETTLEMENT] Cálculos para ${d.name}: totalOrdersValue=${totalOrdersValue}, deliveryFees=${deliveryFees}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
         
         return { driverId: d.id, driverName: d.name || d.email, totalOrders: totalDeliveries, cash, card, pix, deliveryFees, totalToPay, storeNet, baseRate, totalCommission };
     });
@@ -934,12 +932,11 @@ class OrderService {
           include: { order: true }
       });
       if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
-      // Usar valor líquido (sem taxa de entrega)
+      // Usar valor BRUTO (com taxa de entrega) - o estabelecimento paga a taxa
       const cashCollected = deliveries.reduce((acc, del) => {
           const method = del.paymentMethod?.toLowerCase() || '';
           if (method.includes('dinheiro') || method.includes('cash')) {
-              const orderNetValue = (del.order?.total || 0) - (del.deliveryFee || 0);
-              return acc + orderNetValue;
+              return acc + (del.order?.total || 0);
           }
           return acc;
       }, 0);

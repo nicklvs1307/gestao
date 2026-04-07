@@ -211,11 +211,12 @@ function buildTotals(order: Order, items: OrderItem[], width: number = PAPER_WID
   buf += bold(`QTD ITENS: ${totalQty}\n`);
   buf += line('-', width);
 
-  const subtotal = order.total || 0;
   const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
   const discount = (order as { discount?: number }).discount || 0;
   const extraCharge = (order as { extraCharge?: number }).extraCharge || 0;
-  const totalGeral = subtotal + deliveryFee - discount + extraCharge;
+  // order.total já inclui taxa de entrega. Calcular subtotal = total - taxa - extra + desconto
+  const subtotal = (order.total || 0) - deliveryFee - extraCharge + discount;
+  const totalGeral = order.total || 0;
 
   buf += `SUBTOTAL`.padEnd(width - 14) + formatCurrency(subtotal) + '\n';
   if (deliveryFee > 0) buf += `TAXA ENTREGA`.padEnd(width - 14) + formatCurrency(deliveryFee) + '\n';
@@ -239,9 +240,9 @@ function buildPaymentInfo(order: Order, width: number = PAPER_WIDTH): string {
     });
   } else if (order.deliveryOrder?.paymentMethod) {
     const method = PAYMENT_METHOD_MAP[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase();
-    buf += method + '\n';
+    buf += `${method.padEnd(width - 14)}R$ ${(order.total || 0).toFixed(2)}\n`;
   } else {
-    buf += 'A PAGAR NO CAIXA\n';
+    buf += `A PAGAR NO CAIXA`.padEnd(width - 14) + `R$ ${(order.total || 0).toFixed(2)}\n`;
   }
 
   buf += line('-', width);
