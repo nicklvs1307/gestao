@@ -53,6 +53,8 @@ class PricingService {
    * Calcula o preço unitário e total de um item...
    */
   async calculateItemPrice(productId, quantity, sizeId, addonsIds) {
+    logger.info(`[PRICING] calculateItemPrice chamado para productId=${productId}, quantity=${quantity}, sizeId=${sizeId}, addonsIds=${JSON.stringify(addonsIds)}`);
+    
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: { 
@@ -127,6 +129,8 @@ class PricingService {
     logger.info(`[PRICING] Calculando adicionais para produto: ${product.name} (IDs: ${JSON.stringify(addonsIds)})`);
     let addonsTotal = 0;
     const addonsObjects = [];
+
+    logger.info(`[PRICING] addonsIds é array? ${Array.isArray(addonsIds)}, length: ${addonsIds?.length}`);
 
     if (!addonsIds || addonsIds.length === 0) {
       logger.info(`[PRICING] Nenhum ID de adicional recebido.`);

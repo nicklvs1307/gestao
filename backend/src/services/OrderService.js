@@ -181,6 +181,8 @@ class OrderService {
    */
   async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName, discount = 0, extraCharge = 0 }) {
     logger.info(`[ORDER] Iniciando criação de pedido para restaurante: ${restaurantId}`);
+    logger.info(`[ORDER] Itens recebidos: ${JSON.stringify(items, (key, val) => typeof val === 'object' ? val : String(val))}`);
+    logger.info(`[ORDER] orderType: ${orderType}, deliveryInfo: ${JSON.stringify(deliveryInfo)}`);
     
     // 1. Preparação dos Itens (Utiliza método unificado)
     const { processedItems, subtotal: orderTotal } = await this._processOrderItems(items);
@@ -260,7 +262,7 @@ class OrderService {
     }
 
     // Validar troco (changeFor) deve ser >= total do pedido
-    if (isDelivery && deliveryInfo?.changeFor) {
+    if (deliveryInfo?.deliveryType === 'delivery' && deliveryInfo?.changeFor) {
         const totalPedido = money.calcOrderTotal({
             subtotal: orderTotal,
             extraCharge,
