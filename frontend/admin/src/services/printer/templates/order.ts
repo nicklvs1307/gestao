@@ -5,6 +5,7 @@ import {
   alignCenter, 
   bold, 
   double, 
+  tallBold,
   doubleWrapped,
   formatCurrency, 
   formatPhone, 
@@ -73,17 +74,19 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
 
   const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
   const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
+  const isDelivery = deliveryType === 'delivery' || deliveryType === 'entrega';
 
   buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
 
-  if (!isProduction) {
+  // Mostrar fone e endereço se for delivery (mesmo na produção) ou se não for produção
+  if (!isProduction || isDelivery) {
     buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
     
     // Endereço sem rótulo, grande e em negrito.
     if (!isPickup && order.deliveryOrder.address) {
       buf += line('-', width);
       buf += ESC_POS.ALIGN_CENTER;
-      buf += doubleWrapped(order.deliveryOrder.address.toUpperCase(), width);
+      buf += tallBold(wrapText(order.deliveryOrder.address.toUpperCase(), width).trim()) + '\n';
       buf += ESC_POS.ALIGN_LEFT;
     }
   }
@@ -102,21 +105,21 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
     const qty = item.quantity || 1;
 
     if (isProduction) {
-      // Produto grande na cozinha
-      buf += doubleWrapped(`${qty}x ${productName.toUpperCase()}`, width);
+      // Produto grande na cozinha (altura dupla)
+      buf += tallBold(wrapText(`${qty}x ${productName.toUpperCase()}`, width).trim()) + '\n';
     } else {
       // Produto em negrito no cupom
       const totalItem = ((item.priceAtTime || 0) * qty);
       buf += bold(rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width));
     }
 
-    // Sabores (Grande e Negrito)
+    // Sabores (Altura dupla e Negrito)
     if (item.flavorsJson) {
       try {
         const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
         if (Array.isArray(flavors)) {
           flavors.forEach((f: { name: string }) => {
-            buf += doubleWrapped(`> ${f.name.toUpperCase()}`, width);
+            buf += tallBold(wrapText(`> ${f.name.toUpperCase()}`, width).trim()) + '\n';
           });
         }
       } catch { /* ignore */ }
@@ -130,22 +133,22 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       } catch { /* ignore */ }
     }
 
-    // Adicionais (Grande e Negrito)
+    // Adicionais (Altura dupla e Negrito)
     if (item.addonsJson) {
       try {
         const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
         if (Array.isArray(addons)) {
           addons.forEach((a: { name: string; quantity?: number }) => {
             const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-            buf += doubleWrapped(`+ ${prefix}${a.name.toUpperCase()}`, width);
+            buf += tallBold(wrapText(`+ ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
           });
         }
       } catch { /* ignore */ }
     }
 
-    // Observação do item (Grande e Negrito)
+    // Observação do item (Altura dupla e Negrito)
     if (item.observations) {
-      buf += doubleWrapped(`OBS: ${item.observations.toUpperCase()}`, width);
+      buf += tallBold(wrapText(`OBS: ${item.observations.toUpperCase()}`, width).trim()) + '\n';
     }
 
     buf += '\n'; // Espaçamento entre itens
@@ -161,7 +164,7 @@ function buildObservations(order: Order, width: number = PAPER_WIDTH): string {
   if (generalObs) {
     buf += line('-', width);
     buf += alignCenter(double(bold('** OBSERVACOES **')));
-    buf += doubleWrapped(generalObs.toUpperCase(), width);
+    buf += tallBold(wrapText(generalObs.toUpperCase(), width).trim()) + '\n';
     buf += line('-', width);
   }
   
@@ -255,7 +258,7 @@ export function generateEscPosReceipt(
   buf += buildItems(itemsToPrint, isProduction, W);
   buf += buildObservations(order, W);
 
-  if (!isProduction) {
+  if (!isProduction || (order.deliveryOrder && (order.deliveryOrder.deliveryType?.toLowerCase() === 'delivery' || order.deliveryOrder.deliveryType?.toLowerCase() === 'entrega'))) {
     buf += buildTotals(order, itemsToPrint, W);
     buf += buildPaymentInfo(order, W);
   } else {
