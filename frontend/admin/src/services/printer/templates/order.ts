@@ -74,12 +74,12 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
 
   const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
   const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
-  const isDelivery = deliveryType === 'delivery' || deliveryType === 'entrega';
+  const isDeliveryOrderType = order.orderType === 'DELIVERY';
 
   buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
 
   // Mostrar fone e endereço se for delivery (mesmo na produção) ou se não for produção
-  if (!isProduction || isDelivery) {
+  if (!isProduction || isDeliveryOrderType) {
     buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
     
     // Endereço sem rótulo, grande e em negrito.
@@ -258,7 +258,7 @@ export function generateEscPosReceipt(
   buf += buildItems(itemsToPrint, isProduction, W);
   buf += buildObservations(order, W);
 
-  if (!isProduction || (order.deliveryOrder && (order.deliveryOrder.deliveryType?.toLowerCase() === 'delivery' || order.deliveryOrder.deliveryType?.toLowerCase() === 'entrega'))) {
+  if (!isProduction || order.orderType === 'DELIVERY') {
     buf += buildTotals(order, itemsToPrint, W);
     buf += buildPaymentInfo(order, W);
   } else {
