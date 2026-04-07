@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { api, payDriverSettlement } from '../services/api';
-import { printDriverSettlement } from '../services/printing';
+import { printDriverSettlement } from '../services/printer';
 import { 
   Truck, DollarSign, CreditCard, Building2, 
   Calendar, RefreshCw, User, Package, Wallet, CheckCircle, 

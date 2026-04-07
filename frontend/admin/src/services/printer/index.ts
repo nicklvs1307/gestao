@@ -1,34 +1,24 @@
-import type { Order, OrderItem } from '../types';
-import { formatSP } from '@/lib/timezone';
 import { toast } from 'sonner';
-import { 
-  generateEscPosReceipt, 
-  escPosToBase64, 
-  generateCashierClosureReceipt, 
-  generateDriverSettlementReceipt,
-  type CashierClosureData,
-  type DriverSettlementData
-} from './escpos';
+import type { Order, OrderItem } from '../../types';
+import type { 
+  PrinterConfig, 
+  ReceiptSettings, 
+  RestaurantInfo, 
+  CashierClosureData, 
+  DriverSettlementData 
+} from './types';
+import { generateEscPosReceipt } from './templates/order';
+import { generateCashierClosureReceipt } from './templates/closure';
+import { generateDriverSettlementReceipt } from './templates/settlement';
+import { escPosToBase64 } from './utils';
+
+// Export type re-exports
+export type { PrinterConfig, ReceiptSettings, RestaurantInfo, CashierClosureData, DriverSettlementData };
 
 const AGENT_URL = 'http://localhost:4676';
+const AGENT_TOKEN = 'kicardapio-printer-2024';
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────
-const getPrinterConfigFromStorage = (): PrinterConfig => {
-  try {
-    const config = localStorage.getItem('printer_config');
-    if (config) {
-      return JSON.parse(config);
-    }
-  } catch (e) {
-    console.error('Erro ao ler config de impressão:', e);
-  }
-  return { cashierPrinters: [], kitchenPrinters: [], barPrinters: [], categoryMapping: {} };
-};
-
-// ─── CONFIGURAÇÃO DO AGENTE ───────────────────────────────────────────
-const getAgentUrl = () => AGENT_URL;
-const getAgentToken = () => 'kicardapio-printer-2024'; // Deve bater com o server.js
-
+// ─── HELPERS DE REDE ──────────────────────────────────────────────────
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 3000) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -42,38 +32,9 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
   }
 };
 
-export interface PrinterConfig {
-  cashierPrinters: string[];
-  kitchenPrinters: { id: string; name: string; printer: string }[];
-  barPrinters: { id: string; name: string; printer: string }[];
-  categoryMapping: Record<string, string>;
-  /** Modo de impressão: 'escpos' para térmicas, 'pdf' para fallback */
-  printMode?: 'escpos' | 'pdf' | 'auto';
-}
-
-export interface ReceiptSettings {
-  showLogo: boolean;
-  showAddress: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  headerText: string;
-  footerText: string;
-  itemSpacing?: number;
-  paperFeed?: number;
-  useInit?: boolean;
-}
-
-interface RestaurantInfo {
-  name: string;
-  address?: string | null;
-  phone?: string | null;
-  cnpj?: string | null;
-  logoUrl?: string | null;
-}
-
-// ─── VERIFICAÇÃO DO AGENTE ────────────────────────────────────────────
 export const checkAgentStatus = async (): Promise<boolean> => {
   try {
-    const res = await fetchWithTimeout(`${getAgentUrl()}/status`);
+    const res = await fetchWithTimeout(`${AGENT_URL}/status`);
     return res.ok;
   } catch {
     return false;
@@ -82,7 +43,7 @@ export const checkAgentStatus = async (): Promise<boolean> => {
 
 export const getPrinters = async (): Promise<string[]> => {
   try {
-    const res = await fetchWithTimeout(`${getAgentUrl()}/printers`);
+    const res = await fetchWithTimeout(`${AGENT_URL}/printers`);
     const data = await res.json();
     if (Array.isArray(data)) {
       return data.map((p: unknown) =>
@@ -96,38 +57,35 @@ export const getPrinters = async (): Promise<string[]> => {
   }
 };
 
-// ─── ENVIO PARA O AGENTE ──────────────────────────────────────────────
 const sendToAgent = async (printer: string, content: string, type: 'escpos' | 'pdf' = 'escpos') => {
   if (!printer) return;
 
-  await fetchWithTimeout(`${getAgentUrl()}/print`, {
+  await fetchWithTimeout(`${AGENT_URL}/print`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       printer,
       content,
       type,
-      token: getAgentToken(),
+      token: AGENT_TOKEN,
     }),
   }, 8000);
 };
 
-// ─── DETECÇÃO DE MODO DE IMPRESSÃO ────────────────────────────────────
-function isNetworkPrinter(printer: string): boolean {
-  return /^(\d{1,3}\.){3}\d{1,3}/.test(printer) ||
-    printer.startsWith('\\\\') ||
-    printer.toLowerCase().includes('network') ||
-    printer.toLowerCase().includes('tcp');
-}
+// ─── STORAGE HELPERS ──────────────────────────────────────────────────
+export const getPrinterConfigFromStorage = (): PrinterConfig => {
+  try {
+    const config = localStorage.getItem('printer_config');
+    if (config) {
+      return JSON.parse(config);
+    }
+  } catch (e) {
+    console.error('Erro ao ler config de impressão:', e);
+  }
+  return { cashierPrinters: [], kitchenPrinters: [], barPrinters: [], categoryMapping: {} };
+};
 
-function detectPrintMode(printer: string, configMode?: string): 'escpos' | 'pdf' {
-  if (configMode === 'pdf') return 'pdf';
-  // Sempre ESC/POS — funciona para USB e rede sem problemas de feed
-  return 'escpos';
-}
-
-// ─── HELPERS DE STORAGE ───────────────────────────────────────────────
-function getRestaurantInfoFromStorage(): RestaurantInfo {
+const getRestaurantInfoFromStorage = (): RestaurantInfo => {
   return {
     name: localStorage.getItem('restaurant_name') || 'Minha Loja',
     address: localStorage.getItem('restaurant_address'),
@@ -135,9 +93,9 @@ function getRestaurantInfoFromStorage(): RestaurantInfo {
     cnpj: localStorage.getItem('restaurant_cnpj'),
     logoUrl: localStorage.getItem('restaurant_logo'),
   };
-}
+};
 
-function getReceiptSettingsFromStorage(): ReceiptSettings {
+const getReceiptSettingsFromStorage = (): ReceiptSettings => {
   const layout = localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings');
   return layout ? JSON.parse(layout) : {
     showLogo: true,
@@ -149,9 +107,9 @@ function getReceiptSettingsFromStorage(): ReceiptSettings {
     paperFeed: 3,
     useInit: false,
   };
-}
+};
 
-// ─── FUNÇÕES PÚBLICAS DE IMPRESSÃO ───────────────────────────────────
+// ─── FUNÇÕES PÚBLICAS DE IMPRESSÃO ────────────────────────────────────
 
 export const printOrder = async (
   order: Order,
@@ -179,26 +137,13 @@ export const printOrder = async (
     printMode: config?.printMode || 'auto',
   };
 
-  const storageLayout = localStorage.getItem('receipt_layout');
-  const storageSettings = localStorage.getItem('receipt_settings');
-  let finalSettings: ReceiptSettings;
-
-  if (receiptSettings && Object.keys(receiptSettings).length > 0) {
-    finalSettings = receiptSettings;
-  } else if (storageLayout) {
-    finalSettings = JSON.parse(storageLayout);
-  } else if (storageSettings) {
-    finalSettings = JSON.parse(storageSettings);
-  } else {
-    finalSettings = { showLogo: true, showAddress: true, fontSize: 'medium', headerText: '', footerText: '', itemSpacing: 2, paperFeed: 3, useInit: false };
-  }
-
+  const finalSettings = receiptSettings || getReceiptSettingsFromStorage();
   const finalRestaurant = restaurantInfo || getRestaurantInfoFromStorage();
 
   const isTable = order.orderType === 'TABLE';
   const isCompleted = order.status === 'COMPLETED';
 
-  // ── 1. IMPRESSÃO DO CAIXA (Via do Cliente / Extrato) ──
+  // 1. IMPRESSÃO DO CAIXA (Via Cliente / Extrato)
   const shouldPrintCashier = !isTable || (isTable && isCompleted);
 
   if (shouldPrintCashier && finalConfig.cashierPrinters?.length > 0) {
@@ -208,7 +153,7 @@ export const printOrder = async (
     }
   }
 
-  // ── 2. IMPRESSÃO NA PRODUÇÃO (Cozinha/Bar) ──
+  // 2. IMPRESSÃO NA PRODUÇÃO (Cozinha/Bar)
   const shouldPrintProduction = !isTable || (isTable && !isCompleted);
 
   if (shouldPrintProduction) {
@@ -372,8 +317,6 @@ export const printCashierClosure = async (
     toast.success('Fechamento de caixa enviado para impressão!');
   }
 };
-
-// ─── IMPRESSÃO DE ACERTO DE ENTREGADOR ─────────────────────────────────
 
 export const printDriverSettlement = async (
   settlement: DriverSettlementData,

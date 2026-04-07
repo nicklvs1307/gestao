@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
 import PrinterLayoutEditor, { type ReceiptLayout } from '../PrinterLayoutEditor';
-import { type PrinterConfig } from '../../services/printing';
+import { type PrinterConfig } from '../../services/printer';
 import { 
   Printer as PrinterIcon, RefreshCw, CreditCard, ChefHat, LayoutTemplate, 
   Plus, Trash2, Wifi, WifiOff, CheckCircle, XCircle, Loader2, Zap,

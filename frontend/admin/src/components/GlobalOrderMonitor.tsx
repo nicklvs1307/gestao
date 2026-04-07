@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
-import { printOrder } from '../services/printing';
+import { printOrder } from '../services/printer';
 import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
 import TableRequestAlert from './TableRequestAlert';

@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Order } from '@/types/index.ts';
 import { getSettings, markOrderAsPrinted } from '../services/api';
-import { printOrder } from '../services/printing';
+import { printOrder } from '../services/printer';
 import { formatElapsed } from '@/lib/timezone';
 import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag, XCircle } from 'lucide-react';
 import { cn } from '../lib/utils';

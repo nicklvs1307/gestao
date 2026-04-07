@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { calculateProductPrice } from '../../features/pos/utils/priceCalculator';
 import { getSettings, markOrderAsPrinted } from '../../services/api';
-import { printOrder } from '../../services/printing';
+import { printOrder } from '../../services/printer';
 import { OrderEditorProductDrawer } from './OrderEditorProductDrawer';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { OrderEditorPayment } from './OrderEditorPayment';

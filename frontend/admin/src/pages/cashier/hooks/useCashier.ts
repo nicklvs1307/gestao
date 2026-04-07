@@ -10,7 +10,7 @@ import {
   updateOrderPaymentMethod,
 } from '../../../services/api';
 import { toast } from 'sonner';
-import { printCashierClosure } from '../../../services/printing';
+import { printCashierClosure } from '../../../services/printer';
 import { useAuth } from '../../../context/AuthContext';
 import { Banknote, Smartphone, Wallet, Receipt } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';

@@ -7,7 +7,7 @@ import {
 import { usePosStore } from './usePosStore';
 import { useCartStore, useCartTotal } from './useCartStore';
 import { Product, TableSummary, PaymentMethod, Order } from '../../../types';
-import { printOrder } from '../../../services/printing';
+import { printOrder } from '../../../services/printer';
 
 export const usePosActions = (
     refreshTables: () => void, 

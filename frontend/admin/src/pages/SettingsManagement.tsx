@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printing';
+import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printer';
 import PrinterLayoutEditor, { type ReceiptLayout } from '../components/PrinterLayoutEditor';
 import { Save, Settings, Palette, Link, Printer, Sliders } from 'lucide-react';
 import { cn } from '../lib/utils';

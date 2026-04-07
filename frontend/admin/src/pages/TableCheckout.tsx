@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, getPaymentMethods } from '../services/api';
 import { getPosTableSummary } from '../services/api/tables';
-import { printOrder } from '../services/printing';
+import { printOrder } from '../services/printer';
 import {
     ChevronLeft, Printer, Loader2, X,
     ShoppingCart, Users, Receipt, Wallet, Banknote,

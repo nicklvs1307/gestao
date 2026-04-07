@@ -6,7 +6,7 @@ import {
     getDrivers, assignDriver, getSettings, updateDeliveryType, 
     markOrderAsPrinted, emitInvoice 
 } from '../services/api';
-import { printOrder } from '../services/printing';
+import { printOrder } from '../services/printer';
 import { formatSP } from '@/lib/timezone';
 import { 
   X, Clock, MapPin, CheckCircle,

@@ -25,7 +25,7 @@ import { Input } from './ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import MoneyCounter from './MoneyCounter';
-import { printCashierClosure } from '../services/printing';
+import { printCashierClosure } from '../services/printer';
 
 const CashierManagement: React.FC = () => {
     const { user: authUser } = useAuth();

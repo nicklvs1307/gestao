@@ -1,0 +1,269 @@
+import type { Order, OrderItem } from '../../types';
+import { formatSP } from '@/lib/timezone';
+import { ESC_POS, PAPER_WIDTH, PAYMENT_METHOD_MAP } from '../constants';
+import { 
+  alignCenter, 
+  bold, 
+  double, 
+  formatCurrency, 
+  formatPhone, 
+  line, 
+  rowItemSmart, 
+  wrapText 
+} from '../utils';
+import type { ReceiptSettings, RestaurantInfo } from '../types';
+
+function buildHeader(info: RestaurantInfo | Record<string, unknown>, settings: ReceiptSettings, width: number = PAPER_WIDTH): string {
+  let buf = '';
+  buf += ESC_POS.ALIGN_LEFT + ESC_POS.FONT_NORMAL;
+  
+  if (settings.useInit) buf += ESC_POS.INIT;
+
+  const infoCasted = info as RestaurantInfo;
+  buf += alignCenter(double((infoCasted.name || 'KICARDÁPIO').toUpperCase()));
+
+  if (infoCasted.cnpj) buf += alignCenter(`CNPJ: ${infoCasted.cnpj}`);
+  
+  if (infoCasted.address) {
+    buf += alignCenter(wrapText(String(infoCasted.address), width).trim());
+  }
+
+  if (infoCasted.phone) buf += alignCenter(`TEL: ${formatPhone(infoCasted.phone)}`);
+
+  buf += line('-', width);
+
+  if (settings.headerText) {
+    buf += alignCenter(bold(settings.headerText.toUpperCase().substring(0, width * 2)));
+    buf += line('-', width);
+  }
+
+  return buf;
+}
+
+function buildOrderType(order: Order, width: number = PAPER_WIDTH): string {
+  const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
+  const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
+  
+  let typeLabel: string;
+  if (order.orderType === 'TABLE') {
+    typeLabel = `MESA ${order.tableNumber}`;
+  } else if (isPickup) {
+    typeLabel = 'RETIRADA / BALCÃO';
+  } else {
+    typeLabel = 'ENTREGA';
+  }
+
+  return alignCenter(double(typeLabel));
+}
+
+function buildOrderInfo(order: Order, width: number = PAPER_WIDTH): string {
+  let buf = '';
+  buf += formatSP(order.createdAt, 'dd/MM/yyyy HH:mm') + '\n';
+  if (order.user?.name) {
+    buf += bold(`ATEND: ${order.user.name.toUpperCase()}`) + '\n';
+  }
+  buf += double(`PEDIDO: #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}`) + ESC_POS.FONT_NORMAL + '\n';
+  return buf;
+}
+
+function buildCustomerInfo(order: Order, isProduction: boolean, width: number = PAPER_WIDTH): string {
+  let buf = '';
+  if (!order.deliveryOrder) return buf;
+
+  const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
+  const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
+
+  buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
+
+  if (!isProduction) {
+    buf += `FONE: ${order.deliveryOrder.phone || 'N/A'}\n`;
+    
+    // ATENDENDO PEDIDO: Endereço do cliente maior e legível, em negrito.
+    if (!isPickup && order.deliveryOrder.address) {
+      buf += line('-', width);
+      buf += ESC_POS.ALIGN_CENTER;
+      buf += ESC_POS.FONT_DOUBLE; // Maior e legível
+      buf += bold('ENDEREÇO DE ENTREGA');
+      buf += '\n';
+      buf += ESC_POS.FONT_NORMAL;
+      buf += ESC_POS.ALIGN_LEFT;
+      buf += bold(wrapText(order.deliveryOrder.address.toUpperCase(), width));
+    }
+  }
+
+  return buf;
+}
+
+function buildItems(items: OrderItem[], isProduction: boolean, width: number = PAPER_WIDTH): string {
+  let buf = '';
+  
+  buf += bold(isProduction ? 'QTD  PRODUTO\n' : 'QTD  DESCRIÇÃO'.padEnd(width - 12) + 'VALOR\n');
+  buf += line('-', width);
+
+  (items || []).forEach(item => {
+    const productName = item.product?.name || 'Produto';
+    const qty = item.quantity || 1;
+
+    if (isProduction) {
+      buf += bold(`${qty}x ${productName.toUpperCase()}`) + '\n';
+    } else {
+      const totalItem = ((item.priceAtTime || 0) * qty);
+      buf += rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width);
+    }
+
+    // Sabores
+    if (item.flavorsJson) {
+      try {
+        const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
+        if (Array.isArray(flavors)) {
+          flavors.forEach((f: { name: string }) => {
+            buf += bold(`  SABOR: ${(f.name || '').toUpperCase()}`) + '\n';
+          });
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Tamanho
+    if (item.sizeJson) {
+      try {
+        const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
+        buf += bold(`  TAMANHO: ${(size.name || '').toUpperCase()}`) + '\n';
+      } catch { /* ignore */ }
+    }
+
+    // Adicionais - ATENDENDO PEDIDO: completos e adicionais em destaque negrito com **
+    if (item.addonsJson) {
+      try {
+        const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
+        if (Array.isArray(addons)) {
+          addons.forEach((a: { name: string; quantity?: number }) => {
+            const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
+            // Destaque para adicionais
+            buf += bold(`  ** + ${prefix}${(a.name || '').toUpperCase()} **`) + '\n';
+          });
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Observação do item - ATENDENDO PEDIDO: Destaque com **
+    if (item.observations) {
+      buf += bold(`  ** OBS: ${item.observations.toUpperCase()} **`) + '\n';
+    }
+
+    buf += '\n'; // Espaçamento entre itens
+  });
+
+  return buf;
+}
+
+function buildObservations(order: Order, width: number = PAPER_WIDTH): string {
+  let buf = '';
+  const generalObs = (order as { notes?: string }).notes || order.deliveryOrder?.notes;
+  
+  if (generalObs) {
+    buf += line('-', width);
+    buf += alignCenter(double(bold('** OBSERVAÇÕES **')));
+    buf += bold(wrapText(generalObs.toUpperCase(), width));
+    buf += line('-', width);
+  }
+  
+  return buf;
+}
+
+function buildTotals(order: Order, items: OrderItem[], width: number = PAPER_WIDTH): string {
+  let buf = '';
+  
+  const totalQty = (items || []).reduce((acc, item) => acc + (item.quantity || 0), 0);
+  buf += bold(`QTD ITENS: ${totalQty}\n`);
+  buf += line('-', width);
+
+  const subtotal = order.total || 0;
+  const deliveryFee = order.deliveryOrder?.deliveryFee || 0;
+  const discount = (order as { discount?: number }).discount || 0;
+  const extraCharge = (order as { extraCharge?: number }).extraCharge || 0;
+  const totalGeral = subtotal + deliveryFee - discount + extraCharge;
+
+  buf += `SUBTOTAL`.padEnd(width - 14) + formatCurrency(subtotal) + '\n';
+  if (deliveryFee > 0) buf += `TAXA ENTREGA`.padEnd(width - 14) + formatCurrency(deliveryFee) + '\n';
+  if (discount > 0) buf += `DESCONTO (-)`.padEnd(width - 14) + formatCurrency(discount) + '\n';
+
+  buf += line('=', width);
+  buf += double(`TOTAL`.padEnd((width / 2) - 3) + formatCurrency(totalGeral)) + '\n';
+  buf += line('=', width);
+
+  return buf;
+}
+
+function buildPaymentInfo(order: Order, width: number = PAPER_WIDTH): string {
+  let buf = '';
+  buf += bold('PAGAMENTO:\n');
+
+  if (order.payments && order.payments.length > 0) {
+    order.payments.forEach((p: { method: string; amount: number }) => {
+      const method = PAYMENT_METHOD_MAP[p.method] || p.method.toUpperCase();
+      buf += `${method.padEnd(width - 14)}R$ ${p.amount.toFixed(2)}\n`;
+    });
+  } else if (order.deliveryOrder?.paymentMethod) {
+    const method = PAYMENT_METHOD_MAP[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase();
+    buf += method + '\n';
+  } else {
+    buf += 'A PAGAR NO CAIXA\n';
+  }
+
+  buf += line('-', width);
+  return buf;
+}
+
+function buildFooter(order: Order, settings: ReceiptSettings, width: number = PAPER_WIDTH): string {
+  let buf = '';
+  if (settings.footerText) {
+    buf += alignCenter(bold(wrapText(settings.footerText.toUpperCase(), width).trim()));
+  }
+
+  buf += alignCenter(`ID: ${order.id}\n${bold('KICARDÁPIO@')}`);
+
+  const feedLines = settings.paperFeed ?? 3;
+  buf += ESC_POS.FEED_LINES(feedLines);
+  buf += ESC_POS.CUT_PAPER;
+
+  return buf;
+}
+
+export function generateEscPosReceipt(
+  order: Order,
+  itemsToPrint: OrderItem[],
+  title: string,
+  settings: ReceiptSettings,
+  restaurantInfo: RestaurantInfo | Record<string, unknown>,
+  isProduction: boolean = false
+): string {
+  const W = PAPER_WIDTH; // TODO: Obter de settings no futuro
+  let buf = '';
+
+  if (!isProduction) buf += buildHeader(restaurantInfo, settings, W);
+  
+  buf += buildOrderType(order, W);
+  buf += buildOrderInfo(order, W);
+
+  if (order.deliveryOrder) buf += buildCustomerInfo(order, isProduction, W);
+
+  buf += line('-', W);
+
+  if (title) {
+    buf += alignCenter(bold(title.toUpperCase()));
+    buf += line('-', W);
+  }
+
+  buf += buildItems(itemsToPrint, isProduction, W);
+  buf += buildObservations(order, W);
+
+  if (!isProduction) {
+    buf += buildTotals(order, itemsToPrint, W);
+    buf += buildPaymentInfo(order, W);
+  } else {
+    buf += alignCenter(bold('*** FIM DA PRODUÇÃO ***'));
+  }
+
+  buf += buildFooter(order, settings, W);
+  return buf;
+}

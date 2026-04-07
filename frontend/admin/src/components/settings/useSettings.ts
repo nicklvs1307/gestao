@@ -8,7 +8,7 @@ import {
   uploadVideoBanner, 
   checkSlugAvailability 
 } from '../../services/api';
-import { getPrinters, checkAgentStatus } from '../../services/printing';
+import { getPrinters, checkAgentStatus } from '../../services/printer';
 import {
   initialGeneral,
   initialOperation,
