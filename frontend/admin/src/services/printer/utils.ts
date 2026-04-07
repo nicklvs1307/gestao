@@ -1,5 +1,22 @@
 import { ESC_POS, PAPER_WIDTH } from './constants';
 
+/**
+ * Remove acentos e caracteres especiais que quebram a impressão em ESC/POS.
+ * Substitui "ç" por "c", "ã" por "a", etc.
+ */
+export function removeAccents(text: string): string {
+  if (!text) return '';
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/ç/g, 'c')
+    .replace(/Ç/g, 'C')
+    .replace(/ñ/g, 'n')
+    .replace(/Ñ/g, 'N')
+    .replace(/º/g, '.')
+    .replace(/ª/g, '.');
+}
+
 export function line(char: string = '-', width: number = PAPER_WIDTH): string {
   return char.repeat(width) + '\n';
 }
@@ -135,9 +152,12 @@ export function rowItemSmart(qty: string, description: string, value: string, wi
 }
 
 export function escPosToBase64(escPosString: string): string {
-  const bytes = new Uint8Array(escPosString.length);
-  for (let i = 0; i < escPosString.length; i++) {
-    bytes[i] = escPosString.charCodeAt(i) & 0xff;
+  // Limpa caracteres especiais antes de gerar o buffer binário
+  const cleanStr = removeAccents(escPosString);
+  const bytes = new Uint8Array(cleanStr.length);
+  for (let i = 0; i < cleanStr.length; i++) {
+    // Força para a tabela ASCII básica
+    bytes[i] = cleanStr.charCodeAt(i) & 0xff;
   }
   let binary = '';
   bytes.forEach(byte => binary += String.fromCharCode(byte));
