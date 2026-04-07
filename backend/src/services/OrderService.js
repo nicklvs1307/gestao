@@ -3,6 +3,7 @@ const logger = require('../config/logger');
 const SaiposService = require('./SaiposService');
 const PricingService = require('./PricingService');
 const InventoryService = require('./InventoryService');
+const money = require('../utils/money');
 const FinancialService = require('./FinancialService');
 const LoyaltyService = require('./LoyaltyService');
 const GeocodingService = require('./GeocodingService'); // Novo
@@ -156,7 +157,7 @@ class OrderService {
         allOptionsIds
       );
       
-      subtotal += calculation.totalPrice;
+      subtotal = money.add(subtotal, calculation.totalPrice);
 
       const flavorsList = calculation.addonsObjects.filter(a => a.isFlavor);
       const addonsList = calculation.addonsObjects.filter(a => !a.isFlavor);
@@ -252,9 +253,29 @@ class OrderService {
         }
     }
 
+    // Validar desconto antes de criar pedido
+    const discountValidation = money.validateDiscount(parseFloat(discount) || 0, orderTotal);
+    if (!discountValidation.valid) {
+        throw new Error(discountValidation.reason || 'Desconto inválido');
+    }
+
+    // Validar troco (changeFor) deve ser >= total do pedido
+    if (isDelivery && deliveryInfo?.changeFor) {
+        const totalPedido = money.calcOrderTotal({
+            subtotal: orderTotal,
+            extraCharge,
+            discount,
+            deliveryFee: deliveryInfo?.deliveryFee
+        });
+        const changeFor = parseFloat(deliveryInfo.changeFor);
+        if (changeFor < totalPedido) {
+            throw new Error(`Valor do troco (R$ ${changeFor.toFixed(2)}) não pode ser menor que o total do pedido (R$ ${totalPedido.toFixed(2)})`);
+        }
+    }
+
     const orderData = {
       restaurantId: realRestaurantId,
-      total: Number((orderTotal + extraCharge - discount).toFixed(2)),
+      total: money.calcOrderTotal({ subtotal: orderTotal, extraCharge, discount, deliveryFee: deliveryInfo?.deliveryFee }),
       discount: parseFloat(discount),
       extraCharge: parseFloat(extraCharge),
       orderType: finalOrderType,
@@ -390,17 +411,18 @@ class OrderService {
                  });
              }
 
-             if (isDelivery && deliveryInfo.deliveryFee > 0) {
-                 await tx.order.update({
-                     where: { id: createdOrder.id },
-                     data: { total: { increment: deliveryInfo.deliveryFee } }
-                 });
-             }
+              // REMOVIDO: taxa de entrega já incluída no cálculo do total acima (linha 258)
+              // if (isDelivery && deliveryInfo.deliveryFee > 0) {
+              //     await tx.order.update({
+              //         where: { id: createdOrder.id },
+              //         data: { total: { increment: deliveryInfo.deliveryFee } }
+              //     });
+              // }
         }
 
         if (paymentMethod) {
             const finalFee = (finalOrderType === 'DELIVERY' && deliveryInfo?.deliveryFee) ? deliveryInfo.deliveryFee : 0;
-            const totalToPay = orderTotal + finalFee + extraCharge - discount;
+            const totalToPay = money.calcOrderTotal({ subtotal: orderTotal, deliveryFee: finalFee, extraCharge, discount });
 
             await tx.payment.create({
                 data: { orderId: createdOrder.id, amount: totalToPay, method: paymentMethod }
@@ -461,7 +483,7 @@ class OrderService {
         const newStatus = isAutoAccept ? 'PREPARING' : 'PENDING';
         
         const updateData = { 
-            total: originalOrder.total + additionalTotal, 
+            total: money.add(originalOrder.total, additionalTotal), 
             status: originalOrder.status === 'COMPLETED' ? 'COMPLETED' : newStatus,
             userId 
         };
@@ -560,7 +582,7 @@ class OrderService {
     const result = await prisma.$transaction(async (tx) => {
         if (targetOrderInitialState) {
             await tx.orderItem.updateMany({ where: { orderId: currentOrder.id }, data: { orderId: targetOrderInitialState.id } });
-            await tx.order.update({ where: { id: targetOrderInitialState.id }, data: { total: targetOrderInitialState.total + currentOrder.total } });
+            await tx.order.update({ where: { id: targetOrderInitialState.id }, data: { total: money.add(targetOrderInitialState.total, currentOrder.total) } });
             await tx.order.update({ where: { id: currentOrder.id }, data: { status: 'CANCELED', total: 0 } });
             await tx.table.updateMany({ where: { number: parseInt(currentTableNumber), restaurantId }, data: { status: 'free' } });
             return targetOrderInitialState;
@@ -584,7 +606,7 @@ class OrderService {
     const itemsToTransfer = sourceOrder.items.filter(item => itemIds.includes(item.id));
     if (itemsToTransfer.length === 0) throw new Error("Nenhum item válido selecionado.");
     
-    const transferTotal = itemsToTransfer.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
+    const transferTotal = itemsToTransfer.reduce((acc, item) => money.add(acc, money.multiply(item.priceAtTime, item.quantity)), 0);
 
     const result = await prisma.$transaction(async (tx) => {
         let targetOrder = await tx.order.findFirst({
@@ -613,7 +635,7 @@ class OrderService {
     const item = await prisma.orderItem.findUnique({ where: { id: itemId } });
     if (!item || item.orderId !== orderId) throw new Error("Item inválido.");
     
-    const itemTotal = item.priceAtTime * item.quantity;
+    const itemTotal = money.multiply(item.priceAtTime, item.quantity);
     
     const result = await prisma.$transaction(async (tx) => {
         await tx.orderItem.delete({ where: { id: itemId } });
@@ -658,6 +680,25 @@ class OrderService {
 
   async updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge }) {
     logger.info(`[ORDER] Atualizando dados financeiros do pedido ${orderId}`);
+    
+    // Validar valores não negativos
+    const parsedTotal = parseFloat(total);
+    const parsedDiscount = parseFloat(discount) || 0;
+    const parsedSurcharge = parseFloat(surcharge) || 0;
+    const parsedDeliveryFee = parseFloat(deliveryFee) || 0;
+    
+    if (isNaN(parsedTotal) || parsedTotal < 0) {
+        throw new Error('Total do pedido deve ser um valor positivo');
+    }
+    if (parsedDiscount < 0) {
+        throw new Error('Desconto não pode ser negativo');
+    }
+    if (parsedSurcharge < 0) {
+        throw new Error('Encargo extra não pode ser negativo');
+    }
+    if (parsedDeliveryFee < 0) {
+        throw new Error('Taxa de entrega não pode ser negativa');
+    }
     
     const result = await prisma.$transaction(async (tx) => {
         // 1. Atualiza o pedido principal (Order)
@@ -755,9 +796,10 @@ class OrderService {
     
     const result = await prisma.$transaction(async (tx) => {
         await tx.deliveryOrder.update({ where: { id: order.deliveryOrder.id }, data: updateData });
+        const diff = money.subtract(deliveryFee, oldFee);
         return await tx.order.update({
             where: { id: orderId },
-            data: { total: { increment: deliveryFee - oldFee } },
+            data: { total: { increment: diff } },
             include: fullOrderInclude
         });
     });
@@ -842,19 +884,24 @@ class OrderService {
         let cash = 0; let card = 0; let pix = 0; let deliveryFees = 0; let totalOrdersValue = 0;
         d.deliveries.forEach(del => {
             const order = del.order; if (!order) return;
-            deliveryFees += del.deliveryFee || 0;
-            totalOrdersValue += order.total;
+            // Usar valor líquido (sem taxa de entrega)
+            const orderNetValue = money.subtract(order.total, del.deliveryFee || 0);
+            deliveryFees = money.add(deliveryFees, del.deliveryFee || 0);
+            totalOrdersValue = money.add(totalOrdersValue, order.total);
             const method = del.paymentMethod?.toLowerCase() || '';
-            if (method.includes('dinheiro') || method.includes('cash')) cash += order.total;
-            else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card += order.total;
-            else if (method.includes('pix')) pix += order.total;
-            else cash += order.total; 
+            // Classificar método de pagamento pelo valor líquido
+            if (method.includes('dinheiro') || method.includes('cash')) cash = money.add(cash, orderNetValue);
+            else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card = money.add(card, orderNetValue);
+            else if (method.includes('pix')) pix = money.add(pix, orderNetValue);
+            else cash = money.add(cash, orderNetValue); 
         });
         const totalDeliveries = d.deliveries.length;
-        const baseRate = d.baseRate || 0;
-        const totalCommission = d.deliveries.reduce((acc, curr) => acc + (d.bonusPerDelivery || 0), 0);
-        const totalToPay = baseRate + totalCommission;
-        const storeNet = totalOrdersValue - totalToPay;
+        const baseRate = Number(d.baseRate) || 0;
+        const totalCommission = money.multiply(d.bonusPerDelivery || 0, d.deliveries.length);
+        const totalToPay = money.add(baseRate, totalCommission);
+        // Liquido da loja: total pedidos - taxas entrega - comissões
+        const totalOrdersNet = money.subtract(totalOrdersValue, deliveryFees);
+        const storeNet = money.subtract(totalOrdersNet, totalToPay);
         return { driverId: d.id, driverName: d.name || d.email, totalOrders: totalDeliveries, cash, card, pix, deliveryFees, totalToPay, storeNet, baseRate, totalCommission };
     });
   }
@@ -870,9 +917,13 @@ class OrderService {
           include: { order: true }
       });
       if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
+      // Usar valor líquido (sem taxa de entrega)
       const cashCollected = deliveries.reduce((acc, del) => {
           const method = del.paymentMethod?.toLowerCase() || '';
-          if (method.includes('dinheiro') || method.includes('cash')) return acc + (del.order?.total || 0);
+          if (method.includes('dinheiro') || method.includes('cash')) {
+              const orderNetValue = (del.order?.total || 0) - (del.deliveryFee || 0);
+              return acc + orderNetValue;
+          }
           return acc;
       }, 0);
       return await prisma.$transaction(async (tx) => {

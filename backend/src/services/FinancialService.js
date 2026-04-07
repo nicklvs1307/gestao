@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const money = require('../utils/money');
 
 class FinancialService {
 
@@ -24,12 +25,12 @@ class FinancialService {
    * Processa o lançamento financeiro de uma venda.
    * Centraliza a lógica de categorias e sessões de caixa.
    */
-  async processOrderPayment(restaurantId, { order, paymentMethod, cashierId = null, tx = prisma }) {
+  async processOrderPayment(restaurantId, { order, paymentMethod, cashierId = null, tx = prisma, bankAccountId = null }) {
     const category = await this.getOrCreateVendasCategory(restaurantId, tx);
 
     const description = `VENDA #${order.dailyOrderNumber || order.id.slice(-4)}`;
     
-    return await tx.financialTransaction.create({
+    const transaction = await tx.financialTransaction.create({
         data: {
             restaurantId,
             cashierId,
@@ -41,9 +42,17 @@ class FinancialService {
             status: 'PAID',
             dueDate: new Date(),
             paymentDate: new Date(),
-            paymentMethod
+            paymentMethod,
+            bankAccountId
         }
     });
+
+    // Atualiza saldo bancário se houver conta vinculada
+    if (bankAccountId) {
+        await this._updateAccountBalance(bankAccountId, order.total, 'INCOME', tx);
+    }
+
+    return transaction;
   }
 
   /**
@@ -101,6 +110,19 @@ class FinancialService {
       const transferDate = date ? new Date(date) : new Date();
       const parsedAmount = parseFloat(amount);
 
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error('Valor da transferência deve ser maior que zero');
+      }
+
+      // Validar saldo suficiente na conta de origem
+      const fromAccount = await tx.bankAccount.findUnique({ where: { id: fromAccountId } });
+      if (!fromAccount) {
+        throw new Error('Conta bancária de origem não encontrada');
+      }
+      if (fromAccount.balance < parsedAmount) {
+        throw new Error(`Saldo insuficiente na conta de origem. Saldo atual: R$ ${fromAccount.balance.toFixed(2)}`);
+      }
+
       const debit = await tx.financialTransaction.create({
         data: {
           description: `TRANSF. SAÍDA: ${description || 'Transferência'}`,
@@ -147,7 +169,7 @@ class FinancialService {
    * Helper privado para atualizar saldo bancário.
    */
   async _updateAccountBalance(bankAccountId, amount, type, tx) {
-    const adjustment = type === 'INCOME' ? amount : -amount;
+    const adjustment = type === 'INCOME' ? amount : money.multiply(amount, -1);
     await tx.bankAccount.update({
       where: { id: bankAccountId },
       data: { balance: { increment: adjustment } }

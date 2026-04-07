@@ -2,6 +2,7 @@ const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const AppError = require('../utils/AppError');
 const CASHIER_CONSTANTS = require('../constants/cashier');
+const money = require('../utils/money');
 
 class CashierService {
   /**
@@ -24,7 +25,7 @@ class CashierService {
     // Calcula saldo em dinheiro (Dinheiro em mãos)
     const cashInHand = transactions.reduce((acc, t) => {
       if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) {
-        return t.type === 'INCOME' ? acc + t.amount : acc - t.amount;
+        return t.type === 'INCOME' ? money.add(acc, t.amount) : money.subtract(acc, t.amount);
       }
       return acc;
     }, session.initialAmount);
@@ -33,15 +34,15 @@ class CashierService {
     const salesByMethod = transactions.reduce((acc, t) => {
       if (t.type === 'INCOME') {
         const method = t.paymentMethod || 'other';
-        acc[method] = (acc[method] || 0) + t.amount;
+        acc[method] = money.add(acc[method] || 0, t.amount);
       }
       return acc;
     }, {});
 
     // Sangrias e Reforços
     const adjustments = transactions.reduce((acc, t) => {
-      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA)) acc.sangria += t.amount;
-      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO)) acc.reforco += t.amount;
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA)) acc.sangria = money.add(acc.sangria, t.amount);
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO)) acc.reforco = money.add(acc.reforco, t.amount);
       return acc;
     }, { sangria: 0, reforco: 0 });
 
@@ -204,25 +205,27 @@ class CashierService {
 
     transactions.forEach(t => {
         if (t.type === 'INCOME') {
-            systemTotal += t.amount;
-            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash += t.amount;
+            systemTotal = money.add(systemTotal, t.amount);
+            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash = money.add(systemCash, t.amount);
         } else {
-            systemTotal -= t.amount;
-            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash -= t.amount;
+            systemTotal = money.subtract(systemTotal, t.amount);
+            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash = money.subtract(systemCash, t.amount);
         }
     });
 
-    const expectedAmount = Math.round(systemTotal * 100) / 100; // Snapshot arredondado
-    const difference = Math.round(((parseFloat(finalAmount) || 0) - expectedAmount) * 100) / 100;
+    const expectedAmount = money.round(systemTotal);
+    const expectedCashAmount = money.round(systemCash);
+    const informedCash = parseFloat(closingDetails?.cash || closingDetails?.dinheiro || 0);
+    // Diferença do caixa: comparar DINHEIRO esperado vs DINHEIRO informado
+    const difference = money.calcDifference(expectedCashAmount, informedCash);
 
     // --- 3. LÓGICA DE TRANSFERÊNCIA PARA O COFRE (SAFE DROP) ---
-    const informedCash = parseFloat(closingDetails?.cash || closingDetails?.dinheiro || 0);
     const nextShiftFloat = parseFloat(cashLeftover || 0);
     
     // O que vai para o cofre = (Dinheiro Informado) - (Fundo de Troco Próximo Turno)
     let safeDepositAmount = 0;
     if (informedCash > nextShiftFloat) {
-        safeDepositAmount = Math.round((informedCash - nextShiftFloat) * 100) / 100;
+        safeDepositAmount = money.subtract(informedCash, nextShiftFloat);
     }
 
     logger.info(`[CASHIER_SERVICE] Calculando fechamento: 
