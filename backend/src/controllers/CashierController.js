@@ -67,12 +67,15 @@ class CashierController {
     });
 
     const transactions = await prisma.financialTransaction.findMany({
-      where: { cashierId: session.id, status: { not: 'CANCELED' } },
+      where: { cashierId: session.id, status: 'PAID' },
       orderBy: { createdAt: 'desc' }
     });
 
     const salesTransactions = transactions.filter(t => 
-      t.type === 'INCOME' && !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO) && !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA)
+      t.type === 'INCOME' && 
+      !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO) && 
+      !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA) &&
+      !t.description.includes('ENTRADA ACERTO') // Exclui entradas de acerto de entregadores
     );
 
     const normalize = (str) => {

@@ -199,18 +199,21 @@ class CashierService {
         where: { cashierId: session.id, status: 'PAID' }
     });
 
+    // Filtrar vendas (excluir reforços, sangrias e entradas de acerto de entregadores)
+    const salesTransactions = transactions.filter(t => 
+        t.type === 'INCOME' && 
+        !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO) && 
+        !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA) &&
+        !t.description.includes('ENTRADA ACERTO')
+    );
+
     // Totais do Sistema
     let systemTotal = session.initialAmount;
     let systemCash = session.initialAmount;
 
-    transactions.forEach(t => {
-        if (t.type === 'INCOME') {
-            systemTotal = money.add(systemTotal, t.amount);
-            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash = money.add(systemCash, t.amount);
-        } else {
-            systemTotal = money.subtract(systemTotal, t.amount);
-            if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash = money.subtract(systemCash, t.amount);
-        }
+    salesTransactions.forEach(t => {
+        systemTotal = money.add(systemTotal, t.amount);
+        if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash = money.add(systemCash, t.amount);
     });
 
     const expectedAmount = money.round(systemTotal);

@@ -208,43 +208,21 @@ const GlobalOrderMonitor: React.FC = () => {
   useEffect(() => {
     if (!isAutoPrint) return;
 
-    const toPrintProduction = allOrders.filter(o => o.status === 'PREPARING' && !o.isPrinted && !printedIdsRef.current.has(o.id));
-    const toPrintFinal = allOrders.filter(o => o.status === 'COMPLETED' && o.orderType === 'DELIVERY' && !o.isPrinted && !printedIdsRef.current.has(o.id));
-    const allToPrint = [...toPrintProduction, ...toPrintFinal];
+    // Imprime quando o pedido muda para PREPARING (aceito)
+    const toPrint = allOrders.filter(o => o.status === 'PREPARING' && !o.isPrinted && !printedIdsRef.current.has(o.id));
 
-    if (allToPrint.length === 0) return;
+    if (toPrint.length === 0) return;
 
     const processPrinting = async () => {
-      // Verifica se o agente de impressão está disponível
       const agentAvailable = await checkAgentStatus();
-      console.log('[AUTOPRINT] Agente de impressão disponível?', agentAvailable);
-      
-      if (!agentAvailable) {
-        console.warn('[AUTOPRINT] Agente de impressão offline! Pulse:4676 não responds');
-        toast.error('Agente de impressão offline. Verifique se o serviço está em execução.');
-        return;
-      }
+      if (!agentAvailable) return;
 
-      // Verifica se há impressoras configuradas
       const printerConfig = getPrinterConfigFromStorage();
-      const hasKitchenPrinters = printerConfig.kitchenPrinters?.some(k => k.printer);
-      const hasBarPrinters = printerConfig.barPrinters?.some(b => b.printer);
-      const hasCashierPrinters = printerConfig.cashierPrinters?.some(c => c);
-      
-      console.log('[AUTOPRINT] Configuração de impressoras:', JSON.stringify(printerConfig, null, 2));
-      
-      if (!hasKitchenPrinters && !hasBarPrinters && !hasCashierPrinters) {
-        console.warn('[AUTOPRINT] Nenhuma impressora configurada!');
-        toast.error('Nenhuma impressora configurada. Configure em Configurações > Impressão.');
-        return;
-      }
+      const hasPrinters = printerConfig.kitchenPrinters?.some(k => k.printer) || printerConfig.barPrinters?.some(b => b.printer);
+      if (!hasPrinters) return;
 
-      for (const order of allToPrint) {
-        // Mark immediately to prevent re-processing
+      for (const order of toPrint) {
         printedIdsRef.current.add(order.id);
-        
-        console.log(`[AUTOPRINT] Iniciando impressão automática: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
-        console.log(`[AUTOPRINT] orderType: ${order.orderType}, status: ${order.status}, items: ${order.items?.length || 0}`);
         
         try {
           const sLayout = localStorage.getItem('receipt_layout');
@@ -259,13 +237,10 @@ const GlobalOrderMonitor: React.FC = () => {
           
           await printOrder(order, printerConfig, receiptSettings, restaurantInfo);
           await markOrderAsPrinted(order.id);
-          
           setAllOrders(prev => prev.map(o => o.id === order.id ? {...o, isPrinted: true} : o));
         } catch (printErr) {
           console.error("Falha na impressão:", printErr);
-          // Remove from ref on failure so it can be retried
           printedIdsRef.current.delete(order.id);
-          toast.error(`Falha ao imprimir pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
         }
       }
     };
