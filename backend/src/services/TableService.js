@@ -1,5 +1,6 @@
 const FinancialService = require('./FinancialService');
 const prisma = require('../lib/prisma');
+const money = require('../utils/money');
 
 class TableService {
   /**
@@ -37,12 +38,12 @@ class TableService {
         const tableOrders = activeOrders.filter(o => o.tableNumber === t.number);
         
         const tabs = tableOrders.map(order => {
-            const itemsSubtotal = order.items.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
-            const serviceTax = Number((itemsSubtotal * serviceTaxRate).toFixed(2));
-            const totalWithTax = itemsSubtotal + serviceTax + (order.extraCharge || 0) - (order.discount || 0);
+            const itemsSubtotal = order.items.reduce((acc, item) => money.add(acc, money.multiply(item.priceAtTime, item.quantity)), 0);
+            const serviceTax = money.multiply(itemsSubtotal, serviceTaxRate);
+            const totalWithTax = money.calcOrderTotal({ subtotal: itemsSubtotal, deliveryFee: serviceTax, extraCharge: order.extraCharge, discount: order.discount });
             
-            const paymentsTotal = order.payments.reduce((acc, p) => acc + p.amount, 0);
-            const balanceDue = Math.max(0, totalWithTax - paymentsTotal);
+            const paymentsTotal = order.payments.reduce((acc, p) => money.add(acc, p.amount), 0);
+            const balanceDue = Math.max(0, money.subtract(totalWithTax, paymentsTotal));
 
             return {
                 orderId: order.id,
@@ -57,7 +58,7 @@ class TableService {
             };
         }).filter(tab => tab.items.length > 0 || tab.totalAmount > 0);
 
-        const totalTableDue = tabs.reduce((acc, tab) => acc + tab.balanceDue, 0);
+        const totalTableDue = tabs.reduce((acc, tab) => money.add(acc, tab.balanceDue), 0);
 
         return { 
             id: t.id, 
@@ -98,10 +99,12 @@ class TableService {
 
         // 2. Registra Pagamentos (vinculados ao primeiro pedido do lote)
         const mainOrderId = openOrders[0].id;
+        let totalPaid = 0;
         for (const p of payments) {
             await tx.payment.create({
                 data: { orderId: mainOrderId, amount: p.amount, method: p.method }
             });
+            totalPaid = money.add(totalPaid, p.amount);
         }
 
         // 3. Libera Mesa se não houver mais pedidos abertos
@@ -126,7 +129,6 @@ class TableService {
         });
 
         if (payments.length > 0) {
-            const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
             const names = openOrders.map(o => o.customerName).filter(Boolean).join(', ');
             const description = `Venda Mesa ${table.number}${names ? ': ' + names : ''}`;
 
@@ -166,12 +168,12 @@ class TableService {
         });
 
         // 2. Registra os pagamentos
-        const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
-
+        let totalPaid = 0;
         for (const p of payments) {
             await tx.payment.create({
                 data: { orderId, amount: p.amount, method: p.method }
             });
+            totalPaid = money.add(totalPaid, p.amount);
         }
 
         // 3. Registro Financeiro com categoria correta
