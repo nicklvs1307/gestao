@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
-import { printOrder } from '../services/printer';
+import { printOrder, checkAgentStatus, getPrinterConfigFromStorage } from '../services/printer';
 import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
 import TableRequestAlert from './TableRequestAlert';
@@ -215,14 +215,38 @@ const GlobalOrderMonitor: React.FC = () => {
     if (allToPrint.length === 0) return;
 
     const processPrinting = async () => {
+      // Verifica se o agente de impressão está disponível
+      const agentAvailable = await checkAgentStatus();
+      console.log('[AUTOPRINT] Agente de impressão disponível?', agentAvailable);
+      
+      if (!agentAvailable) {
+        console.warn('[AUTOPRINT] Agente de impressão offline! Pulse:4676 não responds');
+        toast.error('Agente de impressão offline. Verifique se o serviço está em execução.');
+        return;
+      }
+
+      // Verifica se há impressoras configuradas
+      const printerConfig = getPrinterConfigFromStorage();
+      const hasKitchenPrinters = printerConfig.kitchenPrinters?.some(k => k.printer);
+      const hasBarPrinters = printerConfig.barPrinters?.some(b => b.printer);
+      const hasCashierPrinters = printerConfig.cashierPrinters?.some(c => c);
+      
+      console.log('[AUTOPRINT] Configuração de impressoras:', JSON.stringify(printerConfig, null, 2));
+      
+      if (!hasKitchenPrinters && !hasBarPrinters && !hasCashierPrinters) {
+        console.warn('[AUTOPRINT] Nenhuma impressora configurada!');
+        toast.error('Nenhuma impressora configurada. Configure em Configurações > Impressão.');
+        return;
+      }
+
       for (const order of allToPrint) {
         // Mark immediately to prevent re-processing
         printedIdsRef.current.add(order.id);
         
         console.log(`[AUTOPRINT] Iniciando impressão automática: Pedido #${order.dailyOrderNumber || order.id.slice(-4)}`);
+        console.log(`[AUTOPRINT] orderType: ${order.orderType}, status: ${order.status}, items: ${order.items?.length || 0}`);
+        
         try {
-          const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-          
           const sLayout = localStorage.getItem('receipt_layout');
           const sSettings = localStorage.getItem('receipt_settings');
           const receiptSettings = sLayout ? JSON.parse(sLayout) : (sSettings ? JSON.parse(sSettings) : {});

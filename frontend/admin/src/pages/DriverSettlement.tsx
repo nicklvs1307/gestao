@@ -399,6 +399,10 @@ const DriverSettlement: React.FC = () => {
                         <span className="text-[6px] font-bold text-slate-400 uppercase tracking-widest">
                           {settlement.totalOrders > 0 ? `R$ ${(settlement.storeNet / settlement.totalOrders).toFixed(2)}/ent` : '-'}
                         </span>
+                        {/* DEBUG: mostrar valores detalhados */}
+                        <span className="text-[5px] font-bold text-orange-400 uppercase tracking-widest mt-1">
+                          Taxas: {formatCurrency(settlement.deliveryFees)}
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-right">

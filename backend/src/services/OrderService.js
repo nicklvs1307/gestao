@@ -862,6 +862,8 @@ class OrderService {
         end.setHours(23, 59, 59, 999);
     }
 
+    logger.info(`[SETTLEMENT] Buscando acertos de entregadores: restaurantId=${restaurantId}, periodo=${start.toISOString()} até ${end.toISOString()}`);
+
     const drivers = await prisma.user.findMany({
         where: { 
             restaurantId, 
@@ -882,7 +884,16 @@ class OrderService {
         }
     });
 
-    return drivers.filter(d => d.deliveries.length > 0).map(d => {
+    logger.info(`[SETTLEMENT] Encontrados ${drivers.length} entregadores com entregas no período`);
+
+    return drivers.filter(d => {
+        if (d.deliveries.length === 0) return false;
+        logger.info(`[SETTLEMENT] Entregador ${d.name}: ${d.deliveries.length} entregas`);
+        d.deliveries.forEach((del, idx) => {
+            logger.info(`[SETTLEMENT]   Pedido ${idx + 1}: order.total=${del.order?.total}, deliveryFee=${del.deliveryFee}, paymentMethod=${del.paymentMethod}`);
+        });
+        return true;
+    }).map(d => {
         let cash = 0; let card = 0; let pix = 0; let deliveryFees = 0; let totalOrdersValue = 0;
         d.deliveries.forEach(del => {
             const order = del.order; if (!order) return;
@@ -899,11 +910,15 @@ class OrderService {
         });
         const totalDeliveries = d.deliveries.length;
         const baseRate = Number(d.baseRate) || 0;
-        const totalCommission = money.multiply(d.bonusPerDelivery || 0, d.deliveries.length);
+        const bonusPerDelivery = Number(d.bonusPerDelivery) || 0;
+        const totalCommission = money.multiply(bonusPerDelivery, d.deliveries.length);
         const totalToPay = money.add(baseRate, totalCommission);
         // Liquido da loja: total pedidos - taxas entrega - comissões
         const totalOrdersNet = money.subtract(totalOrdersValue, deliveryFees);
         const storeNet = money.subtract(totalOrdersNet, totalToPay);
+        
+        logger.info(`[SETTLEMENT] Cálculos para ${d.name}: totalOrdersValue=${totalOrdersValue}, deliveryFees=${deliveryFees}, totalOrdersNet=${totalOrdersNet}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
+        
         return { driverId: d.id, driverName: d.name || d.email, totalOrders: totalDeliveries, cash, card, pix, deliveryFees, totalToPay, storeNet, baseRate, totalCommission };
     });
   }
