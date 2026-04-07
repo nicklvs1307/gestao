@@ -144,7 +144,9 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
           setIsSaving(true);
           const product = selectedProductForAdd;
           const size = product.sizes?.find(s => s.id === selectedSizeId);
-          const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => selectedAddonIds.includes(a.id)) || [];
+          const selectedAddons = product.addonGroups?.flatMap(g => 
+              g.addons.filter(a => selectedAddonIds.includes(a.id)).map(a => ({ ...a, groupName: g.name }))
+          ) || [];
 
           await addItemsToOrder(order.id, [{
               productId: product.id,

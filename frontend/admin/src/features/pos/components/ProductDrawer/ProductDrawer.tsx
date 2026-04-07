@@ -61,8 +61,9 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
     
     // Map each ID in safeAddonIds to its corresponding addon object, allowing duplicates for quantity
     const selectedAddons = safeAddonIds.map(id => {
-      const addon = product.addonGroups?.flatMap(g => g.addons).find(a => a.id === id);
-      return addon;
+      const group = product.addonGroups?.find(g => g.addons.some(a => a.id === id));
+      const addon = group?.addons.find(a => a.id === id);
+      return addon ? { ...addon, groupName: group?.name } : null;
     }).filter(Boolean);
 
     let itemName = product.name;

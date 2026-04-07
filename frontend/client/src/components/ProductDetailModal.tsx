@@ -244,7 +244,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
     }
     const addonsWithPromoPrices = selectedAddons.map(sa => ({
       ...sa,
-      price: getAddonPrice(sa)
+      price: getAddonPrice(sa),
+      groupName: product.addonGroups?.find(g => g.addons.some(a => a.id === sa.id))?.name
     }));
 
     onAddToCart(product, quantity, selectedSize, addonsWithPromoPrices, [], observations);

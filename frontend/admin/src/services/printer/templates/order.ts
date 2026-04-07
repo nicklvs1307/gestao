@@ -125,13 +125,23 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       buf += bold(rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width));
     }
 
-    // Sabores
+    // Sabores (Agrupados caso tenham groupName, senão padrão)
     if (item.flavorsJson) {
       try {
         const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
-        if (Array.isArray(flavors)) {
-          flavors.forEach((f: { name: string }) => {
-            buf += tallBold(wrapText(`  SABOR: ${f.name.toUpperCase()}`, width).trim()) + '\n';
+        if (Array.isArray(flavors) && flavors.length > 0) {
+          const groupedFlavors = flavors.reduce((acc: Record<string, any[]>, f: any) => {
+            const g = f.groupName || 'SABORES';
+            if (!acc[g]) acc[g] = [];
+            acc[g].push(f);
+            return acc;
+          }, {});
+
+          Object.entries(groupedFlavors).forEach(([groupName, groupItems]) => {
+            buf += tallBold(wrapText(`  ${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            (groupItems as any[]).forEach(f => {
+              buf += tallBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
+            });
           });
         }
       } catch { /* ignore */ }
@@ -145,14 +155,24 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       } catch { /* ignore */ }
     }
 
-    // Adicionais
+    // Adicionais (Agrupados por groupName)
     if (item.addonsJson) {
       try {
         const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
-        if (Array.isArray(addons)) {
-          addons.forEach((a: { name: string; quantity?: number }) => {
-            const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-            buf += tallBold(wrapText(`  + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+        if (Array.isArray(addons) && addons.length > 0) {
+          const groupedAddons = addons.reduce((acc: Record<string, any[]>, a: any) => {
+            const g = a.groupName || 'ADICIONAIS';
+            if (!acc[g]) acc[g] = [];
+            acc[g].push(a);
+            return acc;
+          }, {});
+
+          Object.entries(groupedAddons).forEach(([groupName, groupItems]) => {
+            buf += tallBold(wrapText(`  ${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            (groupItems as any[]).forEach(a => {
+              const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
+              buf += tallBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+            });
           });
         }
       } catch { /* ignore */ }

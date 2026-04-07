@@ -144,7 +144,9 @@ const WaiterPos: React.FC = () => {
             }
         }
 
-        const selectedAddons = product.addonGroups?.flatMap(g => g.addons).filter(a => selectedAddonIds.includes(a.id)) || [];
+        const selectedAddons = product.addonGroups?.flatMap(g => 
+            g.addons.filter(a => selectedAddonIds.includes(a.id)).map(a => ({ ...a, groupName: g.name }))
+        ) || [];
 
         let itemName = product.name;
         if (size) itemName += ` (${size.name})`;
