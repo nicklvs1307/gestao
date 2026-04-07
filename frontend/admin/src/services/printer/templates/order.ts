@@ -248,9 +248,12 @@ function buildPaymentInfo(order: Order, width: number = PAPER_WIDTH): string {
   return buf;
 }
 
-function buildFooter(order: Order, settings: ReceiptSettings, width: number = PAPER_WIDTH): string {
+function buildFooter(order: Order, settings: ReceiptSettings, isProduction: boolean, width: number = PAPER_WIDTH): string {
   let buf = '';
-  if (settings.footerText) {
+  
+  if (isProduction) {
+    buf += alignCenter(bold(wrapText('BOM TRABALHO!', width).trim()));
+  } else if (settings.footerText) {
     buf += alignCenter(bold(wrapText(settings.footerText.toUpperCase(), width).trim()));
   }
 
@@ -298,6 +301,6 @@ export function generateEscPosReceipt(
     buf += alignCenter(bold('*** FIM DA PRODUÇÃO ***'));
   }
 
-  buf += buildFooter(order, settings, W);
+  buf += buildFooter(order, settings, isProduction, W);
   return buf;
 }
