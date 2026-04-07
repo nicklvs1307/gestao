@@ -32,6 +32,8 @@ const summaryOrderSelect = {
   tableNumber: true,
   status: true,
   total: true,
+  discount: true,
+  extraCharge: true,
   orderType: true,
   createdAt: true,
   customerName: true,
@@ -40,12 +42,18 @@ const summaryOrderSelect = {
     select: {
       name: true,
       phone: true,
+      address: true,
+      paymentMethod: true,
+      deliveryFee: true,
+      changeFor: true,
+      notes: true,
       deliveryType: true,
       status: true,
       driver: { select: { name: true } }
     }
   },
   user: { select: { name: true } },
+  payments: true,
   items: {
     select: {
       id: true,
