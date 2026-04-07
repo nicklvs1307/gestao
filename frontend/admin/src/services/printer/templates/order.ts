@@ -78,8 +78,20 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
 
   buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
 
-  // Mostrar fone e endereço se for delivery (mesmo na produção) ou se não for produção
-  if (!isProduction || isDeliveryOrderType) {
+  // Na produção, só mostrar o telefone se não for pickup, e o bairro em vez do endereço completo
+  if (isProduction) {
+    if (!isPickup) {
+      // Extrai o bairro (o que vem depois do hífen e antes da vírgula)
+      const addressParts = (order.deliveryOrder.address || '').split('-');
+      let bairro = addressParts.length > 1 ? addressParts[1].split(',')[0].trim() : order.deliveryOrder.address;
+      
+      buf += line('-', width);
+      buf += ESC_POS.ALIGN_CENTER;
+      buf += bold(`BAIRRO: ${bairro?.toUpperCase() || 'N/A'}`) + '\n';
+      buf += ESC_POS.ALIGN_LEFT;
+    }
+  } else if (!isProduction || isDeliveryOrderType) {
+    // Cupom do caixa
     buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
     
     // Endereço sem rótulo, grande e em negrito.
@@ -113,13 +125,13 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       buf += bold(rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width));
     }
 
-    // Sabores (Altura dupla e Negrito)
+    // Sabores
     if (item.flavorsJson) {
       try {
         const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
         if (Array.isArray(flavors)) {
           flavors.forEach((f: { name: string }) => {
-            buf += tallBold(wrapText(`> ${f.name.toUpperCase()}`, width).trim()) + '\n';
+            buf += bold(wrapText(`  SABOR: ${f.name.toUpperCase()}`, width).trim()) + '\n';
           });
         }
       } catch { /* ignore */ }
@@ -133,22 +145,22 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       } catch { /* ignore */ }
     }
 
-    // Adicionais (Altura dupla e Negrito)
+    // Adicionais
     if (item.addonsJson) {
       try {
         const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
         if (Array.isArray(addons)) {
           addons.forEach((a: { name: string; quantity?: number }) => {
             const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-            buf += tallBold(wrapText(`+ ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+            buf += bold(wrapText(`  + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
           });
         }
       } catch { /* ignore */ }
     }
 
-    // Observação do item (Altura dupla e Negrito)
+    // Observação do item
     if (item.observations) {
-      buf += tallBold(wrapText(`OBS: ${item.observations.toUpperCase()}`, width).trim()) + '\n';
+      buf += bold(wrapText(`  OBS: ${item.observations.toUpperCase()}`, width).trim()) + '\n';
     }
 
     buf += '\n'; // Espaçamento entre itens
@@ -258,7 +270,7 @@ export function generateEscPosReceipt(
   buf += buildItems(itemsToPrint, isProduction, W);
   buf += buildObservations(order, W);
 
-  if (!isProduction || order.orderType === 'DELIVERY') {
+  if (!isProduction) {
     buf += buildTotals(order, itemsToPrint, W);
     buf += buildPaymentInfo(order, W);
   } else {
