@@ -100,29 +100,25 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   };
 
   const handleCopyDeliveryLink = () => {
-    let base = user?.menuUrl;
-    const origin = window.location.origin;
+    let finalLink = '';
+    const slug = currentRestaurant?.slug || user?.restaurantId || '';
 
-    // Se o menuUrl for localhost (padrão do banco) e o sistema estiver em prod, ignora
-    if (base && (base.includes('localhost') || base.includes('127.0.0.1')) && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
-      base = null;
-    }
-
-    if (!base) {
-      base = origin.replace('admin.', '').replace(':5173', ':5174');
-    }
-
-    const sanitizedBaseUrl = base.endsWith('/') ? base.slice(0, -1) : base;
-    let finalLink = sanitizedBaseUrl;
-
-    if (sanitizedBaseUrl.includes('localhost') || sanitizedBaseUrl.includes('127.0.0.1')) {
-      finalLink = `${sanitizedBaseUrl}/${currentRestaurant?.slug || user?.restaurantId || ''}`;
+    // Se o cliente salvou um domínio personalizado próprio e válido
+    if (user?.menuUrl && !user.menuUrl.includes('localhost') && !user.menuUrl.includes('127.0.0.1')) {
+      finalLink = user.menuUrl;
+    } else if (window.location.hostname.includes('towersfy.com')) {
+      // Regra específica para ambiente de produção padrão do KiCardápio / Towersfy
+      finalLink = `https://${slug}.towersfy.com`;
+    } else if (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')) {
+      // Ambiente de desenvolvimento local
+      finalLink = `http://localhost:5174/${slug}`;
     } else {
-      // Em produção, garante que o slug da loja esteja na URL caso base seja o domínio central
-      if (currentRestaurant?.slug && !sanitizedBaseUrl.includes(currentRestaurant.slug)) {
-        finalLink = `${sanitizedBaseUrl}/${currentRestaurant.slug}`;
-      }
+      // Outros ambientes em produção (gera subdomínio automático removendo o admin.)
+      const baseHost = window.location.hostname.replace('admin.', '');
+      finalLink = `https://${slug}.${baseHost}`;
     }
+
+    finalLink = finalLink.endsWith('/') ? finalLink.slice(0, -1) : finalLink;
 
     navigator.clipboard.writeText(finalLink).then(() => {
       toast.success('Link do cardápio delivery copiado!');
