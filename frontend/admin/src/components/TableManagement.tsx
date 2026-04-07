@@ -76,16 +76,26 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
   };
 
   const generateMenuLink = (tableNumber: number) => {
-    // Busca a URL base das configurações ou usa o hostname atual como fallback
-    const baseUrl = user?.menuUrl || window.location.origin.replace('admin.', '').replace(':5173', ':5174');
-    const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    let base = user?.menuUrl;
+    const origin = window.location.origin;
+
+    // Ignora localhost do banco se o painel estiver rodando em produção
+    if (base && (base.includes('localhost') || base.includes('127.0.0.1')) && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+      base = null;
+    }
+
+    if (!base) {
+      base = origin.replace('admin.', '').replace(':5173', ':5174');
+    }
+
+    const sanitizedBaseUrl = base.endsWith('/') ? base.slice(0, -1) : base;
     
-    // Se a URL base for localhost ou contiver o ID do restaurante, mantemos o formato antigo por compatibilidade
-    // Caso contrário, usamos o novo formato amigável /mesa/numero
+    // Se a URL base for localhost, mantemos o formato de debug/local
     if (sanitizedBaseUrl.includes('localhost') || sanitizedBaseUrl.includes('127.0.0.1')) {
       return `${sanitizedBaseUrl}/cardapio/${user?.restaurantId}/${tableNumber}`;
     }
     
+    // Em produção, se a URL não apontar direto pro subdomínio, é bom resolver pelo path
     return `${sanitizedBaseUrl}/mesa/${tableNumber}`;
   };
 

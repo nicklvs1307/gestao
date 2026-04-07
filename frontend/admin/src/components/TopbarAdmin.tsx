@@ -100,12 +100,28 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   };
 
   const handleCopyDeliveryLink = () => {
-    const baseUrl = user?.menuUrl || window.location.origin.replace('admin.', '').replace(':5173', ':5174');
-    const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    let base = user?.menuUrl;
+    const origin = window.location.origin;
+
+    // Se o menuUrl for localhost (padrão do banco) e o sistema estiver em prod, ignora
+    if (base && (base.includes('localhost') || base.includes('127.0.0.1')) && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+      base = null;
+    }
+
+    if (!base) {
+      base = origin.replace('admin.', '').replace(':5173', ':5174');
+    }
+
+    const sanitizedBaseUrl = base.endsWith('/') ? base.slice(0, -1) : base;
     let finalLink = sanitizedBaseUrl;
 
     if (sanitizedBaseUrl.includes('localhost') || sanitizedBaseUrl.includes('127.0.0.1')) {
       finalLink = `${sanitizedBaseUrl}/${currentRestaurant?.slug || user?.restaurantId || ''}`;
+    } else {
+      // Em produção, garante que o slug da loja esteja na URL caso base seja o domínio central
+      if (currentRestaurant?.slug && !sanitizedBaseUrl.includes(currentRestaurant.slug)) {
+        finalLink = `${sanitizedBaseUrl}/${currentRestaurant.slug}`;
+      }
     }
 
     navigator.clipboard.writeText(finalLink).then(() => {
