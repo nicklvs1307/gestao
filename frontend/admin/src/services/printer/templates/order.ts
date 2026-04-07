@@ -131,7 +131,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
         const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
         if (Array.isArray(flavors)) {
           flavors.forEach((f: { name: string }) => {
-            buf += bold(wrapText(`  SABOR: ${f.name.toUpperCase()}`, width).trim()) + '\n';
+            buf += tallBold(wrapText(`  SABOR: ${f.name.toUpperCase()}`, width).trim()) + '\n';
           });
         }
       } catch { /* ignore */ }
@@ -141,7 +141,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
     if (item.sizeJson) {
       try {
         const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
-        buf += bold(`  TAMANHO: ${(size.name || '').toUpperCase()}`) + '\n';
+        buf += tallBold(wrapText(`  TAMANHO: ${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
       } catch { /* ignore */ }
     }
 
@@ -152,15 +152,16 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
         if (Array.isArray(addons)) {
           addons.forEach((a: { name: string; quantity?: number }) => {
             const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-            buf += bold(wrapText(`  + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+            buf += tallBold(wrapText(`  + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
           });
         }
       } catch { /* ignore */ }
     }
 
-    // Observação do item
-    if (item.observations) {
-      buf += bold(wrapText(`  OBS: ${item.observations.toUpperCase()}`, width).trim()) + '\n';
+    // Observação do item (suporta tanto item.observations do BD quanto item.observation do carrinho)
+    const obs = item.observations || (item as any).observation;
+    if (obs) {
+      buf += tallBold(wrapText(`  * OBS: ${obs.toUpperCase()} *`, width).trim()) + '\n';
     }
 
     buf += '\n'; // Espaçamento entre itens
