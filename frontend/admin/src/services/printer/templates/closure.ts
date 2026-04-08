@@ -42,6 +42,24 @@ export function generateCashierClosureReceipt(
   buf += line('-', W);
   buf += rowBold('TOTAL DE PEDIDOS:', String(closure.totalOrders), W);
   buf += rowBold('TOTAL DE ITENS:', String(closure.totalItems), W);
+
+  // ═══ PEDIDOS CANCELADOS ═══
+  if (closure.canceledOrders && closure.canceledOrders.length > 0) {
+    buf += line('=', W);
+    buf += alignCenter(bold('PEDIDOS CANCELADOS'));
+    buf += line('-', W);
+    buf += rowBold('QTD CANCELADOS:', String(closure.canceledOrders.length), W);
+    buf += rowBold('VALOR CANCELADO:', formatCurrency(closure.totalCanceledAmount || 0), W);
+    buf += line('-', W);
+
+    closure.canceledOrders.forEach(order => {
+      const orderNum = order.dailyOrderNumber || order.id?.slice(-4) || '0000';
+      const time = formatSP(order.canceledAt, 'HH:mm');
+      buf += row(`#${orderNum} (${time})`, formatCurrency(order.total), W);
+    });
+    buf += line('=', W);
+  }
+
   buf += line('-', W);
 
   // ═══ PRODUTOS VENDIDOS ═══

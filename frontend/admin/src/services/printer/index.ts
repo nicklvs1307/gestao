@@ -250,10 +250,23 @@ export const printCashierClosure = async (
   const itemMap: Record<string, { name: string; qty: number; total: number; addons: Record<string, { qty: number; total: number }> }> = {};
   let totalOrders = 0;
   let totalItems = 0;
+  const canceledOrders: Array<{ id: string; dailyOrderNumber: number; total: number; canceledAt: string }> = [];
+  let totalCanceledAmount = 0;
 
   (sessionOrders || []).forEach((order: unknown) => {
-    const o = order as { status?: string; items?: unknown[] };
-    if (o.status === 'CANCELED') return;
+    const o = order as { status?: string; items?: unknown[]; id?: string; dailyOrderNumber?: number; total?: number; canceledAt?: string };
+    
+    if (o.status === 'CANCELED') {
+      canceledOrders.push({
+        id: o.id || '',
+        dailyOrderNumber: o.dailyOrderNumber || 0,
+        total: o.total || 0,
+        canceledAt: o.canceledAt || new Date().toISOString()
+      });
+      totalCanceledAmount += (o.total || 0);
+      return;
+    }
+    
     totalOrders++;
     (o.items || []).forEach((item: unknown) => {
       const i = item as { quantity?: number; product?: { name?: string }; priceAtTime?: number; addonsJson?: unknown };
@@ -306,6 +319,8 @@ export const printCashierClosure = async (
       addons: item.addons
     })),
     closingDetails,
+    canceledOrders,
+    totalCanceledAmount,
   };
 
   const escPos = generateCashierClosureReceipt(closureData, info, closingDetails, sessionOrders);

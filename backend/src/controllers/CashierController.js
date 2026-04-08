@@ -67,7 +67,13 @@ class CashierController {
     });
 
     const transactions = await prisma.financialTransaction.findMany({
-      where: { cashierId: session.id, status: 'PAID' },
+      where: { 
+        cashierId: session.id, 
+        status: 'PAID',
+        // Excluir transações de pedidos cancelados
+        order: { status: { not: 'CANCELED' } }
+      },
+      include: { order: { select: { id: true, status: true } } },
       orderBy: { createdAt: 'desc' }
     });
 

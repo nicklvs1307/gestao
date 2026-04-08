@@ -196,7 +196,13 @@ class CashierService {
     // --- 2. CÁLCULO DO SNAPSHOT (O que o sistema esperava) ---
     // Recalcula tudo do zero para garantir integridade (Audit Trail)
     const transactions = await prisma.financialTransaction.findMany({
-        where: { cashierId: session.id, status: 'PAID' }
+      where: { 
+        cashierId: session.id, 
+        status: 'PAID',
+        // Excluir transações de pedidos cancelados
+        order: { status: { not: 'CANCELED' } }
+      },
+      include: { order: { select: { id: true, status: true } } }
     });
 
     // Filtrar vendas (excluir reforços, sangrias e entradas de acerto de entregadores)

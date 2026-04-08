@@ -515,7 +515,9 @@ class OrderService {
             case 'SHIPPED': updateData.shippedAt = new Date(); break;
             case 'DELIVERED': updateData.deliveredAt = new Date(); break;
             case 'COMPLETED': updateData.completedAt = new Date(); break;
-            case 'CANCELED': updateData.canceledAt = new Date(); break;
+            case 'CANCELED': 
+                updateData.canceledAt = new Date(); 
+                break;
         }
 
         const order = await tx.order.update({
@@ -523,6 +525,26 @@ class OrderService {
             data: updateData, 
             include: { deliveryOrder: true, payments: true }
         });
+
+        if (status === 'CANCELED') {
+            const canceledTrans = await tx.financialTransaction.findFirst({ where: { orderId: orderId } });
+            if (canceledTrans) {
+                await tx.financialTransaction.create({
+                    data: {
+                        restaurantId: order.restaurantId,
+                        cashierId: canceledTrans.cashierId,
+                        orderId: orderId,
+                        description: `CANCELAMENTO PEDIDO #${order.dailyOrderNumber || orderId}`,
+                        amount: canceledTrans.amount,
+                        type: 'EXPENSE',
+                        status: 'PAID',
+                        paymentMethod: canceledTrans.paymentMethod,
+                        dueDate: new Date(),
+                        paymentDate: new Date()
+                    }
+                });
+            }
+        }
 
         if (order.orderType === 'DELIVERY' && order.deliveryOrder) {
             let deliveryStatus = 'PENDING';

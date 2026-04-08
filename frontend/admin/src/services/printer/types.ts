@@ -43,6 +43,13 @@ export interface CashierClosureData {
     addons?: Record<string, { qty: number; total: number }>;
   }>;
   closingDetails?: Record<string, string>;
+  canceledOrders?: Array<{
+    id: string;
+    dailyOrderNumber: number;
+    total: number;
+    canceledAt: string;
+  }>;
+  totalCanceledAmount?: number;
 }
 
 export interface DriverSettlementData {
