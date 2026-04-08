@@ -35,9 +35,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
 
   const cartTotal = useCartTotal();
   const prefersReducedMotion = usePrefersReducedMotion();
-  const isCheckoutOpen = activeModal === 'checkout';
 
-  useScrollLock(isCheckoutOpen);
+  useScrollLock(activeModal === 'pos_checkout');
 
   const backdropTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.2 };
   const modalTransition = prefersReducedMotion ? { duration: 0.1 } : { type: "spring", damping: 25, stiffness: 300 };

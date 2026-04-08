@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { Product } from '../../../types';
 
 export type PosTab = 'table' | 'counter' | 'delivery' | 'tables';
 
@@ -44,7 +45,7 @@ interface PosState {
   selectedCategory: string;
   
   // Drawer de produto
-  selectedProductForAdd: any | null;
+  selectedProductForAdd: Product | null;
   tempQty: number;
   tempObs: string;
   selectedSizeId: string;
@@ -78,7 +79,7 @@ interface PosState {
   setSelectedCategory: (category: string) => void;
   
   // Drawer
-  setSelectedProductForAdd: (product: any | null) => void;
+  setSelectedProductForAdd: (product: Product | null) => void;
   setTempQty: (qty: number) => void;
   setTempObs: (obs: string) => void;
   setSelectedSizeId: (id: string) => void;

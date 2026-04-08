@@ -6,8 +6,115 @@ import {
 } from '../../../services/api';
 import { usePosStore } from './usePosStore';
 import { useCartStore, useCartTotal } from './useCartStore';
-import { Product, TableSummary, PaymentMethod, Order } from '../../../types';
+import { Product, TableSummary, PaymentMethod, Order, CartItem } from '../../../types';
 import { printOrder } from '../../../services/printer';
+
+interface OrderPayload {
+    items: Array<{
+        productId: string;
+        quantity: number;
+        observations?: string;
+        sizeId?: string;
+        addonsIds?: string[];
+        sizeJson?: string;
+        addonsJson?: string;
+    }>;
+    orderType: string;
+    tableNumber: number | null;
+    paymentMethod: string;
+    customerName: string;
+    deliveryInfo: any;
+    discount: number;
+    extraCharge: number;
+    totalAmount: number;
+}
+
+const validateOrder = (activeTab: string, selectedTable: string, deliveryInfo: any, paymentMethodId: string): string | null => {
+    if (activeTab === 'table' && !selectedTable) return "Por favor, selecione uma mesa";
+    if (activeTab === 'delivery' && !deliveryInfo.name) return "Vincule um cliente para delivery";
+    if (!paymentMethodId) return "Selecione uma forma de pagamento";
+    return null;
+};
+
+const buildOrderPayload = (
+    cart: CartItem[],
+    activeTab: string,
+    selectedTable: string,
+    customerName: string,
+    deliveryInfo: any,
+    deliverySubType: string,
+    posObservations: string,
+    paymentMethods: PaymentMethod[],
+    posPaymentMethodId: string,
+    cartTotalValue: number,
+    finalDiscount: number,
+    finalExtra: number,
+    finalDelivery: number
+): OrderPayload => {
+    const method = paymentMethods.find(m => m.id === posPaymentMethodId);
+    const isDelivery = activeTab === 'delivery';
+    const isCounter = activeTab === 'counter';
+    const hasCounterCustomer = isCounter && customerName;
+
+    const orderType = activeTab === 'table' ? 'TABLE' : (activeTab === 'counter' ? 'PICKUP' : 'DELIVERY');
+
+    return {
+        items: cart.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            observations: item.observation,
+            sizeId: item.selectedSizeDbId,
+            addonsIds: item.selectedAddonDbIds,
+            sizeJson: item.sizeJson,
+            addonsJson: item.addonsJson,
+        })),
+        orderType,
+        tableNumber: activeTab === 'table' ? parseInt(selectedTable) : null,
+        paymentMethod: method?.name || 'OUTRO',
+        customerName: activeTab === 'table' ? customerName : (isCounter ? (customerName || 'Balcão') : deliveryInfo.name),
+        deliveryInfo: isDelivery ? {
+            name: deliveryInfo.name,
+            phone: deliveryInfo.phone,
+            address: deliveryInfo.address, 
+            deliveryType: deliverySubType,
+            deliveryFee: finalDelivery,
+            observations: posObservations
+        } : (hasCounterCustomer && deliveryInfo.name ? {
+            name: deliveryInfo.name,
+            phone: deliveryInfo.phone,
+            address: 'Retirada no Balcão',
+            deliveryType: 'pickup',
+            deliveryFee: 0,
+            observations: posObservations
+        } : null),
+        discount: finalDiscount,
+        extraCharge: finalExtra,
+        totalAmount: Number((cartTotalValue + finalExtra + finalDelivery - finalDiscount).toFixed(2))
+    };
+};
+
+const printNewItems = async (orderPayload: OrderPayload, targetOrderId: string, tableNumber: number, cart: CartItem[], products: Product[], customerName: string) => {
+    const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+    const itemsWithProducts = cart.map(item => {
+        const fullProduct = products.find(p => p.id === item.productId);
+        return {
+            ...item,
+            product: fullProduct || { name: item.name, categories: [] },
+            priceAtTime: item.price,
+        };
+    });
+    
+    const orderForPrint = {
+        ...orderPayload,
+        id: targetOrderId,
+        orderType: 'TABLE' as const,
+        status: 'PENDING' as const,
+        tableNumber,
+        customerName: customerName || `Mesa ${tableNumber}`,
+        items: itemsWithProducts,
+    };
+    await printOrder(orderForPrint as any, printerConfig);
+};
 
 export const usePosActions = (
     refreshTables: () => void, 
@@ -42,130 +149,55 @@ export const usePosActions = (
     }, [pos]);
 
     const submitOrder = useCallback(async () => {
-        // Validações por modo
-        if (pos.activeTab === 'table' && !pos.selectedTable) {
-            return toast.error("Por favor, selecione uma mesa");
-        }
-        if (pos.activeTab === 'delivery' && !pos.deliveryInfo.name) {
-            return toast.error("Vincule um cliente para delivery");
-        }
-        if (!pos.posPaymentMethodId) {
-            return toast.error("Selecione uma forma de pagamento");
-        }
+        const validationError = validateOrder(pos.activeTab, pos.selectedTable, pos.deliveryInfo, pos.posPaymentMethodId);
+        if (validationError) return toast.error(validationError);
 
-        const method = paymentMethods.find(m => m.id === pos.posPaymentMethodId);
-        const cartTotalValue = cartTotal;
-        
+        const finalDiscount = parseFloat(pos.posDiscountValue || '0');
+        const finalExtra = parseFloat(pos.posExtraCharge || '0');
+        const finalDelivery = parseFloat(pos.posDeliveryFee || '0');
+
+        const orderPayload = buildOrderPayload(
+            cart, pos.activeTab, pos.selectedTable, pos.customerName,
+            pos.deliveryInfo, pos.deliverySubType, pos.posObservations,
+            paymentMethods, pos.posPaymentMethodId, cartTotal,
+            finalDiscount, finalExtra, finalDelivery
+        );
+
         try {
-            const finalDiscount = parseFloat(pos.posDiscountValue || '0');
-            const finalExtra = parseFloat(pos.posExtraCharge || '0');
-            const finalDelivery = parseFloat(pos.posDeliveryFee || '0');
-
-            // Determinar orderType baseado na aba ativa
-            // table = TABLE, delivery = DELIVERY, counter = PICKUP
-            const orderType = pos.activeTab === 'table' ? 'TABLE' : (pos.activeTab === 'counter' ? 'PICKUP' : 'DELIVERY');
-            const isDelivery = pos.activeTab === 'delivery';
-            const isCounter = pos.activeTab === 'counter';
-            const hasCounterCustomer = isCounter && pos.customerName;
-
-            const orderPayload = {
-                items: cart.map(item => ({
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    observations: item.observation,
-                    sizeId: item.selectedSizeDbId,
-                    addonsIds: item.selectedAddonDbIds,
-                    sizeJson: item.sizeJson,
-                    addonsJson: item.addonsJson,
-                })),
-                orderType,
-                tableNumber: pos.activeTab === 'table' ? parseInt(pos.selectedTable) : null,
-                paymentMethod: method?.name || 'OUTRO',
-                customerName: pos.activeTab === 'table' ? pos.customerName : (isCounter ? (pos.customerName || 'Balcão') : pos.deliveryInfo.name),
-                deliveryInfo: isDelivery ? {
-                    name: pos.deliveryInfo.name,
-                    phone: pos.deliveryInfo.phone,
-                    address: pos.deliveryInfo.address, 
-                    deliveryType: pos.deliverySubType,
-                    deliveryFee: finalDelivery,
-                    observations: pos.posObservations
-                } : (hasCounterCustomer && pos.deliveryInfo.name ? {
-                    name: pos.deliveryInfo.name,
-                    phone: pos.deliveryInfo.phone,
-                    address: 'Retirada no Balcão',
-                    deliveryType: 'pickup',
-                    deliveryFee: 0,
-                    observations: pos.posObservations
-                } : null),
-                discount: finalDiscount,
-                extraCharge: finalExtra,
-                totalAmount: Number((cartTotalValue + finalExtra + finalDelivery - finalDiscount).toFixed(2))
-            };
-
-            // ─── LÓGICA DE ENVIO POR MODO ───
-
-            // MESA: Adiciona itens à comanda existente OU cria nova comanda
             if (pos.activeTab === 'table') {
                 const tableInfo = tablesSummary.find(t => t.number === parseInt(pos.selectedTable));
                 const activeOrderId = tableInfo?.tabs?.[0]?.orderId;
                 const customerName = pos.customerName?.trim() || '';
 
-                // Se tem nome de cliente e já existe comanda com nome diferente, cria nova comanda
-                // Se não tem nome, usa a comanda existente (genérica)
                 let targetOrderId = activeOrderId;
                 if (customerName && tableInfo?.tabs) {
                     const existingTab = tableInfo.tabs.find(tab => 
                         tab.customerName === customerName && tab.items.length > 0
                     );
-                    if (existingTab) {
-                        targetOrderId = existingTab.orderId;
-                    }
+                    if (existingTab) targetOrderId = existingTab.orderId;
                 }
 
                 if (targetOrderId && tableInfo?.status !== 'free') {
-                    // Adiciona itens à comanda existente
                     await addItemsToOrder(targetOrderId, orderPayload.items);
+                    
                     if (finalDiscount > 0 || finalExtra > 0) {
                         const tabInfo = tableInfo.tabs.find(t => t.orderId === targetOrderId);
                         const newTotal = (tabInfo?.totalAmount || 0) + orderPayload.totalAmount;
                         await updateOrderFinancials(targetOrderId, { discount: finalDiscount, surcharge: finalExtra, total: newTotal });
                     }
                     
-                    // Imprime os itens novos na cozinha/bar
                     try {
-                        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                        const itemsWithProducts = cart.map(item => {
-                            const fullProduct = products.find(p => p.id === item.productId);
-                            return {
-                                ...item,
-                                product: fullProduct || { name: item.name, categories: [] },
-                                priceAtTime: item.price,
-                            };
-                        });
-                        
-                        const orderForPrint = {
-                            ...orderPayload,
-                            id: targetOrderId,
-                            orderType: 'TABLE' as const,
-                            status: 'PENDING' as const,
-                            tableNumber: parseInt(pos.selectedTable),
-                            customerName: customerName || `Mesa ${pos.selectedTable}`,
-                            items: itemsWithProducts,
-                        };
-                        await printOrder(orderForPrint as any, printerConfig);
+                        await printNewItems(orderPayload, targetOrderId, parseInt(pos.selectedTable), cart, products, customerName);
                         toast.success(`Itens de ${customerName || 'Mesa'} impressos na cozinha!`);
                     } catch (err) {
                         console.error('[submitOrder] Erro ao imprimir itens:', err);
                         toast.success("Itens adicionados ao pedido!");
                     }
                 } else {
-                    // Novo pedido de mesa
                     await createOrder(orderPayload);
                     toast.success("Pedido enviado!");
                 }
-            } 
-            // DELIVERY / BALCÃO: SEMPRE cria pedido NOVO (nunca junta com existente)
-            else {
+            } else {
                 await createOrder(orderPayload);
                 toast.success("Pedido enviado!");
             }
