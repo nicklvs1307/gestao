@@ -408,18 +408,10 @@ class OrderService {
                          notes: deliveryInfo.notes || null,
                          latitude: coords?.lat || (deliveryInfo.latitude && !isNaN(parseFloat(deliveryInfo.latitude)) ? parseFloat(deliveryInfo.latitude) : null),
                          longitude: coords?.lng || (deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.longitude)) ? parseFloat(deliveryInfo.longitude) : null),
-                         status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
-                     }
-                 });
-             }
-
-              // REMOVIDO: taxa de entrega já incluída no cálculo do total acima (linha 258)
-              // if (isDelivery && deliveryInfo.deliveryFee > 0) {
-              //     await tx.order.update({
-              //         where: { id: createdOrder.id },
-              //         data: { total: { increment: deliveryInfo.deliveryFee } }
-              //     });
-              // }
+                          status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
+                      }
+                  });
+              }
         }
 
         if (paymentMethod) {
