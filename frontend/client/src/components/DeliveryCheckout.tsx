@@ -228,7 +228,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
         
         {step === 'form' ? (
             /* --- TELA 1: FORMULÁRIO --- */
-            <div className="space-y-8">
+            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <User size={14} className="text-primary" /> Informações Pessoais
@@ -372,7 +372,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                         ))}
                     </div>
                     {paymentMethod.toLowerCase().includes('dinheiro') && (
-                        <div className="pt-2">
+                        <div className="pt-2 animate-in slide-in-from-top-2 duration-300">
                           <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Troco para quanto?</label>
                           <IMaskInput
                               mask="R$ num"
@@ -387,7 +387,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
             </div>
         ) : (
             /* --- TELA 2: REVISÃO --- */
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
                 <Card className="bg-emerald-50 border-emerald-100 p-6 flex flex-col items-center text-center">
                     <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
                       <CheckCircle2 size={32} className="text-emerald-500" />
