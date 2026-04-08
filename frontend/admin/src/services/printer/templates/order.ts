@@ -44,7 +44,9 @@ function buildHeader(info: RestaurantInfo | Record<string, unknown>, settings: R
 
 function buildOrderType(order: Order, width: number = PAPER_WIDTH): string {
   const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
-  const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
+  const isPickup = order.orderType === 'PICKUP' || 
+                   deliveryType === 'pickup' || 
+                   deliveryType === 'retirada';
   
   let typeLabel: string;
   if (order.orderType === 'TABLE') {
@@ -73,7 +75,9 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
   if (!order.deliveryOrder) return buf;
 
   const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
-  const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
+  const isPickup = order.orderType === 'PICKUP' || 
+                  deliveryType === 'pickup' || 
+                  deliveryType === 'retirada';
   const isDeliveryOrderType = order.orderType === 'DELIVERY';
 
   buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';

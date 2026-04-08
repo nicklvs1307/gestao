@@ -308,7 +308,7 @@ class OrderService {
             const lastOrders = await tx.$queryRaw`
                 SELECT "dailyOrderNumber" FROM "Order" 
                 WHERE "restaurantId" = ${realRestaurantId} 
-                AND "orderType" = 'DELIVERY'
+                AND "orderType" IN ('DELIVERY', 'PICKUP')
                 AND "createdAt" >= ${startTime}
                 ORDER BY "dailyOrderNumber" DESC 
                 LIMIT 1 
