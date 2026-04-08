@@ -7,7 +7,7 @@ export interface DeliveryInfo {
   name: string;
   phone: string;
   address: string;
-  deliveryType: 'delivery' | 'pickup';
+  deliveryType: 'delivery' | 'retirada';
 }
 
 export interface CartItem {
@@ -107,7 +107,7 @@ const initialState = {
     name: '',
     phone: '',
     address: '',
-    deliveryType: 'pickup' as const
+    deliveryType: 'retirada' as const
   },
   deliverySubType: 'delivery' as const,
   activeDeliveryOrderId: null as string | null,

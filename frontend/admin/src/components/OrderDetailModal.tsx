@@ -45,14 +45,11 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
 
   const [drivers, setDrivers] = useState<{id: string, name: string}[]>([]);
   const [selectedDriver, setSelectedDriver] = useState<string>(order?.deliveryOrder?.driverId || "");
-  const [deliveryType, setDeliveryType] = useState<string>(order?.deliveryOrder?.deliveryType || "pickup");
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [isEmitting, setIsEmitting] = useState(false);
-
+  const [deliveryType, setDeliveryType] = useState<string>(order?.deliveryOrder?.deliveryType || "retirada");
   useEffect(() => {
     if (order) {
       setSelectedDriver(order.deliveryOrder?.driverId || "");
-      setDeliveryType(order.deliveryOrder?.deliveryType || "pickup");
+      setDeliveryType(order.deliveryOrder?.deliveryType || "retirada");
     }
   }, [order]);
 
@@ -84,11 +81,12 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
       } catch (e) { toast.error("Erro ao vincular."); }
   };
 
-  const handleUpdateDeliveryType = async (type: 'delivery' | 'pickup') => {
-      try {
-          await updateDeliveryType(order.id, type);
+  const handleUpdateDeliveryType = async (type: 'delivery' | 'retirada') => {
+    try {
+      if (type === 'retirada') setSelectedDriver("");
+      await updateDeliveryType(order.id, type);
           setDeliveryType(type);
-          if (type === 'pickup') setSelectedDriver("");
+          if (type === 'retirada') setSelectedDriver("");
           toast.success(`Tipo alterado!`);
       } catch (e) { toast.error("Erro ao atualizar."); }
   };
@@ -110,7 +108,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   };
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
-  const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
+  const isPickup = order.orderType === 'PICKUP' || order.deliveryOrder?.deliveryType === 'pickup' || order.deliveryOrder?.deliveryType === 'retirada';
+  const isDelivery = order.orderType === 'DELIVERY' || (!!order.deliveryOrder && !isPickup);
   const isPaid = order.status === 'COMPLETED' || (order.payments && order.payments.length > 0);
 
   return (
@@ -195,7 +194,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                             </div>
                             <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-3xl space-y-4">
                                 <div className="flex gap-2 p-1.5 bg-white border border-blue-100 rounded-2xl shadow-inner">
-                                    <button onClick={() => handleUpdateDeliveryType('pickup')} className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", deliveryType === 'pickup' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}>
+                                    <button onClick={() => handleUpdateDeliveryType('retirada')} className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", deliveryType === 'retirada' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}>
                                         <ShoppingBag size={14} /> Balcão
                                     </button>
                                     <button onClick={() => handleUpdateDeliveryType('delivery')} className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", deliveryType === 'delivery' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}>

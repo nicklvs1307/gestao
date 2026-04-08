@@ -61,9 +61,10 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, on
                 </tr>
             ) : (
                 orders.map(order => {
-                    const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
+                    const isPickup = order.orderType === 'PICKUP' || order.deliveryOrder?.deliveryType === 'pickup' || order.deliveryOrder?.deliveryType === 'retirada';
+                    const isDelivery = order.orderType === 'DELIVERY' || (!!order.deliveryOrder && !isPickup);
+                    const isTable = order.orderType === 'TABLE';
                     const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
-                    const isPickup = deliveryType === 'pickup' || deliveryType === 'retirada';
                     const driverName = order.deliveryOrder?.driver?.name || 'Não atribuído';
 
                     return (
@@ -103,12 +104,12 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, on
                                 <div className="flex items-center gap-1.5">
                                     <div className={cn(
                                         "p-0.5 rounded text-[8px]",
-                                        !isDelivery ? "text-emerald-500 bg-emerald-50" : (isPickup ? "text-blue-500 bg-blue-50" : "text-rose-500 bg-rose-50")
+                                        isPickup ? "text-blue-500 bg-blue-50" : (isDelivery ? "text-rose-500 bg-rose-50" : "text-emerald-500 bg-emerald-50")
                                     )}>
-                                        {!isDelivery ? <UtensilsCrossed size={8} /> : (isPickup ? <ShoppingBag size={8} /> : <Truck size={8} />)}
+                                        {isPickup ? <ShoppingBag size={8} /> : (isDelivery ? <Truck size={8} /> : <UtensilsCrossed size={8} />)}
                                     </div>
                                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">
-                                        {isPickup ? 'Retirada' : 'Entrega'}
+                                        {isPickup ? 'Retirada' : (isDelivery ? 'Entrega' : 'Mesa')}
                                     </span>
                                 </div>
                             </div>

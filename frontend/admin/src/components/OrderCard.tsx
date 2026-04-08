@@ -110,8 +110,9 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
   };
 
   const deliveryData = order.deliveryOrder;
-  const isDelivery = order.orderType === 'DELIVERY' || !!deliveryData;
-  const isPickup = deliveryData?.deliveryType === 'pickup' || deliveryData?.deliveryType === 'retirada';
+  const isPickup = order.orderType === 'PICKUP' || deliveryData?.deliveryType === 'pickup' || deliveryData?.deliveryType === 'retirada';
+  const isDelivery = order.orderType === 'DELIVERY' || (!!deliveryData && !isPickup);
+  const isTable = order.orderType === 'TABLE' || (order.orderType === 'PICKUP' && !deliveryData);
   const orderTotal = order.total + (order.deliveryOrder?.deliveryFee || 0);
 
   return (
@@ -153,17 +154,17 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
         {/* Info: Entrega/Mesa */}
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing px-4 space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
                 <div className={cn(
                   "p-1.5 rounded-lg border",
-                  isDelivery 
-                    ? (isPickup ? "text-blue-500 bg-blue-50 border-blue-100" : "text-rose-500 bg-rose-50 border-rose-100") 
-                    : "text-emerald-500 bg-emerald-50 border-emerald-100"
+                  isPickup 
+                    ? "text-blue-500 bg-blue-50 border-blue-100" 
+                    : (isDelivery ? "text-rose-500 bg-rose-50 border-rose-100" : "text-emerald-500 bg-emerald-50 border-emerald-100")
                 )}>
-                    {!isDelivery ? <Utensils size={14} /> : (isPickup ? <ShoppingBag size={14} /> : <Truck size={14} />)}
+                    {isPickup ? <ShoppingBag size={14} /> : (isDelivery ? <Truck size={14} /> : <Utensils size={14} />)}
                 </div>
                 <span className="text-xs font-bold text-slate-600 uppercase">
-                  {isPickup ? 'Retirada' : 'Entrega'}
+                  {isPickup ? 'Retirada' : (isDelivery ? 'Entrega' : 'Mesa')}
                 </span>
               </div>
               {deliveryData?.phone && (
@@ -173,7 +174,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
               )}
             </div>
             
-            {isDelivery && !isPickup && deliveryData?.address && (
+            {isDelivery && deliveryData?.address && (
                 <div className="p-2 bg-slate-50 rounded-lg border border-slate-100/50">
                   <div className="flex items-start gap-1.5 text-[10px] font-medium text-slate-500 leading-tight">
                       <MapPin size={11} className="text-orange-500 shrink-0 mt-px" />

@@ -46,7 +46,7 @@ interface CustomerSelectionModalProps {
         phone: string; 
         addressStr: string; 
         addressStructured?: Address;
-        deliveryType: 'delivery' | 'pickup' 
+        deliveryType: 'delivery' | 'retirada' 
     }) => void;
 }
 
@@ -137,7 +137,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             name: customer?.name || 'Venda Balcão',
             phone: customer?.phone || '',
             addressStr: 'Retirada no Balcão',
-            deliveryType: 'pickup'
+            deliveryType: 'retirada'
         });
         onClose();
     };
@@ -147,7 +147,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             name: '',
             phone: '',
             addressStr: 'Retirada no Balcão',
-            deliveryType: 'pickup'
+            deliveryType: 'retirada'
         });
         onClose();
     };
@@ -173,7 +173,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             onSelectCustomer({
                 name: newCustomer.name, phone: newCustomer.phone, addressStr: addrStr,
                 addressStructured: newAddress.street ? newAddress : undefined,
-                deliveryType: newAddress.street ? 'delivery' : 'pickup'
+                deliveryType: newAddress.street ? 'delivery' : 'retirada'
             });
             onClose();
         } catch (error: any) {

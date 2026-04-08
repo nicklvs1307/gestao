@@ -199,7 +199,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                 <button 
                   onClick={() => {
                     setCustomerName('');
-                    setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'pickup' });
+                    setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'retirada' });
                   }}
                   className="w-10 h-10 rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center bg-white transition-all"
                   aria-label="Limpar cliente"

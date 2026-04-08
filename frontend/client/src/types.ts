@@ -162,7 +162,7 @@ export interface Order {
   tableNumber: number;
   status: string; 
   total: number;
-  orderType?: 'TABLE' | 'DELIVERY';
+  orderType?: 'TABLE' | 'DELIVERY' | 'PICKUP';
   isPrinted: boolean;
   createdAt: string;
   updatedAt: string;

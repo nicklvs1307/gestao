@@ -68,7 +68,7 @@ export const useCustomerSearch = (deliveryOrders: any[]) => {
                 name: customer.name,
                 phone: customer.phone,
                 address: customer.address || 'Retirada no Balcão',
-                deliveryType: 'pickup'
+                deliveryType: 'retirada'
             });
         }
         setCustomerResults([]);

@@ -54,7 +54,6 @@ const buildOrderPayload = (
     const method = paymentMethods.find(m => m.id === posPaymentMethodId);
     const isDelivery = activeTab === 'delivery';
     const isCounter = activeTab === 'counter';
-    const hasCounterCustomer = isCounter && customerName;
 
     const orderType = activeTab === 'table' ? 'TABLE' : (activeTab === 'counter' ? 'PICKUP' : 'DELIVERY');
 
@@ -76,14 +75,14 @@ const buildOrderPayload = (
             name: deliveryInfo.name,
             phone: deliveryInfo.phone,
             address: deliveryInfo.address, 
-            deliveryType: deliverySubType,
+            deliveryType: 'retirada',
             deliveryFee: finalDelivery,
             observations: posObservations
-        } : (hasCounterCustomer && deliveryInfo.name ? {
-            name: deliveryInfo.name,
-            phone: deliveryInfo.phone,
+        } : (isCounter ? {
+            name: customerName || 'Balcão',
+            phone: deliveryInfo?.phone || '',
             address: 'Retirada no Balcão',
-            deliveryType: 'pickup',
+            deliveryType: 'retirada',
             deliveryFee: 0,
             observations: posObservations
         } : null),

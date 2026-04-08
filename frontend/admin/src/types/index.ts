@@ -140,7 +140,7 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   restaurantId: string;
-  orderType?: 'TABLE' | 'DELIVERY';
+  orderType?: 'TABLE' | 'DELIVERY' | 'PICKUP';
   items: OrderItem[];
   deliveryOrder?: DeliveryOrder;
   payments?: Payment[];

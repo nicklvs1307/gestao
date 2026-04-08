@@ -278,7 +278,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
     }
   };
 
-  const handleUpdateDeliveryType = async (type: 'delivery' | 'pickup') => {
+  const handleUpdateDeliveryType = async (type: 'delivery' | 'retirada') => {
     try {
       await updateDeliveryType(order.id, type);
       onRefresh();

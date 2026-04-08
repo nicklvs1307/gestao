@@ -328,7 +328,7 @@ class OrderService {
 
         if (finalOrderType === 'DELIVERY' && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
-             const isPickup = deliveryInfo.deliveryType === 'pickup';
+             const isPickup = deliveryInfo.deliveryType === 'pickup' || deliveryInfo.deliveryType === 'retirada';
              const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
              const cleanPhone = deliveryInfo.phone ? normalizePhone(deliveryInfo.phone) : null;
              const customerName = deliveryInfo.name || 'Retirada Balcão';
@@ -342,23 +342,23 @@ class OrderService {
                      }
                  });
 
-                 await tx.deliveryOrder.create({
-                     data: {
-                         orderId: createdOrder.id,
-                         customerId: customer.id,
-                         name: customerName,
-                         phone: null,
-                         address: fullAddress,
-                         deliveryType: 'pickup',
-                         paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
-                         changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
-                         deliveryFee: 0,
-                         notes: deliveryInfo.notes || null,
-                         latitude: null,
-                         longitude: null,
-                         status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
-                     }
-                 });
+                  await tx.deliveryOrder.create({
+                      data: {
+                          orderId: createdOrder.id,
+                          customerId: customer.id,
+                          name: customerName,
+                          phone: null,
+                          address: fullAddress,
+                          deliveryType: deliveryInfo.deliveryType || 'retirada',
+                          paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
+                          changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
+                          deliveryFee: 0,
+                          notes: deliveryInfo.notes || null,
+                          latitude: null,
+                          longitude: null,
+                          status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
+                      }
+                  });
              } else {
                  const customer = await tx.customer.upsert({
                      where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
@@ -786,7 +786,7 @@ class OrderService {
 
     const oldFee = order.deliveryOrder.deliveryFee || 0;
     const updateData = { deliveryType, deliveryFee };
-    if (deliveryType === 'pickup') updateData.driverId = null;
+    if (deliveryType === 'pickup' || deliveryType === 'retirada') updateData.driverId = null;
     
     const result = await prisma.$transaction(async (tx) => {
         await tx.deliveryOrder.update({ where: { id: order.deliveryOrder.id }, data: updateData });

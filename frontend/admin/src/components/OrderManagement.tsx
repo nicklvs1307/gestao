@@ -13,7 +13,7 @@ import { Card } from './ui/Card';
 import { toast } from 'sonner';
 
 type ViewMode = 'kanban' | 'list';
-type OrderSegment = 'ALL' | 'TABLE' | 'DELIVERY';
+type OrderSegment = 'ALL' | 'TABLE' | 'DELIVERY' | 'PICKUP';
 
 import { useSocket } from '../hooks/useSocket';
 
@@ -128,7 +128,7 @@ const OrderManagement: React.FC = () => {
     if (newStatus === 'SHIPPED') {
       const order = allOrders.find(o => o.id === orderId);
       const isDelivery = order?.orderType === 'DELIVERY' || !!order?.deliveryOrder;
-      const isPickup = order?.deliveryOrder?.deliveryType === 'pickup';
+      const isPickup = order?.deliveryOrder?.deliveryType === 'retirada' || order?.deliveryOrder?.deliveryType === 'pickup';
       
       if (isDelivery && !isPickup && !order?.deliveryOrder?.driverId) {
         setOrderIdPendingDriver(orderId);
@@ -267,6 +267,7 @@ const OrderManagement: React.FC = () => {
   // Memoized counts
   const counts = useMemo(() => ({
     DELIVERY: allOrders.filter(o => o.orderType === 'DELIVERY' && ACTIVE_STATUSES.includes(o.status)).length,
+    PICKUP: allOrders.filter(o => o.orderType === 'PICKUP' && ACTIVE_STATUSES.includes(o.status)).length,
   }), [allOrders]);
 
   if (isLoading && allOrders.length === 0) return (
@@ -319,7 +320,8 @@ const OrderManagement: React.FC = () => {
         <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
             <div className="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 shadow-inner">
                 {[
-                    { id: 'DELIVERY', label: 'PEDIDOS DELIVERY', icon: Package, count: counts.DELIVERY }
+                    { id: 'DELIVERY', label: 'DELIVERY', icon: Package, count: counts.DELIVERY },
+                    { id: 'PICKUP', label: 'RETIRADA', icon: ShoppingBag, count: counts.PICKUP }
                 ].map(seg => (
                     <button 
                         key={seg.id}
