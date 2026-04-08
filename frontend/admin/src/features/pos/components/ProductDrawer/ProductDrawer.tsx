@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Minus, Plus, CheckCircle, Search } from 'lucide-react';
-import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
@@ -23,7 +22,6 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
   const [addonSearch, setAddonSearch] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { addToCart } = useCartStore();
-  const shouldReduceMotion = useReducedMotion();
 
   // Atalho Alt + F para focar na busca
   useEffect(() => {
@@ -91,25 +89,14 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
     toast.success("Item adicionado!");
   };
 
-  const drawerTransition = shouldReduceMotion 
-    ? { duration: 0.1 }
-    : { type: "spring", damping: 35, stiffness: 300 };
+  const drawerTransition = { duration: 0 };
 
   return (
     <div className="fixed inset-0 z-[150] flex justify-end">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }}
-        transition={shouldReduceMotion ? { duration: 0.1 } : { duration: 0.2 }}
-        onClick={() => setShowProductDrawer(false)} 
+      <div 
         className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
       />
-      <motion.div 
-        initial={{ x: '100%' }} 
-        animate={{ x: 0 }} 
-        exit={{ x: '100%' }} 
-        transition={drawerTransition}
+      <div 
         className="relative w-[calc(100%-400px)] bg-white shadow-2xl flex flex-col h-full"
       >
         <header className="h-20 border-b border-slate-100 px-10 flex items-center justify-between shrink-0 bg-white sticky top-0 z-10">
@@ -277,7 +264,7 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
             </Button>
           </div>
         </footer>
-      </motion.div>
+      </div>
     </div>
   );
 });
