@@ -254,7 +254,8 @@ const OrderManagement: React.FC = () => {
   const filteredOrders = useMemo(() => {
     return allOrders.filter(o => {
       const isStatusMatch = ACTIVE_STATUSES.includes(o.status);
-      const isSegmentMatch = activeSegment === 'ALL' || o.orderType === activeSegment;
+      const isSegmentMatch = activeSegment === 'ALL' || o.orderType === activeSegment || 
+        (activeSegment === 'DELIVERY' && o.orderType === 'PICKUP'); // Mostra pickup junto com delivery
       const isSearchMatch = !debouncedSearch || 
         o.id.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
         (o.customerName && o.customerName.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
@@ -266,8 +267,7 @@ const OrderManagement: React.FC = () => {
 
   // Memoized counts
   const counts = useMemo(() => ({
-    DELIVERY: allOrders.filter(o => o.orderType === 'DELIVERY' && ACTIVE_STATUSES.includes(o.status)).length,
-    PICKUP: allOrders.filter(o => o.orderType === 'PICKUP' && ACTIVE_STATUSES.includes(o.status)).length,
+    DELIVERY: allOrders.filter(o => (o.orderType === 'DELIVERY' || o.orderType === 'PICKUP') && ACTIVE_STATUSES.includes(o.status)).length,
   }), [allOrders]);
 
   if (isLoading && allOrders.length === 0) return (

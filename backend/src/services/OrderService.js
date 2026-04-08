@@ -203,7 +203,9 @@ class OrderService {
     // Se tem userId (operador logado), vai direto para PREPARING
     const initialStatus = (userId || isAutoAccept) ? 'PREPARING' : 'PENDING';
 
-    const finalOrderType = orderType === 'PICKUP' ? 'PICKUP' : (deliveryInfo || orderType === 'DELIVERY') ? 'DELIVERY' : 'TABLE';
+    const finalOrderType = orderType === 'PICKUP' ? 'PICKUP' : 
+                          (orderType === 'DELIVERY' && deliveryInfo?.deliveryType === 'retirada') ? 'PICKUP' : 
+                          (deliveryInfo || orderType === 'DELIVERY') ? 'DELIVERY' : 'TABLE';
 
     // === VALIDAÇÕES DE DELIVERY ===
     if (finalOrderType === 'DELIVERY') {
