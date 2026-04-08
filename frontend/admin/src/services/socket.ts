@@ -48,12 +48,13 @@ export function connectSocket(): void {
     const { token, restaurantId } = getSocketConfig();
     s.io.opts.query = {
       restaurantId: restaurantId || '',
-      token: token || '',
       timestamp: String(Date.now()),
+    };
+    s.io.opts.auth = {
+      token: token || ''
     };
     s.connect();
   }
-}
 }
 
 export function disconnectSocket(): void {

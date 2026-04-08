@@ -39,7 +39,7 @@ export const usePosData = () => {
         try {
             const ordersData = await getAdminOrders();
             if (isMountedRef.current) {
-                setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY'));
+                setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY' || o.orderType === 'PICKUP'));
             }
         } catch (error) {
             console.error("Erro ao carregar pedidos:", error);
@@ -82,7 +82,7 @@ export const usePosData = () => {
             setCategories(categoriesData || []);
             setTables(tablesData || []);
             setPaymentMethods(paymentMethodsData || []);
-            setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY'));
+            setDeliveryOrders((ordersData || []).filter((o: { orderType: string }) => o.orderType === 'DELIVERY' || o.orderType === 'PICKUP'));
 
             if (settingsData?.settings) {
                 setIsStoreOpen(settingsData.settings.isOpen);

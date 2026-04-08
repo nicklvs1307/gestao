@@ -24,9 +24,10 @@ export const PosModals: React.FC<PosModalsProps> = ({
   const { activeModal, setActiveModal } = usePosStore();
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {activeModal === 'pos_checkout' && (
         <CheckoutModal 
+          key="pos_checkout"
           paymentMethods={paymentMethods} 
           onSubmitOrder={onSubmitOrder} 
         />
@@ -34,12 +35,14 @@ export const PosModals: React.FC<PosModalsProps> = ({
 
       {activeModal === 'cashier_open' && (
         <CashierOpenModal 
+          key="cashier_open"
           onOpenCashier={onOpenCashier} 
         />
       )}
 
       {activeModal === 'delivery_info' && (
         <CustomerSelectionModal 
+          key="delivery_info"
           isOpen={true}
           onClose={() => setActiveModal('none')} 
           onSelectCustomer={(data) => {
@@ -55,6 +58,7 @@ export const PosModals: React.FC<PosModalsProps> = ({
 
       {activeModal === 'counter_customer' && (
         <CustomerSelectionModal 
+          key="counter_customer"
           isOpen={true}
           onClose={() => setActiveModal('none')} 
           onSelectCustomer={(data) => {

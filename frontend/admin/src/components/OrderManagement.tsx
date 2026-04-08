@@ -66,7 +66,7 @@ const OrderManagement: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await getAdminOrders();
-      const deliveryOrders = data.filter((o: Order) => o.orderType === 'DELIVERY');
+      const deliveryOrders = data.filter((o: Order) => o.orderType === 'DELIVERY' || o.orderType === 'PICKUP');
       const sortedOrders = deliveryOrders.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setAllOrders(sortedOrders);
     } catch (err) {
@@ -95,7 +95,7 @@ const OrderManagement: React.FC = () => {
 
     const handleOrderUpdate = (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
-      if (updatedOrder.orderType !== 'DELIVERY') return;
+      if (updatedOrder.orderType !== 'DELIVERY' && updatedOrder.orderType !== 'PICKUP') return;
 
       setAllOrders(prevOrders => {
         const newOrders = [...prevOrders];
