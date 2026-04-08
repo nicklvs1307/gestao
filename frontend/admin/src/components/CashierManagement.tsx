@@ -24,7 +24,6 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import MoneyCounter from './MoneyCounter';
 import { printCashierClosure } from '../services/printer';
 
 const CashierManagement: React.FC = () => {
@@ -48,8 +47,6 @@ const CashierManagement: React.FC = () => {
     });
     
     // ERP Features
-    const [showMoneyCounter, setShowMoneyCounter] = useState(false);
-    const [moneyCountDetails, setMoneyCountDetails] = useState<Record<string, number>>({});
     const [cashLeftover, setCashLeftover] = useState<string>('0'); // Fundo de troco para amanhã
 
     const [showTransactionModal, setShowTransactionModal] = useState<'none' | 'INCOME' | 'EXPENSE'>('none');
@@ -190,8 +187,7 @@ const CashierManagement: React.FC = () => {
                 finalAmount: totalInformed,
                 notes,
                 closingDetails: sanitizedDetails,
-                cashLeftover: parseFloat(cashLeftover) || 0,
-                moneyCountJson: moneyCountDetails
+                cashLeftover: parseFloat(cashLeftover) || 0
             };
 
             // Imprime o relatório de fechamento antes de enviar ao servidor
@@ -405,30 +401,18 @@ const CashierManagement: React.FC = () => {
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-300">R$</span>
                                                     <input 
                                                         type="number"
-                                                        readOnly={m.id === 'cash'} // Cash is read-only if counted
                                                         value={closingValues[m.id]}
                                                         onChange={(e) => setClosingValues(prev => ({ ...prev, [m.id]: e.target.value }))}
                                                         className={cn(
-                                                            "w-full h-8 bg-white border border-slate-200 rounded-md pl-7 pr-2 text-xs font-bold focus:border-slate-900 outline-none shadow-sm transition-all",
-                                                            m.id === 'cash' && "bg-slate-50 text-slate-600 cursor-not-allowed"
+                                                            "w-full h-8 bg-white border border-slate-200 rounded-md pl-7 pr-2 text-xs font-bold focus:border-slate-900 outline-none shadow-sm transition-all"
                                                         )}
                                                         placeholder="0,00"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (m.id === 'cash') setShowMoneyCounter(true);
-                                                        }}
                                                     />
                                                 </div>
                                                 
-                                                {m.id === 'cash' ? (
-                                                    <button onClick={(e) => { e.stopPropagation(); setShowMoneyCounter(true); }} className="h-8 px-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-100 rounded-md transition-all shadow-sm">
-                                                        <Calculator size={14} />
-                                                    </button>
-                                                ) : (
-                                                    <div className={cn("w-6 h-6 rounded-md flex items-center justify-center transition-all", isSelected ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-300")}>
-                                                        <ChevronRight size={12} />
-                                                    </div>
-                                                )}
+                                                <div className={cn("w-6 h-6 rounded-md flex items-center justify-center transition-all", isSelected ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-300")}>
+                                                    <ChevronRight size={12} />
+                                                </div>
                                             </div>
                                         </div>
                                     )
@@ -683,14 +667,6 @@ const CashierManagement: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
-
-            {/* Money Counter Modal */}
-            <MoneyCounter 
-                isOpen={showMoneyCounter} 
-                onClose={() => setShowMoneyCounter(false)} 
-                onConfirm={handleMoneyCountConfirm}
-                initialDetails={moneyCountDetails}
-            />
 
             {/* Modal de Pedidos Pendentes de Acerto */}
             <AnimatePresence>

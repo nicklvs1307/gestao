@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import { ArrowRight, Calculator, ShieldCheck, Wallet, CreditCard, Smartphone, Receipt } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Wallet, CreditCard, Smartphone, Receipt } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -11,7 +11,6 @@ interface CashierBlindCountProps {
   onMethodSelect: (id: string) => void;
   closingValues: Record<string, string>;
   onClosingValueChange: (id: string, value: string) => void;
-  onOpenMoneyCounter: () => void;
   totalInformed: number;
   hasBlocks: boolean;
   onAuditAndFinalize: () => void;
@@ -30,7 +29,6 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
   onMethodSelect,
   closingValues,
   onClosingValueChange,
-  onOpenMoneyCounter,
   totalInformed,
   hasBlocks,
   onAuditAndFinalize,
@@ -104,45 +102,26 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
                   </span>
                   <input
                     type="number"
-                    readOnly={m.id === 'cash'}
                     value={closingValues[m.id] || ''}
                     onChange={(e) => handleValueChange(m.id, e.target.value)}
                     className={cn(
                       'w-full h-11 bg-white border-2 rounded-xl pl-8 pr-3 text-sm font-black focus:outline-none transition-all tabular-nums',
                       isSelected 
                         ? 'border-orange-200 focus:border-orange-500' 
-                        : 'border-slate-200 focus:border-slate-900',
-                      m.id === 'cash' && 'bg-slate-50 text-slate-500 cursor-not-allowed'
+                        : 'border-slate-200 focus:border-slate-900'
                     )}
                     placeholder="0,00"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (m.id === 'cash') onOpenMoneyCounter();
-                    }}
                   />
                 </div>
 
-                {m.id === 'cash' ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenMoneyCounter();
-                    }}
-                    className="h-11 px-4 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 font-black text-[10px] uppercase tracking-widest"
-                  >
-                    <Calculator size={14} />
-                    Contar
-                  </button>
-                ) : (
-                  <div
-                    className={cn(
-                      'w-10 h-10 rounded-xl flex items-center justify-center transition-all',
-                      isSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-300'
-                    )}
-                  >
-                    <ArrowRight size={16} />
-                  </div>
-                )}
+                <div
+                  className={cn(
+                    'w-10 h-10 rounded-xl flex items-center justify-center transition-all',
+                    isSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-300'
+                  )}
+                >
+                  <ArrowRight size={16} />
+                </div>
               </div>
             </div>
           );

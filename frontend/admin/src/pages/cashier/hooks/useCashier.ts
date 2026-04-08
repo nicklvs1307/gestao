@@ -106,8 +106,6 @@ export function useCashier() {
   });
 
   // ERP states
-  const [showMoneyCounter, setShowMoneyCounter] = useState(false);
-  const [moneyCountDetails, setMoneyCountDetails] = useState<Record<string, number>>({});
   const [cashLeftover, setCashLeftover] = useState<string>('0');
 
   // Search state
@@ -296,14 +294,6 @@ export function useCashier() {
     [initialAmount, fetchData]
   );
 
-  const handleMoneyCountConfirm = useCallback(
-    (total: number, details: Record<string, number>) => {
-      setClosingValues(prev => ({ ...prev, cash: total.toFixed(2) }));
-      setMoneyCountDetails(details);
-    },
-    []
-  );
-
   const executeClose = useCallback(async () => {
     setIsClosing(true);
     try {
@@ -317,7 +307,6 @@ export function useCashier() {
         notes,
         closingDetails: sanitizedDetails,
         cashLeftover: parseFloat(cashLeftover) || 0,
-        moneyCountJson: moneyCountDetails,
       };
 
       try {
@@ -451,10 +440,6 @@ export function useCashier() {
     setSearchTerm,
 
     // ERP
-    showMoneyCounter,
-    setShowMoneyCounter,
-    moneyCountDetails,
-
     // Transaction modal
     transactionModalType,
     transAmount,
@@ -480,7 +465,6 @@ export function useCashier() {
     // Actions
     fetchData,
     handleOpen,
-    handleMoneyCountConfirm,
     handleClose,
     handleTransaction,
     handleShowPendingSettlements,

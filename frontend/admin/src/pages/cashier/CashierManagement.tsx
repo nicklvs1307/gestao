@@ -10,7 +10,6 @@ import CashierTransactionList from './components/CashierTransactionList';
 import CashierReviewStep from './components/CashierReviewStep';
 import TransactionModal from './components/TransactionModal';
 import PendingSettlementsModal from './components/PendingSettlementsModal';
-import MoneyCounter from '../../components/MoneyCounter';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
 const stepVariants = {
@@ -39,9 +38,6 @@ const CashierManagement: React.FC = memo(() => {
     setClosingValues,
     cashLeftover,
     setCashLeftover,
-    showMoneyCounter,
-    setShowMoneyCounter,
-    moneyCountDetails,
     transactionModalType,
     transAmount,
     setTransAmount,
@@ -59,7 +55,6 @@ const CashierManagement: React.FC = memo(() => {
     filteredOrders,
     fetchData,
     handleOpen,
-    handleMoneyCountConfirm,
     handleClose,
     executeClose,
     closeConfirmDialog,
@@ -74,7 +69,6 @@ const CashierManagement: React.FC = memo(() => {
   } = useCashier();
 
   const handleSetStep = useCallback((newStep: 'COUNT' | 'REVIEW') => setStep(newStep), [setStep]);
-  const handleSetShowMoneyCounter = useCallback((val: boolean) => setShowMoneyCounter(val), [setShowMoneyCounter]);
   const handleCloseValueChange = useCallback((id: string, val: string) => setClosingValues(prev => ({ ...prev, [id]: val })), [setClosingValues]);
 
   if (loading && !isOpen && !session) {
@@ -143,7 +137,6 @@ const CashierManagement: React.FC = memo(() => {
                 onMethodSelect={setSelectedMethod}
                 closingValues={closingValues}
                 onClosingValueChange={handleCloseValueChange}
-                onOpenMoneyCounter={() => setShowMoneyCounter(true)}
                 totalInformed={totalInformed}
                 hasBlocks={hasBlocks}
                 onAuditAndFinalize={() => setStep('REVIEW')}
@@ -198,13 +191,6 @@ const CashierManagement: React.FC = memo(() => {
         onDescriptionChange={setTransDesc}
         onSubmit={handleTransaction}
         onClose={closeTransactionModal}
-      />
-
-      <MoneyCounter
-        isOpen={showMoneyCounter}
-        onClose={() => setShowMoneyCounter(false)}
-        onConfirm={handleMoneyCountConfirm}
-        initialDetails={moneyCountDetails}
       />
 
       <PendingSettlementsModal
