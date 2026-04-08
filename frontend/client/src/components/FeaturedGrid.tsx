@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import type { Product } from '../types';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
@@ -11,8 +11,26 @@ interface FeaturedGridProps {
   onProductClick: (product: Product) => void;
 }
 
+interface ProcessedProduct {
+  product: Product;
+  basePrice: number;
+  finalPrice: number;
+  activePromotion: Product['promotions'][0] | undefined;
+  mediaUrl: string;
+}
+
 const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const processedProducts = useMemo((): ProcessedProduct[] => {
+    return products.map(product => {
+      const basePrice = calculateStartingPrice(product);
+      const activePromotion = product.promotions?.find(p => p.isActive);
+      const finalPrice = activePromotion ? calculateDiscountedPrice(basePrice, activePromotion) : basePrice;
+      const mediaUrl = getImageUrl(product.imageUrl);
+      return { product, basePrice, finalPrice, activePromotion, mediaUrl };
+    });
+  }, [products]);
 
   useEffect(() => {
     if (products.length <= 3) return;
@@ -48,15 +66,9 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
         ref={scrollRef}
         className="flex gap-3 overflow-x-auto px-5 no-scrollbar scroll-smooth pb-2"
       >
-        {products.map((product) => {
-          const basePrice = calculateStartingPrice(product);
-          const activePromotion = product.promotions?.find(p => p.isActive);
-          const finalPrice = activePromotion ? calculateDiscountedPrice(basePrice, activePromotion) : basePrice;
-          const mediaUrl = getImageUrl(product.imageUrl);
-
-          return (
-            <motion.div
-              key={product.id}
+        {processedProducts.map(({ product, finalPrice, activePromotion, mediaUrl }) => (
+          <motion.div
+            key={product.id}
               whileTap={{ scale: 0.98 }}
               onClick={() => onProductClick(product)}
               // Largura calculada para caber 3 itens com gaps
@@ -98,9 +110,8 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
                 </div>
               </div>
             </motion.div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
     </div>
   );
 };

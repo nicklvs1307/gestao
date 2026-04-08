@@ -18,7 +18,6 @@ import PixPaymentModal from '../components/PixPaymentModal';
 import ProductDetailModal from '../components/ProductDetailModal';
 import StoreClosedModal from '../components/StoreClosedModal';
 import { Search, Heart, Clock } from 'lucide-react';
-import { applyTheme } from '../utils/theme';
 import { Button } from '../components/ui/Button';
 import { isCategoryAvailable } from '../utils/availability';
 import RestaurantMeta from '../components/RestaurantMeta';
@@ -42,6 +41,8 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
     queryKey: [RESTAURANT_KEY, effectiveSlug],
     queryFn: () => getRestaurantBySlug(effectiveSlug!),
     enabled: !!effectiveSlug,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 
   const [activeCategory, setActiveCategory] = useState('todos');
@@ -82,12 +83,6 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const [isPixPaymentLoading, setPixPaymentLoading] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (restaurant?.settings) {
-      applyTheme(restaurant.settings);
-    }
-  }, [restaurant?.settings]);
 
   useEffect(() => {
     return () => {
