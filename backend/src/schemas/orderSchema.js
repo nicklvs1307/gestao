@@ -55,7 +55,7 @@ const CreateDeliveryOrderSchema = z.object({
       })
     ]).optional().nullable(),
 
-    deliveryType: z.enum(['delivery', 'pickup']).optional().nullable(),
+    deliveryType: z.enum(['delivery', 'pickup', 'retirada']).optional().nullable(),
     paymentMethod: z.string().optional().nullable(),
     changeFor: z.union([z.number(), z.string()]).optional().nullable(),
     deliveryFee: z.union([z.number(), z.string()]).optional().default(0),
