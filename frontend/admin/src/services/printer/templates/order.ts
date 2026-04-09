@@ -72,55 +72,57 @@ function buildOrderInfo(order: Order, width: number = PAPER_WIDTH): string {
 
 function buildCustomerInfo(order: Order, isProduction: boolean, width: number = PAPER_WIDTH): string {
   let buf = '';
-  if (!order.deliveryOrder) return buf;
-
+  
   const deliveryType = order.deliveryOrder?.deliveryType?.toLowerCase();
   const isPickup = order.orderType === 'PICKUP' || 
                   deliveryType === 'pickup' || 
                   deliveryType === 'retirada';
   const isDeliveryOrderType = order.orderType === 'DELIVERY';
-
-  buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
+  
+  const customerName = order.deliveryOrder?.name || order.customerName || 'N/A';
+  buf += bold(`CLIENTE: ${customerName.toUpperCase()}`) + '\n';
 
   // Na produção (cozinha), mostrar bairro para delivery ou nome do cliente para retirada
   if (isProduction) {
     if (!isPickup) {
       // Extrai o bairro (o que vem depois do hífen e antes da vírgula)
-      const addressParts = (order.deliveryOrder.address || '').split('-');
-      let bairro = addressParts.length > 1 ? addressParts[1].split(',')[0].trim() : order.deliveryOrder.address;
+      const addressParts = (order.deliveryOrder?.address || '').split('-');
+      let bairro = addressParts.length > 1 ? addressParts[1].split(',')[0].trim() : order.deliveryOrder?.address;
       
       buf += line('-', width);
       buf += ESC_POS.ALIGN_CENTER;
       buf += bold(`BAIRRO: ${bairro?.toUpperCase() || 'N/A'}`) + '\n';
       buf += ESC_POS.ALIGN_LEFT;
     } else {
-      // Para retirada/balcão, mostrar o nome do cliente
+      // Para retirada/balcão, mostrar o nome do cliente (já mostrado acima, mas podemos adicionar info adicional)
       buf += line('-', width);
       buf += ESC_POS.ALIGN_CENTER;
-      buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
+      buf += bold(`CLIENTE: ${customerName.toUpperCase()}`) + '\n';
       buf += ESC_POS.ALIGN_LEFT;
     }
   } else if (!isProduction || isDeliveryOrderType) {
-    // Cupom do caixa
-    buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
-    
-    // Endereço sem rótulo, grande e em negrito.
-    if (!isPickup && order.deliveryOrder.address) {
-      buf += line('-', width);
-      buf += ESC_POS.ALIGN_CENTER;
-      buf += bold(wrapText(order.deliveryOrder.address.toUpperCase(), width).trim()) + '\n';
-      buf += ESC_POS.ALIGN_LEFT;
-    }
-
-    // Complemento e Referência
-    const deliveryOrderAny = order.deliveryOrder as any;
-    if (deliveryOrderAny.complement || deliveryOrderAny.reference) {
-      buf += line('-', width);
-      if (deliveryOrderAny.complement) {
-        buf += bold(`COMP: ${deliveryOrderAny.complement.toUpperCase()}`) + '\n';
+    // Cupom do caixa - só mostra se tiver deliveryOrder
+    if (order.deliveryOrder) {
+      buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
+      
+      // Endereço sem rótulo, grande e em negrito.
+      if (!isPickup && order.deliveryOrder.address) {
+        buf += line('-', width);
+        buf += ESC_POS.ALIGN_CENTER;
+        buf += bold(wrapText(order.deliveryOrder.address.toUpperCase(), width).trim()) + '\n';
+        buf += ESC_POS.ALIGN_LEFT;
       }
-      if (deliveryOrderAny.reference) {
-        buf += bold(`REF: ${deliveryOrderAny.reference.toUpperCase()}`) + '\n';
+
+      // Complemento e Referência
+      const deliveryOrderAny = order.deliveryOrder as any;
+      if (deliveryOrderAny.complement || deliveryOrderAny.reference) {
+        buf += line('-', width);
+        if (deliveryOrderAny.complement) {
+          buf += bold(`COMP: ${deliveryOrderAny.complement.toUpperCase()}`) + '\n';
+        }
+        if (deliveryOrderAny.reference) {
+          buf += bold(`REF: ${deliveryOrderAny.reference.toUpperCase()}`) + '\n';
+        }
       }
     }
   }
