@@ -30,6 +30,7 @@ export function alignRight(text: string): string {
 }
 
 export function bold(text: string): string {
+  // 0x01 = Bold simples (tamanho médio entre normal e tallBold)
   return ESC_POS.BOLD_ON + text + ESC_POS.BOLD_OFF;
 }
 
