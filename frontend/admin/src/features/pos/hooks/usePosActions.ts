@@ -81,14 +81,14 @@ const buildOrderPayload = (
             reference: deliveryInfo.reference,
             deliveryType: deliverySubType === 'delivery' ? 'delivery' : 'retirada',
             deliveryFee: finalDelivery,
-            observations: posObservations
+            notes: posObservations
         } : (isCounter ? {
             name: customerName || 'Balcão',
             phone: deliveryInfo?.phone || '',
             address: 'Retirada no Balcão',
             deliveryType: 'retirada',
             deliveryFee: 0,
-            observations: posObservations
+            notes: posObservations
         } : null),
         discount: finalDiscount,
         extraCharge: finalExtra,
