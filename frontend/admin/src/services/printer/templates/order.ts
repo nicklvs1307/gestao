@@ -180,6 +180,12 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       } catch { /* ignore */ }
     }
 
+    // Observação do item (suporta tanto item.observations do BD quanto item.observation do carrinho)
+    const obs = item.observations || (item as any).observation;
+    if (obs) {
+      buf += tallBold(wrapText(`  * OBS: ${obs.toUpperCase()} *`, width).trim()) + '\n';
+    }
+
     // Adicionais (Agrupados por groupName)
     if (item.addonsJson) {
       try {
@@ -197,16 +203,11 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
               buf += tallBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += '\n'; // Espaçamento entre adicionais
             });
           });
         }
       } catch { /* ignore */ }
-    }
-
-    // Observação do item (suporta tanto item.observations do BD quanto item.observation do carrinho)
-    const obs = item.observations || (item as any).observation;
-    if (obs) {
-      buf += tallBold(wrapText(`  * OBS: ${obs.toUpperCase()} *`, width).trim()) + '\n';
     }
 
     buf += '\n'; // Espaçamento entre itens
