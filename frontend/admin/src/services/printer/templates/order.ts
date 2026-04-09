@@ -163,9 +163,9 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedFlavors).forEach(([groupName, groupItems]) => {
-            buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            buf += mediumBold(wrapText(`  ${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(f => {
-              buf += tallBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += mediumBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
             });
           });
         }
@@ -176,7 +176,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
     if (item.sizeJson) {
       try {
         const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
-        buf += tallBold(wrapText(`${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
+        buf += mediumBold(wrapText(`  TAM: ${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
       } catch { /* ignore */ }
     }
 
@@ -199,18 +199,16 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedAddons).forEach(([groupName, groupItems]) => {
-            buf += mediumBold(wrapText(`    ${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            buf += mediumBold(wrapText(`  ${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-              const addonPrice = a.price ? ` (${formatCurrency(a.price)})` : '';
-              buf += tallBold(wrapText(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}`, width).trim()) + '\n';
+              const addonPrice = (!isProduction && a.price) ? ` (+${formatCurrency(a.price)})` : '';
+              buf += mediumBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}${addonPrice}`, width).trim()) + '\n';
             });
           });
         }
       } catch { /* ignore */ }
     }
-
-    buf += '\n';
   });
 
   return buf;

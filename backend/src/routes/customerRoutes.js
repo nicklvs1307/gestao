@@ -28,6 +28,8 @@ router.get('/search', needsAuth, async (req, res) => {
                     select: {
                         address: true,
                         deliveryType: true,
+                        complement: true,
+                        reference: true,
                         createdAt: true
                     },
                     orderBy: { createdAt: 'desc' },

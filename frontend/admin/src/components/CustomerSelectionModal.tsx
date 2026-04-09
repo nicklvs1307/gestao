@@ -108,7 +108,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                     add(full, { street: c.street, number: c.number, neighborhood: c.neighborhood, city: c.city, state: c.state, zipCode: c.zipCode, complement: c.complement });
                 }
                 if (c.address) add(c.address);
-                c.deliveryOrders?.forEach((o: any) => { if (o.address) add(o.address); });
+                c.deliveryOrders?.forEach((o: any) => { 
+                    if (o.address) add(o.address, { complement: o.complement, reference: o.reference }); 
+                });
 
                 return { ...c, consolidatedAddresses: addressList };
             });
