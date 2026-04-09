@@ -145,9 +145,9 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       // Produto grande na cozinha (altura dupla)
       buf += tallBold(wrapText(`${qty}x ${productName.toUpperCase()}`, width).trim()) + '\n';
     } else {
-      // Produto em negrito no cupom
+      // Produto no cupom - mesmo tamanho da cozinha
       const totalItem = ((item.priceAtTime || 0) * qty);
-      buf += bold(rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width));
+      buf += tallBold(rowItemSmart(`${qty}x`, productName.toUpperCase(), formatCurrency(totalItem), width));
     }
 
     // Sabores (Agrupados caso tenham groupName, senão padrão)
@@ -202,15 +202,15 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
             buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-              buf += tallBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
-              buf += '\n'; // Espaçamento entre adicionais
+              const addonPrice = a.price ? ` (${formatCurrency(a.price)})` : '';
+              buf += tallBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}${addonPrice}`, width).trim()) + '\n';
             });
           });
         }
       } catch { /* ignore */ }
     }
 
-    buf += '\n'; // Espaçamento entre itens
+    buf += ''; // Espaçamento mínimo entre itens
   });
 
   return buf;
