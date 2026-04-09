@@ -889,6 +889,8 @@ model DeliveryOrder {
   name                    String?             // Nome no ato do pedido
   phone                   String?             // Telefone no ato do pedido
   address                 String?             // Endereço no ato do pedido
+  complement              String?             // Complemento do endereço
+  reference               String?             // Ponto de referência
   deliveryType            String?             // 'delivery' ou 'pickup'
   paymentMethod           String?             
   changeFor               Float?              

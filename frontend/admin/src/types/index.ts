@@ -106,6 +106,8 @@ export interface DeliveryOrder {
   name?: string;
   phone?: string;
   address?: string;
+  complement?: string;
+  reference?: string;
   deliveryType?: string;
   paymentMethod?: string;
   changeFor?: number;

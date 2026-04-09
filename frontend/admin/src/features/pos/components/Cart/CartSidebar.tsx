@@ -165,7 +165,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
               </button>
               {deliveryInfo.name && (
                 <button 
-                  onClick={() => setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'delivery' })}
+                  onClick={() => setDeliveryInfo({ name: '', phone: '', address: '', complement: '', reference: '', deliveryType: 'delivery' })}
                   className="w-10 h-10 rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center bg-white transition-all"
                   aria-label="Limpar informações"
                 >
@@ -199,7 +199,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                 <button 
                   onClick={() => {
                     setCustomerName('');
-                    setDeliveryInfo({ name: '', phone: '', address: '', deliveryType: 'retirada' });
+                    setDeliveryInfo({ name: '', phone: '', address: '', complement: '', reference: '', deliveryType: 'retirada' });
                   }}
                   className="w-10 h-10 rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 flex items-center justify-center bg-white transition-all"
                   aria-label="Limpar cliente"

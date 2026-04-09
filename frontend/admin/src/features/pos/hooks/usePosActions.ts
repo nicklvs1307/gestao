@@ -75,6 +75,8 @@ const buildOrderPayload = (
             name: deliveryInfo.name,
             phone: deliveryInfo.phone,
             address: deliveryInfo.address, 
+            complement: deliveryInfo.complement,
+            reference: deliveryInfo.reference,
             deliveryType: deliverySubType === 'delivery' ? 'delivery' : 'retirada',
             deliveryFee: finalDelivery,
             observations: posObservations

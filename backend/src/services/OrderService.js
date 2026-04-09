@@ -351,6 +351,8 @@ class OrderService {
                           name: customerName,
                           phone: null,
                           address: fullAddress,
+                          complement: addr.complement || deliveryInfo.complement || null,
+                          reference: addr.reference || deliveryInfo.reference || null,
                           deliveryType: deliveryInfo.deliveryType || 'retirada',
                           paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
                           changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
@@ -396,23 +398,25 @@ class OrderService {
                      }
                  });
 
-                 await tx.deliveryOrder.create({
-                     data: {
-                         orderId: createdOrder.id,
-                         customerId: customer.id,
-                         name: customerName,
-                         phone: deliveryInfo.phone || null,
-                         address: fullAddress,
-                         deliveryType: deliveryInfo.deliveryType,
-                         paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
-                         changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
-                         deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
-                         notes: deliveryInfo.notes || null,
-                         latitude: coords?.lat || (deliveryInfo.latitude && !isNaN(parseFloat(deliveryInfo.latitude)) ? parseFloat(deliveryInfo.latitude) : null),
-                         longitude: coords?.lng || (deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.longitude)) ? parseFloat(deliveryInfo.longitude) : null),
-                          status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
-                      }
-                  });
+                  await tx.deliveryOrder.create({
+                      data: {
+                          orderId: createdOrder.id,
+                          customerId: customer.id,
+                          name: customerName,
+                          phone: deliveryInfo.phone || null,
+                          address: fullAddress,
+                          complement: addr.complement || deliveryInfo.complement || null,
+                          reference: addr.reference || deliveryInfo.reference || null,
+                          deliveryType: deliveryInfo.deliveryType,
+                          paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
+                          changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
+                          deliveryFee: isDelivery ? (deliveryInfo.deliveryFee || 0) : 0,
+                          notes: deliveryInfo.notes || null,
+                          latitude: coords?.lat || (deliveryInfo.latitude && !isNaN(parseFloat(deliveryInfo.latitude)) ? parseFloat(deliveryInfo.latitude) : null),
+                          longitude: coords?.lng || (deliveryInfo.longitude && !isNaN(parseFloat(deliveryInfo.longitude)) ? parseFloat(deliveryInfo.longitude) : null),
+                           status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
+                       }
+                   });
               }
         }
 

@@ -32,7 +32,9 @@ export const useCustomerSearch = (deliveryOrders: any[]) => {
             ...pos.deliveryInfo,
             name: customer.name,
             phone: customer.phone,
-            address: customer.address || ''
+            address: customer.address || '',
+            complement: customer.complement,
+            reference: customer.reference
         });
 
         // VERIFICAÇÃO DE PEDIDO ATIVO
@@ -68,6 +70,8 @@ export const useCustomerSearch = (deliveryOrders: any[]) => {
                 name: customer.name,
                 phone: customer.phone,
                 address: customer.address || 'Retirada no Balcão',
+                complement: customer.complement,
+                reference: customer.reference,
                 deliveryType: 'retirada'
             });
         }

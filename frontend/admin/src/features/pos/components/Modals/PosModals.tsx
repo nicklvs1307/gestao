@@ -49,7 +49,9 @@ export const PosModals: React.FC<PosModalsProps> = ({
             handleSelectCustomer({
               name: data.name,
               phone: data.phone,
-              address: data.addressStr
+              address: data.addressStr,
+              complement: data.addressStructured?.complement,
+              reference: data.addressStructured?.reference
             });
             setActiveModal('none');
           }}
@@ -67,6 +69,8 @@ export const PosModals: React.FC<PosModalsProps> = ({
                 name: data.name,
                 phone: data.phone,
                 address: data.addressStr,
+                complement: data.addressStructured?.complement,
+                reference: data.addressStructured?.reference,
                 deliveryType: data.deliveryType
               });
             }

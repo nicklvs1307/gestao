@@ -105,6 +105,18 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
       buf += tallBold(wrapText(order.deliveryOrder.address.toUpperCase(), width).trim()) + '\n';
       buf += ESC_POS.ALIGN_LEFT;
     }
+
+    // Complemento e Referência
+    const deliveryOrderAny = order.deliveryOrder as any;
+    if (deliveryOrderAny.complement || deliveryOrderAny.reference) {
+      buf += line('-', width);
+      if (deliveryOrderAny.complement) {
+        buf += bold(`COMP: ${deliveryOrderAny.complement.toUpperCase()}`) + '\n';
+      }
+      if (deliveryOrderAny.reference) {
+        buf += bold(`REF: ${deliveryOrderAny.reference.toUpperCase()}`) + '\n';
+      }
+    }
   }
 
   return buf;

@@ -7,6 +7,8 @@ export interface DeliveryInfo {
   name: string;
   phone: string;
   address: string;
+  complement?: string;
+  reference?: string;
   deliveryType: 'delivery' | 'retirada';
 }
 
