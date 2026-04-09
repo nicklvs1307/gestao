@@ -203,14 +203,15 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
               const addonPrice = a.price ? ` (${formatCurrency(a.price)})` : '';
-              buf += tallBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}${addonPrice}`, width).trim()) + '\n';
+              buf += tallBold(wrapText(`        + ${prefix}${a.name.toUpperCase()}${addonPrice}`, width).trim()) + '\n';
+              buf += '\n'; // Meia linha entre adicionais
             });
           });
         }
       } catch { /* ignore */ }
     }
 
-    buf += ''; // Espaçamento mínimo entre itens
+    buf += '\n'; // Uma linha entre itens
   });
 
   return buf;
