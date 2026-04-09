@@ -330,7 +330,7 @@ class OrderService {
             });
         }
 
-        if (finalOrderType === 'DELIVERY' && deliveryInfo) {
+        if ((finalOrderType === 'DELIVERY' || finalOrderType === 'PICKUP') && deliveryInfo) {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
              const isPickup = deliveryInfo.deliveryType === 'pickup' || deliveryInfo.deliveryType === 'retirada';
              const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};

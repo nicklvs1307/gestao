@@ -27,6 +27,8 @@ interface OrderPayload {
     discount: number;
     extraCharge: number;
     totalAmount: number;
+    dailyOrderNumber?: number;
+    id?: string;
 }
 
 const validateOrder = (activeTab: string, selectedTable: string, deliveryInfo: any, paymentMethodId: string): string | null => {
@@ -199,8 +201,30 @@ export const usePosActions = (
                     toast.success("Pedido enviado!");
                 }
             } else {
-                await createOrder(orderPayload);
+                // Para balcão (PICKUP) ou delivery, cria o pedido
+                const createdOrder = await createOrder(orderPayload);
                 toast.success("Pedido enviado!");
+                
+                // Imprime a comanda para pedidos de balcão (PICKUP)
+                if (pos.activeTab === 'counter') {
+                    try {
+                        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+                        const orderForPrint = {
+                            ...createdOrder,
+                            items: (createdOrder?.items || cart.map(item => {
+                                const fullProduct = products.find(p => p.productId === item.productId || p.id === item.productId);
+                                return {
+                                    ...item,
+                                    product: fullProduct || { name: item.name, categories: [] },
+                                    priceAtTime: item.price,
+                                };
+                            })),
+                        };
+                        await printOrder(orderForPrint as any, printerConfig);
+                    } catch (printErr) {
+                        console.error('[submitOrder] Erro ao imprimir comanda de balcão:', printErr);
+                    }
+                }
             }
 
             clearCart();
