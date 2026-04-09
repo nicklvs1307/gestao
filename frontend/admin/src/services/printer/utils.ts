@@ -47,10 +47,6 @@ export function double(text: string): string {
   return ESC_POS.FONT_DOUBLE + text + ESC_POS.FONT_NORMAL;
 }
 
-export function doubleWidth(text: string): string {
-  return ESC_POS.FONT_DOUBLE_W + text + ESC_POS.FONT_NORMAL;
-}
-
 export function mediumBold(text: string): string {
   // 0x08 = Bold simples (menor que tallBold)
   return ESC_POS.FONT_BOLD + text + ESC_POS.FONT_NORMAL;
