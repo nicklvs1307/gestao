@@ -19,6 +19,9 @@ export const ESC_POS = {
   UNDERLINE_ON: ESC + '-' + '\x01',
   UNDERLINE_OFF: ESC + '-' + '\x00',
   FEED_LINES: (n: number) => ESC + 'd' + String.fromCharCode(n),
+  LINE_SPACING: (n: number) => ESC + '3' + String.fromCharCode(n), // Define espaçamento entre linhas (n = dots)
+  LINE_SPACING_TIGHT: ESC + '3' + '\x10', // 16 dots - ~50% menor
+  LINE_SPACING_NORMAL: ESC + '3' + '\x1E', // 30 dots - padrão
   CUT_PAPER: GS + 'V' + '\x00',
   CUT_PARTIAL: GS + 'V' + '\x01',
 } as const;

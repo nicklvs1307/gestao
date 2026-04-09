@@ -163,10 +163,13 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedFlavors).forEach(([groupName, groupItems], index) => {
-            if (index > 0) buf += '\n';
+            if (index > 0) buf += ESC_POS.LINE_SPACING_TIGHT + '\n'; // 50% menos espaço entre grupos diferentes
             buf += mediumBold(`    ${groupName.toUpperCase()}:\n`);
-            (groupItems as any[]).forEach(f => {
+            (groupItems as any[]).forEach((f, i) => {
               buf += tallBold(`      > ${f.name.toUpperCase()}`);
+              if (i < (groupItems as any[]).length - 1) {
+                buf += ESC_POS.LINE_SPACING_TIGHT; // 50% menos espaço entre sabores do mesmo grupo
+              }
             });
           });
         }
@@ -200,15 +203,18 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedAddons).forEach(([groupName, groupItems], index) => {
-            if (index > 0) buf += '\n'; // Linha em branco entre grupos diferentes
+            if (index > 0) buf += ESC_POS.LINE_SPACING_TIGHT + '\n'; // 50% menos espaço entre grupos diferentes
             buf += mediumBold(`    ${groupName.toUpperCase()}:\n`);
-            (groupItems as any[]).forEach(a => {
+            (groupItems as any[]).forEach((a, i) => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
               const addonPrice = (!isProduction && a.price) ? ` (+${formatCurrency(a.price)})` : '';
               buf += tallBold(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}`);
+              if (i < (groupItems as any[]).length - 1) {
+                buf += ESC_POS.LINE_SPACING_TIGHT; // 50% menos espaço entre adicionais do mesmo grupo
+              }
             });
           });
-          buf += '\n'; // Linha em branco após todos os adicionais (separar do próximo item)
+          buf += ESC_POS.LINE_SPACING_NORMAL + '\n'; // Espaço normal após todos os adicionais (separar do próximo item)
         }
       } catch { /* ignore */ }
     }
