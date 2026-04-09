@@ -199,19 +199,18 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedAddons).forEach(([groupName, groupItems]) => {
-            buf += mediumBold(wrapText(`  ${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            buf += mediumBold(wrapText(`    ${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
               const addonPrice = a.price ? ` (${formatCurrency(a.price)})` : '';
               buf += tallBold(wrapText(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}`, width).trim()) + '\n';
-              buf += '\n'; // Meia linha entre adicionais (50%)
             });
           });
         }
       } catch { /* ignore */ }
     }
 
-    buf += '\n'; // Meia linha entre itens (50%)
+    buf += '\n';
   });
 
   return buf;
