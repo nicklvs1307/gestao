@@ -137,9 +137,10 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
   buf += bold(isProduction ? 'QTD  PRODUTO\n' : 'QTD  DESCRIÇÃO'.padEnd(width - 12) + 'VALOR\n');
   buf += line('-', width);
 
-  (items || []).forEach(item => {
+  (items || []).forEach((item, itemIndex) => {
     const productName = item.product?.name || 'Produto';
     const qty = item.quantity || 1;
+    const isLastItem = itemIndex === (items || []).length - 1;
 
     if (isProduction) {
       // Produto grande na cozinha (altura dupla)
@@ -168,7 +169,9 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
             (groupItems as any[]).forEach((f, i) => {
               buf += tallBold(`      > ${f.name.toUpperCase()}`);
               if (i < (groupItems as any[]).length - 1) {
-                buf += ESC_POS.LINE_SPACING_TIGHT; // 50% menos espaço entre sabores do mesmo grupo
+                buf += ESC_POS.LINE_SPACING_TIGHT + '\n'; // 50% menos espaço entre sabores do mesmo grupo
+              } else {
+                buf += '\n'; // Último sabor também quebra linha
               }
             });
           });
@@ -188,6 +191,15 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
     const obs = item.observations || (item as any).observation;
     if (obs) {
       buf += tallBold(wrapText(`  * OBS: ${obs.toUpperCase()} *`, width).trim()) + '\n';
+    }
+
+    // Verifica se tem adicionais (para saber se precisa adicionar linha após sabores)
+    let hasAddons = false;
+    if (item.addonsJson) {
+      try {
+        const addons = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
+        hasAddons = Array.isArray(addons) && addons.length > 0;
+      } catch { /* ignore */ }
     }
 
     // Adicionais (Agrupados por groupName)
@@ -210,13 +222,34 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
               const addonPrice = (!isProduction && a.price) ? ` (+${formatCurrency(a.price)})` : '';
               buf += tallBold(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}`);
               if (i < (groupItems as any[]).length - 1) {
-                buf += ESC_POS.LINE_SPACING_TIGHT; // 50% menos espaço entre adicionais do mesmo grupo
+                buf += ESC_POS.LINE_SPACING_TIGHT + '\n'; // 50% menos espaço entre adicionais do mesmo grupo
+              } else {
+                buf += '\n'; // Último adicional também quebra linha
               }
             });
           });
-          buf += ESC_POS.LINE_SPACING_NORMAL + '\n'; // Espaço normal após todos os adicionais (separar do próximo item)
         }
       } catch { /* ignore */ }
+    }
+
+    // Linha em branco entre itens (se não for último item)
+    // Se tem sabores mas não tem adicionais, adiciona após sabores
+    // Se tem adicionais (com ou sem sabores), adiciona após adicionais
+    const hasFlavors = item.flavorsJson && (() => {
+      try {
+        const flavors = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
+        return Array.isArray(flavors) && flavors.length > 0;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!isLastItem) {
+      if (hasAddons) {
+        buf += ESC_POS.LINE_SPACING_NORMAL + '\n';
+      } else if (hasFlavors) {
+        buf += ESC_POS.LINE_SPACING_NORMAL + '\n';
+      }
     }
   });
 
