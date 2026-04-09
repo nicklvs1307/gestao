@@ -201,13 +201,14 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           Object.entries(groupedAddons).forEach(([groupName, groupItems], index) => {
             if (index === 0) buf += '\n'; // Linha em branco antes do primeiro grupo
             if (index > 0) buf += '\n'; // Linha em branco entre grupos diferentes
-            buf += mediumBold(wrapText(`    ${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            buf += mediumBold(`    ${groupName.toUpperCase()}:\n`);
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
               const addonPrice = (!isProduction && a.price) ? ` (+${formatCurrency(a.price)})` : '';
-              buf += tallBold(wrapText(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}`, width).trim()) + '\n';
+              buf += tallBold(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}\n`);
             });
           });
+          buf += '\n'; // Linha em branco após todos os adicionais (separar do próximo item)
         }
       } catch { /* ignore */ }
     }
