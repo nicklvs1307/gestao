@@ -330,7 +330,7 @@ export function useCashier() {
     } finally {
       setIsClosing(false);
     }
-  }, [closingValues, totalInformed, notes, cashLeftover, moneyCountDetails, summary, fetchData]);
+  }, [closingValues, totalInformed, notes, cashLeftover, summary, fetchData]);
 
   const handleClose = useCallback(async () => {
     if ((session?.pendingDriverSettlementsCount ?? 0) > 0) {
