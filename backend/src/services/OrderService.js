@@ -296,7 +296,7 @@ class OrderService {
 
     logger.info(`[ORDER] Iniciando transação do banco de dados...`);
     const newOrder = await prisma.$transaction(async (tx) => {
-        if (finalOrderType === 'DELIVERY') {
+        if (finalOrderType === 'DELIVERY' || finalOrderType === 'PICKUP') {
             const openSession = await tx.cashierSession.findFirst({
                 where: { restaurantId: realRestaurantId, status: 'OPEN' },
                 orderBy: { openedAt: 'desc' }

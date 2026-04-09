@@ -82,7 +82,7 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
 
   buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
 
-  // Na produção, só mostrar o telefone se não for pickup, e o bairro em vez do endereço completo
+  // Na produção (cozinha), mostrar bairro para delivery ou nome do cliente para retirada
   if (isProduction) {
     if (!isPickup) {
       // Extrai o bairro (o que vem depois do hífen e antes da vírgula)
@@ -92,6 +92,12 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
       buf += line('-', width);
       buf += ESC_POS.ALIGN_CENTER;
       buf += bold(`BAIRRO: ${bairro?.toUpperCase() || 'N/A'}`) + '\n';
+      buf += ESC_POS.ALIGN_LEFT;
+    } else {
+      // Para retirada/balcão, mostrar o nome do cliente
+      buf += line('-', width);
+      buf += ESC_POS.ALIGN_CENTER;
+      buf += bold(`CLIENTE: ${(order.deliveryOrder.name || 'N/A').toUpperCase()}`) + '\n';
       buf += ESC_POS.ALIGN_LEFT;
     }
   } else if (!isProduction || isDeliveryOrderType) {
