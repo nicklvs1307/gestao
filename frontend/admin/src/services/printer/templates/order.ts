@@ -162,10 +162,11 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
             return acc;
           }, {});
 
-          Object.entries(groupedFlavors).forEach(([groupName, groupItems]) => {
-            buf += mediumBold(wrapText(`  ${groupName.toUpperCase()}:`, width).trim()) + '\n';
+          Object.entries(groupedFlavors).forEach(([groupName, groupItems], index) => {
+            if (index > 0) buf += '\n';
+            buf += mediumBold(`    ${groupName.toUpperCase()}:\n`);
             (groupItems as any[]).forEach(f => {
-              buf += mediumBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += tallBold(`      > ${f.name.toUpperCase()}`);
             });
           });
         }
@@ -199,13 +200,12 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedAddons).forEach(([groupName, groupItems], index) => {
-            if (index === 0) buf += '\n'; // Linha em branco antes do primeiro grupo
             if (index > 0) buf += '\n'; // Linha em branco entre grupos diferentes
             buf += mediumBold(`    ${groupName.toUpperCase()}:\n`);
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
               const addonPrice = (!isProduction && a.price) ? ` (+${formatCurrency(a.price)})` : '';
-              buf += tallBold(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}\n`);
+              buf += tallBold(`      + ${prefix}${a.name.toUpperCase()}${addonPrice}`);
             });
           });
           buf += '\n'; // Linha em branco após todos os adicionais (separar do próximo item)
