@@ -51,7 +51,8 @@ const CreateDeliveryOrderSchema = z.object({
         neighborhood: z.string().optional().nullable(),
         city: z.string().optional().nullable(),
         zipCode: z.string().optional().nullable(),
-        complement: z.string().optional().nullable()
+        complement: z.string().optional().nullable(),
+        reference: z.string().optional().nullable()
       })
     ]).optional().nullable(),
 
@@ -59,6 +60,7 @@ const CreateDeliveryOrderSchema = z.object({
     paymentMethod: z.string().optional().nullable(),
     changeFor: z.union([z.number(), z.string()]).optional().nullable(),
     deliveryFee: z.union([z.number(), z.string()]).optional().default(0),
+    notes: z.string().optional().nullable(),
   }).optional().nullable(),
 
   // Campos opcionais de compatibilidade
