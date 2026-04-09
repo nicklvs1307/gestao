@@ -4,7 +4,6 @@ import { ESC_POS, PAPER_WIDTH, PAYMENT_METHOD_MAP } from '../constants';
 import { 
   alignCenter, 
   bold, 
-  bigBold,
   double, 
   mediumBold,
   tallBold,
@@ -166,7 +165,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           Object.entries(groupedFlavors).forEach(([groupName, groupItems]) => {
             buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(f => {
-              buf += bigBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += tallBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
             });
           });
         }
@@ -177,7 +176,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
     if (item.sizeJson) {
       try {
         const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
-        buf += bigBold(wrapText(`${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
+        buf += tallBold(wrapText(`${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
       } catch { /* ignore */ }
     }
 
@@ -197,7 +196,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
             buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-              buf += bigBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += tallBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
             });
           });
         }
