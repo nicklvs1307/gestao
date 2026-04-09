@@ -4,6 +4,7 @@ import { ESC_POS, PAPER_WIDTH, PAYMENT_METHOD_MAP } from '../constants';
 import { 
   alignCenter, 
   bold, 
+  bigBold,
   double, 
   mediumBold,
   tallBold,
@@ -163,10 +164,9 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedFlavors).forEach(([groupName, groupItems]) => {
-            buf += '\n'; // Espaçamento antes do grupo
             buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(f => {
-              buf += bold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += bigBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
             });
           });
         }
@@ -174,12 +174,10 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
     }
 
     // Tamanho
-    // Tamanho
     if (item.sizeJson) {
       try {
         const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
-        buf += '\n'; // Espaçamento antes
-        buf += bold(wrapText(`${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
+        buf += bigBold(wrapText(`${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
       } catch { /* ignore */ }
     }
 
@@ -196,11 +194,10 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
           }, {});
 
           Object.entries(groupedAddons).forEach(([groupName, groupItems]) => {
-            buf += '\n'; // Espaçamento antes do grupo
             buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-              buf += bold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += bigBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
             });
           });
         }

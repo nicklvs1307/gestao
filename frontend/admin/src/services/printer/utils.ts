@@ -34,6 +34,15 @@ export function bold(text: string): string {
   return ESC_POS.BOLD_ON + text + ESC_POS.BOLD_OFF;
 }
 
+export function bigBold(text: string): string {
+  // 0x10 = Double Height (altura dupla sem bold) - maior que bold, menor que tallBold
+  return ESC_POS.FONT_MEDIUM + text + ESC_POS.FONT_NORMAL;
+}
+
+export function doubleWidth(text: string): string {
+  return ESC_POS.FONT_DOUBLE_W + text + ESC_POS.FONT_NORMAL;
+}
+
 export function double(text: string): string {
   return ESC_POS.FONT_DOUBLE + text + ESC_POS.FONT_NORMAL;
 }
