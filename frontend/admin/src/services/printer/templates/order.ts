@@ -164,9 +164,9 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
 
           Object.entries(groupedFlavors).forEach(([groupName, groupItems]) => {
             buf += '\n'; // Espaçamento antes do grupo
-            buf += bold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(f => {
-              buf += mediumBold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += bold(wrapText(`    > ${f.name.toUpperCase()}`, width).trim()) + '\n';
             });
           });
         }
@@ -179,7 +179,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
       try {
         const size = typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson;
         buf += '\n'; // Espaçamento antes
-        buf += bold(wrapText(`TAMANHO: ${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
+        buf += bold(wrapText(`${(size.name || '').toUpperCase()}`, width).trim()) + '\n';
       } catch { /* ignore */ }
     }
 
@@ -197,10 +197,10 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
 
           Object.entries(groupedAddons).forEach(([groupName, groupItems]) => {
             buf += '\n'; // Espaçamento antes do grupo
-            buf += bold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
+            buf += mediumBold(wrapText(`${groupName.toUpperCase()}:`, width).trim()) + '\n';
             (groupItems as any[]).forEach(a => {
               const prefix = a.quantity && a.quantity > 1 ? `${a.quantity}x ` : '';
-              buf += mediumBold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
+              buf += bold(wrapText(`    + ${prefix}${a.name.toUpperCase()}`, width).trim()) + '\n';
             });
           });
         }
