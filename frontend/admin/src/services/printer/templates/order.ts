@@ -102,7 +102,7 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
     if (!isPickup && order.deliveryOrder.address) {
       buf += line('-', width);
       buf += ESC_POS.ALIGN_CENTER;
-      buf += tallBold(wrapText(order.deliveryOrder.address.toUpperCase(), width).trim()) + '\n';
+      buf += bold(wrapText(order.deliveryOrder.address.toUpperCase(), width).trim()) + '\n';
       buf += ESC_POS.ALIGN_LEFT;
     }
 

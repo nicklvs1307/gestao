@@ -44,6 +44,8 @@ const summaryOrderSelect = {
       name: true,
       phone: true,
       address: true,
+      complement: true,
+      reference: true,
       paymentMethod: true,
       deliveryFee: true,
       changeFor: true,
