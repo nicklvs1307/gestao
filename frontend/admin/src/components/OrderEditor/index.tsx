@@ -423,6 +423,8 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                 {isDelivery && order.deliveryOrder?.address && (
                                     <p className="text-[9px] font-bold text-slate-500 uppercase italic leading-tight line-clamp-2">
                                         <MapPin size={10} className="inline mr-1 text-slate-400" /> {order.deliveryOrder.address}
+                                        {order.deliveryOrder.complement && <span className="text-amber-600"> ({order.deliveryOrder.complement})</span>}
+                                        {order.deliveryOrder.reference && <span className="text-blue-600"> - Ref: {order.deliveryOrder.reference}</span>}
                                     </p>
                                 )}
                                 <div className="flex items-center gap-2 mt-2">

@@ -229,7 +229,11 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
                 <MapPin size={10} /> Endereço de Entrega
               </span>
-              <p className="text-[11px] font-bold text-slate-700 leading-snug">{order.deliveryOrder?.address || 'Retirada no Balcão'}</p>
+              <p className="text-[11px] font-bold text-slate-700 leading-snug">
+                {order.deliveryOrder?.address || 'Retirada no Balcão'}
+                {order.deliveryOrder?.complement && <span className="text-amber-600"> ({order.deliveryOrder.complement})</span>}
+                {order.deliveryOrder?.reference && <span className="text-blue-600"> - Ref: {order.deliveryOrder.reference}</span>}
+              </p>
             </div>
 
             {/* Observações do Cliente */}

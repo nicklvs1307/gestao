@@ -178,7 +178,11 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                 {order.deliveryOrder?.address && (
                                     <div className="space-y-2">
                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12} className="text-rose-500"/> Local de Entrega</p>
-                                        <p className="text-xs font-bold text-slate-600 uppercase italic leading-relaxed bg-white/60 p-4 rounded-2xl border border-white shadow-sm">{order.deliveryOrder.address}</p>
+                                        <p className="text-xs font-bold text-slate-600 uppercase italic leading-relaxed bg-white/60 p-4 rounded-2xl border border-white shadow-sm">
+                                          {order.deliveryOrder.address}
+                                          {order.deliveryOrder.complement && <><br/><span className="text-amber-600">Comp: {order.deliveryOrder.complement}</span></>}
+                                          {order.deliveryOrder.reference && <><br/><span className="text-blue-600">Ref: {order.deliveryOrder.reference}</span></>}
+                                        </p>
                                     </div>
                                 )}
                             </div>

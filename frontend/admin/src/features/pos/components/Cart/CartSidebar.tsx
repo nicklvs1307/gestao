@@ -158,7 +158,11 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                     {deliveryInfo.address ? 'Endereço' : 'Cliente'}
                   </span>
                   <span className="text-xs font-medium text-slate-700 truncate w-full text-left">
-                    {deliveryInfo.name ? (deliveryInfo.address ? deliveryInfo.address.substring(0, 30) + '...' : deliveryInfo.name) : 'Vincular cliente...'}
+                    {deliveryInfo.name 
+                      ? (deliveryInfo.address 
+                          ? deliveryInfo.address.substring(0, 30) + (deliveryInfo.complement ? ` (${deliveryInfo.complement})` : '') + (deliveryInfo.reference ? ` - ${deliveryInfo.reference}` : '') + '...' 
+                          : deliveryInfo.name) 
+                      : 'Vincular cliente...'}
                   </span>
                 </div>
                 <User size={14} className="text-orange-400 shrink-0" />
