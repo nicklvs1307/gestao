@@ -13,6 +13,7 @@ const SettingsManagement: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'printing' | 'links'>('general');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const {
     general,
@@ -125,7 +126,13 @@ const SettingsManagement: React.FC = () => {
               return (
                 <button 
                   key={tab.id}
-                  onClick={() => navigate(`/settings/${tab.id}`)}
+                  disabled={isNavigating}
+                  onClick={() => {
+                    if (isNavigating) return;
+                    setIsNavigating(true);
+                    navigate(`/settings/${tab.id}`);
+                    setTimeout(() => setIsNavigating(false), 300);
+                  }}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-300",
                     activeTab === tab.id 

@@ -50,6 +50,7 @@ const OrderManagement: React.FC = () => {
   const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
   const [orderIdPendingDriver, setOrderIdPendingDriver] = useState<string | null>(null);
   const [newStatusPendingDriver, setNewStatusPendingDriver] = useState<string | null>(null);
+  const statusChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search input
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -125,6 +126,8 @@ const OrderManagement: React.FC = () => {
   }, [on, off, fetchOrders]);
 
   const handleStatusChange = useCallback(async (orderId: string, newStatus: string) => {
+    if (statusChangeTimeoutRef.current) return;
+    
     if (newStatus === 'SHIPPED') {
       const order = allOrders.find(o => o.id === orderId);
       const isDelivery = order?.orderType === 'DELIVERY' || !!order?.deliveryOrder;
@@ -139,6 +142,10 @@ const OrderManagement: React.FC = () => {
     }
 
     try {
+      statusChangeTimeoutRef.current = setTimeout(() => {
+        statusChangeTimeoutRef.current = null;
+      }, 300);
+      
       setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       setSelectedOrder(current => current && current.id === orderId ? { ...current, status: newStatus } : current);
       
@@ -147,6 +154,11 @@ const OrderManagement: React.FC = () => {
     } catch (error) { 
       toast.error("Erro ao atualizar status");
       fetchOrders();
+    } finally {
+      if (statusChangeTimeoutRef.current) {
+        clearTimeout(statusChangeTimeoutRef.current);
+        statusChangeTimeoutRef.current = null;
+      }
     }
   }, [allOrders, fetchOrders]);
 
