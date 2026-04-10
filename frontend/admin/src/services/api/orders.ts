@@ -45,11 +45,6 @@ export const updatePaymentMethod = async (paymentId: string, newMethod: string) 
   return response.data;
 };
 
-export const addOrderPayment = async (orderId: string, paymentData: { amount: number, method: string }) => {
-  const response = await apiClient.post(`/admin/orders/${orderId}/payments`, paymentData);
-  return response.data;
-};
-
 export const updateDeliveryType = async (orderId: string, deliveryType: 'delivery' | 'pickup') => {
     const response = await apiClient.patch(`/admin/orders/${orderId}/delivery-type`, { deliveryType });
     return response.data;
