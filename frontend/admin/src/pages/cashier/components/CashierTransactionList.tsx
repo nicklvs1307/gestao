@@ -8,6 +8,7 @@ interface CashierTransactionListProps {
   paymentMethods: PaymentMethod[];
   selectedMethod: string;
   filteredOrders: any[];
+  totalByMethod: number;
   onUpdatePayment: (orderId: string, method: string) => void;
   onOrderClick: (order: any) => void;
   searchTerm: string;
@@ -43,6 +44,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
   paymentMethods,
   selectedMethod,
   filteredOrders,
+  totalByMethod,
   onUpdatePayment,
   onOrderClick,
   searchTerm,
@@ -117,7 +119,8 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
               const orderNumber = order.dailyOrderNumber || order.id.slice(-3);
               const payments = order.payments || [];
               const paidAmount = payments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
-              const isPartial = payments.length > 0 && paidAmount < order.total;
+              const isPartial = order._isPartial || (payments.length > 0 && paidAmount < order.total);
+              const methodAmount = order._methodAmount || 0;
               const hasPayment = payments.length > 0;
               const isMultiplePayments = payments.length > 1;
               
@@ -165,12 +168,21 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                       <p className="text-base font-black text-slate-900 italic tracking-tighter">
                         {formatCurrency(order.total)}
                       </p>
+                      {isPartial && (
+                        <p className="text-[9px] font-bold text-amber-600 uppercase">Parcial</p>
+                      )}
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
+          {totalByMethod > 0 && (
+            <div className="mt-3 pt-3 border-t-2 border-slate-200 flex justify-between items-center px-2">
+              <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Total desta forma</span>
+              <span className="text-base font-black text-emerald-600 italic tracking-tight">{formatCurrency(totalByMethod)}</span>
+            </div>
+          )}
         ) : (
           <div className="flex flex-col items-center justify-center h-48 opacity-30">
             <Filter size={48} strokeWidth={1.5} className="text-slate-400 mb-3" />

@@ -203,26 +203,49 @@ export function useCashier() {
     const selLabel = normalize(currentDisplayMethod?.label || '');
     const selType = normalize((currentDisplayMethod as any)?.type || '');
 
-    return sessionOrders.filter(o => {
-      const method = normalize(
-        o.payments?.[0]?.method || o.deliveryOrder?.paymentMethod || 'other'
-      );
-      const methodMatch = method === selId || method === selLabel || method === selType;
-      
-      if (!methodMatch) return false;
-      
-      if (!searchTerm) return true;
-      
-      const term = searchTerm.toLowerCase();
-      return (
-        o.id.toLowerCase().includes(term) ||
-        (o.dailyOrderNumber?.toString().includes(term)) ||
-        (o.deliveryOrder?.name?.toLowerCase().includes(term)) ||
-        (o.customerName?.toLowerCase().includes(term)) ||
-        (o.tableNumber?.toString().includes(term))
-      );
-    });
+    return sessionOrders
+      .filter(o => {
+        const payments = o.payments || [];
+        const hasThisMethod = payments.some(p => {
+          const pMethod = normalize(p.method || '');
+          return pMethod === selId || pMethod === selLabel || pMethod === selType;
+        });
+        
+        if (!hasThisMethod) return false;
+        
+        if (!searchTerm) return true;
+        
+        const term = searchTerm.toLowerCase();
+        return (
+          o.id.toLowerCase().includes(term) ||
+          (o.dailyOrderNumber?.toString().includes(term)) ||
+          (o.deliveryOrder?.name?.toLowerCase().includes(term)) ||
+          (o.customerName?.toLowerCase().includes(term)) ||
+          (o.tableNumber?.toString().includes(term))
+        );
+      })
+      .map(o => {
+        const payments = o.payments || [];
+        const selIdLower = selId.toLowerCase();
+        const selLabelLower = selLabel.toLowerCase();
+        const selTypeLower = selType.toLowerCase();
+        
+        const relevantPayments = payments.filter(p => {
+          const pMethod = normalize(p.method || '');
+          return pMethod === selIdLower || pMethod === selLabelLower || pMethod === selTypeLower;
+        });
+        
+        const methodAmount = relevantPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const paidTotal = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const isPartial = paidTotal < o.total;
+        
+        return { ...o, _methodAmount: methodAmount, _isPartial: isPartial };
+      });
   }, [sessionOrders, selectedMethod, paymentMethods, searchTerm]);
+
+  const totalByMethod = useMemo(() => {
+    return filteredOrders.reduce((sum, o) => sum + (o._methodAmount || 0), 0);
+  }, [filteredOrders]);
 
   // --- Expected value for audit ---
 
@@ -491,6 +514,7 @@ export function useCashier() {
     floatNext,
     safeDeposit,
     filteredOrders,
+    totalByMethod,
 
     // Actions
     fetchData,

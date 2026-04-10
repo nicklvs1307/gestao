@@ -55,6 +55,7 @@ const CashierManagement: React.FC = memo(() => {
     searchTerm,
     setSearchTerm,
     filteredOrders,
+    totalByMethod,
     fetchData,
     handleOpen,
     handleClose,
