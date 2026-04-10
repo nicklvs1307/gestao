@@ -166,7 +166,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                     ) : null}
                     <div className="text-right">
                       <p className="text-base font-black text-slate-900 italic tracking-tighter">
-                        {formatCurrency(order.total)}
+                        {formatCurrency(methodAmount)}
                       </p>
                       {isPartial && (
                         <p className="text-[9px] font-bold text-amber-600 uppercase">Parcial</p>
