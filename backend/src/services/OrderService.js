@@ -692,11 +692,45 @@ class OrderService {
   }
 
   async updatePaymentMethod(orderId, newMethod, restaurantId) {
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new Error("Pedido não encontrado");
+
+    const existingTransactions = await prisma.financialTransaction.findMany({
+      where: { orderId, type: 'INCOME', description: { startsWith: 'VENDA' } }
+    });
+
+    const openSession = await prisma.cashierSession.findFirst({
+      where: { restaurantId, status: 'OPEN' }
+    });
+
     const result = await prisma.$transaction(async (tx) => {
-        await tx.payment.updateMany({ where: { orderId }, data: { method: newMethod } });
-        await tx.deliveryOrder.updateMany({ where: { orderId }, data: { paymentMethod: newMethod } });
-        await tx.financialTransaction.updateMany({ where: { orderId, restaurantId }, data: { paymentMethod: newMethod } });
-        return { success: true };
+      await tx.payment.updateMany({ where: { orderId }, data: { method: newMethod } });
+      await tx.deliveryOrder.updateMany({ where: { orderId }, data: { paymentMethod: newMethod } });
+
+      for (const ft of existingTransactions) {
+        await tx.financialTransaction.updateMany({
+          where: { id: ft.id },
+          data: { status: 'CANCELED' }
+        });
+
+        await tx.financialTransaction.create({
+          data: {
+            restaurantId,
+            orderId,
+            cashierId: openSession?.id,
+            categoryId: ft.categoryId,
+            description: ft.description,
+            amount: ft.amount,
+            type: 'INCOME',
+            status: 'PAID',
+            dueDate: new Date(),
+            paymentDate: new Date(),
+            paymentMethod: newMethod
+          }
+        });
+      }
+
+      return { success: true };
     });
     emitOrderUpdate(orderId);
     return result;
@@ -751,13 +785,46 @@ class OrderService {
   }
 
   async addPaymentToOrder(orderId, { amount, method }) {
-    const result = await prisma.payment.create({
-        data: {
-            orderId,
-            amount: parseFloat(amount),
-            method
-        }
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new Error("Pedido não encontrado");
+
+    const restaurantId = order.restaurantId;
+    const openSession = await prisma.cashierSession.findFirst({
+      where: { restaurantId, status: 'OPEN' }
     });
+
+    const result = await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.create({
+        data: {
+          orderId,
+          amount: parseFloat(amount),
+          method
+        }
+      });
+
+      const category = await tx.transactionCategory.findFirst({
+        where: { restaurantId, name: 'Vendas' }
+      });
+
+      await tx.financialTransaction.create({
+        data: {
+          restaurantId,
+          orderId,
+          cashierId: openSession?.id,
+          categoryId: category?.id,
+          description: `VENDA ADICIONAL #${order.dailyOrderNumber || order.id.slice(-4)}`,
+          amount: parseFloat(amount),
+          type: 'INCOME',
+          status: 'PAID',
+          dueDate: new Date(),
+          paymentDate: new Date(),
+          paymentMethod: method
+        }
+      });
+
+      return payment;
+    });
+
     emitOrderUpdate(orderId);
     return result;
   }
@@ -765,8 +832,32 @@ class OrderService {
   async removePaymentFromOrder(paymentId) {
     const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
     if (!payment) throw new Error('Pagamento não encontrado.');
-    
-    await prisma.payment.delete({ where: { id: paymentId } });
+
+    const order = await prisma.order.findUnique({ where: { id: payment.orderId } });
+    if (!order) throw new Error("Pedido não encontrado");
+
+    const restaurantId = order.restaurantId;
+    const openSession = await prisma.cashierSession.findFirst({
+      where: { restaurantId, status: 'OPEN' }
+    });
+
+    const existingTransactions = await prisma.financialTransaction.findMany({
+      where: { orderId: payment.orderId, amount: payment.amount, paymentMethod: payment.method }
+    });
+
+    await prisma.$transaction(async (tx) => {
+      if (existingTransactions.length > 0) {
+        for (const ft of existingTransactions) {
+          await tx.financialTransaction.updateMany({
+            where: { id: ft.id },
+            data: { status: 'CANCELED' }
+          });
+        }
+      }
+
+      await tx.payment.delete({ where: { id: paymentId } });
+    });
+
     emitOrderUpdate(payment.orderId);
     return { success: true };
   }

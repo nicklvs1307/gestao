@@ -121,7 +121,7 @@ class TableService {
             await tx.table.update({ where: { id: tableId }, data: { status: 'free' } });
         }
 
-        // 4. Registro Financeiro
+        // 4. Registro Financeiro (uma transação por método de pagamento)
         const category = await FinancialService.getOrCreateVendasCategory(restaurantId, tx);
 
         const openSession = await tx.cashierSession.findFirst({
@@ -130,23 +130,25 @@ class TableService {
 
         if (payments.length > 0) {
             const names = openOrders.map(o => o.customerName).filter(Boolean).join(', ');
-            const description = `Venda Mesa ${table.number}${names ? ': ' + names : ''}`;
 
-            await tx.financialTransaction.create({
-                data: {
-                    description,
-                    amount: totalPaid,
-                    type: 'INCOME',
-                    status: 'PAID',
-                    dueDate: new Date(),
-                    paymentDate: new Date(),
-                    paymentMethod: payments[0]?.method || 'other',
-                    restaurantId,
-                    orderId: mainOrderId,
-                    cashierId: openSession?.id || null,
-                    categoryId: category.id
-                }
-            });
+            for (const p of payments) {
+                const description = `Venda Mesa ${table.number}${names ? ': ' + names : ''} (${p.method})`;
+                await tx.financialTransaction.create({
+                    data: {
+                        description,
+                        amount: p.amount,
+                        type: 'INCOME',
+                        status: 'PAID',
+                        dueDate: new Date(),
+                        paymentDate: new Date(),
+                        paymentMethod: p.method,
+                        restaurantId,
+                        orderId: mainOrderId,
+                        cashierId: openSession?.id || null,
+                        categoryId: category.id
+                    }
+                });
+            }
         }
 
         return { success: true, orders: openOrders };
@@ -176,28 +178,30 @@ class TableService {
             totalPaid = money.add(totalPaid, p.amount);
         }
 
-        // 3. Registro Financeiro com categoria correta
+        // 3. Registro Financeiro (uma transação por método de pagamento)
         const category = await FinancialService.getOrCreateVendasCategory(restaurantId, tx);
 
         const openSession = await tx.cashierSession.findFirst({
             where: { restaurantId, status: 'OPEN' }
         });
 
-        await tx.financialTransaction.create({
-            data: {
-                description: `Pagto Parcial Mesa ${table.number} (Itens)`,
-                amount: totalPaid,
-                type: 'INCOME',
-                status: 'PAID',
-                dueDate: new Date(),
-                paymentDate: new Date(),
-                paymentMethod: payments[0]?.method || 'other',
-                restaurantId,
-                orderId,
-                cashierId: openSession?.id || null,
-                categoryId: category.id
-            }
-        });
+        for (const p of payments) {
+            await tx.financialTransaction.create({
+                data: {
+                    description: `Pagto Parcial Mesa ${table.number} (${p.method})`,
+                    amount: p.amount,
+                    type: 'INCOME',
+                    status: 'PAID',
+                    dueDate: new Date(),
+                    paymentDate: new Date(),
+                    paymentMethod: p.method,
+                    restaurantId,
+                    orderId,
+                    cashierId: openSession?.id || null,
+                    categoryId: category.id
+                }
+            });
+        }
 
         // 4. Verifica se TODOS os itens de TODOS os pedidos ativos desta mesa foram pagos
         const activeOrders = await tx.order.findMany({
