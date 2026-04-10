@@ -207,9 +207,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
     return (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
+            <div onClick={onClose} className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
             
-            <motion.div initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 
                 {/* Header Compacto e Profissional */}
                 <div className="bg-slate-900 px-4 py-3 flex items-center justify-between border-b border-slate-800">
@@ -363,7 +363,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 };
