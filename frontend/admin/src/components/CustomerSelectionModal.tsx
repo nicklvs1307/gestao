@@ -76,33 +76,23 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     }, [isOpen]);
 
     // Busca com Debounce
-    const searchTermRef = React.useRef(searchTerm);
     const mountedRef = React.useRef(true);
-    searchTermRef.current = searchTerm;
+    const searchIdRef = React.useRef(0);
 
     useEffect(() => {
         mountedRef.current = true;
         return () => { mountedRef.current = false; };
     }, []);
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (searchTermRef.current.length >= 3) {
-                if (results.length > 0) setResults([]);
-                performSearch();
-            } else if (searchTermRef.current.length === 0) {
-                setResults([]);
-            }
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchTerm]);
-
-    const performSearch = async () => {
-        const searchQuery = searchTermRef.current;
+    const performSearch = React.useCallback(async (query: string) => {
+        if (!query || query.length < 3) return;
+        
+        const searchId = ++searchIdRef.current;
         setIsLoading(true);
+        
         try {
-            const data = await searchCustomers(searchQuery);
-            if (!mountedRef.current || searchTermRef.current !== searchQuery) return;
+            const data = await searchCustomers(query);
+            if (!mountedRef.current || searchId !== searchIdRef.current) return;
             
             const customersArray = Array.isArray(data) ? data : (data.customers || []);
             
@@ -132,14 +122,23 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
             setResults(finalResults);
         } catch (error) {
-            if (!mountedRef.current) return;
+            if (!mountedRef.current || searchId !== searchIdRef.current) return;
             console.error(error);
         } finally {
-            if (mountedRef.current && searchTermRef.current === searchQuery) {
+            if (mountedRef.current && searchId === searchIdRef.current) {
                 setIsLoading(false);
             }
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (searchTerm.length >= 3) {
+            setResults([]);
+            performSearch(searchTerm);
+        } else if (searchTerm.length === 0) {
+            setResults([]);
+        }
+    }, [searchTerm, performSearch]);
 
     const handleSelectAddress = (customer: Customer, addrObj: { label: string, data?: any }) => {
         onSelectCustomer({
