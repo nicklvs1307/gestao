@@ -40,7 +40,7 @@ export const updateOrderPaymentMethod = async (orderId: string, newMethod: strin
   return response.data;
 };
 
-export const updatePaymentMethod = async (paymentId: string, newMethod: string) => {
+export const updatePaymentMethodSpecific = async (paymentId: string, newMethod: string) => {
   const response = await apiClient.patch(`/admin/orders/payments/${paymentId}/method`, { newMethod });
   return response.data;
 };

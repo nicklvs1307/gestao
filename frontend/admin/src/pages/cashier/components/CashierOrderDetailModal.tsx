@@ -4,7 +4,7 @@ import { useScrollLock } from '../../../hooks/useScrollLock';
 import { formatSP } from '@/lib/timezone';
 import { toast } from 'sonner';
 import type { PaymentMethod } from '../hooks/useCashier';
-import { updatePaymentMethod, removeOrderPayment, addOrderPayment } from '../../../services/api';
+import { updatePaymentMethodSpecific, removeOrderPayment, addOrderPayment } from '../../../services/api';
 
 interface Payment {
   id: string;
@@ -99,7 +99,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
   const handleUpdatePayment = useCallback(async (paymentId: string, newMethod: string) => {
     setIsLoading(true);
     try {
-      await updatePaymentMethod(paymentId, newMethod);
+      await updatePaymentMethodSpecific(paymentId, newMethod);
       toast.success('Pagamento atualizado!');
       onRefresh();
     } catch (error) {
