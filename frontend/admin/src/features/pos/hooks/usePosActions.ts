@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { 
     createOrder, addItemsToOrder, updateOrderFinancials, 
-    toggleStoreStatus, openCashier, checkoutTable, transferTable 
+    toggleStoreStatus, openCashier, checkoutTable, transferTable, markOrderAsPrinted 
 } from '../../../services/api';
 import { usePosStore } from './usePosStore';
 import { useCartStore, useCartTotal } from './useCartStore';
@@ -117,6 +117,7 @@ const printNewItems = async (orderPayload: OrderPayload, targetOrderId: string, 
         items: itemsWithProducts,
     };
     await printOrder(orderForPrint as any, printerConfig);
+    await markOrderAsPrinted(targetOrderId);
 };
 
 export const usePosActions = (
@@ -221,6 +222,7 @@ export const usePosActions = (
                             })),
                         };
                         await printOrder(orderForPrint as any, printerConfig);
+                        await markOrderAsPrinted(createdOrder.id);
                     } catch (printErr) {
                         console.error('[submitOrder] Erro ao imprimir comanda de balcão:', printErr);
                     }
@@ -242,6 +244,7 @@ export const usePosActions = (
                             })),
                         };
                         await printOrder(orderForPrint as any, printerConfig);
+                        await markOrderAsPrinted(createdOrder.id);
                     } catch (printErr) {
                         console.error('[submitOrder] Erro ao imprimir comanda de delivery:', printErr);
                     }
@@ -310,6 +313,7 @@ export const usePosActions = (
                             })),
                         };
                         await printOrder(orderForPrint as any, printerConfig);
+                        await markOrderAsPrinted(tab.orderId);
                     }
                 } else {
                     // Fallback: imprime todos os itens juntos
@@ -322,6 +326,7 @@ export const usePosActions = (
                         tableNumber: viewingTable.number,
                     };
                     await printOrder(orderForPrint as any, printerConfig);
+                    await markOrderAsPrinted(viewingTable.id);
                 }
             } catch (err) {
                 console.error('[handleTableCheckout] Erro ao imprimir fechamento:', err);
