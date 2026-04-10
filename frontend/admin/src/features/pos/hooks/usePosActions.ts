@@ -225,6 +225,27 @@ export const usePosActions = (
                         console.error('[submitOrder] Erro ao imprimir comanda de balcão:', printErr);
                     }
                 }
+
+                // Imprime a comanda para pedidos de delivery
+                if (pos.activeTab === 'delivery') {
+                    try {
+                        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+                        const orderForPrint = {
+                            ...createdOrder,
+                            items: (createdOrder?.items || cart.map(item => {
+                                const fullProduct = products.find(p => p.productId === item.productId || p.id === item.productId);
+                                return {
+                                    ...item,
+                                    product: fullProduct || { name: item.name, categories: [] },
+                                    priceAtTime: item.price,
+                                };
+                            })),
+                        };
+                        await printOrder(orderForPrint as any, printerConfig);
+                    } catch (printErr) {
+                        console.error('[submitOrder] Erro ao imprimir comanda de delivery:', printErr);
+                    }
+                }
             }
 
             clearCart();

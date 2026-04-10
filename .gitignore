@@ -30,6 +30,10 @@ docker-compose.override.yml
 # Sistema
 Thumbs.db
 
+# Printer Service (executável gerado独立的)
+printer_service/
+printer_service/release/
+
 # opencode
 .opencode/
 nul

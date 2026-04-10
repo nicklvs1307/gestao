@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente de Impressão - KiCardápio</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: white;
+            padding: 2px;
+        }
+        .header h1 { font-size: 1rem; font-weight: 700; }
+        .header p { font-size: 0.7rem; opacity: 0.85; margin-top: 2px; }
+        .version {
+            margin-left: auto;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .status-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #f1f5f9;
+        }
+        .status-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        .status-chip .dot.offline { background: #ef4444; animation: none; }
+        .status-chip.online { background: #ecfdf5; color: #059669; }
+        .status-chip.offline { background: #fef2f2; color: #dc2626; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px 20px;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-card .label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+        .stat-card .value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-top: 4px;
+        }
+
+        .log-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 20px 12px;
+            min-height: 0;
+        }
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        .log-header span {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+        }
+        .clear-btn {
+            background: none;
+            border: 1px solid #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.6rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .clear-btn:hover { background: #f1f5f9; color: #64748b; }
+
+        .log-container {
+            flex: 1;
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 12px;
+            overflow-y: auto;
+            font-family: 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        .log-entry { padding: 2px 0; }
+        .log-time { color: #475569; margin-right: 6px; }
+        .log-info { color: #60a5fa; }
+        .log-success { color: #34d399; }
+        .log-error { color: #f87171; }
+        .log-warn { color: #fbbf24; }
+
+        .footer {
+            text-align: center;
+            padding: 8px;
+            font-size: 0.6rem;
+            color: #94a3b8;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+            70% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="icon.png" alt="Logo">
+        <div>
+            <h1>Agente de Impressão</h1>
+            <p>KiCardápio Delivery & Mesas</p>
+        </div>
+        <span class="version">v2.0</span>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-chip" id="statusChip">
+            <div class="dot" id="statusDot"></div>
+            <span id="statusText">Iniciando...</span>
+        </div>
+        <div class="status-chip" style="background: #eff6ff; color: #2563eb;">
+            <span>Porta 4676</span>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="label">Fila</div>
+            <div class="value" id="queueCount">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Impressões</div>
+            <div class="value" id="printCount">0</div>
+        </div>
+    </div>
+
+    <div class="log-section">
+        <div class="log-header">
+            <span>Logs em Tempo Real</span>
+            <button class="clear-btn" onclick="clearLogs()">Limpar</button>
+        </div>
+        <div class="log-container" id="logs"></div>
+    </div>
+
+    <div class="footer">
+        Este aplicativo roda em segundo plano na bandeja do sistema.
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        const logContainer = document.getElementById('logs');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const statusChip = document.getElementById('statusChip');
+        const queueCount = document.getElementById('queueCount');
+        const printCount = document.getElementById('printCount');
+
+        let totalPrints = 0;
+
+        function addLog(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            const time = new Date().toLocaleTimeString('pt-BR');
+            div.innerHTML = `<span class="log-time">[${time}]</span><span class="log-${type}">${escapeHtml(message)}</span>`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // Limitar logs a 200 entradas
+            while (logContainer.children.length > 200) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function clearLogs() {
+            logContainer.innerHTML = '';
+            addLog('Logs limpos.', 'info');
+        }
+
+        ipcRenderer.on('log', (event, data) => {
+            addLog(data.message, data.type);
+
+            // Contar impressões
+            if (data.message && data.message.includes('impressão enviada')) {
+                totalPrints++;
+                printCount.textContent = totalPrints;
+            }
+        });
+
+        ipcRenderer.on('status-change', (event, isOnline) => {
+            if (isOnline) {
+                statusDot.className = 'dot';
+                statusText.textContent = 'Serviço Ativo';
+                statusChip.className = 'status-chip online';
+            } else {
+                statusDot.className = 'dot offline';
+                statusText.textContent = 'Serviço Parado';
+                statusChip.className = 'status-chip offline';
+            }
+        });
+
+        addLog('Interface conectada. Aguardando servidor...', 'info');
+    </script>
+</body>
+</html>
