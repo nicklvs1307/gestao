@@ -337,14 +337,15 @@ class OrderService {
              const cleanPhone = deliveryInfo.phone ? normalizePhone(deliveryInfo.phone) : null;
              const customerName = deliveryInfo.name || 'Retirada Balcão';
 
-             if (isPickup && !cleanPhone) {
-                 const customer = await tx.customer.create({
-                     data: {
-                         name: customerName,
-                         address: fullAddress,
-                         restaurantId: realRestaurantId
-                     }
-                 });
+if (isPickup && !cleanPhone) {
+                  const customer = await tx.customer.create({
+                      data: {
+                          name: customerName,
+                          phone: '',
+                          address: fullAddress,
+                          restaurantId: realRestaurantId
+                      }
+                  });
 
                   await tx.deliveryOrder.create({
                       data: {
