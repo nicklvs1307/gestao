@@ -1,6 +1,5 @@
 import React, { useMemo, useCallback, useEffect } from 'react';
 import { X, Calculator, Wallet, CheckCircle, MoveRight, Banknote, Smartphone, CreditCard } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';
@@ -34,12 +33,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
   } = usePosStore();
 
   const cartTotal = useCartTotal();
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   useScrollLock(activeModal === 'pos_checkout');
-
-  const backdropTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.2 };
-  const modalTransition = prefersReducedMotion ? { duration: 0.1 } : { type: "spring", damping: 25, stiffness: 300 };
 
   const totalGeral = useMemo(() => {
     return cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0');
@@ -66,18 +61,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }} 
-        transition={backdropTransition}
+      <div 
         onClick={handleCloseModal} 
         className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" 
       />
-      <motion.div 
-        initial={{ scale: 0.98, opacity: 0, y: 10 }} 
-        animate={{ scale: 1, opacity: 1, y: 0 }} 
-        exit={{ scale: 0.98, opacity: 0, y: 10 }} 
+      <div 
         transition={modalTransition}
         className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] border border-slate-200"
       >
@@ -271,7 +259,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 });

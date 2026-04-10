@@ -1,9 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { X, Wallet, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';
-import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
 import { useScrollLock } from '../../../../hooks/useScrollLock';
 
 interface CashierOpenModalProps {
@@ -13,12 +11,8 @@ interface CashierOpenModalProps {
 export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ onOpenCashier }) => {
   const { activeModal, setActiveModal } = usePosStore();
   const [cashierAmount, setCashierAmount] = useState('');
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   useScrollLock(activeModal === 'cashier_open');
-
-  const backdropTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.2 };
-  const modalTransition = prefersReducedMotion ? { duration: 0.1 } : { type: "spring", damping: 25, stiffness: 300 };
 
   if (activeModal !== 'cashier_open') return null;
 
@@ -32,19 +26,11 @@ export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ o
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }} 
-        transition={backdropTransition}
+      <div 
         onClick={handleClose} 
         className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" 
       />
-      <motion.div 
-        initial={{ scale: 0.95, opacity: 0 }} 
-        animate={{ scale: 1, opacity: 1 }} 
-        exit={{ scale: 0.95, opacity: 0 }} 
-        transition={modalTransition}
+      <div 
         className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200"
       >
         {/* Header */}
@@ -95,7 +81,7 @@ export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ o
             </Button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 });
