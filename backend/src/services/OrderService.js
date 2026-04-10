@@ -338,36 +338,27 @@ const cleanPhone = deliveryInfo.phone ? normalizePhone(deliveryInfo.phone) : nul
               const customerName = deliveryInfo.name || 'Retirada Balcão';
               const hasValidPhone = cleanPhone && cleanPhone.length >= 8;
 
-              if (isPickup && !hasValidPhone) {
-                  const customer = await tx.customer.create({
-                      data: {
-                          name: customerName,
-                          phone: '',
-                          address: fullAddress,
-                          restaurantId: realRestaurantId
-                      }
-                  });
-
-                  await tx.deliveryOrder.create({
-                      data: {
-                          orderId: createdOrder.id,
-                          customerId: customer.id,
-                          name: customerName,
-                          phone: null,
-                          address: fullAddress,
-                          complement: addr.complement || deliveryInfo.complement || null,
-                          reference: addr.reference || deliveryInfo.reference || null,
-                          deliveryType: deliveryInfo.deliveryType || 'retirada',
-                          paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
-                          changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
-                          deliveryFee: 0,
-                          notes: deliveryInfo.notes || null,
-                          latitude: null,
-                          longitude: null,
-                          status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
-                      }
-                  });
-             } else {
+if (isPickup && !hasValidPhone) {
+                   await tx.deliveryOrder.create({
+                       data: {
+                           orderId: createdOrder.id,
+                           customerId: null,
+                           name: customerName,
+                           phone: null,
+                           address: fullAddress,
+                           complement: addr.complement || deliveryInfo.complement || null,
+                           reference: addr.reference || deliveryInfo.reference || null,
+                           deliveryType: deliveryInfo.deliveryType || 'retirada',
+                           paymentMethod: deliveryInfo.paymentMethod || paymentMethod,
+                           changeFor: deliveryInfo.changeFor ? parseFloat(deliveryInfo.changeFor) : null,
+                           deliveryFee: 0,
+                           notes: deliveryInfo.notes || null,
+                           latitude: null,
+                           longitude: null,
+                           status: isAutoAccept ? 'CONFIRMED' : 'PENDING'
+                       }
+                   });
+              } else {
                  const customer = await tx.customer.upsert({
                      where: { phone_restaurantId: { phone: cleanPhone, restaurantId: realRestaurantId } },
                      update: {
