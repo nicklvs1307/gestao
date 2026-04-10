@@ -146,7 +146,7 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                                 )}
                               >
                                 {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                                {breakdown.transactions.length} transação{breakdown.transactions.length !== 1 ? 'ões' : ''}
+                                {breakdown?.transactions?.length || 0} transação{(breakdown?.transactions?.length || 0) !== 1 ? 'ões' : ''}
                               </button>
                             )}
                           </div>
