@@ -78,12 +78,18 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
     // Busca com Debounce
     const searchTermRef = React.useRef(searchTerm);
+    const mountedRef = React.useRef(true);
     searchTermRef.current = searchTerm;
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => { mountedRef.current = false; };
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             if (searchTermRef.current.length >= 3) {
-                setResults([]);
+                if (results.length > 0) setResults([]);
                 performSearch();
             } else if (searchTermRef.current.length === 0) {
                 setResults([]);
@@ -93,9 +99,12 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     }, [searchTerm]);
 
     const performSearch = async () => {
+        const searchQuery = searchTermRef.current;
         setIsLoading(true);
         try {
-            const data = await searchCustomers(searchTerm);
+            const data = await searchCustomers(searchQuery);
+            if (!mountedRef.current || searchTermRef.current !== searchQuery) return;
+            
             const customersArray = Array.isArray(data) ? data : (data.customers || []);
             
             const finalResults = customersArray.map((c: any) => {
@@ -124,9 +133,12 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
             setResults(finalResults);
         } catch (error) {
+            if (!mountedRef.current) return;
             console.error(error);
         } finally {
-            setIsLoading(false);
+            if (mountedRef.current && searchTermRef.current === searchQuery) {
+                setIsLoading(false);
+            }
         }
     };
 
