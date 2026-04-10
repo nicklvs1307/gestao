@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     Users, Search, Edit2, Trash2, MapPin, 
     Phone, ChevronLeft, ChevronRight, 
-    X, CheckCircle, Filter, DollarSign, Wallet, Loader2, RefreshCw
+    X, CheckCircle, Filter, DollarSign, Wallet, Loader2, RefreshCw, Upload, Download
 } from 'lucide-react';
 import { api } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +23,10 @@ const CustomerManagement: React.FC = () => {
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<any>(null);
     const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
+    const [isImportModalOpen, setImportModalOpen] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchCustomers = async () => {
         setLoading(true);
@@ -82,6 +86,53 @@ const CustomerManagement: React.FC = () => {
         }
     };
 
+    const handleDownloadTemplate = async () => {
+        try {
+            const res = await api.get('/customers/template', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'modelo_clientes.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            toast.error('Erro ao baixar modelo');
+        }
+    };
+
+    const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                toast.error('Apenas arquivos Excel (.xlsx, .xls)');
+                return;
+            }
+            setImportFile(file);
+        }
+    };
+
+    const handleImport = async () => {
+        if (!importFile) return;
+        setImporting(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', importFile);
+            const res = await api.post('/customers/import', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success(res.data.message);
+            setImportModalOpen(false);
+            setImportFile(null);
+            fetchCustomers();
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Erro ao importar');
+        } finally {
+            setImporting(false);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
             {/* Header Premium */}
@@ -94,6 +145,10 @@ const CustomerManagement: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Button variant="outline" className="bg-white rounded-xl h-12 px-4 gap-2" onClick={() => setImportModalOpen(true)}>
+                        <Upload size={18} />
+                        <span className="text-xs font-black uppercase">Importar</span>
+                    </Button>
                     <div className="relative group flex-1 md:w-72">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={18} />
                         <input 
@@ -288,6 +343,75 @@ const CustomerManagement: React.FC = () => {
                             <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
                                 <Button variant="ghost" onClick={() => setEditModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
                                 <Button type="submit" form="customer-form" className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">SALVAR ALTERAÇÕES</Button>
+                            </footer>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+            
+            {/* Modal de Importação */}
+            <AnimatePresence>
+                {isImportModalOpen && (
+                    <div className="ui-modal-overlay">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
+                            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-emerald-600 text-white p-3 rounded-2xl shadow-xl shadow-emerald-200">
+                                        <Upload size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Importar Clientes</h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Via Planilha Excel</p>
+                                    </div>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => setImportModalOpen(false)} className="rounded-full bg-slate-50"><X size={24} /></Button>
+                            </header>
+
+                            <div className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-6">
+                                <Button variant="outline" className="w-full h-14 border-dashed border-2 gap-2" onClick={handleDownloadTemplate}>
+                                    <Download size={18} />
+                                    <span className="text-xs font-black uppercase">Baixar Modelo</span>
+                                </Button>
+
+                                <div className="relative">
+                                    <input 
+                                        ref={fileInputRef}
+                                        type="file" 
+                                        accept=".xlsx,.xls"
+                                        onChange={handleImportFile}
+                                        className="hidden"
+                                    />
+                                    <div 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition-all"
+                                    >
+                                        {importFile ? (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Upload size={32} className="text-emerald-500" />
+                                                <p className="text-sm font-black text-slate-700 uppercase">{importFile.name}</p>
+                                                <p className="text-xs text-slate-400">Clique para trocar</p>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Upload size={32} className="text-slate-300" />
+                                                <p className="text-sm font-bold text-slate-500">Clique ou arraste o arquivo</p>
+                                                <p className="text-xs text-slate-400">.xlsx ou .xls</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+                                <Button variant="ghost" onClick={() => setImportModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
+                                <Button 
+                                    onClick={handleImport} 
+                                    disabled={!importFile || importing}
+                                    className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black gap-2"
+                                >
+                                    {importing ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+                                    IMPORTAR
+                                </Button>
                             </footer>
                         </motion.div>
                     </div>

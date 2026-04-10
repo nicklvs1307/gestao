@@ -2,11 +2,51 @@ const express = require('express');
 const logger = require('../config/logger');
 const router = express.Router();
 const CustomerController = require('../controllers/CustomerController');
+const CustomerImportService = require('../services/CustomerImportService');
 const { needsAuth } = require('../middlewares/auth');
 const prisma = require('../lib/prisma');
+const multer = require('multer');
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/', needsAuth, CustomerController.index);
 router.post('/', needsAuth, CustomerController.store);
+
+router.post('/import', needsAuth, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+        }
+        
+        const allowedMimes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+            'application/octet-stream'
+        ];
+        
+        if (!allowedMimes.includes(req.file.mimetype) && !req.file.originalname.match(/\.(xlsx|xls)$/i)) {
+            return res.status(400).json({ error: 'Apenas arquivos Excel (.xlsx, .xls) são permitidos.' });
+        }
+
+        const result = await CustomerImportService.importFromExcel(req.restaurantId, req.file.buffer);
+        res.json(result);
+    } catch (error) {
+        logger.error('Erro ao importar clientes:', error);
+        res.status(500).json({ error: error.message || 'Erro ao importar clientes.' });
+    }
+});
+
+router.get('/template', needsAuth, (req, res) => {
+    try {
+        const buffer = CustomerImportService.generateTemplate();
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=modelo_clientes.xlsx');
+        res.send(buffer);
+    } catch (error) {
+        logger.error('Erro ao gerar modelo:', error);
+        res.status(500).json({ error: 'Erro ao gerar modelo.' });
+    }
+});
 router.get('/search', needsAuth, async (req, res) => {
     try {
         const { query } = req.query;
