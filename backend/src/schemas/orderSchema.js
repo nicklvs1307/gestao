@@ -40,7 +40,7 @@ const CreateDeliveryOrderSchema = z.object({
   
   deliveryInfo: z.object({
     name: z.string().optional().nullable(),
-    phone: z.string().min(8, 'Telefone inválido').optional().nullable(),
+    phone: z.union([z.string().min(8, 'Telefone inválido'), z.literal('')]).optional().nullable().default(''),
     
     // Endereço (Opcional, pode ser string ou objeto)
     address: z.union([

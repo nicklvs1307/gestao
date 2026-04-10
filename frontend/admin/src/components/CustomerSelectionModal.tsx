@@ -77,10 +77,17 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     }, [isOpen]);
 
     // Busca com Debounce
+    const searchTermRef = React.useRef(searchTerm);
+    searchTermRef.current = searchTerm;
+
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (searchTerm.length >= 3) performSearch();
-            else if (searchTerm.length === 0) setResults([]);
+            if (searchTermRef.current.length >= 3) {
+                setResults([]);
+                performSearch();
+            } else if (searchTermRef.current.length === 0) {
+                setResults([]);
+            }
         }, 300);
         return () => clearTimeout(timer);
     }, [searchTerm]);
@@ -236,8 +243,8 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                 </div>
                             ) : results.length > 0 ? (
                                 <div className="divide-y divide-slate-50">
-                                    {results.map(customer => (
-                                        <div key={customer.id} className="group hover:bg-slate-50/50 transition-all">
+                                    {results.map((customer, index) => (
+                                        <div key={`${customer.id}-${index}`} className="group hover:bg-slate-50/50 transition-all">
                                             <div className="p-3 flex items-start justify-between gap-4">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
