@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { formatSP } from '@/lib/timezone';
-import { Filter, Search, ShoppingBag, Truck, X, Receipt } from 'lucide-react';
+import { Filter, Search, ShoppingBag, Truck, X, Receipt, CreditCard, AlertCircle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import type { PaymentMethod } from '../hooks/useCashier';
 
@@ -9,6 +9,7 @@ interface CashierTransactionListProps {
   selectedMethod: string;
   filteredOrders: any[];
   onUpdatePayment: (orderId: string, method: string) => void;
+  onOrderClick: (order: any) => void;
   searchTerm: string;
   onSearchChange: (value: string) => void;
 }
@@ -26,6 +27,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
   selectedMethod,
   filteredOrders,
   onUpdatePayment,
+  onOrderClick,
   searchTerm,
   onSearchChange,
 }) => {
@@ -96,11 +98,16 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
               const OrderIcon = getOrderIcon(order.orderType);
               const orderLabel = getOrderLabel(order);
               const orderNumber = order.dailyOrderNumber || order.id.slice(-3);
+              const payments = order.payments || [];
+              const paidAmount = payments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+              const isPartial = payments.length > 0 && paidAmount < order.total;
+              const hasPayment = payments.length > 0;
               
               return (
                 <div
                   key={order.id}
-                  className="bg-white px-4 py-3 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 hover:border-orange-200 hover:shadow-md transition-all group"
+                  onClick={() => onOrderClick(order)}
+                  className="bg-white px-4 py-3 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 hover:border-orange-200 hover:shadow-md transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-4 w-full sm:w-auto">
                     <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 text-xs font-black text-slate-500 uppercase group-hover:bg-slate-900 group-hover:text-white transition-all">
@@ -117,7 +124,13 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    {hasPayment && (
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase ${isPartial ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        <CreditCard size={10} />
+                        {isPartial ? 'PARCIAL' : 'PAGO'}
+                      </div>
+                    )}
                     <div className="text-right">
                       <p className="text-base font-black text-slate-900 italic tracking-tighter">
                         {formatCurrency(order.total)}
@@ -128,6 +141,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                       <select
                         className="w-full h-9 bg-slate-50 border-2 border-slate-200 rounded-xl px-3 text-[10px] font-bold uppercase tracking-widest focus:border-slate-900 focus:outline-none transition-all"
                         value={selectedMethod}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => handleUpdatePayment(order.id, e.target.value)}
                       >
                         {paymentMethods.map(m => (

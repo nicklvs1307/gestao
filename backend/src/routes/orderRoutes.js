@@ -39,6 +39,7 @@ router.put('/:orderId/status', needsAuth, checkPermission('orders:manage'), Orde
 router.post('/:orderId/items', needsAuth, checkPermission('orders:manage'), OrderController.addItemsToOrder);
 router.post('/:orderId/payments', needsAuth, checkPermission('orders:manage'), OrderController.addPayment);
 router.delete('/payments/:paymentId', needsAuth, checkPermission('orders:manage'), OrderController.removePayment);
+router.patch('/payments/:paymentId/method', needsAuth, checkPermission('orders:manage'), OrderController.updateSinglePaymentMethod);
 router.patch('/:orderId/customer', needsAuth, checkPermission('orders:manage'), OrderController.updateCustomer);
 router.patch('/:orderId/financials', needsAuth, checkPermission('orders:manage'), OrderController.updateFinancials);
 router.patch('/:orderId/payment-method', needsAuth, checkPermission('orders:manage'), OrderController.updatePaymentMethod);

@@ -736,6 +736,30 @@ class OrderService {
     return result;
   }
 
+  async updateSinglePaymentMethod(paymentId, newMethod) {
+    const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment) throw new Error("Pagamento não encontrado");
+
+    const updated = await prisma.payment.update({
+      where: { id: paymentId },
+      data: { method: newMethod }
+    });
+
+    const order = await prisma.order.findUnique({ 
+      where: { id: payment.orderId },
+      include: { deliveryOrder: true }
+    });
+    if (order?.deliveryOrder) {
+      await prisma.deliveryOrder.updateMany({
+        where: { orderId: payment.orderId },
+        data: { paymentMethod: newMethod }
+      });
+    }
+
+    if (order) emitOrderUpdate(order.id);
+    return updated;
+  }
+
   async updateOrderFinancials(orderId, { deliveryFee, total, discount, surcharge }) {
     logger.info(`[ORDER] Atualizando dados financeiros do pedido ${orderId}`);
     

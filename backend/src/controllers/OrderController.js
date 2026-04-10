@@ -243,6 +243,15 @@ class OrderController {
     res.json(result);
   });
 
+  // PATCH /api/admin/orders/payments/:paymentId/method
+  updateSinglePaymentMethod = asyncHandler(async (req, res) => {
+    const { paymentId } = req.params;
+    const { newMethod } = req.body;
+
+    const result = await OrderService.updateSinglePaymentMethod(paymentId, newMethod);
+    res.json(result);
+  });
+
   // PUT /api/admin/orders/:orderId/printed
   markAsPrinted = asyncHandler(async (req, res) => {
     const { orderId } = req.params;

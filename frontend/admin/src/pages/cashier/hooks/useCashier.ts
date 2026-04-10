@@ -136,6 +136,10 @@ export function useCashier() {
   const [pendingSettlementsList, setPendingSettlementsList] = useState<any[]>([]);
   const [showPendingSettlementsModal, setShowPendingSettlementsModal] = useState(false);
 
+  // Order detail modal
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+
   // Confirmation & loading states
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -419,6 +423,16 @@ export function useCashier() {
   const closeTransactionModal = useCallback(() => setTransactionModalType('none'), []);
   const closeSettlementsModal = useCallback(() => setShowPendingSettlementsModal(false), []);
 
+  const handleOrderClick = useCallback((order: any) => {
+    setSelectedOrder(order);
+    setShowOrderDetailModal(true);
+  }, []);
+
+  const closeOrderDetailModal = useCallback(() => {
+    setShowOrderDetailModal(false);
+    setSelectedOrder(null);
+  }, []);
+
   return {
     // Auth
     authUser,
@@ -467,9 +481,9 @@ export function useCashier() {
     pendingSettlementsList,
     showPendingSettlementsModal,
 
-    // Confirm close
-    showConfirmClose,
-    isClosing,
+    // Order detail modal
+    selectedOrder,
+    showOrderDetailModal,
 
     // Computed
     totalInformed,
@@ -490,7 +504,9 @@ export function useCashier() {
     openExpenseModal,
     closeTransactionModal,
     closeSettlementsModal,
+    closeOrderDetailModal,
     executeClose,
     closeConfirmDialog,
+    handleOrderClick,
   };
 }

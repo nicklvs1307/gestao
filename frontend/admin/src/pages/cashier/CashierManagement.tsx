@@ -8,6 +8,7 @@ import CashierOpenScreen from './components/CashierOpenScreen';
 import CashierBlindCount from './components/CashierBlindCount';
 import CashierTransactionList from './components/CashierTransactionList';
 import CashierReviewStep from './components/CashierReviewStep';
+import CashierOrderDetailModal from './components/CashierOrderDetailModal';
 import TransactionModal from './components/TransactionModal';
 import PendingSettlementsModal from './components/PendingSettlementsModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -25,6 +26,7 @@ const CashierManagement: React.FC = memo(() => {
     isOpen,
     session,
     hasBlocks,
+    summary,
     paymentMethods,
     selectedMethod,
     setSelectedMethod,
@@ -66,6 +68,10 @@ const CashierManagement: React.FC = memo(() => {
     openExpenseModal,
     closeTransactionModal,
     closeSettlementsModal,
+    closeOrderDetailModal,
+    handleOrderClick,
+    selectedOrder,
+    showOrderDetailModal,
   } = useCashier();
 
   const handleSetStep = useCallback((newStep: 'COUNT' | 'REVIEW') => setStep(newStep), [setStep]);
@@ -150,6 +156,7 @@ const CashierManagement: React.FC = memo(() => {
                 selectedMethod={selectedMethod}
                 filteredOrders={filteredOrders}
                 onUpdatePayment={handleUpdatePayment}
+                onOrderClick={handleOrderClick}
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
               />
@@ -198,6 +205,14 @@ const CashierManagement: React.FC = memo(() => {
         isOpen={showPendingSettlementsModal}
         settlements={pendingSettlementsList}
         onClose={closeSettlementsModal}
+      />
+
+      <CashierOrderDetailModal
+        isOpen={showOrderDetailModal}
+        order={selectedOrder}
+        paymentMethods={paymentMethods}
+        onClose={closeOrderDetailModal}
+        onRefresh={fetchData}
       />
 
       <ConfirmDialog
