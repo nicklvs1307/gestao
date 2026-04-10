@@ -1,12 +1,9 @@
 import React from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { CheckoutModal } from './CheckoutModal';
 import { CashierOpenModal } from './CashierOpenModal';
 import { CustomerSelectionModal } from '../../../../components/CustomerSelectionModal';
 import { usePosStore } from '../../hooks/usePosStore';
 import { PaymentMethod } from '../../../../types';
-
-const ModalSkeleton = () => null;
 
 interface PosModalsProps {
   paymentMethods: PaymentMethod[];
@@ -23,61 +20,65 @@ export const PosModals: React.FC<PosModalsProps> = ({
 }) => {
   const { activeModal, setActiveModal } = usePosStore();
 
-  return (
-    <AnimatePresence mode="wait">
-      {activeModal === 'pos_checkout' && (
-        <CheckoutModal 
-          key="pos_checkout"
-          paymentMethods={paymentMethods} 
-          onSubmitOrder={onSubmitOrder} 
-        />
-      )}
+  if (activeModal === 'none') return null;
 
-      {activeModal === 'cashier_open' && (
-        <CashierOpenModal 
-          key="cashier_open"
-          onOpenCashier={onOpenCashier} 
-        />
-      )}
+  if (activeModal === 'pos_checkout') {
+    return (
+      <CheckoutModal 
+        paymentMethods={paymentMethods} 
+        onSubmitOrder={onSubmitOrder} 
+      />
+    );
+  }
 
-      {activeModal === 'delivery_info' && (
-        <CustomerSelectionModal 
-          key="delivery_info"
-          isOpen={true}
-          onClose={() => setActiveModal('none')} 
-          onSelectCustomer={(data) => {
-            handleSelectCustomer({
+  if (activeModal === 'cashier_open') {
+    return (
+      <CashierOpenModal 
+        onOpenCashier={onOpenCashier} 
+      />
+    );
+  }
+
+  if (activeModal === 'delivery_info') {
+    return (
+      <CustomerSelectionModal 
+        isOpen={true}
+        onClose={() => setActiveModal('none')} 
+        onSelectCustomer={(data) => {
+          handleSelectCustomer({
+            name: data.name,
+            phone: data.phone,
+            address: data.addressStr,
+            complement: data.addressStructured?.complement,
+            reference: data.addressStructured?.reference
+          });
+          setActiveModal('none');
+        }}
+      />
+    );
+  }
+
+  if (activeModal === 'counter_customer') {
+    return (
+      <CustomerSelectionModal 
+        isOpen={true}
+        onClose={() => setActiveModal('none')} 
+        onSelectCustomer={(data) => {
+          if (handleSelectCounterCustomer) {
+            handleSelectCounterCustomer({
               name: data.name,
               phone: data.phone,
               address: data.addressStr,
               complement: data.addressStructured?.complement,
-              reference: data.addressStructured?.reference
+              reference: data.addressStructured?.reference,
+              deliveryType: data.deliveryType
             });
-            setActiveModal('none');
-          }}
-        />
-      )}
+          }
+          setActiveModal('none');
+        }}
+      />
+    );
+  }
 
-      {activeModal === 'counter_customer' && (
-        <CustomerSelectionModal 
-          key="counter_customer"
-          isOpen={true}
-          onClose={() => setActiveModal('none')} 
-          onSelectCustomer={(data) => {
-            if (handleSelectCounterCustomer) {
-              handleSelectCounterCustomer({
-                name: data.name,
-                phone: data.phone,
-                address: data.addressStr,
-                complement: data.addressStructured?.complement,
-                reference: data.addressStructured?.reference,
-                deliveryType: data.deliveryType
-              });
-            }
-            setActiveModal('none');
-          }}
-        />
-      )}
-    </AnimatePresence>
-  );
+  return null;
 };

@@ -4,7 +4,6 @@ import {
     ChevronRight, ChevronDown, Edit, Loader2, Phone, UserPlus,
     History, Star, Info, ArrowRight
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -300,20 +299,17 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                 </div>
                                             </div>
 
-                                            {/* Novo Endereço Inline (Compacto) */}
-                                            <AnimatePresence>
-                                                {isAddingAddress === customer.id && (
-                                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="bg-slate-50/80 border-t border-slate-100 overflow-hidden">
-                                                        <div className="p-3">
-                                                            <AddressForm address={newAddress} onChange={setNewAddress} compact />
-                                                            <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
-                                                                <Button size="sm" variant="ghost" className="h-7 text-[9px] uppercase font-black" onClick={() => setIsAddingAddress(null)}>Cancelar</Button>
-                                                                <Button size="sm" className="h-7 bg-blue-600 text-white text-[9px] uppercase font-black px-4 shadow-md" onClick={() => handleSaveNewAddress(customer.id)}>Confirmar</Button>
-                                                            </div>
+                                            {isAddingAddress === customer.id && (
+                                                <div className="bg-slate-50/80 border-t border-slate-100 overflow-hidden">
+                                                    <div className="p-3">
+                                                        <AddressForm address={newAddress} onChange={setNewAddress} compact />
+                                                        <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
+                                                            <Button size="sm" variant="ghost" className="h-7 text-[9px] uppercase font-black" onClick={() => setIsAddingAddress(null)}>Cancelar</Button>
+                                                            <Button size="sm" className="h-7 bg-blue-600 text-white text-[9px] uppercase font-black px-4 shadow-md" onClick={() => handleSaveNewAddress(customer.id)}>Confirmar</Button>
                                                         </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
