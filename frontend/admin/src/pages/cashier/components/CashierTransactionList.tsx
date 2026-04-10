@@ -177,12 +177,6 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
               );
             })}
           </div>
-          {totalByMethod > 0 && (
-            <div className="mt-3 pt-3 border-t-2 border-slate-200 flex justify-between items-center px-2">
-              <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Total desta forma</span>
-              <span className="text-base font-black text-emerald-600 italic tracking-tight">{formatCurrency(totalByMethod)}</span>
-            </div>
-          )}
         ) : (
           <div className="flex flex-col items-center justify-center h-48 opacity-30">
             <Filter size={48} strokeWidth={1.5} className="text-slate-400 mb-3" />
