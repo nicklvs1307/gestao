@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { formatSP } from '@/lib/timezone';
-import { Filter, Search, ShoppingBag, Truck, X, Receipt, CreditCard, AlertCircle } from 'lucide-react';
+import { Filter, Search, ShoppingBag, Truck, X, Receipt, CreditCard, AlertCircle, Wallet, Smartphone, Banknote } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import type { PaymentMethod } from '../hooks/useCashier';
 
@@ -20,6 +20,23 @@ const getOrderIcon = (orderType: string) => {
 
 const getOrderLabel = (order: any) => {
   return order.tableNumber ? `MESA ${order.tableNumber}` : order.deliveryOrder?.name || 'BALCÃO';
+};
+
+const getMethodLabel = (method: string, paymentMethods: PaymentMethod[]) => {
+  const m = method.toLowerCase();
+  const found = paymentMethods.find(pm => 
+    pm.id.toLowerCase() === m || 
+    pm.label.toLowerCase().includes(m)
+  );
+  return found?.label || method;
+};
+
+const getMethodIcon = (method: string) => {
+  const m = method.toLowerCase();
+  if (m.includes('credit') || m.includes('credito')) return CreditCard;
+  if (m.includes('pix')) return Smartphone;
+  if (m.includes('debit') || m.includes('debito')) return Wallet;
+  return Banknote;
 };
 
 const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
@@ -102,6 +119,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
               const paidAmount = payments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
               const isPartial = payments.length > 0 && paidAmount < order.total;
               const hasPayment = payments.length > 0;
+              const isMultiplePayments = payments.length > 1;
               
               return (
                 <div
@@ -124,32 +142,29 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                    {hasPayment && (
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+                    {isMultiplePayments ? (
+                      <div className="flex flex-wrap gap-1">
+                        {payments.map((payment: any) => {
+                          const methodLabel = getMethodLabel(payment.method, paymentMethods);
+                          return (
+                            <span key={payment.id} className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 rounded-lg text-[9px] font-black uppercase">
+                              <CreditCard size={8} />
+                              {methodLabel}: {formatCurrency(payment.amount)}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : hasPayment ? (
                       <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase ${isPartial ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         <CreditCard size={10} />
                         {isPartial ? 'PARCIAL' : 'PAGO'}
                       </div>
-                    )}
+                    ) : null}
                     <div className="text-right">
                       <p className="text-base font-black text-slate-900 italic tracking-tighter">
                         {formatCurrency(order.total)}
                       </p>
-                    </div>
-
-                    <div className="w-[140px]">
-                      <select
-                        className="w-full h-9 bg-slate-50 border-2 border-slate-200 rounded-xl px-3 text-[10px] font-bold uppercase tracking-widest focus:border-slate-900 focus:outline-none transition-all"
-                        value={selectedMethod}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => handleUpdatePayment(order.id, e.target.value)}
-                      >
-                        {paymentMethods.map(m => (
-                          <option key={m.id} value={m.id}>
-                            {m.label}
-                          </option>
-                        ))}
-                      </select>
                     </div>
                   </div>
                 </div>
