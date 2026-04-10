@@ -42,12 +42,28 @@ export interface CashierStatus {
   session: SessionData | null;
 }
 
+export interface BreakdownTransaction {
+  id: string;
+  amount: number;
+  orderId?: string;
+  orderNumber?: number;
+  orderTotal?: number;
+  description: string;
+  createdAt: string;
+}
+
+export interface BreakdownMethod {
+  total: number;
+  transactions: BreakdownTransaction[];
+}
+
 export interface SummaryData {
   sessionId: string;
   openedAt: string;
   initialAmount: number;
   totalSales: number;
   salesByMethod: Record<string, number>;
+  breakdownByMethod: Record<string, BreakdownMethod>;
   adjustments: { sangria: number; reforco: number };
   transactions: any[];
   availableMethods: any[];

@@ -1,9 +1,10 @@
-import React, { memo, useCallback } from 'react';
-import { ArrowUpRight, CheckCircle, DollarSign, Receipt, ShieldCheck, Wallet } from 'lucide-react';
+import React, { memo, useCallback, useState } from 'react';
+import { ArrowUpRight, CheckCircle, ChevronDown, ChevronRight, DollarSign, Receipt, ShieldCheck, Wallet, ShoppingBag } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
-import type { PaymentMethod } from '../hooks/useCashier';
+import type { PaymentMethod, BreakdownMethod, BreakdownTransaction } from '../hooks/useCashier';
+import { formatSP } from '@/lib/timezone';
 
 interface CashierReviewStepProps {
   paymentMethods: PaymentMethod[];
@@ -18,6 +19,7 @@ interface CashierReviewStepProps {
   onBack: () => void;
   onFinalize: () => void;
   isLoading?: boolean;
+  breakdownByMethod?: Record<string, BreakdownMethod>;
 }
 
 const formatCurrency = (value: number) => 
@@ -36,7 +38,22 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
   onBack,
   onFinalize,
   isLoading = false,
+  breakdownByMethod,
 }) => {
+  const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
+
+  const toggleMethod = useCallback((methodId: string) => {
+    setExpandedMethods(prev => {
+      const next = new Set(prev);
+      if (next.has(methodId)) {
+        next.delete(methodId);
+      } else {
+        next.add(methodId);
+      }
+      return next;
+    });
+  }, []);
+
   const handleBack = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     onBack();
@@ -46,6 +63,18 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
     e.preventDefault();
     onFinalize();
   }, [onFinalize]);
+
+  const normalize = (str: string): string => {
+    if (!str) return '';
+    return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  };
+
+  const getBreakdownForMethod = (methodId: string): BreakdownMethod | undefined => {
+    if (!breakdownByMethod) return undefined;
+    const m = paymentMethods.find(pm => pm.id === methodId);
+    const normLabel = normalize(m?.label || '');
+    return breakdownByMethod[normLabel] || breakdownByMethod[methodId];
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -83,54 +112,106 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                 const informed = parseFloat(closingValues[m.id] || '0');
                 const expected = getExpectedValue(m.id);
                 const diff = informed - expected;
+                const breakdown = getBreakdownForMethod(m.id);
+                const hasTransactions = breakdown && breakdown.transactions && breakdown.transactions.length > 0;
+                const isExpanded = expandedMethods.has(m.id);
 
-                if (Math.abs(diff) < 0.01 && informed === 0) return null;
+                if (Math.abs(diff) < 0.01 && informed === 0 && !hasTransactions) return null;
 
                 return (
-                  <div
-                    key={m.id}
-                    className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-slate-200 transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white border-2 border-slate-200 rounded-xl flex items-center justify-center text-slate-400">
-                        <m.icon size={18} />
+                  <div key={m.id}>
+                    <div
+                      className={cn(
+                        "flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-slate-200 transition-all",
+                        isExpanded && hasTransactions && "rounded-b-none"
+                      )}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-10 h-10 bg-white border-2 border-slate-200 rounded-xl flex items-center justify-center text-slate-400">
+                          <m.icon size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-slate-700 uppercase italic tracking-tight">
+                              {m.label}
+                            </span>
+                            {hasTransactions && (
+                              <button
+                                onClick={() => toggleMethod(m.id)}
+                                className={cn(
+                                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase transition-all",
+                                  isExpanded 
+                                    ? "bg-slate-700 text-white" 
+                                    : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                                )}
+                              >
+                                {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                                {breakdown.transactions.length} transação{breakdown.transactions.length !== 1 ? 'ões' : ''}
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-xs font-black text-slate-700 uppercase italic tracking-tight">
-                        {m.label}
-                      </span>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <span className="block text-[8px] text-slate-400 uppercase font-black">
+                            Informado
+                          </span>
+                          <span className="text-xs font-black text-slate-900 italic tracking-tighter">
+                            {formatCurrency(informed)}
+                          </span>
+                        </div>
+                        <div className="text-right hidden sm:block">
+                          <span className="block text-[8px] text-slate-400 uppercase font-black">
+                            Sistema
+                          </span>
+                          <span className="text-xs font-bold text-slate-500 italic tracking-tighter">
+                            {formatCurrency(expected)}
+                          </span>
+                        </div>
+                        <div
+                          className={cn(
+                            'px-3 py-2 rounded-xl text-[10px] font-black w-24 text-center shadow-sm',
+                            diff < -0.01
+                              ? 'bg-rose-500 text-white'
+                              : diff > 0.01
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-emerald-500 text-white'
+                          )}
+                        >
+                          {Math.abs(diff) < 0.01
+                            ? 'OK'
+                            : `${diff > 0 ? '+' : ''}${formatCurrency(diff)}`}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <span className="block text-[8px] text-slate-400 uppercase font-black">
-                          Informado
-                        </span>
-                        <span className="text-xs font-black text-slate-900 italic tracking-tighter">
-                          {formatCurrency(informed)}
-                        </span>
+                    
+                    {/* Breakdown detalhado */}
+                    {isExpanded && hasTransactions && (
+                      <div className="bg-white border-2 border-t-0 border-slate-100 rounded-b-2xl p-3 space-y-2 max-h-48 overflow-y-auto">
+                        {breakdown.transactions.map((t: BreakdownTransaction, idx: number) => (
+                          <div 
+                            key={t.id || idx}
+                            className="flex items-center justify-between p-2 bg-slate-50 rounded-lg"
+                          >
+                            <div className="flex items-center gap-2">
+                              <ShoppingBag size={12} className="text-slate-400" />
+                              <span className="text-[9px] font-black text-slate-700">
+                                #{t.orderNumber || t.orderId?.slice(-4) || 'N/A'}
+                              </span>
+                              {t.orderTotal && (
+                                <span className="text-[8px] text-slate-400">
+                                  (total: {formatCurrency(t.orderTotal)})
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-800">
+                              {formatCurrency(t.amount)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                      <div className="text-right hidden sm:block">
-                        <span className="block text-[8px] text-slate-400 uppercase font-black">
-                          Sistema
-                        </span>
-                        <span className="text-xs font-bold text-slate-500 italic tracking-tighter">
-                          {formatCurrency(expected)}
-                        </span>
-                      </div>
-                      <div
-                        className={cn(
-                          'px-3 py-2 rounded-xl text-[10px] font-black w-24 text-center shadow-sm',
-                          diff < -0.01
-                            ? 'bg-rose-500 text-white'
-                            : diff > 0.01
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-emerald-500 text-white'
-                        )}
-                      >
-                        {Math.abs(diff) < 0.01
-                          ? 'OK'
-                          : `${diff > 0 ? '+' : ''}${formatCurrency(diff)}`}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}

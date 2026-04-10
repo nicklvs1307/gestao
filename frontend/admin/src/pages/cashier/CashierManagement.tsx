@@ -177,6 +177,7 @@ const CashierManagement: React.FC = memo(() => {
               onBack={() => setStep('COUNT')}
               onFinalize={handleClose}
               isLoading={isClosing}
+              breakdownByMethod={summary?.breakdownByMethod}
             />
           </motion.div>
         )}

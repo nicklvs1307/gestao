@@ -73,7 +73,17 @@ class CashierController {
         // Excluir transações de pedidos cancelados
         order: { status: { not: 'CANCELED' } }
       },
-      include: { order: { select: { id: true, status: true } } },
+      include: { 
+        order: { 
+          select: { 
+            id: true, 
+            status: true, 
+            dailyOrderNumber: true, 
+            total: true,
+            createdAt: true 
+          } 
+        } 
+      },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -113,12 +123,43 @@ class CashierController {
 
     const totalSales = Object.values(salesByMethod).reduce((a, b) => a + b, 0);
 
+    // Breakdown por forma de pagamento com detalhes dos pedidos
+    const breakdownByMethod = {};
+    salesTransactions.forEach(t => {
+      const rawMethod = normalize(t.paymentMethod || 'other');
+      const matchedMethod = restaurantPaymentMethods.find(m => {
+        const normName = normalize(m.name);
+        const normType = normalize(m.type);
+        return normName === rawMethod || normType === rawMethod;
+      });
+      const key = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
+      
+      if (!breakdownByMethod[key]) {
+        breakdownByMethod[key] = {
+          total: 0,
+          transactions: []
+        };
+      }
+      
+      breakdownByMethod[key].total += t.amount;
+      breakdownByMethod[key].transactions.push({
+        id: t.id,
+        amount: t.amount,
+        orderId: t.order?.id,
+        orderNumber: t.order?.dailyOrderNumber,
+        orderTotal: t.order?.total,
+        description: t.description,
+        createdAt: t.createdAt
+      });
+    });
+
     res.json({
       sessionId: session.id,
       openedAt: session.openedAt,
       initialAmount: session.initialAmount,
       totalSales,
       salesByMethod,
+      breakdownByMethod,
       adjustments,
       transactions,
       availableMethods: restaurantPaymentMethods
