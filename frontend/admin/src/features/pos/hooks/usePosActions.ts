@@ -182,7 +182,7 @@ export const usePosActions = (
                 }
 
                 if (targetOrderId && tableInfo?.status !== 'free') {
-                    await addItemsToOrder(targetOrderId, orderPayload.items);
+                    const updatedOrder = await addItemsToOrder(targetOrderId, orderPayload.items);
                     
                     if (finalDiscount > 0 || finalExtra > 0) {
                         const tabInfo = tableInfo.tabs.find(t => t.orderId === targetOrderId);
@@ -190,11 +190,17 @@ export const usePosActions = (
                         await updateOrderFinancials(targetOrderId, { discount: finalDiscount, surcharge: finalExtra, total: newTotal });
                     }
                     
-                    try {
-                        await printNewItems(orderPayload, targetOrderId, parseInt(pos.selectedTable), cart, products, customerName);
-                        toast.success(`Itens de ${customerName || 'Mesa'} impressos na cozinha!`);
-                    } catch (err) {
-                        console.error('[submitOrder] Erro ao imprimir itens:', err);
+                    // Se o status mudou para PREPARING, o GlobalOrderMonitor já vai imprimir
+                    // Só imprimimos manualmente se stayed PENDING (autoAcceptOrders desativado)
+                    if (updatedOrder?.status === 'PENDING') {
+                        try {
+                            await printNewItems(orderPayload, targetOrderId, parseInt(pos.selectedTable), cart, products, customerName);
+                            toast.success(`Itens de ${customerName || 'Mesa'} impressos na cozinha!`);
+                        } catch (err) {
+                            console.error('[submitOrder] Erro ao imprimir itens:', err);
+                            toast.success("Itens adicionados ao pedido!");
+                        }
+                    } else {
                         toast.success("Itens adicionados ao pedido!");
                     }
                 } else {
@@ -203,52 +209,9 @@ export const usePosActions = (
                 }
             } else {
                 // Para balcão (PICKUP) ou delivery, cria o pedido
-                const createdOrder = await createOrder(orderPayload);
+                await createOrder(orderPayload);
                 toast.success("Pedido enviado!");
-                
-                // Imprime a comanda para pedidos de balcão (PICKUP)
-                if (pos.activeTab === 'counter') {
-                    try {
-                        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                        const orderForPrint = {
-                            ...createdOrder,
-                            items: (createdOrder?.items || cart.map(item => {
-                                const fullProduct = products.find(p => p.productId === item.productId || p.id === item.productId);
-                                return {
-                                    ...item,
-                                    product: fullProduct || { name: item.name, categories: [] },
-                                    priceAtTime: item.price,
-                                };
-                            })),
-                        };
-                        await printOrder(orderForPrint as any, printerConfig);
-                        await markOrderAsPrinted(createdOrder.id);
-                    } catch (printErr) {
-                        console.error('[submitOrder] Erro ao imprimir comanda de balcão:', printErr);
-                    }
-                }
-
-                // Imprime a comanda para pedidos de delivery
-                if (pos.activeTab === 'delivery') {
-                    try {
-                        const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-                        const orderForPrint = {
-                            ...createdOrder,
-                            items: (createdOrder?.items || cart.map(item => {
-                                const fullProduct = products.find(p => p.productId === item.productId || p.id === item.productId);
-                                return {
-                                    ...item,
-                                    product: fullProduct || { name: item.name, categories: [] },
-                                    priceAtTime: item.price,
-                                };
-                            })),
-                        };
-                        await printOrder(orderForPrint as any, printerConfig);
-                        await markOrderAsPrinted(createdOrder.id);
-                    } catch (printErr) {
-                        console.error('[submitOrder] Erro ao imprimir comanda de delivery:', printErr);
-                    }
-                }
+                // A impressão será tratada pelo GlobalOrderMonitor automaticamente
             }
 
             clearCart();
