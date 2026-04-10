@@ -334,10 +334,11 @@ class OrderService {
              const isDelivery = deliveryInfo.deliveryType === 'delivery';
              const isPickup = deliveryInfo.deliveryType === 'pickup' || deliveryInfo.deliveryType === 'retirada';
              const addr = typeof deliveryInfo.address === 'object' ? deliveryInfo.address : {};
-             const cleanPhone = deliveryInfo.phone ? normalizePhone(deliveryInfo.phone) : null;
-             const customerName = deliveryInfo.name || 'Retirada Balcão';
+const cleanPhone = deliveryInfo.phone ? normalizePhone(deliveryInfo.phone) : null;
+              const customerName = deliveryInfo.name || 'Retirada Balcão';
+              const hasValidPhone = cleanPhone && cleanPhone.length >= 8;
 
-if (isPickup && !cleanPhone) {
+              if (isPickup && !hasValidPhone) {
                   const customer = await tx.customer.create({
                       data: {
                           name: customerName,
