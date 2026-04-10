@@ -66,7 +66,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
         className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" 
       />
       <div 
-        transition={modalTransition}
         className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] border border-slate-200"
       >
         {/* Header */}
