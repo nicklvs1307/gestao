@@ -59,7 +59,7 @@ const TableFormModal: React.FC<TableFormModalProps> = ({ isOpen, onClose, onSave
   if (!isOpen) return null;
 
   return (
-    <div className="ui-modal-overlay">
+    <div className="ui-modal-overlay z-[var(--z-modal)]">
       <div className="ui-modal-content w-full max-w-md">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div className="flex items-center gap-3">

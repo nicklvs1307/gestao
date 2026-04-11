@@ -630,7 +630,7 @@ const CashierManagement: React.FC = () => {
 
             {/* MODAL SANGREIA / REFORÇO */}
             {showTransactionModal !== 'none' && (
-                <div className="ui-modal-overlay">
+                <div className="ui-modal-overlay z-[var(--z-modal)]">
                     <div className="ui-modal-content w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200">
                             <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                                 <div className="flex items-center gap-3">
@@ -667,7 +667,7 @@ const CashierManagement: React.FC = () => {
 
             {/* Modal de Pedidos Pendentes de Acerto */}
             {showPendingSettlementsModal && (
-                <div className="ui-modal-overlay">
+                <div className="ui-modal-overlay z-[var(--z-modal)]">
                     <div className="ui-modal-content w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
                             <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                                 <div className="flex items-center gap-3">

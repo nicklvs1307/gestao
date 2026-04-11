@@ -43,7 +43,7 @@ const CashierActionModal: React.FC<CashierActionModalProps> = ({ isOpen, onClose
     if (!isOpen) return null;
 
     return (
-        <div className="ui-modal-overlay">
+        <div className="ui-modal-overlay z-[var(--z-modal)]">
             <div className="ui-modal-content w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
                 <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div className="flex items-center gap-3">

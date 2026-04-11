@@ -74,7 +74,7 @@ const UairangoConfigModal: React.FC<UairangoConfigModalProps> = ({ onClose }) =>
   };
 
   return (
-    <div className="ui-modal-overlay">
+    <div className="ui-modal-overlay z-[var(--z-modal)]">
       <div className="ui-modal-content w-full max-w-2xl overflow-hidden flex flex-col">
         {/* Header Compacto e Largo */}
         <div className="px-6 py-4 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">

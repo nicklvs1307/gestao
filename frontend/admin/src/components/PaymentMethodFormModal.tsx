@@ -75,7 +75,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
   ];
 
   return (
-    <div className="ui-modal-overlay">
+    <div className="ui-modal-overlay z-[var(--z-modal)]">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}

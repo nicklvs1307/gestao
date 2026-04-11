@@ -108,7 +108,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   return (
-    <div className="ui-modal-overlay">
+    <div className="ui-modal-overlay z-[var(--z-modal)]">
       <div className="ui-modal-content w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden rounded-2xl shadow-2xl">
         <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div className="flex items-center gap-3">

@@ -247,7 +247,7 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
       {/* Modal de QR Code Premium */}
       <AnimatePresence>
         {qrCodeLink && (
-          <div className="ui-modal-overlay">
+          <div className="ui-modal-overlay z-[var(--z-modal)]">
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}

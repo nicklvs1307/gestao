@@ -171,7 +171,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
   if (!isOpen) return null;
 
   return (
-    <div className="ui-modal-overlay overflow-y-auto py-10">
+    <div className="ui-modal-overlay overflow-y-auto py-10 z-[var(--z-modal)]">
       <div className="ui-modal-content w-full max-w-4xl shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b bg-slate-50/50">
           <div>

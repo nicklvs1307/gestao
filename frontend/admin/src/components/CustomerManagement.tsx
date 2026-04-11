@@ -294,7 +294,7 @@ const CustomerManagement: React.FC = () => {
 
             {/* Modal de Edição Premium */}
             {isEditModalOpen && customerToEdit && (
-                <div className="ui-modal-overlay">
+                <div className="ui-modal-overlay z-[var(--z-modal)]">
                     <div className="ui-modal-content w-full max-w-2xl overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4">
@@ -348,7 +348,7 @@ const CustomerManagement: React.FC = () => {
             
             {/* Modal de Importação */}
             {isImportModalOpen && (
-                <div className="ui-modal-overlay">
+                <div className="ui-modal-overlay z-[var(--z-modal)]">
                     <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4">

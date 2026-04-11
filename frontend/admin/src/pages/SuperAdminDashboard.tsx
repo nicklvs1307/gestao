@@ -610,7 +610,7 @@ const SuperAdminDashboard: React.FC = () => {
             {/* MODAIS SUPER ADMIN PREMIUM */}
                 {/* Modal Franquia */}
                 {isFranchiseModalOpen && (
-                    <div className="ui-modal-overlay">
+                    <div className="ui-modal-overlay z-[var(--z-modal)]">
                         <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4"><div className="bg-orange-500 text-white p-3 rounded-2xl shadow-xl shadow-orange-100"><Briefcase size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Nova Franquia</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Estrutura de Rede</p></div></div>
@@ -627,7 +627,7 @@ const SuperAdminDashboard: React.FC = () => {
 
                 {/* Modal Assinatura (Plano) */}
                 {isSubscriptionModalOpen && (
-                    <div className="ui-modal-overlay">
+                    <div className="ui-modal-overlay z-[var(--z-modal)]">
                         <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><DollarSign size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Plano</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{selectedStore?.name}</p></div></div>
