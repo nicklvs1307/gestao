@@ -10,6 +10,7 @@ import type {
 import { generateEscPosReceipt } from './templates/order';
 import { generateCashierClosureReceipt } from './templates/closure';
 import { generateDriverSettlementReceipt } from './templates/settlement';
+import { downloadCashierClosurePDF } from './templates/closurePDF';
 import { escPosToBase64 } from './utils';
 
 // Export type re-exports
@@ -371,5 +372,169 @@ export const printDriverSettlement = async (
     toast.success(`Comprovante de ${settlement.driverName} enviado para impressão!`);
   } else {
     toast.error('Nenhuma impressora de caixa configurada.');
+  }
+};
+
+export const printCashierClosureFromHistory = async (
+  closingData: Record<string, unknown>,
+  restaurantInfo?: RestaurantInfo,
+  printerConfig?: { cashierPrinters: string[] },
+  sessionOrders?: unknown[]
+) => {
+  const status = await checkAgentStatus();
+  if (!status) { toast.error("Agente de impressão não encontrado!"); return; }
+
+  const config = printerConfig || { cashierPrinters: [] };
+  const info = restaurantInfo || getRestaurantInfoFromStorage();
+
+  const itemMap: Record<string, { name: string; qty: number; total: number; addons: Record<string, { qty: number; total: number }> }> = {};
+  let totalOrders = 0;
+  const canceledOrders: Array<{ id: string; dailyOrderNumber: number; total: number; canceledAt: string }> = [];
+  let totalCanceledAmount = 0;
+
+  (sessionOrders || []).forEach((order: unknown) => {
+    const o = order as { status?: string; items?: unknown[]; id?: string; dailyOrderNumber?: number; total?: number; canceledAt?: string };
+    
+    if (o.status === 'CANCELED') {
+      canceledOrders.push({
+        id: o.id || '',
+        dailyOrderNumber: o.dailyOrderNumber || 0,
+        total: o.total || 0,
+        canceledAt: o.canceledAt || new Date().toISOString()
+      });
+      totalCanceledAmount += (o.total || 0);
+      return;
+    }
+    
+    totalOrders++;
+    (o.items || []).forEach((item: unknown) => {
+      const i = item as { quantity?: number; product?: { name?: string }; priceAtTime?: number; addonsJson?: unknown };
+      const productName = i.product?.name || 'Produto';
+      const key = productName.toUpperCase();
+
+      if (!itemMap[key]) {
+        itemMap[key] = { name: productName, qty: 0, total: 0, addons: {} };
+      }
+      itemMap[key].qty += (i.quantity || 0);
+      itemMap[key].total += (i.priceAtTime || 0) * (i.quantity || 0);
+    });
+  });
+
+  const salesList = closingData.salesTransactions as Array<{ amount: number; paymentMethod: string }> || [];
+  const salesByMethod = salesList.reduce((acc, curr) => {
+    const method = (curr.paymentMethod || 'other').toLowerCase();
+    acc[method] = (acc[method] || 0) + curr.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const adjustments = closingData.adjustments as { sangria: number; reforco: number } || { sangria: 0, reforco: 0 };
+  const initialAmount = closingData.initialAmount as number || 0;
+  const totalSales = closingData.totalSales as number || 0;
+  const closedAt = closingData.closedAt as string || new Date().toISOString();
+
+  const closureData: CashierClosureData = {
+    openedAt: closingData.openedAt as string,
+    closedAt,
+    totalOrders,
+    totalItems: 0,
+    salesByMethod,
+    totalSales,
+    initialAmount,
+    adjustments,
+    closingDetails: closingData.closingDetails as Record<string, string>,
+    items: Object.values(itemMap).map(item => ({
+      name: item.name,
+      qty: item.qty,
+      total: item.total,
+      addons: item.addons
+    })),
+    canceledOrders,
+    totalCanceledAmount,
+  };
+
+  const escPos = generateCashierClosureReceipt(closureData, info, undefined, sessionOrders);
+
+  if (config.cashierPrinters && config.cashierPrinters.length > 0) {
+    for (const p of config.cashierPrinters) {
+      await sendToAgent(p, escPosToBase64(escPos), 'escpos');
+    }
+    toast.success('Fechamento de caixa enviado para impressão!');
+  } else {
+    toast.error('Nenhuma impressora de caixa configurada.');
+  }
+};
+
+export const downloadCashierClosurePDFFromHistory = async (
+  closingData: Record<string, unknown>,
+  restaurantInfo?: RestaurantInfo,
+  sessionOrders?: unknown[]
+) => {
+  const info = restaurantInfo || getRestaurantInfoFromStorage();
+
+  const itemMap: Record<string, { name: string; qty: number; total: number; addons: Record<string, { qty: number; total: number }> }> = {};
+  const canceledOrders: Array<{ id: string; dailyOrderNumber: number; total: number; canceledAt: string }> = [];
+
+  (sessionOrders || []).forEach((order: unknown) => {
+    const o = order as { status?: string; items?: unknown[]; id?: string; dailyOrderNumber?: number; total?: number; canceledAt?: string };
+    
+    if (o.status === 'CANCELED') {
+      canceledOrders.push({
+        id: o.id || '',
+        dailyOrderNumber: o.dailyOrderNumber || 0,
+        total: o.total || 0,
+        canceledAt: o.canceledAt || new Date().toISOString()
+      });
+    }
+    
+    (o.items || []).forEach((item: unknown) => {
+      const i = item as { quantity?: number; product?: { name?: string }; priceAtTime?: number; addonsJson?: unknown };
+      const productName = i.product?.name || 'Produto';
+      const key = productName.toUpperCase();
+
+      if (!itemMap[key]) {
+        itemMap[key] = { name: productName, qty: 0, total: 0, addons: {} };
+      }
+      itemMap[key].qty += (i.quantity || 0);
+      itemMap[key].total += (i.priceAtTime || 0) * (i.quantity || 0);
+    });
+  });
+
+  const salesList = closingData.salesTransactions as Array<{ amount: number; paymentMethod: string }> || [];
+  const salesByMethod = salesList.reduce((acc, curr) => {
+    const method = (curr.paymentMethod || 'other').toLowerCase();
+    acc[method] = (acc[method] || 0) + curr.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const adjustments = closingData.adjustments as { sangria: number; reforco: number } || { sangria: 0, reforco: 0 };
+  const initialAmount = closingData.initialAmount as number || 0;
+  const totalSales = closingData.totalSales as number || 0;
+  const closedAt = closingData.closedAt as string || new Date().toISOString();
+
+  const closureData: CashierClosureData = {
+    openedAt: closingData.openedAt as string,
+    closedAt,
+    totalOrders: sessionOrders?.filter((o: unknown) => (o as { status?: string })?.status !== 'CANCELED').length || 0,
+    totalItems: 0,
+    salesByMethod,
+    totalSales,
+    initialAmount,
+    adjustments,
+    closingDetails: closingData.closingDetails as Record<string, string>,
+    items: Object.values(itemMap).map(item => ({
+      name: item.name,
+      qty: item.qty,
+      total: item.total,
+      addons: item.addons
+    })),
+    canceledOrders,
+    totalCanceledAmount: canceledOrders.reduce((sum, o) => sum + o.total, 0),
+  };
+
+  try {
+    downloadCashierClosurePDF(closureData, info);
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    toast.error('Erro ao gerar PDF do fechamento.');
   }
 };

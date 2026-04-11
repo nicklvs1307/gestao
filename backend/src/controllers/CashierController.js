@@ -225,6 +225,122 @@ class CashierController {
     res.json(sessions);
   });
 
+  // GET /api/cashier/:sessionId/closing
+  getClosing = asyncHandler(async (req, res) => {
+    const { sessionId } = req.params;
+    const restaurantId = req.restaurantId;
+
+    const session = await prisma.cashierSession.findFirst({
+      where: { id: sessionId, restaurantId }
+    });
+
+    if (!session) {
+      throw new AppError("Sessão de caixa não encontrada.", 404);
+    }
+
+    const restaurantPaymentMethods = await prisma.paymentMethod.findMany({
+      where: { restaurantId, isActive: true }
+    });
+
+    const transactions = await prisma.financialTransaction.findMany({
+      where: { 
+        cashierId: session.id, 
+        status: 'PAID'
+      },
+      include: { 
+        order: { 
+          select: { 
+            id: true, 
+            status: true, 
+            dailyOrderNumber: true, 
+            total: true,
+            createdAt: true,
+            items: {
+              include: {
+                product: { select: { name: true } }
+              }
+            }
+          } 
+        } 
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const normalize = (str) => {
+      if (!str) return '';
+      return str.toString().toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    };
+
+    const salesTransactions = transactions.filter(t => 
+      t.type === 'INCOME' && 
+      !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO) && 
+      !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA) &&
+      !t.description.includes('ENTRADA ACERTO')
+    );
+
+    const salesByMethod = salesTransactions.reduce((acc, curr) => {
+      const rawMethod = normalize(curr.paymentMethod || 'other');
+      const matchedMethod = restaurantPaymentMethods.find(m => {
+        const normName = normalize(m.name);
+        const normType = normalize(m.type);
+        return normName === rawMethod || normType === rawMethod;
+      });
+      const key = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
+      acc[key] = (acc[key] || 0) + curr.amount;
+      return acc;
+    }, {});
+
+    const totalSales = Object.values(salesByMethod).reduce((a, b) => a + b, 0);
+
+    const adjustments = transactions.reduce((acc, t) => {
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA)) acc.sangria += t.amount;
+      if (t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO)) acc.reforco += t.amount;
+      return acc;
+    }, { sangria: 0, reforco: 0 });
+
+    const expectedAmount = session.initialAmount + totalSales + adjustments.reforco - adjustments.sangria;
+
+    res.json({
+      sessionId: session.id,
+      status: session.status,
+      openedAt: session.openedAt,
+      closedAt: session.closedAt,
+      initialAmount: session.initialAmount,
+      finalAmount: session.finalAmount,
+      expectedAmount,
+      difference: session.difference,
+      notes: session.notes,
+      closingDetails: session.closingDetails,
+      cashLeftover: session.cashLeftover,
+      safeEntryAmount: session.safeEntryAmount,
+      totalSales,
+      salesByMethod,
+      adjustments,
+      transactions: transactions.map(t => ({
+        id: t.id,
+        amount: t.amount,
+        type: t.type,
+        paymentMethod: t.paymentMethod,
+        description: t.description,
+        orderId: t.order?.id,
+        orderNumber: t.order?.dailyOrderNumber,
+        createdAt: t.createdAt
+      })),
+      salesTransactions: salesTransactions.map(t => ({
+        id: t.id,
+        amount: t.amount,
+        paymentMethod: t.paymentMethod,
+        orderId: t.order?.id,
+        orderNumber: t.order?.dailyOrderNumber,
+        orderTotal: t.order?.total,
+        createdAt: t.createdAt
+      })),
+      availableMethods: restaurantPaymentMethods
+    });
+  });
+
   // GET /api/cashier/orders
   getSessionOrders = asyncHandler(async (req, res) => {
     const session = await prisma.cashierSession.findFirst({

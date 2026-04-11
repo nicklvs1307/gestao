@@ -12,7 +12,7 @@ import {
 import { toast } from 'sonner';
 import { printCashierClosure } from '../../../services/printer';
 import { useAuth } from '../../../context/AuthContext';
-import { Banknote, Smartphone, Wallet, Receipt } from 'lucide-react';
+import { Banknote, Smartphone, Wallet, Receipt, History } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // --- Types ---
@@ -135,6 +135,10 @@ export function useCashier() {
   // Pending settlements
   const [pendingSettlementsList, setPendingSettlementsList] = useState<any[]>([]);
   const [showPendingSettlementsModal, setShowPendingSettlementsModal] = useState(false);
+
+  // Closing history modal
+  const [showClosingHistoryModal, setShowClosingHistoryModal] = useState(false);
+  const [closingHistorySessions, setClosingHistorySessions] = useState<any[]>([]);
 
   // Order detail modal
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -282,7 +286,7 @@ export function useCashier() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statusData, summaryData, , ordersData] = await Promise.all([
+      const [statusData, summaryData, historyData, ordersData] = await Promise.all([
         getCashierStatus(),
         getCashierSummary().catch(() => null),
         getCashierHistory().catch(() => []),
@@ -291,6 +295,7 @@ export function useCashier() {
       setCashierData(statusData);
       setSummary(summaryData);
       setSessionOrders(ordersData);
+      setClosingHistorySessions(historyData);
     } catch (error) {
       console.error(error);
     } finally {
@@ -434,6 +439,14 @@ export function useCashier() {
     }
   }, []);
 
+  const handleShowClosingHistory = useCallback(() => {
+    setShowClosingHistoryModal(true);
+  }, []);
+
+  const handleCloseClosingHistory = useCallback(() => {
+    setShowClosingHistoryModal(false);
+  }, []);
+
   const handleUpdatePayment = useCallback(
     async (orderId: string, newMethod: string) => {
       try {
@@ -510,6 +523,10 @@ export function useCashier() {
     pendingSettlementsList,
     showPendingSettlementsModal,
 
+    // Closing history
+    showClosingHistoryModal,
+    closingHistorySessions,
+
     // Order detail modal
     selectedOrder,
     showOrderDetailModal,
@@ -532,6 +549,8 @@ export function useCashier() {
     handleClose,
     handleTransaction,
     handleShowPendingSettlements,
+    handleShowClosingHistory,
+    handleCloseClosingHistory,
     handleUpdatePayment,
     getExpectedValue,
     openIncomeModal,

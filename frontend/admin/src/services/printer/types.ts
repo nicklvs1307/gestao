@@ -29,6 +29,7 @@ export interface RestaurantInfo {
 
 export interface CashierClosureData {
   openedAt: string;
+  closedAt?: string;
   totalOrders: number;
   totalItems: number;
   salesByMethod: Record<string, number>;

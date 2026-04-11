@@ -6,6 +6,7 @@ const { needsAuth } = require('../middlewares/auth');
 router.get('/status', needsAuth, CashierController.getStatus);
 router.get('/summary', needsAuth, CashierController.getSummary);
 router.get('/history', needsAuth, CashierController.getHistory);
+router.get('/:sessionId/closing', needsAuth, CashierController.getClosing);
 router.get('/orders', needsAuth, CashierController.getSessionOrders);
 router.get('/pending-settlements', needsAuth, CashierController.getPendingSettlements);
 

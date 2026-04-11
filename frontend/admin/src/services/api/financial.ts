@@ -75,6 +75,11 @@ export const getCashierHistory = async () => {
     return response.data;
 };
 
+export const getCashierClosing = async (sessionId: string) => {
+    const response = await apiClient.get(`/cashier/${sessionId}/closing`);
+    return response.data;
+};
+
 export const getPendingSettlements = async () => {
     const response = await apiClient.get('/cashier/pending-settlements');
     return response.data;

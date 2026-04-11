@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { formatSP } from '@/lib/timezone';
-import { Wallet, Clock, User, Plus, Minus, RefreshCw, Calculator } from 'lucide-react';
+import { Wallet, Clock, User, Plus, Minus, RefreshCw, Calculator, History } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Button } from '../../../components/ui/Button';
 
@@ -12,6 +12,7 @@ interface CashierHeaderProps {
   onRefresh: () => void;
   onIncome: () => void;
   onExpense: () => void;
+  onShowHistory: () => void;
 }
 
 const CashierHeader: React.FC<CashierHeaderProps> = memo(({
@@ -22,6 +23,7 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
   onRefresh,
   onIncome,
   onExpense,
+  onShowHistory,
 }) => {
   const handleIncome = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -106,6 +108,16 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
           className="h-9 w-9 p-0 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onShowHistory}
+          className="h-9 px-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl"
+          title="Histórico de caixas"
+        >
+          <History size={16} />
         </Button>
       </div>
     </div>

@@ -10,6 +10,7 @@ import CashierReviewStep from './components/CashierReviewStep';
 import CashierOrderDetailModal from './components/CashierOrderDetailModal';
 import TransactionModal from './components/TransactionModal';
 import PendingSettlementsModal from './components/PendingSettlementsModal';
+import ClosingHistoryModal from './components/ClosingHistoryModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
 const CashierManagement: React.FC = memo(() => {
@@ -40,6 +41,8 @@ const CashierManagement: React.FC = memo(() => {
     setTransDesc,
     pendingSettlementsList,
     showPendingSettlementsModal,
+    showClosingHistoryModal,
+    closingHistorySessions,
     showConfirmClose,
     isClosing,
     totalInformed,
@@ -56,6 +59,8 @@ const CashierManagement: React.FC = memo(() => {
     closeConfirmDialog,
     handleTransaction,
     handleShowPendingSettlements,
+    handleShowClosingHistory,
+    handleCloseClosingHistory,
     handleUpdatePayment,
     getExpectedValue,
     openIncomeModal,
@@ -93,6 +98,7 @@ const CashierManagement: React.FC = memo(() => {
         onRefresh={fetchData}
         onIncome={openIncomeModal}
         onExpense={openExpenseModal}
+        onShowHistory={handleShowClosingHistory}
       />
 
       {/* Block alerts */}
@@ -169,6 +175,12 @@ const CashierManagement: React.FC = memo(() => {
         isOpen={showPendingSettlementsModal}
         settlements={pendingSettlementsList}
         onClose={closeSettlementsModal}
+      />
+
+      <ClosingHistoryModal
+        isOpen={showClosingHistoryModal}
+        sessions={closingHistorySessions}
+        onClose={handleCloseClosingHistory}
       />
 
       <CashierOrderDetailModal
