@@ -514,6 +514,10 @@ export function useCashier() {
     selectedOrder,
     showOrderDetailModal,
 
+    // Confirm close
+    showConfirmClose,
+    isClosing,
+
     // Computed
     totalInformed,
     cashInHand,
