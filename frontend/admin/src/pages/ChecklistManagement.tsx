@@ -1238,8 +1238,7 @@ const ChecklistManagement: React.FC = () => {
                     </div>
                 )}
 
-            {/* Execution Detail Modal */}
-            {showExecutionDetail && selectedExecution && (
+{showExecutionDetail && selectedExecution && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowExecutionDetail(false)} />
                     <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -1285,8 +1284,9 @@ const ChecklistManagement: React.FC = () => {
                                         {(() => {
                                             const total = selectedExecution.responses?.length || 0;
                                             const ok = selectedExecution.responses?.filter((r: any) => r.isOk).length || 0;
-                                            return total > 0 ? `${Math.round((ok / total) * 100)}%` : '0%';
-                                        })()}
+                                            const perc = total > 0 ? Math.round((ok / total) * 100) : 0;
+                                            return perc;
+                                        })()}%
                                     </p>
                                 </Card>
                                 <Card className="p-4 text-center">
@@ -1330,6 +1330,48 @@ const ChecklistManagement: React.FC = () => {
                                                         <p className="text-sm text-amber-900">{resp.notes}</p>
                                                     </div>
                                                 )}
+                                                {task?.type === 'PHOTO' && resp.value && (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {(() => {
+                                                            try {
+                                                                const photos = JSON.parse(resp.value);
+                                                                if (Array.isArray(photos)) {
+                                                                    return photos.map((url: string, pIdx: number) => (
+                                                                        <div key={pIdx} className="relative rounded-lg overflow-hidden border border-border w-24 h-24">
+                                                                            <img
+                                                                                src={`${import.meta.env.VITE_API_URL || ''}${url}`}
+                                                                                className="w-full h-full object-cover cursor-zoom-in"
+                                                                                alt="Evidência"
+                                                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${url}`, '_blank')}
+                                                                            />
+                                                                        </div>
+                                                                    ));
+                                                                }
+                                                            } catch (e) {
+                                                                return (
+                                                                    <div className="relative rounded-lg overflow-hidden border border-border w-24 h-24">
+                                                                        <img
+                                                                            src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`}
+                                                                            className="w-full h-full object-cover cursor-zoom-in"
+                                                                            alt="Evidência"
+                                                                            onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${resp.value}`, '_blank')}
+                                                                        />
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
                                                 {task?.type === 'PHOTO' && resp.value && (
                                                     <div className="flex flex-wrap gap-2">
                                                         {(() => {
