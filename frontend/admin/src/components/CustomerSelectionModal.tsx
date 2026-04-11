@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
-    Search, User, MapPin, Plus, X, Truck, Store, 
-    ChevronRight, ChevronDown, Edit, Loader2, Phone, UserPlus,
-    History, Star, Info, ArrowRight
+    Search, User, MapPin, Plus, X, Store, 
+    ChevronRight, Loader2, UserPlus, Star, Info
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Card } from './ui/Card';
 import { searchCustomers, createCustomer } from '../services/api';
 import { toast } from 'sonner';
 import { useScrollLock } from '../hooks/useScrollLock';
@@ -84,7 +81,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         return () => { mountedRef.current = false; };
     }, []);
 
-    const performSearch = React.useCallback(async (query: string) => {
+    const performSearch = useCallback(async (query: string) => {
         if (!query || query.length < 3) return;
         
         const searchId = ++searchIdRef.current;
@@ -131,16 +128,21 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         }
     }, []);
 
+    const debouncedSearchTerm = useRef<string>('');
     useEffect(() => {
-        if (searchTerm.length >= 3) {
-            setResults([]);
-            performSearch(searchTerm);
-        } else if (searchTerm.length === 0) {
-            setResults([]);
-        }
+        const timer = setTimeout(() => {
+            debouncedSearchTerm.current = searchTerm;
+            if (searchTerm.length >= 3) {
+                setResults([]);
+                performSearch(searchTerm);
+            } else if (searchTerm.length === 0) {
+                setResults([]);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
     }, [searchTerm, performSearch]);
 
-    const handleSelectAddress = (customer: Customer, addrObj: { label: string, data?: any }) => {
+    const handleSelectAddress = useCallback((customer: Customer, addrObj: { label: string, data?: any }) => {
         onSelectCustomer({
             name: customer.name,
             phone: customer.phone,
@@ -149,9 +151,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             deliveryType: 'delivery'
         });
         onClose();
-    };
+    }, [onSelectCustomer, onClose]);
 
-    const handleCounterSale = (customer?: Customer) => {
+    const handleCounterSale = useCallback((customer?: Customer) => {
         onSelectCustomer({
             name: customer?.name || 'Venda Balcão',
             phone: customer?.phone || '',
@@ -159,9 +161,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             deliveryType: 'retirada'
         });
         onClose();
-    };
+    }, [onSelectCustomer, onClose]);
 
-    const handleNoCustomer = () => {
+    const handleNoCustomer = useCallback(() => {
         onSelectCustomer({
             name: '',
             phone: '',
@@ -169,17 +171,17 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             deliveryType: 'retirada'
         });
         onClose();
-    };
+    }, [onSelectCustomer, onClose]);
 
-    const handleSaveNewAddress = (customerId: string) => {
+    const handleSaveNewAddress = useCallback((customerId: string) => {
         const customer = results.find(c => c.id === customerId);
         if (customer) {
             const label = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}, ${newAddress.city}`;
             handleSelectAddress(customer, { label, data: newAddress });
         }
-    };
+    }, [results, newAddress, handleSelectAddress]);
 
-    const handleCreateCustomerAndAddress = async () => {
+    const handleCreateCustomerAndAddress = useCallback(async () => {
         if (!newCustomer.name) return toast.error("Nome obrigatório");
         setIsLoading(true);
         try {
@@ -200,7 +202,29 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [newCustomer, newAddress, onSelectCustomer, onClose]);
+
+    const handleClearSearch = useCallback(() => setSearchTerm(''), []);
+
+    const toggleAddingAddress = useCallback((customerId: string) => {
+        setIsAddingAddress(prev => prev === customerId ? null : customerId);
+    }, []);
+
+    const toggleCreatingCustomer = useCallback(() => {
+        setIsCreatingCustomer(prev => !prev);
+    }, []);
+
+    const handleCustomerNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewCustomer(prev => ({ ...prev, name: e.target.value }));
+    }, []);
+
+    const handleCustomerPhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewCustomer(prev => ({ ...prev, phone: e.target.value }));
+    }, []);
+
+    const handleAddressChange = useCallback((field: keyof Address, value: string) => {
+        setNewAddress(prev => ({ ...prev, [field]: value }));
+    }, []);
 
     if (!isOpen) return null;
 
@@ -237,7 +261,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                 />
-                                {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"><X size={14}/></button>}
+                                {searchTerm && <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"><X size={14}/></button>}
                             </div>
                             <Button onClick={() => handleCounterSale()} className="h-10 bg-slate-900 hover:bg-black text-white px-4 rounded-xl shadow-lg flex items-center gap-2 text-[10px] font-black uppercase italic">
                                 <Store size={14} /> Balcão (Rápido)
@@ -282,7 +306,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                     <Button 
                                                         size="sm" 
                                                         variant="ghost"
-                                                        onClick={() => setIsAddingAddress(isAddingAddress === customer.id ? null : customer.id)}
+                                                        onClick={() => toggleAddingAddress(customer.id)}
                                                         className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50"
                                                     >
                                                         <Plus size={16} />
@@ -301,7 +325,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                             {isAddingAddress === customer.id && (
                                                 <div className="bg-slate-50/80 border-t border-slate-100 overflow-hidden">
                                                     <div className="p-3">
-                                                        <AddressForm address={newAddress} onChange={setNewAddress} compact />
+                                                        <AddressForm address={newAddress} onChange={handleAddressChange} compact />
                                                         <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
                                                             <Button size="sm" variant="ghost" className="h-7 text-[9px] uppercase font-black" onClick={() => setIsAddingAddress(null)}>Cancelar</Button>
                                                             <Button size="sm" className="h-7 bg-blue-600 text-white text-[9px] uppercase font-black px-4 shadow-md" onClick={() => handleSaveNewAddress(customer.id)}>Confirmar</Button>
@@ -316,7 +340,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                 <div className="py-12 px-6 text-center">
                                     <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3"><Info className="text-slate-300" size={20} /></div>
                                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest italic">Nenhum registro encontrado</p>
-                                    <Button onClick={() => setIsCreatingCustomer(true)} className="mt-4 h-9 bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase italic shadow-lg shadow-blue-500/20">Cadastrar "{searchTerm}"</Button>
+                                    <Button onClick={toggleCreatingCustomer} className="mt-4 h-9 bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase italic shadow-lg shadow-blue-500/20">Cadastrar "{searchTerm}"</Button>
                                 </div>
                             ) : (
                                 <div className="py-12 text-center opacity-20">
@@ -336,22 +360,22 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                             <h3 className="text-xs font-black text-slate-900 uppercase italic flex items-center gap-2">
                                 <UserPlus size={14} className="text-blue-500" /> Novo Cliente
                             </h3>
-                            {isCreatingCustomer && <button onClick={() => setIsCreatingCustomer(false)} className="lg:hidden text-slate-400"><X size={18}/></button>}
+                            {isCreatingCustomer && <button onClick={toggleCreatingCustomer} className="lg:hidden text-slate-400"><X size={18}/></button>}
                         </div>
                         
                         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1">
                             <div className="space-y-1">
                                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                                <input className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold focus:border-blue-500 outline-none" value={newCustomer.name} onChange={e => setNewCustomer({...newCustomer, name: e.target.value})} />
+                                <input className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold focus:border-blue-500 outline-none" value={newCustomer.name} onChange={handleCustomerNameChange} />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp / Fone</label>
-                                <input className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold" value={newCustomer.phone} onChange={e => setNewCustomer({...newCustomer, phone: e.target.value})} />
+                                <input className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold" value={newCustomer.phone} onChange={handleCustomerPhoneChange} />
                             </div>
 
                             <div className="pt-4 border-t border-slate-200">
                                 <h4 className="text-[9px] font-black text-slate-400 uppercase mb-3 flex items-center gap-2 italic">Endereço de Entrega</h4>
-                                <AddressForm address={newAddress} onChange={setNewAddress} compact />
+                                <AddressForm address={newAddress} onChange={handleAddressChange} compact />
                             </div>
                         </div>
 

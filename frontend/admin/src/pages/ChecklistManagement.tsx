@@ -1373,48 +1373,6 @@ const ChecklistManagement: React.FC = () => {
                     </div>
                 </div>
             )}
-                                                {task?.type === 'PHOTO' && resp.value && (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {(() => {
-                                                            try {
-                                                                const photos = JSON.parse(resp.value);
-                                                                if (Array.isArray(photos)) {
-                                                                    return photos.map((url: string, pIdx: number) => (
-                                                                        <div key={pIdx} className="relative rounded-lg overflow-hidden border border-border w-24 h-24">
-                                                                            <img
-                                                                                src={`${import.meta.env.VITE_API_URL || ''}${url}`}
-                                                                                className="w-full h-full object-cover cursor-zoom-in"
-                                                                                alt="Evidência"
-                                                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${url}`, '_blank')}
-                                                                            />
-                                                                        </div>
-                                                                    ));
-                                                                }
-                                                            } catch (e) {
-                                                                return (
-                                                                    <div className="relative rounded-lg overflow-hidden border border-border w-24 h-24">
-                                                                        <img
-                                                                            src={`${import.meta.env.VITE_API_URL || ''}${resp.value}`}
-                                                                            className="w-full h-full object-cover cursor-zoom-in"
-                                                                            alt="Evidência"
-                                                                            onClick={() => window.open(`${import.meta.env.VITE_API_URL || ''}${resp.value}`, '_blank')}
-                                                                        />
-                                                                    </div>
-                                                                );
-                                                            }
-                                                            return null;
-                                                        })()}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                </div>
-            )}
-
             <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({ ...prev, open: false }))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({ ...prev, open: false })); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
