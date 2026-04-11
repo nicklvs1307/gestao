@@ -338,6 +338,7 @@ export function useCashier() {
   );
 
   const executeClose = useCallback(async () => {
+    console.log('[CASHIER] executeClose iniciado', { closingValues, totalInformed, summary });
     setIsClosing(true);
     try {
       const sanitizedDetails: Record<string, string> = {};
@@ -352,13 +353,18 @@ export function useCashier() {
         cashLeftover: parseFloat(cashLeftover) || 0,
       };
 
+      console.log('[CASHIER] Payload:', payload);
+
       try {
         const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+        console.log('[CASHIER] Printer config:', printerConfig);
         await printCashierClosure(summary, undefined, printerConfig, sanitizedDetails, sessionOrders);
+        console.log('[CASHIER] Impressao concluida');
       } catch (printError) {
         console.error('[PRINT_ERROR]:', printError);
       }
 
+      console.log('[CASHIER] Enviando para API...');
       await apiClient.post('/cashier/close', payload);
 
       toast.success('Turno encerrado e auditado com sucesso!');
