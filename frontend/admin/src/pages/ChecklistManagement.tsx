@@ -1217,28 +1217,29 @@ const ChecklistManagement: React.FC = () => {
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowQRCodeModal(false)} />
                     <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden p-8 flex flex-col items-center">
-                            <button onClick={() => setShowQRCodeModal(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all">
-                                <X size={16} />
-                            </button>
-                            <h3 className="text-lg font-bold text-foreground mb-1">QR Code de Acesso</h3>
-                            <p className="text-sm text-muted-foreground mb-6">Escaneie para acessar o checklist</p>
-                            <div className="bg-white p-6 rounded-xl border border-border mb-6" id="qr-code-to-print">
-                                <QRCodeSVG value={`${window.location.origin}/checklist/fill/${selectedChecklist?.id}`} size={200} level="H" includeMargin={true} />
-                            </div>
-                            <div className="text-center mb-6">
-                                <h4 className="text-base font-semibold text-foreground">{selectedChecklist?.title}</h4>
-                                <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-md mt-1 inline-block">
-                                    {selectedChecklist?.sector?.name}
-                                </span>
-                            </div>
-                            <Button onClick={handlePrintQR} className="w-full h-11">
-                                <Printer size={16} className="mr-2" /> Imprimir QR Code
-                            </Button>
+                        <button onClick={() => setShowQRCodeModal(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all">
+                            <X size={16} />
+                        </button>
+                        <h3 className="text-lg font-bold text-foreground mb-1">QR Code de Acesso</h3>
+                        <p className="text-sm text-muted-foreground mb-6">Escaneie para acessar o checklist</p>
+                        <div className="bg-white p-6 rounded-xl border border-border mb-6" id="qr-code-to-print">
+                            <QRCodeSVG value={`${window.location.origin}/checklist/fill/${selectedChecklist?.id}`} size={200} level="H" includeMargin={true} />
                         </div>
+                        <div className="text-center mb-6">
+                            <h4 className="text-base font-semibold text-foreground">{selectedChecklist?.title}</h4>
+                            <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-md mt-1 inline-block">
+                                {selectedChecklist?.sector?.name}
+                            </span>
+                        </div>
+                        <Button onClick={handlePrintQR} className="w-full h-11">
+                            <Printer size={16} className="mr-2" /> Imprimir QR Code
+                        </Button>
                     </div>
-                )}
+                </div>
+            )}
 
-{showExecutionDetail && selectedExecution && (
+            {/* Execution Detail Modal */}
+            {showExecutionDetail && selectedExecution && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowExecutionDetail(false)} />
                     <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
