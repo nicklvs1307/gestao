@@ -80,6 +80,11 @@ export const getCashierClosing = async (sessionId: string) => {
     return response.data;
 };
 
+export const getCashierSessionOrders = async (sessionId: string) => {
+    const response = await apiClient.get(`/cashier/${sessionId}/orders`);
+    return response.data;
+};
+
 export const getPendingSettlements = async () => {
     const response = await apiClient.get('/cashier/pending-settlements');
     return response.data;

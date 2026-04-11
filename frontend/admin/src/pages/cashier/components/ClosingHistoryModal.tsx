@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useState } from 'react';
 import { X, Printer, Download, Loader2, Calendar, Lock, Unlock, User } from 'lucide-react';
-import { getCashierClosing } from '../../../services/api';
+import { getCashierClosing, getCashierSessionOrders } from '../../../services/api';
 import { printCashierClosureFromHistory, downloadCashierClosurePDFFromHistory, getPrinterConfigFromStorage } from '../../../services/printer';
 import { formatSP } from '@/lib/timezone';
 import { Button } from '../../../components/ui/Button';
@@ -26,6 +26,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
   const [loadingSession, setLoadingSession] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<SessionHistory | null>(null);
   const [closingData, setClosingData] = useState<Record<string, unknown> | null>(null);
+  const [sessionOrders, setSessionOrders] = useState<unknown[]>([]);
 
   const handleSelectSession = useCallback(async (session: SessionHistory) => {
     if (session.status !== 'CLOSED') {
@@ -37,8 +38,12 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
     setSelectedSession(session);
     
     try {
-      const data = await getCashierClosing(session.id);
+      const [data, orders] = await Promise.all([
+        getCashierClosing(session.id),
+        getCashierSessionOrders(session.id)
+      ]);
       setClosingData(data);
+      setSessionOrders(orders || []);
     } catch (error) {
       console.error('Error fetching closing:', error);
     } finally {
@@ -51,25 +56,26 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
 
     try {
       const config = getPrinterConfigFromStorage();
-      await printCashierClosureFromHistory(closingData, undefined, config);
+      await printCashierClosureFromHistory(closingData, undefined, config, sessionOrders);
     } catch (error) {
       console.error('Error printing:', error);
     }
-  }, [closingData]);
+  }, [closingData, sessionOrders]);
 
   const handleDownloadPDF = useCallback(async () => {
     if (!closingData) return;
 
     try {
-      await downloadCashierClosurePDFFromHistory(closingData);
+      await downloadCashierClosurePDFFromHistory(closingData, undefined, sessionOrders);
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
-  }, [closingData]);
+  }, [closingData, sessionOrders]);
 
   const handleClose = useCallback(() => {
     setSelectedSession(null);
     setClosingData(null);
+    setSessionOrders([]);
     onClose();
   }, [onClose]);
 
@@ -106,7 +112,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => { setSelectedSession(null); setClosingData(null); }}
+                onClick={() => { setSelectedSession(null); setClosingData(null); setSessionOrders([]); }}
                 className="text-xs font-bold uppercase tracking-widest"
               >
                 ← Voltar para lista

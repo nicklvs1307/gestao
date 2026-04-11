@@ -349,6 +349,43 @@ class CashierController {
 
     if (!session) throw new AppError("Nenhum caixa aberto.", 404);
 
+    const orders = await this.getOrdersBySessionId(req.restaurantId, session.id);
+    res.json(orders);
+  });
+
+  // GET /api/cashier/:sessionId/orders - buscar pedidos de sessão específica (aberta ou fechada)
+  getSessionOrdersById = asyncHandler(async (req, res) => {
+    const { sessionId } = req.params;
+    const restaurantId = req.restaurantId;
+
+    const session = await prisma.cashierSession.findFirst({
+      where: { id: sessionId, restaurantId }
+    });
+
+    if (!session) throw new AppError("Sessão de caixa não encontrada.", 404);
+
+    const orders = await this.getOrdersBySessionId(restaurantId, session.id);
+    res.json(orders);
+  });
+
+  getOrdersBySessionId = async (restaurantId, sessionId) => {
+    return await prisma.order.findMany({
+      where: { 
+        restaurantId,
+        OR: [
+          { financialTransaction: { some: { cashierId: sessionId } } },
+        ]
+      },
+      include: {
+        items: { include: { product: true } },
+        deliveryOrder: true,
+        payments: true,
+        user: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  };
+
     const orders = await prisma.order.findMany({
       where: { 
         restaurantId: req.restaurantId,
