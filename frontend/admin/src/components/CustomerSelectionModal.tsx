@@ -409,6 +409,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
 const AddressForm = ({ address, onChange, compact }: { address: Address, onChange: (a: Address) => void, compact?: boolean }) => {
     const handleChange = (field: keyof Address, value: string) => {
+        console.log('AddressForm handleChange', field, value);
         onChange({ ...address, [field]: value });
     };
 
