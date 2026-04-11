@@ -1369,7 +1369,6 @@ const ChecklistManagement: React.FC = () => {
                                 })}
                             </div>
                         </div>
-                    </motion.div>
                 </div>
             )}
 
