@@ -1,9 +1,7 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import { formatSP } from '@/lib/timezone';
 import { CheckCircle, Truck, X, AlertTriangle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useScrollLock } from '../../../hooks/useScrollLock';
 
 interface PendingSettlementsModalProps {
   isOpen: boolean;
@@ -16,7 +14,15 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
   settlements,
   onClose,
 }) => {
-  useScrollLock(isOpen);
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const totalPending = settlements.reduce((acc, i) => acc + i.order.total, 0);
 
   const handleClose = useCallback((e: React.MouseEvent) => {
@@ -27,16 +33,11 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
   const formatCurrency = (value: number) => 
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl border-2 border-slate-200 overflow-hidden"
-          >
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+      <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl border-2 border-slate-200 overflow-hidden">
             <header className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-rose-50 to-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -128,10 +129,8 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
                 ENTENDI, VOU VERIFICAR
               </Button>
             </footer>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </div>
+    </div>
   );
 });
 

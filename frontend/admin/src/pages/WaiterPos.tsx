@@ -15,8 +15,6 @@ import type { Product, Category, CartItem, TableSummary, SizeOption, AddonOption
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useScrollLock } from '../hooks/useScrollLock';
 
 const WaiterPos: React.FC = () => {
     const { logout } = useAuth();
@@ -37,7 +35,14 @@ const WaiterPos: React.FC = () => {
     // Estados de Personalização (Sincronizados com PDV)
     const [productWithOptions, setProductWithOptions] = useState<Product | null>(null);
 
-    useScrollLock(!!productWithOptions);
+    useEffect(() => {
+        if (productWithOptions) {
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [productWithOptions]);
 
     const [selectedSizeId, setSelectedSizeId] = useState<string>('');
     const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
@@ -361,10 +366,9 @@ const WaiterPos: React.FC = () => {
             </main>
 
             {/* MODAL DE OPÇÕES (TOUCH FRIENDLY - ATUALIZADO COM LÓGICA PDV) */}
-            <AnimatePresence>
                 {productWithOptions && (
                     <div className="fixed inset-0 z-[200] flex items-end justify-center bg-slate-950/90 backdrop-blur-md">
-                        <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="w-full max-w-xl bg-slate-900 rounded-t-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border-t border-white/10">
+                        <div className="w-full max-w-xl bg-slate-900 rounded-t-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border-t border-white/10">
                             <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
                                 <div><h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">{productWithOptions.name}</h3><p className="text-[10px] font-black text-primary uppercase tracking-widest mt-2">Personalizar Pedido</p></div>
                                 <Button variant="ghost" size="icon" onClick={() => setProductWithOptions(null)} className="rounded-full bg-white/5 h-12 w-12"><X size={24} /></Button>
@@ -451,10 +455,9 @@ const WaiterPos: React.FC = () => {
                                 </div>
                                 <Button size="lg" onClick={confirmAddToCart} className="h-16 px-8 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 italic shrink-0">LANÇAR <Check size={16} className="ml-2"/></Button>
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
         </div>
     );
 };

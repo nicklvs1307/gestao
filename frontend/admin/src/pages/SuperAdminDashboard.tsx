@@ -9,7 +9,7 @@ import { cn } from '../lib/utils';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { AnimatePresence, motion } from 'framer-motion';
+
 
 const SuperAdminDashboard: React.FC = () => {
     const { token, user } = useAuth();
@@ -608,11 +608,10 @@ const SuperAdminDashboard: React.FC = () => {
             <main className="mt-10">{renderContent()}</main>
 
             {/* MODAIS SUPER ADMIN PREMIUM */}
-            <AnimatePresence>
                 {/* Modal Franquia */}
                 {isFranchiseModalOpen && (
                     <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4"><div className="bg-orange-500 text-white p-3 rounded-2xl shadow-xl shadow-orange-100"><Briefcase size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Nova Franquia</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Estrutura de Rede</p></div></div>
                                 <Button variant="ghost" size="icon" onClick={() => setIsFranchiseModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
@@ -621,57 +620,15 @@ const SuperAdminDashboard: React.FC = () => {
                                 <Input label="Nome da Rede" required value={formData.franchiseName} onChange={e => setFormData({...formData, franchiseName: e.target.value})} placeholder="Ex: Roma Pizzaria Group"/>
                                 <Input label="Slug / Subdomínio" required value={formData.franchiseSlug} onChange={e => setFormData({...formData, franchiseSlug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} placeholder="ex: roma-group"/>
                                 <div className="pt-6"><Button fullWidth size="lg" className="h-14 rounded-2xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200">CRIAR ESTRUTURA</Button></div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-
-                {/* Modal Loja (Onboarding) */}
-                {isRestaurantModalOpen && (
-                    <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-3xl overflow-hidden flex flex-col">
-                            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-4"><div className="bg-blue-600 text-white p-3 rounded-2xl shadow-xl shadow-blue-100"><Store size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Onboarding Unidade</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Provisionamento de Loja e Admin</p></div></div>
-                                <Button variant="ghost" size="icon" onClick={() => setIsRestaurantModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
-                            </header>
-                            <form onSubmit={handleCreateRestaurant} className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-10">
-                                <div className="space-y-6"><h4 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-100 pb-4"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Dados da Operação</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <Input label="Nome da Unidade" required value={formData.restaurantName} onChange={e => setFormData({...formData, restaurantName: e.target.value})} placeholder="Ex: Unidade Shopping Centro"/>
-                                        <Input label="Slug / Identificador" required value={formData.restaurantSlug} onChange={e => setFormData({...formData, restaurantSlug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} placeholder="unidade-centro"/>
-                                        <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Plano do Contrato</label><select className="ui-input w-full h-12" value={formData.restaurantPlan} onChange={e => setFormData({...formData, restaurantPlan: e.target.value})}>
-                                            {plans.filter(p => p.isActive).length > 0 ? (
-                                                plans.filter(p => p.isActive).map(p => <option key={p.id} value={p.name}>{p.name} — {p.modules?.length || 0} módulos{p.price ? ` — R$ ${Number(p.price).toFixed(2)}` : ''}</option>)
-                                            ) : (
-                                                <>
-                                                    <option value="FREE">FREE (Limitado)</option>
-                                                    <option value="SILVER">SILVER (Standard)</option>
-                                                    <option value="GOLD">GOLD (Premium)</option>
-                                                    <option value="DIAMOND">DIAMOND (Unlimited)</option>
-                                                </>
-                                            )}
-                                        </select></div>
-                                        <Input label="Validade Contratual" type="date" value={formData.restaurantExpiresAt} onChange={e => setFormData({...formData, restaurantExpiresAt: e.target.value})}/>
-                                        <div className="md:col-span-2 space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Franquia Vinculada (Opcional)</label><select className="ui-input w-full h-12" value={formData.restaurantFranchiseId} onChange={e => setFormData({...formData, restaurantFranchiseId: e.target.value})}><option value="">LOJA INDEPENDENTE</option>{franchises.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
-                                    </div>
-                                </div>
-                                <div className="space-y-6 pt-4"><h4 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-100 pb-4"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Usuário Mestre (Proprietário)</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="md:col-span-2"><Input label="Nome Completo do Admin" required value={formData.adminName} onChange={e => setFormData({...formData, adminName: e.target.value})} placeholder="Gerente ou Dono"/></div>
-                                        <Input label="E-mail de Login" type="email" required value={formData.adminEmail} onChange={e => setFormData({...formData, adminEmail: e.target.value})} placeholder="dono@loja.com"/>
-                                        <Input label="Senha Temporária" type="password" required value={formData.adminPassword} onChange={e => setFormData({...formData, adminPassword: e.target.value})} placeholder="••••••"/>
-                                    </div>
-                                </div>
-                            </form>
-                            <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0"><Button variant="ghost" onClick={() => setIsRestaurantModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button><Button type="submit" onClick={handleCreateRestaurant} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black bg-blue-600 hover:bg-blue-500">FINALIZAR E CRIAR LOJA</Button></footer>
-                        </motion.div>
+</form>
+                        </div>
                     </div>
                 )}
 
                 {/* Modal Assinatura (Plano) */}
                 {isSubscriptionModalOpen && (
                     <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><DollarSign size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Plano</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{selectedStore?.name}</p></div></div>
                                 <Button variant="ghost" size="icon" onClick={() => setIsSubscriptionModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
@@ -681,67 +638,10 @@ const SuperAdminDashboard: React.FC = () => {
                                 <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Status do Contrato</label><select className="ui-input w-full h-12" value={formData.editStatus} onChange={e => setFormData({...formData, editStatus: e.target.value})}><option value="ACTIVE">ATIVO</option><option value="SUSPENDED">SUSPENSO</option><option value="TRIAL">TESTE (TRIAL)</option></select></div>
                                 <Input label="Nova Validade" type="date" value={formData.editExpiresAt} onChange={e => setFormData({...formData, editExpiresAt: e.target.value})}/>
                                 <div className="pt-6"><Button fullWidth size="lg" className="h-14 rounded-2xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 bg-emerald-600 hover:bg-emerald-500">SALVAR ALTERAÇÕES</Button></div>
-                            </form>
-                        </motion.div>
+</form>
+                        </div>
                     </div>
                 )}
-
-                {/* Modal Plano Customizável */}
-                {isPlanModalOpen && (
-                    <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-3xl overflow-hidden flex flex-col">
-                            <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><CreditCard size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">{editingPlan ? 'Editar Plano' : 'Novo Plano'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Configuração de módulos</p></div></div>
-                                <Button variant="ghost" size="icon" onClick={() => setIsPlanModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
-                            </header>
-                            <form onSubmit={handleSavePlan} className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-slate-50/30 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <Input label="Nome do Plano" required value={planFormData.name} onChange={e => setPlanFormData({...planFormData, name: e.target.value})} placeholder="Ex: Profissional"/>
-                                    <Input label="Slug" required value={planFormData.slug} onChange={e => setPlanFormData({...planFormData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')})} placeholder="ex: profissional"/>
-                                    <Input label="Preço Mensal (R$)" type="number" value={planFormData.price} onChange={e => setPlanFormData({...planFormData, price: e.target.value})} placeholder="99.90"/>
-                                    <Input label="Descrição" value={planFormData.description} onChange={e => setPlanFormData({...planFormData, description: e.target.value})} placeholder="Descrição do plano"/>
-                                </div>
-                                <div className="space-y-4">
-                                    <h4 className="text-xs font-black uppercase text-slate-900 italic flex items-center gap-2 border-b border-slate-100 pb-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Módulos Incluídos</h4>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {['orders', 'pos', 'products', 'settings', 'delivery', 'financial', 'reports', 'customers', 'coupons', 'kds', 'checklists', 'stock', 'dashboards', 'whatsapp', 'fiscal', 'integrations', 'franchise'].map(modId => (
-                                            <label key={modId} className={cn(
-                                                "flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all",
-                                                planFormData.modules.includes(modId)
-                                                    ? "bg-emerald-50 border-emerald-200"
-                                                    : "bg-white border-slate-100 hover:border-slate-200"
-                                            )}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={planFormData.modules.includes(modId)}
-                                                    onChange={() => togglePlanModule(modId)}
-                                                    className="w-4 h-4 text-emerald-600 rounded border-slate-300"
-                                                />
-                                                <span className="text-[9px] font-bold uppercase text-slate-700">{modId}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                    <p className="text-[9px] text-slate-400 font-bold">{planFormData.modules.length} módulos selecionados</p>
-                                </div>
-                                <div className="flex items-center gap-6">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={planFormData.isActive} onChange={e => setPlanFormData({...planFormData, isActive: e.target.checked})} className="w-4 h-4 text-emerald-600 rounded border-slate-300" />
-                                        <span className="text-[9px] font-black uppercase text-slate-600">Ativo</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={planFormData.isDefault} onChange={e => setPlanFormData({...planFormData, isDefault: e.target.checked})} className="w-4 h-4 text-emerald-600 rounded border-slate-300" />
-                                        <span className="text-[9px] font-black uppercase text-slate-600">Plano Padrão</span>
-                                    </label>
-                                </div>
-                            </form>
-                            <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
-                                <Button variant="ghost" onClick={() => setIsPlanModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button>
-                                <Button type="submit" onClick={handleSavePlan} className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black bg-emerald-600 hover:bg-emerald-500">{editingPlan ? 'SALVAR ALTERAÇÕES' : 'CRIAR PLANO'}</Button>
-                            </footer>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </div>
     );
 };

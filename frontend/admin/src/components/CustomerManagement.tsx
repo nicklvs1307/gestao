@@ -5,7 +5,6 @@ import {
     X, CheckCircle, Filter, DollarSign, Wallet, Loader2, RefreshCw, Upload, Download
 } from 'lucide-react';
 import { api } from '../services/api';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
@@ -294,10 +293,9 @@ const CustomerManagement: React.FC = () => {
             </Card>
 
             {/* Modal de Edição Premium */}
-            <AnimatePresence>
-                {isEditModalOpen && customerToEdit && (
-                    <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-2xl overflow-hidden flex flex-col">
+            {isEditModalOpen && customerToEdit && (
+                <div className="ui-modal-overlay">
+                    <div className="ui-modal-content w-full max-w-2xl overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl shadow-slate-200">
@@ -344,16 +342,14 @@ const CustomerManagement: React.FC = () => {
                                 <Button variant="ghost" onClick={() => setEditModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
                                 <Button type="submit" form="customer-form" className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">SALVAR ALTERAÇÕES</Button>
                             </footer>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
             
             {/* Modal de Importação */}
-            <AnimatePresence>
-                {isImportModalOpen && (
-                    <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
+            {isImportModalOpen && (
+                <div className="ui-modal-overlay">
+                    <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="bg-emerald-600 text-white p-3 rounded-2xl shadow-xl shadow-emerald-200">
@@ -413,10 +409,9 @@ const CustomerManagement: React.FC = () => {
                                     IMPORTAR
                                 </Button>
                             </footer>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
             <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
         </div>
     );

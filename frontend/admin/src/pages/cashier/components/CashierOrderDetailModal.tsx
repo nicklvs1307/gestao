@@ -1,6 +1,5 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useEffect } from 'react';
 import { X, Truck, ShoppingBag, Clock, User, List, Plus, Trash2, CreditCard, Banknote, Smartphone, Wallet } from 'lucide-react';
-import { useScrollLock } from '../../../hooks/useScrollLock';
 import { formatSP } from '@/lib/timezone';
 import { toast } from 'sonner';
 import type { PaymentMethod } from '../hooks/useCashier';
@@ -70,7 +69,14 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
   onClose,
   onRefresh,
 }) => {
-  useScrollLock(isOpen);
+  useEffect(() => {
+    if (isOpen && order) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, order]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [showAddPayment, setShowAddPayment] = useState(false);

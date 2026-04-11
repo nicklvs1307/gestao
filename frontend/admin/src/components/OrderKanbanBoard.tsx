@@ -8,7 +8,7 @@ import {
   DragOverlay,
   defaultDropAnimationSideEffects
 } from '@dnd-kit/core';
-import { motion } from 'framer-motion';
+
 import KanbanColumn from './KanbanColumn';
 import type { Order } from '@/types/index.ts';
 import { cn } from '../lib/utils';
@@ -108,11 +108,8 @@ const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({
           if (statusKey === 'PENDING' && columnOrders.length === 0) return null;
           
           return (
-            <motion.div
+            <div
               key={statusKey}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08, duration: 0.3, ease: 'easeOut' }}
               className="flex flex-col flex-none w-[300px] h-full overflow-hidden"
             >
               <KanbanColumn
@@ -125,7 +122,7 @@ const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({
                 selectedOrderIds={selectedOrderIds}
                 toggleSelectOrder={toggleSelectOrder}
               />
-            </motion.div>
+            </div>
           );
         })}
       </div>

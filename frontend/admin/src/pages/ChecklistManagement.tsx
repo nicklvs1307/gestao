@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { useScrollLock } from '../hooks/useScrollLock';
 import {
     ClipboardCheck, Plus, Search, Trash2,
     Edit, ChevronRight, CheckCircle2, AlertCircle, Clock,
@@ -10,7 +9,6 @@ import {
     ChevronLeft, ChevronDown, ChevronUp, BarChart3, Users, FileText,
     AlertTriangle, Calendar, TrendingUp, Eye, MoreVertical
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
@@ -1215,11 +1213,10 @@ const ChecklistManagement: React.FC = () => {
             </AnimatePresence>
 
             {/* QR Code Modal */}
-            <AnimatePresence>
-                {showQRCodeModal && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowQRCodeModal(false)} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden p-8 flex flex-col items-center">
+            {showQRCodeModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowQRCodeModal(false)} />
+                    <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden p-8 flex flex-col items-center">
                             <button onClick={() => setShowQRCodeModal(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all">
                                 <X size={16} />
                             </button>
@@ -1237,16 +1234,15 @@ const ChecklistManagement: React.FC = () => {
                             <Button onClick={handlePrintQR} className="w-full h-11">
                                 <Printer size={16} className="mr-2" /> Imprimir QR Code
                             </Button>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
 
             {/* Execution Detail Modal */}
             {showExecutionDetail && selectedExecution && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowExecutionDetail(false)} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowExecutionDetail(false)} />
+                    <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <header className="p-6 border-b border-border flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-primary/10 rounded-xl">

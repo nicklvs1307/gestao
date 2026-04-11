@@ -1,6 +1,5 @@
 import React, { memo, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useCashier } from './hooks/useCashier';
 import CashierHeader from './components/CashierHeader';
 import CashierAlerts from './components/CashierAlerts';
@@ -12,12 +11,6 @@ import CashierOrderDetailModal from './components/CashierOrderDetailModal';
 import TransactionModal from './components/TransactionModal';
 import PendingSettlementsModal from './components/PendingSettlementsModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-
-const stepVariants = {
-  initial: { opacity: 0, x: 40 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -40 },
-};
 
 const CashierManagement: React.FC = memo(() => {
   const {
@@ -110,86 +103,56 @@ const CashierManagement: React.FC = memo(() => {
         />
       )}
 
-      {/* Main content with animated transitions */}
-      <AnimatePresence mode="wait">
-        {!isOpen ? (
-          <motion.div
-            key="open-screen"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
-          >
-            <CashierOpenScreen
-              initialAmount={initialAmount}
-              onInitialAmountChange={setInitialAmount}
-              onSubmit={handleOpen}
-            />
-          </motion.div>
-        ) : step === 'COUNT' ? (
-          <motion.div
-            key="count-step"
-            variants={stepVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="grid grid-cols-1 xl:grid-cols-12 gap-5"
-          >
-            {/* Left: Blind count */}
-            <div className="xl:col-span-4 space-y-4">
-              <CashierBlindCount
-                paymentMethods={paymentMethods}
-                selectedMethod={selectedMethod}
-                onMethodSelect={setSelectedMethod}
-                closingValues={closingValues}
-                onClosingValueChange={handleCloseValueChange}
-                totalInformed={totalInformed}
-                hasBlocks={hasBlocks}
-                onAuditAndFinalize={() => setStep('REVIEW')}
-              />
-            </div>
-
-            {/* Right: Transaction list */}
-            <div className="xl:col-span-8 space-y-4">
-              <CashierTransactionList
-                paymentMethods={paymentMethods}
-                selectedMethod={selectedMethod}
-                filteredOrders={filteredOrders}
-                onUpdatePayment={handleUpdatePayment}
-                onOrderClick={handleOrderClick}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-              />
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="review-step"
-            variants={stepVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-          >
-            <CashierReviewStep
+      {/* Main content */}
+      {!isOpen ? (
+        <CashierOpenScreen
+          initialAmount={initialAmount}
+          onInitialAmountChange={setInitialAmount}
+          onSubmit={handleOpen}
+        />
+      ) : step === 'COUNT' ? (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+          <div className="xl:col-span-4 space-y-4">
+            <CashierBlindCount
               paymentMethods={paymentMethods}
+              selectedMethod={selectedMethod}
+              onMethodSelect={setSelectedMethod}
               closingValues={closingValues}
-              getExpectedValue={getExpectedValue}
-              cashInHand={cashInHand}
-              safeDeposit={safeDeposit}
-              cashLeftover={cashLeftover}
-              onCashLeftoverChange={setCashLeftover}
-              notes={notes}
-              onNotesChange={setNotes}
-              onBack={() => setStep('COUNT')}
-              onFinalize={handleClose}
-              isLoading={isClosing}
-              breakdownByMethod={summary?.breakdownByMethod}
+              onClosingValueChange={handleCloseValueChange}
+              totalInformed={totalInformed}
+              hasBlocks={hasBlocks}
+              onAuditAndFinalize={() => setStep('REVIEW')}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+          <div className="xl:col-span-8 space-y-4">
+            <CashierTransactionList
+              paymentMethods={paymentMethods}
+              selectedMethod={selectedMethod}
+              filteredOrders={filteredOrders}
+              onUpdatePayment={handleUpdatePayment}
+              onOrderClick={handleOrderClick}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </div>
+        </div>
+      ) : (
+        <CashierReviewStep
+          paymentMethods={paymentMethods}
+          closingValues={closingValues}
+          getExpectedValue={getExpectedValue}
+          cashInHand={cashInHand}
+          safeDeposit={safeDeposit}
+          cashLeftover={cashLeftover}
+          onCashLeftoverChange={setCashLeftover}
+          notes={notes}
+          onNotesChange={setNotes}
+          onBack={() => setStep('COUNT')}
+          onFinalize={handleClose}
+          isLoading={isClosing}
+          breakdownByMethod={summary?.breakdownByMethod}
+        />
+      )}
 
       {/* Modals */}
       <TransactionModal

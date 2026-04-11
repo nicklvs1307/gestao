@@ -22,7 +22,6 @@ import { formatSP } from '@/lib/timezone';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { printCashierClosure } from '../services/printer';
 
@@ -630,10 +629,9 @@ const CashierManagement: React.FC = () => {
             )}
 
             {/* MODAL SANGREIA / REFORÇO */}
-            <AnimatePresence>
-                {showTransactionModal !== 'none' && (
-                    <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }} className="ui-modal-content w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200">
+            {showTransactionModal !== 'none' && (
+                <div className="ui-modal-overlay">
+                    <div className="ui-modal-content w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200">
                             <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                                 <div className="flex items-center gap-3">
                                     <div className={cn("p-2 rounded-lg text-white", showTransactionModal === 'INCOME' ? "bg-emerald-500" : "bg-rose-500")}>
@@ -663,16 +661,14 @@ const CashierManagement: React.FC = () => {
                                     </Button>
                                 </div>
                             </form>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
 
             {/* Modal de Pedidos Pendentes de Acerto */}
-            <AnimatePresence>
-                {showPendingSettlementsModal && (
-                    <div className="ui-modal-overlay">
-                        <motion.div initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }} className="ui-modal-content w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+            {showPendingSettlementsModal && (
+                <div className="ui-modal-overlay">
+                    <div className="ui-modal-content w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
                             <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-rose-500 text-white rounded-xl shadow-lg">
@@ -723,10 +719,9 @@ const CashierManagement: React.FC = () => {
                                     ENTENDI, VOU VERIFICAR
                                 </Button>
                             </footer>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
         </div>
     );
 };

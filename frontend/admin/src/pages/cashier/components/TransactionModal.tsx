@@ -1,9 +1,7 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import { Minus, Plus, X, DollarSign } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Button } from '../../../components/ui/Button';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useScrollLock } from '../../../hooks/useScrollLock';
 import type { TransactionModalState } from '../hooks/useCashier';
 
 interface TransactionModalProps {
@@ -25,7 +23,15 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
   onSubmit,
   onClose,
 }) => {
-  useScrollLock(isOpen !== 'none');
+  useEffect(() => {
+    if (isOpen !== 'none') {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const isIncome = isOpen === 'INCOME';
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -38,16 +44,11 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
     onClose();
   }, [onClose]);
 
+  if (isOpen === 'none') return null;
+
   return (
-    <AnimatePresence>
-      {isOpen !== 'none' && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl border-2 border-slate-200 overflow-hidden"
-          >
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl border-2 border-slate-200 overflow-hidden">
             <header className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
               <div className="flex items-center gap-4">
                 <div className={cn(
@@ -124,10 +125,8 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
                 </Button>
               </div>
             </form>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </div>
+    </div>
   );
 });
 

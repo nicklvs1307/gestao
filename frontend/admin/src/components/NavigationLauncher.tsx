@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, Star, History, ShoppingCart, Bell, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { usePermission } from '../hooks/usePermission';
 import { useModules } from '../hooks/useModules';
-import { useScrollLock } from '../hooks/useScrollLock';
 import { NAV_CATEGORIES, NavCategory, NavItem } from '../config/navigation';
 
 interface NavItem {
@@ -27,7 +25,15 @@ interface NavigationLauncherProps {
 }
 
 const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose }) => {
-    useScrollLock(isOpen);
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const { hasPermission, isSuperAdmin } = usePermission();
@@ -75,27 +81,13 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
         })).filter(cat => cat.items.length > 0);
     }, [categories, searchQuery]);
 
-    return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-[999] overflow-hidden flex items-center justify-center p-4 sm:p-8">
-                    {/* Backdrop */}
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
-                    />
+    if (!isOpen) return null;
 
-                    {/* Central Menu Container */}
-                    <motion.div 
-                        initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                        transition={{ type: "spring", damping: 30, stiffness: 400 }}
-                        className="relative w-full max-w-6xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
-                    >
+    return (
+        <div className="fixed inset-0 z-[999] overflow-hidden flex items-center justify-center p-4 sm:p-8">
+            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={onClose} />
+
+            <div className="relative w-full max-w-6xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border">
                         {/* Top Barra de Busca e Header */}
                         <div className="p-6 border-b border-border flex flex-col sm:flex-row items-center gap-4 bg-background/50">
                             <div className="flex-1 w-full relative group">
@@ -191,10 +183,7 @@ const NavigationLauncher: React.FC<NavigationLauncherProps> = ({ isOpen, onClose
                                 <button className="text-[9px] font-black uppercase text-muted-foreground hover:text-primary transition-colors">Docs</button>
                             </div>
                         </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
+        </div>
     );
 };
 
