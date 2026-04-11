@@ -415,25 +415,60 @@ const AddressForm = ({ address, onChange, compact }: { address: Address, onChang
     return (
         <div className="grid grid-cols-12 gap-2">
             <div className="col-span-5">
-                <input placeholder="CEP" className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" value={address.zipCode} onChange={e => handleChange('zipCode', e.target.value)} />
+                <input 
+                    placeholder="CEP" 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.zipCode} 
+                    onChange={e => handleChange('zipCode', e.target.value)}
+                />
             </div>
             <div className="col-span-7">
-                <input placeholder="Rua / Av." className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" value={address.street} onChange={e => handleChange('street', e.target.value)} />
+                <input 
+                    placeholder="Rua / Av." 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.street} 
+                    onChange={e => handleChange('street', e.target.value)}
+                />
             </div>
             <div className="col-span-3">
-                <input placeholder="Nº" className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" value={address.number} onChange={e => handleChange('number', e.target.value)} />
+                <input 
+                    placeholder="Nº" 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.number} 
+                    onChange={e => handleChange('number', e.target.value)}
+                />
             </div>
             <div className="col-span-9">
-                <input placeholder="Bairro" className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" value={address.neighborhood} onChange={e => handleChange('neighborhood', e.target.value)} />
+                <input 
+                    placeholder="Bairro" 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.neighborhood} 
+                    onChange={e => handleChange('neighborhood', e.target.value)}
+                />
             </div>
             <div className="col-span-8">
-                <input placeholder="Cidade" className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" value={address.city} onChange={e => handleChange('city', e.target.value)} />
+                <input 
+                    placeholder="Cidade" 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.city} 
+                    onChange={e => handleChange('city', e.target.value)}
+                />
             </div>
             <div className="col-span-4">
-                <input placeholder="UF" className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" value={address.state} onChange={e => handleChange('state', e.target.value)} />
+                <input 
+                    placeholder="UF" 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.state} 
+                    onChange={e => handleChange('state', e.target.value)}
+                />
             </div>
             <div className="col-span-12">
-                <input placeholder="Complemento / Ponto de Referência" className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" value={address.complement} onChange={e => handleChange('complement', e.target.value)} />
+                <input 
+                    placeholder="Complemento / Ponto de Referência" 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.complement} 
+                    onChange={e => handleChange('complement', e.target.value)}
+                />
             </div>
         </div>
     );
