@@ -61,16 +61,17 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
     const [newCustomer, setNewCustomer] = useState({ name: '', phone: '' });
 
-    // Carregar configurações da loja
     useEffect(() => {
         if (!isOpen) return;
         const settings = localStorage.getItem('restaurant_settings');
         if (settings) {
             const parsed = JSON.parse(settings);
             setRestaurantSettings(parsed);
-            setNewAddress(prev => ({ ...prev, city: parsed.city || '', state: parsed.state || '' }));
+            if (isCreatingCustomer && !newAddress.city && !newAddress.state) {
+                setNewAddress(prev => ({ ...prev, city: parsed.city || '', state: parsed.state || '' }));
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, isCreatingCustomer]);
 
     // Busca com Debounce
     const mountedRef = React.useRef(true);
@@ -206,9 +207,16 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
     const handleClearSearch = useCallback(() => setSearchTerm(''), []);
 
+    const resetAddress = { street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: '' };
+
     const toggleAddingAddress = useCallback((customerId: string) => {
-        setIsAddingAddress(prev => prev === customerId ? null : customerId);
-    }, []);
+        if (isAddingAddress === customerId) {
+            setIsAddingAddress(null);
+        } else {
+            setNewAddress(resetAddress);
+            setIsAddingAddress(customerId);
+        }
+    }, [isAddingAddress]);
 
     const toggleCreatingCustomer = useCallback(() => {
         setIsCreatingCustomer(prev => !prev);
