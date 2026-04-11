@@ -58,6 +58,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     const [newAddress, setNewAddress] = useState<Address>({
         street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
     });
+    const [addingAddressForm, setAddingAddressForm] = useState<Address>({
+        street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
+    });
 
     const [newCustomer, setNewCustomer] = useState({ name: '', phone: '' });
 
@@ -177,10 +180,11 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     const handleSaveNewAddress = useCallback((customerId: string) => {
         const customer = results.find(c => c.id === customerId);
         if (customer) {
-            const label = `${newAddress.street}, ${newAddress.number} - ${newAddress.neighborhood}, ${newAddress.city}`;
-            handleSelectAddress(customer, { label, data: newAddress });
+            const label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
+            handleSelectAddress(customer, { label, data: addingAddressForm });
+            setIsAddingAddress(null);
         }
-    }, [results, newAddress, handleSelectAddress]);
+    }, [results, addingAddressForm, handleSelectAddress]);
 
     const handleCreateCustomerAndAddress = useCallback(async () => {
         if (!newCustomer.name) return toast.error("Nome obrigatório");
@@ -213,7 +217,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         if (isAddingAddress === customerId) {
             setIsAddingAddress(null);
         } else {
-            setNewAddress(resetAddress);
+            setAddingAddressForm(resetAddress);
             setIsAddingAddress(customerId);
         }
     }, [isAddingAddress]);
@@ -232,6 +236,10 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
     const handleAddressChange = useCallback((field: keyof Address, value: string) => {
         setNewAddress(prev => ({ ...prev, [field]: value }));
+    }, []);
+
+    const handleAddingAddressChange = useCallback((field: keyof Address, value: string) => {
+        setAddingAddressForm(prev => ({ ...prev, [field]: value }));
     }, []);
 
     if (!isOpen) return null;
@@ -333,7 +341,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                             {isAddingAddress === customer.id && (
                                                 <div className="bg-slate-50/80 border-t border-slate-100 overflow-hidden">
                                                     <div className="p-3">
-                                                        <AddressForm address={newAddress} onChange={handleAddressChange} compact />
+                                                        <AddressForm address={addingAddressForm} onChange={handleAddingAddressChange} compact />
                                                         <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
                                                             <Button size="sm" variant="ghost" className="h-7 text-[9px] uppercase font-black" onClick={() => setIsAddingAddress(null)}>Cancelar</Button>
                                                             <Button size="sm" className="h-7 bg-blue-600 text-white text-[9px] uppercase font-black px-4 shadow-md" onClick={() => handleSaveNewAddress(customer.id)}>Confirmar</Button>
