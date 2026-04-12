@@ -109,7 +109,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=gestao_network"
-        # Sintaxe corrigida para Traefik v3 (Expressão Regular Go)
+        # Usuários normais -> Frontend (SPA)
         - "traefik.http.routers.client.rule=HostRegexp(`^[a-z0-9-]+\\.towersfy\\.com$$`)"
         - "traefik.http.routers.client.entrypoints=websecure"
         - "traefik.http.routers.client.tls=true"
@@ -117,7 +117,20 @@ services:
         - "traefik.http.routers.client.tls.domains[0].main=towersfy.com"
         - "traefik.http.routers.client.tls.domains[0].sans=*.towersfy.com"
         - "traefik.http.services.client.loadbalancer.server.port=80"
-        - "traefik.http.routers.client.priority=1"
+        - "traefik.http.routers.client.priority=100"
+
+        # Bots (WhatsApp, Facebook, Twitter, etc) -> Backend API (Preview)
+        # Traefik não suporta regex em Headers, então usamos HeadersRegexp
+        - "traefik.http.routers.client-bot.rule=HostRegexp(`^[a-z0-9-]+\\.towersfy\\.com$$`) && (HeadersRegexp(`User-Agent`, `(WhatsApp|facebookexternalhit|TwitterBot|TelegramBot|Slackbot|LinkedInBot|Discordbot)`))"
+        - "traefik.http.routers.client-bot.entrypoints=websecure"
+        - "traefik.http.routers.client-bot.tls=true"
+        - "traefik.http.routers.client-bot.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.client-bot.priority=1000"
+        - "traefik.http.routers.client-bot.middlewares=bot-redirect"
+        # Redirecionar para API de preview mantendo o subdomínio
+        - "traefik.http.middlewares.bot-redirect.redirectregex.regex=^https?://([a-z0-9-]+)\\.towersfy\\.com(/.*)?$"
+        - "traefik.http.middlewares.bot-redirect.redirectregex.replacement=https://apikicardapio.towersfy.com/api/preview/$${1}"
+        - "traefik.http.services.client-bot.loadbalancer.server.port=3001"
 
 volumes:
   uploads_data:

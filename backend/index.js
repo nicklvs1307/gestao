@@ -230,6 +230,11 @@ app.get('/api/client/integration-settings/:restaurantId', needsAuth, async (req,
   }
 });
 
+const previewController = require('./src/controllers/PreviewController');
+
+app.get('/api/preview/:slug', previewController.getRestaurantPreview);
+app.get('/api/preview', previewController.getRestaurantPreview);
+
 // Health check for monitoring/Docker
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });

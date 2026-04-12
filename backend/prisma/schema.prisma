@@ -105,6 +105,7 @@ model Restaurant {
   name      String   @unique
   slug      String   @unique
   logoUrl   String?  // URL da logo
+  description String? // Descrição do restaurante (para preview/Og tags)
   address   String?  // Endereço
   phone     String?  // Telefone
   serviceTaxPercentage Float? @default(0) // Taxa de serviço
