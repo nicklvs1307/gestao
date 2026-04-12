@@ -344,7 +344,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                             {isAddingAddress === customer.id && (
                                                 <div className="bg-slate-50/80 border-t border-slate-100 overflow-hidden">
                                                     <div className="p-3">
-                                                        <AddressForm address={addingAddressForm} onChange={handleAddingAddressChange} compact />
+                                                        <AddressForm address={addingAddressForm} onChange={setAddingAddressForm} compact />
                                                         <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
                                                             <Button size="sm" variant="ghost" className="h-7 text-[9px] uppercase font-black" onClick={() => setIsAddingAddress(null)}>Cancelar</Button>
                                                             <Button size="sm" className="h-7 bg-blue-600 text-white text-[9px] uppercase font-black px-4 shadow-md" onClick={() => handleSaveNewAddress(customer.id)}>Confirmar</Button>
