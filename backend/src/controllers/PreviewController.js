@@ -6,9 +6,14 @@ const getRestaurantPreview = async (req, res) => {
         // Pegar slug pelo subdomínio ou parâmetro
         let { slug } = req.params;
         
+        // Detectar se é requisição de bot pelo header X-Bot-Detected (enviado pelo Nginx) ou User-Agent
+        const userAgent = req.headers['user-agent'] || '';
+        const isBot = req.headers['x-bot-detected'] === 'true' || 
+            /WhatsApp|facebookexternalhit|TwitterBot|TelegramBot|Slackbot|LinkedInBot|Discordbot/i.test(userAgent);
+        
         if (!slug) {
-            // Tentar pegar pelo subdomínio
-            const hostname = req.hostname;
+            // Tentar pegar pelo subdomínio (X-Original-Host do Nginx ou hostname padrão)
+            const hostname = req.headers['x-original-host'] || req.hostname;
             const parts = hostname.split('.');
             // Pega a primeira parte do hostname (subdomínio)
             if (parts.length >= 3) {
@@ -35,7 +40,8 @@ const getRestaurantPreview = async (req, res) => {
                 settings: {
                     select: {
                         deliveryTime: true,
-                        minOrderValue: true
+                        minOrderValue: true,
+                        welcomeMessage: true
                     }
                 }
             }
@@ -54,7 +60,7 @@ const getRestaurantPreview = async (req, res) => {
             ? (restaurant.logoUrl.startsWith('http') ? restaurant.logoUrl : `${baseUrl}${restaurant.logoUrl}`)
             : `${baseUrl}/logo.png`;
 
-        // Criar descrição dinâmica - usa description do DB ou deriva do endereço
+        // Criar descrição dinâmica
         let description = restaurant.description || '';
         
         if (!description) {
@@ -69,9 +75,9 @@ const getRestaurantPreview = async (req, res) => {
                 : 'Peça online agora mesmo no melhor cardápio digital da região!';
         }
 
-        // Gerar HTML com meta tags dinâmicas para bots (WhatsApp, Facebook, etc)
-        // IMPORTANTE: Este HTML é renderizado pelo servidor, sem JavaScript
-        const html = `<!DOCTYPE html>
+        // Se for bots, retorna HTML com meta tags OG
+        if (isBot) {
+            const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -90,6 +96,7 @@ const getRestaurantPreview = async (req, res) => {
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="${restaurant.name}">
+    <meta property="og:image:alt" content="${restaurant.name} - Cardápio Digital">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -97,15 +104,10 @@ const getRestaurantPreview = async (req, res) => {
     <meta name="twitter:title" content="${restaurant.name} - Peça Online">
     <meta name="twitter:description" content="${description}">
     <meta name="twitter:image" content="${logoUrl}">
+    <meta name="twitter:image:alt" content="${restaurant.name} - Cardápio Digital">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="${logoUrl}">
-    
-    <!-- WhatsApp specific -->
-    <meta property="wa:card" content="summary_large_image">
-    <meta property="wa:title" content="${restaurant.name} - Peça Online">
-    <meta property="wa:description" content="${description}">
-    <meta property="wa:image" content="${logoUrl}">
     
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -134,8 +136,13 @@ const getRestaurantPreview = async (req, res) => {
 </body>
 </html>`;
 
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.send(html);
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.send(html);
+            return;
+        }
+
+        // Se não for bot, redireciona para a página principal
+        res.redirect(302, baseUrl);
     } catch (error) {
         logger.error('Erro ao gerar preview:', error);
         res.status(500).send('Erro ao carregar informações da loja');
