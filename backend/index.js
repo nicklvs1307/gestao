@@ -235,6 +235,17 @@ const previewController = require('./src/controllers/PreviewController');
 app.get('/api/preview/:slug', previewController.getRestaurantPreview);
 app.get('/api/preview', previewController.getRestaurantPreview);
 
+// Rota para servir preview HTML quando acessado via subdomínio de loja (para bots)
+// Esta rota deve estar ANTES do frontend-client no Traefik
+app.get('/preview/:slug', previewController.getRestaurantPreview);
+
+// Catch-all para subdomínios de loja - detecta se é bot e retorna preview HTML
+// Isso permite que bots recebam OG tags mesmo usando o subdomínio da loja
+app.use('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nDisallow:');
+});
+
 // Health check for monitoring/Docker
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
