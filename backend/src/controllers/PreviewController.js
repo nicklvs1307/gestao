@@ -10,6 +10,7 @@ const getRestaurantPreview = async (req, res) => {
             // Tentar pegar pelo subdomínio
             const hostname = req.hostname;
             const parts = hostname.split('.');
+            // Pega a primeira parte do hostname (subdomínio)
             if (parts.length >= 3) {
                 slug = parts[0].toLowerCase();
             }
