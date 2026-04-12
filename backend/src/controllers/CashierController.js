@@ -386,27 +386,6 @@ class CashierController {
     });
   };
 
-    const orders = await prisma.order.findMany({
-      where: { 
-        restaurantId: req.restaurantId,
-        OR: [
-            { financialTransaction: { some: { cashierId: session.id } } },
-            { createdAt: { gte: session.openedAt } },
-            { updatedAt: { gte: session.openedAt }, status: 'COMPLETED' }
-        ]
-      },
-      include: {
-        items: { include: { product: true } },
-        deliveryOrder: true,
-        payments: true,
-        user: { select: { name: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    res.json(orders);
-  });
-
   // GET /api/cashier/pending-settlements
   getPendingSettlements = asyncHandler(async (req, res) => {
     const settlements = await CashierService.getPendingSettlements(req.restaurantId);
