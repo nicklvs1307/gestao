@@ -14,9 +14,11 @@ const getRestaurantPreview = async (req, res) => {
         if (!slug) {
             // Tentar pegar pelo subdomínio (X-Original-Host do Nginx ou hostname padrão)
             const hostname = req.headers['x-original-host'] || req.hostname;
-            const parts = hostname.split('.');
+            // Remove protocolo se houver
+            const cleanHostname = hostname.replace(/^https?:\/\//, '');
+            const parts = cleanHostname.split('.');
             // Pega a primeira parte do hostname (subdomínio)
-            if (parts.length >= 3) {
+            if (parts.length >= 2) {
                 slug = parts[0].toLowerCase();
             }
         }
