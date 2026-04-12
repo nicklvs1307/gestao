@@ -128,7 +128,7 @@ services:
         - "traefik.http.routers.client-bot.priority=1000"
         - "traefik.http.routers.client-bot.middlewares=bot-redirect"
         # Redirecionar para API de preview mantendo o subdomínio
-        - "traefik.http.middlewares.bot-redirect.redirectregex.regex=^https?://([a-z0-9-]+)\\.towersfy\\.com(/.*)?$"
+        - "traefik.http.middlewares.bot-redirect.redirectregex.regex=^https?://([a-z0-9-]+)\\.towersfy\\.com(/.*)?$$"
         - "traefik.http.middlewares.bot-redirect.redirectregex.replacement=https://apikicardapio.towersfy.com/api/preview/$${1}"
         - "traefik.http.services.client-bot.loadbalancer.server.port=3001"
 
