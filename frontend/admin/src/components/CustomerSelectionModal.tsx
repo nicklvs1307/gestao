@@ -70,11 +70,14 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         if (settings) {
             const parsed = JSON.parse(settings);
             setRestaurantSettings(parsed);
-            if (isCreatingCustomer && !newAddress.city && !newAddress.state) {
-                setNewAddress(prev => ({ ...prev, city: parsed.city || '', state: parsed.state || '' }));
-            }
+            setNewAddress(prev => {
+                if (!prev.street && parsed.city) {
+                    return { ...prev, city: parsed.city || '', state: parsed.state || '' };
+                }
+                return prev;
+            });
         }
-    }, [isOpen, isCreatingCustomer]);
+    }, [isOpen]);
 
     // Busca com Debounce
     const mountedRef = React.useRef(true);
@@ -409,7 +412,6 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
 const AddressForm = ({ address, onChange, compact }: { address: Address, onChange: (a: Address) => void, compact?: boolean }) => {
     const handleChange = (field: keyof Address, value: string) => {
-        console.log('AddressForm handleChange', field, value);
         onChange({ ...address, [field]: value });
     };
 
