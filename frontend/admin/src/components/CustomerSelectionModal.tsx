@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
     Search, User, MapPin, Plus, X, Store, 
-    ChevronRight, Loader2, UserPlus, Star, Info
+    ChevronRight, Loader2, UserPlus, Star, Info,
+    Edit2, Trash2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
@@ -36,6 +37,7 @@ interface Customer {
 
 interface CustomerSelectionModalProps {
     isOpen: boolean;
+    isDeliveryMode?: boolean;
     onClose: () => void;
     onSelectCustomer: (data: { 
         name: string; 
@@ -46,7 +48,7 @@ interface CustomerSelectionModalProps {
     }) => void;
 }
 
-export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ isOpen, onClose, onSelectCustomer }) => {
+export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ isOpen, isDeliveryMode = false, onClose, onSelectCustomer }) => {
     useScrollLock(isOpen);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +56,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     const [restaurantSettings, setRestaurantSettings] = useState<any>(null);
     const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
     const [isAddingAddress, setIsAddingAddress] = useState<string | null>(null);
+    const [editingAddress, setEditingAddress] = useState<{ customerId: string; address: Address; index: number } | null>(null);
     
     const [newAddress, setNewAddress] = useState<Address>({
         street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
@@ -189,6 +192,37 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         }
     }, [results, addingAddressForm, handleSelectAddress]);
 
+    const handleEditAddress = useCallback((customer: Customer, addr: { label: string, data?: any }, index: number) => {
+        const addressData = addr.data || {
+            street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
+        };
+        setEditingAddress({ customerId: customer.id, address: addressData, index });
+        setIsAddingAddress(null);
+    }, []);
+
+    const handleSaveEditedAddress = useCallback((customerId: string, originalIndex: number) => {
+        const customer = results.find(c => c.id === customerId);
+        if (customer && customer.consolidatedAddresses) {
+            const label = `${editingAddress?.address.street}, ${editingAddress?.address.number} - ${editingAddress?.address.neighborhood}, ${editingAddress?.address.city}`;
+            const updatedAddresses = [...customer.consolidatedAddresses];
+            updatedAddresses[originalIndex] = { label, data: editingAddress?.address };
+            customer.consolidatedAddresses = updatedAddresses;
+            setResults([...results]);
+            toast.success("Endereço atualizado!");
+            setEditingAddress(null);
+        }
+    }, [results, editingAddress]);
+
+    const handleDeleteAddress = useCallback((customerId: string, index: number) => {
+        const customer = results.find(c => c.id === customerId);
+        if (customer && customer.consolidatedAddresses) {
+            const updatedAddresses = customer.consolidatedAddresses.filter((_, i) => i !== index);
+            customer.consolidatedAddresses = updatedAddresses;
+            setResults([...results]);
+            toast.success("Endereço removido!");
+        }
+    }, [results]);
+
     const handleCreateCustomerAndAddress = useCallback(async () => {
         if (!newCustomer.name) return toast.error("Nome obrigatório");
         setIsLoading(true);
@@ -228,6 +262,15 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     const toggleCreatingCustomer = useCallback(() => {
         setIsCreatingCustomer(prev => !prev);
     }, []);
+
+    const handleEditAddressChange = useCallback((field: keyof Address, value: string) => {
+        if (editingAddress) {
+            setEditingAddress({
+                ...editingAddress,
+                address: { ...editingAddress.address, [field]: value }
+            });
+        }
+    }, [editingAddress]);
 
     const handleCustomerNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setNewCustomer(prev => ({ ...prev, name: e.target.value }));
@@ -282,8 +325,13 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                 />
                                 {searchTerm && <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"><X size={14}/></button>}
                             </div>
-                            <Button onClick={() => handleCounterSale()} className="h-10 bg-slate-900 hover:bg-black text-white px-4 rounded-xl shadow-lg flex items-center gap-2 text-[10px] font-black uppercase italic">
-                                <Store size={14} /> Balcão (Rápido)
+                            {!isDeliveryMode && (
+                                <Button onClick={() => handleNoCustomer()} className="h-10 bg-slate-900 hover:bg-black text-white px-4 rounded-xl shadow-lg flex items-center gap-2 text-[10px] font-black uppercase italic">
+                                    <Store size={14} /> Balcão (Rápido)
+                                </Button>
+                            )}
+                            <Button onClick={() => { setIsCreatingCustomer(true); setSearchTerm(''); }} className="h-10 bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl shadow-lg flex items-center gap-2 text-[10px] font-black uppercase italic">
+                                <UserPlus size={14} /> Novo Cliente
                             </Button>
                         </div>
 
@@ -308,15 +356,32 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                     {/* Endereços em Linha ou Minimalistas */}
                                                     <div className="mt-2 space-y-1">
                                                         {customer.consolidatedAddresses?.map((addr, i) => (
-                                                            <button 
-                                                                key={i} 
-                                                                onClick={() => handleSelectAddress(customer, addr)}
-                                                                className="w-full flex items-center gap-2 p-1.5 rounded-lg border border-slate-100 bg-white hover:border-blue-200 hover:bg-blue-50 transition-all group/addr"
-                                                            >
-                                                                <MapPin size={12} className="text-slate-300 group-hover/addr:text-blue-400" />
-                                                                <span className="text-[10px] font-bold text-slate-500 uppercase truncate text-left">{addr.label}</span>
-                                                                <ChevronRight size={10} className="ml-auto opacity-0 group-hover/addr:opacity-100 text-blue-400" />
-                                                            </button>
+                                                            <div key={i} className="flex items-center gap-1">
+                                                                <button 
+                                                                    onClick={() => handleSelectAddress(customer, addr)}
+                                                                    className="flex-1 flex items-center gap-2 p-1.5 rounded-lg border border-slate-100 bg-white hover:border-blue-200 hover:bg-blue-50 transition-all group/addr"
+                                                                >
+                                                                    <MapPin size={12} className="text-slate-300 group-hover/addr:text-blue-400" />
+                                                                    <span className="text-[10px] font-bold text-slate-500 uppercase truncate text-left">{addr.label}</span>
+                                                                    <ChevronRight size={10} className="ml-auto opacity-0 group-hover/addr:opacity-100 text-blue-400" />
+                                                                </button>
+                                                                <Button 
+                                                                    size="sm" 
+                                                                    variant="ghost"
+                                                                    onClick={() => handleEditAddress(customer, addr, i)}
+                                                                    className="h-7 w-7 p-0 rounded-lg text-slate-300 hover:text-amber-500 hover:bg-amber-50 shrink-0"
+                                                                >
+                                                                    <Edit2 size={12} />
+                                                                </Button>
+                                                                <Button 
+                                                                    size="sm" 
+                                                                    variant="ghost"
+                                                                    onClick={() => handleDeleteAddress(customer.id, i)}
+                                                                    className="h-7 w-7 p-0 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 shrink-0"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </Button>
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 </div>
@@ -348,6 +413,23 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                         <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
                                                             <Button size="sm" variant="ghost" className="h-7 text-[9px] uppercase font-black" onClick={() => setIsAddingAddress(null)}>Cancelar</Button>
                                                             <Button size="sm" className="h-7 bg-blue-600 text-white text-[9px] uppercase font-black px-4 shadow-md" onClick={() => handleSaveNewAddress(customer.id)}>Confirmar</Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {editingAddress?.customerId === customer.id && (
+                                                <div className="bg-amber-50/80 border-t border-amber-100 overflow-hidden">
+                                                    <div className="p-3">
+                                                        <div className="text-[9px] font-black text-amber-600 uppercase mb-2">Editando Endereço</div>
+                                                        <AddressForm 
+                                                            address={editingAddress.address} 
+                                                            onChange={handleEditAddressChange} 
+                                                            compact 
+                                                        />
+                                                        <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
+                                                            <Button size="sm" variant="ghost" className="h-7 text-[9px] uppercase font-black" onClick={() => setEditingAddress(null)}>Cancelar</Button>
+                                                            <Button size="sm" className="h-7 bg-amber-600 text-white text-[9px] uppercase font-black px-4 shadow-md" onClick={() => handleSaveEditedAddress(customer.id, editingAddress.index)}>Salvar</Button>
                                                         </div>
                                                     </div>
                                                 </div>

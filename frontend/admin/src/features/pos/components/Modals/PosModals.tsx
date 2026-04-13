@@ -43,6 +43,7 @@ export const PosModals: React.FC<PosModalsProps> = ({
     return (
       <CustomerSelectionModal 
         isOpen={true}
+        isDeliveryMode={true}
         onClose={() => setActiveModal('none')} 
         onSelectCustomer={(data) => {
           handleSelectCustomer({
@@ -62,6 +63,7 @@ export const PosModals: React.FC<PosModalsProps> = ({
     return (
       <CustomerSelectionModal 
         isOpen={true}
+        isDeliveryMode={false}
         onClose={() => setActiveModal('none')} 
         onSelectCustomer={(data) => {
           if (handleSelectCounterCustomer) {
