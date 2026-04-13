@@ -310,8 +310,8 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         setNewCustomer(prev => ({ ...prev, phone: e.target.value }));
     }, []);
 
-    const handleAddressChange = useCallback((field: keyof Address, value: string) => {
-        setNewAddress(prev => ({ ...prev, [field]: value }));
+    const handleAddressChange = useCallback((newAddress: Address) => {
+        setNewAddress(newAddress);
     }, []);
 
     const handleAddingAddressChange = useCallback((field: keyof Address, value: string) => {
