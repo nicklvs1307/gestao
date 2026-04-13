@@ -193,9 +193,38 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     }, [results, addingAddressForm, handleSelectAddress]);
 
     const handleEditAddress = useCallback((customer: Customer, addr: { label: string, data?: any }, index: number) => {
-        const addressData = addr.data || {
-            street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
-        };
+        let addressData = addr.data;
+        
+        if (!addressData || !addressData.street) {
+            const label = addr.label || '';
+            const parts = label.split(/[,.-]/);
+            
+            const streetNumMatch = label.match(/^(.+?),\s*(\d+|\d+\s*\w*)\s*[-–]\s*(.+?)(?:,\s*(.+))?$/i);
+            if (streetNumMatch) {
+                addressData = {
+                    street: (streetNumMatch[1] || '').trim(),
+                    number: (streetNumMatch[2] || '').trim(),
+                    neighborhood: (streetNumMatch[3] || '').trim(),
+                    city: (streetNumMatch[4] || '').trim(),
+                    state: '',
+                    complement: addr.data?.complement || '',
+                    reference: addr.data?.reference || '',
+                    zipCode: addr.data?.zipCode || ''
+                };
+            } else {
+                addressData = {
+                    street: parts[0] || '',
+                    number: '',
+                    neighborhood: parts[1] || '',
+                    city: parts[2] || '',
+                    state: '',
+                    complement: addr.data?.complement || '',
+                    reference: addr.data?.reference || '',
+                    zipCode: addr.data?.zipCode || ''
+                };
+            }
+        }
+        
         setEditingAddress({ customerId: customer.id, address: addressData, index });
         setIsAddingAddress(null);
     }, []);
@@ -455,7 +484,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                     {/* Painel Lateral de Novo Cadastro (Fixo em Desktop, Modal em Mobile) */}
                     <div className={cn(
                         "w-full lg:w-[320px] bg-slate-50 p-4 border-l border-slate-100 flex flex-col",
-                        !isCreatingCustomer && "hidden lg:flex opacity-40 grayscale pointer-events-none"
+                        !isCreatingCustomer && "hidden"
                     )}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xs font-black text-slate-900 uppercase italic flex items-center gap-2">
