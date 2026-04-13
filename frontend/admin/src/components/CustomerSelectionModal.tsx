@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
-import { searchCustomers, createCustomer } from '../services/api';
+import { searchCustomers, createCustomer, updateCustomer, createCustomerAddress, updateCustomerAddress, deleteCustomerAddress } from '../services/api';
 import { toast } from 'sonner';
 import { useScrollLock } from '../hooks/useScrollLock';
 
@@ -19,6 +19,8 @@ interface Address {
     complement?: string;
     reference?: string;
     zipCode?: string;
+    id?: string;
+    label?: string;
 }
 
 interface Customer {
@@ -32,7 +34,9 @@ interface Customer {
     city?: string;
     state?: string;
     complement?: string;
-    consolidatedAddresses?: { label: string, data?: any }[];
+    reference?: string;
+    customerAddresses?: Address[];
+    consolidatedAddresses?: { label: string, data?: any, source: 'customer' | 'address' | 'order' }[];
 }
 
 interface CustomerSelectionModalProps {
@@ -56,7 +60,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     const [restaurantSettings, setRestaurantSettings] = useState<any>(null);
     const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
     const [isAddingAddress, setIsAddingAddress] = useState<string | null>(null);
-    const [editingAddress, setEditingAddress] = useState<{ customerId: string; address: Address; index: number } | null>(null);
+    const [editingAddress, setEditingAddress] = useState<{ customerId: string; address: Address; index: number; source: 'customer' | 'address' | 'order' } | null>(null);
     
     const [newAddress, setNewAddress] = useState<Address>({
         street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
@@ -104,24 +108,33 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             const customersArray = Array.isArray(data) ? data : (data.customers || []);
             
             const finalResults = customersArray.map((c: any) => {
-                const addressList: { label: string, data?: any }[] = [];
+                const addressList: { label: string, data?: any, source: 'customer' | 'address' | 'order' }[] = [];
                 const seen = new Set<string>();
 
-                const add = (label: string, structured?: any) => {
+                const add = (label: string, structured?: any, source: 'customer' | 'address' | 'order' = 'customer') => {
                     const clean = label.trim().toUpperCase();
                     if (clean && clean !== 'RETIRADA NO BALCÃO' && !seen.has(clean)) {
-                        addressList.push({ label, data: structured });
+                        addressList.push({ label, data: structured, source });
                         seen.add(clean);
                     }
                 };
 
+                // Endereço principal do cliente (campos do Customer)
                 if (c.street) {
                     const full = `${c.street}, ${c.number || 'S/N'} - ${c.neighborhood || ''}${c.city ? ', ' + c.city : ''}`;
-                    add(full, { street: c.street, number: c.number, neighborhood: c.neighborhood, city: c.city, state: c.state, zipCode: c.zipCode, complement: c.complement, reference: c.reference });
+                    add(full, { street: c.street, number: c.number, neighborhood: c.neighborhood, city: c.city, state: c.state, zipCode: c.zipCode, complement: c.complement, reference: c.reference }, 'customer');
                 }
                 if (c.address) add(c.address);
+
+                // Endereços adicionais da nova tabela CustomerAddress
+                c.customerAddresses?.forEach((addr: any) => {
+                    const full = `${addr.street}, ${addr.number || 'S/N'} - ${addr.neighborhood || ''}${addr.city ? ', ' + addr.city : ''}`;
+                    add(full, { id: addr.id, label: addr.label, street: addr.street, number: addr.number, neighborhood: addr.neighborhood, city: addr.city, state: addr.state, zipCode: addr.zipCode, complement: addr.complement, reference: addr.reference }, 'address');
+                });
+
+                // Endereços históricos dos pedidos de delivery
                 c.deliveryOrders?.forEach((o: any) => { 
-                    if (o.address) add(o.address, { complement: o.complement, reference: o.reference }); 
+                    if (o.address) add(o.address, { complement: o.complement, reference: o.reference }, 'order'); 
                 });
 
                 return { ...c, consolidatedAddresses: addressList };
@@ -183,14 +196,40 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         onClose();
     }, [onSelectCustomer, onClose]);
 
-    const handleSaveNewAddress = useCallback((customerId: string) => {
+    const handleSaveNewAddress = useCallback(async (customerId: string) => {
         const customer = results.find(c => c.id === customerId);
         if (customer) {
-            const label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
-            handleSelectAddress(customer, { label, data: addingAddressForm });
-            setIsAddingAddress(null);
+            try {
+                // Criar endereço na nova tabela
+                const newAddressData = {
+                    street: addingAddressForm.street,
+                    number: addingAddressForm.number,
+                    neighborhood: addingAddressForm.neighborhood,
+                    city: addingAddressForm.city,
+                    state: addingAddressForm.state,
+                    complement: addingAddressForm.complement,
+                    reference: addingAddressForm.reference,
+                    zipCode: addingAddressForm.zipCode
+                };
+                
+                await createCustomerAddress(customerId, newAddressData);
+                
+                const label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
+                const addressWithId = { ...newAddressData, id: `new-${Date.now()}` };
+                
+                // Atualizar a lista local para mostrar o novo endereço
+                const consolidated = customer.consolidatedAddresses || [];
+                customer.consolidatedAddresses = [...consolidated, { label, data: addressWithId, source: 'address' as const }];
+                setResults([...results]);
+                
+                toast.success("Endereço adicionado!");
+                setIsAddingAddress(null);
+            } catch (error) {
+                console.error(error);
+                toast.error("Erro ao adicionar endereço");
+            }
         }
-    }, [results, addingAddressForm, handleSelectAddress]);
+    }, [results, addingAddressForm]);
 
     const handleEditAddress = useCallback((customer: Customer, addr: { label: string, data?: any }, index: number) => {
         let addressData = addr.data;
@@ -225,26 +264,75 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             }
         }
         
-        setEditingAddress({ customerId: customer.id, address: addressData, index });
+        setEditingAddress({ customerId: customer.id, address: addressData, index, source: addr.data?.source || 'order' });
         setIsAddingAddress(null);
     }, []);
 
-    const handleSaveEditedAddress = useCallback((customerId: string, originalIndex: number) => {
+    const handleSaveEditedAddress = useCallback(async (customerId: string, originalIndex: number) => {
         const customer = results.find(c => c.id === customerId);
-        if (customer && customer.consolidatedAddresses) {
-            const label = `${editingAddress?.address.street}, ${editingAddress?.address.number} - ${editingAddress?.address.neighborhood}, ${editingAddress?.address.city}`;
-            const updatedAddresses = [...customer.consolidatedAddresses];
-            updatedAddresses[originalIndex] = { label, data: editingAddress?.address };
-            customer.consolidatedAddresses = updatedAddresses;
-            setResults([...results]);
-            toast.success("Endereço atualizado!");
-            setEditingAddress(null);
+        if (customer && customer.consolidatedAddresses && editingAddress) {
+            try {
+                const source = editingAddress.source || 'order';
+                
+                if (source === 'address' && editingAddress.address.id) {
+                    // Endereço da tabela CustomerAddress - usar API de endereço
+                    await updateCustomerAddress(editingAddress.address.id, {
+                        street: editingAddress.address.street,
+                        number: editingAddress.address.number,
+                        neighborhood: editingAddress.address.neighborhood,
+                        city: editingAddress.address.city,
+                        state: editingAddress.address.state,
+                        complement: editingAddress.address.complement,
+                        reference: editingAddress.address.reference,
+                        zipCode: editingAddress.address.zipCode
+                    });
+                } else if (source === 'customer') {
+                    // Endereço principal do cliente - atualizar no Customer
+                    await updateCustomer(customerId, {
+                        ...editingAddress.address,
+                        address: `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`
+                    });
+                } else {
+                    // Endereços de pedidos históricos não podem ser editados
+                    toast.error("Endereços de pedidos antigos não podem ser editados.");
+                    return;
+                }
+                
+                const label = `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`;
+                const updatedAddresses = [...customer.consolidatedAddresses];
+                updatedAddresses[originalIndex] = { label, data: editingAddress.address, source };
+                customer.consolidatedAddresses = updatedAddresses;
+                setResults([...results]);
+                toast.success("Endereço atualizado!");
+                setEditingAddress(null);
+            } catch (error) {
+                console.error(error);
+                toast.error("Erro ao atualizar endereço");
+            }
         }
     }, [results, editingAddress]);
 
-    const handleDeleteAddress = useCallback((customerId: string, index: number) => {
+    const handleDeleteAddress = useCallback(async (customerId: string, index: number) => {
         const customer = results.find(c => c.id === customerId);
         if (customer && customer.consolidatedAddresses) {
+            const addressToDelete = customer.consolidatedAddresses[index];
+            
+            if (addressToDelete.source === 'address' && addressToDelete.data?.id) {
+                try {
+                    await deleteCustomerAddress(addressToDelete.data.id);
+                } catch (error) {
+                    console.error(error);
+                    toast.error("Erro ao deletar endereço");
+                    return;
+                }
+            } else if (addressToDelete.source === 'customer') {
+                toast.error("O endereço principal não pode ser removido.");
+                return;
+            } else {
+                toast.error("Endereços de pedidos antigos não podem ser removidos.");
+                return;
+            }
+            
             const updatedAddresses = customer.consolidatedAddresses.filter((_, i) => i !== index);
             customer.consolidatedAddresses = updatedAddresses;
             setResults([...results]);
@@ -297,7 +385,8 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             setEditingAddress({
                 customerId: editingAddress.customerId,
                 address: newAddress,
-                index: editingAddress.index
+                index: editingAddress.index,
+                source: editingAddress.source
             });
         }
     }, [editingAddress]);

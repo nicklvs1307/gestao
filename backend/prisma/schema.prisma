@@ -952,6 +952,28 @@ model Customer {
 
   @@unique([phone, restaurantId])
   @@index([restaurantId])
+
+  customerAddresses CustomerAddress[]
+}
+
+model CustomerAddress {
+  id           String   @id @default(cuid())
+  customerId   String
+  label        String?  // rótulo opcional (ex: "Casa", "Trabalho")
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String?
+  reference    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
 }
 
 model TableRequest {

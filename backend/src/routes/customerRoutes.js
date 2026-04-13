@@ -63,7 +63,33 @@ router.get('/search', needsAuth, async (req, res) => {
                     { address: { contains: query.toString(), mode: 'insensitive' } }
                 ]
             },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                phone: true,
+                zipCode: true,
+                street: true,
+                number: true,
+                neighborhood: true,
+                city: true,
+                state: true,
+                complement: true,
+                reference: true,
+                address: true,
+                customerAddresses: {
+                    select: {
+                        id: true,
+                        label: true,
+                        street: true,
+                        number: true,
+                        complement: true,
+                        neighborhood: true,
+                        city: true,
+                        state: true,
+                        zipCode: true,
+                        reference: true
+                    }
+                },
                 deliveryOrders: {
                     select: {
                         address: true,
@@ -88,5 +114,11 @@ router.get('/search', needsAuth, async (req, res) => {
 router.get('/:id', needsAuth, CustomerController.show);
 router.put('/:id', needsAuth, CustomerController.update);
 router.delete('/:id', needsAuth, CustomerController.delete);
+
+// Rotas de endereços
+router.get('/:customerId/addresses', needsAuth, CustomerController.listAddresses);
+router.post('/:customerId/addresses', needsAuth, CustomerController.createAddress);
+router.put('/addresses/:id', needsAuth, CustomerController.updateAddress);
+router.delete('/addresses/:id', needsAuth, CustomerController.deleteAddress);
 
 module.exports = router;

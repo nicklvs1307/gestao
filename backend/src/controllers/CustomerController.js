@@ -137,6 +137,85 @@ class CustomerController {
       res.status(500).json({ error: 'Erro ao excluir cliente.' });
     }
   }
+
+  // Listar endereços de um cliente
+  async listAddresses(req, res) {
+    const { customerId } = req.params;
+    try {
+      const addresses = await prisma.customerAddress.findMany({
+        where: { customerId },
+        orderBy: { createdAt: 'desc' }
+      });
+      res.json(addresses);
+    } catch (error) {
+      logger.error('Erro ao listar endereços:', error);
+      res.status(500).json({ error: 'Erro ao listar endereços.' });
+    }
+  }
+
+  // Criar novo endereço para cliente
+  async createAddress(req, res) {
+    const { customerId } = req.params;
+    const data = req.body;
+    try {
+      const address = await prisma.customerAddress.create({
+        data: {
+          customerId,
+          label: data.label,
+          street: data.street,
+          number: data.number,
+          complement: data.complement,
+          neighborhood: data.neighborhood,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          reference: data.reference
+        }
+      });
+      res.status(201).json(address);
+    } catch (error) {
+      logger.error('Erro ao criar endereço:', error);
+      res.status(500).json({ error: 'Erro ao criar endereço.' });
+    }
+  }
+
+  // Atualizar endereço
+  async updateAddress(req, res) {
+    const { id } = req.params;
+    const data = req.body;
+    try {
+      const updated = await prisma.customerAddress.update({
+        where: { id },
+        data: {
+          label: data.label,
+          street: data.street,
+          number: data.number,
+          complement: data.complement,
+          neighborhood: data.neighborhood,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          reference: data.reference
+        }
+      });
+      res.json(updated);
+    } catch (error) {
+      logger.error('Erro ao atualizar endereço:', error);
+      res.status(500).json({ error: 'Erro ao atualizar endereço.' });
+    }
+  }
+
+  // Deletar endereço
+  async deleteAddress(req, res) {
+    const { id } = req.params;
+    try {
+      await prisma.customerAddress.delete({ where: { id } });
+      res.json({ message: 'Endereço excluído com sucesso.' });
+    } catch (error) {
+      logger.error('Erro ao deletar endereço:', error);
+      res.status(500).json({ error: 'Erro ao excluir endereço.' });
+    }
+  }
 }
 
 module.exports = new CustomerController();
