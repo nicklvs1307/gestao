@@ -186,7 +186,7 @@ class OrderController {
 
   // GET /api/admin/orders/drivers/settlement
   getDriverSettlement = asyncHandler(async (req, res) => {
-    const { date, startTime, endTime } = req.query;
+    const { startDate, endDate, startTime, endTime } = req.query;
     const restaurantId = req.restaurantId || req.user?.restaurantId; 
 
     if (!restaurantId) {
@@ -194,13 +194,13 @@ class OrderController {
         throw new Error('Restaurante não identificado.');
     }
 
-    const settlement = await OrderService.getDriverSettlement(restaurantId, date, startTime, endTime);
+    const settlement = await OrderService.getDriverSettlement(restaurantId, startDate, endDate, startTime, endTime);
     res.json(settlement);
   });
 
   // POST /api/admin/orders/drivers/settlement/pay
   payDriverSettlement = asyncHandler(async (req, res) => {
-    const { driverName, amount, date, driverId } = req.body;
+    const { driverName, amount, startDate, endDate, driverId } = req.body;
     const restaurantId = req.restaurantId || req.user?.restaurantId;
 
     if (!restaurantId) {
@@ -208,7 +208,7 @@ class OrderController {
         throw new Error('Restaurante não identificado.');
     }
     
-    await OrderService.payDriverSettlement(restaurantId, driverName, amount, date, driverId);
+    await OrderService.payDriverSettlement(restaurantId, driverName, amount, startDate, endDate, driverId);
     res.json({ success: true });
   });
 

@@ -33,7 +33,8 @@ interface SettlementData {
 const DriverSettlement: React.FC = () => {
   const [data, setData] = useState<SettlementData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState(formatSP(new Date(), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(formatSP(new Date(), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(formatSP(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
   const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
@@ -46,7 +47,7 @@ const DriverSettlement: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.get(`/admin/orders/drivers/settlement`, {
-        params: { date, startTime, endTime }
+        params: { startDate, endDate, startTime, endTime }
       });
       setData(res.data);
     } catch (e) {
@@ -65,13 +66,14 @@ const DriverSettlement: React.FC = () => {
       onConfirm: async () => {
         try {
           // 1. Imprime o comprovante ANTES de liquidar
-          await printDriverSettlement(settlement, date, startTime, endTime);
+          await printDriverSettlement(settlement, startDate, startTime, endTime);
           
           // 2. Registra o acerto no backend
           await payDriverSettlement({
             driverName: settlement.driverName,
             amount: settlement.totalToPay,
-            date: date,
+            startDate: startDate,
+            endDate: endDate,
             driverId: settlement.driverId
           });
           toast.success(`Acerto de ${settlement.driverName} registrado com sucesso!`);
@@ -88,7 +90,7 @@ const DriverSettlement: React.FC = () => {
     
     // Imprime um comprovante para cada entregador
     for (const settlement of filteredData) {
-      await printDriverSettlement(settlement, date, startTime, endTime);
+      await printDriverSettlement(settlement, startDate, startTime, endTime);
     }
     toast.success(`${filteredData.length} comprovante(s) enviado(s) para impressão!`);
   };
@@ -103,7 +105,7 @@ const DriverSettlement: React.FC = () => {
     setPrinting(true);
     try {
       for (const settlement of selected) {
-        await printDriverSettlement(settlement, date, startTime, endTime);
+        await printDriverSettlement(settlement, startDate, startTime, endTime);
       }
       toast.success(`${selected.length} comprovante(s) enviado(s) para impressão!`);
     } finally {
@@ -133,7 +135,7 @@ const DriverSettlement: React.FC = () => {
 
   useEffect(() => {
     fetchSettlement();
-  }, [date, startTime, endTime]);
+  }, [startDate, endDate, startTime, endTime]);
 
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -179,12 +181,24 @@ const DriverSettlement: React.FC = () => {
             <Calendar size={14} className="text-primary" />
             <input 
               type="date" 
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
               className="bg-transparent border-none font-black text-[11px] uppercase outline-none text-slate-600 cursor-pointer"
             />
           </div>
           
+          <span className="text-[10px] font-bold text-slate-400">ATÉ</span>
+          
+          <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+            <Calendar size={14} className="text-primary" />
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent border-none font-black text-[11px] uppercase outline-none text-slate-600 cursor-pointer"
+            />
+          </div>
+
           <div className="h-6 w-px bg-slate-200" />
 
           <div className="flex items-center gap-2">

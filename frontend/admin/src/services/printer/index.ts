@@ -336,10 +336,11 @@ export const printCashierClosure = async (
 
 export const printDriverSettlement = async (
   settlement: DriverSettlementData,
-  date: string,
+  startDate: string,
   startTime: string,
   endTime: string,
-  restaurantInfo?: RestaurantInfo
+  restaurantInfo?: RestaurantInfo,
+  endDate?: string
 ) => {
   const status = await checkAgentStatus();
   if (!status) { 
@@ -361,7 +362,7 @@ export const printDriverSettlement = async (
     storeNet: settlement.storeNet,
   };
 
-  const escPos = generateDriverSettlementReceipt(settlementData, date, startTime, endTime, info);
+  const escPos = generateDriverSettlementReceipt(settlementData, startDate, startTime, endTime, info, endDate);
   const escPosBase64 = escPosToBase64(escPos);
   const config = getPrinterConfigFromStorage();
   

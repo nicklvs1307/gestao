@@ -974,25 +974,34 @@ if (isPickup && !hasValidPhone) {
     });
   }
 
-  async getDriverSettlement(restaurantId, date, startTime, endTime) {
-    const queryDate = date ? new Date(date) : new Date();
-    const start = new Date(queryDate);
+  getSaoPauloDate() {
+    const now = new Date();
+    return new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  }
+
+  async getDriverSettlement(restaurantId, startDate, endDate, startTime, endTime) {
+    if (!startDate || !endDate) {
+      throw new Error("Parâmetros startDate e endDate são obrigatórios.");
+    }
+
+    const spNow = this.getSaoPauloDate();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
     if (startTime) {
-        const [h, m] = startTime.split(':');
-        start.setHours(parseInt(h), parseInt(m), 0, 0);
-    } else {
-        start.setHours(0, 0, 0, 0);
+      const [h, m] = startTime.split(':');
+      start.setHours(parseInt(h), parseInt(m), 0, 0);
     }
 
-    const end = new Date(queryDate);
     if (endTime) {
-        const [h, m] = endTime.split(':');
-        end.setHours(parseInt(h), parseInt(m), 59, 999);
-    } else {
-        end.setHours(23, 59, 59, 999);
+      const [h, m] = endTime.split(':');
+      end.setHours(parseInt(h), parseInt(m), 59, 999);
     }
 
-    logger.info(`[SETTLEMENT] Buscando acertos de entregadores: restaurantId=${restaurantId}, periodo=${start.toISOString()} até ${end.toISOString()}`);
+    logger.info(`[SETTLEMENT] Buscando acertos de entregadores: restaurantId=${restaurantId}, periodo=${start.toISOString()} até ${end.toISOString()} (timezone: America/Sao_Paulo)`);
 
     const drivers = await prisma.user.findMany({
         where: { 
@@ -1051,12 +1060,16 @@ if (isPickup && !hasValidPhone) {
     });
   }
 
-  async payDriverSettlement(restaurantId, driverName, amount, date, driverId = null) {
+  async payDriverSettlement(restaurantId, driverName, amount, startDate, endDate, driverId = null) {
       const activeCashier = await prisma.cashierSession.findFirst({ where: { restaurantId, status: 'OPEN' } });
       if (!activeCashier) throw new Error("Não é possível realizar acerto: Não há caixa aberto.");
-      const queryDate = date ? new Date(date) : new Date();
-      const start = new Date(queryDate); start.setHours(0, 0, 0, 0);
-      const end = new Date(queryDate); end.setHours(23, 59, 59, 999);
+      
+      if (!startDate || !endDate) {
+        throw new Error("Parâmetros startDate e endDate são obrigatórios.");
+      }
+      
+      const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate); end.setHours(23, 59, 59, 999);
       const deliveries = await prisma.deliveryOrder.findMany({
           where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, updatedAt: { gte: start, lte: end } },
           include: { order: true }

@@ -90,7 +90,7 @@ export const markOrderAsPrinted = async (orderId: string) => {
   return response.data;
 };
 
-export const payDriverSettlement = async (data: { driverName: string, amount: number, date: string }) => {
+export const payDriverSettlement = async (data: { driverName: string, amount: number, startDate: string, endDate: string, driverId?: string }) => {
     const response = await apiClient.post('/admin/orders/drivers/settlement/pay', data);
     return response.data;
 };

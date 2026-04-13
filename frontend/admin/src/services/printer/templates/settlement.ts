@@ -15,12 +15,14 @@ import type { DriverSettlementData, RestaurantInfo } from '../types';
 
 export function generateDriverSettlementReceipt(
   settlement: DriverSettlementData,
-  date: string,
+  startDate: string,
   startTime: string,
   endTime: string,
-  restaurantInfo: RestaurantInfo | Record<string, unknown>
+  restaurantInfo: RestaurantInfo | Record<string, unknown>,
+  endDate?: string
 ): string {
   const W = PAPER_WIDTH;
+  const periodEndDate = endDate || startDate;
   let buf = '';
 
   // ═══ CABEÇALHO ═══
@@ -29,15 +31,16 @@ export function generateDriverSettlementReceipt(
   buf += alignCenter(double((infoDriver.name || 'KICARDÁPIO').toUpperCase()));
   
   if (infoDriver.cnpj) buf += alignCenter(`CNPJ: ${infoDriver.cnpj}`);
-  if (infoDriver.address) buf += alignCenter(wrapText(String(infoDriver.address), W).trim());
+  if (infoDriver.address) buf += alignCenter(wrapText(String(infoDriver.address)), W).trim();
 
   buf += line('=', W);
   buf += alignCenter(doubleWidth('COMPROVANTE ACERTO'));
   buf += line('=', W);
 
   // ═══ PERÍODO ═══
-  buf += `Data:     ${date}\n`;
-  buf += `Período:  ${startTime} às ${endTime}\n`;
+  buf += `Data Início: ${startDate}\n`;
+  buf += `Data Fim:   ${periodEndDate}\n`;
+  buf += `Período:    ${startTime} às ${endTime}\n`;
   buf += line('-', W);
 
   // ═══ ENTREGADOR ═══
