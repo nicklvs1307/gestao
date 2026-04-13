@@ -334,7 +334,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">PDV Inteligente • Cardápio Tablets</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 transition-all"><X size={20} /></button>
+                    <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 transition-all"><X size={20} /></button>
                 </div>
 
                 <div className="flex flex-col lg:flex-row h-full overflow-hidden">
@@ -436,7 +436,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                             </div>
 
                                             {isAddingAddress === customer.id && (
-                                                <div className="bg-slate-50/80 border-t border-slate-100 overflow-hidden">
+                                                <div className="bg-slate-50/80 border-t border-slate-100 overflow-hidden relative z-10">
                                                     <div className="p-3">
                                                         <AddressForm address={addingAddressForm} onChange={setAddingAddressForm} compact />
                                                         <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-200/50">
@@ -448,7 +448,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                             )}
 
                                             {editingAddress?.customerId === customer.id && (
-                                                <div className="bg-amber-50/80 border-t border-amber-100 overflow-hidden">
+                                                <div className="bg-amber-50/80 border-t border-amber-100 overflow-hidden relative z-10">
                                                     <div className="p-3">
                                                         <div className="text-[9px] font-black text-amber-600 uppercase mb-2">Editando Endereço</div>
                                                         <AddressForm 
@@ -484,7 +484,8 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                     {/* Painel Lateral de Novo Cadastro (Fixo em Desktop, Modal em Mobile) */}
                     <div className={cn(
                         "w-full lg:w-[320px] bg-slate-50 p-4 border-l border-slate-100 flex flex-col",
-                        !isCreatingCustomer && "hidden"
+                        !isCreatingCustomer && "hidden",
+                        "relative z-10"
                     )}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xs font-black text-slate-900 uppercase italic flex items-center gap-2">
