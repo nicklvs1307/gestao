@@ -7,7 +7,12 @@ export const useCustomerSearch = (deliveryOrders: any[]) => {
     const pos = usePosStore();
     const [customerSearchTerm, setCustomerSearchTerm] = useState('');
     const [customerResults, setCustomerResults] = useState<any[]>([]);
-    const [customerAddresses, setCustomerAddresses] = useState<string[]>([]);
+    interface AddressWithMeta {
+        address: string;
+        complement?: string;
+        reference?: string;
+    }
+    const [customerAddresses, setCustomerAddresses] = useState<AddressWithMeta[]>([]);
     const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
 
     const handleSearchCustomer = async (term: string) => {
@@ -50,13 +55,27 @@ export const useCustomerSearch = (deliveryOrders: any[]) => {
             pos.setActiveDeliveryOrderId(null);
         }
 
-        const historyAddresses = customer.deliveryOrders
-            ?.map((o: any) => o.address)
-            .filter((addr: string, i: number, self: string[]) => addr && self.indexOf(addr) === i) || [];
+        const historyAddressesMap = new Map<string, AddressWithMeta>();
         
-        if (customer.address && !historyAddresses.includes(customer.address)) {
-            historyAddresses.unshift(customer.address);
+        customer.deliveryOrders?.forEach((o: any) => {
+            if (o.address && !historyAddressesMap.has(o.address)) {
+                historyAddressesMap.set(o.address, {
+                    address: o.address,
+                    complement: o.complement,
+                    reference: o.reference
+                });
+            }
+        });
+        
+        if (customer.address && !historyAddressesMap.has(customer.address)) {
+            historyAddressesMap.set(customer.address, {
+                address: customer.address,
+                complement: customer.complement,
+                reference: customer.reference
+            });
         }
+        
+        const historyAddresses = Array.from(historyAddressesMap.values());
         setCustomerAddresses(historyAddresses);
         setCustomerResults([]);
         setCustomerSearchTerm('');

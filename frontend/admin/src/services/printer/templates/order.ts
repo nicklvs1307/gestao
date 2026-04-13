@@ -102,7 +102,7 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
       buf += ESC_POS.ALIGN_LEFT;
     }
   } else if (!isProduction || isDeliveryOrderType) {
-    // Cupom do caixa - só mostra se tiver deliveryOrder
+    // Cupom do caixa - mostra informações de entrega/delivery
     if (order.deliveryOrder) {
       buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
       

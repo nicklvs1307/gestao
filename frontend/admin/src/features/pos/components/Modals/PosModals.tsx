@@ -5,11 +5,17 @@ import { CustomerSelectionModal } from '../../../../components/CustomerSelection
 import { usePosStore } from '../../hooks/usePosStore';
 import { PaymentMethod } from '../../../../types';
 
+interface AddressWithMeta {
+  address: string;
+  complement?: string;
+  reference?: string;
+}
+
 interface PosModalsProps {
   paymentMethods: PaymentMethod[];
   onSubmitOrder: () => void;
   onOpenCashier: (amount: string) => void;
-  customerAddresses: string[];
+  customerAddresses: AddressWithMeta[];
   handleSelectCustomer: (data: any) => void;
   handleSelectCounterCustomer?: (data: any) => void;
 }

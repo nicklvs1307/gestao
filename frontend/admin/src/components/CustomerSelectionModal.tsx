@@ -117,7 +117,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
                 if (c.street) {
                     const full = `${c.street}, ${c.number || 'S/N'} - ${c.neighborhood || ''}${c.city ? ', ' + c.city : ''}`;
-                    add(full, { street: c.street, number: c.number, neighborhood: c.neighborhood, city: c.city, state: c.state, zipCode: c.zipCode, complement: c.complement });
+                    add(full, { street: c.street, number: c.number, neighborhood: c.neighborhood, city: c.city, state: c.state, zipCode: c.zipCode, complement: c.complement, reference: c.reference });
                 }
                 if (c.address) add(c.address);
                 c.deliveryOrders?.forEach((o: any) => { 
@@ -549,10 +549,18 @@ const AddressForm = ({ address, onChange, compact }: { address: Address, onChang
             </div>
             <div className="col-span-12">
                 <input 
-                    placeholder="Complemento / Ponto de Referência" 
+                    placeholder="Complemento (Apto, Bloco, etc.)" 
                     className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
                     value={address.complement} 
                     onChange={e => handleChange('complement', e.target.value)}
+                />
+            </div>
+            <div className="col-span-12">
+                <input 
+                    placeholder="Ponto de Referência" 
+                    className="w-full h-8 px-2 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-blue-500" 
+                    value={address.reference} 
+                    onChange={e => handleChange('reference', e.target.value)}
                 />
             </div>
         </div>
