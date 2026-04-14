@@ -359,7 +359,7 @@ const TableCheckout: React.FC = () => {
                 const tabItemIds = payingItems.filter(i => i.tabId === tabId).map(i => i.itemId);
                 if (tabItemIds.length === 0) continue;
 
-                const tabPayments = payments.map(p => ({ amount: p.amount, method: p.methodName }));
+                const tabPayments = payments.map(p => ({ amount: p.amount, method: p.methodId }));
 
                 const res = await api.post(`/admin/tables/partial-payment-simple`, {
                     orderId: tabId,

@@ -71,7 +71,7 @@ const buildOrderPayload = (
         })),
         orderType,
         tableNumber: activeTab === 'table' ? parseInt(selectedTable) : null,
-        paymentMethod: method?.name || 'OUTRO',
+        paymentMethod: posPaymentMethodId || method?.id || 'OUTRO',
         customerName: activeTab === 'table' ? customerName : (isCounter ? (customerName || 'Balcão') : deliveryInfo.name),
         deliveryInfo: isDelivery ? {
             name: deliveryInfo.name,

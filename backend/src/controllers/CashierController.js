@@ -92,8 +92,8 @@ class CashierController {
       !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO) && 
       !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.SANGRIA) &&
       !t.description.includes('ENTRADA ACERTO') // Exclui entradas de acerto de entregadores
-    );
-
+);
+    
     const normalize = (str) => {
       if (!str) return '';
       return str.toString().toLowerCase()
@@ -101,16 +101,43 @@ class CashierController {
         .trim();
     };
 
-    const salesByMethod = salesTransactions.reduce((acc, curr) => {
-      const rawMethod = normalize(curr.paymentMethod || 'other');
-      
-      const matchedMethod = restaurantPaymentMethods.find(m => {
-        const normName = normalize(m.name);
-        const normType = normalize(m.type);
-        return normName === rawMethod || normType === rawMethod;
-      });
+    // Criar mapa de métodos por ID e por nome normalizado para busca mais eficiente
+    const paymentMethodMap = {};
+    const paymentMethodByName = {};
+    restaurantPaymentMethods.forEach(m => {
+      paymentMethodMap[m.id] = m;
+      paymentMethodByName[normalize(m.name)] = m;
+      if (m.type) paymentMethodByName[normalize(m.type)] = m;
+    });
 
-      const key = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
+    const getMethodKey = (paymentMethodValue) => {
+      if (!paymentMethodValue) return 'other';
+      
+      // 1. Primeiro tenta encontrar pelo ID direto
+      if (paymentMethodMap[paymentMethodValue]) {
+        return normalize(paymentMethodMap[paymentMethodValue].name);
+      }
+      
+      // 2. Se não for ID, tenta encontrar pelo nome/tipo normalizado
+      const normalized = normalize(paymentMethodValue);
+      if (paymentMethodByName[normalized]) {
+        return normalize(paymentMethodByName[normalized].name);
+      }
+      
+      // 3. Se ainda não encontrou, procurar por similaridade (contains)
+      const found = restaurantPaymentMethods.find(m => 
+        normalize(m.name).includes(normalized) || 
+        (m.type && normalize(m.type).includes(normalized))
+      );
+      
+      if (found) return normalize(found.name);
+      
+      // 4. Se não encontrou nenhum, agrupar como 'other'
+      return 'other';
+    };
+
+    const salesByMethod = salesTransactions.reduce((acc, curr) => {
+      const key = getMethodKey(curr.paymentMethod);
       acc[key] = (acc[key] || 0) + curr.amount;
       return acc;
     }, {});
@@ -126,13 +153,7 @@ class CashierController {
     // Breakdown por forma de pagamento com detalhes dos pedidos
     const breakdownByMethod = {};
     salesTransactions.forEach(t => {
-      const rawMethod = normalize(t.paymentMethod || 'other');
-      const matchedMethod = restaurantPaymentMethods.find(m => {
-        const normName = normalize(m.name);
-        const normType = normalize(m.type);
-        return normName === rawMethod || normType === rawMethod;
-      });
-      const key = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
+      const key = getMethodKey(t.paymentMethod);
       
       if (!breakdownByMethod[key]) {
         breakdownByMethod[key] = {
@@ -273,6 +294,32 @@ class CashierController {
         .trim();
     };
 
+    // Criar mapa de métodos por ID e por nome normalizado
+    const paymentMethodMap = {};
+    const paymentMethodByName = {};
+    restaurantPaymentMethods.forEach(m => {
+      paymentMethodMap[m.id] = m;
+      paymentMethodByName[normalize(m.name)] = m;
+      if (m.type) paymentMethodByName[normalize(m.type)] = m;
+    });
+
+    const getMethodKey = (paymentMethodValue) => {
+      if (!paymentMethodValue) return 'other';
+      if (paymentMethodMap[paymentMethodValue]) {
+        return normalize(paymentMethodMap[paymentMethodValue].name);
+      }
+      const normalized = normalize(paymentMethodValue);
+      if (paymentMethodByName[normalized]) {
+        return normalize(paymentMethodByName[normalized].name);
+      }
+      const found = restaurantPaymentMethods.find(m => 
+        normalize(m.name).includes(normalized) || 
+        (m.type && normalize(m.type).includes(normalized))
+      );
+      if (found) return normalize(found.name);
+      return 'other';
+    };
+
     const salesTransactions = transactions.filter(t => 
       t.type === 'INCOME' && 
       !t.description.includes(CASHIER_CONSTANTS.TRANSACTION_PREFIXES.REFORCO) && 
@@ -281,13 +328,7 @@ class CashierController {
     );
 
     const salesByMethod = salesTransactions.reduce((acc, curr) => {
-      const rawMethod = normalize(curr.paymentMethod || 'other');
-      const matchedMethod = restaurantPaymentMethods.find(m => {
-        const normName = normalize(m.name);
-        const normType = normalize(m.type);
-        return normName === rawMethod || normType === rawMethod;
-      });
-      const key = matchedMethod ? normalize(matchedMethod.name) : rawMethod;
+      const key = getMethodKey(curr.paymentMethod);
       acc[key] = (acc[key] || 0) + curr.amount;
       return acc;
     }, {});

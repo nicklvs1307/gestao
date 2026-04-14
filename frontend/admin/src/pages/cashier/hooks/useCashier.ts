@@ -171,7 +171,7 @@ export function useCashier() {
       else if (lowName.includes('cartão') || lowName.includes('credit') || lowName.includes('debit')) icon = Wallet;
 
       return {
-        id: lowName.includes('dinheiro') ? 'cash' : m.name.toLowerCase(),
+        id: m.id || (lowName.includes('dinheiro') ? 'cash' : m.name.toLowerCase()),
         label: m.name,
         type: m.type,
         icon,
