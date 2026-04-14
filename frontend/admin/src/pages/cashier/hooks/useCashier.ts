@@ -452,6 +452,7 @@ export function useCashier() {
       try {
         await updateOrderPaymentMethod(orderId, newMethod);
         toast.success('Forma de pagamento atualizada!');
+        await new Promise(resolve => setTimeout(resolve, 300));
         fetchData();
       } catch {
         toast.error('Erro ao alterar pagamento.');

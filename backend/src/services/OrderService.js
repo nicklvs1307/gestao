@@ -688,40 +688,9 @@ if (isPickup && !hasValidPhone) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new Error("Pedido não encontrado");
 
-    const existingTransactions = await prisma.financialTransaction.findMany({
-      where: { orderId, type: 'INCOME', description: { startsWith: 'VENDA' } }
-    });
-
-    const openSession = await prisma.cashierSession.findFirst({
-      where: { restaurantId, status: 'OPEN' }
-    });
-
     const result = await prisma.$transaction(async (tx) => {
       await tx.payment.updateMany({ where: { orderId }, data: { method: newMethod } });
       await tx.deliveryOrder.updateMany({ where: { orderId }, data: { paymentMethod: newMethod } });
-
-      for (const ft of existingTransactions) {
-        await tx.financialTransaction.updateMany({
-          where: { id: ft.id },
-          data: { status: 'CANCELED' }
-        });
-
-        await tx.financialTransaction.create({
-          data: {
-            restaurantId,
-            orderId,
-            cashierId: openSession?.id,
-            categoryId: ft.categoryId,
-            description: ft.description,
-            amount: ft.amount,
-            type: 'INCOME',
-            status: 'PAID',
-            dueDate: new Date(),
-            paymentDate: new Date(),
-            paymentMethod: newMethod
-          }
-        });
-      }
 
       return { success: true };
     });

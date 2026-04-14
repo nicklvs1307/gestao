@@ -137,11 +137,15 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-slate-900">R$ {pay.amount.toFixed(2).replace('.', ',')}</span>
                     <button 
-                      onClick={() => onRemovePayment(pay.id)} 
-                      className="p-1.5 hover:bg-rose-100 rounded-lg transition-colors text-slate-300 hover:text-rose-500 opacity-0 group-hover/pay:opacity-100"
+                      onClick={() => {
+                        if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${pay.method}" de R$ ${pay.amount.toFixed(2).replace('.', ',')}?`)) {
+                          onRemovePayment(pay.id);
+                        }
+                      }} 
+                      className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-rose-400 hover:text-rose-600"
                       title="Remover pagamento"
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>

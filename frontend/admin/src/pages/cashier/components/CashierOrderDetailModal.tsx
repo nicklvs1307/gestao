@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback, useEffect } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import { X, Truck, ShoppingBag, Clock, User, List, Plus, Trash2, CreditCard, Banknote, Smartphone, Wallet } from 'lucide-react';
 import { formatSP } from '@/lib/timezone';
 import { toast } from 'sonner';
@@ -61,6 +61,20 @@ const getMethodLabel = (method: string, paymentMethods: PaymentMethod[]) => {
 
 const formatCurrency = (value: number) => 
   `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+const normalizePaymentMethod = (method: string): string => {
+  if (!method) return '';
+  return method.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+};
+
+const findMatchingMethodId = (method: string, paymentMethods: PaymentMethod[]): string => {
+  const normalizedMethod = normalizePaymentMethod(method);
+  const found = paymentMethods.find(pm => 
+    normalizePaymentMethod(pm.id) === normalizedMethod ||
+    normalizePaymentMethod(pm.label) === normalizedMethod
+  );
+  return found?.id || paymentMethods[0]?.id || '';
+};
 
 const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
   isOpen,
@@ -259,7 +273,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
                         <div className="flex items-center gap-2">
                           <select
                             className="h-7 text-[10px] font-bold uppercase bg-slate-50 border border-slate-200 rounded-lg px-2 focus:border-slate-900 outline-none"
-                            value={payment.method}
+                            value={findMatchingMethodId(payment.method, paymentMethods)}
                             onChange={(e) => handleUpdatePayment(payment.id, e.target.value)}
                           >
                                 {paymentMethods.map((pm) => (
@@ -269,8 +283,12 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
                                 ))}
                           </select>
                           <button
-                            onClick={() => handleRemovePayment(payment.id)}
-                            className="w-7 h-7 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center justify-center text-rose-500"
+                            onClick={() => {
+                              if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${payment.method}" de R$ ${formatCurrency(payment.amount)}?`)) {
+                                handleRemovePayment(payment.id);
+                              }
+                            }}
+                            className="w-7 h-7 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center justify-center text-rose-500 hover:text-rose-700"
                           >
                             <Trash2 size={14} />
                           </button>
