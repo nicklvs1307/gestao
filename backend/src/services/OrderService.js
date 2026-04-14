@@ -1027,7 +1027,7 @@ if (isPickup && !hasValidPhone) {
                 where: {
                     status: 'DELIVERED',
                     order: { isSettled: false },
-                    deliveredAt: { gte: start, lte: end }
+updatedAt: { gte: start, lte: end }
                 },
                 include: { order: { include: { payments: true } } }
             }
@@ -1106,7 +1106,7 @@ if (isPickup && !hasValidPhone) {
       const start = new Date(startStr);
       const end = new Date(endStr);
       const deliveries = await prisma.deliveryOrder.findMany({
-          where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, deliveredAt: { gte: start, lte: end } },
+          where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, updatedAt: { gte: start, lte: end } },
           include: { order: { include: { payments: true } } }
       });
       if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informativa.");
