@@ -984,21 +984,15 @@ if (isPickup && !hasValidPhone) {
     }
 
     const spNow = this.getSaoPauloDate();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const startHour = startTime ? startTime : '00:00';
+    const endHour = endTime ? endTime : '23:59:59';
+    const [sh, sm] = startHour.split(':');
+    const [eh, em] = endHour.split(':');
 
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-
-    if (startTime) {
-      const [h, m] = startTime.split(':');
-      start.setHours(parseInt(h), parseInt(m), 0, 0);
-    }
-
-    if (endTime) {
-      const [h, m] = endTime.split(':');
-      end.setHours(parseInt(h), parseInt(m), 59, 999);
-    }
+    const startStr = `${startDate}T${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}:00-03:00`;
+    const endStr = `${endDate}T${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:59-03:00`;
+    const start = new Date(startStr);
+    const end = new Date(endStr);
 
     logger.info(`[SETTLEMENT] Buscando acertos de entregadores: restaurantId=${restaurantId}, periodo=${start.toISOString()} até ${end.toISOString()} (timezone: America/Sao_Paulo)`);
 
@@ -1015,7 +1009,7 @@ if (isPickup && !hasValidPhone) {
                 where: {
                     status: 'DELIVERED',
                     order: { isSettled: false },
-                    updatedAt: { gte: start, lte: end }
+                    deliveredAt: { gte: start, lte: end }
                 },
                 include: { order: { include: { payments: true } } }
             }
@@ -1089,10 +1083,12 @@ if (isPickup && !hasValidPhone) {
         throw new Error("Parâmetros startDate e endDate são obrigatórios.");
       }
       
-      const start = new Date(startDate); start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate); end.setHours(23, 59, 59, 999);
+      const startStr = `${startDate}T00:00:00-03:00`;
+      const endStr = `${endDate}T23:59:59-03:00`;
+      const start = new Date(startStr);
+      const end = new Date(endStr);
       const deliveries = await prisma.deliveryOrder.findMany({
-          where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, updatedAt: { gte: start, lte: end } },
+          where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, deliveredAt: { gte: start, lte: end } },
           include: { order: { include: { payments: true } } }
       });
       if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
