@@ -996,6 +996,24 @@ if (isPickup && !hasValidPhone) {
 
     logger.info(`[SETTLEMENT] Buscando acertos de entregadores: restaurantId=${restaurantId}, periodo=${start.toISOString()} até ${end.toISOString()} (timezone: America/Sao_Paulo)`);
 
+    const tenantPaymentMethods = await prisma.paymentMethod.findMany({
+      where: { restaurantId },
+      select: { id: true, name: true }
+    });
+    const paymentMethodMap = new Map(tenantPaymentMethods.map(pm => [pm.id.toLowerCase(), pm.name.toLowerCase()]));
+    logger.info(`[SETTLEMENT] Métodos de pagamento do tenant carregados: ${tenantPaymentMethods.length}`);
+
+    const resolvePaymentMethodName = (methodValue) => {
+      if (!methodValue) return '';
+      const normalized = methodValue.toLowerCase();
+      if (normalized === 'cash' || normalized === 'pix' || normalized.includes('credit') || normalized.includes('debit')) {
+        return normalized;
+      }
+      const resolved = paymentMethodMap.get(normalized);
+      if (resolved) return resolved;
+      return normalized;
+    };
+
     const drivers = await prisma.user.findMany({
         where: { 
             restaurantId, 
@@ -1024,7 +1042,7 @@ if (isPickup && !hasValidPhone) {
         d.deliveries.forEach((del, idx) => {
             const orderPayments = del.order?.payments || [];
             const paymentSummary = orderPayments.length > 0 
-                ? orderPayments.map(p => `${p.method}:${p.amount}`).join(', ')
+                ? orderPayments.map(p => `${resolvePaymentMethodName(p.method)}:${p.amount}`).join(', ')
                 : del.paymentMethod;
             logger.info(`[SETTLEMENT]   Pedido ${idx + 1}: order.total=${del.order?.total}, deliveryFee=${del.deliveryFee}, payments=${paymentSummary}`);
         });
@@ -1040,13 +1058,13 @@ if (isPickup && !hasValidPhone) {
             const orderPayments = order.payments || [];
             if (orderPayments.length > 0) {
                 orderPayments.forEach(p => {
-                    const pMethod = (p.method || '').toLowerCase();
+                    const resolvedMethod = resolvePaymentMethodName(p.method);
                     const pAmount = p.amount || 0;
-                    if (pMethod.includes('dinheiro') || pMethod.includes('cash')) {
+                    if (resolvedMethod.includes('dinheiro') || resolvedMethod.includes('cash')) {
                         cash = money.add(cash, pAmount);
-                    } else if (pMethod.includes('cart') || pMethod.includes('card') || pMethod.includes('deb') || pMethod.includes('cred')) {
+                    } else if (resolvedMethod.includes('cart') || resolvedMethod.includes('card') || resolvedMethod.includes('deb') || resolvedMethod.includes('cred')) {
                         card = money.add(card, pAmount);
-                    } else if (pMethod.includes('pix')) {
+                    } else if (resolvedMethod.includes('pix')) {
                         pix = money.add(pix, pAmount);
                     } else {
                         cash = money.add(cash, pAmount);
@@ -1091,7 +1109,23 @@ if (isPickup && !hasValidPhone) {
           where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, deliveredAt: { gte: start, lte: end } },
           include: { order: { include: { payments: true } } }
       });
-      if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
+      if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informativa.");
+      
+      const tenantPaymentMethods = await prisma.paymentMethod.findMany({
+        where: { restaurantId },
+        select: { id: true, name: true }
+      });
+      const paymentMethodMap = new Map(tenantPaymentMethods.map(pm => [pm.id.toLowerCase(), pm.name.toLowerCase()]));
+      
+const resolvePaymentMethodName = (methodValue) => {
+        if (!methodValue) return '';
+        const normalized = methodValue.toLowerCase();
+        if (normalized === 'cash' || normalized === 'pix' || normalized.includes('credit') || normalized.includes('debit')) {
+          return normalized;
+        }
+        const resolved = paymentMethodMap.get(normalized);
+        return resolved || normalized;
+      };
       
       let cashCollected = 0;
       deliveries.forEach(del => {
@@ -1100,8 +1134,8 @@ if (isPickup && !hasValidPhone) {
           const orderPayments = order.payments || [];
           if (orderPayments.length > 0) {
               orderPayments.forEach(p => {
-                  const pMethod = (p.method || '').toLowerCase();
-                  if (pMethod.includes('dinheiro') || pMethod.includes('cash')) {
+                  const resolvedMethod = resolvePaymentMethodName(p.method);
+                  if (resolvedMethod.includes('dinheiro') || resolvedMethod.includes('cash')) {
                       cashCollected = money.add(cashCollected, p.amount || 0);
                   }
               });
