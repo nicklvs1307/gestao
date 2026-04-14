@@ -1083,9 +1083,13 @@ updatedAt: { gte: start, lte: end }
         const baseRate = Number(d.baseRate) || 0;
         const bonusPerDelivery = Number(d.bonusPerDelivery) || 0;
         const totalCommission = money.multiply(bonusPerDelivery, d.deliveries.length);
-        const totalToPay = money.add(baseRate, totalCommission);
+        const totalToPay = (baseRate > 0 || bonusPerDelivery > 0) 
+            ? money.add(baseRate, totalCommission)
+            : 0;
         
-        const storeNet = money.subtract(totalOrdersValue, money.add(totalToPay, deliveryFees));
+        const storeNet = (baseRate > 0 || bonusPerDelivery > 0) 
+            ? money.subtract(totalOrdersValue, money.add(totalToPay, deliveryFees))
+            : totalOrdersValue;
         
         logger.info(`[SETTLEMENT] Cálculos para ${d.name}: totalOrdersValue=${totalOrdersValue}, deliveryFees=${deliveryFees}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
         
