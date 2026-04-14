@@ -688,12 +688,27 @@ if (isPickup && !hasValidPhone) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new Error("Pedido não encontrado");
 
+    const payments = await prisma.payment.findMany({ where: { orderId } });
+
     const result = await prisma.$transaction(async (tx) => {
       await tx.payment.updateMany({ where: { orderId }, data: { method: newMethod } });
       await tx.deliveryOrder.updateMany({ where: { orderId }, data: { paymentMethod: newMethod } });
 
+      await tx.financialTransaction.updateMany({
+        where: { 
+          orderId,
+          type: 'INCOME',
+          status: 'PAID',
+          description: { startsWith: 'VENDA' }
+        },
+        data: { paymentMethod: newMethod }
+      });
+
       return { success: true };
     });
+
+    logger.info(`[ORDER payment] alterado todos os pagamentos do pedido ${orderId}: ${payments.map(p => p.method).join(', ')} → ${newMethod}`);
+
     emitOrderUpdate(orderId);
     return result;
   }
@@ -702,6 +717,7 @@ if (isPickup && !hasValidPhone) {
     const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
     if (!payment) throw new Error("Pagamento não encontrado");
 
+    const oldMethod = payment.method;
     const updated = await prisma.payment.update({
       where: { id: paymentId },
       data: { method: newMethod }
@@ -717,6 +733,18 @@ if (isPickup && !hasValidPhone) {
         data: { paymentMethod: newMethod }
       });
     }
+
+    await prisma.financialTransaction.updateMany({
+      where: { 
+        orderId: payment.orderId,
+        type: 'INCOME',
+        status: 'PAID',
+        description: { startsWith: 'VENDA' }
+      },
+      data: { paymentMethod: newMethod }
+    });
+
+    logger.info(`[ORDER payment] Alterado ${paymentId}: ${oldMethod} → ${newMethod}, order: ${payment.orderId}`);
 
     if (order) emitOrderUpdate(order.id);
     return updated;
@@ -843,6 +871,8 @@ if (isPickup && !hasValidPhone) {
 
       await tx.payment.delete({ where: { id: paymentId } });
     });
+
+    logger.info(`[ORDER payment] Removido ${paymentId}: ${payment.method} R$ ${payment.amount}, order: ${payment.orderId}, FTs canceladas: ${existingTransactions.length}`);
 
     emitOrderUpdate(payment.orderId);
     return { success: true };
