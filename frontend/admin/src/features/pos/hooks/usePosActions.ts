@@ -153,8 +153,14 @@ export const usePosActions = (
     }, [pos]);
 
     const submitOrder = useCallback(async () => {
+        if (pos.isSubmitting) return;
+        pos.setIsSubmitting(true);
+
         const validationError = validateOrder(pos.activeTab, pos.selectedTable, pos.deliveryInfo, pos.posPaymentMethodId);
-        if (validationError) return toast.error(validationError);
+        if (validationError) {
+            pos.setIsSubmitting(false);
+            return toast.error(validationError);
+        }
 
         const finalDiscount = parseFloat(pos.posDiscountValue || '0');
         const finalExtra = parseFloat(pos.posExtraCharge || '0');
@@ -220,6 +226,8 @@ export const usePosActions = (
             refreshData();
         } catch (e) {
             toast.error("Erro ao enviar pedido");
+        } finally {
+            pos.setIsSubmitting(false);
         }
     }, [pos, cart, paymentMethods, tablesSummary, deliveryOrders, cartTotal, clearCart, refreshTables, refreshData, products]);
 

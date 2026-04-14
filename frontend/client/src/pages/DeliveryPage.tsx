@@ -82,6 +82,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const [pixData, setPixData] = useState<{ qrCodeImage: string; pixCopiaECola: string } | null>(null);
   const [isPixPaymentLoading, setPixPaymentLoading] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -198,7 +199,8 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
   }, [setLocalCartItems]);
 
   const handleSubmitDeliveryOrder = useCallback(async (deliveryInfo: any) => {
-    if (!restaurant) return;
+    if (!restaurant || isPlacingOrder) return;
+    setIsPlacingOrder(true);
 
     try {
       const deliveryFee = deliveryInfo.deliveryType === 'delivery' ? (restaurant.settings?.deliveryFee || 0) : 0;
@@ -239,8 +241,10 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
     } catch (err) {
       toast.error('Falha ao enviar o pedido de delivery.');
       console.error(err);
+    } finally {
+      setIsPlacingOrder(false);
     }
-  }, [restaurant, localCartItems, localCartTotal, navigate, clearCart, handlePixPayment, trackInitiateCheckout, trackPurchase]);
+  }, [restaurant, localCartItems, localCartTotal, navigate, clearCart, handlePixPayment, trackInitiateCheckout, trackPurchase, isPlacingOrder]);
 
   const handleSearchClick = useCallback(() => {
     setIsSearchOpen(true);
@@ -362,7 +366,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
           onRemoveItem={handleRemoveFromCart}
           onUpdateItemQuantity={handleUpdateCartItemQuantity}
           onSubmitOrder={handleSubmitDeliveryOrder}
-          isPlacingOrder={false}
+          isPlacingOrder={isPlacingOrder}
           isDelivery={true}
         />
 
