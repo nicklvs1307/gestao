@@ -1028,30 +1028,52 @@ if (isPickup && !hasValidPhone) {
         if (d.deliveries.length === 0) return false;
         logger.info(`[SETTLEMENT] Entregador ${d.name}: ${d.deliveries.length} entregas`);
         d.deliveries.forEach((del, idx) => {
-            logger.info(`[SETTLEMENT]   Pedido ${idx + 1}: order.total=${del.order?.total}, deliveryFee=${del.deliveryFee}, paymentMethod=${del.paymentMethod}`);
+            const orderPayments = del.order?.payments || [];
+            const paymentSummary = orderPayments.length > 0 
+                ? orderPayments.map(p => `${p.method}:${p.amount}`).join(', ')
+                : del.paymentMethod;
+            logger.info(`[SETTLEMENT]   Pedido ${idx + 1}: order.total=${del.order?.total}, deliveryFee=${del.deliveryFee}, payments=${paymentSummary}`);
         });
         return true;
     }).map(d => {
         let cash = 0; let card = 0; let pix = 0; let deliveryFees = 0; let totalOrdersValue = 0;
         d.deliveries.forEach(del => {
             const order = del.order; if (!order) return;
-            // Usar valor BRUTO (com taxa de entrega incluída) - o estabelecimento paga a entrega
+            
             deliveryFees = money.add(deliveryFees, del.deliveryFee || 0);
             totalOrdersValue = money.add(totalOrdersValue, order.total);
-            const method = del.paymentMethod?.toLowerCase() || '';
-            // Classificar método de pagamento pelo valor BRUTO (com taxa)
-            if (method.includes('dinheiro') || method.includes('cash')) cash = money.add(cash, order.total);
-            else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card = money.add(card, order.total);
-            else if (method.includes('pix')) pix = money.add(pix, order.total);
-            else cash = money.add(cash, order.total); 
+            
+            const orderPayments = order.payments || [];
+            if (orderPayments.length > 0) {
+                orderPayments.forEach(p => {
+                    const pMethod = (p.method || '').toLowerCase();
+                    const pAmount = p.amount || 0;
+                    if (pMethod.includes('dinheiro') || pMethod.includes('cash')) {
+                        cash = money.add(cash, pAmount);
+                    } else if (pMethod.includes('cart') || pMethod.includes('card') || pMethod.includes('deb') || pMethod.includes('cred')) {
+                        card = money.add(card, pAmount);
+                    } else if (pMethod.includes('pix')) {
+                        pix = money.add(pix, pAmount);
+                    } else {
+                        cash = money.add(cash, pAmount);
+                    }
+                });
+            } else {
+                const method = del.paymentMethod?.toLowerCase() || '';
+                const totalWithFee = order.total;
+                if (method.includes('dinheiro') || method.includes('cash')) cash = money.add(cash, totalWithFee);
+                else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card = money.add(card, totalWithFee);
+                else if (method.includes('pix')) pix = money.add(pix, totalWithFee);
+                else cash = money.add(cash, totalWithFee);
+            }
         });
         const totalDeliveries = d.deliveries.length;
         const baseRate = Number(d.baseRate) || 0;
         const bonusPerDelivery = Number(d.bonusPerDelivery) || 0;
         const totalCommission = money.multiply(bonusPerDelivery, d.deliveries.length);
         const totalToPay = money.add(baseRate, totalCommission);
-        // Lucro da loja: total bruto - comissões dos entregadores
-        const storeNet = money.subtract(totalOrdersValue, totalToPay);
+        
+        const storeNet = money.subtract(totalOrdersValue, money.add(totalToPay, deliveryFees));
         
         logger.info(`[SETTLEMENT] Cálculos para ${d.name}: totalOrdersValue=${totalOrdersValue}, deliveryFees=${deliveryFees}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
         
@@ -1071,17 +1093,30 @@ if (isPickup && !hasValidPhone) {
       const end = new Date(endDate); end.setHours(23, 59, 59, 999);
       const deliveries = await prisma.deliveryOrder.findMany({
           where: { driverId, status: 'DELIVERED', order: { restaurantId, isSettled: false }, updatedAt: { gte: start, lte: end } },
-          include: { order: true }
+          include: { order: { include: { payments: true } } }
       });
       if (deliveries.length === 0) throw new Error("Nenhum pedido pendente de acerto para este entregador na data informada.");
-      // Usar valor BRUTO (com taxa de entrega) - o estabelecimento paga a taxa
-      const cashCollected = deliveries.reduce((acc, del) => {
-          const method = del.paymentMethod?.toLowerCase() || '';
-          if (method.includes('dinheiro') || method.includes('cash')) {
-              return acc + (del.order?.total || 0);
+      
+      let cashCollected = 0;
+      deliveries.forEach(del => {
+          const order = del.order;
+          if (!order) return;
+          const orderPayments = order.payments || [];
+          if (orderPayments.length > 0) {
+              orderPayments.forEach(p => {
+                  const pMethod = (p.method || '').toLowerCase();
+                  if (pMethod.includes('dinheiro') || pMethod.includes('cash')) {
+                      cashCollected = money.add(cashCollected, p.amount || 0);
+                  }
+              });
+          } else {
+              const method = del.paymentMethod?.toLowerCase() || '';
+              if (method.includes('dinheiro') || method.includes('cash')) {
+                  cashCollected = money.add(cashCollected, order.total || 0);
+              }
           }
-          return acc;
-      }, 0);
+      });
+      cashCollected = Number(cashCollected) || 0;
       return await prisma.$transaction(async (tx) => {
           const orderIds = deliveries.map(d => d.orderId);
           await tx.order.updateMany({ where: { id: { in: orderIds } }, data: { isSettled: true, settledAt: new Date() } });
