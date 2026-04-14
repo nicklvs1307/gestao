@@ -73,7 +73,11 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
     if (!breakdownByMethod) return undefined;
     const m = paymentMethods.find(pm => pm.id === methodId);
     const normLabel = normalize(m?.label || '');
-    return breakdownByMethod[normLabel] || breakdownByMethod[methodId];
+    const normCash = 'cash';
+    return breakdownByMethod[normLabel] || 
+           breakdownByMethod[methodId] ||
+           breakdownByMethod[normCash] ||
+           breakdownByMethod['dinheiro'];
   };
 
   return (

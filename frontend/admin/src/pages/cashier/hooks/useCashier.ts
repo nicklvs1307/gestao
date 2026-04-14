@@ -171,7 +171,7 @@ export function useCashier() {
       else if (lowName.includes('cartão') || lowName.includes('credit') || lowName.includes('debit')) icon = Wallet;
 
       return {
-        id: m.id || (lowName.includes('dinheiro') ? 'cash' : m.name.toLowerCase()),
+        id: m.id || (m.type === 'CASH' ? 'cash' : m.name.toLowerCase()),
         label: m.name,
         type: m.type,
         icon,
@@ -179,7 +179,12 @@ export function useCashier() {
       };
     });
 
-    if (!dbMethods.find((m: any) => m.id === 'cash')) {
+    const hasCashMethod = dbMethods.some((m: any) => 
+      m.id === 'cash' || 
+      m.type === 'CASH' || 
+      m.label?.toLowerCase().includes('dinheiro')
+    );
+    if (!hasCashMethod) {
       dbMethods.unshift(DEFAULT_METHODS[0]);
     }
 
@@ -262,9 +267,12 @@ export function useCashier() {
       const normId = normalize(methodId);
       const normType = normalize((m as any)?.type || '');
 
-      if (methodId === 'cash') {
+      if (methodId === 'cash' || (m as any)?.type === 'CASH') {
         const sales =
-          summary.salesByMethod?.cash || summary.salesByMethod?.dinheiro || 0;
+          summary.salesByMethod?.cash || 
+          summary.salesByMethod?.dinheiro || 
+          summary.salesByMethod?.['dinheiro'] ||
+          0;
         const ref = summary.adjustments?.reforco || 0;
         const sang = summary.adjustments?.sangria || 0;
         const init = cashierData?.session?.initialAmount || 0;
@@ -274,7 +282,7 @@ export function useCashier() {
       return (
         summary?.salesByMethod?.[normLabel] ||
         summary?.salesByMethod?.[normId] ||
-        (normType ? summary?.salesByMethod?.[normType] : 0) ||
+        summary?.salesByMethod?.[normType] ||
         0
       );
     },
