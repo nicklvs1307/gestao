@@ -3,20 +3,19 @@ import type { Order, Product, Category, PaymentMethod as PaymentMethodType } fro
 import {
     getDrivers, assignDriver, getProducts, getCategories,
     getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem,
-    updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType, updateOrderStatus
+    updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType, updateOrderStatus, getSettings, markOrderAsPrinted
 } from '../../services/api';
 import { formatSP } from '@/lib/timezone';
 import {
     CheckCircle, Printer,
     Loader2, FileText, User, MapPin,
-    Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck, XCircle
+    Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck, XCircle, ChevronDown, ShoppingCart, ChefHat, Wine
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { calculateProductPrice } from '../../features/pos/utils/priceCalculator';
-import { getSettings, markOrderAsPrinted } from '../../services/api';
-import { printOrder } from '../../services/printer';
+import { printOrder, type PrintTarget } from '../../services/printer';
 import { OrderEditorProductDrawer } from './OrderEditorProductDrawer';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { OrderEditorPayment } from './OrderEditorPayment';
@@ -84,6 +83,8 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const [, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [printMenuAnchor, setPrintMenuAnchor] = useState<null | HTMLElement>(null);
+  const [printingTarget, setPrintingTarget] = useState<PrintTarget | null>(null);
 
   useScrollLock(true);
 
@@ -259,25 +260,6 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       }
   };
 
-  const handlePrint = async () => {
-    setIsPrinting(true);
-    try {
-      const settingsData = await getSettings();
-      const restaurantInfo = {
-        name: settingsData.name, address: settingsData.address, phone: settingsData.phone,
-        cnpj: settingsData.fiscalConfig?.cnpj, logoUrl: settingsData.logoUrl
-      };
-      const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-      await printOrder(order, printerConfig, undefined, restaurantInfo);
-      await markOrderAsPrinted(order.id);
-      toast.success("Impressão enviada!");
-    } catch {
-      toast.error("Falha na impressão.");
-    } finally {
-      setIsPrinting(false);
-    }
-  };
-
   const handleUpdateDeliveryType = async (type: 'delivery' | 'retirada') => {
     try {
       await updateDeliveryType(order.id, type);
@@ -315,6 +297,47 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
   const isDelivery = order.orderType === 'DELIVERY' || !!order.deliveryOrder;
 
+  const printTargetLabels: Record<PrintTarget, string> = {
+    all: 'Imprimir Todos',
+    cashier: 'Imprimir Caixa',
+    kitchen: 'Imprimir Cozinha',
+    bar: 'Imprimir Bar',
+  };
+
+  const handleOpenPrintMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPrintMenuAnchor(e.currentTarget);
+  };
+
+  const handleClosePrintMenu = () => {
+    setPrintMenuAnchor(null);
+  };
+
+  const handlePrintTarget = useCallback(async (target: PrintTarget) => {
+    handleClosePrintMenu();
+    setIsPrinting(true);
+    setPrintingTarget(target);
+    try {
+      const settingsData = await getSettings();
+      const restaurantInfo = {
+        name: settingsData.name,
+        address: settingsData.address,
+        phone: settingsData.phone,
+        cnpj: settingsData.fiscalConfig?.cnpj,
+        logoUrl: settingsData.logoUrl
+      };
+      const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
+      await printOrder(order, printerConfig, undefined, restaurantInfo, target);
+      await markOrderAsPrinted(order.id);
+      toast.success(`${printTargetLabels[target]} enviado!`);
+    } catch {
+      toast.error("Falha na impressão.");
+    } finally {
+      setIsPrinting(false);
+      setPrintingTarget(null);
+    }
+  }, [order]);
+
   return (
     <div className="fixed inset-0 z-[300] flex flex-col animate-in fade-in duration-300">
       {/* Overlay escuro com backdrop blur */}
@@ -339,14 +362,49 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 {currentStatus.label} - {formatSP(order.createdAt, "dd/MMM 'às' HH:mm")}
             </div>
         </div>
-        <div className="flex items-center gap-3">
-            <button 
-              onClick={handlePrint} 
-              disabled={isPrinting} 
-              className="flex items-center gap-2 bg-slate-800 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-slate-900 transition-all shadow-md disabled:opacity-50"
-            >
-                {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />} Imprimir
-            </button>
+        <div className="flex items-center gap-3 relative">
+            <div className="relative">
+              <button 
+                onClick={handleOpenPrintMenu}
+                disabled={isPrinting}
+                className="flex items-center gap-1.5 bg-slate-800 text-white h-9 px-4 rounded-xl font-black text-[10px] uppercase italic hover:bg-slate-900 transition-all shadow-md disabled:opacity-50"
+              >
+                {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                {printingTarget ? printTargetLabels[printingTarget] : 'Imprimir'}
+                {!isPrinting && <ChevronDown size={12} className="ml-1" />}
+              </button>
+              
+              {/* Print Menu Dropdown */}
+              {printMenuAnchor && (
+                <div 
+                  className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-[400] min-w-[180px] overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {(['all', 'cashier', 'kitchen', 'bar'] as PrintTarget[]).map((target) => (
+                    <button
+                      key={target}
+                      onClick={() => handlePrintTarget(target)}
+                      disabled={isPrinting}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+                    >
+                      {target === 'all' && <Printer size={16} className="text-slate-500" />}
+                      {target === 'cashier' && <ShoppingCart size={16} className="text-blue-500" />}
+                      {target === 'kitchen' && <ChefHat size={16} className="text-orange-500" />}
+                      {target === 'bar' && <Wine size={16} className="text-purple-500" />}
+                      {printTargetLabels[target]}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Overlay to close menu */}
+              {printMenuAnchor && (
+                <div 
+                  className="fixed inset-0 z-[350]" 
+                  onClick={handleClosePrintMenu}
+                />
+              )}
+            </div>
             {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
               <button 
                 onClick={handleCancelOrder}

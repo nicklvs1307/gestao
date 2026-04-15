@@ -5,11 +5,12 @@ import type { Order } from '@/types/index.ts';
 import { getSettings, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printer';
 import { formatElapsed } from '@/lib/timezone';
-import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag, XCircle } from 'lucide-react';
+import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag, XCircle, ChevronDown, ShoppingCart, ChefHat, Wine } from 'lucide-react';
 import { resolvePaymentLabel } from '@/utils/paymentUtils';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
+import type { PrintTarget } from '../services/printer';
 
 const OrderTimer = memo(({ createdAt, status }: { createdAt: string; status: string }) => {
   const [timeElapsedStr, setTimeElapsedStr] = useState('');
@@ -46,10 +47,29 @@ interface OrderCardProps {
 const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSelected, onSelect, onStatusChange, onCancelOrder }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: order.id });
   const [isPrinting, setIsPrinting] = useState(false);
+  const [printMenuAnchor, setPrintMenuAnchor] = useState<null | HTMLElement>(null);
+  const [printingTarget, setPrintingTarget] = useState<PrintTarget | null>(null);
 
-  const handleQuickPrint = useCallback(async (e: React.MouseEvent) => {
+  const printTargetLabels: Record<PrintTarget, string> = {
+    all: 'Imprimir Todos',
+    cashier: 'Imprimir Caixa',
+    kitchen: 'Imprimir Cozinha',
+    bar: 'Imprimir Bar',
+  };
+
+  const handleOpenPrintMenu = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    setPrintMenuAnchor(e.currentTarget);
+  }, []);
+
+  const handleClosePrintMenu = useCallback(() => {
+    setPrintMenuAnchor(null);
+  }, []);
+
+  const handlePrintTarget = useCallback(async (target: PrintTarget) => {
+    handleClosePrintMenu();
     setIsPrinting(true);
+    setPrintingTarget(target);
     try {
       const settingsData = await getSettings();
       const restaurantInfo = {
@@ -60,14 +80,15 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
         logoUrl: settingsData.logoUrl
       };
       const printerConfig = JSON.parse(localStorage.getItem('printer_config') || '{}');
-      await printOrder(order, printerConfig, undefined, restaurantInfo);
+      await printOrder(order, printerConfig, undefined, restaurantInfo, target);
       await markOrderAsPrinted(order.id);
-      toast.success("Impressão enviada!");
+      toast.success(`${printTargetLabels[target]} enviado!`);
     } catch (error) {
       console.error("Erro ao imprimir:", error);
       toast.error("Falha na impressão.");
     } finally {
       setIsPrinting(false);
+      setPrintingTarget(null);
     }
   }, [order]);
 
@@ -213,14 +234,47 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
 
         {/* Footer: Ações */}
         <div className="flex gap-1.5 p-2 bg-slate-50/50 rounded-b-2xl border-t border-slate-100">
-            <button 
-              onClick={handleQuickPrint}
-              disabled={isPrinting}
-              aria-label="Imprimir pedido"
-              className="h-10 w-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-500 hover:text-orange-600 transition-colors"
-            >
-              {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
-            </button>
+            <div className="relative">
+              <button 
+                onClick={handleOpenPrintMenu}
+                disabled={isPrinting}
+                aria-label="Imprimir pedido"
+                className="h-10 w-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-500 hover:text-orange-600 transition-colors"
+              >
+                {isPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+              </button>
+              
+              {/* Print Menu Dropdown */}
+              {printMenuAnchor && (
+                <div 
+                  className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 min-w-[160px] overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {(['all', 'cashier', 'kitchen', 'bar'] as PrintTarget[]).map((target) => (
+                    <button
+                      key={target}
+                      onClick={() => handlePrintTarget(target)}
+                      disabled={isPrinting}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+                    >
+                      {target === 'all' && <Printer size={14} className="text-slate-500" />}
+                      {target === 'cashier' && <ShoppingCart size={14} className="text-blue-500" />}
+                      {target === 'kitchen' && <ChefHat size={14} className="text-orange-500" />}
+                      {target === 'bar' && <Wine size={14} className="text-purple-500" />}
+                      {printTargetLabels[target]}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Overlay to close menu */}
+              {printMenuAnchor && (
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={handleClosePrintMenu}
+                />
+              )}
+            </div>
             
             <button 
               onClick={handleOpenDetails}

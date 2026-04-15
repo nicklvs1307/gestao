@@ -112,11 +112,14 @@ const getReceiptSettingsFromStorage = (): ReceiptSettings => {
 
 // ─── FUNÇÕES PÚBLICAS DE IMPRESSÃO ────────────────────────────────────
 
+export type PrintTarget = 'all' | 'cashier' | 'kitchen' | 'bar';
+
 export const printOrder = async (
   order: Order,
   config: PrinterConfig,
   receiptSettings?: ReceiptSettings,
-  restaurantInfo?: RestaurantInfo
+  restaurantInfo?: RestaurantInfo,
+  target: PrintTarget = 'all'
 ) => {
   const status = await checkAgentStatus();
   if (!status) {
@@ -147,7 +150,7 @@ export const printOrder = async (
   // 1. IMPRESSÃO DO CAIXA (Via Cliente / Extrato)
   const shouldPrintCashier = !isTable || (isTable && isCompleted);
 
-  if (shouldPrintCashier && finalConfig.cashierPrinters?.length > 0) {
+  if (shouldPrintCashier && finalConfig.cashierPrinters?.length > 0 && (target === 'all' || target === 'cashier')) {
     for (const printer of finalConfig.cashierPrinters) {
       const escPos = generateEscPosReceipt(order, order.items, isTable ? "EXTRATO DE CONTA" : "VIA CAIXA", finalSettings, finalRestaurant, false);
       await sendToAgent(printer, escPosToBase64(escPos), 'escpos');
@@ -177,21 +180,25 @@ export const printOrder = async (
       productionGroups[destinationId].push(item);
     });
 
-    // Cozinhas
-    for (const k of (finalConfig.kitchenPrinters || [])) {
-      const items = productionGroups[k.id];
-      if (items && items.length > 0) {
-        const escPos = generateEscPosReceipt(order, items, `VIA ${k.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
-        await sendToAgent(k.printer, escPosToBase64(escPos), 'escpos');
+    // Cozinhas - apenas se target for 'all' ou 'kitchen'
+    if (target === 'all' || target === 'kitchen') {
+      for (const k of (finalConfig.kitchenPrinters || [])) {
+        const items = productionGroups[k.id];
+        if (items && items.length > 0) {
+          const escPos = generateEscPosReceipt(order, items, `VIA ${k.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
+          await sendToAgent(k.printer, escPosToBase64(escPos), 'escpos');
+        }
       }
     }
 
-    // Bares
-    for (const b of (finalConfig.barPrinters || [])) {
-      const items = productionGroups[b.id];
-      if (items && items.length > 0) {
-        const escPos = generateEscPosReceipt(order, items, `VIA ${b.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
-        await sendToAgent(b.printer, escPosToBase64(escPos), 'escpos');
+    // Bares - apenas se target for 'all' ou 'bar'
+    if (target === 'all' || target === 'bar') {
+      for (const b of (finalConfig.barPrinters || [])) {
+        const items = productionGroups[b.id];
+        if (items && items.length > 0) {
+          const escPos = generateEscPosReceipt(order, items, `VIA ${b.name.toUpperCase()}`, finalSettings, finalRestaurant, true);
+          await sendToAgent(b.printer, escPosToBase64(escPos), 'escpos');
+        }
       }
     }
   }
