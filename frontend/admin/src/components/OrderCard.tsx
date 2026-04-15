@@ -6,6 +6,7 @@ import { getSettings, markOrderAsPrinted } from '../services/api';
 import { printOrder } from '../services/printer';
 import { formatElapsed } from '@/lib/timezone';
 import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag, XCircle } from 'lucide-react';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Card } from './ui/Card';
@@ -201,7 +202,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                 <div className="flex items-center gap-1.5">
                   <CreditCard size={11} className="text-slate-300" />
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[100px]">
-                    {deliveryData?.paymentMethod || 'PENDENTE'}
+                    {resolvePaymentLabel(deliveryData?.paymentMethod) || 'PENDENTE'}
                   </span>
                 </div>
                 <span className="text-base font-bold text-slate-900">

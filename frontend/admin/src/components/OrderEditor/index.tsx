@@ -217,7 +217,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       }
       try {
           setIsSaving(true);
-          const method = paymentMethods.find(p => p.id === newPayment.methodId)?.id || newPayment.methodId || 'OTHER';
+          const method = paymentMethods.find(p => p.id === newPayment.methodId)?.name || 'Outro';
           await addOrderPayment(order.id, { amount: newPayment.amount, method });
           toast.success("Pagamento adicionado!");
           setIsAddingPayment(false);

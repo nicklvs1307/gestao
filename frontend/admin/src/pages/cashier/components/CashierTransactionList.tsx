@@ -3,6 +3,7 @@ import { formatSP } from '@/lib/timezone';
 import { Filter, Search, ShoppingBag, Truck, X, Receipt, CreditCard, AlertCircle, Wallet, Smartphone, Banknote } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import type { PaymentMethod } from '../hooks/useCashier';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 
 interface CashierTransactionListProps {
   paymentMethods: PaymentMethod[];
@@ -24,12 +25,12 @@ const getOrderLabel = (order: any) => {
 };
 
 const getMethodLabel = (method: string, paymentMethods: PaymentMethod[]) => {
-  const m = method.toLowerCase();
-  const found = paymentMethods.find(pm => 
-    pm.id.toLowerCase() === m || 
-    pm.label.toLowerCase().includes(m)
-  );
-  return found?.label || method;
+  const mappedMethods = paymentMethods.map(pm => ({
+    id: pm.id,
+    name: pm.label,
+    type: pm.type
+  }));
+  return resolvePaymentLabel(method, mappedMethods);
 };
 
 const getMethodIcon = (method: string) => {

@@ -12,6 +12,7 @@ import {
   wrapText,
   bold
 } from '../utils';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 import type { CashierClosureData, RestaurantInfo } from '../types';
 
 export function generateCashierClosureReceipt(
@@ -87,7 +88,7 @@ export function generateCashierClosureReceipt(
   buf += line('-', W);
 
   Object.entries(closure.salesByMethod).forEach(([method, amount]) => {
-    const label = PAYMENT_METHOD_CLOSURE_MAP[method] || method.toUpperCase();
+    const label = resolvePaymentLabel(method);
     buf += row(label, formatCurrency(amount as number), W);
   });
 
@@ -104,7 +105,7 @@ export function generateCashierClosureReceipt(
     Object.entries(closingDetails).forEach(([method, value]) => {
       const numVal = parseFloat(value) || 0;
       if (numVal > 0) {
-        const label = PAYMENT_METHOD_CLOSURE_MAP[method] || method.toUpperCase();
+        const label = resolvePaymentLabel(method);
         buf += row(label, formatCurrency(numVal), W);
         totalInformed += numVal;
       }

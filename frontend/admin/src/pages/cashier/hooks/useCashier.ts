@@ -19,6 +19,7 @@ import type { LucideIcon } from 'lucide-react';
 
 export interface PaymentMethod {
   id: string;
+  dbId?: string;
   label: string;
   type?: string;
   icon: LucideIcon;
@@ -170,8 +171,10 @@ export function useCashier() {
       if (lowName.includes('pix')) icon = Smartphone;
       else if (lowName.includes('cartão') || lowName.includes('credit') || lowName.includes('debit')) icon = Wallet;
 
+      const normalizedId = m.type === 'CASH' ? 'dinheiro' : m.name.toLowerCase();
       return {
-        id: m.id || (m.type === 'CASH' ? 'cash' : m.name.toLowerCase()),
+        id: normalizedId,
+        dbId: m.id,
         label: m.name,
         type: m.type,
         icon,
@@ -180,7 +183,7 @@ export function useCashier() {
     });
 
     const hasCashMethod = dbMethods.some((m: any) => 
-      m.id === 'cash' || 
+      m.id === 'dinheiro' || 
       m.type === 'CASH' || 
       m.label?.toLowerCase().includes('dinheiro')
     );
@@ -200,7 +203,7 @@ export function useCashier() {
     [closingValues]
   );
 
-  const cashInHand = useMemo(() => parseFloat(closingValues['cash'] || '0'), [closingValues]);
+  const cashInHand = useMemo(() => parseFloat(closingValues['dinheiro'] || closingValues['cash'] || '0'), [closingValues]);
   const floatNext = useMemo(() => parseFloat(cashLeftover || '0'), [cashLeftover]);
   const safeDeposit = useMemo(() => Math.max(0, cashInHand - floatNext), [cashInHand, floatNext]);
 

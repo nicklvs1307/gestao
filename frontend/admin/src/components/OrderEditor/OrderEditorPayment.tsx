@@ -4,6 +4,7 @@ import { formatSP } from '@/lib/timezone';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
 import type { Order, PaymentMethod } from '../../types';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 
 interface OrderEditorPaymentProps {
   order: Order;
@@ -131,14 +132,14 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               {order.payments?.map((pay) => (
                 <div key={pay.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group/pay hover:border-orange-200 transition-colors">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-slate-800 uppercase">{pay.method}</span>
+                    <span className="text-[10px] font-black text-slate-800 uppercase">{resolvePaymentLabel(pay.method, paymentMethods)}</span>
                     <span className="text-[8px] font-bold text-slate-400 mt-0.5">{formatSP(pay.createdAt, 'HH:mm')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-slate-900">R$ {pay.amount.toFixed(2).replace('.', ',')}</span>
                     <button 
                       onClick={() => {
-                        if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${pay.method}" de R$ ${pay.amount.toFixed(2).replace('.', ',')}?`)) {
+                        if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${resolvePaymentLabel(pay.method, paymentMethods)}" de R$ ${pay.amount.toFixed(2).replace('.', ',')}?`)) {
                           onRemovePayment(pay.id);
                         }
                       }} 
@@ -213,7 +214,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pagamento</span>
-                <p className="text-[10px] font-black text-emerald-600 uppercase truncate">{order.deliveryOrder?.paymentMethod || 'Não informado'}</p>
+                <p className="text-[10px] font-black text-emerald-600 uppercase truncate">{resolvePaymentLabel(order.deliveryOrder?.paymentMethod, paymentMethods) || 'Não informado'}</p>
               </div>
               {order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > 0 ? (
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">

@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { formatSP } from '@/lib/timezone';
 import type { CashierClosureData, RestaurantInfo } from '../types';
-import { PAYMENT_METHOD_CLOSURE_MAP } from '../constants';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 
 export function generateCashierClosurePDF(
   closure: CashierClosureData,
@@ -78,7 +78,7 @@ export function generateCashierClosurePDF(
   y += 5;
 
   Object.entries(closure.salesByMethod).forEach(([method, amount]) => {
-    const label = PAYMENT_METHOD_CLOSURE_MAP[method] || method.toUpperCase();
+    const label = resolvePaymentLabel(method);
     setFont(10, true);
     doc.text(label, 10, y);
     setFont(10);

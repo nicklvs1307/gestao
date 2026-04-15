@@ -5,6 +5,7 @@ import { printCashierClosureFromHistory, downloadCashierClosurePDFFromHistory, g
 import { formatSP } from '@/lib/timezone';
 import { Button } from '../../../components/ui/Button';
 import { cn } from '../../../lib/utils';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 
 interface SessionHistory {
   id: string;
@@ -177,7 +178,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
                     <div className="space-y-1">
                       {Object.entries(closingData.salesByMethod as Record<string, number> || {}).map(([method, amount]) => (
                         <div key={method} className="flex justify-between text-xs">
-                          <span className="font-bold text-emerald-800 capitalize">{method}</span>
+                          <span className="font-bold text-emerald-800 capitalize">{resolvePaymentLabel(method)}</span>
                           <span className="font-black text-emerald-900">R$ {Number(amount).toFixed(2)}</span>
                         </div>
                       ))}

@@ -1,6 +1,6 @@
 import type { Order, OrderItem } from '../../types';
 import { formatSP } from '@/lib/timezone';
-import { ESC_POS, PAPER_WIDTH, PAYMENT_METHOD_MAP } from '../constants';
+import { ESC_POS, PAPER_WIDTH } from '../constants';
 import { 
   alignCenter, 
   bold, 
@@ -14,6 +14,7 @@ import {
   rowItemSmart, 
   wrapText 
 } from '../utils';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 import type { ReceiptSettings, RestaurantInfo } from '../types';
 
 function buildHeader(info: RestaurantInfo | Record<string, unknown>, settings: ReceiptSettings, width: number = PAPER_WIDTH): string {
@@ -301,11 +302,11 @@ function buildPaymentInfo(order: Order, width: number = PAPER_WIDTH): string {
 
   if (order.payments && order.payments.length > 0) {
     order.payments.forEach((p: { method: string; amount: number }) => {
-      const method = PAYMENT_METHOD_MAP[p.method] || p.method.toUpperCase();
+      const method = resolvePaymentLabel(p.method);
       buf += `${method.padEnd(width - 14)}R$ ${p.amount.toFixed(2)}\n`;
     });
   } else if (order.deliveryOrder?.paymentMethod) {
-    const method = PAYMENT_METHOD_MAP[order.deliveryOrder.paymentMethod] || order.deliveryOrder.paymentMethod.toUpperCase();
+    const method = resolvePaymentLabel(order.deliveryOrder.paymentMethod);
     buf += `${method.padEnd(width - 14)}R$ ${(order.total || 0).toFixed(2)}\n`;
   } else {
     buf += `A PAGAR NO CAIXA`.padEnd(width - 14) + `R$ ${(order.total || 0).toFixed(2)}\n`;
