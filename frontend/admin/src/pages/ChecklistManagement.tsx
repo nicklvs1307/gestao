@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
     ClipboardCheck, Plus, Search, Trash2,
     Edit, ChevronRight, CheckCircle2, AlertCircle, Clock,
