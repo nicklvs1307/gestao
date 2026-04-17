@@ -121,14 +121,16 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
                 // Endereço principal do cliente (campos do Customer)
                 if (c.street) {
-                    const full = `${c.street}, ${c.number || 'S/N'} - ${c.neighborhood || ''}${c.city ? ', ' + c.city : ''}`;
+                    let full = `${c.street}, ${c.number || 'S/N'} - ${c.neighborhood || ''}${c.city ? ', ' + c.city : ''}`;
+                    if (c.complement) full += ` (${c.complement})`;
                     add(full, { street: c.street, number: c.number, neighborhood: c.neighborhood, city: c.city, state: c.state, zipCode: c.zipCode, complement: c.complement, reference: c.reference }, 'customer');
                 }
                 if (c.address) add(c.address);
 
                 // Endereços adicionais da nova tabela CustomerAddress
                 c.customerAddresses?.forEach((addr: any) => {
-                    const full = `${addr.street}, ${addr.number || 'S/N'} - ${addr.neighborhood || ''}${addr.city ? ', ' + addr.city : ''}`;
+                    let full = `${addr.street}, ${addr.number || 'S/N'} - ${addr.neighborhood || ''}${addr.city ? ', ' + addr.city : ''}`;
+                    if (addr.complement) full += ` (${addr.complement})`;
                     add(full, { id: addr.id, label: addr.label, street: addr.street, number: addr.number, neighborhood: addr.neighborhood, city: addr.city, state: addr.state, zipCode: addr.zipCode, complement: addr.complement, reference: addr.reference }, 'address');
                 });
 
@@ -214,7 +216,8 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                 
                 await createCustomerAddress(customerId, newAddressData);
                 
-                const label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
+                let label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
+                if (addingAddressForm.complement) label += ` (${addingAddressForm.complement})`;
                 const addressWithId = { ...newAddressData, id: `new-${Date.now()}` };
                 
                 // Atualizar a lista local para mostrar o novo endereço
@@ -231,7 +234,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         }
     }, [results, addingAddressForm]);
 
-    const handleEditAddress = useCallback((customer: Customer, addr: { label: string, data?: any }, index: number) => {
+    const handleEditAddress = useCallback((customer: Customer, addr: { label: string, data?: any, source: 'customer' | 'address' | 'order' }, index: number) => {
         let addressData = addr.data;
         
         if (!addressData || !addressData.street) {
@@ -264,7 +267,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
             }
         }
         
-        setEditingAddress({ customerId: customer.id, address: addressData, index, source: addr.data?.source || 'order' });
+        setEditingAddress({ customerId: customer.id, address: addressData, index, source: addr.source || 'order' });
         setIsAddingAddress(null);
     }, []);
 
@@ -293,14 +296,28 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                         address: `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`
                     });
                 } else {
-                    // Endereços de pedidos históricos não podem ser editados
-                    toast.error("Endereços de pedidos antigos não podem ser editados.");
-                    return;
+                    // Endereço de pedido histórico - salvar como novo CustomerAddress para uso futuro
+                    const newAddr = await createCustomerAddress(customerId, {
+                        street: editingAddress.address.street,
+                        number: editingAddress.address.number,
+                        neighborhood: editingAddress.address.neighborhood,
+                        city: editingAddress.address.city,
+                        state: editingAddress.address.state,
+                        complement: editingAddress.address.complement,
+                        reference: editingAddress.address.reference,
+                        zipCode: editingAddress.address.zipCode
+                    });
+                    // Atualizar o data com o id retornado para futuras edições
+                    editingAddress.address.id = newAddr?.id || `saved-${Date.now()}`;
                 }
                 
-                const label = `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`;
+                const complement = editingAddress.address.complement;
+                const reference = editingAddress.address.reference;
+                let label = `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`;
+                if (complement) label += ` (${complement})`;
                 const updatedAddresses = [...customer.consolidatedAddresses];
-                updatedAddresses[originalIndex] = { label, data: editingAddress.address, source };
+                const newSource = source === 'order' ? 'address' : source;
+                updatedAddresses[originalIndex] = { label, data: editingAddress.address, source: newSource };
                 customer.consolidatedAddresses = updatedAddresses;
                 setResults([...results]);
                 toast.success("Endereço atualizado!");
@@ -478,11 +495,16 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                             <div key={i} className="flex items-center gap-1">
                                                                 <button 
                                                                     onClick={() => handleSelectAddress(customer, addr)}
-                                                                    className="flex-1 flex items-center gap-2 p-1.5 rounded-lg border border-slate-100 bg-white hover:border-blue-200 hover:bg-blue-50 transition-all group/addr"
+                                                                    className="flex-1 flex items-start gap-2 p-1.5 rounded-lg border border-slate-100 bg-white hover:border-blue-200 hover:bg-blue-50 transition-all group/addr"
                                                                 >
-                                                                    <MapPin size={12} className="text-slate-300 group-hover/addr:text-blue-400" />
-                                                                    <span className="text-[10px] font-bold text-slate-500 uppercase truncate text-left">{addr.label}</span>
-                                                                    <ChevronRight size={10} className="ml-auto opacity-0 group-hover/addr:opacity-100 text-blue-400" />
+                                                                    <MapPin size={12} className="text-slate-300 group-hover/addr:text-blue-400 mt-0.5 shrink-0" />
+                                                                    <div className="flex-1 min-w-0 text-left">
+                                                                        <span className="text-[10px] font-bold text-slate-500 uppercase truncate block">{addr.label}</span>
+                                                                        {addr.data?.reference && (
+                                                                            <span className="text-[9px] font-medium text-blue-400 truncate block">Ref: {addr.data.reference}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <ChevronRight size={10} className="ml-auto opacity-0 group-hover/addr:opacity-100 text-blue-400 mt-0.5 shrink-0" />
                                                                 </button>
                                                                 <Button 
                                                                     size="sm" 

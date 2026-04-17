@@ -890,7 +890,9 @@ if (isPickup && !hasValidPhone) {
             data: {
                 name: customerData.name,
                 phone: customerData.phone,
-                address: customerData.address
+                address: customerData.address,
+                complement: customerData.complement || null,
+                reference: customerData.reference || null
             }
         });
     }
