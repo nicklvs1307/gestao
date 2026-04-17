@@ -290,9 +290,16 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                         zipCode: editingAddress.address.zipCode
                     });
                 } else if (source === 'customer') {
-                    // Endereço principal do cliente - atualizar no Customer
+                    // Endereço principal do cliente - atualizar apenas campos de endereço no Customer
                     await updateCustomer(customerId, {
-                        ...editingAddress.address,
+                        street: editingAddress.address.street,
+                        number: editingAddress.address.number,
+                        neighborhood: editingAddress.address.neighborhood,
+                        city: editingAddress.address.city,
+                        state: editingAddress.address.state,
+                        complement: editingAddress.address.complement,
+                        reference: editingAddress.address.reference,
+                        zipCode: editingAddress.address.zipCode,
                         address: `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`
                     });
                 } else {

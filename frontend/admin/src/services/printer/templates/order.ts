@@ -107,24 +107,30 @@ function buildCustomerInfo(order: Order, isProduction: boolean, width: number = 
     if (order.deliveryOrder) {
       buf += bold(`FONE: ${order.deliveryOrder.phone || 'N/A'}`) + '\n';
       
-      // Endereço sem rótulo, grande e em negrito.
       if (!isPickup && order.deliveryOrder.address) {
+        const fullAddr = order.deliveryOrder.address || '';
+        // Parse: "Rua X, 123 (Comp) - Bairro, Cidade/UF"
+        const dashParts = fullAddr.split(' - ');
+        // Endereco + Numero (remove complemento inline se existir)
+        const streetNum = (dashParts[0] || fullAddr).replace(/\s*\(.*?\)\s*/, '').trim();
+        // Bairro (parte depois do hifen, antes da virgula)
+        const afterDash = dashParts.length > 1 ? dashParts.slice(1).join(' - ') : '';
+        const bairro = afterDash.split(',')[0]?.trim() || '';
+
         buf += line('-', width);
-        buf += ESC_POS.ALIGN_CENTER;
-        buf += bold(wrapText(order.deliveryOrder.address.toUpperCase(), width).trim()) + '\n';
-        buf += ESC_POS.ALIGN_LEFT;
+        buf += bold(`END: ${streetNum.toUpperCase()}`) + '\n';
+        if (bairro) {
+          buf += bold(`BAIRRO: ${bairro.toUpperCase()}`) + '\n';
+        }
       }
 
-      // Complemento e Referência
+      // Complemento e Referência (campos separados do DeliveryOrder)
       const deliveryOrderAny = order.deliveryOrder as any;
-      if (deliveryOrderAny.complement || deliveryOrderAny.reference) {
-        buf += line('-', width);
-        if (deliveryOrderAny.complement) {
-          buf += bold(`COMP: ${deliveryOrderAny.complement.toUpperCase()}`) + '\n';
-        }
-        if (deliveryOrderAny.reference) {
-          buf += bold(`REF: ${deliveryOrderAny.reference.toUpperCase()}`) + '\n';
-        }
+      if (deliveryOrderAny.complement) {
+        buf += bold(`COMP: ${deliveryOrderAny.complement.toUpperCase()}`) + '\n';
+      }
+      if (deliveryOrderAny.reference) {
+        buf += bold(`REF: ${deliveryOrderAny.reference.toUpperCase()}`) + '\n';
       }
     }
   }

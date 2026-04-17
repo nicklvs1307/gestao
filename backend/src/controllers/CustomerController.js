@@ -102,21 +102,22 @@ class CustomerController {
     const { id } = req.params;
     const data = req.body;
     try {
+      const updateData = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.phone !== undefined) updateData.phone = normalizePhone(data.phone);
+      if (data.zipCode !== undefined) updateData.zipCode = data.zipCode;
+      if (data.street !== undefined) updateData.street = data.street;
+      if (data.number !== undefined) updateData.number = data.number;
+      if (data.neighborhood !== undefined) updateData.neighborhood = data.neighborhood;
+      if (data.city !== undefined) updateData.city = data.city;
+      if (data.state !== undefined) updateData.state = data.state;
+      if (data.complement !== undefined) updateData.complement = data.complement;
+      if (data.reference !== undefined) updateData.reference = data.reference;
+      if (data.address !== undefined) updateData.address = data.address;
+
       const updated = await prisma.customer.update({
         where: { id },
-        data: {
-          name: data.name,
-          phone: normalizePhone(data.phone),
-          zipCode: data.zipCode,
-          street: data.street,
-          number: data.number,
-          neighborhood: data.neighborhood,
-          city: data.city,
-          state: data.state,
-          complement: data.complement,
-          reference: data.reference,
-          address: data.address
-        }
+        data: updateData
       });
       res.json(updated);
     } catch (error) {
