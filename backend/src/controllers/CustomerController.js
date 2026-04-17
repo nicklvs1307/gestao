@@ -159,18 +159,19 @@ class CustomerController {
     const { customerId } = req.params;
     const data = req.body;
     try {
+      const addressLabel = data.label || `${data.street}, ${data.number} - ${data.neighborhood}`;
       const address = await prisma.customerAddress.create({
         data: {
           customerId,
-          label: data.label,
-          street: data.street,
-          number: data.number,
-          complement: data.complement,
-          neighborhood: data.neighborhood,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
-          reference: data.reference
+          label: addressLabel,
+          street: data.street || '',
+          number: data.number || '',
+          complement: data.complement || '',
+          neighborhood: data.neighborhood || '',
+          city: data.city || '',
+          state: data.state || '',
+          zipCode: data.zipCode || '',
+          reference: data.reference || ''
         }
       });
       res.status(201).json(address);
@@ -210,6 +211,26 @@ class CustomerController {
   async deleteAddress(req, res) {
     const { id } = req.params;
     try {
+      const address = await prisma.customerAddress.findUnique({ where: { id } });
+      if (!address) {
+        return res.status(404).json({ error: 'Endereço não encontrado.' });
+      }
+      
+      const relatedOrders = await prisma.deliveryOrder.count({
+        where: {
+          customerId: address.customerId,
+          address: {
+            contains: address.street
+          }
+        }
+      });
+      
+      if (relatedOrders > 0) {
+        return res.status(400).json({ 
+          error: `Este endereço possui ${relatedOrders} pedido(s) associado(s). Considere apenas ocultá-lo ou edite os dados.` 
+        });
+      }
+      
       await prisma.customerAddress.delete({ where: { id } });
       res.json({ message: 'Endereço excluído com sucesso.' });
     } catch (error) {

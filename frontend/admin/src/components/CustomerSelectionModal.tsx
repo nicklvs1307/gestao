@@ -204,36 +204,35 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         const customer = results.find(c => c.id === customerId);
         if (customer) {
             try {
-                // Criar endereço na nova tabela
                 const newAddressData = {
                     street: addingAddressForm.street,
                     number: addingAddressForm.number,
                     neighborhood: addingAddressForm.neighborhood,
                     city: addingAddressForm.city,
                     state: addingAddressForm.state,
-                    complement: addingAddressForm.complement,
-                    reference: addingAddressForm.reference,
-                    zipCode: addingAddressForm.zipCode
+                    complement: addingAddressForm.complement || '',
+                    reference: addingAddressForm.reference || '',
+                    zipCode: addingAddressForm.zipCode || ''
                 };
                 
-                await createCustomerAddress(customerId, newAddressData);
+                const createdAddress = await createCustomerAddress(customerId, newAddressData);
                 
                 const label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
-                const addressWithId = { ...newAddressData, id: `new-${Date.now()}` };
+                const addressWithId = { ...newAddressData, id: createdAddress?.id || `new-${Date.now()}` };
                 
-                // Atualizar a lista local para mostrar o novo endereço
                 const consolidated = customer.consolidatedAddresses || [];
                 customer.consolidatedAddresses = [...consolidated, { label, data: addressWithId, source: 'address' as const }];
                 setResults([...results]);
                 
                 toast.success("Endereço adicionado!");
                 setIsAddingAddress(null);
+                setAddingAddressForm(resetAddress);
             } catch (error) {
                 console.error(error);
                 toast.error("Erro ao adicionar endereço");
             }
         }
-    }, [results, addingAddressForm]);
+    }, [results, addingAddressForm, resetAddress]);
 
     const handleEditAddress = useCallback((customer: Customer, addr: { label: string, data?: any, source: 'customer' | 'address' | 'order' }, index: number) => {
         let addressData = addr.data;
@@ -279,50 +278,53 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                 const source = editingAddress.source || 'order';
                 
                 if (source === 'address' && editingAddress.address.id) {
-                    // Endereço da tabela CustomerAddress - usar API de endereço
                     await updateCustomerAddress(editingAddress.address.id, {
                         street: editingAddress.address.street,
                         number: editingAddress.address.number,
                         neighborhood: editingAddress.address.neighborhood,
                         city: editingAddress.address.city,
                         state: editingAddress.address.state,
-                        complement: editingAddress.address.complement,
-                        reference: editingAddress.address.reference,
-                        zipCode: editingAddress.address.zipCode
+                        complement: editingAddress.address.complement || '',
+                        reference: editingAddress.address.reference || '',
+                        zipCode: editingAddress.address.zipCode || '',
+                        label: `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}`
                     });
                 } else if (source === 'customer') {
-                    // Endereço principal do cliente - atualizar apenas campos de endereço no Customer
+                    const addressStr = `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`;
                     await updateCustomer(customerId, {
                         street: editingAddress.address.street,
                         number: editingAddress.address.number,
                         neighborhood: editingAddress.address.neighborhood,
                         city: editingAddress.address.city,
                         state: editingAddress.address.state,
-                        complement: editingAddress.address.complement,
-                        reference: editingAddress.address.reference,
-                        zipCode: editingAddress.address.zipCode,
-                        address: `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`
+                        complement: editingAddress.address.complement || '',
+                        reference: editingAddress.address.reference || '',
+                        zipCode: editingAddress.address.zipCode || '',
+                        address: addressStr
                     });
                 } else {
-                    // Endereço de pedido histórico - salvar como novo CustomerAddress para uso futuro
                     const newAddr = await createCustomerAddress(customerId, {
                         street: editingAddress.address.street,
                         number: editingAddress.address.number,
                         neighborhood: editingAddress.address.neighborhood,
                         city: editingAddress.address.city,
                         state: editingAddress.address.state,
-                        complement: editingAddress.address.complement,
-                        reference: editingAddress.address.reference,
-                        zipCode: editingAddress.address.zipCode
+                        complement: editingAddress.address.complement || '',
+                        reference: editingAddress.address.reference || '',
+                        zipCode: editingAddress.address.zipCode || ''
                     });
-                    // Atualizar o data com o id retornado para futuras edições
-                    editingAddress.address.id = newAddr?.id || `saved-${Date.now()}`;
+                    editingAddress.address.id = newAddr?.id;
                 }
                 
                 const label = `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`;
                 const updatedAddresses = [...customer.consolidatedAddresses];
+                const addressData = { 
+                    ...editingAddress.address, 
+                    complement: editingAddress.address.complement || '',
+                    reference: editingAddress.address.reference || ''
+                };
                 const newSource = source === 'order' ? 'address' : source;
-                updatedAddresses[originalIndex] = { label, data: editingAddress.address, source: newSource };
+                updatedAddresses[originalIndex] = { label, data: addressData, source: newSource };
                 customer.consolidatedAddresses = updatedAddresses;
                 setResults([...results]);
                 toast.success("Endereço atualizado!");
@@ -339,7 +341,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
         if (customer && customer.consolidatedAddresses) {
             const addressToDelete = customer.consolidatedAddresses[index];
             
-            if (addressToDelete.source === 'address' && addressToDelete.data?.id) {
+            const hasValidId = addressToDelete.data?.id && !addressToDelete.data.id.toString().startsWith('new-') && !addressToDelete.data.id.toString().startsWith('saved-');
+            
+            if (addressToDelete.source === 'address' || (addressToDelete.source === 'order' && hasValidId)) {
                 try {
                     await deleteCustomerAddress(addressToDelete.data.id);
                 } catch (error) {
