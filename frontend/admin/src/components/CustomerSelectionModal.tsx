@@ -121,16 +121,14 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
                 // Endereço principal do cliente (campos do Customer)
                 if (c.street) {
-                    let full = `${c.street}, ${c.number || 'S/N'} - ${c.neighborhood || ''}${c.city ? ', ' + c.city : ''}`;
-                    if (c.complement) full += ` (${c.complement})`;
+                    const full = `${c.street}, ${c.number || 'S/N'} - ${c.neighborhood || ''}${c.city ? ', ' + c.city : ''}`;
                     add(full, { street: c.street, number: c.number, neighborhood: c.neighborhood, city: c.city, state: c.state, zipCode: c.zipCode, complement: c.complement, reference: c.reference }, 'customer');
                 }
                 if (c.address) add(c.address);
 
                 // Endereços adicionais da nova tabela CustomerAddress
                 c.customerAddresses?.forEach((addr: any) => {
-                    let full = `${addr.street}, ${addr.number || 'S/N'} - ${addr.neighborhood || ''}${addr.city ? ', ' + addr.city : ''}`;
-                    if (addr.complement) full += ` (${addr.complement})`;
+                    const full = `${addr.street}, ${addr.number || 'S/N'} - ${addr.neighborhood || ''}${addr.city ? ', ' + addr.city : ''}`;
                     add(full, { id: addr.id, label: addr.label, street: addr.street, number: addr.number, neighborhood: addr.neighborhood, city: addr.city, state: addr.state, zipCode: addr.zipCode, complement: addr.complement, reference: addr.reference }, 'address');
                 });
 
@@ -168,10 +166,14 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     }, [searchTerm, performSearch]);
 
     const handleSelectAddress = useCallback((customer: Customer, addrObj: { label: string, data?: any }) => {
+        let cleanAddr = addrObj.label;
+        if (addrObj.data?.street) {
+            cleanAddr = `${addrObj.data.street}, ${addrObj.data.number || 'S/N'} - ${addrObj.data.neighborhood || ''}${addrObj.data.city ? ', ' + addrObj.data.city : ''}`;
+        }
         onSelectCustomer({
             name: customer.name,
             phone: customer.phone,
-            addressStr: addrObj.label,
+            addressStr: cleanAddr,
             addressStructured: addrObj.data,
             deliveryType: 'delivery'
         });
@@ -216,8 +218,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                 
                 await createCustomerAddress(customerId, newAddressData);
                 
-                let label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
-                if (addingAddressForm.complement) label += ` (${addingAddressForm.complement})`;
+                const label = `${addingAddressForm.street}, ${addingAddressForm.number} - ${addingAddressForm.neighborhood}, ${addingAddressForm.city}`;
                 const addressWithId = { ...newAddressData, id: `new-${Date.now()}` };
                 
                 // Atualizar a lista local para mostrar o novo endereço
@@ -318,10 +319,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                     editingAddress.address.id = newAddr?.id || `saved-${Date.now()}`;
                 }
                 
-                const complement = editingAddress.address.complement;
-                const reference = editingAddress.address.reference;
-                let label = `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`;
-                if (complement) label += ` (${complement})`;
+                const label = `${editingAddress.address.street}, ${editingAddress.address.number} - ${editingAddress.address.neighborhood}, ${editingAddress.address.city}`;
                 const updatedAddresses = [...customer.consolidatedAddresses];
                 const newSource = source === 'order' ? 'address' : source;
                 updatedAddresses[originalIndex] = { label, data: editingAddress.address, source: newSource };
@@ -507,6 +505,9 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                                     <MapPin size={12} className="text-slate-300 group-hover/addr:text-blue-400 mt-0.5 shrink-0" />
                                                                     <div className="flex-1 min-w-0 text-left">
                                                                         <span className="text-[10px] font-bold text-slate-500 uppercase truncate block">{addr.label}</span>
+                                                                        {addr.data?.complement && (
+                                                                            <span className="text-[9px] font-medium text-amber-500 truncate block">Comp: {addr.data.complement}</span>
+                                                                        )}
                                                                         {addr.data?.reference && (
                                                                             <span className="text-[9px] font-medium text-blue-400 truncate block">Ref: {addr.data.reference}</span>
                                                                         )}

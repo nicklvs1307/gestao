@@ -232,7 +232,7 @@ class OrderService {
         
         if (isDelivery) {
             if (typeof deliveryInfo.address === 'object') {
-                fullAddress = `${addr.street || ''}, ${addr.number || 'S/N'}${addr.complement ? ' (' + addr.complement + ')' : ''} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
+                fullAddress = `${addr.street || ''}, ${addr.number || 'S/N'} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
             } else {
                 fullAddress = deliveryInfo.address || 'Endereço não informado';
             }
