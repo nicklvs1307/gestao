@@ -71,6 +71,10 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
 
     const [newCustomer, setNewCustomer] = useState({ name: '', phone: '' });
 
+    const resetAddress = useMemo(() => ({
+        street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: ''
+    }), []);
+
     useEffect(() => {
         if (!isOpen) return;
         const settings = localStorage.getItem('restaurant_settings');
@@ -390,8 +394,6 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     }, [newCustomer, newAddress, onSelectCustomer, onClose]);
 
     const handleClearSearch = useCallback(() => setSearchTerm(''), []);
-
-    const resetAddress = { street: '', number: '', neighborhood: '', city: '', state: '', complement: '', reference: '', zipCode: '' };
 
     const toggleAddingAddress = useCallback((customerId: string) => {
         if (isAddingAddress === customerId) {
