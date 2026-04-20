@@ -436,44 +436,91 @@ class ChecklistController {
   });
 
   uploadFile = asyncHandler(async (req, res) => {
+    const MAX_SIZES = require('../config/multer').MAX_SIZES;
+    const path = require('path');
+    const fs = require('fs');
+
     if (!req.file) {
       res.status(400);
       throw new Error("Nenhum arquivo enviado");
     }
 
+    const { originalname, mimetype, size, path: originalPath, filename } = req.file;
+    const isImage = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimetype);
+    const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(mimetype);
+
+    // Validar tamanho antes deprocessar
+    const maxSize = isImage ? MAX_SIZES.image : MAX_SIZES.video;
+    if (size > maxSize) {
+      fs.unlinkSync(originalPath);
+      const typeLabel = isImage ? 'imagem' : 'vídeo';
+      const sizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+      res.status(400);
+      throw new Error(`Tamanho máximo para ${typeLabel}: ${sizeMB}MB`);
+    }
+
+    // Se arquivo muito pequeno (< 1KB), provavelmente é inválido
+    if (size < 1024) {
+      fs.unlinkSync(originalPath);
+      res.status(400);
+      throw new Error("Arquivo muito pequeno ou inválido");
+    }
+
+    if (isImage) {
+      await this.convertImageToWebP(res, originalPath, filename, maxSize);
+    } else if (isVideo) {
+      await this.processVideo(res, originalPath, filename);
+    } else {
+      res.json({ url: `/uploads/${filename}` });
+    }
+  });
+
+  convertImageToWebP = async (res, originalPath, filename, maxSize) => {
     const sharp = require('sharp');
     const path = require('path');
     const fs = require('fs');
 
-    const originalPath = req.file.path;
-    const ext = path.extname(req.file.originalname).toLowerCase();
-    const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'].includes(ext);
+    const webpFilename = filename.replace(/\.[^.]+$/, '.webp');
+    const webpPath = path.join(path.dirname(originalPath), webpFilename);
 
-    let finalUrl = `/uploads/${req.file.filename}`;
+    try {
+      const stats = fs.statSync(originalPath);
+      let quality = 80;
+      let maxDimension = 1280;
 
-    if (isImage) {
-      // Converter para WebP com qualidade otimizada
-      const webpFilename = req.file.filename.replace(/\.[^.]+$/, '.webp');
-      const webpPath = path.join(path.dirname(originalPath), webpFilename);
-
-      try {
-        await sharp(originalPath)
-          .webp({ quality: 80, effort: 6 })
-          .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-          .toFile(webpPath);
-
-        // Remover arquivo original para economizar espaço
-        fs.unlinkSync(originalPath);
-
-        finalUrl = `/uploads/${webpFilename}`;
-      } catch (error) {
-        // Se falhar conversão, manter original
-        console.error('Erro ao converter imagem para WebP:', error);
+      if (stats.size > 5 * 1024 * 1024) {
+        quality = 65;
+        maxDimension = 1024;
+      } else if (stats.size > 2 * 1024 * 1024) {
+        quality = 70;
+        maxDimension = 1152;
       }
-    }
 
-    res.json({ url: finalUrl });
-  });
+      await sharp(originalPath)
+        .webp({ quality, effort: 6 })
+        .resize(maxDimension, maxDimension, { fit: 'inside', withoutEnlargement: true })
+        .toFile(webpPath);
+
+      fs.unlinkSync(originalPath);
+      res.json({ url: `/uploads/${webpFilename}` });
+    } catch (error) {
+      console.error('Erro ao converter imagem para WebP:', error);
+      try { fs.unlinkSync(originalPath); } catch {}
+      res.status(500);
+      throw new Error("Erro ao processar imagem. Tente novamente.");
+    }
+  };
+
+  processVideo = async (res, originalPath, filename) => {
+    const path = require('path');
+    const fs = require('fs');
+
+    const ext = path.extname(filename).toLowerCase();
+    const stats = fs.statSync(originalPath);
+    console.log(`Vídeo recebido: ${filename} (${(stats.size / (1024 * 1024)).toFixed(2)}MB)`);
+
+    res.json({ url: `/uploads/${filename}` });
+  };
 
   // Histórico de envios de relatórios
   getReportLogs = asyncHandler(async (req, res) => {

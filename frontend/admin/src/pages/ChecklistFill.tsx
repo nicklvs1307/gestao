@@ -122,26 +122,53 @@ const ChecklistFill: React.FC = () => {
             return;
         }
 
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        const MAX_SIZE_MB = isImage ? 10 : 20;
+        const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+        if (file.size > MAX_SIZE_BYTES) {
+            toast.error(`Tamanho máx: ${MAX_SIZE_MB}MB`);
+            return;
+        }
+
+        if (file.size < 1024) {
+            toast.error("Arquivo muito pequeno");
+            return;
+        }
+
         setUploadingTask(taskId);
+        
         const formData = new FormData();
         formData.append('file', file);
+
+        const typeLabel = isImage ? 'imagem' : 'vídeo';
 
         try {
             const response = await axios.post(`${API_URL}/checklists/upload`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
-                timeout: 30000
+                timeout: 60000,
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total) {
+                        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        setUploadingTask(`${taskId}-${percent}`);
+                    }
+                }
             });
 
             const newPhotos = [...currentPhotos, response.data.url];
             handleUpdateResponse(taskId, 'value', newPhotos);
             handleUpdateResponse(taskId, 'isOk', true);
-            toast.success("Foto anexada");
+            toast.success(isVideo ? "Vídeo anexado" : "Foto anexada");
         } catch (error: any) {
             console.error("Upload error:", error);
-            if (error.code === 'ECONNABORTED') {
-                toast.error("Upload demorou muito. Verifique sua conexão.");
+            const message = error.response?.data?.message || error.message;
+            if (error.code === 'ECONNABORTED' || error.code === 'ERR_CANCELED') {
+                toast.error("Upload cancelado. Tente novamente.");
+            } else if (message?.includes('máximo')) {
+                toast.error(message);
             } else {
-                toast.error("Erro no upload. Tente novamente.");
+                toast.error(`Erro ao enviar ${typeLabel}. Tente novamente.`);
             }
         } finally {
             setUploadingTask(null);
@@ -545,7 +572,7 @@ const ChecklistFill: React.FC = () => {
                                                         <div className="space-y-4">
                                                             <input
                                                                 type="file"
-                                                                accept="image/*"
+                                                                accept="image/*,video/*"
                                                                 capture="environment"
                                                                 className="hidden"
                                                                 ref={el => fileInputRefs.current[task.id] = el}
@@ -579,25 +606,36 @@ const ChecklistFill: React.FC = () => {
                                                                 </div>
                                                             )}
 
-                                                            {/* Add Photo Button */}
-                                    {(!Array.isArray(resp.value) || resp.value.length < 3) && (
+                                                            {/* Add Photo/Video Button */}
+                                                            {(!Array.isArray(resp.value) || resp.value.length < 3) && (
                                                                 <button
                                                                     onClick={() => fileInputRefs.current[task.id]?.click()}
-                                                                    disabled={uploadingTask === task.id}
-                                                                    className="w-full h-36 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-primary hover:bg-primary/5 transition-all"
+                                                                    disabled={uploadingTask && uploadingTask.startsWith(task.id)}
+                                                                    className="w-full h-36 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50"
                                                                 >
-                                                                    {uploadingTask === task.id ? (
+                                                                    {uploadingTask && uploadingTask.startsWith(task.id) ? (
                                                                         <div className="flex flex-col items-center gap-2">
-                                                                            <Loader2 className="animate-spin w-6 h-6 text-primary" />
-                                                                            <span className="text-xs font-semibold text-primary">Enviando...</span>
+                                                                            {uploadingTask.includes('-') ? (
+                                                                                <>
+                                                                                    <Loader2 className="animate-spin w-6 h-6 text-primary" />
+                                                                                    <span className="text-xs font-semibold text-primary">
+                                                                                        Processando... {uploadingTask.split('-')[1]}%
+                                                                                    </span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Loader2 className="animate-spin w-6 h-6 text-primary" />
+                                                                                    <span className="text-xs font-semibold text-primary">Enviando...</span>
+                                                                                </>
+                                                                            )}
                                                                         </div>
                                                                     ) : (
                                                                         <>
                                                                             <Camera size={32} />
                                                                             <div className="text-center">
-                                                                                <span className="text-xs font-semibold block">Adicionar Foto</span>
+                                                                                <span className="text-xs font-semibold block">Adicionar Mídia</span>
                                                                                 <span className="text-xs text-slate-400">
-                                                                                    {Array.isArray(resp.value) ? resp.value.length : 0} de 3
+                                                                                    {Array.isArray(resp.value) ? resp.value.length : 0} de 3 • máx 10MB
                                                                                 </span>
                                                                             </div>
                                                                         </>
