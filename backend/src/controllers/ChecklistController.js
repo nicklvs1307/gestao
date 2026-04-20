@@ -417,19 +417,19 @@ class ChecklistController {
     const settings = await prisma.checklistReportSettings.upsert({
       where: { restaurantId },
       update: {},
-      create: { restaurantId, enabled: false, sendTime: '22:00' }
+      create: { restaurantId, enabled: false, sendTime: '07:00', turnStartHour: '06:00' }
     });
     res.json(settings);
   });
 
   updateReportSettings = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { enabled, recipientPhone, recipientPhones, sendTime, reportFormat, customMessage } = req.body;
+    const { enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage } = req.body;
 
     const settings = await prisma.checklistReportSettings.upsert({
       where: { restaurantId },
-      update: { enabled, recipientPhone, recipientPhones, sendTime, reportFormat, customMessage },
-      create: { restaurantId, enabled, recipientPhone, recipientPhones, sendTime, reportFormat, customMessage }
+      update: { enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage },
+      create: { restaurantId, enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage }
     });
 
     res.json(settings);

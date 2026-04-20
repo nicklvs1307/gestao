@@ -3,7 +3,7 @@ const logger = require('../config/logger');
 const evolutionService = require('./EvolutionService');
 const pdfService = require('./PDFService');
 const { normalizePhone } = require('../lib/phoneUtils');
-const { startOfDay, endOfDay, format } = require('date-fns');
+const { startOfDay, endOfDay, format, subDays, parseISO, subHours, addDays } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
 const fs = require('fs');
 
@@ -132,10 +132,7 @@ class ChecklistReportService {
   }
 
   async generateDailyReport(restaurantId) {
-    const today = this.getSaoPauloDate();
-    const start = startOfDay(today);
-    const end = endOfDay(today);
-
+    const now = this.getSaoPauloDate();
     const settings = await prisma.checklistReportSettings.findUnique({
       where: { restaurantId },
     });
@@ -167,16 +164,40 @@ class ChecklistReportService {
       }
     });
 
+    const reportDate = new Date(now);
+    const sendTime = settings.sendTime || '07:00';
+    const turnStartHour = settings.turnStartHour || '06:00';
+
+    const [sendHour, sendMin] = sendTime.split(':').map(Number);
+    const [turnHour, turnMin] = turnStartHour.split(':').map(Number);
+
+    let turnStart, turnEnd;
+
+    const sendDate = new Date(reportDate);
+    sendDate.setHours(sendHour, sendMin, 0, 0);
+
+    const turnStartDate = new Date(reportDate);
+    turnStartDate.setHours(turnHour, turnMin, 0, 0);
+
+    if (sendDate <= turnStartDate) {
+      turnStart = subDays(turnStartDate, 1);
+      turnEnd = sendDate;
+    } else {
+      turnStart = turnStartDate;
+      turnEnd = sendDate;
+    }
+
     const executions = await prisma.checklistExecution.findMany({
       where: {
         restaurantId,
-        completedAt: { gte: start, lte: end }
+        completedAt: { gte: turnStart, lte: turnEnd }
       },
       include: {
         checklist: { include: { sector: true, tasks: true } },
         responses: { include: { task: true } },
         user: { select: { name: true } }
-      }
+      },
+      orderBy: { completedAt: 'asc' }
     });
 
     const totalChecklists = checklists.length;
@@ -193,7 +214,7 @@ class ChecklistReportService {
     });
 
     const conformityRate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(1) : 0;
-    const dateStr = format(today, "dd 'de' MMMM", { locale: ptBR });
+    const dateStr = format(turnEnd, "dd 'de' MMMM", { locale: ptBR });
     const formatType = settings.reportFormat || "PDF";
 
     // Montar mensagem com template customizado ou padrão
@@ -207,12 +228,14 @@ class ChecklistReportService {
     let summaryMessage = this.buildMessage(settings.customMessage, { ...templateData, type: 'daily' });
 
     if (!summaryMessage) {
+      const turnLabel = `${turnStartHour}-${sendTime}`;
+      
       // Mensagem padrão
       if (formatType === "LINK") {
         const frontendUrl = this.getFrontendUrl();
-        summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+        summaryMessage = `*📊 Resumo Geral de Conformidade - Turno ${turnLabel}*\n\n`;
         summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
-        summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+        summaryMessage += `• Realizados no Turno: ${executedToday}\n`;
         summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
 
         if (executions.length > 0) {
@@ -230,12 +253,12 @@ class ChecklistReportService {
             summaryMessage += `  🔗 ${link}\n`;
           });
         } else {
-          summaryMessage += `_Nenhum checklist realizado hoje._`;
+          summaryMessage += `_Nenhum checklist realizado neste turno._`;
         }
       } else if (formatType === "TEXT" || formatType === "BOTH") {
-        summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+        summaryMessage = `*📊 Resumo Geral de Conformidade - Turno ${turnLabel}*\n\n`;
         summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
-        summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+        summaryMessage += `• Realizados no Turno: ${executedToday}\n`;
         summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
 
         summaryMessage += `*━━━━━━━━━━━━━━━━━━*\n`;
@@ -281,9 +304,9 @@ class ChecklistReportService {
           summaryMessage += `\n_O relatório técnico oficial segue em PDF abaixo._`;
         }
       } else {
-        summaryMessage = `*📊 Resumo Geral de Conformidade - ${dateStr}*\n\n`;
+        summaryMessage = `*📊 Resumo Geral de Conformidade - Turno ${turnLabel}*\n\n`;
         summaryMessage += `• Checklists Ativos: ${totalChecklists}\n`;
-        summaryMessage += `• Realizados Hoje: ${executedToday}\n`;
+        summaryMessage += `• Realizados no Turno: ${executedToday}\n`;
         summaryMessage += `• Taxa de Conformidade: *${conformityRate}%*\n\n`;
         summaryMessage += `_O relatório detalhado segue em PDF abaixo._`;
       }

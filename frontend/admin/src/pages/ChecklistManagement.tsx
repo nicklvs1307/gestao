@@ -882,6 +882,23 @@ const ChecklistManagement: React.FC = () => {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="block text-sm font-semibold text-foreground mb-1.5 uppercase tracking-wide">
+                                        Início do Turno (Abertura)
+                                    </label>
+                                    <input
+                                        type="time"
+                                        className="w-full h-11 px-4 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all"
+                                        value={reportSettings.turnStartHour || '06:00'}
+                                        onChange={e => setReportSettings({ ...reportSettings, turnStartHour: e.target.value })}
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Relatório pegará checklists desde este horário
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="space-y-3">
                                 <label className="block text-sm font-semibold text-foreground uppercase tracking-wide">
                                     Formato do Relatório

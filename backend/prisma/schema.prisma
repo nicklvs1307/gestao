@@ -1397,7 +1397,8 @@ model ChecklistReportSettings {
   enabled          Boolean  @default(false)
   recipientPhone   String?  // Numero principal que recebe o relatorio via WhatsApp
   recipientPhones  String?  // Numeros adicionais separados por virgula (JSON array)
-  sendTime         String   @default("22:00") // Horário de envio (HH:mm)
+  sendTime         String   @default("07:00") // Horário de envio do relatório (HH:mm)
+  turnStartHour   String   @default("06:00") // Início do turno/horário de abertura (HH:mm) - usada para definir range do relatório
   reportFormat     String   @default("PDF")   // "PDF", "TEXT", "BOTH"
   customMessage    String?  // Mensagem personalizada para o relatório (template)
   
