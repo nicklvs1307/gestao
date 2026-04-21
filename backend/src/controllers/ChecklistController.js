@@ -347,7 +347,10 @@ show = asyncHandler(async (req, res) => {
     // Garantir que responses seja um array
     const responsesArray = Array.isArray(responses) ? responses : [];
 
-    const validTaskIds = checklist.tasks.map(t => t.id);
+    // Garantir que tasks seja um array (safety check)
+    const checklistTasks = Array.isArray(checklist.tasks) ? checklist.tasks : [];
+
+    const validTaskIds = checklistTasks.map(t => t.id);
     const invalidResponses = responsesArray.filter(r => !validTaskIds.includes(r.taskId));
     
     if (invalidResponses.length > 0) {
