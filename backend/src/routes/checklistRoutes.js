@@ -8,19 +8,24 @@ const validate = require('../middlewares/validate');
 const { checklistStoreSchema, checklistSubmitSchema } = require('../schemas/checklistSchemas');
 const rateLimit = require('express-rate-limit');
 
-// Rate limit para preenchimento público (QR Code) - 10 envios a cada 15 min por IP
 const submitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { message: "Muitos envios de checklist. Tente novamente em 15 minutos." }
 });
 
+const publicReadLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 30,
+  message: { message: "Muitas requisições. Tente novamente em 1 minuto." }
+});
+
 router.get('/', needsAuth, checkModuleEnabled('checklists'), checkPermission('checklists:view'), ChecklistController.index);
-router.get('/available', ChecklistController.getAvailableToday);
+router.get('/available', needsAuth, checkModuleEnabled('checklists'), checkPermission('checklists:view'), ChecklistController.getAvailableToday);
 router.get('/history', needsAuth, checkModuleEnabled('checklists'), checkPermission('checklists:view'), ChecklistController.executions);
 router.get('/stats', needsAuth, checkModuleEnabled('checklists'), checkPermission('checklists:view'), ChecklistController.stats);
-router.get('/report/:executionId', ChecklistController.getExecutionReport);
-router.get('/:id', ChecklistController.show);
+router.get('/report/:executionId', publicReadLimiter, ChecklistController.getExecutionReport);
+router.get('/:id', publicReadLimiter, ChecklistController.show);
 
 router.post('/', 
   needsAuth, 

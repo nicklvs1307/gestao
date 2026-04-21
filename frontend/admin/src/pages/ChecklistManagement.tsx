@@ -266,6 +266,50 @@ const ChecklistManagement: React.FC = () => {
         setTimeout(() => { windowPrint.print(); windowPrint.close(); }, 500);
     };
 
+    const handleDuplicateChecklist = async (checklist: any) => {
+        try {
+            const duplicatedData = {
+                title: `${checklist.title} (Cópia)`,
+                description: checklist.description,
+                frequency: checklist.frequency,
+                sectorId: checklist.sectorId,
+                deadlineTime: checklist.deadlineTime,
+                days: checklist.days,
+                tasks: checklist.tasks?.map((t: any) => ({
+                    content: t.content,
+                    isRequired: t.isRequired,
+                    type: t.type,
+                    procedureType: t.procedureType,
+                    procedureContent: t.procedureContent
+                })) || []
+            };
+            await createChecklist(duplicatedData);
+            toast.success("Checklist duplicado!");
+            loadData();
+        } catch (error) {
+            toast.error("Falha ao duplicar");
+        }
+    };
+
+    const findDuplicateTasks = (checklist: any) => {
+        const allTasks = checklists.flatMap((c: any) => c.tasks?.map((t: any) => ({ task: t.content, checklistId: c.id, checklistTitle: c.title })) || []);
+        const duplicates: { task: string; checklistTitle: string }[] = [];
+        const taskMap = new Map<string, string>();
+        
+        allTasks.forEach(({ task, checklistId, checklistTitle }: { task: string; checklistId: string; checklistTitle: string }) => {
+            if (checklistId === checklist.id) return;
+            const normalized = task.toLowerCase().trim();
+            if (taskMap.has(normalized)) {
+                const existing = taskMap.get(normalized)!;
+                duplicates.push({ task, checklistTitle: existing });
+            } else {
+                taskMap.set(normalized, checklistTitle);
+            }
+        });
+        
+        return duplicates.slice(0, 5);
+    };
+
     const filteredChecklists = useMemo(() => {
         if (!Array.isArray(checklists)) return [];
         return checklists.filter(c =>
@@ -551,6 +595,13 @@ const ChecklistManagement: React.FC = () => {
                                                             title="Gerar QR Code"
                                                         >
                                                             <QrCode size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDuplicateChecklist(checklist)}
+                                                            className="p-2 rounded-lg text-muted-foreground hover:text-purple-600 hover:bg-purple-50 transition-all"
+                                                            title="Duplicar"
+                                                        >
+                                                            <Copy size={16} />
                                                         </button>
                                                         <button
                                                             onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }}

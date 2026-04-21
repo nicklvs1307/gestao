@@ -337,20 +337,20 @@ class ChecklistController {
   executions = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
     const { checklistId, startDate, endDate, executionId, page = '1', limit = '10' } = req.query;
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+    const skip = (pageNum - 1) * limitNum;
 
-    // If executionId is provided, return just that execution
     if (executionId) {
       const execution = await prisma.checklistExecution.findUnique({
         where: { id: executionId },
         include: {
           checklist: {
-            include: {
-              sector: true
-            }
+            include: { sector: true }
           },
           user: { select: { name: true } },
           responses: {
-            include: { task: true }
+            include: { task: { select: { id: true, content: true, type: true } } }
           }
         }
       });
@@ -362,10 +362,6 @@ class ChecklistController {
 
       return res.json({ data: execution });
     }
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
 
     const whereClause = {
       restaurantId,
@@ -383,13 +379,11 @@ class ChecklistController {
         where: whereClause,
         include: {
           checklist: {
-            include: {
-              sector: true
-            }
+            include: { sector: true }
           },
           user: { select: { name: true } },
           responses: {
-            include: { task: true }
+            select: { id: true, value: true, isOk: true, notes: true, task: true }
           }
         },
         orderBy: { completedAt: 'desc' },

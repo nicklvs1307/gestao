@@ -2,6 +2,9 @@ const { z } = require('zod');
 
 const weekDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
+const taskTypes = ['CHECKBOX', 'PHOTO', 'TEXT', 'NUMBER'];
+const procedureTypes = ['NONE', 'TEXT', 'IMAGE', 'VIDEO'];
+
 const checklistStoreSchema = z.object({
   body: z.object({
     title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
@@ -27,29 +30,64 @@ const checklistStoreSchema = z.object({
       id: z.string().optional(),
       content: z.string().min(1, "O conteúdo da tarefa é obrigatório"),
       isRequired: z.boolean().default(true),
-      type: z.enum(['CHECKBOX', 'PHOTO', 'TEXT', 'NUMBER']).default('CHECKBOX'),
-      procedureType: z.enum(['NONE', 'TEXT', 'IMAGE', 'VIDEO']).default('NONE'),
+      type: z.enum(taskTypes).default('CHECKBOX'),
+      procedureType: z.enum(procedureTypes).default('NONE'),
       procedureContent: z.string().optional().nullable()
     })).min(1, "O checklist deve ter pelo menos uma tarefa")
   })
 });
 
+const taskResponseSchemas = {
+  CHECKBOX: z.boolean(),
+  PHOTO: z.string().min(1, "Foto é obrigatória"),
+  TEXT: z.string().min(1, "Texto é obrigatório"),
+  NUMBER: z.union([
+    z.number(),
+    z.string().transform((val) => Number(val)).pipe(z.number().min(0, "Valor deve ser positivo"))
+  ])
+};
+
 const checklistSubmitSchema = z.object({
   body: z.object({
     checklistId: z.string().cuid("ID de checklist inválido"),
-    userName: z.string().optional(),
-    notes: z.string().optional(),
+    userName: z.string().max(100, "Nome muito longo").optional(),
+    notes: z.string().max(1000, "Notas muito longas").optional(),
     startedAt: z.string().datetime().optional(),
     responses: z.array(z.object({
       taskId: z.string().cuid("ID de tarefa inválido"),
-      value: z.any(),
+      value: z.union([
+        taskResponseSchemas.CHECKBOX,
+        taskResponseSchemas.PHOTO,
+        taskResponseSchemas.TEXT,
+        taskResponseSchemas.NUMBER
+      ])).refine(val => val !== undefined && val !== null, {
+        message: "Valor é obrigatório"
+      }),
       isOk: z.boolean().default(true),
-      notes: z.string().optional()
-    })).min(1, "Pelo menos uma resposta deve ser enviada")
+      notes: z.string().max(500, "Observação muito longa").optional()
+    })).min(1, "Pelo menos uma resposta deve ser enviada").refine(
+      (data) => {
+        const values = data.body?.responses || [];
+        return values.length > 0 && values.every(v => v.value !== undefined);
+      },
+      { message: "Todas as tarefas devem ter valor preenchido" }
+    )
+  })
+});
+
+const checklistUpdateSchema = checklistStoreSchema.partial();
+
+const sectorSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, "Nome do setor é obrigatório").max(100, "Nome muito longo")
   })
 });
 
 module.exports = {
   checklistStoreSchema,
-  checklistSubmitSchema
+  checklistSubmitSchema,
+  checklistUpdateSchema,
+  sectorSchema,
+  taskTypes,
+  procedureTypes
 };
