@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { useNavigate } from 'react-router-dom';
 import { useScrollLock } from '../hooks/useScrollLock';
+import { ChecklistDashboard } from '../components/checklist/ChecklistDashboard';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     ClipboardCheck, Plus, Search, Trash2,
@@ -38,8 +40,9 @@ import { cn } from '../lib/utils';
 const ITEMS_PER_PAGE = 10;
 
 const ChecklistManagement: React.FC = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'checklists' | 'sectors' | 'executions' | 'report'>('checklists');
+    const [activeTab, setActiveTab] = useState<'checklists' | 'sectors' | 'executions' | 'report' | 'dashboard'>('checklists');
 
     const [checklists, setChecklists] = useState<any[]>([]);
     const [sectors, setSectors] = useState<any[]>([]);
@@ -457,10 +460,7 @@ const ChecklistManagement: React.FC = () => {
                     </div>
                 </div>
                 <Button
-                    onClick={() => {
-                        setCurrentChecklist({ title: '', description: '', frequency: 'DAILY', sectorId: '', deadlineTime: '', days: [], tasks: [] });
-                        setIsEditingChecklist(true);
-                    }}
+                    onClick={() => navigate('/checklists/new')}
                     className="h-10 px-5"
                 >
                     <Plus size={16} className="mr-2" /> Novo Modelo
@@ -517,7 +517,7 @@ const ChecklistManagement: React.FC = () => {
 
             {/* Tabs */}
             <div className="flex items-center gap-1 bg-muted p-1 rounded-lg self-start">
-                {(['checklists', 'sectors', 'executions', 'report'] as const).map(tab => (
+                {(['dashboard', 'checklists', 'sectors', 'executions', 'report'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -526,13 +526,20 @@ const ChecklistManagement: React.FC = () => {
                             activeTab === tab ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        {tab === 'checklists' ? 'Modelos' : tab === 'sectors' ? 'Setores' : tab === 'executions' ? 'Histórico' : 'Alertas'}
+                        {tab === 'dashboard' ? 'Dashboard' : tab === 'checklists' ? 'Modelos' : tab === 'sectors' ? 'Setores' : tab === 'executions' ? 'Histórico' : 'Alertas'}
                     </button>
                 ))}
             </div>
 
             {/* Content Area */}
             <div className="flex flex-col gap-4">
+                {activeTab === 'dashboard' && (
+                    <ChecklistDashboard
+                        executions={executions}
+                        checklists={checklists}
+                        loading={loading}
+                    />
+                )}
                 {activeTab === 'checklists' && (
                     <>
                         {/* Search Bar */}
@@ -556,7 +563,7 @@ const ChecklistManagement: React.FC = () => {
                                 icon={FileText}
                                 title={searchQuery ? "Nenhum modelo encontrado" : "Nenhum modelo criado"}
                                 description={searchQuery ? "Tente buscar com outros termos" : "Crie seu primeiro modelo de checklist para começar a auditoria operacional"}
-                                action={!searchQuery ? { label: "Criar Modelo", onClick: () => setIsEditingChecklist(true) } : undefined}
+                                action={!searchQuery ? { label: "Criar Modelo", onClick: () => navigate('/checklists/new') } : undefined}
                             />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -604,7 +611,7 @@ const ChecklistManagement: React.FC = () => {
                                                             <Copy size={16} />
                                                         </button>
                                                         <button
-                                                            onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }}
+                                                            onClick={() => navigate(`/checklists/${checklist.id}/edit`)}
                                                             className="p-2 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-50 transition-all"
                                                             title="Editar"
                                                         >
@@ -652,7 +659,7 @@ const ChecklistManagement: React.FC = () => {
                                                         </span>
                                                     </div>
                                                     <button
-                                                        onClick={() => { setCurrentChecklist(checklist); setIsEditingChecklist(true); }}
+                                                        onClick={() => navigate(`/checklists/${checklist.id}/edit`)}
                                                         className="text-sm font-medium text-primary flex items-center gap-1 hover:underline"
                                                     >
                                                         Editar <ArrowRight size={14} />

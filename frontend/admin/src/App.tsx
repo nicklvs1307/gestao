@@ -56,6 +56,7 @@ const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
 
 const GlobalSizesPage = lazy(() => import('./pages/GlobalSizesPage'));
 const ChecklistManagement = lazy(() => import('./pages/ChecklistManagement'));
+const ChecklistFormPage = lazy(() => import('./pages/ChecklistFormPage'));
 const ChecklistFill = lazy(() => import('./pages/ChecklistFill'));
 const ChecklistReportView = lazy(() => import('./pages/ChecklistReportView'));
 const TableCheckout = lazy(() => import('./pages/TableCheckout'));
@@ -182,6 +183,8 @@ function AdminRoutes() {
           <Route path="/production/technical-sheets" element={<ProtectedRoute permission="products:manage"><TechnicalSheetManagement /></ProtectedRoute>} />
           <Route path="/fiscal" element={<ProtectedRoute permission="settings:manage"><FiscalManagement /></ProtectedRoute>} />
           <Route path="/checklists" element={<ProtectedRoute permission="orders:view"><ChecklistManagement /></ProtectedRoute>} />
+          <Route path="/checklists/new" element={<ProtectedRoute permission="orders:manage"><ChecklistFormPage /></ProtectedRoute>} />
+          <Route path="/checklists/:id/edit" element={<ProtectedRoute permission="orders:manage"><ChecklistFormPage /></ProtectedRoute>} />
           <Route path="/whatsapp/chat" element={<ProtectedRoute permission="orders:view"><WhatsAppChat /></ProtectedRoute>} />
           <Route path="/whatsapp/*" element={<ProtectedRoute permission="settings:manage"><WhatsAppManagement /></ProtectedRoute>} />
 
