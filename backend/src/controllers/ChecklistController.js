@@ -7,6 +7,43 @@ const checklistReportService = require('../services/ChecklistReportService');
 class ChecklistController {
   // ... (existing methods)
 
+  getAvailableToday = asyncHandler(async (req, res) => {
+    const { restaurantId } = req;
+    const { sectorId } = req.query;
+
+    const weekDays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const today = weekDays[new Date().getDay()];
+
+    const whereClause = {
+      restaurantId,
+      isActive: true,
+      ...(sectorId && { sectorId }),
+      OR: [
+        { days: null },
+        { days: { contains: today } }
+      ]
+    };
+
+    const checklists = await prisma.checklist.findMany({
+      where: whereClause,
+      include: {
+        sector: true,
+        tasks: {
+          where: { isActive: true },
+          orderBy: { order: 'asc' }
+        },
+        _count: {
+          select: {
+            tasks: { where: { isActive: true } }
+          }
+        }
+      },
+      orderBy: { title: 'asc' }
+    });
+
+    res.json({ data: checklists, today });
+  });
+
   sendManualDailyReport = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
     await checklistReportService.generateDailyReport(restaurantId);
@@ -21,11 +58,19 @@ class ChecklistController {
 
   index = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { sectorId, search } = req.query;
+    const { sectorId, search, day } = req.query;
+
+    const weekDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
     const whereClause = {
       restaurantId,
-      ...(sectorId && { sectorId })
+      ...(sectorId && { sectorId }),
+      ...(day && weekDays.includes(day.toUpperCase()) ? {
+        OR: [
+          { days: null },
+          { days: { contains: day.toUpperCase() } }
+        ]
+      } : {})
     };
 
     const [checklists, totalCount] = await Promise.all([
@@ -53,6 +98,8 @@ class ChecklistController {
 
   show = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const { checkDay } = req.query;
+    
     const checklist = await prisma.checklist.findUnique({
       where: { id },
       include: { 
@@ -63,10 +110,23 @@ class ChecklistController {
         } 
       }
     });
+    
     if (!checklist) {
       res.status(404);
       throw new Error("Checklist não encontrado");
     }
+
+    if (checkDay === 'true' && checklist.days) {
+      const weekDays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+      const today = weekDays[new Date().getDay()];
+      const allowedDays = Array.isArray(checklist.days) ? checklist.days : JSON.parse(checklist.days || '[]');
+      
+      if (!allowedDays.includes(today)) {
+        res.status(403);
+        throw new Error(`Checklist disponível apenas em: ${allowedDays.join(', ')}`);
+      }
+    }
+    
     res.json(checklist);
   });
 
@@ -98,11 +158,13 @@ class ChecklistController {
 
   store = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { title, description, frequency, sectorId, tasks, deadlineTime } = req.body;
+    const { title, description, frequency, sectorId, tasks, deadlineTime, days } = req.body;
+
+    const daysString = Array.isArray(days) ? JSON.stringify(days) : days;
 
     const checklist = await prisma.checklist.create({
       data: {
-        title, description, frequency, sectorId, restaurantId, deadlineTime,
+        title, description, frequency, sectorId, restaurantId, deadlineTime, days: daysString,
         tasks: {
           create: (tasks || []).map((t, idx) => ({
             content: t.content,
@@ -123,7 +185,7 @@ class ChecklistController {
   update = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { restaurantId } = req;
-    const { title, description, frequency, sectorId, tasks, isActive, deadlineTime } = req.body;
+    const { title, description, frequency, sectorId, tasks, isActive, deadlineTime, days } = req.body;
 
     const existingChecklist = await prisma.checklist.findFirst({
       where: { id, restaurantId }
@@ -133,6 +195,8 @@ class ChecklistController {
       res.status(404);
       throw new Error("Checklist não encontrado");
     }
+
+    const daysString = Array.isArray(days) ? JSON.stringify(days) : days;
 
     const checklist = await prisma.$transaction(async (tx) => {
       if (Array.isArray(tasks)) {
@@ -182,7 +246,7 @@ class ChecklistController {
       return await tx.checklist.update({
         where: { id },
         data: {
-          title, description, frequency, sectorId, isActive, deadlineTime
+          title, description, frequency, sectorId, isActive, deadlineTime, days: daysString
         },
         include: { 
           tasks: { 

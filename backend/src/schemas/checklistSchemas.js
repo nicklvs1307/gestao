@@ -1,5 +1,7 @@
 const { z } = require('zod');
 
+const weekDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+
 const checklistStoreSchema = z.object({
   body: z.object({
     title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
@@ -9,6 +11,16 @@ const checklistStoreSchema = z.object({
     deadlineTime: z.preprocess(
       (val) => (val === "" ? null : val),
       z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Horário inválido (HH:mm)").optional().nullable()
+    ),
+    days: z.preprocess(
+      (val) => {
+        if (!val) return null;
+        if (typeof val === 'string') {
+          try { return JSON.parse(val); } catch { return val; }
+        }
+        return val;
+      },
+      z.array(z.enum(weekDays)).optional().nullable()
     ),
     sectorId: z.string().cuid("ID de setor inválido"),
     tasks: z.array(z.object({

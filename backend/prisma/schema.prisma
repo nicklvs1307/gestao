@@ -1300,6 +1300,7 @@ model Checklist {
   description  String?
   frequency    String   @default("DAILY") // "DAILY", "WEEKLY", "MONTHLY"
   deadlineTime String?  // Horário limite (ex: "18:30")
+  days         String?  // JSON array: '["MONDAY", "WEDNESDAY"]' - dias específicos (se null, todos os dias)
   
   isActive     Boolean  @default(true)
 

@@ -22,6 +22,16 @@ import {
     getChecklistReportSettings, updateChecklistReportSettings,
     sendManualDailyReport, sendManualIndividualReport
 } from '../services/api/checklists';
+
+const WEEK_DAYS = [
+    { value: 'MONDAY', label: 'Segunda', short: 'Seg' },
+    { value: 'TUESDAY', label: 'Terça', short: 'Ter' },
+    { value: 'WEDNESDAY', label: 'Quarta', short: 'Qua' },
+    { value: 'THURSDAY', label: 'Quinta', short: 'Qui' },
+    { value: 'FRIDAY', label: 'Sexta', short: 'Sex' },
+    { value: 'SATURDAY', label: 'Sábado', short: 'Sáb' },
+    { value: 'SUNDAY', label: 'Domingo', short: 'Dom' }
+];
 import apiClient from '../services/api/client';
 import { cn } from '../lib/utils';
 
@@ -59,6 +69,7 @@ const ChecklistManagement: React.FC = () => {
         frequency: 'DAILY',
         sectorId: '',
         deadlineTime: '',
+        days: [],
         tasks: []
     });
 
@@ -403,7 +414,7 @@ const ChecklistManagement: React.FC = () => {
                 </div>
                 <Button
                     onClick={() => {
-                        setCurrentChecklist({ title: '', description: '', frequency: 'DAILY', sectorId: '', deadlineTime: '', tasks: [] });
+                        setCurrentChecklist({ title: '', description: '', frequency: 'DAILY', sectorId: '', deadlineTime: '', days: [], tasks: [] });
                         setIsEditingChecklist(true);
                     }}
                     className="h-10 px-5"
@@ -578,6 +589,12 @@ const ChecklistManagement: React.FC = () => {
                                                         )}>
                                                             {getFrequencyLabel(checklist.frequency)}
                                                         </span>
+                                                        {checklist.days && Array.isArray(checklist.days) && checklist.days.length > 0 && (
+                                                            <span className="px-2 py-0.5 text-xs font-medium rounded border bg-purple-50 border-purple-200 text-purple-700 flex items-center gap-1">
+                                                                <Calendar size={12} />
+                                                                {checklist.days.map((d: string) => WEEK_DAYS.find(wd => wd.value === d)?.short || d).join(', ')}
+                                                            </span>
+                                                        )}
                                                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                                                             <CheckSquare size={14} />
                                                             {checklist.tasks?.length || 0} itens
@@ -1071,6 +1088,42 @@ const ChecklistManagement: React.FC = () => {
                                                 />
                                                 <p className="text-xs text-muted-foreground">
                                                     Alerta será enviado se não preenchido até este horário
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <label className="block text-sm font-semibold text-foreground mb-1.5 flex items-center gap-1.5">
+                                                    <Calendar size={14} /> Dias Específicos
+                                                </label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {WEEK_DAYS.map((day) => {
+                                                        const isSelected = (currentChecklist.days || []).includes(day.value);
+                                                        return (
+                                                            <button
+                                                                key={day.value}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newDays = isSelected
+                                                                        ? (currentChecklist.days || []).filter((d: string) => d !== day.value)
+                                                                        : [...(currentChecklist.days || []), day.value];
+                                                                    setCurrentChecklist({ ...currentChecklist, days: newDays });
+                                                                }}
+                                                                className={cn(
+                                                                    "h-9 px-3 rounded-lg text-sm font-medium transition-all border",
+                                                                    isSelected
+                                                                        ? "bg-primary text-primary-foreground border-primary"
+                                                                        : "bg-card text-muted-foreground border-input hover:border-primary/50"
+                                                                )}
+                                                            >
+                                                                {day.short}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {currentChecklist.days?.length > 0
+                                                        ? "Checklist disponível apenas nos dias selecionados"
+                                                        : "Disponível em todos os dias"}
                                                 </p>
                                             </div>
 

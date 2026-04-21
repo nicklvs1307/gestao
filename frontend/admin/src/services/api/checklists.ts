@@ -20,13 +20,17 @@ export const deleteSector = async (id: string) => {
     return response.data;
 };
 
-export const getChecklists = async () => {
-    const response = await apiClient.get('/checklists');
-    // response.data is { data: [...], total: N }
+export const getChecklists = async (params?: Record<string, unknown>) => {
+    const response = await apiClient.get('/checklists', { params });
     const result = response.data;
     if (Array.isArray(result)) return result;
     if (result && Array.isArray(result.data)) return result.data;
     return [];
+};
+
+export const getAvailableChecklists = async (params?: Record<string, unknown>) => {
+    const response = await apiClient.get('/checklists/available', { params });
+    return response.data;
 };
 
 export const createChecklist = async (data: Record<string, unknown>) => {

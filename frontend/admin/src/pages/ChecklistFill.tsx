@@ -76,7 +76,7 @@ const ChecklistFill: React.FC = () => {
 
     const loadChecklist = async () => {
         try {
-            const response = await axios.get(`${API_URL}/checklists/${id}`);
+            const response = await axios.get(`${API_URL}/checklists/${id}`, { params: { checkDay: 'true' } });
             const data = response.data;
             setChecklist(data);
 
@@ -90,8 +90,13 @@ const ChecklistFill: React.FC = () => {
                 showProcedure: false
             }));
             setResponses(initialResponses);
-        } catch (error) {
-            toast.error("Link de checklist inválido ou expirado");
+        } catch (error: any) {
+            const message = error.response?.data?.message || error.message;
+            if (error.response?.status === 403) {
+                toast.error(message || "Checklist não disponível hoje");
+            } else {
+                toast.error("Link de checklist inválido ou expirado");
+            }
         } finally {
             setLoading(false);
         }

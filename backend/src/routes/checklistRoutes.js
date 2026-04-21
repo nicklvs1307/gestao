@@ -16,6 +16,7 @@ const submitLimiter = rateLimit({
 });
 
 router.get('/', needsAuth, checkModuleEnabled('checklists'), checkPermission('checklists:view'), ChecklistController.index);
+router.get('/available', ChecklistController.getAvailableToday);
 router.get('/history', needsAuth, checkModuleEnabled('checklists'), checkPermission('checklists:view'), ChecklistController.executions);
 router.get('/stats', needsAuth, checkModuleEnabled('checklists'), checkPermission('checklists:view'), ChecklistController.stats);
 router.get('/report/:executionId', ChecklistController.getExecutionReport);
