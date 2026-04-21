@@ -60,18 +60,10 @@ const checklistSubmitSchema = z.object({
         taskResponseSchemas.PHOTO,
         taskResponseSchemas.TEXT,
         taskResponseSchemas.NUMBER
-      ])).refine(val => val !== undefined && val !== null, {
-        message: "Valor é obrigatório"
-      }),
+      ]).optional(),
       isOk: z.boolean().default(true),
       notes: z.string().max(500, "Observação muito longa").optional()
-    })).min(1, "Pelo menos uma resposta deve ser enviada").refine(
-      (data) => {
-        const values = data.body?.responses || [];
-        return values.length > 0 && values.every(v => v.value !== undefined);
-      },
-      { message: "Todas as tarefas devem ter valor preenchido" }
-    )
+    })).min(1, "Pelo menos uma resposta deve ser enviada")
   })
 });
 
