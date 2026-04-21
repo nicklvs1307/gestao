@@ -45,7 +45,14 @@ class ChecklistController {
     const filteredChecklists = checklists.map(checklist => {
       const allTasks = checklist.tasks || [];
       const validTasks = allTasks.filter(task => {
-        const taskDays = task.days ? (Array.isArray(task.days) ? task.days : JSON.parse(task.days || '[]')) : [];
+        let taskDays = [];
+        if (task.days) {
+          try {
+            taskDays = typeof task.days === 'string' ? JSON.parse(task.days) : (Array.isArray(task.days) ? task.days : []);
+          } catch (e) {
+            taskDays = [];
+          }
+        }
         if (taskDays.length === 0) return true;
         return taskDays.includes(todayStr);
       });
@@ -135,9 +142,14 @@ show = asyncHandler(async (req, res) => {
 
   if (checkDay === 'true' && checklist.days) {
     const today = weekDays[new Date().getDay()];
-    const allowedDays = Array.isArray(checklist.days) ? checklist.days : JSON.parse(checklist.days || '[]');
+    let allowedDays = [];
+    try {
+      allowedDays = typeof checklist.days === 'string' ? JSON.parse(checklist.days) : (Array.isArray(checklist.days) ? checklist.days : []);
+    } catch (e) {
+      allowedDays = [];
+    }
     
-    if (!allowedDays.includes(today)) {
+    if (allowedDays.length > 0 && !allowedDays.includes(today)) {
       res.status(403);
       throw new Error(`Checklist disponível apenas em: ${allowedDays.join(', ')}`);
     }
@@ -149,7 +161,14 @@ show = asyncHandler(async (req, res) => {
     
     const allTasks = checklist.tasks || [];
     const filteredTasks = allTasks.filter(task => {
-      const taskDays = task.days ? (Array.isArray(task.days) ? task.days : JSON.parse(task.days || '[]')) : [];
+      let taskDays = [];
+      if (task.days) {
+        try {
+          taskDays = typeof task.days === 'string' ? JSON.parse(task.days) : (Array.isArray(task.days) ? task.days : []);
+        } catch (e) {
+          taskDays = [];
+        }
+      }
       if (taskDays.length === 0) return true;
       return taskDays.includes(todayStr);
     });
