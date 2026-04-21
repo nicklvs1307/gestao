@@ -70,15 +70,45 @@ const ChecklistFormPage: React.FC = () => {
 
             if (id) {
                 const checklistData = await getChecklistDetail(id);
+                
+                // Parse days field from string to array if needed
+                let checklistDays = checklistData.days;
+                if (typeof checklistDays === 'string') {
+                    try {
+                        checklistDays = JSON.parse(checklistDays);
+                    } catch {
+                        checklistDays = [];
+                    }
+                }
+                if (!Array.isArray(checklistDays)) {
+                    checklistDays = [];
+                }
+                
+                // Parse days field for each task
+                const parsedTasks = (checklistData.tasks || []).map((task: any) => {
+                    let taskDays = task.days;
+                    if (typeof taskDays === 'string') {
+                        try {
+                            taskDays = JSON.parse(taskDays);
+                        } catch {
+                            taskDays = [];
+                        }
+                    }
+                    if (!Array.isArray(taskDays)) {
+                        taskDays = [];
+                    }
+                    return { ...task, days: taskDays };
+                });
+                
                 setFormData({
                     title: checklistData.title || '',
                     description: checklistData.description || '',
                     frequency: checklistData.frequency || 'DAILY',
                     sectorId: checklistData.sectorId || '',
                     deadlineTime: checklistData.deadlineTime || '',
-                    days: checklistData.days || [],
+                    days: checklistDays,
                     isActive: checklistData.isActive ?? true,
-                    tasks: checklistData.tasks || []
+                    tasks: parsedTasks
                 });
             }
         } catch (error: any) {
@@ -99,11 +129,34 @@ const ChecklistFormPage: React.FC = () => {
 
         setSaving(true);
         try {
+            // Normalize days to ensure it's always an array
+            const normalizeDays = (days: any) => {
+                if (Array.isArray(days)) return days;
+                if (typeof days === 'string') {
+                    try {
+                        const parsed = JSON.parse(days);
+                        if (Array.isArray(parsed)) return parsed;
+                    } catch {}
+                }
+                return [];
+            };
+            
             const payload = {
-                ...formData,
-                tasks: formData.tasks.map((t, idx) => ({
-                    ...t,
+                title: formData.title,
+                description: formData.description,
+                frequency: formData.frequency,
+                sectorId: formData.sectorId,
+                deadlineTime: formData.deadlineTime,
+                days: normalizeDays(formData.days),
+                isActive: formData.isActive,
+                tasks: formData.tasks.map((t: any, idx: number) => ({
+                    content: t.content,
+                    isRequired: t.isRequired,
+                    type: t.type || 'CHECKBOX',
                     order: idx,
+                    procedureType: t.procedureType || 'NONE',
+                    procedureContent: t.procedureContent || null,
+                    days: normalizeDays(t.days),
                     id: t.id || undefined
                 }))
             };
