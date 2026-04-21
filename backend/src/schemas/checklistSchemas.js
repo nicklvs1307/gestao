@@ -32,7 +32,17 @@ const checklistStoreSchema = z.object({
       isRequired: z.boolean().default(true),
       type: z.enum(taskTypes).default('CHECKBOX'),
       procedureType: z.enum(procedureTypes).default('NONE'),
-      procedureContent: z.string().optional().nullable()
+      procedureContent: z.string().optional().nullable(),
+      days: z.preprocess(
+        (val) => {
+          if (!val) return null;
+          if (typeof val === 'string') {
+            try { return JSON.parse(val); } catch { return val; }
+          }
+          return val;
+        },
+        z.array(z.enum(weekDays)).optional().nullable()
+      )
     })).min(1, "O checklist deve ter pelo menos uma tarefa")
   })
 });

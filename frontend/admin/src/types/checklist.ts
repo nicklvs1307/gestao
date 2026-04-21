@@ -13,6 +13,7 @@ export interface ChecklistTask {
   isActive: boolean;
   procedureType: ProcedureType;
   procedureContent?: string;
+  days?: WeekDay[];
   checklistId?: string;
 }
 
@@ -42,7 +43,7 @@ export interface ChecklistFormData {
   sectorId: string;
   deadlineTime?: string;
   days?: WeekDay[];
-  tasks: Omit<ChecklistTask, 'id' | 'checklistId'>[];
+  tasks: Omit<ChecklistTask, 'id' | 'checklistId' | 'days'> & { days?: WeekDay[] }[];
   isActive?: boolean;
 }
 

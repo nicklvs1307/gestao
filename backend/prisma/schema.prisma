@@ -1333,6 +1333,9 @@ model ChecklistTask {
   procedureType    String?  @default("NONE") // "NONE", "TEXT", "IMAGE", "VIDEO"
   procedureContent String?  @db.Text
 
+  // Dias específicos para esta task (se null, aparece em todos os dias)
+  days         String?  // JSON array: '["MONDAY", "WEDNESDAY"]'
+
   checklistId  String
   checklist    Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
 

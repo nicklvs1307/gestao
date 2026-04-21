@@ -133,7 +133,8 @@ const ChecklistFormPage: React.FC = () => {
                     type: 'CHECKBOX',
                     isRequired: true,
                     procedureType: 'NONE',
-                    procedureContent: ''
+                    procedureContent: '',
+                    days: []
                 }
             ]
         });
@@ -345,6 +346,34 @@ const ChecklistFormPage: React.FC = () => {
                                                 />
                                                 <span className="text-sm text-foreground">Obrigatório</span>
                                             </label>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm font-medium text-foreground mb-2 block">Dias da Semana (opcional)</label>
+                                            <p className="text-xs text-muted-foreground mb-2">Se nenhum dia for selecionado, aparece em todos os dias</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {WEEK_DAYS.map(day => (
+                                                    <button
+                                                        key={day.value}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const currentDays = task.days || [];
+                                                            const newDays = currentDays.includes(day.value)
+                                                                ? currentDays.filter(d => d !== day.value)
+                                                                : [...currentDays, day.value];
+                                                            updateTask(index, 'days', newDays);
+                                                        }}
+                                                        className={cn(
+                                                            "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                                                            (task.days || []).includes(day.value)
+                                                                ? "bg-primary text-white"
+                                                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                        )}
+                                                    >
+                                                        {day.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
 
                                         <div>

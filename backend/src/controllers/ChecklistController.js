@@ -13,6 +13,7 @@ class ChecklistController {
 
     const weekDays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
     const today = weekDays[new Date().getDay()];
+    const todayStr = today;
 
     const whereClause = {
       restaurantId,
@@ -41,7 +42,21 @@ class ChecklistController {
       orderBy: { title: 'asc' }
     });
 
-    res.json({ data: checklists, today });
+    const filteredChecklists = checklists.map(checklist => {
+      const allTasks = checklist.tasks || [];
+      const validTasks = allTasks.filter(task => {
+        const taskDays = task.days ? (Array.isArray(task.days) ? task.days : JSON.parse(task.days || '[]')) : [];
+        if (taskDays.length === 0) return true;
+        return taskDays.includes(todayStr);
+      });
+      return {
+        ...checklist,
+        tasks: validTasks,
+        _count: { tasks: validTasks.length }
+      };
+    });
+
+    res.json({ data: filteredChecklists, today });
   });
 
   sendManualDailyReport = asyncHandler(async (req, res) => {
@@ -96,39 +111,54 @@ class ChecklistController {
     res.json({ data: checklists, total: totalCount });
   });
 
-  show = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { checkDay } = req.query;
+show = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { checkDay } = req.query;
+  
+  const checklist = await prisma.checklist.findUnique({
+    where: { id },
+    include: { 
+      sector: true, 
+      tasks: { 
+        where: { isActive: true },
+        orderBy: { order: 'asc' } 
+      } 
+    }
+  });
+  
+  if (!checklist) {
+    res.status(404);
+    throw new Error("Checklist não encontrado");
+  }
+
+  const weekDays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+  if (checkDay === 'true' && checklist.days) {
+    const today = weekDays[new Date().getDay()];
+    const allowedDays = Array.isArray(checklist.days) ? checklist.days : JSON.parse(checklist.days || '[]');
     
-    const checklist = await prisma.checklist.findUnique({
-      where: { id },
-      include: { 
-        sector: true, 
-        tasks: { 
-          where: { isActive: true },
-          orderBy: { order: 'asc' } 
-        } 
-      }
+    if (!allowedDays.includes(today)) {
+      res.status(403);
+      throw new Error(`Checklist disponível apenas em: ${allowedDays.join(', ')}`);
+    }
+  }
+
+  if (checkDay === 'true') {
+    const today = weekDays[new Date().getDay()];
+    const todayStr = today;
+    
+    const allTasks = checklist.tasks || [];
+    const filteredTasks = allTasks.filter(task => {
+      const taskDays = task.days ? (Array.isArray(task.days) ? task.days : JSON.parse(task.days || '[]')) : [];
+      if (taskDays.length === 0) return true;
+      return taskDays.includes(todayStr);
     });
     
-    if (!checklist) {
-      res.status(404);
-      throw new Error("Checklist não encontrado");
-    }
-
-    if (checkDay === 'true' && checklist.days) {
-      const weekDays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-      const today = weekDays[new Date().getDay()];
-      const allowedDays = Array.isArray(checklist.days) ? checklist.days : JSON.parse(checklist.days || '[]');
-      
-      if (!allowedDays.includes(today)) {
-        res.status(403);
-        throw new Error(`Checklist disponível apenas em: ${allowedDays.join(', ')}`);
-      }
-    }
-    
-    res.json(checklist);
-  });
+    checklist.tasks = filteredTasks;
+  }
+  
+  res.json(checklist);
+});
 
   getExecutionReport = asyncHandler(async (req, res) => {
     const { executionId } = req.params;
@@ -173,6 +203,7 @@ class ChecklistController {
             order: idx,
             procedureType: t.procedureType || 'NONE',
             procedureContent: t.procedureContent,
+            days: t.days ? (Array.isArray(t.days) ? JSON.stringify(t.days) : t.days) : null,
             isActive: true
           }))
         }
@@ -213,6 +244,7 @@ class ChecklistController {
 
         for (let i = 0; i < tasks.length; i++) {
           const t = tasks[i];
+          const taskDays = t.days ? (Array.isArray(t.days) ? JSON.stringify(t.days) : t.days) : null;
           if (t.id) {
             await tx.checklistTask.update({
               where: { id: t.id },
@@ -223,6 +255,7 @@ class ChecklistController {
                 order: i,
                 procedureType: t.procedureType,
                 procedureContent: t.procedureContent,
+                days: taskDays,
                 isActive: true // Garante que reative se for enviado
               }
             });
@@ -236,6 +269,7 @@ class ChecklistController {
                 order: i,
                 procedureType: t.procedureType || 'NONE',
                 procedureContent: t.procedureContent,
+                days: taskDays,
                 isActive: true
               }
             });
