@@ -53,6 +53,7 @@ const DriverDashboard = lazy(() => import('./pages/DriverDashboard'));
 const DriverSettlement = lazy(() => import('./pages/DriverSettlement'));
 const WaiterSettlement = lazy(() => import('./pages/WaiterSettlement'));
 const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
+const RestaurantOnboardingPage = lazy(() => import('./pages/RestaurantOnboardingPage'));
 
 const GlobalSizesPage = lazy(() => import('./pages/GlobalSizesPage'));
 const ChecklistManagement = lazy(() => import('./pages/ChecklistManagement'));
@@ -107,6 +108,7 @@ function AdminRoutes() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/super-admin/restaurants/new" element={<RestaurantOnboardingPage />} />
           <Route path="/super-admin/*" element={<SuperAdminDashboard />} />
           <Route path="/franchise/*" element={<SuperAdminDashboard />} />
           <Route path="/waiters/settlement" element={<WaiterSettlement />} />

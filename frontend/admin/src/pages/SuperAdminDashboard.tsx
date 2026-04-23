@@ -303,7 +303,7 @@ const SuperAdminDashboard: React.FC = () => {
                     <div className="space-y-8 animate-in fade-in duration-500">
                         <div className="flex justify-between items-center">
                             <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Store size={24} className="text-blue-500" /> Portfólio de Lojas</h2>
-                            <Button onClick={() => setIsRestaurantModalOpen(true)} className="rounded-xl px-6 italic"><Plus size={18} /> NOVO ONBOARDING</Button>
+                            <Button onClick={() => navigate('/super-admin/restaurants/new')} className="rounded-xl px-6 italic"><Plus size={18} /> NOVO ONBOARDING</Button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {restaurants.map(r => {
