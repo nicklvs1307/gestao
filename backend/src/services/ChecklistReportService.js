@@ -202,6 +202,11 @@ class ChecklistReportService {
       orderBy: { completedAt: 'asc' }
     });
 
+    // Debug: Log das datas do turno
+    logger.info(`[ChecklistReport] DAILY - Turno: ${turnStartHour}-${sendTime}`);
+    logger.info(`[ChecklistReport] DAILY - Range: ${turnStart} até ${turnEnd}`);
+    logger.info(`[ChecklistReport] DAILY - Execuções encontradas: ${executions.length}`);
+
     const totalChecklists = checklists.length;
     const executedToday = executions.length;
     
@@ -548,7 +553,13 @@ class ChecklistReportService {
       return;
     }
 
-    const { checklist, restaurant } = execution;
+    const { checklist } = execution;
+    const restaurant = execution.checklist?.restaurant;
+    
+    if (!restaurant) {
+      console.error('[ChecklistReport] Restaurante não encontrado na execução:', executionId);
+      return;
+    }
     
     const settings = await prisma.checklistReportSettings.findUnique({
       where: { restaurantId: restaurant.id }
