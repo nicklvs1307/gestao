@@ -67,7 +67,9 @@ class ChecklistReportService {
         .replace(/\{executorName\}/g, data.executorName || '')
         .replace(/\{completionTime\}/g, data.completionTime || '')
         .replace(/\{individualRate\}/g, data.individualRate || '0')
-        .replace(/\{reportLink\}/g, data.reportLink || '');
+        .replace(/\{reportLink\}/g, data.reportLink || '')
+        .replace(/\{deadlineTime\}/g, data.deadlineTime || '')
+        .replace(/\{isLate\}/g, data.isLate || 'não');
     }
     return null; // Retorna null para usar mensagem padrão
   }
@@ -324,7 +326,7 @@ class ChecklistReportService {
           conformityRate,
           executions
         });
-        pdfFilename = `Resumo_Geral_${format(today, 'yyyy-MM-dd')}.pdf`;
+        pdfFilename = `Resumo_Geral_${format(reportDate, 'yyyy-MM-dd')}.pdf`;
       } catch (error) {
         logger.error(`[ChecklistReport] Erro ao gerar PDF:`, error);
       }
@@ -525,6 +527,208 @@ class ChecklistReportService {
     }
 
     return results;
+  }
+
+  // Novo método para enviar relatório individual após submissão automática
+  // Detecta se foi enviado com atraso automaticamente
+  async sendExecutionReport(executionId) {
+    const execution = await prisma.checklistExecution.findUnique({
+      where: { id: executionId },
+      include: {
+        checklist: {
+          include: { sector: true, restaurant: true }
+        },
+        responses: { include: { task: true } },
+        user: { select: { name: true } }
+      }
+    });
+
+    if (!execution) {
+      console.error('[ChecklistReport] Execução não encontrada:', executionId);
+      return;
+    }
+
+    const { checklist, restaurant } = execution;
+    
+    const settings = await prisma.checklistReportSettings.findUnique({
+      where: { restaurantId: restaurant.id }
+    });
+
+    if (!settings || !settings.enabled) {
+      console.log('[ChecklistReport] Relatórios não habilitados para restaurante:', restaurant.id);
+      return;
+    }
+
+    const instance = await prisma.whatsAppInstance.findUnique({
+      where: { restaurantId: restaurant.id }
+    });
+
+    if (!instance || instance.status !== 'CONNECTED') {
+      console.error('[ChecklistReport] WhatsApp não conectado para restaurante:', restaurant.id);
+      return;
+    }
+
+    const recipients = this.getRecipients(settings);
+    if (recipients.length === 0) {
+      console.warn('[ChecklistReport] Nenhum destinatário configurado para restaurante:', restaurant.id);
+      return;
+    }
+
+    const now = this.getSaoPauloDate();
+    const okTasks = execution.responses.filter(r => r.isOk).length;
+    const totalTasks = execution.responses.length;
+    const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
+    const time = format(execution.completedAt, "HH:mm");
+    
+    // Usar format individual configurado ou default TEXT
+    const formatType = settings.individualReportFormat || "TEXT";
+    const reportLink = `${this.getFrontendUrl()}/checklist/report/${execution.id}`;
+
+    // Detectar tipo de mensagem baseado em isLate
+    const isLate = execution.isLate || false;
+    const reportType = isLate ? "INDIVIDUAL_ATRASO" : "INDIVIDUAL";
+
+    // Template data
+    const templateData = {
+      checklistName: checklist.title,
+      sectorName: checklist.sector.name,
+      executorName: execution.user?.name || execution.externalUserName || 'N/A',
+      completionTime: time,
+      individualRate: rate,
+      reportLink,
+      deadlineTime: checklist.deadlineTime || null,
+      isLate: isLate ? 'sim' : 'não'
+    };
+
+    let message = this.buildMessage(settings.customMessage, { ...templateData, type: isLate ? 'individual_late' : 'individual' });
+
+    if (!message) {
+      if (isLate) {
+        // Mensagem de ATRASO
+        if (formatType === "LINK") {
+          message = `*⚠️ CHECKLIST COM ATRASO - ${checklist.sector.name}*\n\n`;
+          message += `📋 *${checklist.title.toUpperCase()}*\n`;
+          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n`;
+          message += `🕒 Concluído às: ${time}\n`;
+          message += `⏰ Era para ter sido feito até: ${checklist.deadlineTime || 'N/A'}\n`;
+          message += `📊 Conformidade: *${rate}%*\n\n`;
+          message += `🔗 Ver relatório completo:\n${reportLink}`;
+        } else if (formatType === "TEXT" || formatType === "BOTH") {
+          message = `*⚠️ CHECKLIST COM ATRASO - ${checklist.sector.name}*\n\n`;
+          message += `O checklist *${checklist.title.toUpperCase()}* foi concluído APÓS o horário limite.\n\n`;
+          message += `⏰ Era para ter sido feito até: ${checklist.deadlineTime || 'N/A'}\n`;
+          message += `🕒 Concluído às: ${time} (ATRASADO)\n`;
+          message += `📊 Conformidade: *${rate}%*\n`;
+          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+
+          message += `*DETALHAMENTO DOS ITENS:*\n`;
+          execution.responses.forEach(res => {
+            const status = res.isOk ? "✅" : "❌";
+            message += `\n ${status} *${res.task?.content}*\n`;
+            if (res.notes) message += `    └ 📝 _Nota: ${res.notes}_\n`;
+            
+            if (res.value && res.task?.type === "PHOTO") {
+              try {
+                const photos = JSON.parse(res.value);
+                const baseUrl = process.env.API_URL || "https://api.kicardapio.com.br";
+                if (Array.isArray(photos)) {
+                  photos.forEach((p, idx) => {
+                    message += `    └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
+                  });
+                }
+              } catch (e) {}
+            }
+          });
+          if (formatType === "BOTH") message += `\n🔗 Relatório completo: ${reportLink}`;
+        } else {
+          message = `*⚠️ CHECKLIST COM ATRASO - ${checklist.sector.name}*\n\n`;
+          message += `O checklist *${checklist.title.toUpperCase()}* foi concluído APÓS o horário limite.\n\n`;
+          message += `⏰ Era para ter sido fatto até: ${checklist.deadlineTime || 'N/A'}\n`;
+          message += `🕒 Concluído às: ${time} (ATRASADO)\n`;
+          message += `📊 Conformidade: *${rate}%*\n`;
+          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+          message += `_O detalhamento técnico segue em PDF._`;
+        }
+      } else {
+        // Mensagem normal (não está atrasado)
+        if (formatType === "LINK") {
+          message = `*✅ CHECKLIST CONCLUÍDO - ${checklist.sector.name}*\n\n`;
+          message += `📋 *${checklist.title.toUpperCase()}*\n`;
+          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n`;
+          message += `🕒 Concluído às: ${time}\n`;
+          message += `📊 Conformidade: *${rate}%*\n\n`;
+          message += `🔗 Ver relatório completo:\n${reportLink}`;
+        } else if (formatType === "TEXT" || formatType === "BOTH") {
+          message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
+          message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
+          message += `📊 Conformidade: *${rate}%*\n`;
+          message += `🕒 Concluído às: ${time}\n`;
+          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+
+          message += `*DETALHAMENTO DOS ITENS:*\n`;
+          execution.responses.forEach(res => {
+            const status = res.isOk ? "✅" : "❌";
+            message += `\n ${status} *${res.task?.content}*\n`;
+            if (res.notes) message += `    └ 📝 _Nota: ${res.notes}_\n`;
+            
+            if (res.value && res.task?.type === "PHOTO") {
+              try {
+                const photos = JSON.parse(res.value);
+                const baseUrl = process.env.API_URL || "https://api.kicardapio.com.br";
+                if (Array.isArray(photos)) {
+                  photos.forEach((p, idx) => {
+                    message += `    └ 📸 Foto ${idx+1}: ${baseUrl}${p}\n`;
+                  });
+                }
+              } catch (e) {}
+            }
+          });
+          if (formatType === "BOTH") message += `\n🔗 Relatório completo: ${reportLink}`;
+        } else {
+          message = `*✅ RELATÓRIO INDIVIDUAL - ${checklist.sector.name}*\n\n`;
+          message += `O checklist *${checklist.title.toUpperCase()}* foi concluído.\n\n`;
+          message += `📊 Conformidade: *${rate}%*\n`;
+          message += `🕒 Concluído às: ${time}\n`;
+          message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
+          message += `_O detalhamento técnico segue em PDF._`;
+        }
+      }
+    }
+
+    let pdfPath = null;
+    let pdfFilename = null;
+    if (formatType === "PDF" || formatType === "BOTH") {
+      try {
+        pdfPath = await pdfService.generateChecklistExecutionPDF(execution);
+        pdfFilename = `Auditoria_${checklist.id}_${format(now, 'HHmm')}.pdf`;
+      } catch (error) {
+        console.error('[ChecklistReport] Erro ao gerar PDF individual:', error);
+      }
+    }
+
+    // Enviar para todos os destinatários
+    for (const recipient of recipients) {
+      const result = await this.sendWithRetry(
+        instance.name,
+        recipient,
+        message,
+        pdfPath,
+        pdfFilename,
+        isLate ? `Auditoria ATRASADA - ${checklist.title}` : `Auditoria - ${checklist.title}`
+      );
+
+      await this.logReport(restaurant.id, reportType, recipient, result.success ? 'SUCCESS' : 'FAILED', {
+        checklistId: checklist.id,
+        errorMessage: result.error?.message,
+        retryCount: result.attempts - 1,
+        summary: `${checklist.title}: ${rate}% conformidade${isLate ? ' (ATRASADO)' : ''}, executor: ${execution.user?.name || execution.externalUserName}`
+      });
+    }
+
+    // Limpar PDF
+    if (pdfPath && fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
+    }
   }
 
   async checkIndividualDeadlines() {

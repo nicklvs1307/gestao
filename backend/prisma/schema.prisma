@@ -1369,6 +1369,7 @@ model ChecklistExecution {
   startedAt    DateTime @default(now())
   completedAt  DateTime @default(now())
   durationSeconds Int?   // Tempo legado para preencher
+  isLate        Boolean  @default(false)  // Indica se enviado após o deadline
 
   @@index([checklistId])
   @@index([userId])
@@ -1376,6 +1377,8 @@ model ChecklistExecution {
   @@index([startedAt, restaurantId])
   @@index([completedAt, restaurantId])
   @@index([checklistId, status])
+  @@index([isLate])
+  @@index([completedAt, isLate])
 }
 
 model ChecklistResponse {
@@ -1410,6 +1413,9 @@ model ChecklistReportSettings {
   reportFormat     String   @default("PDF")   // "PDF", "TEXT", "BOTH"
   customMessage    String?  // Mensagem personalizada para o relatório (template)
   
+  sendIndividualReport  Boolean  @default(true)   // Enviar relatório individual automaticamente ao completar
+  individualReportFormat String  @default("TEXT") // Formato do relatório individual: "PDF", "TEXT", "LINK", "BOTH"
+  
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -1423,7 +1429,7 @@ model ChecklistReportLog {
   restaurantId     String
   settings         ChecklistReportSettings @relation(fields: [restaurantId], references: [restaurantId])
   
-  type             String   // "DAILY", "INDIVIDUAL", "DEADLINE_ALERT", "DEADLINE_OK"
+  type             String   // "DAILY", "INDIVIDUAL", "INDIVIDUAL_ATRASO", "DEADLINE_ALERT", "DEADLINE_OK"
   checklistId      String?  // Para relatórios individuais
   recipientPhone   String   // Numero que recebeu
   status           String   // "SUCCESS", "FAILED", "RETRY"

@@ -364,6 +364,15 @@ show = asyncHandler(async (req, res) => {
       durationSeconds = differenceInSeconds(completedAt, new Date(startedAt));
     }
 
+    // Calcular isLate: verificar se enviado após o deadline
+    let isLate = false;
+    if (checklist.deadlineTime) {
+      const [deadlineHour, deadlineMin] = checklist.deadlineTime.split(':').map(Number);
+      const deadlineDate = new Date(completedAt);
+      deadlineDate.setHours(deadlineHour, deadlineMin, 0, 0);
+      isLate = completedAt > deadlineDate;
+    }
+
     const execution = await prisma.checklistExecution.create({
       data: {
         checklistId,
@@ -375,6 +384,7 @@ show = asyncHandler(async (req, res) => {
         startedAt: startedAt ? new Date(startedAt) : undefined,
         completedAt,
         durationSeconds,
+        isLate,
         responses: {
           create: responsesArray.map(r => ({
             taskId: r.taskId,
@@ -386,6 +396,20 @@ show = asyncHandler(async (req, res) => {
       },
       include: { responses: true }
     });
+
+    // Enviar relatório individual automaticamente após submissão
+    try {
+      const settings = await prisma.checklistReportSettings.findUnique({
+        where: { restaurantId: checklist.restaurantId }
+      });
+      
+      if (settings?.enabled && settings?.sendIndividualReport) {
+        await checklistReportService.sendExecutionReport(execution.id);
+      }
+    } catch (reportError) {
+      // Não falhar a submissão se relatório individual falhar
+      console.error('[ChecklistController] Erro ao enviar relatório individual:', reportError.message);
+    }
 
     res.status(201).json(execution);
   });

@@ -87,6 +87,7 @@ export interface ChecklistExecution {
   startedAt: string;
   completedAt: string;
   durationSeconds?: number;
+  isLate?: boolean;
 }
 
 export interface ChecklistStats {
@@ -104,12 +105,14 @@ export interface ReportSettings {
   turnStartHour: string;
   reportFormat: 'PDF' | 'TEXT' | 'BOTH' | 'LINK';
   customMessage?: string;
+  sendIndividualReport?: boolean;
+  individualReportFormat?: 'PDF' | 'TEXT' | 'BOTH' | 'LINK';
 }
 
 export interface ReportLog {
   id: string;
   restaurantId: string;
-  type: 'DAILY' | 'INDIVIDUAL' | 'DEADLINE_ALERT' | 'DEADLINE_OK';
+  type: 'DAILY' | 'INDIVIDUAL' | 'INDIVIDUAL_ATRASO' | 'DEADLINE_ALERT' | 'DEADLINE_OK';
   checklistId?: string;
   recipientPhone: string;
   status: 'SUCCESS' | 'FAILED' | 'RETRY';
