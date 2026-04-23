@@ -404,13 +404,11 @@ const SuperAdminDashboard: React.FC = () => {
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {localModuleState.map((mod: any) => {
                                         return (
-                                            <motion.button
+                                            <button
                                                 key={mod.id}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
                                                 onClick={() => toggleModule(mod.id)}
                                                 className={cn(
-                                                    "p-5 rounded-2xl border-2 text-left transition-all relative",
+                                                    "p-5 rounded-2xl border-2 text-left transition-all relative cursor-pointer hover:scale-[1.02]",
                                                     mod.enabled 
                                                         ? "bg-gradient-to-br from-orange-50 to-white border-orange-200 shadow-md" 
                                                         : "bg-slate-50 border-slate-100 opacity-60"
@@ -446,7 +444,7 @@ const SuperAdminDashboard: React.FC = () => {
                                                         <Unlock size={8} /> Extra ao plano
                                                     </div>
                                                 )}
-                                            </motion.button>
+                                            </button>
                                         );
                                     })}
                                 </div>
