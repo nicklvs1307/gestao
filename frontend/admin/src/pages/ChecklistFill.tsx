@@ -103,10 +103,14 @@ const ChecklistFill: React.FC = () => {
     };
 
     const handleUpdateResponse = (taskId: string, field: string, value: any) => {
-        setResponses(prev => prev.map(r =>
-            r.taskId === taskId ? { ...r, [field]: value } : r
-        ));
-        // Clear error when user starts filling
+        setResponses(prev => prev.map(r => {
+            if (r.taskId !== taskId) return r;
+            const updates: any = { [field]: value };
+            if (field === 'value' && value && r.type !== 'CHECKBOX' && r.type !== 'PHOTO') {
+                updates.isOk = true;
+            }
+            return { ...r, ...updates };
+        }));
         if (errors[taskId]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
