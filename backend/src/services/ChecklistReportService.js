@@ -591,8 +591,8 @@ class ChecklistReportService {
     const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
     const time = format(execution.completedAt, "HH:mm");
     
-    // Usar format individual configurado ou default TEXT
-    const formatType = settings.individualReportFormat || "TEXT";
+    // Usar mesmo formato configurado nos Modelos
+    const formatType = settings.reportFormat || "PDF";
     const reportLink = `${this.getFrontendUrl()}/checklist/report/${execution.id}`;
 
     // Detectar tipo de mensagem baseado em isLate
