@@ -577,7 +577,7 @@ const ChecklistFill: React.FC = () => {
                                                         <div className="space-y-4">
                                                             <input
                                                                 type="file"
-                                                                accept="image/*,video/*"
+                                                                accept="image/*"
                                                                 capture="environment"
                                                                 className="hidden"
                                                                 ref={el => fileInputRefs.current[task.id] = el}
