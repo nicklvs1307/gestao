@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import uairangoLogo from '../assets/uairango-logo.png';
 
 const UairangoSettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -90,8 +91,8 @@ const UairangoSettingsPage: React.FC = () => {
           <ArrowLeft size={20} className="text-slate-600" />
         </button>
         <div className="flex items-center gap-4 flex-1">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg">
-            <img src={require('../assets/uairango-logo.png').default} alt="UaiRango" className="w-10 h-10 object-contain" />
+          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg p-2">
+            <img src={uairangoLogo} alt="UaiRango" className="w-full h-full object-contain" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3">

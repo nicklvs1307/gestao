@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import ifoodLogo from '../assets/ifood-logo.png';
 
 const IfoodSettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -75,8 +76,8 @@ const IfoodSettingsPage: React.FC = () => {
           <ArrowLeft size={20} className="text-slate-600" />
         </button>
         <div className="flex items-center gap-4 flex-1">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <img src={require('../assets/ifood-logo.png').default} alt="iFood" className="w-9 h-9 object-contain" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shadow-lg shadow-orange-500/20 p-2">
+            <img src={ifoodLogo} alt="iFood" className="w-full h-full object-contain" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3">

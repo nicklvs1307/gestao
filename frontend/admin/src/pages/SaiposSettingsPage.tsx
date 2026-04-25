@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import saiposLogo from '../assets/saipos-logo.png';
 
 const SaiposSettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -108,8 +109,8 @@ const SaiposSettingsPage: React.FC = () => {
           <ArrowLeft size={20} className="text-slate-600" />
         </button>
         <div className="flex items-center gap-4 flex-1">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg">
-            <img src={require('../assets/saipos-logo.png').default} alt="Saipos" className="w-10 h-10 object-contain" />
+          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg p-2">
+            <img src={saiposLogo} alt="Saipos" className="w-full h-full object-contain" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3">
