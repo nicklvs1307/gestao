@@ -27,6 +27,10 @@ const AddonManagement = lazy(() => import('./pages/AddonManagement'));
 const AddonFormPage = lazy(() => import('./pages/AddonFormPage'));
 
 const IntegrationManagement = lazy(() => import('./components/IntegrationManagement'));
+const IfoodSettingsPage = lazy(() => import('./pages/IfoodSettingsPage'));
+const SaiposSettingsPage = lazy(() => import('./pages/SaiposSettingsPage'));
+const UairangoSettingsPage = lazy(() => import('./pages/UairangoSettingsPage'));
+const VoltakiSettingsPage = lazy(() => import('./pages/VoltakiSettingsPage'));
 const UserAndPermissions = lazy(() => import('./components/UserAndPermissions'));
 const UserPermissionPage = lazy(() => import('./pages/UserPermissionPage'));
 const DriverManagement = lazy(() => import('./components/DriverManagement'));
@@ -67,22 +71,39 @@ const WhatsAppChat = lazy(() => import('./pages/WhatsAppChat'));
 const TechnicalSheetManagement = lazy(() => import('./pages/TechnicalSheetManagement'));
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/products': 'Gestão de Produtos',
-  '/addons': 'Biblioteca de Complementos',
-  '/ingredients': 'Estoque de Insumos',
-  '/categories': 'Gestão de Categorias',
-  '/global-sizes': 'Biblioteca de Tamanhos',
-  '/promotions': 'Gestão de Promoções',
-  '/customers': 'Cadastro de Clientes',
-  '/orders': 'Gestão de Pedidos',
-  '/tables': 'Gestão de Mesas',
+  '/dashboard': 'Painel',
+  '/products': 'Produtos',
+  '/categories': 'Categorias',
+  '/addons': 'Adicionais',
+  '/promotions': 'Promoções',
+  '/orders': 'Pedidos',
+  '/tables': 'Mesas',
+  '/customers': 'Clientes',
   '/reports': 'Relatórios',
   '/settings': 'Configurações',
-  '/users': 'Gerenciamento de Usuários',
-  '/drivers': 'Equipe de Entregadores',
-  '/financial': 'Fluxo de Caixa',
-  '/payment-methods': 'Formas de Pagamento',
+  '/settings/general': 'Geral',
+  '/settings/integrations': 'Integrações',
+  '/settings/theme': 'Aparência',
+  '/settings/notifications': 'Notificações',
+  '/integrations': 'Integrações',
+  '/integrations/ifood': 'iFood',
+  '/integrations/saipos': 'Saipos',
+  '/integrations/uairango': 'UaiRango',
+  '/integrations/voltaki': 'Voltaki',
+  '/users': 'Usuários',
+  '/pos': 'P.O.S',
+  '/cashier': 'Caixa',
+  '/kds': 'Cozinha',
+  '/financial': 'Financeiro',
+  '/stock': 'Estoque',
+  '/stock/dashboard': 'Dashboard',
+  '/stock/ingredients': 'Ingredientes',
+  '/stock/purchases': 'Compras',
+  '/fiscal': 'Fiscal',
+  '/drivers': 'Entregadores',
+  '/drivers/settlement': 'Fechamento',
+  '/auth/waiters': 'Garçons',
+  '/checklists': 'Checklists',
   '/whatsapp': 'WhatsApp & IA',
   '/whatsapp/chat': 'Central de Atendimento',
 };
@@ -150,7 +171,11 @@ function AdminRoutes() {
 
           <Route path="/reports/*" element={<ProtectedRoute permission="reports:view"><ReportManagement /></ProtectedRoute>} />
           <Route path="/settings/*" element={<ProtectedRoute permission="settings:view"><SettingsManagement /></ProtectedRoute>} />
-          <Route path="/integrations" element={<ProtectedRoute permission="integrations:manage"><IntegrationManagement /></ProtectedRoute>} />
+<Route path="/integrations" element={<ProtectedRoute permission="integrations:manage"><IntegrationManagement /></ProtectedRoute>} />
+          <Route path="/integrations/ifood" element={<ProtectedRoute permission="integrations:manage"><IfoodSettingsPage /></ProtectedRoute>} />
+          <Route path="/integrations/saipos" element={<ProtectedRoute permission="integrations:manage"><SaiposSettingsPage /></ProtectedRoute>} />
+          <Route path="/integrations/uairango" element={<ProtectedRoute permission="integrations:manage"><UairangoSettingsPage /></ProtectedRoute>} />
+          <Route path="/integrations/voltaki" element={<ProtectedRoute permission="integrations:manage"><VoltakiSettingsPage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute permission="users:manage"><UserAndPermissions /></ProtectedRoute>} />
           <Route path="/users/:id" element={<ProtectedRoute permission="users:manage"><UserPermissionPage /></ProtectedRoute>} />
 

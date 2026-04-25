@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import SaiposConfigModal from './SaiposConfigModal';
-import UairangoConfigModal from './UairangoConfigModal';
-import IfoodConfigModal from './IfoodConfigModal';
+import { useNavigate } from 'react-router-dom';
 import { getSaiposSettings, getUairangoSettings, getIfoodSettings } from '../services/api';
-import { Puzzle, RefreshCw, Loader2, ChevronRight, Share2, Plug, ShoppingBag } from 'lucide-react';
+import { RefreshCw, Loader2, ChevronRight, Share2, Plug, ShoppingBag, ShieldCheck, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import saiposLogo from '../assets/saipos-logo.png';
 import voltakiLogo from '../assets/voltaki-logo.png';
@@ -11,33 +9,30 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 
 const IntegrationManagement: React.FC = () => {
-  const [isSaiposModalOpen, setIsSaiposModalOpen] = useState(false);
-  const [isUairangoModalOpen, setIsUairangoModalOpen] = useState(false);
-  const [isIfoodModalOpen, setIsIfoodModalOpen] = useState(false);
+  const navigate = useNavigate();
   const [saiposStatus, setSaiposStatus] = useState(false);
   const [uairangoStatus, setUairangoStatus] = useState(false);
   const [ifoodStatus, setIfoodStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchStatus = async () => {
-    setIsLoading(true);
-    try {
-      const [saiposSettings, uairangoSettings, ifoodSettings] = await Promise.all([
-        getSaiposSettings(),
-        getUairangoSettings(),
-        getIfoodSettings().catch(() => ({}))
-      ]);
-      setSaiposStatus(saiposSettings.saiposIntegrationActive || false);
-      setUairangoStatus(uairangoSettings.uairangoActive || false);
-      setIfoodStatus(ifoodSettings?.ifoodIntegrationActive || false);
-    } catch (error) {
-      console.error('Erro ao buscar status das integrações:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchStatus = async () => {
+      setIsLoading(true);
+      try {
+        const [saiposSettings, uairangoSettings, ifoodSettings] = await Promise.all([
+          getSaiposSettings(),
+          getUairangoSettings(),
+          getIfoodSettings().catch(() => ({}))
+        ]);
+        setSaiposStatus(saiposSettings.saiposIntegrationActive || false);
+        setUairangoStatus(uairangoSettings.uairangoActive || false);
+        setIfoodStatus(ifoodSettings?.ifoodIntegrationActive || false);
+      } catch (error) {
+        console.error('Erro ao buscar status das integrações:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchStatus();
   }, []);
 
@@ -59,7 +54,7 @@ const IntegrationManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Card Saipos Premium */}
         <Card 
-          onClick={() => setIsSaiposModalOpen(true)}
+          onClick={() => navigate('/integrations/saipos')}
           className={cn(
             "p-0 overflow-hidden border-2 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group",
             saiposStatus ? "border-emerald-100 hover:border-emerald-500/30 bg-emerald-50/10" : "border-slate-100 bg-white"
@@ -108,7 +103,7 @@ const IntegrationManagement: React.FC = () => {
 
         {/* Card UaiRango Premium */}
         <Card 
-          onClick={() => setIsUairangoModalOpen(true)}
+          onClick={() => navigate('/integrations/uairango')}
           className={cn(
             "p-0 overflow-hidden border-2 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group",
             uairangoStatus ? "border-orange-100 hover:border-orange-500/30 bg-orange-50/10" : "border-slate-100 bg-white"
@@ -155,9 +150,9 @@ const IntegrationManagement: React.FC = () => {
           </div>
         </Card>
 
-        {/* Card Voltaki (Coming Soon) */}
+        {/* Card iFood */}
         <Card 
-          onClick={() => setIsIfoodModalOpen(true)}
+          onClick={() => navigate('/integrations/ifood')}
           className={cn(
             "p-0 overflow-hidden border-2 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group",
             ifoodStatus ? "border-orange-100 hover:border-orange-500/30 bg-orange-50/10" : "border-slate-100 bg-white"
@@ -204,7 +199,8 @@ const IntegrationManagement: React.FC = () => {
           </div>
         </Card>
 
-        {/* Card Voltaki (Em Breve) */}
+        {/* Card Voltaki (Coming Soon) */}
+        <Card onClick={() => navigate('/integrations/voltaki')} className="p-0 overflow-hidden border-2 border-slate-100 bg-slate-50/50 opacity-80 group" noPadding>
           <div className="p-8 space-y-6">
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
@@ -229,10 +225,6 @@ const IntegrationManagement: React.FC = () => {
           </div>
         </Card>
       </div>
-
-      {isSaiposModalOpen && <SaiposConfigModal onClose={() => { setIsSaiposModalOpen(false); fetchStatus(); }} />}
-      {isUairangoModalOpen && <UairangoConfigModal onClose={() => { setIsUairangoModalOpen(false); fetchStatus(); }} />}
-      {isIfoodModalOpen && <IfoodConfigModal onClose={() => { setIsIfoodModalOpen(false); fetchStatus(); }} />}
     </div>
   );
 };
