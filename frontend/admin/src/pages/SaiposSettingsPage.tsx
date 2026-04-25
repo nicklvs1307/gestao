@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getSaiposSettings, updateSaiposSettings, importSaiposMenu } from '../services/api';
-import { ArrowLeft, Save, Loader2, ShieldCheck, RefreshCw, DownloadCloud, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, ShieldCheck, RefreshCw, DownloadCloud, FileSpreadsheet, CheckCircle, XCircle, Key, Upload, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -25,7 +25,7 @@ const SaiposSettingsPage: React.FC = () => {
       try {
         const settings = await getSaiposSettings();
         setPartnerId(settings.saiposPartnerId || '');
-        setSecret(settings.saiposSecret || '');
+        setSecret(settings.saiposSecret === '********' ? '' : settings.saiposSecret || '');
         setCodStore(settings.saiposCodStore || '');
         setEnv(settings.saiposEnv || 'homologation');
         setIsActive(settings.saiposIntegrationActive || false);
@@ -98,140 +98,298 @@ const SaiposSettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Header */}
+    <div className="space-y-6">
+      {/* Header Premium */}
       <div className="flex items-center gap-4">
         <button 
           onClick={() => navigate('/integrations')}
-          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
+          className="p-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
         >
           <ArrowLeft size={20} className="text-slate-600" />
         </button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl flex items-center justify-center">
-            <ShieldCheck size={18} />
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-lg">
+            <img src={require('../assets/saipos-logo.png').default} alt="Saipos" className="w-10 h-10 object-contain" />
           </div>
-          <div>
-            <h1 className="text-xl font-black uppercase">Saipos</h1>
-            <p className="text-[9px] text-slate-400 uppercase tracking-wider">Gestão de Restaurante</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter">Saipos</h1>
+              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border ${
+                isActive 
+                  ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                  : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}>
+                {isActive ? 'Conectado' : 'Desativado'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Gestão de Restaurante</p>
           </div>
         </div>
       </div>
 
-      <Card className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Toggle Ativo */}
-          <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
-            <input
-              type="checkbox"
-              id="saiposActive"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              className="w-5 h-5 text-emerald-500 rounded"
-            />
-            <label htmlFor="saiposActive" className="text-sm font-medium">
-              Ativar Integração Saipos
-            </label>
-          </div>
-
-          {/* Credenciais */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Credenciais</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Coluna Principal */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Card de Credenciais */}
+          <Card className="overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <Key size={18} className="text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Credenciais da API</h2>
+                  <p className="text-[10px] text-slate-400 font-medium">Partner ID, Secret e Código da Loja</p>
+                </div>
+              </div>
+            </div>
             
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-600">Partner ID</label>
-              <Input
-                value={partnerId}
-                onChange={(e) => setPartnerId(e.target.value)}
-                placeholder="ID do Parceiro"
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Partner ID</label>
+                  <Input
+                    value={partnerId}
+                    onChange={(e) => setPartnerId(e.target.value)}
+                    placeholder="ID do Parceiro Saipos"
+                    className="h-12 bg-slate-50 border-slate-200 focus:bg-white"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-600">Secret</label>
-              <Input
-                type="password"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                placeholder="••••••••••••"
-              />
-            </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Secret</label>
+                  <Input
+                    type="password"
+                    value={secret}
+                    onChange={(e) => setSecret(e.target.value)}
+                    placeholder="••••••••••••••••••••••"
+                    className="h-12 bg-slate-50 border-slate-200 focus:bg-white"
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-600">Código da Loja</label>
-              <Input
-                value={codStore}
-                onChange={(e) => setCodStore(e.target.value)}
-                placeholder="Código da Loja"
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Código da Loja</label>
+                <Input
+                  value={codStore}
+                  onChange={(e) => setCodStore(e.target.value)}
+                  placeholder="Código da Loja no Saipos"
+                  className="h-12 bg-slate-50 border-slate-200 focus:bg-white"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-600">Ambiente</label>
-              <select
-                value={env}
-                onChange={(e) => setEnv(e.target.value as any)}
-                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm"
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Ambiente</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEnv('homologation')}
+                    className={`h-12 rounded-xl border-2 font-black text-sm uppercase tracking-wider transition-all ${
+                      env === 'homologation'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg shadow-emerald-500/10'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                  >
+                    Homologação
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEnv('production')}
+                    className={`h-12 rounded-xl border-2 font-black text-sm uppercase tracking-wider transition-all ${
+                      env === 'production'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg shadow-emerald-500/10'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                  >
+                    Produção
+                  </button>
+                </div>
+              </div>
+
+              {/* Toggle Ativo */}
+              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setIsActive(!isActive)}
+                  className={`relative w-14 h-8 rounded-full transition-all ${
+                    isActive ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all ${
+                    isActive ? 'left-7' : 'left-1'
+                  }`} />
+                </button>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-700">Ativar Integração Saipos</p>
+                  <p className="text-[10px] text-slate-400">Sincronizar pedidos e estoque</p>
+                </div>
+                {isActive ? (
+                  <CheckCircle size={20} className="text-emerald-500" />
+                ) : (
+                  <XCircle size={20} className="text-slate-400" />
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <Button type="button" variant="outline" onClick={() => navigate('/integrations')} className="flex-1 h-12">
+                  Voltar
+                </Button>
+                <Button type="submit" disabled={isSaving} className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20">
+                  {isSaving ? <Loader2 className="animate-spin mr-2" size={14} /> : <Save size={14} className="mr-2" />}
+                  Salvar Configurações
+                </Button>
+              </div>
+            </form>
+          </Card>
+
+          {/* Card de Importação */}
+          <Card className="overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <Upload size={18} className="text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Importar Cardápio</h2>
+                  <p className="text-[10px] text-slate-400 font-medium">Upload de arquivo .xlsx</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    Selecione um arquivo <span className="font-black">.xlsx</span> com o cardápio do Saipos. 
+                    O arquivo deve seguir o formato esperado pelo sistema.
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition-colors">
+                <FileSpreadsheet size={40} className="mx-auto text-slate-300 mb-3" />
+                <p className="text-sm text-slate-500 mb-4 font-medium">
+                  {selectedFile ? selectedFile.name : 'Arraste o arquivo aqui ou clique para selecionar'}
+                </p>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <label htmlFor="file-input">
+                  <span className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:border-emerald-300 hover:text-emerald-600 rounded-xl text-sm font-bold transition-all shadow-sm">
+                    <RefreshCw size={16} />
+                    Selecionar Arquivo
+                  </span>
+                </label>
+              </div>
+
+              <Button 
+                onClick={handleImport} 
+                disabled={!selectedFile || isImporting}
+                className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-xl shadow-emerald-500/30 text-lg font-black uppercase tracking-wider"
               >
-                <option value="homologation">Homologação (Teste)</option>
-                <option value="production">Produção</option>
-              </select>
+                {isImporting ? (
+                  <>
+                    <Loader2 className="animate-spin mr-3" size={18} />
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <DownloadCloud size={18} className="mr-3" />
+                    Importar Cardápio
+                  </>
+                )}
+              </Button>
             </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => navigate('/integrations')} className="flex-1">
-              Voltar
-            </Button>
-            <Button type="submit" disabled={isSaving} className="flex-1 bg-emerald-500 hover:bg-emerald-600">
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={14} /> : <Save size={14} className="mr-2" />}
-              Salvar
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      {/* Importação de Cardápio */}
-      <Card className="p-6">
-        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Importar Cardápio</h3>
-        
-        <div className="space-y-4">
-          <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center">
-            <FileSpreadsheet size={32} className="mx-auto text-slate-300 mb-2" />
-            <p className="text-xs text-slate-500 mb-3">Selecione um arquivo .xlsx com o cardápio</p>
-            <input
-              id="file-input"
-              type="file"
-              accept=".xlsx"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <label htmlFor="file-input">
-              <span className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium transition-colors">
-                <RefreshCw size={14} />
-                Selecionar Arquivo
-              </span>
-            </label>
-            {selectedFile && (
-              <p className="text-xs text-emerald-600 mt-2">{selectedFile.name}</p>
-            )}
-          </div>
-
-          <Button 
-            onClick={handleImport} 
-            disabled={!selectedFile || isImporting}
-            className="w-full bg-emerald-500 hover:bg-emerald-600"
-          >
-            {isImporting ? (
-              <Loader2 className="animate-spin mr-2" size={14} />
-            ) : (
-              <DownloadCloud size={14} className="mr-2" />
-            )}
-            Importar Cardápio
-          </Button>
+          </Card>
         </div>
-      </Card>
+
+        {/* Coluna Lateral - Info */}
+        <div className="space-y-6">
+          {/* Info */}
+          <Card className="overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-white">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={16} className="text-blue-500" />
+                <h3 className="font-black text-slate-800 text-sm uppercase">Sobre o Saipos</h3>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                O <span className="font-black">Saipos</span> é um sistema completo de gestão para restaurantes, 
+                bares e similares que oferece:
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-emerald-500" />
+                  <span className="text-xs text-slate-600">Gestão de pedidos em tempo real</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-emerald-500" />
+                  <span className="text-xs text-slate-600">Controle de estoque</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-emerald-500" />
+                  <span className="text-xs text-slate-600">Comandas digitais</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-emerald-500" />
+                  <span className="text-xs text-slate-600">Gestão de funcionários</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Status */}
+          <Card className="overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center gap-2">
+                <Key size={16} className="text-slate-500" />
+                <h3 className="font-black text-slate-800 text-sm uppercase">Status</h3>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Partner ID</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                  partnerId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {partnerId ? 'Configurado' : 'Pendente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Secret</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                  secret ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {secret ? 'Configurado' : 'Pendente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Loja</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                  codStore ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {codStore || 'Pendente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Integração</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                  isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {isActive ? 'Ativa' : 'Inativa'}
+                </span>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

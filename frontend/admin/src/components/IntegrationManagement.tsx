@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSaiposSettings, getUairangoSettings, getIfoodSettings } from '../services/api';
-import { RefreshCw, Loader2, ChevronRight, Share2, Plug, ShoppingBag, ShieldCheck, Zap } from 'lucide-react';
+import { RefreshCw, Loader2, ChevronRight, Share2, Plug } from 'lucide-react';
 import { cn } from '../lib/utils';
 import saiposLogo from '../assets/saipos-logo.png';
 import voltakiLogo from '../assets/voltaki-logo.png';
+import ifoodLogo from '../assets/ifood-logo.png';
+import uairangoLogo from '../assets/uairango-logo.png';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 
@@ -114,8 +116,8 @@ const IntegrationManagement: React.FC = () => {
           <div className="p-8 space-y-6">
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-orange-500 shadow-lg border border-orange-400 p-2.5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <ShoppingBag className="text-white w-full h-full" />
+                    <div className="w-14 h-14 rounded-2xl bg-white shadow-lg border border-slate-100 p-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src={uairangoLogo} alt="UaiRango" className="w-full h-full object-contain" />
                     </div>
                     <div>
                         <h3 className="font-black text-xl text-slate-900 uppercase italic tracking-tighter leading-none">UaiRango</h3>
@@ -163,8 +165,8 @@ const IntegrationManagement: React.FC = () => {
           <div className="p-8 space-y-6">
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-orange-500 shadow-lg border border-orange-400 p-2.5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <ShoppingBag className="text-white w-full h-full" />
+                    <div className="w-14 h-14 rounded-2xl bg-white shadow-lg border border-slate-100 p-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src={ifoodLogo} alt="iFood" className="w-full h-full object-contain" />
                     </div>
                     <div>
                         <h3 className="font-black text-xl text-slate-900 uppercase italic tracking-tighter leading-none">iFood</h3>
