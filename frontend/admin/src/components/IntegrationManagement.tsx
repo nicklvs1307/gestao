@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSaiposSettings, getUairangoSettings, getIfoodSettings } from '../services/api';
 import { RefreshCw, Loader2, ChevronRight, Share2, Plug, ShoppingBag, ShieldCheck, Zap } from 'lucide-react';
@@ -15,26 +15,27 @@ const IntegrationManagement: React.FC = () => {
   const [ifoodStatus, setIfoodStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      setIsLoading(true);
-      try {
-        const [saiposSettings, uairangoSettings, ifoodSettings] = await Promise.all([
-          getSaiposSettings(),
-          getUairangoSettings(),
-          getIfoodSettings().catch(() => ({}))
-        ]);
-        setSaiposStatus(saiposSettings.saiposIntegrationActive || false);
-        setUairangoStatus(uairangoSettings.uairangoActive || false);
-        setIfoodStatus(ifoodSettings?.ifoodIntegrationActive || false);
-      } catch (error) {
-        console.error('Erro ao buscar status das integrações:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchStatus();
+  const fetchStatus = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [saiposSettings, uairangoSettings, ifoodSettings] = await Promise.all([
+        getSaiposSettings(),
+        getUairangoSettings(),
+        getIfoodSettings().catch(() => ({}))
+      ]);
+      setSaiposStatus(saiposSettings.saiposIntegrationActive || false);
+      setUairangoStatus(uairangoSettings.uairangoActive || false);
+      setIfoodStatus(ifoodSettings?.ifoodIntegrationActive || false);
+    } catch (error) {
+      console.error('Erro ao buscar status das integrações:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
