@@ -16,4 +16,11 @@ router.get('/uairango', IntegrationController.getUairangoSettings);
 router.put('/uairango', IntegrationController.updateUairangoSettings);
 router.post('/uairango/import', IntegrationController.importUairangoMenu);
 
+router.get('/ifood', IntegrationController.getIfoodSettings);
+router.put('/ifood', IntegrationController.updateIfoodSettings);
+router.post('/ifood/confirm', IntegrationController.confirmIfoodOrder);
+router.post('/ifood/reject', IntegrationController.rejectIfoodOrder);
+router.post('/ifood/start', IntegrationController.startIfoodPreparation);
+router.post('/ifood/ready', IntegrationController.markIfoodReady);
+
 module.exports = router;

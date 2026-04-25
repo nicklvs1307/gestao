@@ -496,6 +496,15 @@ model IntegrationSettings {
   uairangoActive          Boolean   @default(false)
   uairangoImportedAt      DateTime? // Última importação realizada
 
+  // === CAMPOS IFOOD ===
+  ifoodAccessToken        String?   // Token OAuth
+  ifoodClientId         String?   // Client ID do portal iFood Developer
+  ifoodClientSecret   String?   // Client Secret
+  ifoodRestaurantId  String?   // ID do restaurante no iFood
+  ifoodIntegrationActive Boolean  @default(false)
+  ifoodEnv           String    @default("homologation") // "production" ou "homologation"
+  ifoodWebhookSigningKey String? // Chave para validar assinatura do webhook
+
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
@@ -825,12 +834,11 @@ model Order {
   canceledAt   DateTime?
 
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  updatedAt   DateTime   @updatedAt
   saiposOrderId String?
+  ifoodOrderId String?
 
-  isSettled    Boolean     @default(false) // Novo: Controle de acerto financeiro (Motoboy/Garçom)
-  settledAt    DateTime?
-
+  // ======== RESTAURANT RELATION ========
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
@@ -847,6 +855,9 @@ model Order {
   
   invoice      Invoice?    // Nota Fiscal
   financialTransaction FinancialTransaction[] // Lançamento financeiro (Ex: Conta a Receber gerada)
+
+  isSettled    Boolean     @default(false) // Novo: Controle de acerto financeiro (Motoboy/Garçom)
+  settledAt    DateTime?
 
   @@index([restaurantId])
   @@index([status])

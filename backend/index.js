@@ -155,6 +155,7 @@ const paymentRoutes = require('./src/routes/paymentRoutes');
 const superAdminRoutes = require('./src/routes/superAdminRoutes');
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 const whatsappRoutes = require('./src/routes/whatsappRoutes');
+const ifoodRoutes = require('./src/routes/ifoodRoutes');
 
 // SuperAdmin / Admin Role Management Alias
 const SuperAdminController = require('./src/controllers/SuperAdminController');
@@ -196,6 +197,7 @@ app.use('/api/delivery-areas', deliveryAreaRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/ifood', ifoodRoutes);
 
 // KDS Alias
 const OrderController = require('./src/controllers/OrderController');

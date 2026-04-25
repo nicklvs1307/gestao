@@ -35,3 +35,33 @@ export const importSaiposMenu = async (file: File) => {
     });
     return response.data;
 };
+
+export const getIfoodSettings = async () => {
+  const response = await apiClient.get('/integrations/ifood');
+  return response.data;
+};
+
+export const updateIfoodSettings = async (settingsData: Record<string, unknown>) => {
+  const response = await apiClient.put('/integrations/ifood', settingsData);
+  return response.data;
+};
+
+export const confirmIfoodOrder = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/ifood/confirm', { orderId });
+  return response.data;
+};
+
+export const rejectIfoodOrder = async (orderId: string, reason?: string) => {
+  const response = await apiClient.post('/integrations/ifood/reject', { orderId, reason });
+  return response.data;
+};
+
+export const startIfoodPreparation = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/ifood/start', { orderId });
+  return response.data;
+};
+
+export const markIfoodReady = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/ifood/ready', { orderId });
+  return response.data;
+};

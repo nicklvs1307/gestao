@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printer';
 import PrinterLayoutEditor, { type ReceiptLayout } from '../components/PrinterLayoutEditor';
-import { Save, Settings, Palette, Link, Printer, Sliders } from 'lucide-react';
+import { Save, Settings, Palette, Link, Printer, Sliders, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { useSettings } from '../components/settings';
-import { SettingsGeneralTab, SettingsAppearanceTab, SettingsPrintingTab, SettingsLinksTab } from '../components/settings';
+import { SettingsGeneralTab, SettingsAppearanceTab, SettingsPrintingTab, SettingsLinksTab, SettingsIntegrationsTab } from '../components/settings';
 
 const SettingsManagement: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'printing' | 'links'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'printing' | 'links' | 'integrations'>('general');
   const [isNavigating, setIsNavigating] = useState(false);
 
   const {
@@ -69,6 +69,7 @@ const SettingsManagement: React.FC = () => {
     if (path.includes('/printing')) setActiveTab('printing');
     else if (path.includes('/appearance')) setActiveTab('appearance');
     else if (path.includes('/links')) setActiveTab('links');
+    else if (path.includes('/integrations')) setActiveTab('integrations');
     else setActiveTab('general');
   }, [location.pathname]);
 
@@ -84,6 +85,7 @@ const SettingsManagement: React.FC = () => {
 
   const tabs = [
     { id: 'general', label: 'GERAL', icon: Sliders },
+    { id: 'integrations', label: 'INTEGRAÇÕES', icon: Zap },
     { id: 'appearance', label: 'VISUAL', icon: Palette },
     { id: 'printing', label: 'IMPRESSÃO', icon: Printer },
     { id: 'links', label: 'LINKS', icon: Link },
@@ -180,6 +182,10 @@ const SettingsManagement: React.FC = () => {
           appearance={appearance}
           setAppearance={setAppearance}
         />
+      )}
+
+      {activeTab === 'integrations' && (
+        <SettingsIntegrationsTab />
       )}
 
       {activeTab === 'printing' && (
