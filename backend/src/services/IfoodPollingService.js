@@ -145,6 +145,7 @@ class IfoodPollingService {
 
     switch (code) {
       case 'PLACED':
+      case 'PLC':
       case 'CONFIRMED': {
         // Buscar detalhes completos do pedido na API do iFood
         const orderDetails = await this.getOrderDetails(orderId, token);
@@ -155,6 +156,7 @@ class IfoodPollingService {
       }
 
       case 'CANCELLED':
+      case 'CAN':
       case 'CANCELLATION_REQUEST_FAILED':
         await IfoodOrderService.cancelOrderFromIfood(restaurantId, orderId);
         break;
