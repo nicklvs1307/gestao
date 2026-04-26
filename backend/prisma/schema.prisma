@@ -904,6 +904,10 @@ model DeliveryOrder {
   address                 String?             // Endereço no ato do pedido
   complement              String?             // Complemento do endereço
   reference               String?             // Ponto de referência
+  neighborhood            String?             // Bairro
+  city                    String?             // Cidade
+  state                   String?             // Estado (UF)
+  zipCode                 String?             // CEP
   deliveryType            String?             // 'delivery' ou 'pickup'
   paymentMethod           String?             
   changeFor               Float?              
