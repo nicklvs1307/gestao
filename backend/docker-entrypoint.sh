@@ -35,6 +35,9 @@ file_env 'JWT_SECRET'
 file_env 'OPENAI_API_KEY'
 file_env 'EVOLUTION_API_URL'
 file_env 'EVOLUTION_API_KEY'
+file_env 'OPENROUTER_API_KEY'
+file_env 'IFOOD_CLIENT_ID'
+file_env 'IFOOD_CLIENT_SECRET'
 
 # Aguarda o banco de dados estar pronto (evita falha na inicialização)
 DB_HOST=$(echo $DATABASE_URL | sed -e 's|.*@||' -e 's|/.*||' -e 's|:.*||')

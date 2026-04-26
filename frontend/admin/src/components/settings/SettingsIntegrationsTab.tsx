@@ -13,11 +13,10 @@ import { Card } from '../ui/Card';
 import { Save, Loader2, ExternalLink, CheckCircle, XCircle, Zap } from 'lucide-react';
 
 interface IfoodSettings {
-  ifoodClientId?: string;
-  ifoodClientSecret?: string;
   ifoodRestaurantId?: string;
   ifoodIntegrationActive?: boolean;
   ifoodEnv?: string;
+  ifoodCredentialsConfigured?: boolean;
 }
 
 interface SaiposSettings {
@@ -190,28 +189,16 @@ export const SettingsIntegrationsTab: React.FC = () => {
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Client ID</label>
-                <input
-                  type="text"
-                  value={ifoodSettings.ifoodClientId || ''}
-                  onChange={(e) => setIfoodSettings(prev => ({ ...prev, ifoodClientId: e.target.value }))}
-                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm"
-                  placeholder="xxxxx-xxxxx-xxxxx"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Client Secret</label>
-                <input
-                  type="password"
-                  value={ifoodSettings.ifoodClientSecret || ''}
-                  onChange={(e) => setIfoodSettings(prev => ({ ...prev, ifoodClientSecret: e.target.value }))}
-                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm"
-                  placeholder="••••••••••••"
-                />
-              </div>
+            {/* Status das credenciais da plataforma */}
+            <div className={`p-3 rounded-lg border ${ifoodSettings.ifoodCredentialsConfigured 
+              ? 'bg-emerald-50 border-emerald-200' 
+              : 'bg-red-50 border-red-200'}`}>
+              <p className={`text-[8px] font-black uppercase tracking-widest ${ifoodSettings.ifoodCredentialsConfigured ? 'text-emerald-600' : 'text-red-600'}`}>
+                {ifoodSettings.ifoodCredentialsConfigured ? 'Credenciais da plataforma configuradas' : 'Credenciais não configuradas'}
+              </p>
+              <p className="text-[8px] text-slate-400 mt-1">
+                Client ID e Secret são gerenciados pelo administrador do sistema
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -240,18 +227,13 @@ export const SettingsIntegrationsTab: React.FC = () => {
             </div>
 
             {ifoodSettings.ifoodIntegrationActive && (
-              <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-[8px] font-black text-orange-600 uppercase tracking-widest mb-1">
-                  Webhook URL
+              <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1">
+                  Recebimento de Pedidos
                 </p>
-                <code className="text-xs text-slate-600 break-all">
-                  {typeof window !== 'undefined' 
-                    ? `${window.location.origin}/api/ifood/webhook/{restaurantId}`
-                    : 'https://seudominio.com/api/ifood/webhook/{restaurantId}'
-                  }
-                </code>
+                <p className="text-xs text-emerald-700 font-bold">Polling Ativo (a cada 30s)</p>
                 <p className="text-[8px] text-slate-400 mt-2">
-                  Configure esta URL no portal iFood Developer
+                  O sistema busca automaticamente novos pedidos do iFood
                 </p>
               </div>
             )}

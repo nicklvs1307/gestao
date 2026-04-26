@@ -65,3 +65,23 @@ export const markIfoodReady = async (orderId: string) => {
   const response = await apiClient.post('/integrations/ifood/ready', { orderId });
   return response.data;
 };
+
+export const getIfoodConnectionStatus = async () => {
+  const response = await apiClient.get('/integrations/ifood/status');
+  return response.data;
+};
+
+export const initiateIfoodLink = async () => {
+  const response = await apiClient.post('/integrations/ifood/initiate-link');
+  return response.data;
+};
+
+export const completeIfoodLink = async (authorizationCode: string) => {
+  const response = await apiClient.post('/integrations/ifood/complete-link', { authorizationCode });
+  return response.data;
+};
+
+export const disconnectIfood = async () => {
+  const response = await apiClient.post('/integrations/ifood/disconnect');
+  return response.data;
+};

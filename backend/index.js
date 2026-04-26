@@ -43,6 +43,16 @@ if (!process.env.EVOLUTION_API_KEY && fs.existsSync('/run/secrets/evolution_api_
   process.env.EVOLUTION_API_KEY = fs.readFileSync('/run/secrets/evolution_api_key', 'utf8').trim();
 }
 
+// IFOOD_CLIENT_ID
+if (!process.env.IFOOD_CLIENT_ID && fs.existsSync('/run/secrets/ifood_client_id')) {
+  process.env.IFOOD_CLIENT_ID = fs.readFileSync('/run/secrets/ifood_client_id', 'utf8').trim();
+}
+
+// IFOOD_CLIENT_SECRET
+if (!process.env.IFOOD_CLIENT_SECRET && fs.existsSync('/run/secrets/ifood_client_secret')) {
+  process.env.IFOOD_CLIENT_SECRET = fs.readFileSync('/run/secrets/ifood_client_secret', 'utf8').trim();
+}
+
 if (!process.env.JWT_SECRET) {
   throw new Error('ERRO FATAL: JWT_SECRET não está definido. Verifique seu arquivo .env.');
 }
@@ -155,7 +165,7 @@ const paymentRoutes = require('./src/routes/paymentRoutes');
 const superAdminRoutes = require('./src/routes/superAdminRoutes');
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 const whatsappRoutes = require('./src/routes/whatsappRoutes');
-const ifoodRoutes = require('./src/routes/ifoodRoutes');
+// ifoodRoutes removido - integração iFood agora usa polling (IfoodPollingService) ao invés de webhook
 
 // SuperAdmin / Admin Role Management Alias
 const SuperAdminController = require('./src/controllers/SuperAdminController');
@@ -197,7 +207,7 @@ app.use('/api/delivery-areas', deliveryAreaRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
-app.use('/api/ifood', ifoodRoutes);
+// Rota /api/ifood removida - integração iFood agora usa polling ativo ao invés de webhook passivo
 
 // KDS Alias
 const OrderController = require('./src/controllers/OrderController');

@@ -18,6 +18,10 @@ router.post('/uairango/import', IntegrationController.importUairangoMenu);
 
 router.get('/ifood', IntegrationController.getIfoodSettings);
 router.put('/ifood', IntegrationController.updateIfoodSettings);
+router.get('/ifood/status', IntegrationController.getIfoodConnectionStatus);
+router.post('/ifood/initiate-link', IntegrationController.initiateIfoodLink);
+router.post('/ifood/complete-link', IntegrationController.completeIfoodLink);
+router.post('/ifood/disconnect', IntegrationController.disconnectIfood);
 router.post('/ifood/confirm', IntegrationController.confirmIfoodOrder);
 router.post('/ifood/reject', IntegrationController.rejectIfoodOrder);
 router.post('/ifood/start', IntegrationController.startIfoodPreparation);

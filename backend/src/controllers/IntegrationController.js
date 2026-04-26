@@ -3,6 +3,8 @@ const logger = require('../config/logger');
 const UairangoService = require('../services/UairangoService');
 const SaiposImportService = require('../services/SaiposImportService');
 const IfoodOrderService = require('../services/IfoodOrderService');
+const IfoodAuthService = require('../services/IfoodAuthService');
+// Webhook handler removido - integração iFood agora usa polling (IfoodPollingService)
 
 const getSaiposSettings = async (req, res) => {
     try {
@@ -133,13 +135,13 @@ const getIfoodSettings = async (req, res) => {
             });
         }
 
-        const safeSettings = {
-            ...settings,
-            ifoodClientSecret: settings.ifoodClientSecret ? '********' : null,
-            ifoodWebhookSigningKey: settings.ifoodWebhookSigningKey ? '********' : null
-        };
+        // Indica ao frontend se as credenciais da plataforma estão configuradas
+        const credentialsConfigured = !!(process.env.IFOOD_CLIENT_ID && process.env.IFOOD_CLIENT_SECRET);
 
-        res.json(safeSettings);
+        res.json({
+            ...settings,
+            ifoodCredentialsConfigured: credentialsConfigured
+        });
     } catch (error) {
         logger.error('Erro ao buscar configurações do iFood:', error);
         res.status(500).json({ error: 'Erro ao buscar configurações do iFood.' });
@@ -147,23 +149,14 @@ const getIfoodSettings = async (req, res) => {
 };
 
 const updateIfoodSettings = async (req, res) => {
-    const { ifoodClientId, ifoodClientSecret, ifoodRestaurantId, ifoodIntegrationActive, ifoodEnv, ifoodWebhookSigningKey } = req.body;
+    const { ifoodRestaurantId, ifoodIntegrationActive, ifoodEnv } = req.body;
 
     try {
         const updateData = {
-            ifoodClientId,
             ifoodRestaurantId,
             ifoodIntegrationActive,
             ifoodEnv
         };
-
-        if (ifoodClientSecret && ifoodClientSecret !== '********') {
-            updateData.ifoodClientSecret = ifoodClientSecret;
-        }
-
-        if (ifoodWebhookSigningKey && ifoodWebhookSigningKey !== '********') {
-            updateData.ifoodWebhookSigningKey = ifoodWebhookSigningKey;
-        }
 
         const settings = await prisma.integrationSettings.upsert({
             where: { restaurantId: req.restaurantId },
@@ -174,50 +167,15 @@ const updateIfoodSettings = async (req, res) => {
             }
         });
 
-        const safeSettings = {
-            ...settings,
-            ifoodClientSecret: settings.ifoodClientSecret ? '********' : null,
-            ifoodWebhookSigningKey: settings.ifoodWebhookSigningKey ? '********' : null
-        };
+        const credentialsConfigured = !!(process.env.IFOOD_CLIENT_ID && process.env.IFOOD_CLIENT_SECRET);
 
-        res.json(safeSettings);
+        res.json({
+            ...settings,
+            ifoodCredentialsConfigured: credentialsConfigured
+        });
     } catch (error) {
         logger.error('Erro ao atualizar configurações do iFood:', error);
         res.status(500).json({ error: 'Erro ao atualizar configurações do iFood.' });
-    }
-};
-
-const ifoodWebhook = async (req, res) => {
-    try {
-        const signature = req.headers['x-ifood-signature'] || req.headers['ifood-signature'];
-        const { events } = req.body;
-
-        if (!events || !Array.isArray(events)) {
-            logger.warn('[IFOOD] Webhook sem eventos');
-            return res.status(400).json({ error: 'Eventos inválidos' });
-        }
-
-        for (const eventData of events) {
-            const orderId = eventData.orderId || eventData.metadata?.id;
-            
-            if (!orderId) {
-                continue;
-            }
-
-            const restaurantId = req.restaurantId;
-
-            if (!restaurantId) {
-                logger.warn('[IFOOD] Restaurant ID não fornecido no webhook');
-                continue;
-            }
-
-            await IfoodOrderService.processWebhookEvent(restaurantId, eventData);
-        }
-
-        res.status(200).json({ acknowledged: true });
-    } catch (error) {
-        logger.error('[IFOOD] Erro ao processar webhook:', error);
-        res.status(500).json({ error: 'Erro interno' });
     }
 };
 
@@ -285,6 +243,59 @@ const markIfoodReady = async (req, res) => {
     }
 };
 
+const initiateIfoodLink = async (req, res) => {
+    try {
+        if (!process.env.IFOOD_CLIENT_ID || !process.env.IFOOD_CLIENT_SECRET) {
+            return res.status(400).json({ 
+                error: 'Credenciais da plataforma iFood não configuradas. Contate o administrador do sistema.',
+                hasCredentials: false 
+            });
+        }
+
+        const result = await IfoodAuthService.requestUserCode(req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao iniciar vinculação:', error);
+        res.status(500).json({ error: error.message || 'Erro ao iniciar vinculação' });
+    }
+};
+
+const completeIfoodLink = async (req, res) => {
+    try {
+        const { authorizationCode } = req.body;
+
+        if (!authorizationCode) {
+            return res.status(400).json({ error: 'Código de autorização é obrigatório' });
+        }
+
+        const result = await IfoodAuthService.completeLink(req.restaurantId, authorizationCode);
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao completar vinculação:', error);
+        res.status(500).json({ error: error.message || 'Erro ao completar vinculação' });
+    }
+};
+
+const disconnectIfood = async (req, res) => {
+    try {
+        const result = await IfoodAuthService.disconnect(req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao desconectar:', error);
+        res.status(500).json({ error: error.message || 'Erro ao desconectar' });
+    }
+};
+
+const getIfoodConnectionStatus = async (req, res) => {
+    try {
+        const status = await IfoodAuthService.checkConnectionStatus(req.restaurantId);
+        res.json(status);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao verificar status:', error);
+        res.status(500).json({ error: error.message || 'Erro ao verificar status' });
+    }
+};
+
 module.exports = {
     getSaiposSettings,
     updateSaiposSettings,
@@ -294,9 +305,12 @@ module.exports = {
     importUairangoMenu,
     getIfoodSettings,
     updateIfoodSettings,
-    ifoodWebhook,
     confirmIfoodOrder,
     rejectIfoodOrder,
     startIfoodPreparation,
-    markIfoodReady
+    markIfoodReady,
+    initiateIfoodLink,
+    completeIfoodLink,
+    disconnectIfood,
+    getIfoodConnectionStatus
 };

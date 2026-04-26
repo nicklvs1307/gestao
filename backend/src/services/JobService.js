@@ -5,6 +5,8 @@ const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const { format, parse } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
+const IfoodAuthService = require('./IfoodAuthService');
+const IfoodPollingService = require('./IfoodPollingService');
 
 class JobService {
   constructor() {
@@ -112,6 +114,62 @@ class JobService {
     });
 
     this.jobs.push({ name: 'AutoDeliveryOpenClose', job: autoDeliveryJob });
+
+    // Cron Job para Renew de Token iFood (a cada 30 minutos)
+    const ifoodTokenRefreshJob = cron.schedule('*/30 * * * *', async () => {
+      try {
+        const settings = await prisma.integrationSettings.findMany({
+          where: { ifoodIntegrationActive: true }
+        });
+
+        for (const setting of settings) {
+          try {
+            const expiresAt = setting.ifoodAccessTokenExpiresAt;
+            
+            if (!expiresAt) {
+              continue;
+            }
+
+            // Se não tem refresh token, não tenta renovar
+            if (!setting.ifoodRefreshToken) {
+              continue;
+            }
+
+            const expires = new Date(expiresAt);
+            const now = new Date();
+            const minutesUntilExpiry = Math.floor((expires - now) / 1000 / 60);
+
+            // Renovar se expira em até 30 min OU se já expirou (tentativa de recuperação)
+            if (minutesUntilExpiry <= 30) {
+              const status = minutesUntilExpiry <= 0 ? 'EXPIRADO' : `expira em ${minutesUntilExpiry} min`;
+              logger.info(`[JobService] Renovando token iFood para restaurante ${setting.restaurantId} (${status})`);
+              
+              const result = await IfoodAuthService.refreshAccessToken(setting.restaurantId);
+              
+              if (result) {
+                logger.info(`[JobService] Token iFood renovado com sucesso para ${setting.restaurantId}`);
+              } else {
+                logger.warn(`[JobService] Falha ao renovar token iFood para ${setting.restaurantId}`);
+              }
+            }
+          } catch (err) {
+            logger.error(`[JobService] Erro ao processar renew token para ${setting.restaurantId}:`, err);
+          }
+        }
+      } catch (error) {
+        logger.error('[JobService] Erro ao processar renew de tokens iFood:', error);
+      }
+    });
+
+    this.jobs.push({ name: 'IfoodTokenRefresh', job: ifoodTokenRefreshJob });
+
+    // Iniciar polling de eventos do iFood
+    try {
+      IfoodPollingService.init();
+      logger.info('[JobService] iFood Polling Service iniciado com sucesso.');
+    } catch (error) {
+      logger.error('[JobService] Erro ao iniciar iFood Polling Service:', error);
+    }
 
     logger.info('[JobService] Tarefas agendadas com sucesso.');
   }

@@ -24,6 +24,8 @@ services:
       OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
       EVOLUTION_API_URL_FILE: /run/secrets/evolution_api_url
       EVOLUTION_API_KEY_FILE: /run/secrets/evolution_api_key
+      IFOOD_CLIENT_ID_FILE: /run/secrets/ifood_client_id
+      IFOOD_CLIENT_SECRET_FILE: /run/secrets/ifood_client_secret
       VITE_OPENROUTE_KEY: ${VITE_OPENROUTE_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api"]
@@ -42,6 +44,8 @@ services:
       - openai_api_key
       - evolution_api_url
       - evolution_api_key
+      - ifood_client_id
+      - ifood_client_secret
     deploy:
       replicas: 1
       restart_policy:
@@ -145,4 +149,8 @@ secrets:
   evolution_api_url:
     external: true
   evolution_api_key:
+    external: true
+  ifood_client_id:
+    external: true
+  ifood_client_secret:
     external: true

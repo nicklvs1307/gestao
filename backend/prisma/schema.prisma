@@ -497,13 +497,14 @@ model IntegrationSettings {
   uairangoImportedAt      DateTime? // Última importação realizada
 
   // === CAMPOS IFOOD ===
-  ifoodAccessToken        String?   // Token OAuth
-  ifoodClientId         String?   // Client ID do portal iFood Developer
-  ifoodClientSecret   String?   // Client Secret
-  ifoodRestaurantId  String?   // ID do restaurante no iFood
-  ifoodIntegrationActive Boolean  @default(false)
-  ifoodEnv           String    @default("homologation") // "production" ou "homologation"
-  ifoodWebhookSigningKey String? // Chave para validar assinatura do webhook
+  ifoodAccessToken          String?   // Token OAuth (access token ativo)
+  ifoodRefreshToken         String?   // Refresh Token (para renew automático)
+  ifoodAccessTokenExpiresAt DateTime? // Data de expiração do access token
+  ifoodAuthCodeVerifier     String?   // Verifier temporário durante fluxo OAuth (não sobrecarrega accessToken)
+  ifoodRestaurantId         String?   // ID do restaurante no iFood
+  ifoodIntegrationActive    Boolean   @default(false)
+  ifoodEnv                  String    @default("production")
+  // ifoodClientId e ifoodClientSecret removidos — agora são variáveis de ambiente centralizadas (Docker secrets)
 
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
