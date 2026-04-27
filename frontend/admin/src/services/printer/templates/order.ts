@@ -331,6 +331,13 @@ function buildFooter(order: Order, settings: ReceiptSettings, isProduction: bool
     buf += alignCenter(bold(wrapText(settings.footerText.toUpperCase(), width).trim()));
   }
 
+  if (order.ifoodOrderId) {
+    buf += line('-', width);
+    buf += alignCenter(bold('*** PEDIDO IFOOD ***'));
+    buf += alignCenter(`Pedido: ${order.ifoodOrderId}`);
+    buf += line('-', width);
+  }
+
   buf += alignCenter(`ID: ${order.id}\n${bold('KICARDÁPIO@')}`);
 
   const feedLines = settings.paperFeed ?? 3;

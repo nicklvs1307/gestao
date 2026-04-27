@@ -160,6 +160,7 @@ export interface Order {
   deliveredAt?: string | null;
   completedAt?: string | null;
   canceledAt?: string | null;
+  ifoodOrderId?: string | null;
 }
 
 export interface TableSummary {

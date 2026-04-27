@@ -10,6 +10,7 @@ const GeocodingService = require('./GeocodingService'); // Novo
 const WhatsAppNotificationService = require('./WhatsAppNotificationService');
 const { normalizePhone } = require('../lib/phoneUtils');
 const socketLib = require('../lib/socket');
+const OrderPlatformService = require('./OrderPlatformService');
 
 const fullOrderInclude = {
   items: { 
@@ -39,6 +40,7 @@ const summaryOrderSelect = {
   createdAt: true,
   customerName: true,
   isPrinted: true,
+  ifoodOrderId: true,
   deliveryOrder: {
     select: {
       name: true,
@@ -580,6 +582,8 @@ if (isPickup && !hasValidPhone) {
     if (status === 'COMPLETED') {
         this._triggerAutomaticInvoice(updatedOrder).catch(err => logger.error('[FISCAL BACKGROUND]', err));
     }
+    
+    OrderPlatformService.syncStatus(updatedOrder, status).catch(err => logger.error('[Platform Sync] Error:', err));
     
     emitOrderUpdate(updatedOrder.id);
     WhatsAppNotificationService.notifyOrderUpdate(updatedOrder.id, status).catch(err => logger.error('[WhatsApp Notification] Error:', err));
