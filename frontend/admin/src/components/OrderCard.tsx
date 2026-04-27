@@ -173,7 +173,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
             </div>
             <div className="flex items-center gap-2">
                 {order.ifoodOrderId && (
-                    <img src={ifoodLogo} alt="iFood" className="h-5 w-auto" />
+                    <img src={ifoodLogo} alt="iFood" className="h-7 w-auto" />
                 )}
                 <OrderTimer createdAt={order.createdAt} status={order.status} />
             </div>
