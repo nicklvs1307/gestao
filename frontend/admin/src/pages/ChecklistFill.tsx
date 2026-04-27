@@ -133,7 +133,7 @@ const ChecklistFill: React.FC = () => {
 
         const isImage = file.type.startsWith('image/');
         const isVideo = file.type.startsWith('video/');
-        const MAX_SIZE_MB = isImage ? 10 : 20;
+        const MAX_SIZE_MB = isImage ? 20 : 20;
         const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
         if (file.size > MAX_SIZE_BYTES) {

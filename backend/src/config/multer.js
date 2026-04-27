@@ -2,7 +2,7 @@ const multer = require('multer');
 const path = require('path');
 
 const MAX_SIZES = {
-  image: 10 * 1024 * 1024,  // 10MB para imagens
+  image: 20 * 1024 * 1024,  // 20MB para imagens
   video: 20 * 1024 * 1024, // 20MB para vídeos
 };
 
