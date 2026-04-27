@@ -25,6 +25,21 @@ export const importUairangoMenu = async () => {
     return response.data;
 };
 
+export const confirmUairangoOrder = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/uairango/confirm', { orderId });
+  return response.data;
+};
+
+export const rejectUairangoOrder = async (orderId: string, reason?: string) => {
+  const response = await apiClient.post('/integrations/uairango/reject', { orderId, reason });
+  return response.data;
+};
+
+export const markUairangoReady = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/uairango/ready', { orderId });
+  return response.data;
+};
+
 export const importSaiposMenu = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

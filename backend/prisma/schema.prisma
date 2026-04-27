@@ -838,6 +838,7 @@ model Order {
   updatedAt   DateTime   @updatedAt
   saiposOrderId String?
   ifoodOrderId String?
+  uairangoOrderId String?
 
   // ======== RESTAURANT RELATION ========
   restaurantId String

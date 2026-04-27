@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const logger = require('../config/logger');
 const UairangoService = require('../services/UairangoService');
+const UairangoOrderService = require('../services/UairangoOrderService');
 const SaiposImportService = require('../services/SaiposImportService');
 const IfoodOrderService = require('../services/IfoodOrderService');
 const IfoodAuthService = require('../services/IfoodAuthService');
@@ -296,6 +297,54 @@ const getIfoodConnectionStatus = async (req, res) => {
     }
 };
 
+const confirmUairangoOrder = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const result = await UairangoOrderService.confirmOrder(orderId, req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao confirmar pedido:', error);
+        res.status(500).json({ error: error.message || 'Erro ao confirmar pedido' });
+    }
+};
+
+const rejectUairangoOrder = async (req, res) => {
+    try {
+        const { orderId, reason } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const result = await UairangoOrderService.rejectOrder(orderId, req.restaurantId, reason);
+        res.json(result);
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao rejeitar pedido:', error);
+        res.status(500).json({ error: error.message || 'Erro ao rejeitar pedido' });
+    }
+};
+
+const markUairangoReady = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const result = await UairangoOrderService.markReady(orderId, req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao marcar pronto:', error);
+        res.status(500).json({ error: error.message || 'Erro ao marcar pronto' });
+    }
+};
+
 module.exports = {
     getSaiposSettings,
     updateSaiposSettings,
@@ -312,5 +361,8 @@ module.exports = {
     initiateIfoodLink,
     completeIfoodLink,
     disconnectIfood,
-    getIfoodConnectionStatus
+    getIfoodConnectionStatus,
+    confirmUairangoOrder,
+    rejectUairangoOrder,
+    markUairangoReady
 };

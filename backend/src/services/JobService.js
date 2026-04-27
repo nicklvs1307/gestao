@@ -7,6 +7,7 @@ const { format, parse } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
 const IfoodAuthService = require('./IfoodAuthService');
 const IfoodPollingService = require('./IfoodPollingService');
+const UairangoPollingService = require('./UairangoPollingService');
 
 class JobService {
   constructor() {
@@ -169,6 +170,14 @@ class JobService {
       logger.info('[JobService] iFood Polling Service iniciado com sucesso.');
     } catch (error) {
       logger.error('[JobService] Erro ao iniciar iFood Polling Service:', error);
+    }
+
+    // Iniciar polling de pedidos do Uai Rangô
+    try {
+      UairangoPollingService.init();
+      logger.info('[JobService] Uai Rangô Polling Service iniciado com sucesso.');
+    } catch (error) {
+      logger.error('[JobService] Erro ao iniciar Uai Rangô Polling Service:', error);
     }
 
     logger.info('[JobService] Tarefas agendadas com sucesso.');

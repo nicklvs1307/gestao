@@ -15,6 +15,9 @@ router.post('/saipos/import', upload.single('file'), IntegrationController.impor
 router.get('/uairango', IntegrationController.getUairangoSettings);
 router.put('/uairango', IntegrationController.updateUairangoSettings);
 router.post('/uairango/import', IntegrationController.importUairangoMenu);
+router.post('/uairango/confirm', IntegrationController.confirmUairangoOrder);
+router.post('/uairango/reject', IntegrationController.rejectUairangoOrder);
+router.post('/uairango/ready', IntegrationController.markUairangoReady);
 
 router.get('/ifood', IntegrationController.getIfoodSettings);
 router.put('/ifood', IntegrationController.updateIfoodSettings);
