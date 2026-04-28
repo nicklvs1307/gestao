@@ -202,7 +202,8 @@ class PricingService {
                 price: addon.price,
                 quantity: counts[addon.id],
                 groupName: group.name,
-                isFlavor: group.isFlavorGroup
+                isFlavor: group.isFlavorGroup,
+                saiposIntegrationCode: addon.saiposIntegrationCode || null
             });
         });
     }

@@ -124,7 +124,7 @@ function ProductFormPage() {
                 if (id && id !== 'new') {
                     const product = await getProductById(id);
                     if (product) {
-                        let initialCategoryIds = Array.isArray(product.categories) ? product.categories.map((c: any) => c.id) : (product.categoryId ? [product.categoryId] : []);
+                        let initialCategoryIds = Array.isArray(product.categories) ? product.categories.map((c: any) => c.id) : [];
                         const formattedData = {
                             ...product,
                             categoryIds: initialCategoryIds, 

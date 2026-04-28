@@ -58,7 +58,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
       setTags(productToEdit.tags?.join(', ') || '');
       
       // Carregar categorias (suporta legado e novo array)
-      const initialCats = productToEdit.categoryIds || (productToEdit.categories?.map((c: any) => c.id)) || (productToEdit.categoryId ? [productToEdit.categoryId] : []);
+      const initialCats = productToEdit.categoryIds || (productToEdit.categories?.map((c: any) => c.id)) || [];
       setCategoryIds(initialCats);
 
       setSaiposIntegrationCode(productToEdit.saiposIntegrationCode || ''); 

@@ -66,7 +66,6 @@ export interface Category {
   parentId?: string | null;
   subCategories?: Category[];
   saiposIntegrationCode?: string | null;
-  halfAndHalfRule?: string;
   availableDays?: string;
   startTime?: string;
   endTime?: string;

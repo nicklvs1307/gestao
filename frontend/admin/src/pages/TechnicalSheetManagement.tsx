@@ -185,9 +185,12 @@ const TechnicalSheetManagement = () => {
                     }))
                 });
             } else if (editingTarget.type === 'addon') {
-                // Para adicionais, precisamos atualizar via grupo (ou um novo endpoint se existir)
-                // Por enquanto simularemos o sucesso e recarregaremos
-                toast.warning("Implementando persistência de adicional...");
+                await addonService.updateAddon(editingTarget.id, {
+                    ingredients: newIngredients.map(i => ({
+                        ingredientId: i.ingredientId,
+                        quantity: Number(i.quantity)
+                    }))
+                });
             }
             
             toast.success("Ficha técnica atualizada!");

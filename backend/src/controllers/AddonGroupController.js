@@ -126,6 +126,7 @@ const duplicateAddonGroup = async (req, res) => {
                 type: originalGroup.type,
                 isRequired: originalGroup.isRequired,
                 isFlavorGroup: originalGroup.isFlavorGroup,
+                priceRule: originalGroup.priceRule || 'higher',
                 minQuantity: originalGroup.minQuantity,
                 maxQuantity: originalGroup.maxQuantity,
                 order: originalGroup.order + 1,
@@ -142,6 +143,7 @@ const duplicateAddonGroup = async (req, res) => {
                         promoEndDate: addon.promoEndDate,
                         maxQuantity: addon.maxQuantity,
                         order: addon.order,
+                        saiposIntegrationCode: addon.saiposIntegrationCode,
                         ingredients: {
                             create: addon.ingredients.map(ing => ({
                                 ingredientId: ing.ingredientId,
@@ -166,39 +168,99 @@ const updateAddonGroup = async (req, res) => {
     const { name, type, isRequired, isFlavorGroup, priceRule, minQuantity, maxQuantity, order, saiposIntegrationCode, addons } = req.body;
 
     try {
-        const updatedGroup = await prisma.addonGroup.update({
-            where: { id },
-            data: {
-                name,
-                type,
-                isRequired,
-                isFlavorGroup: isFlavorGroup || false,
-                priceRule: priceRule || 'higher',
-                minQuantity: minQuantity || 0,
-                maxQuantity: maxQuantity || 1,
-                order,
-                saiposIntegrationCode,
-                addons: {
-                    deleteMany: {},
-                    create: addons?.map(addon => ({
+        // Buscar addons existentes do grupo
+        const existingAddons = await prisma.addon.findMany({
+            where: { addonGroupId: id }
+        });
+        
+        const existingAddonIds = new Set(existingAddons.map(a => a.id));
+        const newAddonIds = new Set(addons?.filter(a => a.id).map(a => a.id) || []);
+        
+        // Addons para deletar (existem no DB mas não no payload)
+        const addonIdsToDelete = [...existingAddonIds].filter(id => !newAddonIds.has(id));
+        
+        // Transaction para garantir atomicidade
+        const updatedGroup = await prisma.$transaction(async (tx) => {
+            // 1. Deletar addons removidos
+            if (addonIdsToDelete.length > 0) {
+                await tx.addon.deleteMany({
+                    where: { id: { in: addonIdsToDelete } }
+                });
+            }
+            
+            // 2. Upsert cada addon do payload
+            if (addons && addons.length > 0) {
+                for (const addon of addons) {
+                    const addonData = {
                         name: addon.name,
-                        description: addon.description,
-                        imageUrl: addon.imageUrl,
-                        price: addon.price,
+                        description: addon.description || null,
+                        imageUrl: addon.imageUrl || null,
+                        price: parseFloat(addon.price) || 0,
+                        costPrice: addon.costPrice !== undefined ? parseFloat(addon.costPrice) : 0,
+                        promoPrice: addon.promoPrice !== undefined && addon.promoPrice !== null ? parseFloat(addon.promoPrice) : null,
+                        promoStartDate: addon.promoStartDate ? new Date(addon.promoStartDate) : null,
+                        promoEndDate: addon.promoEndDate ? new Date(addon.promoEndDate) : null,
                         maxQuantity: addon.maxQuantity || 1,
                         order: addon.order || 0,
-                        saiposIntegrationCode: addon.saiposIntegrationCode,
-                        ingredients: {
-                            create: addon.ingredients?.map(ing => ({
-                                ingredientId: ing.ingredientId,
-                                quantity: ing.quantity
-                            })) || []
+                        saiposIntegrationCode: addon.saiposIntegrationCode || null,
+                    };
+                    
+                    if (addon.id && existingAddonIds.has(addon.id)) {
+                        // UPDATE addon existente
+                        await tx.addon.update({
+                            where: { id: addon.id },
+                            data: addonData
+                        });
+                        
+                        // Upsert ingredients (ficha técnica)
+                        await tx.addonIngredient.deleteMany({
+                            where: { addonId: addon.id }
+                        });
+                        if (addon.ingredients && addon.ingredients.length > 0) {
+                            await tx.addonIngredient.createMany({
+                                data: addon.ingredients.map(ing => ({
+                                    addonId: addon.id,
+                                    ingredientId: ing.ingredientId,
+                                    quantity: parseFloat(ing.quantity) || 0
+                                }))
+                            });
                         }
-                    })) || []
+                    } else {
+                        // CREATE novo addon
+                        await tx.addon.create({
+                            data: {
+                                ...addonData,
+                                addonGroup: { connect: { id } },
+                                ingredients: addon.ingredients ? {
+                                    create: addon.ingredients.map(ing => ({
+                                        ingredientId: ing.ingredientId,
+                                        quantity: parseFloat(ing.quantity) || 0
+                                    }))
+                                } : {}
+                            }
+                        });
+                    }
                 }
-            },
-            include: { addons: { include: { ingredients: true } } }
+            }
+            
+            // 3. Atualizar grupo
+            return await tx.addonGroup.update({
+                where: { id },
+                data: {
+                    name,
+                    type: type || 'multiple',
+                    isRequired: isRequired || false,
+                    isFlavorGroup: isFlavorGroup || false,
+                    priceRule: priceRule || 'higher',
+                    minQuantity: minQuantity || 0,
+                    maxQuantity: maxQuantity || 1,
+                    order: order || 0,
+                    saiposIntegrationCode: saiposIntegrationCode || null
+                },
+                include: { addons: { include: { ingredients: true } } }
+            });
         });
+        
         res.json(updatedGroup);
     } catch (error) {
         logger.error(error);
@@ -235,7 +297,7 @@ const reorderGroups = async (req, res) => {
 
 const updateAddon = async (req, res) => {
     const { id } = req.params;
-    const { name, price, order, maxQuantity, costPrice, promoPrice, promoStartDate, promoEndDate, description, imageUrl, saiposIntegrationCode } = req.body;
+    const { name, price, order, maxQuantity, costPrice, promoPrice, promoStartDate, promoEndDate, description, imageUrl, saiposIntegrationCode, ingredients } = req.body;
     
     try {
         const updated = await prisma.addon.update({
@@ -244,9 +306,9 @@ const updateAddon = async (req, res) => {
                 name,
                 price: price !== undefined ? parseFloat(price) : undefined,
                 costPrice: costPrice !== undefined ? parseFloat(costPrice) : undefined,
-                promoPrice: promoPrice !== undefined ? parseFloat(promoPrice) : undefined,
-                promoStartDate: promoStartDate ? new Date(promoStartDate) : undefined,
-                promoEndDate: promoEndDate ? new Date(promoEndDate) : undefined,
+                promoPrice: promoPrice !== undefined && promoPrice !== null ? parseFloat(promoPrice) : null,
+                promoStartDate: promoStartDate ? new Date(promoStartDate) : null,
+                promoEndDate: promoEndDate ? new Date(promoEndDate) : null,
                 order: order !== undefined ? parseInt(order) : undefined,
                 maxQuantity: maxQuantity !== undefined ? parseInt(maxQuantity) : undefined,
                 description,
@@ -254,7 +316,28 @@ const updateAddon = async (req, res) => {
                 saiposIntegrationCode
             }
         });
-        res.json(updated);
+        
+        // Upsert ingredients (ficha técnica) se enviado
+        if (ingredients !== undefined) {
+            await prisma.addonIngredient.deleteMany({ where: { addonId: id } });
+            if (ingredients && ingredients.length > 0) {
+                await prisma.addonIngredient.createMany({
+                    data: ingredients.map(ing => ({
+                        addonId: id,
+                        ingredientId: ing.ingredientId,
+                        quantity: parseFloat(ing.quantity) || 0
+                    }))
+                });
+            }
+        }
+        
+        // Retornar addon atualizado com ingredients
+        const addonWithIngredients = await prisma.addon.findUnique({
+            where: { id },
+            include: { ingredients: { include: { ingredient: true } } }
+        });
+        
+        res.json(addonWithIngredients);
     } catch (error) {
         logger.error(error);
         res.status(500).json({ error: 'Erro ao atualizar adicional individual.' });

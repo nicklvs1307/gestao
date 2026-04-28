@@ -94,6 +94,16 @@ class ProductService {
       throw new AppError('Product with this name already exists in this restaurant', 400);
     }
 
+    // Validação de Preço Zero sem tamanhos ou grupos obrigatórios
+    const hasSizes = data.sizes && data.sizes.length > 0;
+    const hasPrice = data.price && data.price > 0;
+    const hasRequiredAddonGroups = data.addonGroups?.some(g => g.isRequired);
+    
+    if (!hasPrice && !hasSizes && !hasRequiredAddonGroups) {
+      // Apenas avisa (warning) mas não bloqueia - produto pode ter preço específico via promoção
+      console.warn(`[PRODUCT_SERVICE] Produto "${data.name}" criado com preço zero. Considere adicionar preços base ou tamanhos.`);
+    }
+
     const { 
       categoryIds = [], 
       sizes = [], 
@@ -138,7 +148,16 @@ class ProductService {
   }
 
   async updateProduct(id, data, restaurantId) {
-    await this.getProductById(id, restaurantId);
+    const existingProduct = await this.getProductById(id, restaurantId);
+
+    // Validação de Preço Zero sem tamanhos ou grupos obrigatórios
+    const hasSizes = sizes && sizes.length > 0;
+    const hasPrice = productData.price && productData.price > 0;
+    const hasRequiredAddonGroups = addonGroups?.some(g => g.isRequired);
+    
+    if (!hasPrice && !hasSizes && !hasRequiredAddonGroups) {
+      console.warn(`[PRODUCT_SERVICE] Produto "${existingProduct.name}" atualizado com preço zero. Considere adicionar preços base ou tamanhos.`);
+    }
 
     const { 
       id: _id,
@@ -158,31 +177,78 @@ class ProductService {
       addonGroupsOrder = addonGroups.map(g => g.id);
     }
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
-        ...productData,
-        ...(addonGroupsOrder !== undefined && { addonGroupsOrder }),
-        ...(categoryIds && {
-          categories: {
-            set: categoryIds.map((cid) => ({ id: cid })),
-          },
-        }),
-        ...(addonGroups && {
-          addonGroups: {
-            set: addonGroups.map((g) => ({ id: g.id })),
-          },
-        }),
-        ...(ingredients && {
-          ingredients: {
-            deleteMany: {},
-            create: ingredients.map((ing) => ({
-              quantity: ing.quantity,
-              ingredient: { connect: { id: ing.ingredientId } }
-            }))
+    // Buscar sizes existentes para determinar o que fazer
+    const existingSizes = await prisma.size.findMany({
+      where: { productId: id }
+    });
+    const existingSizeIds = new Set(existingSizes.map(s => s.id));
+    const newSizeIds = new Set(sizes?.filter(s => s.id).map(s => s.id) || []);
+    const sizeIdsToDelete = [...existingSizeIds].filter(id => !newSizeIds.has(id));
+
+    const product = await prisma.$transaction(async (tx) => {
+      // Deletar sizes removidos
+      if (sizeIdsToDelete.length > 0) {
+        await tx.size.deleteMany({
+          where: { id: { in: sizeIdsToDelete } }
+        });
+      }
+      
+      // Upsert cada size
+      if (sizes && sizes.length > 0) {
+        for (const size of sizes) {
+          const sizeData = {
+            name: size.name || 'Padrão',
+            price: parseFloat(size.price) || 0,
+            order: size.order || 0,
+            globalSizeId: size.globalSizeId || null,
+            saiposIntegrationCode: size.saiposIntegrationCode || null,
+          };
+          
+          if (size.id && existingSizeIds.has(size.id)) {
+            await tx.size.update({
+              where: { id: size.id },
+              data: sizeData
+            });
+          } else {
+            await tx.size.create({
+              data: {
+                ...sizeData,
+                product: { connect: { id } }
+              }
+            });
           }
-        })
-      },
+        }
+      }
+
+      // Update do produto (mantém o resto)
+      return await tx.product.update({
+        where: { id },
+        data: {
+          ...productData,
+          ...(addonGroupsOrder !== undefined && { addonGroupsOrder }),
+          ...(categoryIds && {
+            categories: { set: categoryIds.map((cid) => ({ id: cid })) },
+          }),
+          ...(addonGroups && {
+            addonGroups: { set: addonGroups.map((g) => ({ id: g.id })) },
+          }),
+          ...(ingredients && {
+            ingredients: {
+              deleteMany: {},
+              create: ingredients.map((ing) => ({
+                quantity: parseFloat(ing.quantity) || 0,
+                ingredient: { connect: { id: ing.ingredientId } }
+              }))
+            }
+          })
+        },
+        include: {
+          sizes: true,
+          categories: true,
+          addonGroups: true,
+          ingredients: { include: { ingredient: true } }
+        }
+      });
     });
 
     return product;
