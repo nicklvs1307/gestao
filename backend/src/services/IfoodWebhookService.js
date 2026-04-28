@@ -152,16 +152,27 @@ class IfoodWebhookService {
   async _handleEventForRestaurant(restaurantId, event) {
     const { code, orderId, id: eventId } = event;
 
+    logger.info(`[IFOOD WEBHOOK] Processando evento ${code} (${eventId}) para pedido ${orderId}`);
+
     switch (code) {
       case 'PLACED':
       case 'PLC':
       case 'CONFIRMED': {
-        const token = await IfoodAuthService.getValidToken();
-        if (token) {
-          const orderDetails = await this._getOrderDetails(orderId, token);
-          if (orderDetails) {
-            await IfoodOrderService.createOrderFromIfood(restaurantId, orderId, orderDetails);
+        try {
+          const token = await IfoodAuthService.getValidToken();
+          if (!token) {
+            logger.error(`[IFOOD WEBHOOK] Sem token para buscar pedido ${orderId}`);
+            break;
           }
+          const orderDetails = await this._getOrderDetails(orderId, token);
+          if (!orderDetails) {
+            logger.error(`[IFOOD WEBHOOK] Não foi possível obter detalles do pedido ${orderId}`);
+            break;
+          }
+          await IfoodOrderService.createOrderFromIfood(restaurantId, orderId, orderDetails);
+          logger.info(`[IFOOD WEBHOOK] Pedido ${orderId} criado/atualizado com sucesso via webhook`);
+        } catch (error) {
+          logger.error(`[IFOOD WEBHOOK] Erro ao criar pedido via webhook: ${error.message}`);
         }
         break;
       }
