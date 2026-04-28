@@ -144,8 +144,12 @@ app.use('/api/uploads', express.static(uploadsPath));
 // ==================================================================
 
 const IfoodWebhookService = require('./src/services/IfoodWebhookService');
-app.post('/webhooks/ifood', (req, res) => IfoodWebhookService.handleWebhook(req, res));
-app.get('/webhooks/ifood', (req, res) => res.status(200).json({ status: 'ok' }));
+app.all('/webhooks/ifood*', (req, res) => {
+  if (req.method === 'GET') {
+    return res.status(200).json({ status: 'ok' });
+  }
+  return IfoodWebhookService.handleWebhook(req, res);
+});
 
 // ==================================================================
 // ROTAS
