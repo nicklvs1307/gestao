@@ -6,7 +6,7 @@ const IfoodAuthService = require('./IfoodAuthService');
 const prisma = require('../lib/prisma');
 
 const _processedEventIds = new Set();
-const _lastCleanup = Date.now();
+let _lastCleanup = Date.now();
 
 class IfoodWebhookService {
 
