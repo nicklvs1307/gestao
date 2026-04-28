@@ -14,7 +14,8 @@ class IfoodPollingService {
 
   /**
    * Inicia o cron job de polling de eventos do iFood.
-   * Roda a cada 30 segundos para todos os restaurantes com integração ativa.
+   * Modelo centralizado: polling é fallback quando webhook não está disponível.
+   * Roda a cada 30 segundos.
    */
   init() {
     this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
@@ -26,7 +27,7 @@ class IfoodPollingService {
       this.isPolling = true;
 
       try {
-        await this.pollAllRestaurants();
+        await this.pollEvents();
       } catch (error) {
         logger.error('[IFOOD POLLING] Erro geral no polling:', error.message);
       } finally {
@@ -34,7 +35,7 @@ class IfoodPollingService {
       }
     });
 
-    logger.info('[IFOOD POLLING] Serviço de polling iniciado (a cada 30 segundos)');
+    logger.info('[IFOOD POLLING] Serviço de polling iniciado (fallback a cada 30 segundos)');
   }
 
   /**
@@ -48,42 +49,39 @@ class IfoodPollingService {
   }
 
   /**
-   * Faz polling de eventos para todos os restaurantes com integração iFood ativa.
+   * Faz polling de eventos usando token centralizado.
+   * Modelo centralizado: usa header x-polling-merchants para filtrar por loja.
    */
-  async pollAllRestaurants() {
-    const settings = await prisma.integrationSettings.findMany({
-      where: { ifoodIntegrationActive: true }
-    });
-
-    if (settings.length === 0) return;
-
-    for (const setting of settings) {
-      try {
-        await this.pollRestaurant(setting.restaurantId);
-      } catch (error) {
-        logger.error(`[IFOOD POLLING] Erro ao processar restaurante ${setting.restaurantId}:`, error.message);
-      }
-    }
-  }
-
-  /**
-   * Faz polling de eventos para um restaurante específico.
-   */
-  async pollRestaurant(restaurantId) {
-    const token = await IfoodAuthService.getValidToken(restaurantId);
+  async pollEvents() {
+    const token = await IfoodAuthService.getValidToken();
 
     if (!token) {
-      logger.debug(`[IFOOD POLLING] Sem token válido para restaurante ${restaurantId}`);
+      logger.debug('[IFOOD POLLING] Sem token válido, pulando...');
       return;
     }
 
     try {
+      const settings = await prisma.integrationSettings.findMany({
+        where: { ifoodIntegrationActive: true }
+      });
+
+      if (settings.length === 0) return;
+
+      const merchantIds = settings.map(s => s.ifoodMerchantId).filter(Boolean);
+
+      if (merchantIds.length === 0) {
+        logger.debug('[IFOOD POLLING] Nenhum merchant ID configurado');
+        return;
+      }
+
       const response = await axios.get(
-        `${this.BASE_URL}/order/v1.0/events:polling`,
+        `${this.BASE_URL}/events/v1.0/events:polling`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-polling-merchants': merchantIds.join(','),
+            'excludeHeartbeat': 'true'
           },
           timeout: 15000
         }
@@ -93,61 +91,71 @@ class IfoodPollingService {
 
       if (events.length === 0) return;
 
-      logger.info(`[IFOOD POLLING] ${events.length} evento(s) recebido(s) para restaurante ${restaurantId}`);
+      logger.info(`[IFOOD POLLING] ${events.length} evento(s) recebido(s)`);
 
       const processedEventIds = [];
 
       for (const event of events) {
         try {
-          await this.processEvent(restaurantId, event, token);
+          await this.processEvent(event, token);
           processedEventIds.push(event.id);
         } catch (error) {
           logger.error(`[IFOOD POLLING] Erro ao processar evento ${event.id}:`, error.message);
-          // Mesmo com erro, faz acknowledgment para nao reprocessar infinitamente
           processedEventIds.push(event.id);
         }
       }
 
-      // Acknowledgment dos eventos processados
       if (processedEventIds.length > 0) {
         await this.acknowledgeEvents(token, processedEventIds);
       }
     } catch (error) {
       if (error.response?.status === 304) {
-        // 304 = Nenhum evento novo (Not Modified) -- comportamento normal
         return;
       }
 
       if (error.response?.status === 401) {
-        logger.warn(`[IFOOD POLLING] Token expirado para restaurante ${restaurantId}. Tentando renovar...`);
-        await IfoodAuthService.refreshAccessToken(restaurantId);
+        logger.warn('[IFOOD POLLING] Token expirado. Tentando renovar...');
+        await IfoodAuthService.getValidToken();
         return;
       }
 
       if (error.response?.status === 429) {
-        logger.warn(`[IFOOD POLLING] Rate limit atingido para restaurante ${restaurantId}. Aguardando...`);
+        logger.warn('[IFOOD POLLING] Rate limit atingido. Aguardando...');
         return;
       }
 
-      logger.error(`[IFOOD POLLING] Erro HTTP ao fazer polling para ${restaurantId}:`, 
+      logger.error('[IFOOD POLLING] Erro HTTP:', 
         error.response?.status, error.response?.data || error.message);
     }
   }
 
   /**
    * Processa um evento individual do iFood.
-   * Eventos de pedido (PLACED, CONFIRMED) buscam detalhes completos antes de criar.
    */
-  async processEvent(restaurantId, event, token) {
-    const { code, orderId, id: eventId } = event;
+  async processEvent(event, token) {
+    const { code, orderId, id: eventId, merchantId } = event;
 
     logger.info(`[IFOOD POLLING] Processando evento ${code} (${eventId}) para pedido ${orderId}`);
+
+    const settings = await prisma.integrationSettings.findMany({
+      where: { ifoodIntegrationActive: true }
+    });
+
+    const setting = merchantId 
+      ? settings.find(s => s.ifoodMerchantId === merchantId)
+      : settings[0];
+
+    const restaurantId = setting?.restaurantId;
+
+    if (!restaurantId) {
+      logger.warn(`[IFOOD POLLING] Restaurant não encontrado para merchant ${merchantId}`);
+      return;
+    }
 
     switch (code) {
       case 'PLACED':
       case 'PLC':
       case 'CONFIRMED': {
-        // Buscar detalhes completos do pedido na API do iFood
         const orderDetails = await this.getOrderDetails(orderId, token);
         if (orderDetails) {
           await IfoodOrderService.createOrderFromIfood(restaurantId, orderId, orderDetails);
@@ -161,15 +169,14 @@ class IfoodPollingService {
         await IfoodOrderService.cancelOrderFromIfood(restaurantId, orderId);
         break;
 
-      case 'ORDER_PATCHED':
-        // Buscar detalhes atualizados
+      case 'ORDER_PATCHED': {
         const updatedDetails = await this.getOrderDetails(orderId, token);
         if (updatedDetails) {
           await IfoodOrderService.updateOrderFromIfood(restaurantId, orderId, updatedDetails);
         }
         break;
+      }
 
-      // Eventos de status que atualizam o pedido localmente
       case 'READY_TO_PICKUP':
         await this.updateLocalOrderStatus(restaurantId, orderId, 'READY');
         break;
@@ -191,9 +198,6 @@ class IfoodPollingService {
     }
   }
 
-  /**
-   * Busca detalhes completos de um pedido na API do iFood.
-   */
   async getOrderDetails(orderId, token) {
     try {
       const response = await axios.get(
@@ -206,7 +210,6 @@ class IfoodPollingService {
           timeout: 10000
         }
       );
-
       return response.data;
     } catch (error) {
       logger.error(`[IFOOD POLLING] Erro ao buscar detalhes do pedido ${orderId}:`, 
@@ -215,14 +218,10 @@ class IfoodPollingService {
     }
   }
 
-  /**
-   * Envia acknowledgment dos eventos processados para o iFood.
-   * Isso sinaliza ao iFood que os eventos foram recebidos e processados.
-   */
   async acknowledgeEvents(token, eventIds) {
     try {
       await axios.post(
-        `${this.BASE_URL}/order/v1.0/events/acknowledgment`,
+        `${this.BASE_URL}/events/v1.0/events/acknowledgment`,
         eventIds.map(id => ({ id })),
         {
           headers: {
@@ -232,17 +231,13 @@ class IfoodPollingService {
           timeout: 10000
         }
       );
-
-      logger.info(`[IFOOD POLLING] ${eventIds.length} evento(s) confirmado(s) (ack)`);
+      logger.info(`[IFOOD POLLING] ${eventIds.length} evento(s) confirmado(s)`);
     } catch (error) {
       logger.error('[IFOOD POLLING] Erro ao enviar acknowledgment:', 
         error.response?.status, error.response?.data || error.message);
     }
   }
 
-  /**
-   * Atualiza o status local de um pedido baseado em evento do iFood.
-   */
   async updateLocalOrderStatus(restaurantId, ifoodOrderId, newStatus) {
     try {
       const order = await prisma.order.findFirst({
@@ -256,7 +251,6 @@ class IfoodPollingService {
 
       const statusUpdateData = { status: newStatus };
 
-      // Adicionar timestamps específicos
       if (newStatus === 'READY') statusUpdateData.readyAt = new Date();
       if (newStatus === 'COMPLETED') statusUpdateData.completedAt = new Date();
 
@@ -272,15 +266,12 @@ class IfoodPollingService {
         source: 'IFOOD'
       });
 
-      logger.info(`[IFOOD POLLING] Pedido ${order.id} atualizado para ${newStatus} via iFood`);
+      logger.info(`[IFOOD POLLING] Pedido ${order.id} atualizado para ${newStatus}`);
     } catch (error) {
-      logger.error(`[IFOOD POLLING] Erro ao atualizar status do pedido ${ifoodOrderId}:`, error.message);
+      logger.error(`[IFOOD POLLING] Erro ao atualizar status:`, error.message);
     }
   }
 
-  /**
-   * Lida com pedidos de cancelamento vindo do consumidor/iFood.
-   */
   async handleCancellationRequest(restaurantId, ifoodOrderId, event) {
     try {
       const order = await prisma.order.findFirst({
@@ -297,9 +288,9 @@ class IfoodPollingService {
         source: 'IFOOD'
       });
 
-      logger.info(`[IFOOD POLLING] Solicitação de cancelamento recebida para pedido ${order.id}`);
+      logger.info(`[IFOOD POLLING] Solicitação de cancelamento para pedido ${order.id}`);
     } catch (error) {
-      logger.error(`[IFOOD POLLING] Erro ao processar solicitação de cancelamento:`, error.message);
+      logger.error(`[IFOOD POLLING] Erro ao processar cancelamento:`, error.message);
     }
   }
 }

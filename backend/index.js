@@ -140,6 +140,13 @@ app.use('/uploads', express.static(uploadsPath));
 app.use('/api/uploads', express.static(uploadsPath));
 
 // ==================================================================
+// WEBHOOKS (sem autenticação)
+// ==================================================================
+
+const IfoodWebhookService = require('./src/services/IfoodWebhookService');
+app.post('/webhooks/ifood', (req, res) => IfoodWebhookService.handleWebhook(req, res));
+
+// ==================================================================
 // ROTAS
 // ==================================================================
 

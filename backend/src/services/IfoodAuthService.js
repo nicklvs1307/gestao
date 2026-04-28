@@ -1,15 +1,10 @@
 const axios = require('axios');
 const logger = require('../config/logger');
-const prisma = require('../lib/prisma');
 
 const BASE_URL = 'https://merchant-api.ifood.com.br';
 
 class IfoodAuthService {
 
-  /**
-   * Retorna clientId e clientSecret centralizados (Docker secrets / .env).
-   * Lança erro se não estiverem configurados.
-   */
   _getCredentials() {
     const clientId = process.env.IFOOD_CLIENT_ID;
     const clientSecret = process.env.IFOOD_CLIENT_SECRET;
@@ -21,60 +16,13 @@ class IfoodAuthService {
     return { clientId, clientSecret };
   }
 
-  async requestUserCode(restaurantId) {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
-
-    const { clientId } = this._getCredentials();
-
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/authentication/v1.0/oauth/userCode`,
-        null,
-        {
-          params: { clientId },
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        }
-      );
-
-      const { userCode, authorizationCodeVerifier, verificationUrlComplete, expiresIn } = response.data;
-
-      await prisma.integrationSettings.update({
-        where: { restaurantId },
-        data: {
-          ifoodAuthCodeVerifier: authorizationCodeVerifier,
-          ifoodAccessTokenExpiresAt: new Date(Date.now() + expiresIn * 1000)
-        }
-      });
-
-      logger.info(`[IFOOD AUTH] Código de vinculação gerado para ${restaurantId}: ${userCode}`);
-
-      return {
-        userCode,
-        authorizationCodeVerifier,
-        verificationUrlComplete,
-        expiresIn
-      };
-    } catch (error) {
-      logger.error('[IFOOD AUTH] Erro ao solicitar código de vinculação:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.error?.message || 'Falha ao solicitar código de vinculação');
-    }
-  }
-
-  async completeLink(restaurantId, authorizationCode) {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
-
-    if (!settings?.ifoodAuthCodeVerifier) {
-      throw new Error('Código verificador não encontrado. Inicie o processo de vinculação novamente.');
-    }
-
+  /**
+   * Obtém token de acesso usando grant type client_credentials.
+   * Modelo centralizado: mesmo token para todas as lojas.
+   * Token expira em 6 horas (21600s).
+   */
+  async requestAccessToken() {
     const { clientId, clientSecret } = this._getCredentials();
-    const authorizationCodeVerifier = settings.ifoodAuthCodeVerifier;
 
     try {
       const response = await axios.post(
@@ -82,214 +30,105 @@ class IfoodAuthService {
         null,
         {
           params: {
-            grantType: 'authorization_code',
+            grantType: 'client_credentials',
             clientId,
-            clientSecret,
-            authorizationCode,
-            authorizationCodeVerifier
+            clientSecret
           },
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
-          }
+          },
+          timeout: 15000
         }
       );
 
-      const { accessToken, refreshToken, expiresIn, type } = response.data;
+      const { accessToken, expiresIn } = response.data;
+
+      if (!accessToken) {
+        throw new Error('Token de acesso não retornado pela API iFood');
+      }
 
       const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-      await prisma.integrationSettings.update({
-        where: { restaurantId },
-        data: {
-          ifoodAccessToken: accessToken,
-          ifoodRefreshToken: refreshToken,
-          ifoodAccessTokenExpiresAt: expiresAt,
-          ifoodIntegrationActive: true,
-          ifoodAuthCodeVerifier: null  // Limpar verifier após uso
-        }
-      });
-
-      logger.info(`[IFOOD AUTH] Tokens armazenados para ${restaurantId}. Expira em: ${expiresAt}`);
+      logger.info(`[IFOOD AUTH] Token obtido. Expira em ${expiresIn}s (${new Date(expiresAt).toISOString()})`);
 
       return {
-        type,
+        accessToken,
         expiresAt,
         expiresIn
       };
     } catch (error) {
-      logger.error('[IFOOD AUTH] Erro ao trocar código por token:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.error?.message || 'Falha ao completar vinculação. Verifique o código e tente novamente.');
+      logger.error('[IFOOD AUTH] Erro ao obter token:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.error?.message || 'Falha ao obter token de acesso');
     }
   }
 
-  async refreshAccessToken(restaurantId) {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
-
-    if (!settings?.ifoodIntegrationActive) {
-      return null;
-    }
-
-    if (!settings?.ifoodRefreshToken) {
-      logger.warn(`[IFOOD AUTH] Refresh token não encontrado para ${restaurantId}`);
-      return null;
-    }
-
+  /**
+   * Obtém token válido ou renova se necessário.
+   * Gerencia token em memória para todas as requisições.
+   */
+  async getValidToken() {
     const { clientId, clientSecret } = this._getCredentials();
-    const refreshToken = settings.ifoodRefreshToken;
+
+    if (!clientId || !clientSecret) {
+      logger.warn('[IFOOD AUTH] Credenciais não configuradas');
+      return null;
+    }
+
+    const now = new Date();
+
+    if (this._cachedToken && this._tokenExpiresAt && this._tokenExpiresAt > now) {
+      if ((this._tokenExpiresAt - now) > 5 * 60 * 1000) {
+        return this._cachedToken;
+      }
+      logger.info('[IFOOD AUTH] Token expirando em breve, renovando...');
+    }
 
     try {
-      const response = await axios.post(
-        `${BASE_URL}/authentication/v1.0/oauth/token`,
-        null,
-        {
-          params: {
-            grantType: 'refresh_token',
-            clientId,
-            clientSecret,
-            refreshToken
-          },
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        }
-      );
+      const result = await this.requestAccessToken();
+      this._cachedToken = result.accessToken;
+      this._tokenExpiresAt = result.expiresAt;
+      this._tokenExpiresIn = result.expiresIn;
 
-      const { accessToken, refreshToken: newRefreshToken, expiresIn } = response.data;
-
-      const expiresAt = new Date(Date.now() + expiresIn * 1000);
-
-      await prisma.integrationSettings.update({
-        where: { restaurantId },
-        data: {
-          ifoodAccessToken: accessToken,
-          ifoodRefreshToken: newRefreshToken || refreshToken,
-          ifoodAccessTokenExpiresAt: expiresAt
-        }
-      });
-
-      logger.info(`[IFOOD AUTH] Token renovado para ${restaurantId}. Novo acesso: ${expiresAt}`);
-
-      return {
-        accessToken,
-        refreshToken: newRefreshToken || refreshToken,
-        expiresAt
-      };
+      return this._cachedToken;
     } catch (error) {
-      logger.error('[IFOOD AUTH] Erro ao renovar token:', error.response?.data || error.message);
-      
-      if (error.response?.status === 401) {
-        logger.warn(`[IFOOD AUTH] Refresh token expirado ou inválido para ${restaurantId}. Desativando integração.`);
-        
-        await prisma.integrationSettings.update({
-          where: { restaurantId },
-          data: {
-            ifoodIntegrationActive: false,
-            ifoodAccessToken: null,
-            ifoodRefreshToken: null,
-            ifoodAccessTokenExpiresAt: null
-          }
-        });
-      }
-      
+      logger.error('[IFOOD AUTH] Erro ao obter token válido:', error.message);
       return null;
     }
   }
 
-  async getValidToken(restaurantId) {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
+  /**
+   * Verifica se o token está configurado e válido (sem renewal automático).
+   */
+  async checkConnectionStatus() {
+    const { clientId, clientSecret } = this._getCredentials();
 
-    if (!settings?.ifoodIntegrationActive) {
-      return null;
-    }
-
-    if (!process.env.IFOOD_CLIENT_ID || !process.env.IFOOD_CLIENT_SECRET) {
-      return null;
-    }
-
-    const expiresAt = settings.ifoodAccessTokenExpiresAt;
-    const accessToken = settings.ifoodAccessToken;
-
-    if (!accessToken) {
-      return null;
-    }
-
-    if (expiresAt && new Date(expiresAt) <= new Date(Date.now() + 5 * 60 * 1000)) {
-      logger.info(`[IFOOD AUTH] Token expirando em breve para ${restaurantId}. Renovando...`);
-      
-      const refreshed = await this.refreshAccessToken(restaurantId);
-      
-      if (!refreshed) {
-        return null;
-      }
-      
-      return refreshed.accessToken;
-    }
-
-    return accessToken;
-  }
-
-  async disconnect(restaurantId) {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
-
-    if (!settings) {
-      return { success: true };
-    }
-
-    await prisma.integrationSettings.update({
-      where: { restaurantId },
-      data: {
-        ifoodAccessToken: null,
-        ifoodRefreshToken: null,
-        ifoodAccessTokenExpiresAt: null,
-        ifoodAuthCodeVerifier: null,
-        ifoodIntegrationActive: false
-      }
-    });
-
-    logger.info(`[IFOOD AUTH] Integração desconectada para ${restaurantId}`);
-
-    return { success: true };
-  }
-
-  async checkConnectionStatus(restaurantId) {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
-
-    if (!settings?.ifoodIntegrationActive) {
+    if (!clientId || !clientSecret) {
       return {
         connected: false,
-        status: 'disconnected',
-        message: 'Integração não está ativa'
+        status: 'not_configured',
+        message: 'Credenciais não configuradas no sistema'
       };
     }
 
-    if (!settings.ifoodAccessToken || !settings.ifoodRefreshToken) {
+    if (!this._cachedToken) {
       return {
         connected: false,
-        status: 'invalid',
-        message: 'Tokens não configurados'
-      };
-    }
-
-    const expiresAt = settings.ifoodAccessTokenExpiresAt;
-    
-    if (!expiresAt) {
-      return {
-        connected: true,
-        status: 'no_expiry',
-        message: 'Token configurado (sem informação de expiração)'
+        status: 'no_token',
+        message: 'Token ainda não requerido'
       };
     }
 
     const now = new Date();
-    const expires = new Date(expiresAt);
+    const expires = this._tokenExpiresAt;
+
+    if (!expires) {
+      return {
+        connected: true,
+        status: 'active',
+        message: 'Token ativo (sem informação de expiração)'
+      };
+    }
+
     const minutesUntilExpiry = Math.floor((expires - now) / 1000 / 60);
 
     if (minutesUntilExpiry <= 0) {
@@ -297,16 +136,64 @@ class IfoodAuthService {
         connected: false,
         status: 'expired',
         message: 'Token expirado',
-        expiresAt
+        expiresAt: expires
       };
     }
 
     return {
       connected: true,
-      status: 'connected',
+      status: 'active',
       message: `Token válido (expira em ${minutesUntilExpiry} min)`,
-      expiresAt
+      expiresAt: expires
     };
+  }
+
+  /**
+   * Desconecta a integração (limpa cache).
+   */
+  async disconnect() {
+    this._cachedToken = null;
+    this._tokenExpiresAt = null;
+    this._tokenExpiresIn = null;
+
+    logger.info('[IFOOD AUTH] Integração desconectada (cache limpo)');
+
+    return { success: true };
+  }
+
+  /**
+   * Inicia o job de renovação automática de token.
+   * Deve ser chamado na inicialização do app.
+   */
+  initTokenRefreshJob(schedulerFn) {
+    if (this._refreshJobInterval) {
+      logger.info('[IFOOD AUTH] Job de renovação já está ativo');
+      return;
+    }
+
+    logger.info('[IFOOD AUTH] Iniciando job de renovação automática (a cada 5 minutos)');
+
+    this._refreshJobInterval = setInterval(async () => {
+      try {
+        const token = await this.getValidToken();
+        if (token) {
+          logger.debug('[IFOOD AUTH] Token renovado com sucesso');
+        }
+      } catch (error) {
+        logger.error('[IFOOD AUTH] Erro na renovação:', error.message);
+      }
+    }, 5 * 60 * 1000);
+  }
+
+  /**
+   * Para o job de renovação.
+   */
+  stopTokenRefreshJob() {
+    if (this._refreshJobInterval) {
+      clearInterval(this._refreshJobInterval);
+      this._refreshJobInterval = null;
+      logger.info('[IFOOD AUTH] Job de renovação parado');
+    }
   }
 }
 

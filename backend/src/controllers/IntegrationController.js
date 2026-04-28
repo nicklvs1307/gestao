@@ -136,7 +136,6 @@ const getIfoodSettings = async (req, res) => {
             });
         }
 
-        // Indica ao frontend se as credenciais da plataforma estão configuradas
         const credentialsConfigured = !!(process.env.IFOOD_CLIENT_ID && process.env.IFOOD_CLIENT_SECRET);
 
         res.json({
@@ -150,11 +149,11 @@ const getIfoodSettings = async (req, res) => {
 };
 
 const updateIfoodSettings = async (req, res) => {
-    const { ifoodRestaurantId, ifoodIntegrationActive, ifoodEnv } = req.body;
+    const { ifoodMerchantId, ifoodIntegrationActive, ifoodEnv } = req.body;
 
     try {
         const updateData = {
-            ifoodRestaurantId,
+            ifoodMerchantId,
             ifoodIntegrationActive,
             ifoodEnv
         };
@@ -244,52 +243,9 @@ const markIfoodReady = async (req, res) => {
     }
 };
 
-const initiateIfoodLink = async (req, res) => {
-    try {
-        if (!process.env.IFOOD_CLIENT_ID || !process.env.IFOOD_CLIENT_SECRET) {
-            return res.status(400).json({ 
-                error: 'Credenciais da plataforma iFood não configuradas. Contate o administrador do sistema.',
-                hasCredentials: false 
-            });
-        }
-
-        const result = await IfoodAuthService.requestUserCode(req.restaurantId);
-        res.json(result);
-    } catch (error) {
-        logger.error('[IFOOD] Erro ao iniciar vinculação:', error);
-        res.status(500).json({ error: error.message || 'Erro ao iniciar vinculação' });
-    }
-};
-
-const completeIfoodLink = async (req, res) => {
-    try {
-        const { authorizationCode } = req.body;
-
-        if (!authorizationCode) {
-            return res.status(400).json({ error: 'Código de autorização é obrigatório' });
-        }
-
-        const result = await IfoodAuthService.completeLink(req.restaurantId, authorizationCode);
-        res.json(result);
-    } catch (error) {
-        logger.error('[IFOOD] Erro ao completar vinculação:', error);
-        res.status(500).json({ error: error.message || 'Erro ao completar vinculação' });
-    }
-};
-
-const disconnectIfood = async (req, res) => {
-    try {
-        const result = await IfoodAuthService.disconnect(req.restaurantId);
-        res.json(result);
-    } catch (error) {
-        logger.error('[IFOOD] Erro ao desconectar:', error);
-        res.status(500).json({ error: error.message || 'Erro ao desconectar' });
-    }
-};
-
 const getIfoodConnectionStatus = async (req, res) => {
     try {
-        const status = await IfoodAuthService.checkConnectionStatus(req.restaurantId);
+        const status = await IfoodAuthService.checkConnectionStatus();
         res.json(status);
     } catch (error) {
         logger.error('[IFOOD] Erro ao verificar status:', error);

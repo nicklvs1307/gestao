@@ -345,6 +345,7 @@ class IfoodOrderService {
 
   /**
    * Helper interno: busca pedido e obtém token válido via IfoodAuthService.
+   * Modelo centralizado: usa token global da aplicação.
    * Retorna { order, token } ou { success: false, error }.
    */
   async _getOrderAndToken(orderId) {
@@ -361,10 +362,10 @@ class IfoodOrderService {
       return { success: false, error: 'Pedido não encontrado ou não é do iFood' };
     }
 
-    const token = await IfoodAuthService.getValidToken(order.restaurant.id);
+    const token = await IfoodAuthService.getValidToken();
 
     if (!token) {
-      return { success: false, error: 'Token iFood expirado ou indisponível. Reconecte a integração.' };
+      return { success: false, error: 'Token iFood expirado ou indisponível. Verifique as credenciais.' };
     }
 
     return { order, token };
