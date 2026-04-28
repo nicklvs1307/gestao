@@ -5,12 +5,28 @@ const IfoodOrderService = require('./IfoodOrderService');
 const IfoodAuthService = require('./IfoodAuthService');
 const prisma = require('../lib/prisma');
 
+const _processedEventIds = new Set();
+const _lastCleanup = Date.now();
+
 class IfoodWebhookService {
 
   constructor() {
     this.BASE_URL = 'https://merchant-api.ifood.com.br';
     this._processingQueue = [];
     this._isProcessing = false;
+  }
+
+  _isEventProcessed(eventId) {
+    return _processedEventIds.has(eventId);
+  }
+
+  _markEventProcessed(eventId) {
+    const now = Date.now();
+    if (now - _lastCleanup > 5 * 60 * 1000) {
+      _processedEventIds.clear();
+      _lastCleanup = now;
+    }
+    _processedEventIds.add(eventId);
   }
 
   /**
@@ -55,20 +71,22 @@ class IfoodWebhookService {
     const rawBody = JSON.stringify(req.body);
     const signature = req.headers['x-ifood-signature'];
 
-    logger.info(`[IFOOD WEBHOOK] Recebidoevento(s): ${req.body?.length || 1}`);
+    logger.info(`[IFOOD WEBHOOK] Recebido evento(s): ${req.body?.length || 1}`);
 
     res.status(202).json({ received: true });
-
-    if (!this.validateSignature(rawBody, signature)) {
-      logger.warn('[IFOOD WEBHOOK] Assinatura inválida, evento ignorado');
-      return;
-    }
 
     const events = Array.isArray(req.body) ? req.body : [req.body];
     const eventCount = events.length;
 
     for (const event of events) {
+      if (this._isEventProcessed(event.id)) {
+        logger.info(`[IFOOD WEBHOOK] Evento ${event.id} já processado, ignorando`);
+        continue;
+      }
+
+      this._markEventProcessed(event.id);
       this._processingQueue.push(event);
+      logger.info(`[IFOOD WEBHOOK] Evento ${event.id} (${event.code}) enfileirado para processamento`);
     }
 
     this._processQueue();

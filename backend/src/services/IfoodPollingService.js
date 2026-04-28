@@ -4,6 +4,10 @@ const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const IfoodAuthService = require('./IfoodAuthService');
 const IfoodOrderService = require('./IfoodOrderService');
+const IfoodWebhookService = require('./IfoodWebhookService');
+
+// Polling agora é apenas fallback - verifica se webhook já processou o evento
+const FALLBACK_MODE = true;
 
 class IfoodPollingService {
   constructor() {
@@ -12,12 +16,16 @@ class IfoodPollingService {
     this.BASE_URL = 'https://merchant-api.ifood.com.br';
   }
 
-  /**
-   * Inicia o cron job de polling de eventos do iFood.
-   * Modelo centralizado: polling é fallback quando webhook não está disponível.
-   * Roda a cada 30 segundos.
-   */
+/**
+    * Inicia o cron job de polling de eventos do iFood.
+    * ATENÇÃO: Polling agora é apenas FALLBACK quando webhook não funcionar.
+    * Rode a cada 30 segundos apenas como backup.
+    */
   init() {
+    if (FALLBACK_MODE) {
+      logger.info('[IFOOD POLLING] Modo FALLBACK ativado - apenas backup do webhook');
+    }
+
     this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
       if (this.isPolling) {
         logger.debug('[IFOOD POLLING] Polling anterior ainda em execução, pulando...');
@@ -131,6 +139,7 @@ class IfoodPollingService {
 
   /**
    * Processa um evento individual do iFood.
+   * Ignora eventos já processados pelo webhook.
    */
   async processEvent(event, token) {
     const { code, orderId, id: eventId, merchantId } = event;
