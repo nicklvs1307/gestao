@@ -22,7 +22,6 @@ const GlobalOrderMonitor: React.FC = () => {
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isAutoAccept, setIsAutoAccept] = useState(false);
   const [isAutoPrint, setIsAutoPrint] = useState(true);
-  const [socketReady, setSocketReady] = useState(false);
   
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -122,8 +121,6 @@ const GlobalOrderMonitor: React.FC = () => {
   useEffect(() => {
     if (isKdsPage || !hasUser()) return;
 
-    setSocketReady(isConnected);
-
     const handleOrderUpdate = (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
       if (!updatedOrder || !updatedOrder.id) return;
@@ -180,7 +177,7 @@ const GlobalOrderMonitor: React.FC = () => {
       off('order_update', handleOrderUpdate);
       off('new_order', handleNewOrder);
     };
-  }, [isKdsPage, hasUser, isAutoAccept, isConnected, on, off, playNotificationSound]);
+  }, [isKdsPage, hasUser, isAutoAccept, on, off, playNotificationSound]);
 
   // SSE Effect - Fallback when socket fails
   useEffect(() => {

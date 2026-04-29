@@ -53,7 +53,10 @@ export function connectSocket(): void {
     s.io.opts.auth = {
       token: token || ''
     };
+    console.log('[SOCKET] Connecting with restaurantId:', restaurantId);
     s.connect();
+  } else {
+    console.log('[SOCKET] Already connected');
   }
 }
 

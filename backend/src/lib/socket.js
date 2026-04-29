@@ -69,6 +69,7 @@ module.exports = {
   },
   emitToRestaurant: (restaurantId, event, data) => {
     if (io) {
+      console.log(`[SOCKET] Emitting '${event}' to restaurant_${restaurantId}`, data);
       io.to(`restaurant_${restaurantId}`).emit(event, data);
     }
   }
