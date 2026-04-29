@@ -3,7 +3,6 @@ const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const IfoodAuthService = require('./IfoodAuthService');
-const OrderService = require('./OrderService');
 const OrderNumberService = require('./OrderNumberService');
 
 const BASE_URL = 'https://merchant-api.ifood.com.br';
