@@ -48,9 +48,9 @@ const OrderManagement: React.FC = () => {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
   const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
-  const [orderIdPendingDriver, setOrderIdPendingDriver] = useState<string | null>(null);
+  const [pendingDriverOrderIds, setPendingDriverOrderIds] = useState<string[]>([]);
   const [newStatusPendingDriver, setNewStatusPendingDriver] = useState<string | null>(null);
-  const statusChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const statusChangeTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Debounce search input
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,7 +150,7 @@ const OrderManagement: React.FC = () => {
   }, [on, off, fetchOrders]);
 
   const handleStatusChange = useCallback(async (orderId: string, newStatus: string) => {
-    if (statusChangeTimeoutRef.current) return;
+    if (statusChangeTimeoutsRef.current.has(orderId)) return;
     
     if (newStatus === 'SHIPPED') {
       const order = allOrders.find(o => o.id === orderId);
@@ -158,17 +158,22 @@ const OrderManagement: React.FC = () => {
       const isPickup = order?.deliveryOrder?.deliveryType === 'retirada' || order?.deliveryOrder?.deliveryType === 'pickup';
       
       if (isDelivery && !isPickup && !order?.deliveryOrder?.driverId) {
-        setOrderIdPendingDriver(orderId);
-        setNewStatusPendingDriver(newStatus);
-        setIsDriverModalOpen(true);
+        setPendingDriverOrderIds(prev => prev.includes(orderId) ? prev : [...prev, orderId]);
+        if (!newStatusPendingDriver) {
+          setNewStatusPendingDriver(newStatus);
+        }
+        if (!isDriverModalOpen) {
+          setIsDriverModalOpen(true);
+        }
         return;
       }
     }
 
     try {
-      statusChangeTimeoutRef.current = setTimeout(() => {
-        statusChangeTimeoutRef.current = null;
+      const timeout = setTimeout(() => {
+        statusChangeTimeoutsRef.current.delete(orderId);
       }, 300);
+      statusChangeTimeoutsRef.current.set(orderId, timeout);
       
       setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       setSelectedOrder(current => current && current.id === orderId ? { ...current, status: newStatus } : current);
@@ -179,43 +184,49 @@ const OrderManagement: React.FC = () => {
       toast.error("Erro ao atualizar status");
       fetchOrders();
     } finally {
-      if (statusChangeTimeoutRef.current) {
-        clearTimeout(statusChangeTimeoutRef.current);
-        statusChangeTimeoutRef.current = null;
+      const timeout = statusChangeTimeoutsRef.current.get(orderId);
+      if (timeout) {
+        clearTimeout(timeout);
+        statusChangeTimeoutsRef.current.delete(orderId);
       }
     }
   }, [allOrders, fetchOrders]);
 
   const handleDriverSelect = useCallback(async (driverId: string) => {
-    if (!orderIdPendingDriver) return;
+    if (pendingDriverOrderIds.length === 0) return;
     
     try {
       setIsLoading(true);
-      await assignDriver(orderIdPendingDriver, driverId);
-      
-      setAllOrders(prev => prev.map(o => o.id === orderIdPendingDriver ? { 
-        ...o, 
-        deliveryOrder: o.deliveryOrder ? { ...o.deliveryOrder, driverId } : { driverId } as any 
-      } : o));
-
-      toast.success("Entregador vinculado!");
       
       const targetStatus = newStatusPendingDriver;
-      const targetId = orderIdPendingDriver;
+      const idsToProcess = [...pendingDriverOrderIds];
+      
+      for (const orderId of idsToProcess) {
+        await assignDriver(orderId, driverId);
+        
+        setAllOrders(prev => prev.map(o => o.id === orderId ? { 
+          ...o, 
+          deliveryOrder: o.deliveryOrder ? { ...o.deliveryOrder, driverId } : { driverId } as any 
+        } : o));
+      }
+
+      toast.success(`${idsToProcess.length} entregador(es) vinculado(s)!`);
       
       setIsDriverModalOpen(false);
-      setOrderIdPendingDriver(null);
+      setPendingDriverOrderIds([]);
       setNewStatusPendingDriver(null);
 
       if (targetStatus) {
-        await handleStatusChange(targetId, targetStatus);
+        for (const orderId of idsToProcess) {
+          await handleStatusChange(orderId, targetStatus);
+        }
       }
     } catch (error) {
       toast.error("Erro ao vincular entregador.");
     } finally {
       setIsLoading(false);
     }
-  }, [orderIdPendingDriver, newStatusPendingDriver, handleStatusChange]);
+  }, [pendingDriverOrderIds, newStatusPendingDriver, handleStatusChange]);
 
   const handleBulkStatusChange = useCallback(async (newStatus: string) => {
     if (selectedOrderIds.length === 0) return;
@@ -413,11 +424,11 @@ const OrderManagement: React.FC = () => {
         isOpen={isDriverModalOpen}
         onClose={() => {
           setIsDriverModalOpen(false);
-          setOrderIdPendingDriver(null);
+          setPendingDriverOrderIds([]);
           setNewStatusPendingDriver(null);
         }}
         onSelect={handleDriverSelect}
-        orderId={orderIdPendingDriver || undefined}
+        orderIds={pendingDriverOrderIds}
       />
     </div>
   );

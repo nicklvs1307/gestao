@@ -9,10 +9,10 @@ interface DriverSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (driverId: string) => void;
-  orderId?: string;
+  orderIds?: string[];
 }
 
-const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onClose, onSelect, orderId }) => {
+const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onClose, onSelect, orderIds = [] }) => {
   useScrollLock(isOpen);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +54,11 @@ const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onC
               Selecionar <span className="text-orange-600">Entregador</span>
             </h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-              {orderId ? `Pedido #${orderId.slice(-4).toUpperCase()}` : 'Ação em massa'}
+              {orderIds.length === 1 
+                ? `Pedido #${orderIds[0].slice(-4).toUpperCase()}` 
+                : orderIds.length > 1 
+                  ? `${orderIds.length} pedidos selecionados`
+                  : 'Ação em massa'}
             </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
