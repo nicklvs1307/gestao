@@ -145,7 +145,7 @@ class JobService {
               const status = minutesUntilExpiry <= 0 ? 'EXPIRADO' : `expira em ${minutesUntilExpiry} min`;
               logger.info(`[JobService] Renovando token iFood para restaurante ${setting.restaurantId} (${status})`);
               
-              const result = await IfoodAuthService.refreshAccessToken(setting.restaurantId);
+              const result = await IfoodAuthService.getValidToken();
               
               if (result) {
                 logger.info(`[JobService] Token iFood renovado com sucesso para ${setting.restaurantId}`);

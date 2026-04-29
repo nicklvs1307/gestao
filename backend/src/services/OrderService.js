@@ -1177,3 +1177,4 @@ const resolvePaymentMethodName = (methodValue) => {
 }
 
 module.exports = new OrderService();
+module.exports.emitOrderUpdate = emitOrderUpdate;
