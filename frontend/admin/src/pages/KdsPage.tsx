@@ -60,12 +60,16 @@ const KdsPage: React.FC = () => {
         loadKds();
 
         // Socket.io for real-time updates
-        on('order_update', () => {
+        const handleOrderUpdate = () => {
             loadKds();
-        });
+        };
+
+        on('order_update', handleOrderUpdate);
+        on('new_order', handleOrderUpdate);
 
         return () => {
-            off('order_update');
+            off('order_update', handleOrderUpdate);
+            off('new_order', handleOrderUpdate);
         };
     }, [area, on, off]);
 

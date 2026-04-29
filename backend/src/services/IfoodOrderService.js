@@ -155,11 +155,7 @@ class IfoodOrderService {
 
       logger.info(`[IFOOD] Pedido ${order.id} criado a partir do iFood ${ifoodOrderId} (${orderType})`);
 
-      socketLib.emitToRestaurant(restaurantId, 'new_order', {
-        order: order.id,
-        source: 'IFOOD',
-        orderNumber: order.dailyOrderNumber
-      });
+      await require('./OrderService').emitOrderUpdate(order.id, 'ORDER_CREATED');
 
       return order;
     } catch (error) {
@@ -264,10 +260,7 @@ class IfoodOrderService {
 
       logger.info(`[IFOOD] Pedido ${order.id} cancelado via iFood`);
 
-      socketLib.emitToRestaurant(restaurantId, 'order_canceled', {
-        orderId: order.id,
-        source: 'IFOOD'
-      });
+      await require('./OrderService').emitOrderUpdate(order.id, 'ORDER_CANCELED');
     } catch (error) {
       logger.error(`[IFOOD] Erro ao cancelar pedido:`, error);
     }
@@ -300,10 +293,7 @@ class IfoodOrderService {
 
       logger.info(`[IFOOD] Pedido ${order.id} atualizado via iFood`);
 
-      socketLib.emitToRestaurant(restaurantId, 'order_updated', {
-        orderId: order.id,
-        source: 'IFOOD'
-      });
+      await require('./OrderService').emitOrderUpdate(order.id, 'ORDER_UPDATED');
     } catch (error) {
       logger.error(`[IFOOD] Erro ao atualizar pedido:`, error);
       this._notifySyncError(restaurantId, ifoodOrderId, `Erro ao atualizar pedido: ${error.message}`);

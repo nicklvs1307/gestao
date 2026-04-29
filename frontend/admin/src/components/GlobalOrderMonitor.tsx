@@ -5,6 +5,7 @@ import { printOrder, checkAgentStatus, getPrinterConfigFromStorage } from '../se
 import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
 import TableRequestAlert from './TableRequestAlert';
+import { useSocket } from '../hooks/useSocket';
 import { Bell, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,11 +16,13 @@ const getApiBaseUrl = () => {
 const GlobalOrderMonitor: React.FC = () => {
   const location = useLocation();
   const isKdsPage = location.pathname === '/kds';
+  const { on, off, isConnected } = useSocket();
 
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isAutoAccept, setIsAutoAccept] = useState(false);
   const [isAutoPrint, setIsAutoPrint] = useState(true);
+  const [socketReady, setSocketReady] = useState(false);
   
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -115,7 +118,71 @@ const GlobalOrderMonitor: React.FC = () => {
     return () => clearInterval(requestInterval);
   }, [isKdsPage, hasUser, playNotificationSound]);
 
-  // SSE Effect - Socket.io is primary, SSE as backup with dedup
+  // Socket.io Effect - Primary real-time connection
+  useEffect(() => {
+    if (isKdsPage || !hasUser()) return;
+
+    setSocketReady(isConnected);
+
+    const handleOrderUpdate = (eventData: any) => {
+      const updatedOrder = eventData.payload as Order;
+      if (!updatedOrder || !updatedOrder.id) return;
+
+      setAllOrders(prevOrders => {
+        const currentOrders = Array.isArray(prevOrders) ? prevOrders : [];
+        const newOrders = [...currentOrders];
+        const existingOrderIndex = newOrders.findIndex(o => o.id === updatedOrder.id);
+        
+        if (existingOrderIndex > -1) {
+          newOrders[existingOrderIndex] = updatedOrder;
+        } else {
+          newOrders.unshift(updatedOrder);
+          lastOrderIdsRef.current.add(updatedOrder.id);
+          playNotificationSound();
+          if (!isAutoAccept && updatedOrder.status === 'PENDING') {
+            setIsOrderModalOpen(true);
+          }
+        }
+        return newOrders;
+      });
+    };
+
+    const handleNewOrder = (eventData: any) => {
+      const orderId = eventData.order || eventData.payload?.id;
+      if (orderId) {
+        fetch(`/api/admin/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        .then(res => res.json())
+        .then(order => {
+          if (order && order.id) {
+            setAllOrders(prevOrders => {
+              const exists = prevOrders.some(o => o.id === order.id);
+              if (!exists) {
+                playNotificationSound();
+                if (!isAutoAccept && order.status === 'PENDING') {
+                  setIsOrderModalOpen(true);
+                }
+                return [order, ...prevOrders];
+              }
+              return prevOrders;
+            });
+          }
+        })
+        .catch(console.error);
+      }
+    };
+
+    on('order_update', handleOrderUpdate);
+    on('new_order', handleNewOrder);
+
+    return () => {
+      off('order_update', handleOrderUpdate);
+      off('new_order', handleNewOrder);
+    };
+  }, [isKdsPage, hasUser, isAutoAccept, isConnected, on, off, playNotificationSound]);
+
+  // SSE Effect - Fallback when socket fails
   useEffect(() => {
     if (isKdsPage || !hasUser()) return;
 

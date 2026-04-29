@@ -96,7 +96,7 @@ const OrderManagement: React.FC = () => {
 
     const handleOrderUpdate = (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
-      if (updatedOrder.orderType !== 'DELIVERY' && updatedOrder.orderType !== 'PICKUP') return;
+      if (!updatedOrder || updatedOrder.orderType !== 'DELIVERY' && updatedOrder.orderType !== 'PICKUP') return;
 
       setAllOrders(prevOrders => {
         const newOrders = [...prevOrders];
@@ -117,10 +117,34 @@ const OrderManagement: React.FC = () => {
       });
     };
 
+    const handleNewOrder = async (eventData: any) => {
+      if (eventData.order) {
+        try {
+          const fullOrder = await fetch(`/api/admin/orders/${eventData.order}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          }).then(res => res.json());
+          
+          if (fullOrder && (fullOrder.orderType === 'DELIVERY' || fullOrder.orderType === 'PICKUP')) {
+            setAllOrders(prevOrders => {
+              const exists = prevOrders.some(o => o.id === fullOrder.id);
+              if (!exists) {
+                return [fullOrder, ...prevOrders];
+              }
+              return prevOrders;
+            });
+          }
+        } catch (err) {
+          console.error('Erro ao buscar detalhes do novo pedido:', err);
+        }
+      }
+    };
+
     on('order_update', handleOrderUpdate);
+    on('new_order', handleNewOrder);
 
     return () => {
       off('order_update', handleOrderUpdate);
+      off('new_order', handleNewOrder);
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
   }, [on, off, fetchOrders]);
