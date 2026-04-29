@@ -3,6 +3,8 @@ const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const IfoodAuthService = require('./IfoodAuthService');
+const OrderService = require('./OrderService');
+const OrderNumberService = require('./OrderNumberService');
 
 const BASE_URL = 'https://merchant-api.ifood.com.br';
 
@@ -44,7 +46,7 @@ class IfoodOrderService {
         return;
       }
 
-      const orderNumber = await this.getNextDailyOrderNumber(restaurantId);
+      const orderNumber = await OrderNumberService.getNextDailyOrderNumber(restaurantId);
 
       // Mapear itens do formato da API iFood
       const items = orderData?.items || [];
@@ -298,21 +300,6 @@ class IfoodOrderService {
       logger.error(`[IFOOD] Erro ao atualizar pedido:`, error);
       this._notifySyncError(restaurantId, ifoodOrderId, `Erro ao atualizar pedido: ${error.message}`);
     }
-  }
-
-  async getNextDailyOrderNumber(restaurantId) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const lastOrder = await prisma.order.findFirst({
-      where: {
-        restaurantId,
-        createdAt: { gte: today }
-      },
-      orderBy: { dailyOrderNumber: 'desc' }
-    });
-
-    return (lastOrder?.dailyOrderNumber || 0) + 1;
   }
 
   mapPaymentMethod(method) {

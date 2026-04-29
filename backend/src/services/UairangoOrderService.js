@@ -2,6 +2,7 @@ const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
+const OrderNumberService = require('./OrderNumberService');
 
 class UairangoOrderService {
   BASE_URL = 'https://www.uairango.com/api2';
@@ -59,10 +60,10 @@ class UairangoOrderService {
         return;
       }
 
-      const orderNumber = await this.getNextDailyOrderNumber(restaurantId);
+      const orderNumber = await OrderNumberService.getNextDailyOrderNumber(restaurantId);
 
       const isDelivery = orderData.tipo_entrega === 'Delivery';
-      const orderType = isDelivery ? 'DELIVERY' : 'TAKEOUT';
+      const orderType = isDelivery ? 'DELIVERY' : 'PICKUP';
 
       const orderItems = [];
 
@@ -230,28 +231,6 @@ class UairangoOrderService {
     }
 
     return product;
-  }
-
-  /**
-   * Obtém o próximo número de pedido do dia.
-   */
-  async getNextDailyOrderNumber(restaurantId) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const lastOrder = await prisma.order.findFirst({
-      where: {
-        restaurantId,
-        createdAt: {
-          gte: today
-        }
-      },
-      orderBy: {
-        dailyOrderNumber: 'desc'
-      }
-    });
-
-    return (lastOrder?.dailyOrderNumber || 0) + 1;
   }
 
   /**
