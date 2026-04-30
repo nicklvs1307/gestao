@@ -514,6 +514,27 @@ model IntegrationSettings {
   restaurant              Restaurant @relation(fields: [restaurantId], references: [id])
 }
 
+// === INTEGRAÇÕES DE DELIVERY - PROCESSAMENTO IDEMPOTENTE ===
+model IntegrationEvent {
+  id              String    @id // UUID do evento
+  platform        String    // 'ifood', 'uairango', 'rappi', etc.
+  platformOrderId String    // ID do pedido na plataforma
+  eventType      String    // 'ORDER_PLACED', 'ORDER_CANCELED', etc.
+  restaurantId   String
+  
+  orderId        String?   // ID local do pedido (se criado)
+  status        String    @default("PENDING") // 'PENDING', 'PROCESSED', 'FAILED'
+  errorMessage  String?   // Mensagem de erro se falhou
+  processedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  
+  @@unique([platform, platformOrderId, eventType])
+  @@index([platform])
+  @@index([restaurantId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 // === MÓDULO WHATSAPP & IA ===
 
 model WhatsAppInstance {

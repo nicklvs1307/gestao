@@ -1,12 +1,11 @@
 const crypto = require('crypto');
 const axios = require('axios');
 const logger = require('../config/logger');
-const IfoodOrderService = require('./IfoodOrderService');
+const IfoodOrderAdapter = require('./IfoodOrderAdapter');
 const IfoodAuthService = require('./IfoodAuthService');
+const IntegrationOrderService = require('./IntegrationOrderService');
+const IntegrationTypeService = require('./IntegrationTypeService');
 const prisma = require('../lib/prisma');
-
-const _processedEventIds = new Set();
-let _lastCleanup = Date.now();
 
 class IfoodWebhookService {
 
@@ -14,25 +13,11 @@ class IfoodWebhookService {
     this.BASE_URL = 'https://merchant-api.ifood.com.br';
     this._processingQueue = [];
     this._isProcessing = false;
-  }
-
-  _isEventProcessed(eventId) {
-    return _processedEventIds.has(eventId);
-  }
-
-  _markEventProcessed(eventId) {
-    const now = Date.now();
-    if (now - _lastCleanup > 5 * 60 * 1000) {
-      _processedEventIds.clear();
-      _lastCleanup = now;
-    }
-    _processedEventIds.add(eventId);
+    this.adapter = IfoodOrderAdapter;
   }
 
   /**
    * Valida a assinatura HMAC SHA256 do request do webhook.
-   * O header X-IFood-Signature contém o HMAC do payload.
-   * O clientSecret é usado como chave para validar.
    */
   validateSignature(payload, signature) {
     const clientSecret = process.env.IFOOD_CLIENT_SECRET;
@@ -64,6 +49,37 @@ class IfoodWebhookService {
   }
 
   /**
+   * Verifica se evento já foi processado (busca no banco).
+   */
+  async _isEventProcessed(platform, platformOrderId, eventType) {
+    const event = await prisma.integrationEvent.findUnique({
+      where: {
+        platform_platformOrderId_eventType: {
+          platform,
+          platformOrderId,
+          eventType,
+        },
+      },
+    });
+
+    return event?.status === 'PROCESSED';
+  }
+
+  /**
+   * Registra evento como processado no banco.
+   */
+  async _markEventProcessed(platform, platformOrderId, eventType, restaurantId, orderId) {
+    await IntegrationOrderService.registerEvent(
+      platform,
+      platformOrderId,
+      eventType,
+      restaurantId,
+      orderId,
+      'PROCESSED'
+    );
+  }
+
+  /**
    * Processa webhook do iFood.
    * Recebe eventos POST e processa de forma assíncrona (resposta rápida).
    */
@@ -76,17 +92,20 @@ class IfoodWebhookService {
     res.status(202).json({ received: true });
 
     const events = Array.isArray(req.body) ? req.body : [req.body];
-    const eventCount = events.length;
+    const platform = 'ifood';
 
     for (const event of events) {
-      if (this._isEventProcessed(event.id)) {
-        logger.info(`[IFOOD WEBHOOK] Evento ${event.id} já processado, ignorando`);
+      const { orderId, code, id: eventId } = event;
+      const eventType = code;
+
+      const alreadyProcessed = await this._isEventProcessed(platform, orderId, eventType);
+      if (alreadyProcessed) {
+        logger.info(`[IFOOD WEBHOOK] Evento ${orderId} (${eventType}) já processado, ignorando`);
         continue;
       }
 
-      this._markEventProcessed(event.id);
       this._processingQueue.push(event);
-      logger.info(`[IFOOD WEBHOOK] Evento ${event.id} (${event.code}) enfileirado para processamento`);
+      logger.info(`[IFOOD WEBHOOK] Evento ${eventId} (${eventType}) enfileirado para processamento`);
     }
 
     this._processQueue();
@@ -150,7 +169,14 @@ class IfoodWebhookService {
    * Processa evento para uma restaurante específico.
    */
   async _handleEventForRestaurant(restaurantId, event) {
-    const { code, orderId, id: eventId } = event;
+    const { code, orderId, id: eventId, merchantId } = event;
+    const platform = 'ifood';
+
+    const alreadyProcessed = await this._isEventProcessed(platform, orderId, code);
+    if (alreadyProcessed) {
+      logger.info(`[IFOOD WEBHOOK] Evento ${orderId} (${code}) já processado, ignorando`);
+      return;
+    }
 
     logger.info(`[IFOOD WEBHOOK] Processando evento ${code} (${eventId}) para pedido ${orderId}`);
 
@@ -166,13 +192,15 @@ class IfoodWebhookService {
           }
           const orderDetails = await this._getOrderDetails(orderId, token);
           if (!orderDetails) {
-            logger.error(`[IFOOD WEBHOOK] Não foi possível obter detalles do pedido ${orderId}`);
+            logger.error(`[IFOOD WEBHOOK] Não foi possível obter detalhes do pedido ${orderId}`);
             break;
           }
-          await IfoodOrderService.createOrderFromIfood(restaurantId, orderId, orderDetails);
+          const order = await this.adapter.processNewOrder(restaurantId, orderDetails);
+          await this._markEventProcessed(platform, orderId, code, restaurantId, order?.id);
           logger.info(`[IFOOD WEBHOOK] Pedido ${orderId} criado/atualizado com sucesso via webhook`);
         } catch (error) {
           logger.error(`[IFOOD WEBHOOK] Erro ao criar pedido via webhook: ${error.message}`);
+          await IntegrationOrderService.registerEvent(platform, orderId, code, restaurantId, null, 'FAILED', error.message);
         }
         break;
       }
@@ -180,7 +208,8 @@ class IfoodWebhookService {
       case 'CANCELLED':
       case 'CAN':
       case 'CANCELLATION_REQUEST_FAILED':
-        await IfoodOrderService.cancelOrderFromIfood(restaurantId, orderId);
+        await IntegrationOrderService.cancelFromIntegration(platform, restaurantId, orderId);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'ORDER_PATCHED': {
@@ -188,7 +217,7 @@ class IfoodWebhookService {
         if (token) {
           const updatedDetails = await this._getOrderDetails(orderId, token);
           if (updatedDetails) {
-            await IfoodOrderService.updateOrderFromIfood(restaurantId, orderId, updatedDetails);
+            await IntegrationOrderService.updateFromIntegration(platform, restaurantId, orderId, updatedDetails);
           }
         }
         break;
@@ -196,14 +225,17 @@ class IfoodWebhookService {
 
       case 'READY_TO_PICKUP':
         await this._updateLocalOrderStatus(restaurantId, orderId, 'READY');
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'DISPATCHED':
-        await this._updateLocalOrderStatus(restaurantId, orderId, 'DELIVERING');
+        await this._updateLocalOrderStatus(restaurantId, orderId, 'SHIPPED');
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'CONCLUDED':
         await this._updateLocalOrderStatus(restaurantId, orderId, 'COMPLETED');
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'CANCELLATION_REQUESTED':
