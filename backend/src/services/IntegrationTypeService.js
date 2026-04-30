@@ -51,6 +51,18 @@ const PLATFORM_STATUS_MAP = {
     'CANCELLATION_REQUESTED': 'CANCELED',
   },
   uairango: {
+    // Novos códigos da Events API (UaiRango Connect)
+    'PLC': 'PENDING',        // PLACED
+    'PLACED': 'PENDING',
+    'CFM': 'PREPARING',      // CONFIRMED
+    'CONFIRMED': 'PREPARING',
+    'RTP': 'READY',           // READY_TO_PICKUP
+    'READY_TO_PICKUP': 'READY',
+    'DSP': 'SHIPPED',        // DISPATCHED
+    'DISPATCHED': 'SHIPPED',
+    'CAN': 'CANCELED',       // CANCELED
+    'CANCELED': 'CANCELED',
+    // Legados (fallback)
     'novo': 'PENDING',
     'confirmado': 'PREPARING',
     'preparando': 'PREPARING',

@@ -149,6 +149,14 @@ app.post('/webhooks/ifood', (req, res) => IfoodWebhookService.handleWebhook(req,
 app.get('/webhooks/ifood/test', (req, res) => res.status(200).json({ status: 'ok' }));
 app.post('/webhooks/ifood/test', (req, res) => res.status(200).json({ status: 'ok' }));
 
+// Webhook Uai Rango (PRIORITÁRIO - Polling é fallback)
+const UairangoWebhookService = require('./src/services/UairangoWebhookService');
+app.post('/webhooks/uairango', (req, res) => {
+  const result = UairangoWebhookService.handleWebhook(req.body);
+  res.status(200).json(result);
+});
+app.get('/webhooks/uairango/test', (req, res) => res.status(200).json({ status: 'ok' }));
+
 // ==================================================================
 // ROTAS
 // ==================================================================

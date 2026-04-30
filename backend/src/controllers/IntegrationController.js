@@ -89,29 +89,33 @@ const getUairangoSettings = async (req, res) => {
 };
 
 const updateUairangoSettings = async (req, res) => {
-    const { uairangoToken, uairangoEstablishmentId, uairangoActive } = req.body;
+  const { uairangoToken, uairangoEstablishmentId, uairangoClientId, uairangoClientSecret, uairangoActive } = req.body;
 
-    try {
-        const settings = await prisma.integrationSettings.upsert({
-            where: { restaurantId: req.restaurantId },
-            update: {
-                uairangoToken,
-                uairangoEstablishmentId,
-                uairangoActive
-            },
-            create: {
-                restaurantId: req.restaurantId,
-                uairangoToken,
-                uairangoEstablishmentId,
-                uairangoActive
-            }
-        });
+  try {
+    const settings = await prisma.integrationSettings.upsert({
+      where: { restaurantId: req.restaurantId },
+      update: {
+        uairangoToken, // Legacy (opcional)
+        uairangoEstablishmentId,
+        uairangoClientId,
+        uairangoClientSecret,
+        uairangoActive
+      },
+      create: {
+        restaurantId: req.restaurantId,
+        uairangoToken,
+        uairangoEstablishmentId,
+        uairangoClientId,
+        uairangoClientSecret,
+        uairangoActive
+      }
+    });
 
-        res.json(settings);
-    } catch (error) {
-        logger.error('Erro ao atualizar configurações do UaiRango:', error);
-        res.status(500).json({ error: 'Erro ao atualizar configurações do UaiRango.' });
-    }
+    res.json(settings);
+  } catch (error) {
+    logger.error('Erro ao atualizar configurações do UaiRango:', error);
+    res.status(500).json({ error: 'Erro ao atualizar configurações do UaiRango.' });
+  }
 };
 
 const importUairangoMenu = async (req, res) => {

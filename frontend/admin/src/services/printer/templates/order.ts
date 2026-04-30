@@ -338,6 +338,13 @@ function buildFooter(order: Order, settings: ReceiptSettings, isProduction: bool
     buf += line('-', width);
   }
 
+  if (order.uairangoOrderId) {
+    buf += line('-', width);
+    buf += alignCenter(bold('*** PEDIDO UAIRANGÔ ***'));
+    buf += alignCenter(`Pedido: ${order.uairangoOrderId}`);
+    buf += line('-', width);
+  }
+
   buf += alignCenter(`ID: ${order.id}\n${bold('KICARDÁPIO@')}`);
 
   const feedLines = settings.paperFeed ?? 3;

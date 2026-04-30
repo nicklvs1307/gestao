@@ -10,8 +10,10 @@ import uairangoLogo from '../assets/uairango-logo.png';
 
 const UairangoSettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(''); // Legacy (opcional)
   const [establishmentId, setEstablishmentId] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -25,6 +27,8 @@ const UairangoSettingsPage: React.FC = () => {
         const settings = await getUairangoSettings();
         setToken(settings.uairangoToken || '');
         setEstablishmentId(settings.uairangoEstablishmentId || '');
+        setClientId(settings.uairangoClientId || '');
+        setClientSecret(settings.uairangoClientSecret || '');
         setIsActive(settings.uairangoActive || false);
       } catch (error) {
         console.error(error);
@@ -36,13 +40,15 @@ const UairangoSettingsPage: React.FC = () => {
     fetchSettings();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       await updateUairangoSettings({ 
-        uairangoToken: token,
+        uairangoToken: token, // Legacy (opcional)
         uairangoEstablishmentId: establishmentId,
+        uairangoClientId: clientId,
+        uairangoClientSecret: clientSecret,
         uairangoActive: isActive 
       });
       toast.success('Configurações UaiRango salvas!');
@@ -54,8 +60,13 @@ const UairangoSettingsPage: React.FC = () => {
   };
 
   const handleImportMenu = async () => {
-    if (!token || !establishmentId) {
-      toast.error('Configure o Token e o ID antes de importar.');
+    // Prioriza OAuth 2.0, fallback para token legado
+    if ((!clientId || !clientSecret) && !token) {
+      toast.error('Configure o Client ID e Client Secret (OAuth 2.0) ou Token legado antes de importar.');
+      return;
+    }
+    if (!establishmentId) {
+      toast.error('Configure o ID do Estabelecimento antes de importar.');
       return;
     }
 
@@ -129,12 +140,49 @@ const UairangoSettingsPage: React.FC = () => {
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Token de Desenvolvedor</label>
+                <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Token de Desenvolvedor (Legado)</label>
                 <Input 
                   value={token} 
                   onChange={e => setToken(e.target.value)} 
                   placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." 
                   className="h-12 bg-slate-50 border-slate-200 focus:bg-white font-mono text-sm"
+                />
+                <p className="text-[10px] text-slate-400">Use OAuth 2.0 abaixo (preferencial)</p>
+              </div>
+              
+              {/* Novos campos OAuth 2.0 */}
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <p className="text-xs font-bold text-blue-800 uppercase tracking-tight mb-3">OAuth 2.0 (Novo - Preferencial)</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Client ID</label>
+                    <Input 
+                      value={clientId} 
+                      onChange={e => setClientId(e.target.value)} 
+                      placeholder="Ex: 573eeed8-c028-43f6-8957-12006e31f457" 
+                      className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Client Secret</label>
+                    <Input 
+                      value={clientSecret} 
+                      onChange={e => setClientSecret(e.target.value)} 
+                      placeholder="Ex: 2d1ff9303270b2efdac5b1c2d8a5e622" 
+                      type="password"
+                      className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-tight">ID do Estabelecimento (Merchant ID)</label>
+                <Input 
+                  value={establishmentId} 
+                  onChange={e => setEstablishmentId(e.target.value)} 
+                  placeholder="Ex: f4af41ba-e01e-4500-b5cf-0bcb130589db" 
+                  className="h-12 bg-slate-50 border-slate-200 focus:bg-white font-mono"
                 />
               </div>
               
@@ -225,7 +273,7 @@ const UairangoSettingsPage: React.FC = () => {
 
               <Button 
                 onClick={handleImportMenu} 
-                disabled={isImporting || !token || !establishmentId}
+                disabled={isImporting || ((!clientId || !clientSecret) && !token) || !establishmentId}
                 className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xl shadow-orange-500/30 text-lg font-black uppercase tracking-wider"
               >
                 {isImporting ? (
@@ -270,8 +318,32 @@ const UairangoSettingsPage: React.FC = () => {
                 </p>
               </div>
               <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[10px] font-bold text-blue-600">2</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  No portal UaiRango, vá em <span className="font-bold">Meus Apps → API OAuth 2.0</span>
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[10px] font-bold text-blue-600">3</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Copie o <span className="font-bold">Client ID e Client Secret</span> (OAuth 2.0 - Preferencial)
+                </p>
+              </div>
+              <div className="flex gap-3">
                 <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-black text-slate-500">2</span>
+                  <span className="text-[10px] font-bold text-slate-500">4</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  O <span className="font-bold">Merchant ID</span> está no perfil da sua conta
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[10px] font-black text-slate-500">5</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Copie o <span className="font-black">Token de Desenvolvedor</span> da seção API
@@ -279,7 +351,7 @@ const UairangoSettingsPage: React.FC = () => {
               </div>
               <div className="flex gap-3">
                 <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-black text-slate-500">3</span>
+                  <span className="text-[10px] font-black text-slate-500">6</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   O <span className="font-black">ID do Estabelecimento</span> está no perfil da sua conta
@@ -298,11 +370,43 @@ const UairangoSettingsPage: React.FC = () => {
             </div>
             <div className="p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Token</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                  token ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                <span className="text-xs text-slate-500">OAuth 2.0</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  clientId && clientSecret ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
                 }`}>
-                  {token ? 'Configurado' : 'Pendente'}
+                  {clientId && clientSecret ? 'Configurado' : 'Pendente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Client ID</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  clientId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {clientId ? clientId.substring(0, 8) + '...' : 'Pendente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Merchant ID</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  establishmentId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {establishmentId ? establishmentId.substring(0, 8) + '...' : 'Pendente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Token (Legado)</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  token ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {token ? 'Configurado' : 'Opcional'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Integração</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {isActive ? 'Ativa' : 'Inativa'}
                 </span>
               </div>
               <div className="flex items-center justify-between">

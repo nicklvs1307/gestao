@@ -2,7 +2,9 @@ const cron = require('node-cron');
 const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
-const UairangoOrderService = require('./UairangoOrderService');
+const UairangoAuthService = require('./UairangoAuthService');
+const IntegrationOrderService = require('./IntegrationOrderService');
+const IntegrationTypeService = require('./IntegrationTypeService');
 
 class UairangoPollingService {
   constructor() {
@@ -12,35 +14,16 @@ class UairangoPollingService {
   }
 
   /**
-   * Obtém o token de acesso válido para o restaurante.
+   * Obtém token válido via OAuth 2.0
    */
   async getAccessToken(restaurantId) {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
-
-    if (!settings?.uairangoActive || !settings?.uairangoToken) {
-      return null;
-    }
-
-    try {
-      const response = await axios.post(`${this.BASE_URL}/login`, {
-        token: settings.uairangoToken
-      });
-
-      if (response.data && response.data.success && response.data.token) {
-        return response.data.token;
-      }
-      return null;
-    } catch (error) {
-      logger.error(`[UAIRANGO POLLING] Erro ao obter token para restaurante ${restaurantId}:`, error.message);
-      return null;
-    }
+    return await UairangoAuthService.getAccessToken(restaurantId);
   }
 
   /**
-   * Inicia o cron job de polling de pedidos do Uai Rangô.
-   * Roda a cada 30 segundos para todos os restaurantes com integração ativa.
+   * Inicia o cron job de polling de eventos do Uai Rangô.
+   * ATENÇÃO: Webhook é PRIORITÁRIO. Polling é FALLBACK.
+   * Roda a cada 30 segundos.
    */
   init() {
     this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
@@ -52,7 +35,7 @@ class UairangoPollingService {
       this.isPolling = true;
 
       try {
-        await this.pollAllRestaurants();
+        await this.pollEvents();
       } catch (error) {
         logger.error('[UAIRANGO POLLING] Erro geral no polling:', error.message);
       } finally {
@@ -60,7 +43,7 @@ class UairangoPollingService {
       }
     });
 
-    logger.info('[UAIRANGO POLLING] Serviço de polling iniciado (a cada 30 segundos)');
+    logger.info('[UAIRANGO POLLING] Serviço de polling iniciado (FALLBACK - Webhook é prioritário)');
   }
 
   /**
@@ -74,9 +57,10 @@ class UairangoPollingService {
   }
 
   /**
-   * Faz polling de pedidos para todos os restaurantes com integração Uai Rangô ativa.
+   * Faz polling de eventos para todos os restaurantes com integração Uai Rangô ativa.
+   * Usa a Events API: /events/v1.0/events:polling
    */
-  async pollAllRestaurants() {
+  async pollEvents() {
     const settings = await prisma.integrationSettings.findMany({
       where: { uairangoActive: true }
     });
@@ -85,41 +69,28 @@ class UairangoPollingService {
 
     for (const setting of settings) {
       try {
-        await this.pollRestaurant(setting.restaurantId);
+        await this.pollRestaurantEvents(setting);
       } catch (error) {
-        logger.error(`[UAIRANGO POLLING] Erro ao processar restaurante ${setting.restaurantId}:`, error.message);
+        logger.error(`[UAIRANGO POLLING] Erro ao processar ${setting.restaurantId}:`, error.message);
       }
     }
   }
 
   /**
-   * Faz polling de pedidos pendentes para um restaurante específico.
+   * Faz polling de eventos para um restaurante específico.
    */
-  async pollRestaurant(restaurantId) {
-    const token = await this.getAccessToken(restaurantId);
-
-    if (!token) {
-      logger.debug(`[UAIRANGO POLLING] Sem token válido para restaurante ${restaurantId}`);
-      return;
-    }
-
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId }
-    });
-
-    if (!settings?.uairangoEstablishmentId) {
-      logger.warn(`[UAIRANGO POLLING] ID do estabelecimento não configurado para restaurante ${restaurantId}`);
-      return;
-    }
+  async pollRestaurantEvents(setting) {
+    const token = await this.getAccessToken(setting.restaurantId);
+    if (!token) return;
 
     try {
+      // Busca eventos via Events API
       const response = await axios.get(
-        `${this.BASE_URL}/auth/pedidos/${settings.uairangoEstablishmentId}`,
+        `${this.BASE_URL}/events/v1.0/events:polling`,
         {
           params: {
-            skip: 0,
-            status: 0,
-            limit: 50
+            types: 'PLC,CFM,RTP,DSP,CAN',
+            groups: 'ORDER_STATUS'
           },
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -129,63 +100,83 @@ class UairangoPollingService {
         }
       );
 
-      const orders = Array.isArray(response.data) ? response.data : [];
+      const events = Array.isArray(response.data) ? response.data : [];
 
-      if (orders.length === 0) return;
+      if (events.length === 0) {
+        logger.debug(`[UAIRANGO POLLING] Nenhum evento novo para ${setting.restaurantId}`);
+        return;
+      }
 
-      logger.info(`[UAIRANGO POLLING] ${orders.length} pedido(s) pendente(s) encontrado(s) para restaurante ${restaurantId}`);
+      logger.info(`[UAIRANGO POLLING] ${events.length} evento(s) recebido(s) para ${setting.restaurantId}`);
 
-      for (const order of orders) {
+      // Processa eventos
+      const eventIds = [];
+      for (const event of events) {
         try {
-          await this.processOrder(restaurantId, order);
+          await this._processEvent(event, setting.restaurantId);
+          eventIds.push(event.id);
         } catch (error) {
-          logger.error(`[UAIRANGO POLLING] Erro ao processar pedido ${order.cod_pedido}:`, error.message);
+          logger.error(`[UAIRANGO POLLING] Erro ao processar evento ${event.id}:`, error.message);
         }
       }
-    } catch (error) {
-      logger.error(`[UAIRANGO POLLING] Erro ao buscar pedidos para restaurante ${restaurantId}:`, error.message);
-    }
-  }
 
-  /**
-   * Processa um pedido pendente - cria no sistema se não existir.
-   */
-  async processOrder(restaurantId, orderData) {
-    const uairangoOrderId = orderData.cod_pedido;
-
-    const existingOrder = await prisma.order.findFirst({
-      where: {
-        restaurantId,
-        uairangoOrderId
+      // Acknowlegment obrigatório (para não receber os mesmos eventos novamente)
+      if (eventIds.length > 0) {
+        await this._acknowledgeEvents(token, eventIds);
       }
-    });
-
-    if (existingOrder) {
-      logger.debug(`[UAIRANGO POLLING] Pedido ${uairangoOrderId} já existe no sistema`);
-      return;
+    } catch (error) {
+      if (error.response?.status === 204) {
+        logger.debug(`[UAIRANGO POLLING] Nenhum evento novo (204)`);
+        return;
+      }
+      logger.error(`[UAIRANGO POLLING] Erro ao buscar eventos:`, error.message);
     }
-
-    const fullOrderData = await this.getOrderDetails(restaurantId, uairangoOrderId);
-    
-    if (!fullOrderData) {
-      logger.error(`[UAIRANGO POLLING] Não foi possível obter detalhes do pedido ${uairangoOrderId}`);
-      return;
-    }
-
-    await UairangoOrderService.createOrderFromUairango(restaurantId, uairangoOrderId, fullOrderData);
   }
 
   /**
-   * Obtém os detalhes completos de um pedido.
+   * Processa um evento individual
    */
-  async getOrderDetails(restaurantId, orderId) {
-    const token = await this.getAccessToken(restaurantId);
+  async _processEvent(event, restaurantId) {
+    const { id: eventId, code, orderId: platformOrderId, merchantId } = event;
 
-    if (!token) return null;
+    if (!platformOrderId || !code) {
+      logger.warn(`[UAIRANGO POLLING] Evento inválido:`, event);
+      return;
+    }
 
+    // Se for evento de pedido novo (PLC)
+    if (code === 'PLC' || code === 'PLACED') {
+      const fullOrderData = await this._fetchOrderDetails(restaurantId, platformOrderId);
+      if (fullOrderData) {
+        await IntegrationOrderService.createFromIntegration(
+          'uairango',
+          restaurantId,
+          platformOrderId,
+          fullOrderData
+        );
+      }
+    } else {
+      // Outros eventos: mapear e atualizar status
+      const newStatus = IntegrationTypeService.mapStatus('uairango', code);
+      await IntegrationOrderService.updateFromIntegration(
+        'uairango',
+        restaurantId,
+        platformOrderId,
+        { status: newStatus }
+      );
+    }
+
+    logger.info(`[UAIRANGO POLLING] Evento ${eventId} (${code}) processado`);
+  }
+
+  /**
+   * Acknowlegment de eventos (obrigatório)
+   */
+  async _acknowledgeEvents(token, eventIds) {
     try {
-      const response = await axios.get(
-        `${this.BASE_URL}/auth/pedido/${orderId}`,
+      await axios.post(
+        `${this.BASE_URL}/events/v1.0/events/acknowledgment`,
+        { ids: eventIds },
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -194,10 +185,33 @@ class UairangoPollingService {
           timeout: 10000
         }
       );
+      logger.info(`[UAIRANGO POLLING] ${eventIds.length} evento(s) confirmado(s) via acknowledgment`);
+    } catch (error) {
+      logger.error(`[UAIRANGO POLLING] Erro no acknowledgment:`, error.message);
+    }
+  }
 
+  /**
+   * Busca detalhes do pedido via API
+   */
+  async _fetchOrderDetails(restaurantId, orderId) {
+    const token = await this.getAccessToken(restaurantId);
+    if (!token) return null;
+
+    try {
+      const response = await axios.get(
+        `${this.BASE_URL}/order/v1.0/orders/${orderId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
       return response.data;
     } catch (error) {
-      logger.error(`[UAIRANGO POLLING] Erro ao obter detalhes do pedido ${orderId}:`, error.message);
+      logger.error(`[UAIRANGO POLLING] Erro ao buscar pedido ${orderId}:`, error.message);
       return null;
     }
   }

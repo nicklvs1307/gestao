@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Card } from './ui/Card';
 import type { PrintTarget } from '../services/printer';
 import ifoodLogo from '../assets/ifood-logo.png';
+import uairangoLogo from '../assets/uairango-logo.png';
 
 const OrderTimer = memo(({ createdAt, status }: { createdAt: string; status: string }) => {
   const [timeElapsedStr, setTimeElapsedStr] = useState('');
@@ -174,6 +175,9 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
             <div className="flex items-center gap-2">
                 {order.ifoodOrderId && (
                     <img src={ifoodLogo} alt="iFood" className="h-7 w-auto" />
+                )}
+                {order.uairangoOrderId && (
+                    <img src={uairangoLogo} alt="Uai Rangô" className="h-7 w-auto" />
                 )}
                 <OrderTimer createdAt={order.createdAt} status={order.status} />
             </div>

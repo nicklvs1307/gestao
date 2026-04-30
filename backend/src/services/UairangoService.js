@@ -1,11 +1,21 @@
 const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
+const UairangoAuthService = require('./UairangoAuthService');
 
 class UairangoService {
-    baseUrl = 'https://www.uairango.com/api2';
+  baseUrl = 'https://www.uairango.com/api2';
 
-    async getAccessToken(restaurantId) {
+  async getAccessToken(restaurantId) {
+        // Prioriza OAuth 2.0, fallback para token legado
+        try {
+            const token = await UairangoAuthService.getAccessToken(restaurantId);
+            if (token) return token;
+        } catch (e) {
+            logger.warn(`[UAIRANGO SERVICE] OAuth falhou, tentando legado: ${e.message}`);
+        }
+
+        // Fallback: Token legado
         const settings = await prisma.integrationSettings.findUnique({ where: { restaurantId } });
         if (!settings || !settings.uairangoToken) throw new Error('Token UaiRango ausente.');
         try {

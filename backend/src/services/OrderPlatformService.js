@@ -64,4 +64,18 @@ orderPlatformService.register('ifood', {
   }
 });
 
+const UairangoOrderAdapter = require('./UairangoOrderAdapter');
+
+orderPlatformService.register('uairango', {
+  onPreparing: async (orderId, restaurantId) => {
+    return await UairangoOrderAdapter.confirmOrderOnPlatform(restaurantId, orderId);
+  },
+  onReady: async (orderId, restaurantId) => {
+    return await UairangoOrderAdapter.markReadyOnPlatform(restaurantId, orderId);
+  },
+  onCanceled: async (orderId, restaurantId) => {
+    return await UairangoOrderAdapter.rejectOrderOnPlatform(restaurantId, orderId);
+  }
+});
+
 module.exports = orderPlatformService;

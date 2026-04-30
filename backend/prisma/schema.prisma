@@ -491,10 +491,16 @@ model IntegrationSettings {
   saiposTokenExpiresAt    DateTime? // Data de expiração do token
 
   // === CAMPOS UAIRANGO ===
-  uairangoToken           String?   // Token de Desenvolvedor
-  uairangoEstablishmentId String?   // ID do estabelecimento no UaiRango
+  uairangoToken           String?   // Token de Desenvolvedor (Legacy)
+  uairangoEstablishmentId String?   // ID do estabelecimento no UaiRango (Merchant ID)
   uairangoActive          Boolean   @default(false)
   uairangoImportedAt      DateTime? // Última importação realizada
+  // Campos para Nova API UaiRango Connect (OAuth 2.0)
+  uairangoClientId        String?   // Client ID para OAuth 2.0
+  uairangoClientSecret    String?   // Client Secret para OAuth 2.0
+  uairangoAccessToken     String?   // Access Token OAuth atual
+  uairangoTokenExpiresAt DateTime? // Expiração do access token (6h)
+  uairangoRefreshToken    String?   // Refresh Token (168h)
 
   // === CAMPOS IFOOD ===
   ifoodMerchantId           String?   // ID do Merchant no iFood (usado no modelo centralizado)
