@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, MapPin, Truck, ShoppingBag, Plus, Trash2, Tag, FileText, Info, DollarSign, Bike, CheckCircle } from 'lucide-react';
+import { Clock, MapPin, Truck, ShoppingBag, Plus, Trash2, Tag, FileText, Info, DollarSign, Bike, CheckCircle, Lock } from 'lucide-react';
 import { formatSP } from '@/lib/timezone';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
@@ -21,21 +21,33 @@ interface OrderEditorPaymentProps {
   isAddingPayment: boolean;
   newPayment: { methodId: string; amount: number };
   internalObs: string;
+  isSaving?: boolean;
   onDeliveryFeeChange: (value: number) => void;
   onDiscountChange: (value: number) => void;
   onSurchargeChange: (value: number) => void;
   onAssignDriver: (driverId: string) => void;
   onAddPayment: () => void;
+  onRemovePayment: (paymentId: string) => void;
   onSetIsAddingPayment: (value: boolean) => void;
   onNewPaymentChange: (payment: { methodId: string; amount: number }) => void;
   onInternalObsChange: (obs: string) => void;
 }
 
+const isIfoodOnlinePayment = (order: Order): boolean => {
+  if (!order.ifoodOrderId) return false;
+  if (!order.payments?.length) return false;
+  return order.payments.some(p => 
+    p.method?.toLowerCase().includes('pago online') || 
+    p.method?.toLowerCase().includes('pix') ||
+    p.method?.toLowerCase().includes('cartao')
+  );
+};
+
 export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
   order, subtotal, totalGeral, remainingToPay,
   deliveryFee, discount, surcharge,
   isDelivery, drivers, selectedDriverId,
-  paymentMethods, isAddingPayment, newPayment, internalObs,
+  paymentMethods, isAddingPayment, newPayment, internalObs, isSaving,
   onDeliveryFeeChange, onDiscountChange, onSurchargeChange,
   onAssignDriver,
   onAddPayment, onRemovePayment,
@@ -112,9 +124,16 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                     </div>
                   )}
                   {remainingToPay <= 0.01 && order.payments && order.payments.length > 0 && (
-                    <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
-                      <CheckCircle size={14} className="text-emerald-600" />
-                      <span className="text-[9px] font-black text-emerald-600 uppercase">Pago</span>
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-xl",
+                      order.ifoodOrderId 
+                        ? "bg-emerald-50 border border-emerald-200" 
+                        : "bg-emerald-50 border border-emerald-200"
+                    )}>
+                      {order.ifoodOrderId ? <CheckCircle size={14} className="text-emerald-600" /> : <CheckCircle size={14} className="text-emerald-600" />}
+                      <span className="text-[9px] font-black text-emerald-600 uppercase">
+                        {order.ifoodOrderId ? 'Pago via iFood' : 'Pago'}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -137,17 +156,19 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-slate-900">R$ {pay.amount.toFixed(2).replace('.', ',')}</span>
-                    <button 
-                      onClick={() => {
-                        if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${resolvePaymentLabel(pay.method, paymentMethods)}" de R$ ${pay.amount.toFixed(2).replace('.', ',')}?`)) {
-                          onRemovePayment(pay.id);
-                        }
-                      }} 
-                      className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-rose-400 hover:text-rose-600"
-                      title="Remover pagamento"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {!order.ifoodOrderId && (
+                      <button 
+                        onClick={() => {
+                          if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${resolvePaymentLabel(pay.method, paymentMethods)}" de R$ ${pay.amount.toFixed(2).replace('.', ',')}?`)) {
+                            onRemovePayment(pay.id);
+                          }
+                        }} 
+                        className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-rose-400 hover:text-rose-600"
+                        title="Remover pagamento"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -157,15 +178,35 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 </div>
               )}
             </div>
-            <button
-              onClick={() => {
-                onSetIsAddingPayment(true);
-                onNewPaymentChange({ methodId: '', amount: remainingToPay > 0 ? remainingToPay : 0 });
-              }}
-              className="w-full mt-4 h-10 border-2 border-orange-200 rounded-xl flex items-center justify-center gap-2 text-orange-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all text-[10px] font-black uppercase"
-            >
-              <Plus size={14} /> Registrar Pagamento
-            </button>
+            {order.ifoodOrderId ? (
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <div className="flex items-center gap-2 text-amber-700">
+                  <Lock size={14} />
+                  <span className="text-[9px] font-bold text-amber-700 uppercase">
+                    Pagamento via iFood
+                  </span>
+                </div>
+                <p className="text-[8px] text-amber-600 mt-1">
+                  Não é possível adicionar pagamentos manualmente
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  onSetIsAddingPayment(true);
+                  onNewPaymentChange({ methodId: '', amount: remainingToPay > 0 ? remainingToPay : 0 });
+                }}
+                disabled={remainingToPay <= 0.01}
+                className={cn(
+                  "w-full mt-4 h-10 border-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase",
+                  remainingToPay <= 0.01
+                    ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                    : "border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all"
+                )}
+              >
+                <Plus size={14} /> Registrar Pagamento
+              </button>
+            )}
           </Card>
         </div>
 

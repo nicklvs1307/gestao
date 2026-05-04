@@ -4,6 +4,7 @@ const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const IfoodAuthService = require('./IfoodAuthService');
 const OrderNumberService = require('./OrderNumberService');
+const FinancialService = require('./FinancialService');
 
 const BASE_URL = 'https://merchant-api.ifood.com.br';
 
@@ -97,8 +98,32 @@ class IfoodOrderService {
           }
         );
 
-        const payments = orderData?.payments || [];
-        const firstPayment = payments[0] || {};
+        // Processar pagamentos do iFood
+        const payments = orderData?.payments || {};
+        const prepaid = parseFloat(payments.prepaid) || 0;
+        const pending = parseFloat(payments.pending) || 0;
+        const paymentMethods = payments.methods || [];
+        
+        // Detectar se pagamento é online (já foi pago no app)
+        const onlinePayments = paymentMethods.filter(p => p.type === 'ONLINE');
+        const offlinePayments = paymentMethods.filter(p => p.type === 'OFFLINE');
+        const isPaidOnline = prepaid > 0 || onlinePayments.length > 0;
+        
+        // Usar o primeiro método de pagamento válido
+        const firstValidPayment = paymentMethods[0] || {};
+        const ifoodMethod = firstValidPayment.method || firstValidPayment.type || 'CASH';
+        const mappedMethod = this.mapIfoodPaymentMethod(ifoodMethod);
+
+        // Armazenar info sobre pagamento online para uso posterior
+        const paymentInfo = {
+          isPaidOnline,
+          prepaidAmount: prepaid,
+          pendingAmount: pending,
+          method: mappedMethod,
+          rawMethod: ifoodMethod,
+          // Guardar para exibir "Pago Online - PIX" etc
+          displayLabel: isPaidOnline ? `Pago Online - ${this.getPaymentDisplayLabel(ifoodMethod)}` : mappedMethod
+        };
 
         deliveryOrderData = {
           name: customer?.name || 'Cliente iFood',
@@ -111,8 +136,8 @@ class IfoodOrderService {
           state: deliveryAddress?.state || '',
           zipCode: deliveryAddress?.postalCode || '',
           deliveryType: 'delivery',
-          paymentMethod: this.mapPaymentMethod(firstPayment.method || firstPayment.type),
-          changeFor: firstPayment.changeFor || null,
+          paymentMethod: paymentInfo.displayLabel,
+          changeFor: firstValidPayment.changeFor || null,
           deliveryFee: orderData?.total?.deliveryFee || orderData?.deliveryFee || 0,
           notes: orderData?.extraInfo || '',
           customerId: localCustomer?.id
@@ -155,6 +180,9 @@ class IfoodOrderService {
       });
 
       logger.info(`[IFOOD] Pedido ${order.id} criado a partir do iFood ${ifoodOrderId} (${orderType})`);
+
+      // Criar registros de pagamento (igual PDV)
+      await this.processIfoodPayments(order, restaurantId, paymentInfo, ifoodOrderId);
 
       await require('./OrderService').emitOrderUpdate(order.id, 'ORDER_CREATED');
 
@@ -317,6 +345,124 @@ class IfoodOrderService {
     };
 
     return methodMap[method] || method || 'Dinheiro';
+  }
+
+  /**
+   * Mapeia método do iFood para o formato interno do sistema
+   */
+  mapIfoodPaymentMethod(method) {
+    const methodMap = {
+      'CASH': 'dinheiro',
+      'CREDIT': 'cartao-credito',
+      'CREDIT_CARD': 'cartao-credito',
+      'DEBIT': 'cartao-debito',
+      'DEBIT_CARD': 'cartao-debito',
+      'PIX': 'pix',
+      'MEAL_VOUCHER': 'vale-refeicao',
+      'FOOD_VOUCHER': 'vale-refeicao',
+      'DIGITAL_WALLET': 'carteira-digital',
+      'OTHER': 'outro'
+    };
+
+    return methodMap[method?.toUpperCase()] || 'dinheiro';
+  }
+
+  /**
+   * Retorna label para exibição (ex: "Pix", "Cartão de Crédito")
+   */
+  getPaymentDisplayLabel(method) {
+    const labelMap = {
+      'CASH': 'Dinheiro',
+      'CREDIT': 'Cartão de Crédito',
+      'CREDIT_CARD': 'Cartão de Crédito',
+      'DEBIT': 'Cartão de Débito',
+      'DEBIT_CARD': 'Cartão de Débito',
+      'PIX': 'Pix',
+      'MEAL_VOUCHER': 'Vale Refeição',
+      'FOOD_VOUCHER': 'Vale Refeição',
+      'DIGITAL_WALLET': 'Carteira Digital',
+      'OTHER': 'Outro'
+    };
+
+    return labelMap[method?.toUpperCase()] || method || 'Dinheiro';
+  }
+
+  /**
+   * Processa pagamentos do iFood e cria registros no banco
+   * Segue o mesmo padrão do PDV (OrderService.createOrder)
+   */
+  async processIfoodPayments(order, restaurantId, paymentInfo, ifoodOrderId) {
+    try {
+      const ifoodMethod = paymentInfo.rawMethod?.toUpperCase() || 'CASH';
+      const isPaidOnline = paymentInfo.isPaidOnline;
+      
+      // Valores a processar
+      const totalAmount = order.total;
+      const prepaidAmount = paymentInfo.prepaidAmount || 0;
+      const pendingAmount = paymentInfo.pendingAmount || 0;
+
+      // Se tem pagamento online (já foi pago no app), criar transação
+      if (isPaidOnline && prepaidAmount > 0) {
+        logger.info(`[IFOOD] Pagamento online detectado: R$ ${prepaidAmount} (${ifoodMethod})`);
+
+        // 1. Criar registro no pedido (prisma.payment)
+        await prisma.payment.create({
+          data: {
+            orderId: order.id,
+            amount: prepaidAmount,
+            method: paymentInfo.method
+          }
+        });
+
+        // 2. Buscar caixa aberto
+        const openSession = await prisma.cashierSession.findFirst({
+          where: { restaurantId, status: 'OPEN' }
+        });
+
+        // 3. Criar transação financeira (igual PDV)
+        await FinancialService.processOrderPayment(restaurantId, {
+          order: { ...order, dailyOrderNumber: order.dailyOrderNumber },
+          paymentMethod: paymentInfo.method,
+          cashierId: openSession?.id
+        });
+
+        logger.info(`[IFOOD] Transação criada: R$ ${prepaidAmount} no caixa ${openSession?.id || 'NULL'}`);
+      }
+
+      // Se tem pagamento pendente (offline - pagar na entrega), não criar transação ainda
+      if (pendingAmount > 0) {
+        logger.info(`[IFOOD] Pagamento pendente: R$ ${pendingAmount} (pagar na entrega)`);
+        
+        // Criar registro como pendente (não cria financialTransaction ainda)
+        await prisma.payment.create({
+          data: {
+            orderId: order.id,
+            amount: pendingAmount,
+            method: 'pendente'
+          }
+        });
+      }
+
+      // Se não tem prepaid nem pending, mas tem método definido (offline total)
+      if (!isPaidOnline && pendingAmount === 0 && totalAmount > 0) {
+        const method = this.mapIfoodPaymentMethod(ifoodMethod);
+        logger.info(`[IFOOD] Pagamento total offline: R$ ${totalAmount} (${method})`);
+
+        await prisma.payment.create({
+          data: {
+            orderId: order.id,
+            amount: totalAmount,
+            method: method
+          }
+        });
+
+        // Não criar transação ainda - será criado quando delivery confirmar recebimento
+      }
+
+    } catch (error) {
+      logger.error(`[IFOOD] Erro ao processar pagamentos: ${error.message}`);
+      // Não falha o pedido por erro de pagamento
+    }
   }
 
   /**

@@ -806,6 +806,28 @@ if (isPickup && !hasValidPhone) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new Error("Pedido não encontrado");
 
+    // Verificar se pedido iFood já foi pago online - bloquear duplicação
+    if (order.ifoodOrderId) {
+      const existingPayments = await prisma.payment.findMany({
+        where: { orderId }
+      });
+      
+      // Se já tem pagamento com "Pago Online", não permitir adicionar
+      const hasOnlinePayment = existingPayments.some(p => 
+        p.method?.includes('Pago Online') || p.method?.includes('pago online')
+      );
+      
+      if (hasOnlinePayment) {
+        throw new Error("Este pedido já foi pago via iFood. Não é possível adicionar pagamento manualmente.");
+      }
+      
+      // Se tem payment com valor = total do pedido, já foi pago
+      const totalPaid = existingPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+      if (totalPaid >= order.total) {
+        throw new Error("Este pedido já foi pago integralmente. Não é possível adicionar pagamento manualmente.");
+      }
+    }
+
     const restaurantId = order.restaurantId;
     const openSession = await prisma.cashierSession.findFirst({
       where: { restaurantId, status: 'OPEN' }
