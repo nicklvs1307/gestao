@@ -52,6 +52,11 @@ class IfoodWebhookService {
    * Verifica se evento já foi processado (busca no banco).
    */
   async _isEventProcessed(platform, platformOrderId, eventType) {
+    // Eventos sem orderId (ex: KEEPALIVE) não são trackeados
+    if (!platformOrderId) {
+      return false;
+    }
+
     const event = await prisma.integrationEvent.findUnique({
       where: {
         platform_platformOrderId_eventType: {
@@ -98,9 +103,10 @@ class IfoodWebhookService {
       const { orderId, code, id: eventId } = event;
       const eventType = code;
 
-      const alreadyProcessed = await this._isEventProcessed(platform, orderId, eventType);
+      // Verifica se evento já foi processado (não verifica se não tem orderId)
+      const alreadyProcessed = orderId ? await this._isEventProcessed(platform, orderId, eventType) : false;
       if (alreadyProcessed) {
-        logger.info(`[IFOOD WEBHOOK] Evento ${orderId} (${eventType}) já processado, ignorando`);
+        logger.info(`[IFOOD WEBHOOK] Evento ${orderId || eventId} (${eventType}) já processado, ignorando`);
         continue;
       }
 
