@@ -50,30 +50,33 @@ class OrderPlatformService {
 }
 
 const orderPlatformService = new OrderPlatformService();
-const IfoodOrderService = require('./IfoodOrderService');
 
 orderPlatformService.register('ifood', {
   onPreparing: async (orderId, restaurantId) => {
+    const IfoodOrderService = require('./IfoodOrderService');
     return await IfoodOrderService.confirmOrder(orderId, restaurantId);
   },
   onReady: async (orderId, restaurantId) => {
+    const IfoodOrderService = require('./IfoodOrderService');
     return await IfoodOrderService.markReady(orderId, restaurantId);
   },
   onCanceled: async (orderId, restaurantId) => {
+    const IfoodOrderService = require('./IfoodOrderService');
     return await IfoodOrderService.rejectOrder(orderId, restaurantId, '501');
   }
 });
 
-const UairangoOrderAdapter = require('./UairangoOrderAdapter');
-
 orderPlatformService.register('uairango', {
   onPreparing: async (orderId, restaurantId) => {
+    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
     return await UairangoOrderAdapter.confirmOrderOnPlatform(restaurantId, orderId);
   },
   onReady: async (orderId, restaurantId) => {
+    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
     return await UairangoOrderAdapter.markReadyOnPlatform(restaurantId, orderId);
   },
   onCanceled: async (orderId, restaurantId) => {
+    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
     return await UairangoOrderAdapter.rejectOrderOnPlatform(restaurantId, orderId);
   }
 });
