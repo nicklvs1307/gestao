@@ -107,7 +107,7 @@ class IfoodOrderAdapter extends IntegrationBaseService {
         isPrepaid,
         prepaidAmount,
         pendingAmount,
-        changeFor: firstMethod.changeFor ? parseFloat(firstMethod.changeFor) : null,
+        changeFor: firstOfflineMethod?.changeFor ? parseFloat(firstOfflineMethod.changeFor) : null,
       },
       totals: {
         subtotal,
