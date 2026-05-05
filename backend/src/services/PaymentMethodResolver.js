@@ -62,6 +62,9 @@ const TYPE_MAP = {
   'debito': 'DEBIT_CARD',
   'vale': 'VOUCHER',
   'ticket': 'VOUCHER',
+
+  // Pagamentos Online (iFood pre-pago via app)
+  'ONLINE_PAID': 'ONLINE_PAID',
 };
 
 // Labels de exibição por type (para frontend/impressão)
@@ -71,6 +74,7 @@ const DISPLAY_LABELS = {
   'CREDIT_CARD': 'Cartão de Crédito',
   'DEBIT_CARD': 'Cartão de Débito',
   'VOUCHER': 'Vale Refeição',
+  'ONLINE_PAID': 'Pago Online',
   'OTHER': 'Outros',
 };
 
@@ -107,7 +111,7 @@ class PaymentMethodResolver {
     if (lower.includes('vale') || lower.includes('voucher') || lower.includes('ticket')) return 'VOUCHER';
 
     // 4. Se já é um type válido, retornar como está
-    const validTypes = ['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'VOUCHER', 'OTHER'];
+    const validTypes = ['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'VOUCHER', 'ONLINE_PAID', 'OTHER'];
     if (validTypes.includes(upper)) return upper;
 
     logger.warn(`[PaymentMethodResolver] Método não reconhecido: "${rawMethod}", usando OTHER`);
@@ -157,7 +161,7 @@ class PaymentMethodResolver {
    * @returns {string[]}
    */
   static getValidTypes() {
-    return ['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'VOUCHER', 'OTHER'];
+    return ['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'VOUCHER', 'ONLINE_PAID', 'OTHER'];
   }
 }
 

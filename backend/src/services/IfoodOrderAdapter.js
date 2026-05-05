@@ -56,18 +56,20 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     // ─── PAGAMENTO ────────────────────────────────────────────────
     // API v2 do iFood: payments é um OBJETO { prepaid, pending, methods }
     const payments = rawData?.payments || {};
-    const prepaid = parseFloat(payments.prepaid) || 0;
-    const pending = parseFloat(payments.pending) || 0;
     const paymentMethods = payments.methods || [];
 
-    // Se payments veio como array (formato antigo), tratar como fallback
-    const isLegacyFormat = Array.isArray(payments);
-    const firstMethod = isLegacyFormat 
-      ? (payments[0] || {}) 
-      : (paymentMethods[0] || {});
+    // Separar métodos Online (já pagos no app) e Offline (cobrar na entrega)
+    const onlineMethods = paymentMethods.filter(m => m.type === 'ONLINE');
+    const offlineMethods = paymentMethods.filter(m => m.type === 'OFFLINE');
 
-    const rawMethod = firstMethod.method || firstMethod.type || 'CASH';
-    const isPrepaid = prepaid > 0 || paymentMethods.some(m => m.type === 'ONLINE');
+    // Calcular valores corretamente
+    const prepaidAmount = onlineMethods.reduce((sum, m) => sum + (parseFloat(m.value) || 0), 0) || parseFloat(payments.prepaid) || 0;
+    const pendingAmount = offlineMethods.reduce((sum, m) => sum + (parseFloat(m.value) || 0), 0) || parseFloat(payments.pending) || 0;
+
+    // Método offline (para cobrança na entrega) - usar primeiro offline ou CASH como fallback
+    const firstOfflineMethod = offlineMethods[0] || {};
+    const rawMethod = firstOfflineMethod.method || 'CASH';
+    const isPrepaid = prepaidAmount > 0;
 
     // ─── DELIVERY DATA ────────────────────────────────────────────
     const deliveryData = (orderType === 'DELIVERY' || deliveryAddress) ? {
@@ -103,8 +105,8 @@ class IfoodOrderAdapter extends IntegrationBaseService {
       payment: {
         rawMethod,
         isPrepaid,
-        prepaidAmount: prepaid,
-        pendingAmount: pending,
+        prepaidAmount,
+        pendingAmount,
         changeFor: firstMethod.changeFor ? parseFloat(firstMethod.changeFor) : null,
       },
       totals: {

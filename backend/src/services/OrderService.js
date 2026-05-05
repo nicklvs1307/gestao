@@ -643,7 +643,7 @@ if (isPickup && !hasValidPhone) {
             state: deliveryData.state || '',
             zipCode: deliveryData.zipCode || '',
             deliveryType: deliveryData.deliveryType || 'delivery',
-            paymentMethod: resolvedPaymentType, // SEMPRE type padronizado
+            paymentMethod: isPrepaid ? 'ONLINE_PAID' : resolvedPaymentType, // ONLINE_PAID para prepaid
             changeFor: payment?.changeFor ? parseFloat(payment.changeFor) : null,
             deliveryFee: finalDeliveryFee,
             notes: notes || '',
@@ -656,24 +656,24 @@ if (isPickup && !hasValidPhone) {
 
       // ─── CRIAR PAYMENT (MESMO PADRÃO DO PDV) ─────────────────────
       if (isPrepaid && prepaidAmount > 0) {
-        // Pagamento online - já pago no app
+        // Pagamento online - já pago no app - usar ONLINE_PAID
         await tx.payment.create({
           data: {
             orderId: createdOrder.id,
             amount: prepaidAmount,
-            method: resolvedPaymentType,
+            method: 'ONLINE_PAID',
           },
         });
 
         // Criar transação financeira (igual PDV - linha 432 do createOrder)
         await FinancialService.processOrderPayment(restaurantId, {
           order: { ...createdOrder, total: prepaidAmount, dailyOrderNumber },
-          paymentMethod: resolvedPaymentType,
+          paymentMethod: 'ONLINE_PAID',
           cashierId: openSession?.id,
           tx,
         });
 
-        logger.info(`[ORDER-INTEGRATION] Payment PREPAID criado: R$${prepaidAmount} (${resolvedPaymentType}) no caixa ${openSession?.id || 'NENHUM'}`);
+        logger.info(`[ORDER-INTEGRATION] Payment PREPAID criado: R$${prepaidAmount} (ONLINE_PAID) no caixa ${openSession?.id || 'NENHUM'}`);
       }
 
       if (pendingAmount > 0) {

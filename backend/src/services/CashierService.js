@@ -106,12 +106,13 @@ class CashierService {
 
     return await prisma.deliveryOrder.findMany({
         where: {
-            order: { 
-                restaurantId, 
+            order: {
+                restaurantId,
                 isSettled: false,
                 createdAt: { gte: session.openedAt }
             },
-            status: 'DELIVERED'
+            status: 'DELIVERED',
+            paymentMethod: { not: 'ONLINE_PAID' } // Excluir pagamentos online (já pagos no app)
         },
         include: {
             order: {
@@ -170,14 +171,15 @@ class CashierService {
     if (activeOrders > 0) throw new AppError(`Existem ${activeOrders} pedidos ativos. Finalize-os antes de fechar.`, 400);
 
     const pendingDeliveries = await prisma.deliveryOrder.findMany({
-        where: { 
-            order: { 
-                restaurantId, 
+        where: {
+            order: {
+                restaurantId,
                 isSettled: false,
                 createdAt: { gte: session.openedAt }
-            }, 
+            },
             status: 'DELIVERED',
-            driverId: { not: null } // Apenas bloqueia se houver um entregador para acertar
+            driverId: { not: null }, // Apenas bloqueia se houver um entregador para acertar
+            paymentMethod: { not: 'ONLINE_PAID' } // Excluir pagamentos online (já pagos no app)
         },
         select: { driverId: true }
     });
