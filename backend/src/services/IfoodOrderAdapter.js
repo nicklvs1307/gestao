@@ -68,8 +68,10 @@ class IfoodOrderAdapter extends IntegrationBaseService {
 
     // Método offline (para cobrança na entrega) - usar primeiro offline ou CASH como fallback
     const firstOfflineMethod = offlineMethods[0] || {};
-    const rawMethod = firstOfflineMethod.method || 'CASH';
     const isPrepaid = prepaidAmount > 0;
+    const rawMethod = offlineMethods.length > 0 
+      ? (firstOfflineMethod.method || 'CASH') 
+      : (isPrepaid ? 'ONLINE_PAID' : 'CASH');
 
     // ─── DELIVERY DATA ────────────────────────────────────────────
     const deliveryData = (orderType === 'DELIVERY' || deliveryAddress) ? {
@@ -107,7 +109,9 @@ class IfoodOrderAdapter extends IntegrationBaseService {
         isPrepaid,
         prepaidAmount,
         pendingAmount,
-        changeFor: firstOfflineMethod?.cash?.changeFor ? parseFloat(firstOfflineMethod.cash.changeFor) : null,
+        changeFor: firstOfflineMethod?.cash?.changeFor 
+          ? parseFloat(firstOfflineMethod.cash.changeFor) 
+          : (firstOfflineMethod?.changeFor ? parseFloat(firstOfflineMethod.changeFor) : null),
       },
       totals: {
         subtotal,
