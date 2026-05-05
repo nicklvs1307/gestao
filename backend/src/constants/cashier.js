@@ -17,7 +17,7 @@ const CASHIER_CONSTANTS = {
     CLOSED: 'CLOSED',
   },
   METHODS: {
-    CASH: 'cash',
+    CASH: 'CASH',
   },
 };
 

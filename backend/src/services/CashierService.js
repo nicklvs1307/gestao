@@ -3,6 +3,7 @@ const prisma = require('../lib/prisma');
 const AppError = require('../utils/AppError');
 const CASHIER_CONSTANTS = require('../constants/cashier');
 const money = require('../utils/money');
+const PaymentMethodResolver = require('./PaymentMethodResolver');
 
 class CashierService {
   /**
@@ -23,18 +24,21 @@ class CashierService {
     });
 
     // Calcula saldo em dinheiro (Dinheiro em mãos)
+    // Usa PaymentMethodResolver.isCash() para detectar QUALQUER formato de "dinheiro"
+    // (resolve 'cash', 'CASH', 'money', 'dinheiro', etc.)
     const cashInHand = transactions.reduce((acc, t) => {
-      if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) {
+      if (PaymentMethodResolver.isCash(t.paymentMethod)) {
         return t.type === 'INCOME' ? money.add(acc, t.amount) : money.subtract(acc, t.amount);
       }
       return acc;
     }, session.initialAmount);
 
-    // Resumo por método de pagamento
+    // Resumo por método de pagamento (lowercase keys for frontend compatibility)
     const salesByMethod = transactions.reduce((acc, t) => {
       if (t.type === 'INCOME') {
-        const method = t.paymentMethod || 'other';
-        acc[method] = money.add(acc[method] || 0, t.amount);
+        const resolved = PaymentMethodResolver.resolveType(t.paymentMethod || 'OTHER');
+        const key = resolved ? resolved.toLowerCase() : 'other';
+        acc[key] = money.add(acc[key] || 0, t.amount);
       }
       return acc;
     }, {});
@@ -219,7 +223,7 @@ class CashierService {
 
     salesTransactions.forEach(t => {
         systemTotal = money.add(systemTotal, t.amount);
-        if (t.paymentMethod === CASHIER_CONSTANTS.METHODS.CASH) systemCash = money.add(systemCash, t.amount);
+        if (PaymentMethodResolver.isCash(t.paymentMethod)) systemCash = money.add(systemCash, t.amount);
     });
 
     const expectedAmount = money.round(systemTotal);

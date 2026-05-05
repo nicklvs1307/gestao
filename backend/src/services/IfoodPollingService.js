@@ -3,8 +3,8 @@ const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const IfoodAuthService = require('./IfoodAuthService');
-const IfoodOrderService = require('./IfoodOrderService');
-const IfoodWebhookService = require('./IfoodWebhookService');
+const IfoodOrderAdapter = require('./IfoodOrderAdapter');
+const IntegrationOrderService = require('./IntegrationOrderService');
 
 // Polling agora é apenas fallback - verifica se webhook já processou o evento
 const FALLBACK_MODE = true;
@@ -167,7 +167,8 @@ class IfoodPollingService {
       case 'CONFIRMED': {
         const orderDetails = await this.getOrderDetails(orderId, token);
         if (orderDetails) {
-          await IfoodOrderService.createOrderFromIfood(restaurantId, orderId, orderDetails);
+          // Usa o mesmo adapter do webhook → OrderService.createOrderFromIntegration()
+          await IfoodOrderAdapter.processNewOrder(restaurantId, orderDetails);
         }
         break;
       }
@@ -175,13 +176,13 @@ class IfoodPollingService {
       case 'CANCELLED':
       case 'CAN':
       case 'CANCELLATION_REQUEST_FAILED':
-        await IfoodOrderService.cancelOrderFromIfood(restaurantId, orderId);
+        await IntegrationOrderService.cancelFromIntegration('ifood', restaurantId, orderId);
         break;
 
       case 'ORDER_PATCHED': {
         const updatedDetails = await this.getOrderDetails(orderId, token);
         if (updatedDetails) {
-          await IfoodOrderService.updateOrderFromIfood(restaurantId, orderId, updatedDetails);
+          await IntegrationOrderService.updateFromIntegration('ifood', restaurantId, orderId, updatedDetails);
         }
         break;
       }

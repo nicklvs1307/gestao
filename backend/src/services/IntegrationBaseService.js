@@ -3,6 +3,7 @@ const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const IntegrationTypeService = require('./IntegrationTypeService');
 const IntegrationOrderService = require('./IntegrationOrderService');
+const PaymentMethodResolver = require('./PaymentMethodResolver');
 
 class IntegrationBaseService {
   constructor(platformName) {
@@ -26,38 +27,44 @@ class IntegrationBaseService {
   }
 
   mapPaymentMethod(rawMethod) {
-    return IntegrationTypeService.mapPaymentMethod(this.platform, rawMethod);
+    return PaymentMethodResolver.resolveType(rawMethod);
   }
 
   mapOrderType(rawType) {
     return IntegrationTypeService.mapOrderType(this.platform, rawType);
   }
 
+  /**
+   * Processa um novo pedido de integração.
+   * Agora usa OrderService.createOrderFromIntegration() como caminho centralizado.
+   * Mesma lógica financeira do PDV (Payment + FinancialTransaction).
+   */
   async processNewOrder(restaurantId, rawData) {
     try {
       const normalized = this.parseOrder(rawData, restaurantId);
-      
       const platformOrderId = this.getPlatformOrderId(rawData);
-      
-      const order = await IntegrationOrderService.createFromIntegration(
-        this.platform,
-        restaurantId,
-        platformOrderId,
-        normalized
-      );
 
-      if (order && !order.isReplayed) {
+      // Usar lazy require para evitar circular dependency
+      const OrderService = require('./OrderService');
+
+      const result = await OrderService.createOrderFromIntegration({
+        platform: this.platform,
+        platformOrderId,
+        restaurantId,
+        items: normalized.items,
+        orderType: normalized.orderType,
+        customer: normalized.customer,
+        deliveryData: normalized.deliveryData,
+        payment: normalized.payment,
+        totals: normalized.totals,
+        notes: normalized.customerNote || null,
+      });
+
+      if (result && !result.isReplayed) {
         await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
-        
-        socketLib.emitToRestaurant(restaurantId, 'order_update', {
-          eventType: 'ORDER_CREATED',
-          platform: this.platform,
-          orderId: order.id,
-          platformOrderId,
-        });
       }
 
-      return order;
+      return result;
     } catch (error) {
       logger.error(`[${this.platform.toUpperCase()}] Erro ao processar pedido:`, error.message);
       throw error;

@@ -5,6 +5,7 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const AppError = require('../utils/AppError');
 const { CloseCashierSchema, OpenCashierSchema, CashierTransactionSchema } = require('../schemas/cashierSchema');
 const CASHIER_CONSTANTS = require('../constants/cashier');
+const PaymentMethodResolver = require('../services/PaymentMethodResolver');
 
 class CashierController {
 
@@ -94,6 +95,7 @@ class CashierController {
       !t.description.includes('ENTRADA ACERTO') // Exclui entradas de acerto de entregadores
 );
     
+    // Normalize helper for key output (lowercase, accent-stripped)
     const normalize = (str) => {
       if (!str) return '';
       return str.toString().toLowerCase()
@@ -101,39 +103,32 @@ class CashierController {
         .trim();
     };
 
-    // Criar mapa de métodos por ID e por nome normalizado para busca mais eficiente
-    const paymentMethodMap = {};
-    const paymentMethodByName = {};
+    // Build type → restaurant method map for robust grouping
+    const typeToMethod = {};
+    const idToMethod = {};
     restaurantPaymentMethods.forEach(m => {
-      paymentMethodMap[m.id] = m;
-      paymentMethodByName[normalize(m.name)] = m;
-      if (m.type) paymentMethodByName[normalize(m.type)] = m;
+      if (m.type) typeToMethod[m.type.toUpperCase()] = m;
+      idToMethod[m.id] = m;
     });
 
     const getMethodKey = (paymentMethodValue) => {
-      if (!paymentMethodValue) return 'other';
+      if (!paymentMethodValue) return 'outros';
       
-      // 1. Primeiro tenta encontrar pelo ID direto
-      if (paymentMethodMap[paymentMethodValue]) {
-        return normalize(paymentMethodMap[paymentMethodValue].name);
+      // 1. Try direct ID lookup (PDV stores UUID)
+      if (idToMethod[paymentMethodValue]) {
+        return normalize(idToMethod[paymentMethodValue].name);
       }
       
-      // 2. Se não for ID, tenta encontrar pelo nome/tipo normalizado
-      const normalized = normalize(paymentMethodValue);
-      if (paymentMethodByName[normalized]) {
-        return normalize(paymentMethodByName[normalized].name);
+      // 2. Resolve to standardized type via PaymentMethodResolver
+      const resolvedType = PaymentMethodResolver.resolveType(paymentMethodValue);
+      
+      // 3. Find matching restaurant payment method by type
+      if (typeToMethod[resolvedType]) {
+        return normalize(typeToMethod[resolvedType].name);
       }
       
-      // 3. Se ainda não encontrou, procurar por similaridade (contains)
-      const found = restaurantPaymentMethods.find(m => 
-        normalize(m.name).includes(normalized) || 
-        (m.type && normalize(m.type).includes(normalized))
-      );
-      
-      if (found) return normalize(found.name);
-      
-      // 4. Se não encontrou nenhum, agrupar como 'other'
-      return 'other';
+      // 4. Fallback: return resolved type lowercased
+      return resolvedType ? resolvedType.toLowerCase() : 'outros';
     };
 
     const salesByMethod = salesTransactions.reduce((acc, curr) => {
@@ -287,6 +282,7 @@ class CashierController {
       orderBy: { createdAt: 'desc' }
     });
 
+    // Normalize helper for key output (lowercase, accent-stripped)
     const normalize = (str) => {
       if (!str) return '';
       return str.toString().toLowerCase()
@@ -294,30 +290,24 @@ class CashierController {
         .trim();
     };
 
-    // Criar mapa de métodos por ID e por nome normalizado
-    const paymentMethodMap = {};
-    const paymentMethodByName = {};
+    // Build type → restaurant method map for robust grouping
+    const typeToMethod = {};
+    const idToMethod = {};
     restaurantPaymentMethods.forEach(m => {
-      paymentMethodMap[m.id] = m;
-      paymentMethodByName[normalize(m.name)] = m;
-      if (m.type) paymentMethodByName[normalize(m.type)] = m;
+      if (m.type) typeToMethod[m.type.toUpperCase()] = m;
+      idToMethod[m.id] = m;
     });
 
     const getMethodKey = (paymentMethodValue) => {
-      if (!paymentMethodValue) return 'other';
-      if (paymentMethodMap[paymentMethodValue]) {
-        return normalize(paymentMethodMap[paymentMethodValue].name);
+      if (!paymentMethodValue) return 'outros';
+      if (idToMethod[paymentMethodValue]) {
+        return normalize(idToMethod[paymentMethodValue].name);
       }
-      const normalized = normalize(paymentMethodValue);
-      if (paymentMethodByName[normalized]) {
-        return normalize(paymentMethodByName[normalized].name);
+      const resolvedType = PaymentMethodResolver.resolveType(paymentMethodValue);
+      if (typeToMethod[resolvedType]) {
+        return normalize(typeToMethod[resolvedType].name);
       }
-      const found = restaurantPaymentMethods.find(m => 
-        normalize(m.name).includes(normalized) || 
-        (m.type && normalize(m.type).includes(normalized))
-      );
-      if (found) return normalize(found.name);
-      return 'other';
+      return resolvedType ? resolvedType.toLowerCase() : 'outros';
     };
 
     const salesTransactions = transactions.filter(t => 

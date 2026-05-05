@@ -2,8 +2,19 @@ const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
-const OrderNumberService = require('./OrderNumberService');
 
+/**
+ * UairangoOrderService — API interaction only.
+ * 
+ * Order creation is now handled by:
+ * - OrderService.createOrderFromIntegration() (via UairangoOrderAdapter + IntegrationBaseService)
+ * 
+ * Cancel/update are handled by:
+ * - IntegrationOrderService.cancelFromIntegration()
+ * - IntegrationOrderService.updateFromIntegration()
+ * 
+ * This service only handles Uairango platform API calls (confirm, reject, markReady).
+ */
 class UairangoOrderService {
   BASE_URL = 'https://www.uairango.com/api2';
 
@@ -32,220 +43,6 @@ class UairangoOrderService {
       logger.error(`[UAIRANGO] Erro ao obter token para restaurante ${restaurantId}:`, error.message);
       return null;
     }
-  }
-
-  /**
-   * Cria um pedido no sistema a partir dos dados do Uai Rangô.
-   */
-  async createOrderFromUairango(restaurantId, uairangoOrderId, orderData) {
-    try {
-      const settings = await prisma.integrationSettings.findUnique({
-        where: { restaurantId }
-      });
-
-      if (!settings?.uairangoActive) {
-        logger.info(`[UAIRANGO] Integração não ativa para restaurante ${restaurantId}`);
-        return;
-      }
-
-      const existingOrder = await prisma.order.findFirst({
-        where: {
-          restaurantId,
-          uairangoOrderId
-        }
-      });
-
-      if (existingOrder) {
-        logger.info(`[UAIRANGO] Pedido ${uairangoOrderId} já existe no sistema`);
-        return;
-      }
-
-      const orderNumber = await OrderNumberService.getNextDailyOrderNumber(restaurantId);
-
-      const isDelivery = orderData.tipo_entrega === 'Delivery';
-      const orderType = isDelivery ? 'DELIVERY' : 'PICKUP';
-
-      const orderItems = [];
-
-      const products = orderData.produtos || [];
-      for (const item of products) {
-        const product = await this.findOrCreateProduct(restaurantId, item);
-
-        const addonsData = [];
-        if (Array.isArray(item.adicionais)) {
-          for (const addon of item.adicionais) {
-            addonsData.push({
-              name: addon.nome || 'Adicional',
-              price: parseFloat(addon.valor || 0),
-              quantity: addon.quantidade || 1
-            });
-          }
-        }
-
-        const sizeData = item.opcao ? {
-          name: item.opcao,
-          price: parseFloat(item.valor || 0)
-        } : null;
-
-        orderItems.push({
-          productId: product.id,
-          quantity: parseInt(item.quantidade || 1),
-          priceAtTime: parseFloat(item.valor || 0),
-          observations: item.obs || null,
-          addonsJson: addonsData.length > 0 ? JSON.stringify(addonsData) : null,
-          sizeJson: sizeData ? JSON.stringify(sizeData) : null,
-          flavorsJson: null
-        });
-      }
-
-      const deliveryOrderData = isDelivery ? {
-        customerName: orderData.usuario?.nome || 'Cliente',
-        phone: orderData.usuario?.tel1 || orderData.usuario?.tel_localizador || '',
-        street: orderData.endereco?.rua || '',
-        number: orderData.endereco?.num?.toString() || '',
-        complement: orderData.endereco?.complemento || '',
-        neighborhood: orderData.endereco?.bairro || '',
-        city: orderData.endereco?.cidade || '',
-        state: orderData.endereco?.uf || '',
-        zipCode: orderData.endereco?.cep || '',
-        reference: orderData.endereco?.ponto_referencia || '',
-        latitude: orderData.endereco?.lat ? parseFloat(orderData.endereco.lat) : null,
-        longitude: orderData.endereco?.lng ? parseFloat(orderData.endereco.lng) : null,
-        estimatedTime: orderData.prazo_min || orderData.prazo_max || null
-      } : null;
-
-      const total = parseFloat(orderData.valor_total || 0);
-      const extraCharge = isDelivery ? parseFloat(orderData.taxa_entrega || 0) : 0;
-
-      const paymentMethod = this.mapPaymentMethod(orderData.forma_pagamento);
-
-      const order = await prisma.order.create({
-        data: {
-          dailyOrderNumber: orderNumber,
-          status: 'CONFIRMED',
-          total: total - (orderData.taxa_entrega || 0),
-          discount: 0,
-          extraCharge: extraCharge,
-          orderType: orderType,
-          isPrinted: false,
-          pendingAt: new Date(),
-          preparingAt: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          restaurantId,
-          uairangoOrderId,
-          items: {
-            create: orderItems
-          }
-        },
-        include: {
-          items: {
-            include: {
-              product: true
-            }
-          },
-          restaurant: true
-        }
-      });
-
-      if (deliveryOrderData) {
-        await prisma.deliveryOrder.create({
-          data: {
-            status: 'PENDING',
-            ...deliveryOrderData,
-            orderId: order.id
-          }
-        });
-      }
-
-      if (orderData.observacao) {
-        await prisma.orderNote.create({
-          data: {
-            orderId: order.id,
-            content: orderData.observacao,
-            createdBy: 'Sistema'
-          }
-        });
-      }
-
-      socketLib.emitToRestaurant(restaurantId, 'new_order', {
-        order: order,
-        platform: 'uairango',
-        orderId: uairangoOrderId
-      });
-
-      await this.confirmOrderOnUairango(restaurantId, uairangoOrderId);
-
-      logger.info(`[UAIRANGO] Pedido ${order.id} criado a partir do Uai Rangô ${uairangoOrderId} (${orderType})`);
-
-      return order;
-    } catch (error) {
-      logger.error(`[UAIRANGO] Erro ao criar pedido ${uairangoOrderId}:`, error.message);
-      this._notifySyncError(restaurantId, uairangoOrderId, `Erro ao criar pedido: ${error.message}`);
-      throw error;
-    }
-  }
-
-  /**
-   * Encontra ou cria um produto baseado nos dados do item do pedido.
-   */
-  async findOrCreateProduct(restaurantId, item) {
-    const productName = item.produto || 'Produto Uai Rangô';
-    
-    const existingProduct = await prisma.product.findFirst({
-      where: {
-        restaurantId,
-        name: productName
-      }
-    });
-
-    if (existingProduct) {
-      return existingProduct;
-    }
-
-    const defaultCategory = await prisma.category.findFirst({
-      where: { restaurantId }
-    });
-
-    const product = await prisma.product.create({
-      data: {
-        name: productName,
-        description: item.obs || '',
-        price: parseFloat(item.valor || 0),
-        restaurantId,
-        showInMenu: false,
-        isFlavor: false,
-        saiposIntegrationCode: item.id_produto?.toString() || null
-      }
-    });
-
-    if (defaultCategory) {
-      await prisma.product.update({
-        where: { id: product.id },
-        data: {
-          categories: {
-            connect: { id: defaultCategory.id }
-          }
-        }
-      });
-    }
-
-    return product;
-  }
-
-  /**
-   * Mapeia o método de pagamento do Uai Rangô para o sistema.
-   */
-  mapPaymentMethod(formaPagamento) {
-    if (!formaPagamento) return 'money';
-    
-    const lower = formaPagamento.toLowerCase();
-    if (lower.includes('pix')) return 'pix';
-    if (lower.includes('crédito')) return 'credit_card';
-    if (lower.includes('débito')) return 'debit_card';
-    if (lower.includes('online')) return 'online';
-    
-    return 'money';
   }
 
   /**

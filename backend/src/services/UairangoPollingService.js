@@ -3,6 +3,7 @@ const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const UairangoAuthService = require('./UairangoAuthService');
+const UairangoOrderAdapter = require('./UairangoOrderAdapter');
 const IntegrationOrderService = require('./IntegrationOrderService');
 const IntegrationTypeService = require('./IntegrationTypeService');
 
@@ -148,13 +149,11 @@ class UairangoPollingService {
     if (code === 'PLC' || code === 'PLACED') {
       const fullOrderData = await this._fetchOrderDetails(restaurantId, platformOrderId);
       if (fullOrderData) {
-        await IntegrationOrderService.createFromIntegration(
-          'uairango',
-          restaurantId,
-          platformOrderId,
-          fullOrderData
-        );
+        // Usa o adapter centralizado → OrderService.createOrderFromIntegration()
+        await UairangoOrderAdapter.processNewOrder(restaurantId, fullOrderData);
       }
+    } else if (code === 'CAN' || code === 'CANCELLED') {
+      await IntegrationOrderService.cancelFromIntegration('uairango', restaurantId, platformOrderId);
     } else {
       // Outros eventos: mapear e atualizar status
       const newStatus = IntegrationTypeService.mapStatus('uairango', code);

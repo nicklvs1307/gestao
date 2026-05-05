@@ -11,6 +11,8 @@ const WhatsAppNotificationService = require('./WhatsAppNotificationService');
 const { normalizePhone } = require('../lib/phoneUtils');
 const socketLib = require('../lib/socket');
 const OrderPlatformService = require('./OrderPlatformService');
+const PaymentMethodResolver = require('./PaymentMethodResolver');
+const IntegrationOrderService = require('./IntegrationOrderService');
 
 const fullOrderInclude = {
   items: { 
@@ -455,6 +457,325 @@ if (isPickup && !hasValidPhone) {
   }
 
   /**
+   * Cria pedido a partir de integração externa (iFood, Uairango, etc).
+   * 
+   * Este é o ÚNICO ponto de criação de pedidos de integração.
+   * Reutiliza a mesma lógica financeira do PDV (Payment + FinancialTransaction),
+   * garantindo consistência no fechamento de caixa.
+   * 
+   * Os adapters (IfoodOrderAdapter, UairangoOrderAdapter) fazem APENAS tradução
+   * de formato e chamam este método.
+   */
+  async createOrderFromIntegration({
+    platform,           // 'ifood' | 'uairango'
+    platformOrderId,    // ID externo (para idempotência)
+    restaurantId,
+    items,              // [{ name, price, quantity, observations, addons }]
+    orderType,          // 'DELIVERY' | 'PICKUP'
+    customer,           // { name, phone }
+    deliveryData,       // { address, complement, neighborhood, city, state, zipCode, ... }
+    payment,            // { rawMethod, isPrepaid, prepaidAmount, pendingAmount, changeFor }
+    totals,             // { subtotal, deliveryFee, discount, total }
+    notes,              // observações do pedido
+  }) {
+    logger.info(`[ORDER-INTEGRATION] Criando pedido ${platform}/${platformOrderId} para restaurante ${restaurantId}`);
+
+    // ─── 1. IDEMPOTÊNCIA ────────────────────────────────────────────
+    const eventType = 'ORDER_PLACED';
+
+    const existingEvent = await prisma.integrationEvent.findUnique({
+      where: {
+        platform_platformOrderId_eventType: {
+          platform,
+          platformOrderId,
+          eventType,
+        },
+      },
+    });
+
+    if (existingEvent?.status === 'PROCESSED' && existingEvent?.orderId) {
+      logger.info(`[ORDER-INTEGRATION] Evento ${platformOrderId} (${platform}) já processado`);
+      const existingOrder = await prisma.order.findUnique({
+        where: { id: existingEvent.orderId },
+        include: fullOrderInclude,
+      });
+      return { order: existingOrder, isReplayed: true };
+    }
+
+    // Verificar pedido existente por ID da plataforma
+    const platformField = platform === 'ifood' ? 'ifoodOrderId' : 'uairangoOrderId';
+    const existingOrder = await prisma.order.findFirst({
+      where: { restaurantId, [platformField]: platformOrderId },
+    });
+
+    if (existingOrder) {
+      logger.info(`[ORDER-INTEGRATION] Pedido ${platformOrderId} já existe (ID: ${existingOrder.id})`);
+      if (existingEvent) {
+        await prisma.integrationEvent.update({
+          where: { id: existingEvent.id },
+          data: { status: 'PROCESSED', orderId: existingOrder.id, processedAt: new Date() },
+        });
+      }
+      return { order: existingOrder, isReplayed: true };
+    }
+
+    // ─── 2. RESOLVER FORMA DE PAGAMENTO (CENTRALIZADO) ──────────────
+    const resolvedPaymentType = PaymentMethodResolver.resolveType(payment?.rawMethod);
+    const paymentDisplayLabel = PaymentMethodResolver.getDisplayLabel(resolvedPaymentType);
+    const isPrepaid = payment?.isPrepaid || false;
+    const prepaidAmount = parseFloat(payment?.prepaidAmount) || 0;
+    const pendingAmount = parseFloat(payment?.pendingAmount) || 0;
+
+    logger.info(`[ORDER-INTEGRATION] Pagamento: ${payment?.rawMethod} → ${resolvedPaymentType} (prepaid: ${isPrepaid}, R$${prepaidAmount})`);
+
+    // ─── 3. FIND/CREATE PRODUTOS E CLIENTE ──────────────────────────
+    const orderItems = [];
+    for (const item of items) {
+      const product = await this._findOrCreateIntegrationProduct(restaurantId, item);
+      
+      const addonsData = (item.addons || []).map(addon => ({
+        name: addon.name,
+        price: parseFloat(addon.price) || 0,
+        quantity: parseInt(addon.quantity) || 1,
+      }));
+
+      orderItems.push({
+        productId: product.id,
+        quantity: parseInt(item.quantity) || 1,
+        priceAtTime: parseFloat(item.price) || product.price,
+        observations: item.observations || null,
+        addonsJson: addonsData.length > 0 ? JSON.stringify(addonsData) : null,
+        sizeJson: item.sizeJson || null,
+        flavorsJson: item.flavorsJson || null,
+      });
+    }
+
+    let localCustomer = null;
+    if (customer?.phone) {
+      const cleanPhone = customer.phone.replace(/\D/g, '');
+      if (cleanPhone.length >= 8) {
+        localCustomer = await prisma.customer.upsert({
+          where: { phone_restaurantId: { phone: cleanPhone, restaurantId } },
+          update: {
+            name: customer.name || 'Cliente',
+            address: deliveryData?.address || undefined,
+            neighborhood: deliveryData?.neighborhood || undefined,
+            city: deliveryData?.city || undefined,
+            state: deliveryData?.state || undefined,
+            zipCode: deliveryData?.zipCode || undefined,
+            complement: deliveryData?.complement || undefined,
+            reference: deliveryData?.reference || undefined,
+          },
+          create: {
+            name: customer.name || 'Cliente',
+            phone: cleanPhone,
+            address: deliveryData?.address || null,
+            neighborhood: deliveryData?.neighborhood || null,
+            city: deliveryData?.city || null,
+            state: deliveryData?.state || null,
+            zipCode: deliveryData?.zipCode || null,
+            complement: deliveryData?.complement || null,
+            reference: deliveryData?.reference || null,
+            restaurantId,
+          },
+        });
+      }
+    }
+
+    // ─── 4. TRANSAÇÃO ATÔMICA (Pedido + Payment + Financial) ────────
+    const finalTotal = parseFloat(totals?.total) || 0;
+    const finalDiscount = parseFloat(totals?.discount) || 0;
+    const finalDeliveryFee = parseFloat(totals?.deliveryFee) || 0;
+
+    const order = await prisma.$transaction(async (tx) => {
+      // Numeração diária (mesma lógica do PDV)
+      const openSession = await tx.cashierSession.findFirst({
+        where: { restaurantId, status: 'OPEN' },
+        orderBy: { openedAt: 'desc' },
+      });
+
+      const startTime = openSession ? openSession.openedAt : new Date();
+      if (!openSession) startTime.setHours(0, 0, 0, 0);
+
+      const lastOrders = await tx.$queryRaw`
+        SELECT "dailyOrderNumber" FROM "Order" 
+        WHERE "restaurantId" = ${restaurantId} 
+        AND "orderType" IN ('DELIVERY', 'PICKUP')
+        AND "createdAt" >= ${startTime}
+        ORDER BY "dailyOrderNumber" DESC 
+        LIMIT 1 
+        FOR UPDATE
+      `;
+      const dailyOrderNumber = (lastOrders[0]?.dailyOrderNumber || 0) + 1;
+
+      // Criar pedido
+      const createdOrder = await tx.order.create({
+        data: {
+          dailyOrderNumber,
+          status: 'PENDING',
+          total: finalTotal,
+          discount: finalDiscount,
+          extraCharge: finalDeliveryFee,
+          orderType: orderType === 'PICKUP' ? 'PICKUP' : 'DELIVERY',
+          restaurantId,
+          isPrinted: false,
+          pendingAt: new Date(),
+          ifoodOrderId: platform === 'ifood' ? platformOrderId : null,
+          uairangoOrderId: platform === 'uairango' ? platformOrderId : null,
+          items: { create: orderItems },
+        },
+        include: { items: true },
+      });
+
+      // Criar DeliveryOrder (se DELIVERY)
+      if ((orderType === 'DELIVERY' || deliveryData) && deliveryData) {
+        await tx.deliveryOrder.create({
+          data: {
+            orderId: createdOrder.id,
+            customerId: localCustomer?.id || null,
+            name: customer?.name || 'Cliente',
+            phone: customer?.phone || null,
+            address: deliveryData.address || '',
+            complement: deliveryData.complement || '',
+            reference: deliveryData.reference || '',
+            neighborhood: deliveryData.neighborhood || '',
+            city: deliveryData.city || '',
+            state: deliveryData.state || '',
+            zipCode: deliveryData.zipCode || '',
+            deliveryType: deliveryData.deliveryType || 'delivery',
+            paymentMethod: resolvedPaymentType, // SEMPRE type padronizado
+            changeFor: payment?.changeFor ? parseFloat(payment.changeFor) : null,
+            deliveryFee: finalDeliveryFee,
+            notes: notes || '',
+            latitude: deliveryData.latitude || null,
+            longitude: deliveryData.longitude || null,
+            status: 'PENDING',
+          },
+        });
+      }
+
+      // ─── CRIAR PAYMENT (MESMO PADRÃO DO PDV) ─────────────────────
+      if (isPrepaid && prepaidAmount > 0) {
+        // Pagamento online - já pago no app
+        await tx.payment.create({
+          data: {
+            orderId: createdOrder.id,
+            amount: prepaidAmount,
+            method: resolvedPaymentType,
+          },
+        });
+
+        // Criar transação financeira (igual PDV - linha 432 do createOrder)
+        await FinancialService.processOrderPayment(restaurantId, {
+          order: { ...createdOrder, total: prepaidAmount, dailyOrderNumber },
+          paymentMethod: resolvedPaymentType,
+          cashierId: openSession?.id,
+          tx,
+        });
+
+        logger.info(`[ORDER-INTEGRATION] Payment PREPAID criado: R$${prepaidAmount} (${resolvedPaymentType}) no caixa ${openSession?.id || 'NENHUM'}`);
+      }
+
+      if (pendingAmount > 0) {
+        // Pagamento pendente - será pago na entrega
+        await tx.payment.create({
+          data: {
+            orderId: createdOrder.id,
+            amount: pendingAmount,
+            method: resolvedPaymentType,
+          },
+        });
+        // NÃO cria FinancialTransaction - será criado no COMPLETED ou no acerto do motoboy
+        logger.info(`[ORDER-INTEGRATION] Payment PENDING criado: R$${pendingAmount} (${resolvedPaymentType})`);
+      }
+
+      // Se não tem prepaid nem pending, criar payment com total (offline puro)
+      if (!isPrepaid && pendingAmount === 0 && finalTotal > 0) {
+        await tx.payment.create({
+          data: {
+            orderId: createdOrder.id,
+            amount: finalTotal,
+            method: resolvedPaymentType,
+          },
+        });
+        // NÃO cria FinancialTransaction - será criado no COMPLETED
+        logger.info(`[ORDER-INTEGRATION] Payment OFFLINE criado: R$${finalTotal} (${resolvedPaymentType})`);
+      }
+
+      // ─── REGISTRAR EVENTO DE INTEGRAÇÃO ──────────────────────────
+      await tx.integrationEvent.upsert({
+        where: {
+          platform_platformOrderId_eventType: {
+            platform,
+            platformOrderId,
+            eventType,
+          },
+        },
+        create: {
+          id: `${platform}_${platformOrderId}_${eventType}_${Date.now()}`,
+          platform,
+          platformOrderId,
+          eventType,
+          restaurantId,
+          orderId: createdOrder.id,
+          status: 'PROCESSED',
+          processedAt: new Date(),
+        },
+        update: {
+          orderId: createdOrder.id,
+          status: 'PROCESSED',
+          processedAt: new Date(),
+        },
+      });
+
+      return createdOrder;
+    }, { timeout: 30000 });
+
+    logger.info(`[ORDER-INTEGRATION] Pedido ${order.id} criado (${platform}/${platformOrderId}, #${order.dailyOrderNumber})`);
+
+    // ─── 5. EMITIR EVENTOS (fora da transação) ─────────────────────
+    const finalOrder = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: fullOrderInclude,
+    });
+
+    emitOrderUpdate(finalOrder.id, 'ORDER_CREATED');
+
+    return { order: finalOrder, isReplayed: false };
+  }
+
+  /**
+   * Busca ou cria produto a partir de dados de integração.
+   * Usado por createOrderFromIntegration.
+   */
+  async _findOrCreateIntegrationProduct(restaurantId, item) {
+    const name = item.name || `Item Integração (${item.externalId || 'diversos'})`;
+    const price = parseFloat(item.price) || 0;
+
+    let product = await prisma.product.findFirst({
+      where: {
+        restaurantId,
+        name: { equals: name, mode: 'insensitive' },
+      },
+    });
+
+    if (!product) {
+      product = await prisma.product.create({
+        data: {
+          name,
+          description: `Produto importado via integração`,
+          price,
+          restaurantId,
+          isAvailable: true,
+        },
+      });
+      logger.info(`[ORDER-INTEGRATION] Produto criado: ${product.id} - ${name}`);
+    }
+
+    return product;
+  }
+
+  /**
    * Adiciona itens a um pedido existente
    */
   async addItemsToOrder(orderId, items, userId = null) {
@@ -563,7 +884,8 @@ if (isPickup && !hasValidPhone) {
                 where: { restaurantId: order.restaurantId, status: 'OPEN' } 
             });
 
-            const method = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'cash';
+            const rawMethod = order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'CASH';
+            const method = PaymentMethodResolver.resolveType(rawMethod);
             const existingTrans = await tx.financialTransaction.findFirst({ where: { orderId: order.id } });
             
             if (!existingTrans) {

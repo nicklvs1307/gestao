@@ -1,158 +1,17 @@
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
-const socketLib = require('../lib/socket');
-const OrderNumberService = require('./OrderNumberService');
-const IntegrationTypeService = require('./IntegrationTypeService');
-const { emitOrderUpdate } = require('./OrderService');
+// NOTE: OrderService is lazy-required inside methods to avoid circular dependency
+// (OrderService imports IntegrationOrderService at top level)
 
+/**
+ * IntegrationOrderService — auxiliary operations for integration orders.
+ * 
+ * Order CREATION is now handled by OrderService.createOrderFromIntegration()
+ * (called via IntegrationBaseService.processNewOrder()).
+ * 
+ * This service handles: update, cancel, event tracking, and cleanup.
+ */
 class IntegrationOrderService {
-  /**
-   * Processa um novo pedido de qualquer plataforma de delivery.
-   * Garante idempotência, numeração única e emissão consistente de eventos.
-   */
-  static async createFromIntegration(platform, restaurantId, platformOrderId, normalizedData) {
-    logger.info(`[INTEGRATION] Processando pedido ${platformOrderId} da plataforma ${platform} para restaurante ${restaurantId}`);
-
-    const eventType = 'ORDER_PLACED';
-
-    return await prisma.$transaction(async (tx) => {
-      const existingEvent = await tx.integrationEvent.findUnique({
-        where: {
-          platform_platformOrderId_eventType: {
-            platform,
-            platformOrderId,
-            eventType,
-          },
-        },
-      });
-
-      if (existingEvent?.status === 'PROCESSED' && existingEvent?.orderId) {
-        logger.info(`[INTEGRATION] Evento ${platformOrderId} (${platform}) já processado anteriormente`);
-        const existingOrder = await tx.order.findUnique({
-          where: { id: existingEvent.orderId },
-          include: { items: true, deliveryOrder: true },
-        });
-        return { ...existingOrder, isReplayed: true };
-      }
-
-      const existingOrder = await tx.order.findFirst({
-        where: {
-          restaurantId,
-          OR: [
-            { ifoodOrderId: platformOrderId },
-            { uairangoOrderId: platformOrderId },
-          ],
-        },
-      });
-
-      if (existingOrder) {
-        logger.info(`[INTEGRATION] Pedido ${platformOrderId} já existe no sistema (ID: ${existingOrder.id})`);
-        
-        if (existingEvent) {
-          await tx.integrationEvent.update({
-            where: { id: existingEvent.id },
-            data: { status: 'PROCESSED', orderId: existingOrder.id, processedAt: new Date() },
-          });
-        }
-        
-        return { ...existingOrder, isReplayed: true };
-      }
-
-      const orderNumber = await OrderNumberService.getNextDailyOrderNumber(restaurantId, tx);
-
-      const paymentMethod = IntegrationTypeService.mapPaymentMethod(platform, normalizedData.paymentMethod);
-      const orderType = normalizedData.orderType === 'PICKUP' ? 'PICKUP' : 'DELIVERY';
-
-      const { items, customer, deliveryData } = normalizedData;
-
-      const order = await tx.order.create({
-        data: {
-          dailyOrderNumber: orderNumber,
-          status: 'PENDING',
-          total: normalizedData.total || 0,
-          discount: normalizedData.discount || 0,
-          extraCharge: normalizedData.extraCharge || 0,
-          orderType,
-          isPrinted: false,
-          pendingAt: new Date(),
-          restaurantId,
-          ifoodOrderId: platform === 'ifood' ? platformOrderId : null,
-          uairangoOrderId: platform === 'uairango' ? platformOrderId : null,
-          items: {
-            create: items,
-          },
-        },
-        include: {
-          items: { include: { product: true } },
-          restaurant: true,
-        },
-      });
-
-      if (orderType === 'DELIVERY' && deliveryData) {
-        await tx.deliveryOrder.create({
-          data: {
-            name: customer?.name || 'Cliente',
-            phone: customer?.phone || null,
-            address: deliveryData.address || null,
-            complement: deliveryData.complement || null,
-            reference: deliveryData.reference || null,
-            neighborhood: deliveryData.neighborhood || null,
-            city: deliveryData.city || null,
-            state: deliveryData.state || null,
-            zipCode: deliveryData.zipCode || null,
-            deliveryType: 'delivery',
-            paymentMethod,
-            changeFor: deliveryData.changeFor || null,
-            deliveryFee: deliveryData.deliveryFee || 0,
-            notes: deliveryData.notes || null,
-            latitude: deliveryData.latitude || null,
-            longitude: deliveryData.longitude || null,
-            status: 'PENDING',
-            orderId: order.id,
-          },
-        });
-      }
-
-      if (normalizedData.customerNote) {
-        await tx.orderNote.create({
-          data: {
-            orderId: order.id,
-            content: normalizedData.customerNote,
-            createdBy: platform,
-          },
-        });
-      }
-
-      await tx.integrationEvent.upsert({
-        where: {
-          platform_platformOrderId_eventType: {
-            platform,
-            platformOrderId,
-            eventType,
-          },
-        },
-        create: {
-          id: `${platform}_${platformOrderId}_${eventType}_${Date.now()}`,
-          platform,
-          platformOrderId,
-          eventType,
-          restaurantId,
-          orderId: order.id,
-          status: 'PROCESSED',
-          processedAt: new Date(),
-        },
-        update: {
-          orderId: order.id,
-          status: 'PROCESSED',
-          processedAt: new Date(),
-        },
-      });
-
-      logger.info(`[INTEGRATION] Pedido ${order.id} criado a partir de ${platform} ${platformOrderId} (${orderType})`);
-
-      return order;
-    });
-  }
 
   /**
    * Atualiza um pedido existente a partir de dados da plataforma.
@@ -187,7 +46,7 @@ class IntegrationOrderService {
       include: { items: true, deliveryOrder: true },
     });
 
-    await emitOrderUpdate(order.id, 'ORDER_UPDATED');
+    await require('./OrderService').emitOrderUpdate(order.id, 'ORDER_UPDATED');
 
     return updatedOrder;
   }
@@ -226,7 +85,7 @@ class IntegrationOrderService {
       },
     });
 
-    await emitOrderUpdate(order.id, 'ORDER_CANCELED');
+    await require('./OrderService').emitOrderUpdate(order.id, 'ORDER_CANCELED');
 
     return canceledOrder;
   }

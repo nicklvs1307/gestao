@@ -37,36 +37,39 @@ class UairangoOrderAdapter extends IntegrationBaseService {
     return rawData.orderId || rawData.cod_pedido || rawData.id;
   }
 
+  /**
+   * Traduz o formato bruto da API do Uairango para o formato normalizado
+   * que o OrderService.createOrderFromIntegration() espera.
+   * 
+   * APENAS tradução de formato. Zero lógica financeira.
+   */
   parseOrder(rawData, restaurantId) {
     const isDelivery = rawData.orderType === 'DELIVERY' || rawData.tipo_entrega === 'Delivery';
     const orderType = isDelivery ? 'DELIVERY' : 'PICKUP';
 
+    // ─── ITENS ────────────────────────────────────────────────────
     const products = rawData.items || rawData.produtos || [];
     const items = products.map(item => {
-      const addonsData = [];
       const addons = item.addons || item.adicionais || [];
-      
-      if (Array.isArray(addons)) {
-        for (const addon of addons) {
-          addonsData.push({
-            name: addon.name || addon.nome || 'Adicional',
-            price: parseFloat(addon.price || addon.valor || 0),
-            quantity: addon.quantity || addon.quantidade || 1
-          });
-        }
-      }
+      const addonsData = Array.isArray(addons) ? addons.map(addon => ({
+        name: addon.name || addon.nome || 'Adicional',
+        price: parseFloat(addon.price || addon.valor || 0),
+        quantity: parseInt(addon.quantity || addon.quantidade || 1),
+      })) : [];
 
       return {
-        productId: null,
+        name: item.name || item.nome || `Item Uairango`,
+        externalId: item.id || item.cod_produto || null,
+        price: parseFloat(item.priceAtTime || item.valor || 0),
         quantity: parseInt(item.quantity || item.quantidade || 1),
-        priceAtTime: parseFloat(item.priceAtTime || item.valor || 0),
         observations: item.observations || item.obs || null,
-        addonsJson: addonsData.length > 0 ? JSON.stringify(addonsData) : null,
+        addons: addonsData,
         sizeJson: item.size ? JSON.stringify({ name: item.size.name || item.size, price: parseFloat(item.size.price || 0) }) : null,
-        flavorsJson: null
+        flavorsJson: null,
       };
     });
 
+    // ─── DELIVERY DATA ────────────────────────────────────────────
     const deliveryData = isDelivery ? {
       address: this._formatAddress(rawData.delivery?.address || rawData.endereco),
       complement: rawData.delivery?.complement || rawData.endereco?.complemento || '',
@@ -77,30 +80,42 @@ class UairangoOrderAdapter extends IntegrationBaseService {
       zipCode: rawData.delivery?.postalCode || rawData.endereco?.cep || '',
       deliveryType: 'delivery',
       deliveryFee: parseFloat(rawData.delivery?.fee || rawData.taxa_entrega || 0),
-      notes: rawData.notes || rawData.observacao || null,
       latitude: rawData.delivery?.latitude || rawData.endereco?.lat ? parseFloat(rawData.delivery?.latitude || rawData.endereco?.lat) : null,
       longitude: rawData.delivery?.longitude || rawData.endereco?.lng ? parseFloat(rawData.delivery?.longitude || rawData.endereco?.lng) : null,
     } : null;
 
-    const customerData = isDelivery ? {
+    // ─── CUSTOMER ─────────────────────────────────────────────────
+    const customer = isDelivery ? {
       name: rawData.customer?.name || rawData.usuario?.nome || 'Cliente',
       phone: rawData.customer?.phone || rawData.usuario?.tel1 || rawData.usuario?.tel_localizador || '',
     } : null;
 
-    const total = parseFloat(rawData.total || rawData.valor_total || 0);
-    const extraCharge = isDelivery ? parseFloat(rawData.delivery?.fee || rawData.taxa_entrega || 0) : 0;
+    // ─── PAGAMENTO ────────────────────────────────────────────────
+    const rawMethod = rawData.payment?.method || rawData.forma_pagamento || 'CASH';
+    const changeFor = rawData.payment?.changeFor || rawData.troco || null;
 
-    const paymentMethod = this.mapPaymentMethod(rawData.payment?.method || rawData.forma_pagamento);
+    // ─── TOTAIS ───────────────────────────────────────────────────
+    const total = parseFloat(rawData.total || rawData.valor_total || 0);
+    const deliveryFee = isDelivery ? parseFloat(rawData.delivery?.fee || rawData.taxa_entrega || 0) : 0;
 
     return {
       orderType,
-      total: total - (rawData.delivery?.fee || rawData.taxa_entrega || 0),
-      discount: 0,
-      extraCharge,
       items,
-      customer: customerData,
+      customer,
       deliveryData,
-      paymentMethod,
+      payment: {
+        rawMethod,
+        isPrepaid: false, // Uairango geralmente não tem pagamento online
+        prepaidAmount: 0,
+        pendingAmount: 0,
+        changeFor: changeFor ? parseFloat(changeFor) : null,
+      },
+      totals: {
+        subtotal: total - deliveryFee,
+        deliveryFee,
+        discount: 0,
+        total,
+      },
       customerNote: rawData.notes || rawData.observacao || null,
     };
   }

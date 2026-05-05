@@ -1,10 +1,7 @@
 const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
-const socketLib = require('../lib/socket');
 const IfoodAuthService = require('./IfoodAuthService');
-const OrderNumberService = require('./OrderNumberService');
-const IntegrationTypeService = require('./IntegrationTypeService');
 const IntegrationBaseService = require('./IntegrationBaseService');
 
 const BASE_URL = 'https://merchant-api.ifood.com.br';
@@ -28,33 +25,51 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     return rawData.id || rawData.orderId;
   }
 
+  /**
+   * Traduz o formato bruto da API do iFood para o formato normalizado
+   * que o OrderService.createOrderFromIntegration() espera.
+   * 
+   * APENAS tradução de formato. Zero lógica financeira.
+   */
   parseOrder(rawData, restaurantId) {
-    const items = rawData?.items || [];
-    const orderType = IntegrationTypeService.mapOrderType(this.platform, rawData.orderType || rawData.type);
+    const orderType = rawData.orderType || rawData.type;
     const deliveryAddress = rawData?.delivery?.deliveryAddress;
     const customer = rawData?.customer;
-    const payments = rawData?.payments || [];
-    const firstPayment = payments[0] || {};
 
-    const orderItems = items.map(item => ({
-      productId: null,
+    // ─── ITENS ────────────────────────────────────────────────────
+    const rawItems = rawData?.items || [];
+    const items = rawItems.map(item => ({
+      name: item.name || `Item iFood (${item.id || item.productId || 'diversos'})`,
+      externalId: item.id || item.productId,
+      price: item.unitPrice || item.totalPrice || item.price || 0,
       quantity: item.quantity || 1,
-      priceAtTime: item.unitPrice || item.totalPrice || item.price || 0,
       observations: item.observations || null,
-      addonsJson: item.subItems?.length > 0 ? JSON.stringify(item.subItems.map(sub => ({
+      addons: (item.subItems || []).map(sub => ({
         name: sub.name,
         price: sub.totalPrice || sub.price || 0,
-        quantity: sub.quantity || 1
-      }))) : null,
+        quantity: sub.quantity || 1,
+      })),
       sizeJson: null,
-      flavorsJson: null
+      flavorsJson: null,
     }));
 
-    const customerData = customer ? {
-      name: customer.name || 'Cliente iFood',
-      phone: customer.phone?.number || customer.phone || '',
-    } : null;
+    // ─── PAGAMENTO ────────────────────────────────────────────────
+    // API v2 do iFood: payments é um OBJETO { prepaid, pending, methods }
+    const payments = rawData?.payments || {};
+    const prepaid = parseFloat(payments.prepaid) || 0;
+    const pending = parseFloat(payments.pending) || 0;
+    const paymentMethods = payments.methods || [];
 
+    // Se payments veio como array (formato antigo), tratar como fallback
+    const isLegacyFormat = Array.isArray(payments);
+    const firstMethod = isLegacyFormat 
+      ? (payments[0] || {}) 
+      : (paymentMethods[0] || {});
+
+    const rawMethod = firstMethod.method || firstMethod.type || 'CASH';
+    const isPrepaid = prepaid > 0 || paymentMethods.some(m => m.type === 'ONLINE');
+
+    // ─── DELIVERY DATA ────────────────────────────────────────────
     const deliveryData = (orderType === 'DELIVERY' || deliveryAddress) ? {
       address: deliveryAddress?.formattedAddress || deliveryAddress?.streetName || '',
       complement: deliveryAddress?.complement || '',
@@ -65,57 +80,41 @@ class IfoodOrderAdapter extends IntegrationBaseService {
       zipCode: deliveryAddress?.postalCode || '',
       deliveryType: 'delivery',
       deliveryFee: rawData?.total?.deliveryFee || rawData?.deliveryFee || 0,
-      notes: rawData?.extraInfo || '',
+      latitude: deliveryAddress?.coordinates?.latitude || null,
+      longitude: deliveryAddress?.coordinates?.longitude || null,
     } : null;
 
+    // ─── TOTAIS ───────────────────────────────────────────────────
     const subtotal = rawData?.total?.subTotal || 
-      items.reduce((sum, item) => sum + ((item.totalPrice || item.unitPrice || 0) * (item.quantity || 1)), 0);
+      rawItems.reduce((sum, item) => sum + ((item.totalPrice || item.unitPrice || 0) * (item.quantity || 1)), 0);
     const deliveryFee = rawData?.total?.deliveryFee || rawData?.deliveryFee || 0;
     const discount = rawData?.total?.discount || 0;
     const total = rawData?.total?.orderAmount || (subtotal + deliveryFee - discount);
 
-    const hasChangeFor = firstPayment.changeFor && parseFloat(firstPayment.changeFor) > 0;
-    if (hasChangeFor && deliveryData) {
-      deliveryData.changeFor = parseFloat(firstPayment.changeFor);
-    }
-
+    // ─── RETORNO NORMALIZADO ──────────────────────────────────────
     return {
-      orderType,
-      total,
-      discount,
-      extraCharge: deliveryFee,
-      items: orderItems,
-      customer: customerData,
+      orderType: orderType === 'PICKUP' ? 'PICKUP' : 'DELIVERY',
+      items,
+      customer: {
+        name: customer?.name || 'Cliente iFood',
+        phone: customer?.phone?.number || customer?.phone || '',
+      },
       deliveryData,
-      paymentMethod: firstPayment.method || firstPayment.type || 'CASH',
+      payment: {
+        rawMethod,
+        isPrepaid,
+        prepaidAmount: prepaid,
+        pendingAmount: pending,
+        changeFor: firstMethod.changeFor ? parseFloat(firstMethod.changeFor) : null,
+      },
+      totals: {
+        subtotal,
+        deliveryFee,
+        discount,
+        total,
+      },
       customerNote: rawData?.extraInfo || null,
     };
-  }
-
-  async findOrCreateProduct(restaurantId, item) {
-    const name = item.name || `Item iFood (${item.id || 'diversos'})`;
-    const price = item.unitPrice || item.totalPrice || item.price || 0;
-
-    let product = await prisma.product.findFirst({
-      where: {
-        restaurantId,
-        name: { equals: name, mode: 'insensitive' }
-      }
-    });
-
-    if (!product) {
-      product = await prisma.product.create({
-        data: {
-          name,
-          description: `Produto importado do iFood`,
-          price,
-          restaurantId,
-          isAvailable: true
-        }
-      });
-    }
-
-    return product;
   }
 
   async confirmOrderOnPlatform(restaurantId, platformOrderId) {
