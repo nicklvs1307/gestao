@@ -58,9 +58,15 @@ export interface DriverSettlementData {
   driverName: string;
   totalOrders: number;
   cash: number;
-  card: number;
+  cardDebit: number;
+  cardCredit: number;
   pix: number;
+  onlinePaid: number;
   deliveryFees: number;
   totalToPay: number;
   storeNet: number;
+  driverCashReceives: number;
+  driverCardReceives: number;
+  storeOnlinePaid: number;
+  storePix: number;
 }

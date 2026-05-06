@@ -58,16 +58,21 @@ export function generateDriverSettlementReceipt(
   // ═══ DETALHAMENTO FINANCEIRO ═══
   buf += alignCenter(bold('DETALHAMENTO FINANCEIRO'));
   buf += line('-', W);
-  buf += row('Dinheiro (Mão)', formatCurrencyBRL(settlement.cash), W);
-  buf += row('Cartão (Machine)', formatCurrencyBRL(settlement.card), W);
+  buf += row('Dinheiro (Mao)', formatCurrencyBRL(settlement.cash), W);
+  buf += row('Cartao Debito', formatCurrencyBRL(settlement.cardDebit), W);
+  buf += row('Cartao Credito', formatCurrencyBRL(settlement.cardCredit), W);
   buf += row('PIX (Transf)', formatCurrencyBRL(settlement.pix), W);
-  buf += row('Taxas de Entrega', `- ${formatCurrencyBRL(settlement.deliveryFees)}`, W);
+  buf += row('Pago Online', formatCurrencyBRL(settlement.onlinePaid), W);
   buf += line('-', W);
+  buf += rowBold('Total Entregador:', formatCurrencyBRL(settlement.driverCashReceives + settlement.driverCardReceives), W);
+  buf += rowBold('Taxas de Entrega:', `- ${formatCurrencyBRL(settlement.deliveryFees)}`, W);
+  buf += line('=', W);
 
   // ═══ TOTAIS ═══
-  buf += line('=', W);
   buf += rowBold('TOTAL A RECEBER:', formatCurrencyBRL(settlement.totalToPay), W);
-  buf += rowBold('LÍQUIDO LOJA:', formatCurrencyBRL(settlement.storeNet), W);
+  buf += rowBold('LIQUIDO LOJA:', formatCurrencyBRL(settlement.storeNet), W);
+  buf += rowBold('PAGO ONLINE (iFood):', formatCurrencyBRL(settlement.storeOnlinePaid), W);
+  buf += rowBold('PIX LOJA:', formatCurrencyBRL(settlement.storePix), W);
   if (settlement.totalOrders > 0) {
     buf += alignCenter(`(${formatCurrencyBRL(settlement.storeNet / settlement.totalOrders)}/ent)`);
   }

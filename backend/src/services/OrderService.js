@@ -1398,7 +1398,7 @@ updatedAt: { gte: start, lte: end }
         });
         return true;
     }).map(d => {
-        let cash = 0; let card = 0; let pix = 0; let deliveryFees = 0; let totalOrdersValue = 0;
+        let cash = 0; let cardDebit = 0; let cardCredit = 0; let pix = 0; let onlinePaid = 0; let deliveryFees = 0; let totalOrdersValue = 0;
         d.deliveries.forEach(del => {
             const order = del.order; if (!order) return;
             
@@ -1412,10 +1412,14 @@ updatedAt: { gte: start, lte: end }
                     const pAmount = p.amount || 0;
                     if (resolvedMethod.includes('dinheiro') || resolvedMethod.includes('cash')) {
                         cash = money.add(cash, pAmount);
-                    } else if (resolvedMethod.includes('cart') || resolvedMethod.includes('card') || resolvedMethod.includes('deb') || resolvedMethod.includes('cred')) {
-                        card = money.add(card, pAmount);
+                    } else if (resolvedMethod.includes('débito') || resolvedMethod.includes('debito') || resolvedMethod === 'debit_card') {
+                        cardDebit = money.add(cardDebit, pAmount);
+                    } else if (resolvedMethod.includes('crédito') || resolvedMethod.includes('credito') || resolvedMethod === 'credit_card') {
+                        cardCredit = money.add(cardCredit, pAmount);
                     } else if (resolvedMethod.includes('pix')) {
                         pix = money.add(pix, pAmount);
+                    } else if (resolvedMethod === 'online_paid') {
+                        onlinePaid = money.add(onlinePaid, pAmount);
                     } else {
                         cash = money.add(cash, pAmount);
                     }
@@ -1424,7 +1428,8 @@ updatedAt: { gte: start, lte: end }
                 const method = del.paymentMethod?.toLowerCase() || '';
                 const totalWithFee = order.total;
                 if (method.includes('dinheiro') || method.includes('cash')) cash = money.add(cash, totalWithFee);
-                else if (method.includes('cart') || method.includes('card') || method.includes('deb') || method.includes('cred')) card = money.add(card, totalWithFee);
+                else if (method.includes('debito')) cardDebit = money.add(cardDebit, totalWithFee);
+                else if (method.includes('credito')) cardCredit = money.add(cardCredit, totalWithFee);
                 else if (method.includes('pix')) pix = money.add(pix, totalWithFee);
                 else cash = money.add(cash, totalWithFee);
             }
@@ -1437,13 +1442,36 @@ updatedAt: { gte: start, lte: end }
             ? money.add(baseRate, totalCommission)
             : 0;
         
+        const driverCashReceives = cash;
+        const driverCardReceives = money.add(cardDebit, cardCredit);
+        const storeOnlinePaid = onlinePaid;
+        const storePix = pix;
         const storeNet = (baseRate > 0 || bonusPerDelivery > 0) 
             ? money.subtract(totalOrdersValue, money.add(totalToPay, deliveryFees))
             : totalOrdersValue;
         
         logger.info(`[SETTLEMENT] Cálculos para ${d.name}: totalOrdersValue=${totalOrdersValue}, deliveryFees=${deliveryFees}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
+        logger.info(`[SETTLEMENT] Breakdown: cash=${cash}, cardDebit=${cardDebit}, cardCredit=${cardCredit}, pix=${pix}, onlinePaid=${onlinePaid}`);
         
-        return { driverId: d.id, driverName: d.name || d.email, totalOrders: totalDeliveries, cash, card, pix, deliveryFees, totalToPay, storeNet, baseRate, totalCommission };
+        return { 
+            driverId: d.id, 
+            driverName: d.name || d.email, 
+            totalOrders: totalDeliveries, 
+            cash, 
+            cardDebit, 
+            cardCredit,
+            pix, 
+            onlinePaid,
+            deliveryFees, 
+            totalToPay, 
+            storeNet, 
+            baseRate, 
+            totalCommission,
+            driverCashReceives,
+            driverCardReceives,
+            storeOnlinePaid,
+            storePix
+        };
     });
   }
 
@@ -1482,6 +1510,7 @@ const resolvePaymentMethodName = (methodValue) => {
       };
       
       let cashCollected = 0;
+      let cardCollected = 0;
       deliveries.forEach(del => {
           const order = del.order;
           if (!order) return;
@@ -1491,16 +1520,21 @@ const resolvePaymentMethodName = (methodValue) => {
                   const resolvedMethod = resolvePaymentMethodName(p.method);
                   if (resolvedMethod.includes('dinheiro') || resolvedMethod.includes('cash')) {
                       cashCollected = money.add(cashCollected, p.amount || 0);
+                  } else if (resolvedMethod.includes('debito') || resolvedMethod.includes('credito') || resolvedMethod === 'debit_card' || resolvedMethod === 'credit_card') {
+                      cardCollected = money.add(cardCollected, p.amount || 0);
                   }
               });
           } else {
               const method = del.paymentMethod?.toLowerCase() || '';
               if (method.includes('dinheiro') || method.includes('cash')) {
                   cashCollected = money.add(cashCollected, order.total || 0);
+              } else if (method.includes('debito') || method.includes('credito')) {
+                  cardCollected = money.add(cardCollected, order.total || 0);
               }
           }
       });
       cashCollected = Number(cashCollected) || 0;
+      cardCollected = Number(cardCollected) || 0;
       return await prisma.$transaction(async (tx) => {
           const orderIds = deliveries.map(d => d.orderId);
           await tx.order.updateMany({ where: { id: { in: orderIds } }, data: { isSettled: true, settledAt: new Date() } });
@@ -1510,6 +1544,9 @@ const resolvePaymentMethodName = (methodValue) => {
           if (!salesCategory) salesCategory = await tx.transactionCategory.create({ data: { name: 'Venda de Delivery', type: 'INCOME', isSystem: true, restaurantId } });
           if (cashCollected > 0) {
               await tx.financialTransaction.create({ data: { restaurantId, cashierId: activeCashier.id, description: `ENTRADA ACERTO [MOTOBOY: ${driverName}]: Dinheiro coletado em entregas`, amount: cashCollected, type: 'INCOME', status: 'PAID', paymentMethod: 'cash', categoryId: salesCategory.id, dueDate: new Date(), paymentDate: new Date() } });
+          }
+          if (cardCollected > 0) {
+              await tx.financialTransaction.create({ data: { restaurantId, cashierId: activeCashier.id, description: `ENTRADA ACERTO [MOTOBOY: ${driverName}]: Cartão coletado em entregas`, amount: cardCollected, type: 'INCOME', status: 'PAID', paymentMethod: 'credit_card', categoryId: salesCategory.id, dueDate: new Date(), paymentDate: new Date() } });
           }
           return await tx.financialTransaction.create({ data: { restaurantId, cashierId: activeCashier.id, description: `PAGAMENTO ACERTO [MOTOBOY: ${driverName}]: Taxas de entrega/Comissões`, amount, type: 'EXPENSE', status: 'PAID', paymentMethod: 'cash', recipientUserId: driverId, categoryId: feeCategory.id, dueDate: new Date(), paymentDate: new Date() } });
       });

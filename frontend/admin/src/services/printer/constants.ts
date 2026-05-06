@@ -41,6 +41,8 @@ export const PAYMENT_METHOD_MAP: Record<string, string> = {
   vale_refeicao: 'VALE REFEIÇÃO',
   card: 'CARTÃO (PDV)',
   other: 'OUTROS',
+  online_paid: 'PAGO ONLINE',
+  paid_online: 'PAGO ONLINE',
 };
 
 export const PAYMENT_METHOD_CLOSURE_MAP: Record<string, string> = {

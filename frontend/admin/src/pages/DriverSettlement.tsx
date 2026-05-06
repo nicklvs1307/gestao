@@ -22,11 +22,17 @@ interface SettlementData {
   driverName: string;
   totalOrders: number;
   cash: number;
-  card: number;
+  cardDebit: number;
+  cardCredit: number;
   pix: number;
+  onlinePaid: number;
   deliveryFees: number;
   totalToPay: number;
   storeNet: number;
+  driverCashReceives: number;
+  driverCardReceives: number;
+  storeOnlinePaid: number;
+  storePix: number;
   orders?: any[];
 }
 
@@ -147,10 +153,14 @@ const DriverSettlement: React.FC = () => {
     toPay: acc.toPay + curr.totalToPay,
     net: acc.net + curr.storeNet,
     cash: acc.cash + curr.cash,
-    card: acc.card + curr.card,
+    cardDebit: acc.cardDebit + curr.cardDebit,
+    cardCredit: acc.cardCredit + curr.cardCredit,
     pix: acc.pix + curr.pix,
+    onlinePaid: acc.onlinePaid + curr.onlinePaid,
     orders: acc.orders + curr.totalOrders
-  }), { toPay: 0, net: 0, cash: 0, card: 0, pix: 0, orders: 0 }), [data]);
+  }), { toPay: 0, net: 0, cash: 0, cardDebit: 0, cardCredit: 0, pix: 0, onlinePaid: 0, orders: 0 }), [data]);
+
+  const totalsCard = totals.cardDebit + totals.cardCredit;
 
   const avgTicket = totals.orders > 0 ? totals.net / totals.orders : 0;
   const profitMargin = totals.toPay > 0 ? ((totals.net / totals.toPay) * 100) : 0;
@@ -265,11 +275,22 @@ const DriverSettlement: React.FC = () => {
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard size={14} className="text-purple-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cartão</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cartão Débito</span>
           </div>
-          <p className="text-lg font-black italic tracking-tighter text-purple-600">{formatCurrency(totals.card)}</p>
+          <p className="text-lg font-black italic tracking-tighter text-purple-600">{formatCurrency(totals.cardDebit)}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Machine</span>
+            <span className="text-[7px] font-bold text-slate-400 uppercase">Débito</span>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border border-slate-200">
+          <div className="flex items-center gap-2 mb-2">
+            <CreditCard size={14} className="text-indigo-500" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cartão Crédito</span>
+          </div>
+          <p className="text-lg font-black italic tracking-tighter text-indigo-600">{formatCurrency(totals.cardCredit)}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[7px] font-bold text-slate-400 uppercase">Crédito</span>
           </div>
         </Card>
 
@@ -281,6 +302,17 @@ const DriverSettlement: React.FC = () => {
           <p className="text-lg font-black italic tracking-tighter text-emerald-600">{formatCurrency(totals.pix)}</p>
           <div className="flex items-center gap-1 mt-1">
             <span className="text-[7px] font-bold text-slate-400 uppercase">Transferência</span>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-orange-500 to-orange-600 text-white border-none">
+          <div className="flex items-center gap-2 mb-2">
+            <DollarSign size={14} className="text-orange-200" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-orange-200">Pago Online</span>
+          </div>
+          <p className="text-lg font-black italic tracking-tighter">{formatCurrency(totals.onlinePaid)}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[7px] font-bold text-orange-200 uppercase">iFood/Plataforma</span>
           </div>
         </Card>
 
@@ -334,9 +366,11 @@ const DriverSettlement: React.FC = () => {
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic w-12">#</th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic">Entregador</th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-center">Entregas</th>
-                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic">Dinheiro</th>
-                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic">Cartão</th>
-                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic">PIX</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-center">Dinheiro</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-center">Débito</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-center">Crédito</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-center">PIX</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-center">Pago Online</th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-orange-400">Repasse</th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic bg-slate-800">Líquido Loja</th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest italic text-right">Ação</th>
@@ -384,22 +418,29 @@ const DriverSettlement: React.FC = () => {
                         {settlement.totalOrders}
                       </span>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col">
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center">
                         <span className="text-emerald-600 font-black text-xs italic tracking-tighter">{formatCurrency(settlement.cash)}</span>
-                        <span className="text-[6px] font-bold text-slate-400 uppercase tracking-widest">Na mão</span>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-slate-600 font-black text-xs italic tracking-tighter">{formatCurrency(settlement.card)}</span>
-                        <span className="text-[6px] font-bold text-slate-400 uppercase tracking-widest">Machine</span>
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-purple-600 font-black text-xs italic tracking-tighter">{formatCurrency(settlement.cardDebit)}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-emerald-600 font-black text-xs italic tracking-tighter">{formatCurrency(settlement.pix)}</span>
-                        <span className="text-[6px] font-bold text-slate-400 uppercase tracking-widest">Transfer</span>
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-indigo-600 font-black text-xs italic tracking-tighter">{formatCurrency(settlement.cardCredit)}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-blue-600 font-black text-xs italic tracking-tighter">{formatCurrency(settlement.pix)}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-orange-600 font-black text-xs italic tracking-tighter">{formatCurrency(settlement.onlinePaid)}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -413,7 +454,6 @@ const DriverSettlement: React.FC = () => {
                         <span className="text-[6px] font-bold text-slate-400 uppercase tracking-widest">
                           {settlement.totalOrders > 0 ? `R$ ${(settlement.storeNet / settlement.totalOrders).toFixed(2)}/ent` : '-'}
                         </span>
-                        {/* DEBUG: mostrar valores detalhados */}
                         <span className="text-[5px] font-bold text-orange-400 uppercase tracking-widest mt-1">
                           Taxas: {formatCurrency(settlement.deliveryFees)}
                         </span>
@@ -450,36 +490,14 @@ const DriverSettlement: React.FC = () => {
                 <tr>
                   <td className="px-4 py-3 text-[9px] uppercase tracking-widest text-slate-500" colSpan={3}>TOTAL PERÍODO</td>
                   <td className="px-4 py-3 text-center text-slate-700">{totals.orders}</td>
-                  <td className="px-4 py-3 text-emerald-600">{formatCurrency(totals.cash)}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatCurrency(totals.card)}</td>
-                  <td className="px-4 py-3 text-emerald-600">{formatCurrency(totals.pix)}</td>
+                  <td className="px-4 py-3 text-emerald-600 text-center">{formatCurrency(totals.cash)}</td>
+                  <td className="px-4 py-3 text-purple-600 text-center">{formatCurrency(totals.cardDebit)}</td>
+                  <td className="px-4 py-3 text-indigo-600 text-center">{formatCurrency(totals.cardCredit)}</td>
+                  <td className="px-4 py-3 text-blue-600 text-center">{formatCurrency(totals.pix)}</td>
+                  <td className="px-4 py-3 text-orange-600 text-center">{formatCurrency(totals.onlinePaid)}</td>
                   <td className="px-4 py-3 text-primary">{formatCurrency(totals.toPay)}</td>
                   <td className="px-4 py-3 text-slate-700 bg-slate-200">{formatCurrency(totals.net)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end items-center gap-2">
-                      {selectedDrivers.size > 0 && (
-                        <Button 
-                          variant="primary" 
-                          size="sm" 
-                          className="h-7 text-[8px] font-black uppercase tracking-widest gap-1.5"
-                          onClick={handlePrintSelected}
-                          disabled={printing}
-                        >
-                          <PrinterIcon size={12} className={cn(printing && "animate-spin")} /> 
-                          IMPRIMIR {selectedDrivers.size}
-                        </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-7 text-[8px] font-black uppercase tracking-widest gap-1.5 border-slate-300 hover:bg-slate-800 hover:text-white"
-                        onClick={() => handleExportAll()}
-                        disabled={filteredData.length === 0}
-                      >
-                        <FileDown size={12} /> TODOS
-                      </Button>
-                    </div>
-                  </td>
+                  <td className="px-4 py-3 text-right"></td>
                 </tr>
               </tfoot>
             )}

@@ -36,11 +36,13 @@ interface OrderEditorPaymentProps {
 const isIfoodOnlinePayment = (order: Order): boolean => {
   if (!order.ifoodOrderId) return false;
   if (!order.payments?.length) return false;
-  return order.payments.some(p => 
-    p.method?.toLowerCase().includes('pago online') || 
-    p.method?.toLowerCase().includes('pix') ||
-    p.method?.toLowerCase().includes('cartao')
-  );
+  return order.payments.some(p => p.method === 'ONLINE_PAID');
+};
+
+const isPaymentEditable = (order: Order): boolean => {
+  if (!order.ifoodOrderId) return true;
+  if (!order.payments?.length) return true;
+  return !order.payments.some(p => p.method === 'ONLINE_PAID');
 };
 
 export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
@@ -154,22 +156,22 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                     <span className="text-[10px] font-black text-slate-800 uppercase">{resolvePaymentLabel(pay.method, paymentMethods)}</span>
                     <span className="text-[8px] font-bold text-slate-400 mt-0.5">{formatSP(pay.createdAt, 'HH:mm')}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-slate-900">R$ {pay.amount.toFixed(2).replace('.', ',')}</span>
-                    {!order.ifoodOrderId && (
-                      <button 
-                        onClick={() => {
-                          if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${resolvePaymentLabel(pay.method, paymentMethods)}" de R$ ${pay.amount.toFixed(2).replace('.', ',')}?`)) {
-                            onRemovePayment(pay.id);
-                          }
-                        }} 
-                        className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-rose-400 hover:text-rose-600"
-                        title="Remover pagamento"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-slate-900">R$ {pay.amount.toFixed(2).replace('.', ',')}</span>
+                      {isPaymentEditable(order) && (
+                        <button 
+                          onClick={() => {
+                            if (window.confirm(`⚠️ Deseja realmente excluir a forma de pagamento "${resolvePaymentLabel(pay.method, paymentMethods)}" de R$ ${pay.amount.toFixed(2).replace('.', ',')}?`)) {
+                              onRemovePayment(pay.id);
+                            }
+                          }} 
+                          className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-rose-400 hover:text-rose-600"
+                          title="Remover pagamento"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                 </div>
               ))}
               {!order.payments?.length && (
@@ -178,7 +180,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 </div>
               )}
             </div>
-            {order.ifoodOrderId ? (
+            {order.ifoodOrderId && !isPaymentEditable(order) ? (
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                 <div className="flex items-center gap-2 text-amber-700">
                   <Lock size={14} />
@@ -187,7 +189,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   </span>
                 </div>
                 <p className="text-[8px] text-amber-600 mt-1">
-                  Não é possível adicionar pagamentos manualmente
+                  Pagamento já realizado na plataforma
                 </p>
               </div>
             ) : (

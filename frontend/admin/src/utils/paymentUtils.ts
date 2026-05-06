@@ -18,6 +18,9 @@ const PAYMENT_METHOD_FALLBACK_MAP: Record<string, string> = {
   debito: 'CARTÃO DÉBITO',
   vale: 'VALE REFEIÇÃO',
   ticket: 'VALE REFEIÇÃO',
+  online_paid: 'PAGO ONLINE',
+  'pago online': 'PAGO ONLINE',
+  paid_online: 'PAGO ONLINE',
 };
 
 function looksLikeCuid(value: string): boolean {
