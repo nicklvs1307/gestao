@@ -143,7 +143,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, on
                             )}
                         </td>
                         <td className="px-4 py-3 font-black text-xs italic text-slate-900 tracking-tighter">
-                            R$ {((order.total || 0) + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
+                            R$ {(order.total || 0).toFixed(2).replace('.', ',')}
                         </td>
                         <td className="px-4 py-3">
                             <div className="flex flex-col gap-0.5">

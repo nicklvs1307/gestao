@@ -137,7 +137,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
   const isPickup = order.orderType === 'PICKUP' || deliveryData?.deliveryType === 'pickup' || deliveryData?.deliveryType === 'retirada';
   const isDelivery = order.orderType === 'DELIVERY' || (!!deliveryData && !isPickup);
   const isTable = order.orderType === 'TABLE' || (order.orderType === 'PICKUP' && !deliveryData);
-  const orderTotal = order.total + (order.deliveryOrder?.deliveryFee || 0);
+  const orderTotal = order.total;
 
   return (
     <div ref={setNodeRef} style={style}>

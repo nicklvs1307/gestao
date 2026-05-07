@@ -230,12 +230,18 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                         <span>Consumo Base</span>
-                                        <span className="text-white">R$ {order.total.toFixed(2)}</span>
+                                        <span className="text-white">R$ {(order.subtotal || order.total).toFixed(2)}</span>
                                     </div>
-                                    {isDelivery && order.deliveryOrder?.deliveryFee && order.deliveryOrder.deliveryFee > 0 && (
+                                    {(order.deliveryFee || order.deliveryOrder?.deliveryFee) > 0 && (
                                         <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                             <span>Taxa de Entrega</span>
-                                            <span className="text-blue-400">+ R$ {order.deliveryOrder.deliveryFee.toFixed(2)}</span>
+                                            <span className="text-blue-400">+ R$ {(order.deliveryFee || order.deliveryOrder?.deliveryFee || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {(order.platformFee || 0) > 0 && (
+                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>Taxa Plataforma</span>
+                                            <span className="text-amber-400">+ R$ {(order.platformFee || 0).toFixed(2)}</span>
                                         </div>
                                     )}
                                     {order.discount && order.discount > 0 && (
@@ -267,7 +273,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                     <div>
                                         <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Total Final</p>
                                         <h3 className="text-4xl font-black text-white italic tracking-tighter leading-none">
-                                            R$ {(order.total + (order.deliveryOrder?.deliveryFee || 0)).toFixed(2).replace('.', ',')}
+                                            R$ {order.total.toFixed(2).replace('.', ',')}
                                         </h3>
                                     </div>
                                     <div className={cn("px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-lg", isPaid ? "bg-emerald-500 text-white border-transparent" : "bg-rose-500 text-white border-transparent animate-pulse")}>
