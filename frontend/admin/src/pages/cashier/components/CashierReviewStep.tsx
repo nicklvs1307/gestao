@@ -74,10 +74,15 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
     const m = paymentMethods.find(pm => pm.id === methodId);
     const normLabel = normalize(m?.label || '');
     const normCash = 'cash';
-    return breakdownByMethod[normLabel] || 
+
+    // Tenta todas as variações possíveis da chave
+    return breakdownByMethod[normLabel] ||
            breakdownByMethod[methodId] ||
            breakdownByMethod[normCash] ||
-           breakdownByMethod['dinheiro'];
+           breakdownByMethod['dinheiro'] ||
+           breakdownByMethod['pago online'] ||
+           breakdownByMethod['online_paid'] ||
+           breakdownByMethod['online'];
   };
 
   return (

@@ -12,7 +12,7 @@ import {
 import { toast } from 'sonner';
 import { printCashierClosure } from '../../../services/printer';
 import { useAuth } from '../../../context/AuthContext';
-import { Banknote, Smartphone, Wallet, Receipt, History } from 'lucide-react';
+import { Banknote, Smartphone, Wallet, Receipt, History, ShoppingBag } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // --- Types ---
@@ -81,6 +81,7 @@ const DEFAULT_METHODS: PaymentMethod[] = [
   { id: 'pix', label: 'Pix', icon: Smartphone, color: 'blue' },
   { id: 'credit_card', label: 'Cartão Crédito', icon: Wallet, color: 'purple' },
   { id: 'debit_card', label: 'Cartão Débito', icon: Wallet, color: 'indigo' },
+  { id: 'online_paid', label: 'Pago Online', icon: ShoppingBag, color: 'purple' },
   { id: 'other', label: 'Outros', icon: Receipt, color: 'slate' },
 ];
 
@@ -119,6 +120,7 @@ export function useCashier() {
     pix: '',
     credit_card: '',
     debit_card: '',
+    online_paid: '',
     other: '',
   });
 
@@ -163,13 +165,14 @@ export function useCashier() {
   );
 
   const paymentMethods = useMemo<PaymentMethod[]>(() => {
-    if (!summary?.availableMethods) return DEFAULT_METHODS;
+    if (!summary?.availableMethods && !summary?.breakdownByMethod) return DEFAULT_METHODS;
 
-    const dbMethods = summary.availableMethods.map((m: any) => {
+    const dbMethods = (summary?.availableMethods || []).map((m: any) => {
       const lowName = m.name.toLowerCase();
       let icon: LucideIcon = Banknote;
       if (lowName.includes('pix')) icon = Smartphone;
       else if (lowName.includes('cartão') || lowName.includes('credit') || lowName.includes('debit')) icon = Wallet;
+      else if (lowName.includes('online') || lowName.includes('ifood')) icon = ShoppingBag;
 
       const normalizedId = m.type === 'CASH' ? 'dinheiro' : m.name.toLowerCase();
       return {
@@ -182,13 +185,25 @@ export function useCashier() {
       };
     });
 
-    const hasCashMethod = dbMethods.some((m: any) => 
-      m.id === 'dinheiro' || 
-      m.type === 'CASH' || 
+    const hasCashMethod = dbMethods.some((m: any) =>
+      m.id === 'dinheiro' ||
+      m.type === 'CASH' ||
       m.label?.toLowerCase().includes('dinheiro')
     );
     if (!hasCashMethod) {
       dbMethods.unshift(DEFAULT_METHODS[0]);
+    }
+
+    // Garante ONLINE_PAID (pago online) no array se houver no breakdown
+    if (summary?.breakdownByMethod) {
+      const breakdownKeys = Object.keys(summary.breakdownByMethod).map(k => k.toLowerCase());
+      const hasOnlinePaid = dbMethods.some(m => m.id === 'pago online' || m.id === 'online_paid' || breakdownKeys.includes('pago online'));
+      if (hasOnlinePaid || breakdownKeys.some(k => k.includes('online') || k.includes('pago'))) {
+        const exists = dbMethods.some(m => m.id === 'pago online');
+        if (!exists) {
+          dbMethods.push({ id: 'pago online', label: 'Pago Online', icon: ShoppingBag, color: 'purple', type: 'ONLINE_PAID' });
+        }
+      }
     }
 
     return dbMethods;
@@ -209,24 +224,47 @@ export function useCashier() {
 
   // --- Filtered orders per selected method ---
 
+  // Mapeamento de todos os métodos possíveis para seus equivalentes normalizados
+  const METHOD_EQUIVALENTS: Record<string, string[]> = {
+    'cash': ['cash', 'dinheiro', 'dinheiro'],
+    'pix': ['pix', 'pix'],
+    'credit_card': ['credit_card', 'cartao-credito', 'cartao de credito', 'cartao crédito', 'credito'],
+    'debit_card': ['debit_card', 'cartao-debito', 'cartao de debito', 'cartao débito', 'debito'],
+    'online_paid': ['online_paid', 'online', 'pago online', 'paid', 'paid_online'],
+    'other': ['other', 'outros', 'outro']
+  };
+
+  const isMethodMatch = (paymentMethod: string | null | undefined, targetId: string): boolean => {
+    if (!paymentMethod) return false;
+    const pNorm = normalize(paymentMethod);
+    const equivalents = METHOD_EQUIVALENTS[targetId] || [targetId];
+    return equivalents.some(eq => pNorm === normalize(eq));
+  };
+
+  const getUniquePaymentMethods = (order: any): string[] => {
+    const methods = new Set<string>();
+    (order.payments || []).forEach((p: any) => {
+      const resolved = normalize(p.method || '');
+      if (resolved) methods.add(resolved);
+    });
+    return Array.from(methods);
+  };
+
   const filteredOrders = useMemo(() => {
     const currentDisplayMethod = paymentMethods.find(m => m.id === selectedMethod);
-    const selId = normalize(selectedMethod);
-    const selLabel = normalize(currentDisplayMethod?.label || '');
-    const selType = normalize((currentDisplayMethod as any)?.type || '');
 
     return sessionOrders
       .filter(o => {
         const payments = o.payments || [];
-        const hasThisMethod = payments.some(p => {
-          const pMethod = normalize(p.method || '');
-          return pMethod === selId || pMethod === selLabel || pMethod === selType;
-        });
-        
+        // Pedido tem pagamento neste método específico?
+        const hasThisMethod = payments.some((p: any) =>
+          isMethodMatch(p.method, selectedMethod)
+        );
+
         if (!hasThisMethod) return false;
-        
+
         if (!searchTerm) return true;
-        
+
         const term = searchTerm.toLowerCase();
         return (
           o.id.toLowerCase().includes(term) ||
@@ -238,20 +276,17 @@ export function useCashier() {
       })
       .map(o => {
         const payments = o.payments || [];
-        const selIdLower = selId.toLowerCase();
-        const selLabelLower = selLabel.toLowerCase();
-        const selTypeLower = selType.toLowerCase();
-        
-        const relevantPayments = payments.filter(p => {
-          const pMethod = normalize(p.method || '');
-          return pMethod === selIdLower || pMethod === selLabelLower || pMethod === selTypeLower;
-        });
-        
+
+        const relevantPayments = payments.filter((p: any) =>
+          isMethodMatch(p.method, selectedMethod)
+        );
+
         const methodAmount = relevantPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
         const paidTotal = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
         const isPartial = paidTotal < o.total;
-        
-        return { ...o, _methodAmount: methodAmount, _isPartial: isPartial };
+        const orderMethods = getUniquePaymentMethods(o);
+
+        return { ...o, _methodAmount: methodAmount, _isPartial: isPartial, _orderMethods: orderMethods };
       });
   }, [sessionOrders, selectedMethod, paymentMethods, searchTerm]);
 
@@ -272,14 +307,18 @@ export function useCashier() {
 
       if (methodId === 'cash' || (m as any)?.type === 'CASH') {
         const sales =
-          summary.salesByMethod?.cash || 
-          summary.salesByMethod?.dinheiro || 
+          summary.salesByMethod?.cash ||
+          summary.salesByMethod?.dinheiro ||
           summary.salesByMethod?.['dinheiro'] ||
           0;
         const ref = summary.adjustments?.reforco || 0;
         const sang = summary.adjustments?.sangria || 0;
         const init = cashierData?.session?.initialAmount || 0;
         return init + sales + ref - sang;
+      }
+
+      if (methodId === 'online_paid' || methodId === 'pago online') {
+        return summary.salesByMethod?.['pago online'] || 0;
       }
 
       return (

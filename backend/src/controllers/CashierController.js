@@ -169,6 +169,50 @@ class CashierController {
       });
     });
 
+    // --- Buscar ONLINE_PAID do período (iFood pre-pago) ---
+    // Pedidos iFood com ONLINE_PAID não geram transação no caixa (vão direto pra iFood),
+    // mas precisamos mostrar no fechamento para visibilidade completa.
+    const onlinePaidOrders = await prisma.order.findMany({
+      where: {
+        restaurantId,
+        status: { notIn: ['CANCELED'] },
+        createdAt: { gte: session.openedAt },
+        payments: { some: { method: 'ONLINE_PAID' } }
+      },
+      select: {
+        id: true,
+        dailyOrderNumber: true,
+        total: true,
+        createdAt: true,
+        payments: { select: { amount: true, method: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const onlinePaidTotal = onlinePaidOrders.reduce((sum, o) => {
+      const paid = (o.payments || []).filter(p => p.method === 'ONLINE_PAID').reduce((s, p) => s + (p.amount || 0), 0);
+      return sum + paid;
+    }, 0);
+
+    if (onlinePaidTotal > 0) {
+      salesByMethod['pago online'] = onlinePaidTotal;
+      breakdownByMethod['pago online'] = {
+        total: onlinePaidTotal,
+        transactions: onlinePaidOrders.map(o => {
+          const paid = (o.payments || []).filter(p => p.method === 'ONLINE_PAID').reduce((s, p) => s + (p.amount || 0), 0);
+          return {
+            id: o.id,
+            amount: paid,
+            orderId: o.id,
+            orderNumber: o.dailyOrderNumber,
+            orderTotal: o.total,
+            description: `PAGO ONLINE #${o.dailyOrderNumber || o.id.slice(-4)}`,
+            createdAt: o.createdAt
+          };
+        })
+      };
+    }
+
     res.json({
       sessionId: session.id,
       openedAt: session.openedAt,
@@ -400,11 +444,18 @@ class CashierController {
   });
 
   getOrdersBySessionId = async (restaurantId, sessionId) => {
+    const session = await prisma.cashierSession.findUnique({ where: { id: sessionId } });
+    if (!session) return [];
+
+    // Busca pedidos com transação no caixa OU pedidos ONLINE_PAID do período
     return await prisma.order.findMany({
       where: { 
         restaurantId,
+        status: { notIn: ['CANCELED'] },
+        createdAt: { gte: session.openedAt },
         OR: [
           { financialTransaction: { some: { cashierId: sessionId } } },
+          { payments: { some: { method: 'ONLINE_PAID' } } }
         ]
       },
       include: {
