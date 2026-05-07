@@ -228,12 +228,12 @@ export function useCashier() {
   // Mapeamento de todos os métodos possíveis para seus equivalentes normalizados
   const METHOD_EQUIVALENTS: Record<string, string[]> = {
     'all': ['all', 'todos', 'todas'],
-    'cash': ['cash', 'dinheiro', 'dinheiro'],
-    'pix': ['pix', 'pix'],
-    'credit_card': ['credit_card', 'cartao-credito', 'cartao de credito', 'cartao crédito', 'credito'],
-    'debit_card': ['debit_card', 'cartao-debito', 'cartao de debito', 'cartao débito', 'debito'],
+    'cash': ['cash', 'dinheiro', 'dinheiro', 'CASH'],
+    'pix': ['pix', 'pix', 'PIX'],
+    'credit_card': ['credit_card', 'cartao-credito', 'cartao de credito', 'cartao crédito', 'credito', 'CREDIT_CARD', 'credit'],
+    'debit_card': ['debit_card', 'cartao-debito', 'cartao de debito', 'cartao débito', 'debito', 'DEBIT_CARD', 'debit'],
     'online_paid': ['online_paid', 'online', 'pago online', 'paid', 'paid_online', 'ONLINE_PAID', 'pago online'],
-    'other': ['other', 'outros', 'outro']
+    'other': ['other', 'outros', 'outro', 'OTHER']
   };
 
   const isMethodMatch = (paymentMethod: string | null | undefined, targetId: string): boolean => {

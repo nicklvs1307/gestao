@@ -111,7 +111,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   <span className="text-[10px] font-bold text-amber-600 uppercase flex items-center gap-1.5">
                     <Tag size={10} /> Taxa Plataforma
                   </span>
-                  <span className="text-sm font-black text-amber-600">- R$ {platformFee.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-sm font-black text-amber-600">+ R$ {platformFee.toFixed(2).replace('.', ',')}</span>
                 </div>
               )}
                

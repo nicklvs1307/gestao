@@ -447,16 +447,12 @@ class CashierController {
     const session = await prisma.cashierSession.findUnique({ where: { id: sessionId } });
     if (!session) return [];
 
-    // Busca pedidos com transação no caixa OU pedidos ONLINE_PAID do período
+    // Busca TODOS os pedidos do período (inclui iFood pagos na entrega)
     return await prisma.order.findMany({
       where: { 
         restaurantId,
         status: { notIn: ['CANCELED'] },
         createdAt: { gte: session.openedAt },
-        OR: [
-          { financialTransaction: { some: { cashierId: sessionId } } },
-          { payments: { some: { method: 'ONLINE_PAID' } } }
-        ]
       },
       include: {
         items: { include: { product: true } },
