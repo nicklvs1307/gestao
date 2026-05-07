@@ -14,6 +14,7 @@ interface OrderEditorPaymentProps {
   deliveryFee: number;
   discount: number;
   surcharge: number;
+  platformFee?: number;
   isDelivery: boolean;
   drivers: { id: string; name: string }[];
   selectedDriverId: string;
@@ -33,12 +34,6 @@ interface OrderEditorPaymentProps {
   onInternalObsChange: (obs: string) => void;
 }
 
-const isIfoodOnlinePayment = (order: Order): boolean => {
-  if (!order.ifoodOrderId) return false;
-  if (!order.payments?.length) return false;
-  return order.payments.some(p => p.method === 'ONLINE_PAID');
-};
-
 const isPaymentEditable = (order: Order): boolean => {
   if (!order.ifoodOrderId) return true;
   if (!order.payments?.length) return true;
@@ -47,7 +42,7 @@ const isPaymentEditable = (order: Order): boolean => {
 
 export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
   order, subtotal, totalGeral, remainingToPay,
-  deliveryFee, discount, surcharge,
+  deliveryFee, discount, surcharge, platformFee,
   isDelivery, drivers, selectedDriverId,
   paymentMethods, isAddingPayment, newPayment, internalObs, isSaving,
   onDeliveryFeeChange, onDiscountChange, onSurchargeChange,
@@ -99,7 +94,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   />
                 </div>
               </div>
-              <div className="flex justify-between items-center p-2.5 bg-rose-50/50 rounded-xl border border-rose-100">
+<div className="flex justify-between items-center p-2.5 bg-rose-50/50 rounded-xl border border-rose-100">
                 <span className="text-[10px] font-bold text-rose-600 uppercase">Desconto</span>
                 <div className="flex items-center bg-white px-3 py-1.5 rounded-lg border border-rose-200 shadow-sm">
                   <span className="text-[9px] font-bold text-slate-400 mr-1">R$</span>
@@ -111,7 +106,15 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   />
                 </div>
               </div>
-              
+              {platformFee && platformFee > 0 && (
+                <div className="flex justify-between items-center p-2.5 bg-amber-50/50 rounded-xl border border-amber-100">
+                  <span className="text-[10px] font-bold text-amber-600 uppercase flex items-center gap-1.5">
+                    <Tag size={10} /> Taxa Plataforma
+                  </span>
+                  <span className="text-sm font-black text-amber-600">- R$ {platformFee.toFixed(2).replace('.', ',')}</span>
+                </div>
+              )}
+               
               {/* Total Geral + A Pagar */}
               <div className="mt-4 pt-4 border-t-2 border-dashed border-slate-200">
                 <div className="flex justify-between items-end">

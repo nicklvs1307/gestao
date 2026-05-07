@@ -138,6 +138,7 @@ export interface Order {
   tableNumber: number;
   status: string;
   total: number;
+  subtotal?: number;
   customerName?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -149,6 +150,8 @@ export interface Order {
   user?: { name: string };
   discount?: number;
   extraCharge?: number;
+  deliveryFee?: number;
+  platformFee?: number;
   isPrinted?: boolean;
   isSettled?: boolean;
   settledAt?: string | null;

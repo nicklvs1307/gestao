@@ -569,6 +569,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                     deliveryFee={deliveryFee}
                     discount={discount}
                     surcharge={surcharge}
+                    platformFee={order.platformFee}
                     isDelivery={isDelivery}
                     isSaving={isSaving}
                     drivers={drivers}

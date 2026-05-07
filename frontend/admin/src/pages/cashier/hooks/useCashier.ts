@@ -77,6 +77,7 @@ export type TransactionModalState = 'none' | TransactionType;
 // --- Default Methods ---
 
 const DEFAULT_METHODS: PaymentMethod[] = [
+  { id: 'all', label: 'Todos', icon: Receipt, color: 'slate' },
   { id: 'cash', label: 'Dinheiro', icon: Banknote, color: 'emerald' },
   { id: 'pix', label: 'Pix', icon: Smartphone, color: 'blue' },
   { id: 'credit_card', label: 'Cartão Crédito', icon: Wallet, color: 'purple' },
@@ -109,7 +110,7 @@ export function useCashier() {
   const [loading, setLoading] = useState(true);
 
   // View states
-  const [selectedMethod, setSelectedMethod] = useState<string>('cash');
+  const [selectedMethod, setSelectedMethod] = useState<string>('all');
   const [step, setStep] = useState<CashierStep>('COUNT');
 
   // Form states
@@ -226,6 +227,7 @@ export function useCashier() {
 
   // Mapeamento de todos os métodos possíveis para seus equivalentes normalizados
   const METHOD_EQUIVALENTS: Record<string, string[]> = {
+    'all': ['all', 'todos', 'todas'],
     'cash': ['cash', 'dinheiro', 'dinheiro'],
     'pix': ['pix', 'pix'],
     'credit_card': ['credit_card', 'cartao-credito', 'cartao de credito', 'cartao crédito', 'credito'],
@@ -255,6 +257,19 @@ export function useCashier() {
 
     return sessionOrders
       .filter(o => {
+        // Se selectedMethod for 'all', mostra todos os pedidos sem filtro
+        if (selectedMethod === 'all') {
+          if (!searchTerm) return true;
+          const term = searchTerm.toLowerCase();
+          return (
+            o.id.toLowerCase().includes(term) ||
+            (o.dailyOrderNumber?.toString().includes(term)) ||
+            (o.deliveryOrder?.name?.toLowerCase().includes(term)) ||
+            (o.customerName?.toLowerCase().includes(term)) ||
+            (o.tableNumber?.toString().includes(term))
+          );
+        }
+
         const payments = o.payments || [];
         // Pedido tem pagamento neste método específico?
         const hasThisMethod = payments.some((p: any) =>
@@ -277,9 +292,12 @@ export function useCashier() {
       .map(o => {
         const payments = o.payments || [];
 
-        const relevantPayments = payments.filter((p: any) =>
-          isMethodMatch(p.method, selectedMethod)
-        );
+        // Se selectedMethod for 'all', usa todos os payments
+        const relevantPayments = selectedMethod === 'all' 
+          ? payments 
+          : payments.filter((p: any) =>
+              isMethodMatch(p.method, selectedMethod)
+            );
 
         const methodAmount = relevantPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
         const paidTotal = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -299,6 +317,9 @@ export function useCashier() {
   const getExpectedValue = useCallback(
     (methodId: string): number => {
       if (!summary) return 0;
+      
+      // Para 'all' não há valor esperado individual
+      if (methodId === 'all') return 0;
 
       const m = paymentMethods.find(pm => pm.id === methodId);
       const normLabel = normalize(m?.label || '');

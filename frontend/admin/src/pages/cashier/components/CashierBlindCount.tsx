@@ -17,6 +17,7 @@ interface CashierBlindCountProps {
 }
 
 const getMethodIcon = (id: string) => {
+  if (id === 'all') return Receipt;
   if (id === 'cash') return Wallet;
   if (id === 'pix') return Smartphone;
   if (id.includes('credit') || id.includes('debit')) return CreditCard;
