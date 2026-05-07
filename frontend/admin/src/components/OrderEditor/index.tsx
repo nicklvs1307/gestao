@@ -65,7 +65,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState(order.deliveryOrder?.driverId || '');
 
-  const [deliveryFee, setDeliveryFee] = useState(order.deliveryOrder?.deliveryFee || 0);
+  const [deliveryFee, setDeliveryFee] = useState(order.deliveryFee || order.deliveryOrder?.deliveryFee || 0);
   const [discount, setDiscount] = useState(order.discount || 0);
   const [surcharge, setSurcharge] = useState(order.extraCharge || 0);
   const [internalObs, setInternalObs] = useState('');

@@ -230,7 +230,7 @@ export function useCashier() {
     'pix': ['pix', 'pix'],
     'credit_card': ['credit_card', 'cartao-credito', 'cartao de credito', 'cartao crédito', 'credito'],
     'debit_card': ['debit_card', 'cartao-debito', 'cartao de debito', 'cartao débito', 'debito'],
-    'online_paid': ['online_paid', 'online', 'pago online', 'paid', 'paid_online'],
+    'online_paid': ['online_paid', 'online', 'pago online', 'paid', 'paid_online', 'ONLINE_PAID', 'pago online'],
     'other': ['other', 'outros', 'outro']
   };
 

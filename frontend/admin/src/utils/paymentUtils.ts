@@ -21,6 +21,7 @@ const PAYMENT_METHOD_FALLBACK_MAP: Record<string, string> = {
   online_paid: 'PAGO ONLINE',
   'pago online': 'PAGO ONLINE',
   paid_online: 'PAGO ONLINE',
+  ONLINE_PAID: 'PAGO ONLINE',
 };
 
 function looksLikeCuid(value: string): boolean {

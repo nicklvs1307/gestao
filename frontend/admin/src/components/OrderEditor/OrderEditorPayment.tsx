@@ -126,15 +126,20 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                     </div>
                   )}
                   {remainingToPay <= 0.01 && order.payments && order.payments.length > 0 && (
-                    <div className={cn(
-                      "flex items-center gap-1.5 px-3 py-2 rounded-xl",
-                      order.ifoodOrderId 
-                        ? "bg-emerald-50 border border-emerald-200" 
-                        : "bg-emerald-50 border border-emerald-200"
-                    )}>
-                      {order.ifoodOrderId ? <CheckCircle size={14} className="text-emerald-600" /> : <CheckCircle size={14} className="text-emerald-600" />}
+                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                      <CheckCircle size={14} className="text-emerald-600" />
                       <span className="text-[9px] font-black text-emerald-600 uppercase">
-                        {order.ifoodOrderId ? 'Pago via iFood' : 'Pago'}
+                        {(() => {
+                          const hasOnlinePaid = order.payments?.some((p: any) => p.method === 'ONLINE_PAID');
+                          if (order.ifoodOrderId && hasOnlinePaid) {
+                            return 'Pago Online';
+                          }
+                          if (order.ifoodOrderId && !hasOnlinePaid) {
+                            const offlinePayment = order.payments?.find((p: any) => p.method !== 'ONLINE_PAID');
+                            return offlinePayment ? `Pago com ${resolvePaymentLabel(offlinePayment.method, paymentMethods)}` : 'Pago na Entrega';
+                          }
+                          return 'Pago';
+                        })()}
                       </span>
                     </div>
                   )}
