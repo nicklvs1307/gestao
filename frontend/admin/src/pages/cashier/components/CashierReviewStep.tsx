@@ -71,18 +71,12 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
 
   const getBreakdownForMethod = (methodId: string): BreakdownMethod | undefined => {
     if (!breakdownByMethod) return undefined;
-    const m = paymentMethods.find(pm => pm.id === methodId);
-    const normLabel = normalize(m?.label || '');
-    const normCash = 'cash';
 
-    // Tenta todas as variações possíveis da chave
-    return breakdownByMethod[normLabel] ||
-           breakdownByMethod[methodId] ||
-           breakdownByMethod[normCash] ||
-           breakdownByMethod['dinheiro'] ||
-           breakdownByMethod['pago online'] ||
-           breakdownByMethod['online_paid'] ||
-           breakdownByMethod['online'];
+    // ONLINE_PAID: frontend id 'online_paid' ou 'pago online' mapeia para 'pago online' (backend key)
+    const isOnlinePaid = methodId === 'online_paid' || methodId === 'pago online';
+    const targetKey = isOnlinePaid ? 'pago online' : methodId;
+
+    return breakdownByMethod[targetKey] || undefined;
   };
 
   return (
