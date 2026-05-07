@@ -790,8 +790,11 @@ const ReportController = {
                 select: {
                     id: true,
                     total: true,
+                    subtotal: true,
                     discount: true,
                     extraCharge: true,
+                    deliveryFee: true,
+                    platformFee: true,
                     status: true,
                     orderType: true,
                     createdAt: true,
@@ -817,7 +820,9 @@ const ReportController = {
                     accumulated: 0,
                     avgTicket: 0,
                     itemsCount: 0,
+                    subtotal: 0,
                     deliveryFee: 0,
+                    platformFee: 0,
                     extraCharge: 0,
                     discount: 0,
                     canceledOrders: 0,
@@ -860,7 +865,9 @@ const ReportController = {
                 day.itemsCount += order.items.reduce((sum, item) => sum + item.quantity, 0);
 
                 // Taxas
+                day.subtotal += order.subtotal || 0;
                 day.deliveryFee += deliveryFee;
+                day.platformFee += order.platformFee || 0;
                 day.extraCharge += order.extraCharge || 0;
                 day.discount += order.discount || 0;
 
@@ -899,7 +906,9 @@ const ReportController = {
                 totalOrders: acc.totalOrders + day.orders,
                 totalRevenue: acc.totalRevenue + day.revenue,
                 totalItems: acc.totalItems + day.itemsCount,
+                totalSubtotal: acc.totalSubtotal + day.subtotal,
                 totalDeliveryFee: acc.totalDeliveryFee + day.deliveryFee,
+                totalPlatformFee: acc.totalPlatformFee + day.platformFee,
                 totalExtraCharge: acc.totalExtraCharge + day.extraCharge,
                 totalDiscount: acc.totalDiscount + day.discount,
                 totalCanceledOrders: acc.totalCanceledOrders + day.canceledOrders,
@@ -908,7 +917,9 @@ const ReportController = {
                 totalOrders: 0,
                 totalRevenue: 0,
                 totalItems: 0,
+                totalSubtotal: 0,
                 totalDeliveryFee: 0,
+                totalPlatformFee: 0,
                 totalExtraCharge: 0,
                 totalDiscount: 0,
                 totalCanceledOrders: 0,

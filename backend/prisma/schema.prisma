@@ -850,7 +850,10 @@ model Order {
   status       OrderStatus @default(BUILDING)
   total        Float
   discount     Float       @default(0) // Novo: Persistência de desconto
-  extraCharge  Float       @default(0) // Novo: Persistência de acréscimo/taxa
+  extraCharge  Float       @default(0) // Acréscimo/taxa do restaurante (não inclui delivery)
+  subtotal     Float       @default(0) // Soma dos itens sem taxas (novo)
+  deliveryFee  Float       @default(0) // Taxa de entrega (novo - centralizado no Order)
+  platformFee  Float       @default(0) // Taxas da plataforma (iFood, etc) (novo)
   orderType    OrderType   @default(TABLE) // Novo campo para diferenciar o tipo de pedido
   isPrinted    Boolean     @default(false) // Controle definitivo de impressão
   

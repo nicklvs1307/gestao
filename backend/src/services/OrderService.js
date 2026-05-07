@@ -38,6 +38,9 @@ const summaryOrderSelect = {
   total: true,
   discount: true,
   extraCharge: true,
+  subtotal: true,
+  deliveryFee: true,
+  platformFee: true,
   orderType: true,
   createdAt: true,
   customerName: true,
@@ -286,8 +289,11 @@ class OrderService {
     const orderData = {
       restaurantId: realRestaurantId,
       total: money.calcOrderTotal({ subtotal: orderTotal, extraCharge, discount, deliveryFee: deliveryInfo?.deliveryFee }),
+      subtotal: orderTotal,
       discount: parseFloat(discount),
       extraCharge: parseFloat(extraCharge),
+      deliveryFee: parseFloat(deliveryInfo?.deliveryFee || 0),
+      platformFee: 0, // Plataforma PDV não tem taxa de plataforma
       orderType: finalOrderType,
       status: initialStatus,
       pendingAt: initialStatus === 'PENDING' ? new Date() : null,
@@ -584,8 +590,11 @@ if (isPickup && !hasValidPhone) {
 
     // ─── 4. TRANSAÇÃO ATÔMICA (Pedido + Payment + Financial) ────────
     const finalTotal = parseFloat(totals?.total) || 0;
+    const finalSubtotal = parseFloat(totals?.subtotal) || 0;
     const finalDiscount = parseFloat(totals?.discount) || 0;
     const finalDeliveryFee = parseFloat(totals?.deliveryFee) || 0;
+    // platformFee = total - subtotal - deliveryFee + discount (taxas da plataforma iFood, etc.)
+    const finalPlatformFee = money.subtract(finalTotal, money.add(finalSubtotal, money.subtract(finalDeliveryFee, finalDiscount)));
 
     const order = await prisma.$transaction(async (tx) => {
       // Numeração diária (mesma lógica do PDV)
@@ -608,14 +617,17 @@ if (isPickup && !hasValidPhone) {
       `;
       const dailyOrderNumber = (lastOrders[0]?.dailyOrderNumber || 0) + 1;
 
-      // Criar pedido
+      // Criar pedido com campos explícitos para税率
       const createdOrder = await tx.order.create({
         data: {
           dailyOrderNumber,
           status: 'PENDING',
           total: finalTotal,
+          subtotal: finalSubtotal,
           discount: finalDiscount,
-          extraCharge: finalDeliveryFee,
+          extraCharge: 0, // Acréscimo do restaurante = 0 para integrações
+          deliveryFee: finalDeliveryFee,
+          platformFee: finalPlatformFee,
           orderType: orderType === 'PICKUP' ? 'PICKUP' : 'DELIVERY',
           restaurantId,
           isPrinted: false,
@@ -1398,12 +1410,13 @@ updatedAt: { gte: start, lte: end }
         });
         return true;
     }).map(d => {
-        let cash = 0; let cardDebit = 0; let cardCredit = 0; let pix = 0; let onlinePaid = 0; let deliveryFees = 0; let totalOrdersValue = 0;
+        let cash = 0; let cardDebit = 0; let cardCredit = 0; let pix = 0; let onlinePaid = 0; let deliveryFees = 0; let totalOrdersValue = 0; let subtotal = 0;
         d.deliveries.forEach(del => {
             const order = del.order; if (!order) return;
             
             deliveryFees = money.add(deliveryFees, del.deliveryFee || 0);
             totalOrdersValue = money.add(totalOrdersValue, order.total);
+            subtotal = money.add(subtotal, order.subtotal || 0);
             
             const orderPayments = order.payments || [];
             if (orderPayments.length > 0) {
@@ -1446,11 +1459,15 @@ updatedAt: { gte: start, lte: end }
         const driverCardReceives = money.add(cardDebit, cardCredit);
         const storeOnlinePaid = onlinePaid;
         const storePix = pix;
-        const storeNet = (baseRate > 0 || bonusPerDelivery > 0) 
-            ? money.subtract(totalOrdersValue, money.add(totalToPay, deliveryFees))
-            : totalOrdersValue;
-        
-        logger.info(`[SETTLEMENT] Cálculos para ${d.name}: totalOrdersValue=${totalOrdersValue}, deliveryFees=${deliveryFees}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
+        // storeNet = quanto o restaurante recebe diretamente (PIX + ONLINE_PAID) - comissão do entregador
+        // Cash e Card são coletados pelo entregador e entram no acerto
+        // DeliveryFee já está em order.total (não subtrai separadamente)
+        const storeNet = money.subtract(
+            money.add(storePix, storeOnlinePaid),
+            totalToPay
+        );
+
+        logger.info(`[SETTLEMENT] ${d.name}: storePix=${storePix}, onlinePaid=${storeOnlinePaid}, totalToPay=${totalToPay}, storeNet=${storeNet}`);
         logger.info(`[SETTLEMENT] Breakdown: cash=${cash}, cardDebit=${cardDebit}, cardCredit=${cardCredit}, pix=${pix}, onlinePaid=${onlinePaid}`);
         
         return { 
@@ -1463,6 +1480,8 @@ updatedAt: { gte: start, lte: end }
             pix, 
             onlinePaid,
             deliveryFees, 
+            totalOrdersValue,
+            subtotal,
             totalToPay, 
             storeNet, 
             baseRate, 
