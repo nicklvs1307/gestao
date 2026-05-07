@@ -43,7 +43,7 @@ const DriverSettlement: React.FC = () => {
   const [endDate, setEndDate] = useState(formatSP(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
-  const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
+  const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void, isLoading?: boolean}>({open: false, title: '', message: '', onConfirm: () => {}});
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedDriver, setExpandedDriver] = useState<string | null>(null);
   const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set());
@@ -70,6 +70,7 @@ const DriverSettlement: React.FC = () => {
       title: 'Confirmar Acerto', 
       message: `CONFIRMAR ACERTO: R$ ${settlement.totalToPay.toFixed(2)} com ${settlement.driverName}?\n\nIsso lançará os valores no caixa aberto e finalizará o ciclo de liquidação.`, 
       onConfirm: async () => {
+        setConfirmData(prev => ({ ...prev, isLoading: true }));
         try {
           // 1. Imprime o comprovante ANTES de liquidar
           await printDriverSettlement(settlement, startDate, startTime, endTime);
@@ -83,9 +84,11 @@ const DriverSettlement: React.FC = () => {
             driverId: settlement.driverId
           });
           toast.success(`Acerto de ${settlement.driverName} registrado com sucesso!`);
+          setConfirmData(prev => ({ ...prev, open: false }));
           fetchSettlement();
         } catch (error: any) {
-          toast.error(error.response?.data?.error || "Erro ao registrar acerto.");
+          toast.error(error.message || "Erro ao registrar acerto.");
+          setConfirmData(prev => ({ ...prev, isLoading: false }));
         }
       }
     });
@@ -527,9 +530,10 @@ const DriverSettlement: React.FC = () => {
       <ConfirmDialog 
         isOpen={confirmData.open} 
         onClose={() => setConfirmData(prev => ({...prev, open: false}))} 
-        onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} 
+        onConfirm={confirmData.onConfirm} 
         title={confirmData.title} 
         message={confirmData.message} 
+        isLoading={confirmData.isLoading}
       />
     </div>
   );

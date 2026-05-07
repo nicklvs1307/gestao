@@ -362,11 +362,17 @@ export const printDriverSettlement = async (
     driverName: settlement.driverName,
     totalOrders: settlement.totalOrders,
     cash: settlement.cash,
-    card: settlement.card,
+    cardDebit: settlement.cardDebit,
+    cardCredit: settlement.cardCredit,
     pix: settlement.pix,
+    onlinePaid: settlement.onlinePaid,
     deliveryFees: settlement.deliveryFees,
     totalToPay: settlement.totalToPay,
     storeNet: settlement.storeNet,
+    driverCashReceives: settlement.driverCashReceives,
+    driverCardReceives: settlement.driverCardReceives,
+    storeOnlinePaid: settlement.storeOnlinePaid,
+    storePix: settlement.storePix,
   };
 
   const escPos = generateDriverSettlementReceipt(settlementData, startDate, startTime, endTime, info, endDate);
