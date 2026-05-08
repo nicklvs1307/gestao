@@ -85,3 +85,34 @@ export const getIfoodConnectionStatus = async () => {
   const response = await apiClient.get('/integrations/ifood/status');
   return response.data;
 };
+
+export const getFood99Settings = async () => {
+  const response = await apiClient.get('/integrations/food99');
+  return response.data;
+};
+
+export const updateFood99Settings = async (settingsData: Record<string, unknown>) => {
+  const response = await apiClient.put('/integrations/food99', settingsData);
+  return response.data;
+};
+
+export const confirmFood99Order = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/food99/confirm', { orderId });
+  return response.data;
+};
+
+export const rejectFood99Order = async (orderId: string, reason?: string) => {
+  const response = await apiClient.post('/integrations/food99/reject', { orderId, reason });
+  return response.data;
+};
+
+export const markFood99Ready = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/food99/ready', { orderId });
+  return response.data;
+};
+
+export const getFood99ConnectionStatus = async (appShopId?: string) => {
+  const params = appShopId ? { app_shop_id: appShopId } : {};
+  const response = await apiClient.get('/integrations/food99/status', { params });
+  return response.data;
+};

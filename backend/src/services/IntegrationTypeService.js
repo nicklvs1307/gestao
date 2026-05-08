@@ -51,18 +51,16 @@ const PLATFORM_STATUS_MAP = {
     'CANCELLATION_REQUESTED': 'CANCELED',
   },
   uairango: {
-    // Novos códigos da Events API (UaiRango Connect)
-    'PLC': 'PENDING',        // PLACED
+    'PLC': 'PENDING',
     'PLACED': 'PENDING',
-    'CFM': 'PREPARING',      // CONFIRMED
+    'CFM': 'PREPARING',
     'CONFIRMED': 'PREPARING',
-    'RTP': 'READY',           // READY_TO_PICKUP
+    'RTP': 'READY',
     'READY_TO_PICKUP': 'READY',
-    'DSP': 'SHIPPED',        // DISPATCHED
+    'DSP': 'SHIPPED',
     'DISPATCHED': 'SHIPPED',
-    'CAN': 'CANCELED',       // CANCELED
+    'CAN': 'CANCELED',
     'CANCELED': 'CANCELED',
-    // Legados (fallback)
     'novo': 'PENDING',
     'confirmado': 'PREPARING',
     'preparando': 'PREPARING',
@@ -71,6 +69,24 @@ const PLATFORM_STATUS_MAP = {
     'entregue': 'DELIVERED',
     'finalizado': 'COMPLETED',
     'cancelado': 'CANCELED',
+  },
+  food99: {
+    '1': 'PENDING',
+    'STATUS_1': 'PENDING',
+    '2': 'PREPARING',
+    'STATUS_2': 'PREPARING',
+    '3': 'READY',
+    'STATUS_3': 'READY',
+    '4': 'SHIPPED',
+    'STATUS_4': 'SHIPPED',
+    '5': 'CANCELED',
+    'STATUS_5': 'CANCELED',
+    '6': 'CANCELED',
+    'STATUS_6': 'CANCELED',
+    '7': 'CANCELED',
+    'STATUS_7': 'CANCELED',
+    '8': 'COMPLETED',
+    'STATUS_8': 'COMPLETED',
   },
 };
 

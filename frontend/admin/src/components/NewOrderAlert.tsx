@@ -7,6 +7,7 @@ import { useScrollLock } from '../hooks/useScrollLock';
 import ifoodLogo from '../assets/ifood-logo.png';
 import saiposLogo from '../assets/saipos-logo.png';
 import uairangoLogo from '../assets/uairango-logo.png';
+import food99Logo from '../assets/99food-logo.png';
 
 interface NewOrderAlertProps {
   orders: Order[];
@@ -31,6 +32,24 @@ const getIntegrationInfo = (order: Order): IntegrationInfo | null => {
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
       borderColor: 'border-orange-200'
+    };
+  }
+  if (order.uairangoOrderId) {
+    return {
+      name: 'UaiRango',
+      logo: uairangoLogo,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200'
+    };
+  }
+  if (order.food99OrderId) {
+    return {
+      name: '99Food',
+      logo: food99Logo,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200'
     };
   }
   return null;
@@ -90,7 +109,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onRejec
                           Pedido via {integration.name}
                         </p>
                         <p className="text-[10px] font-bold text-slate-500">
-                          #{order.ifoodOrderId || order.id.slice(-8).toUpperCase()}
+                          #{order.ifoodOrderId || order.uairangoOrderId || order.food99OrderId || order.id.slice(-8).toUpperCase()}
                         </p>
                       </div>
                       <div className={cn("px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1", integration.color, integration.bgColor)}>

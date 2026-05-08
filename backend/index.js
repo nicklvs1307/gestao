@@ -53,6 +53,16 @@ if (!process.env.IFOOD_CLIENT_SECRET && fs.existsSync('/run/secrets/ifood_client
   process.env.IFOOD_CLIENT_SECRET = fs.readFileSync('/run/secrets/ifood_client_secret', 'utf8').trim();
 }
 
+// FOOD99_CLIENT_ID
+if (!process.env.FOOD99_CLIENT_ID && fs.existsSync('/run/secrets/food99_client_id')) {
+  process.env.FOOD99_CLIENT_ID = fs.readFileSync('/run/secrets/food99_client_id', 'utf8').trim();
+}
+
+// FOOD99_CLIENT_SECRET
+if (!process.env.FOOD99_CLIENT_SECRET && fs.existsSync('/run/secrets/food99_client_secret')) {
+  process.env.FOOD99_CLIENT_SECRET = fs.readFileSync('/run/secrets/food99_client_secret', 'utf8').trim();
+}
+
 if (!process.env.JWT_SECRET) {
   throw new Error('ERRO FATAL: JWT_SECRET não está definido. Verifique seu arquivo .env.');
 }
@@ -157,6 +167,13 @@ app.post('/webhooks/uairango', (req, res) => {
 });
 app.get('/webhooks/uairango/test', (req, res) => res.status(200).json({ status: 'ok' }));
 
+// Webhook 99Food
+const Food99WebhookService = require('./src/services/Food99WebhookService');
+app.get('/webhooks/food99', (req, res) => res.status(200).json({ status: 'ok' }));
+app.post('/webhooks/food99', (req, res) => Food99WebhookService.handleWebhook(req, res));
+app.get('/webhooks/food99/test', (req, res) => res.status(200).json({ status: 'ok' }));
+app.post('/webhooks/food99/test', (req, res) => res.status(200).json({ status: 'ok' }));
+
 // ==================================================================
 // ROTAS
 // ==================================================================
@@ -172,6 +189,7 @@ const stockRoutes = require('./src/routes/stockRoutes');
 const promotionRoutes = require('./src/routes/promotionRoutes');
 const settingsRoutes = require('./src/routes/settingsRoutes');
 const integrationRoutes = require('./src/routes/integrationRoutes');
+const food99Routes = require('./src/routes/food99Routes');
 const tableRoutes = require('./src/routes/tableRoutes');
 const customerRoutes = require('./src/routes/customerRoutes');
 const reportRoutes = require('./src/routes/reportRoutes');
@@ -214,6 +232,7 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/integrations', integrationRoutes);
+app.use('/api/integrations', food99Routes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/admin/tables', tableRoutes); // Alias para compatibilidade com o front
 app.use('/api/customers', customerRoutes);

@@ -8,6 +8,7 @@ const { ptBR } = require('date-fns/locale');
 const IfoodAuthService = require('./IfoodAuthService');
 const IfoodPollingService = require('./IfoodPollingService');
 const UairangoPollingService = require('./UairangoPollingService');
+const Food99PollingService = require('./Food99PollingService');
 
 class JobService {
   constructor() {
@@ -178,6 +179,14 @@ class JobService {
       logger.info('[JobService] Uai Rangô Polling Service iniciado com sucesso.');
     } catch (error) {
       logger.error('[JobService] Erro ao iniciar Uai Rangô Polling Service:', error);
+    }
+
+    // Iniciar polling de eventos da 99Food (fallback)
+    try {
+      Food99PollingService.init();
+      logger.info('[JobService] 99Food Polling Service iniciado com sucesso.');
+    } catch (error) {
+      logger.error('[JobService] Erro ao iniciar 99Food Polling Service:', error);
     }
 
     logger.info('[JobService] Tarefas agendadas com sucesso.');

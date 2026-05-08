@@ -13,6 +13,7 @@ import { Card } from './ui/Card';
 import type { PrintTarget } from '../services/printer';
 import ifoodLogo from '../assets/ifood-logo.png';
 import uairangoLogo from '../assets/uairango-logo.png';
+import food99Logo from '../assets/99food-logo.png';
 
 const OrderTimer = memo(({ createdAt, status }: { createdAt: string; status: string }) => {
   const [timeElapsedStr, setTimeElapsedStr] = useState('');
@@ -178,6 +179,9 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                 )}
                 {order.uairangoOrderId && (
                     <img src={uairangoLogo} alt="Uai Rangô" className="h-7 w-auto" />
+                )}
+                {order.food99OrderId && (
+                    <img src={food99Logo} alt="99Food" className="h-7 w-auto" />
                 )}
                 <OrderTimer createdAt={order.createdAt} status={order.status} />
             </div>

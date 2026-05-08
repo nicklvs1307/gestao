@@ -28,6 +28,7 @@ const AddonFormPage = lazy(() => import('./pages/AddonFormPage'));
 
 const IntegrationManagement = lazy(() => import('./components/IntegrationManagement'));
 const IfoodSettingsPage = lazy(() => import('./pages/IfoodSettingsPage'));
+const Food99SettingsPage = lazy(() => import('./pages/Food99SettingsPage'));
 const SaiposSettingsPage = lazy(() => import('./pages/SaiposSettingsPage'));
 const UairangoSettingsPage = lazy(() => import('./pages/UairangoSettingsPage'));
 const VoltakiSettingsPage = lazy(() => import('./pages/VoltakiSettingsPage'));
@@ -173,6 +174,7 @@ function AdminRoutes() {
           <Route path="/settings/*" element={<ProtectedRoute permission="settings:view"><SettingsManagement /></ProtectedRoute>} />
 <Route path="/integrations" element={<ProtectedRoute permission="integrations:manage"><IntegrationManagement /></ProtectedRoute>} />
           <Route path="/integrations/ifood" element={<ProtectedRoute permission="integrations:manage"><IfoodSettingsPage /></ProtectedRoute>} />
+          <Route path="/integrations/food99" element={<ProtectedRoute permission="integrations:manage"><Food99SettingsPage /></ProtectedRoute>} />
           <Route path="/integrations/saipos" element={<ProtectedRoute permission="integrations:manage"><SaiposSettingsPage /></ProtectedRoute>} />
           <Route path="/integrations/uairango" element={<ProtectedRoute permission="integrations:manage"><UairangoSettingsPage /></ProtectedRoute>} />
           <Route path="/integrations/voltaki" element={<ProtectedRoute permission="integrations:manage"><VoltakiSettingsPage /></ProtectedRoute>} />
