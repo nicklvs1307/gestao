@@ -872,6 +872,24 @@ model Order {
   ifoodOrderId String?
   uairangoOrderId String?
 
+  // === CAMPOS IFOOD (Homologação) ===
+  displayId           String?    // Código de coleta do iFood (ex: #A1B2)
+  scheduledDateTime   DateTime? // Data/hora do agendamento
+  customerDocument    String?    // CPF ou CNPJ do cliente
+  benefits            Json?     // Cupons/benefícios aplicados (JSON)
+  
+  // === CAMPOS DE CANCELAMENTO (Política iFood) ===
+  cancellationRequested   Boolean   @default(false) // Cliente solicitou cancelamento
+  cancellationReason      String?   // Motivo do cancelamento (do cliente ou sistema)
+  cancellationDeadline    DateTime? // Prazo para responder (5 minutos)
+  cancellationSource      String?   // Origem: 'CUSTOMER', 'IFOOD', 'MERCHANT'
+
+  // === CAMPOS DE DISPUTA (Handshake - pós-entrega) ===
+  disputeId          String?    // ID da disputa no iFood
+  disputeExpiresAt   DateTime?  // Prazo para responder a disputa
+  disputeReason      String?    // Motivo da disputa
+  disputeEvidence   Json?      // Evidências (fotos, etc)
+
   // ======== RESTAURANT RELATION ========
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
