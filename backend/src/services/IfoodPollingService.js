@@ -175,8 +175,13 @@ class IfoodPollingService {
 
       case 'CANCELLED':
       case 'CAN':
-      case 'CANCELLATION_REQUEST_FAILED':
+        // Pedido cancelado confirmado
         await IntegrationOrderService.cancelFromIntegration('ifood', restaurantId, orderId);
+        break;
+
+      case 'CANCELLATION_REQUEST_FAILED':
+        // Cancelamento rejeitado pelo sistema - limpar flag
+        await this.clearCancellationRequest(restaurantId, orderId);
         break;
 
       case 'ORDER_PATCHED': {
@@ -200,7 +205,18 @@ class IfoodPollingService {
         break;
 
       case 'CANCELLATION_REQUESTED':
+        // Cliente solicitou cancelamento - notificar e salvar no banco
         await this.handleCancellationRequest(restaurantId, orderId, event);
+        break;
+
+      case 'HANDSHAKE_DISPUTE':
+        // Cliente abriu disputa pós-entrega
+        await this.handleDisputeRequest(restaurantId, orderId, event);
+        break;
+
+      case 'HANDSHAKE_SETTLEMENT':
+        // Disputa resolvida
+        await this.handleDisputeSettlement(restaurantId, orderId, event);
         break;
 
       default:
@@ -290,17 +306,137 @@ class IfoodPollingService {
 
       if (!order) return;
 
+      const deadline = new Date(Date.now() + 5 * 60 * 1000); // 5 minutos
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          cancellationRequested: true,
+          cancellationReason: event.metadata?.reason || event.metadata?.cancelCodeId || 'Motivo não informado',
+          cancellationDeadline: deadline,
+          cancellationSource: 'CUSTOMER'
+        }
+      });
+
       const socketLib = require('../lib/socket');
       socketLib.emitToRestaurant(restaurantId, 'ifood_cancellation_requested', {
         orderId: order.id,
         ifoodOrderId,
         reason: event.metadata?.cancelCodeId || 'Motivo não informado',
+        deadline: deadline.toISOString(),
         source: 'IFOOD'
       });
 
       logger.info(`[IFOOD POLLING] Solicitação de cancelamento para pedido ${order.id}`);
     } catch (error) {
       logger.error(`[IFOOD POLLING] Erro ao processar cancelamento:`, error.message);
+    }
+  }
+
+  async clearCancellationRequest(restaurantId, ifoodOrderId) {
+    try {
+      const order = await prisma.order.findFirst({
+        where: { restaurantId, ifoodOrderId }
+      });
+
+      if (!order) return;
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          cancellationRequested: false,
+          cancellationReason: 'Cancelamento rejeitado pelo sistema',
+          cancellationDeadline: null
+        }
+      });
+
+      const socketLib = require('../lib/socket');
+      socketLib.emitToRestaurant(restaurantId, 'ifood_cancellation_failed', {
+        orderId: order.id,
+        ifoodOrderId,
+        message: 'O cancelamento foi rejeitado. O pedido continua ativo.',
+        source: 'IFOOD'
+      });
+
+      logger.info(`[IFOOD POLLING] Cancelamento rejeitado para pedido ${order.id}`);
+    } catch (error) {
+      logger.error(`[IFOOD POLLING] Erro ao limpar solicitação de cancelamento:`, error.message);
+    }
+  }
+
+  async handleDisputeRequest(restaurantId, ifoodOrderId, event) {
+    try {
+      const order = await prisma.order.findFirst({
+        where: { restaurantId, ifoodOrderId }
+      });
+
+      if (!order) return;
+
+      const disputeId = event.metadata?.disputeId || event.id;
+      const expiresAt = event.metadata?.expiresAt ? new Date(event.metadata.expiresAt) : new Date(Date.now() + 5 * 60 * 1000);
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          disputeId,
+          disputeExpiresAt: expiresAt,
+          disputeReason: event.metadata?.reason || 'Disputa pós-entrega',
+          disputeEvidence: event.metadata?.evidence || null
+        }
+      });
+
+      const socketLib = require('../lib/socket');
+      socketLib.emitToRestaurant(restaurantId, 'ifood_dispute_opened', {
+        orderId: order.id,
+        ifoodOrderId,
+        disputeId,
+        reason: event.metadata?.reason,
+        expiresAt: expiresAt.toISOString(),
+        evidence: event.metadata?.evidence,
+        source: 'IFOOD'
+      });
+
+      logger.info(`[IFOOD POLLING] Disputa aberta para pedido ${order.id}`);
+    } catch (error) {
+      logger.error(`[IFOOD POLLING] Erro ao processar disputa:`, error.message);
+    }
+  }
+
+  async handleDisputeSettlement(restaurantId, ifoodOrderId, event) {
+    try {
+      const order = await prisma.order.findFirst({
+        where: { restaurantId, ifoodOrderId }
+      });
+
+      if (!order) return;
+
+      const settlement = event.metadata?.settlement || event.metadata?.result;
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          disputeId: null,
+          disputeExpiresAt: null,
+          disputeReason: null,
+          disputeEvidence: null,
+          ...(settlement === 'ACCEPTED' && {
+            status: 'CANCELED',
+            canceledAt: new Date()
+          })
+        }
+      });
+
+      const socketLib = require('../lib/socket');
+      socketLib.emitToRestaurant(restaurantId, 'ifood_dispute_settled', {
+        orderId: order.id,
+        ifoodOrderId,
+        settlement,
+        source: 'IFOOD'
+      });
+
+      logger.info(`[IFOOD POLLING] Disputa resolvida para pedido ${order.id}: ${settlement}`);
+    } catch (error) {
+      logger.error(`[IFOOD POLLING] Erro ao processar resolução de disputa:`, error.message);
     }
   }
 }

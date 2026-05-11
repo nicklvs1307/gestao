@@ -198,6 +198,265 @@ class IfoodOrderService {
       return { success: false, error: errorMsg };
     }
   }
+
+  /**
+   * Buscar códigos de cancelamento disponíveis para um pedido
+   * Usado quando a loja inicia o cancelamento
+   */
+  async getCancellationReasons(orderId, restaurantId) {
+    try {
+      const result = await this._getOrderAndToken(orderId);
+      if (result.success === false) return result;
+
+      const { order, token } = result;
+
+      const response = await axios.get(
+        `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/cancellationReasons`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      return { success: true, reasons: response.data };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+      logger.error(`[IFOOD] Erro ao buscar motivos de cancelamento:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Aceitar cancelamento solicitado pelo cliente
+   */
+  async acceptCancellation(orderId, restaurantId) {
+    try {
+      const result = await this._getOrderAndToken(orderId);
+      if (result.success === false) return result;
+
+      const { order, token } = result;
+
+      await axios.post(
+        `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/acceptCancellation`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          status: 'CANCELED',
+          canceledAt: new Date(),
+          cancellationRequested: false,
+          cancellationReason: 'Aceito pelo restaurante'
+        }
+      });
+
+      socketLib.emitToRestaurant(restaurantId, 'order_updated', {
+        orderId,
+        status: 'CANCELED',
+        source: 'IFOOD'
+      });
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+      logger.error(`[IFOOD] Erro ao aceitar cancelamento:`, errorMsg);
+      this._notifySyncError(restaurantId, orderId, `Erro ao aceitar cancelamento: ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Recusar cancelamento solicitado pelo cliente
+   */
+  async refuseCancellation(orderId, restaurantId) {
+    try {
+      const result = await this._getOrderAndToken(orderId);
+      if (result.success === false) return result;
+
+      const { order, token } = result;
+
+      await axios.post(
+        `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/refuseCancellation`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          cancellationRequested: false,
+          cancellationReason: 'Recusado pelo restaurante'
+        }
+      });
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+      logger.error(`[IFOOD] Erro ao recusar cancelamento:`, errorMsg);
+      this._notifySyncError(restaurantId, orderId, `Erro ao recusar cancelamento: ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Validar código de retirada (pickup code)
+   */
+  async validatePickupCode(orderId, code, restaurantId) {
+    try {
+      const result = await this._getOrderAndToken(orderId);
+      if (result.success === false) return result;
+
+      const { order, token } = result;
+
+      const response = await axios.post(
+        `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/validatePickupCode`,
+        { code },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      if (response.data.valid === true || response.data.validated === true) {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            status: 'COMPLETED',
+            completedAt: new Date()
+          }
+        });
+
+        socketLib.emitToRestaurant(restaurantId, 'order_updated', {
+          orderId,
+          status: 'COMPLETED',
+          source: 'IFOOD'
+        });
+
+        return { success: true, valid: true };
+      }
+
+      return { success: true, valid: false, error: 'Código inválido' };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+      logger.error(`[IFOOD] Erro ao validar código de retirada:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Aceitar disputa pós-entrega (Handshake)
+   */
+  async acceptDispute(disputeId, restaurantId, reason = 'CUSTOMER_SATISFACTION') {
+    try {
+      const token = await IfoodAuthService.getValidToken();
+      if (!token) {
+        return { success: false, error: 'Token iFood expirado ou indisponível.' };
+      }
+
+      await axios.post(
+        `${BASE_URL}/order/v1.0/disputes/${disputeId}/accept`,
+        { reason },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+      logger.error(`[IFOOD] Erro ao aceitar disputa:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Recusar disputa pós-entrega (Handshake)
+   */
+  async rejectDispute(disputeId, restaurantId, reason) {
+    try {
+      const token = await IfoodAuthService.getValidToken();
+      if (!token) {
+        return { success: false, error: 'Token iFood expirado ou indisponível.' };
+      }
+
+      await axios.post(
+        `${BASE_URL}/order/v1.0/disputes/${disputeId}/reject`,
+        { reason },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+      logger.error(`[IFOOD] Erro ao recusar disputa:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Oferecer alternativa na disputa (reembolso parcial, cupom, reenvio)
+   */
+  async offerAlternativeDispute(disputeId, restaurantId, alternativeType, value = null) {
+    try {
+      const token = await IfoodAuthService.getValidToken();
+      if (!token) {
+        return { success: false, error: 'Token iFood expirado ou indisponível.' };
+      }
+
+      const body = {
+        alternativeType,
+        ...(value && { value })
+      };
+
+      await axios.post(
+        `${BASE_URL}/order/v1.0/disputes/${disputeId}/alternative`,
+        body,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+      logger.error(`[IFOOD] Erro ao oferecer alternativa na disputa:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }
 }
 
 module.exports = new IfoodOrderService();

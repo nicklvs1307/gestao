@@ -28,4 +28,19 @@ router.post('/ifood/reject', IntegrationController.rejectIfoodOrder);
 router.post('/ifood/start', IntegrationController.startIfoodPreparation);
 router.post('/ifood/ready', IntegrationController.markIfoodReady);
 
+// Cancelamento - motivos disponíveis
+router.get('/ifood/cancellation-reasons/:orderId', IntegrationController.getIfoodCancellationReasons);
+
+// Cancelamento - aceitar/recusar solicitação do cliente
+router.post('/ifood/accept-cancellation', IntegrationController.acceptIfoodCancellation);
+router.post('/ifood/refuse-cancellation', IntegrationController.refuseIfoodCancellation);
+
+// Validação de código de retirada
+router.post('/ifood/validate-pickup', IntegrationController.validateIfoodPickupCode);
+
+// Disputas (Handshake pós-entrega)
+router.post('/ifood/accept-dispute', IntegrationController.acceptIfoodDispute);
+router.post('/ifood/reject-dispute', IntegrationController.rejectIfoodDispute);
+router.post('/ifood/alternative-dispute', IntegrationController.offerIfoodAlternative);
+
 module.exports = router;

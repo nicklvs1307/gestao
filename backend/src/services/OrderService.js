@@ -483,6 +483,10 @@ if (isPickup && !hasValidPhone) {
     payment,            // { rawMethod, isPrepaid, prepaidAmount, pendingAmount, changeFor }
     totals,             // { subtotal, deliveryFee, discount, total }
     notes,              // observações do pedido
+    displayId,          // iFood: código de coleta
+    scheduledDateTime,  // iFood: data/hora do agendamento
+    customerDocument,   // iFood: CPF/CNPJ do cliente
+    benefits,           // iFood: cupons/benefícios aplicados
   }) {
     logger.info(`[ORDER-INTEGRATION] Criando pedido ${platform}/${platformOrderId} para restaurante ${restaurantId}`);
 
@@ -634,6 +638,11 @@ if (isPickup && !hasValidPhone) {
           pendingAt: new Date(),
           ifoodOrderId: platform === 'ifood' ? platformOrderId : null,
           uairangoOrderId: platform === 'uairango' ? platformOrderId : null,
+          // === CAMPOS IFOOD (Homologação) ===
+          displayId: displayId || null,
+          scheduledDateTime: scheduledDateTime ? new Date(scheduledDateTime) : null,
+          customerDocument: customerDocument || null,
+          benefits: benefits || null,
           items: { create: orderItems },
         },
         include: { items: true },

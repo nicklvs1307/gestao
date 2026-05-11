@@ -305,6 +305,155 @@ const markUairangoReady = async (req, res) => {
     }
 };
 
+// === IFOOD - CANCELAMENTO (Homologação) ===
+
+const getIfoodCancellationReasons = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const result = await IfoodOrderService.getCancellationReasons(orderId, req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao buscar motivos de cancelamento:', error);
+        res.status(500).json({ error: error.message || 'Erro ao buscar motivos de cancelamento' });
+    }
+};
+
+const acceptIfoodCancellation = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const result = await IfoodOrderService.acceptCancellation(orderId, req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao aceitar cancelamento:', error);
+        res.status(500).json({ error: error.message || 'Erro ao aceitar cancelamento' });
+    }
+};
+
+const refuseIfoodCancellation = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const result = await IfoodOrderService.refuseCancellation(orderId, req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao recusar cancelamento:', error);
+        res.status(500).json({ error: error.message || 'Erro ao recusar cancelamento' });
+    }
+};
+
+const validateIfoodPickupCode = async (req, res) => {
+    try {
+        const { orderId, code } = req.body;
+
+        if (!orderId || !code) {
+            return res.status(400).json({ error: 'orderId e code são obrigatórios' });
+        }
+
+        const result = await IfoodOrderService.validatePickupCode(orderId, code, req.restaurantId);
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao validar código de retirada:', error);
+        res.status(500).json({ error: error.message || 'Erro ao validar código de retirada' });
+    }
+};
+
+const acceptIfoodDispute = async (req, res) => {
+    try {
+        const { disputeId, orderId, reason } = req.body;
+
+        if (!disputeId || !orderId) {
+            return res.status(400).json({ error: 'disputeId e orderId são obrigatórios' });
+        }
+
+        const result = await IfoodOrderService.acceptDispute(disputeId, req.restaurantId, reason);
+
+        if (result.success) {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: {
+                    status: 'CANCELED',
+                    canceledAt: new Date()
+                }
+            });
+        }
+
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao aceitar disputa:', error);
+        res.status(500).json({ error: error.message || 'Erro ao aceitar disputa' });
+    }
+};
+
+const rejectIfoodDispute = async (req, res) => {
+    try {
+        const { disputeId, orderId, reason } = req.body;
+
+        if (!disputeId || !orderId) {
+            return res.status(400).json({ error: 'disputeId e orderId são obrigatórios' });
+        }
+
+        const result = await IfoodOrderService.rejectDispute(disputeId, req.restaurantId, reason);
+
+        if (result.success) {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: {
+                    disputeId: null,
+                    disputeExpiresAt: null,
+                    disputeReason: null
+                }
+            });
+        }
+
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao recusar disputa:', error);
+        res.status(500).json({ error: error.message || 'Erro ao recusar disputa' });
+    }
+};
+
+const offerIfoodAlternative = async (req, res) => {
+    try {
+        const { disputeId, orderId, alternativeType, value } = req.body;
+
+        if (!disputeId || !orderId || !alternativeType) {
+            return res.status(400).json({ error: 'disputeId, orderId e alternativeType são obrigatórios' });
+        }
+
+        const result = await IfoodOrderService.offerAlternativeDispute(disputeId, req.restaurantId, alternativeType, value);
+
+        if (result.success) {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: {
+                    disputeId: null,
+                    disputeExpiresAt: null,
+                    disputeReason: null
+                }
+            });
+        }
+
+        res.json(result);
+    } catch (error) {
+        logger.error('[IFOOD] Erro ao oferecer alternativa na disputa:', error);
+        res.status(500).json({ error: error.message || 'Erro ao oferecer alternativa' });
+    }
+};
+
 module.exports = {
     getSaiposSettings,
     updateSaiposSettings,
@@ -321,5 +470,12 @@ module.exports = {
     getIfoodConnectionStatus,
     confirmUairangoOrder,
     rejectUairangoOrder,
-    markUairangoReady
+    markUairangoReady,
+    getIfoodCancellationReasons,
+    acceptIfoodCancellation,
+    refuseIfoodCancellation,
+    validateIfoodPickupCode,
+    acceptIfoodDispute,
+    rejectIfoodDispute,
+    offerIfoodAlternative
 };

@@ -58,6 +58,10 @@ class IntegrationBaseService {
         payment: normalized.payment,
         totals: normalized.totals,
         notes: normalized.customerNote || null,
+        displayId: normalized.displayId || null,
+        scheduledDateTime: normalized.scheduledDateTime || null,
+        customerDocument: normalized.customerDocument || null,
+        benefits: normalized.benefits || null,
       });
 
       if (result && !result.isReplayed) {

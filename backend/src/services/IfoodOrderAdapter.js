@@ -95,6 +95,19 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     const discount = rawData?.total?.discount || 0;
     const total = rawData?.total?.orderAmount || (subtotal + deliveryFee - discount);
 
+    // ─── SCHEDULE (AGENDAMENTO) ────────────────────────────────────
+    const schedule = rawData?.schedule || {};
+    const scheduledDateTime = schedule?.scheduledDateTime || null;
+
+    // ─── BENEFITS (CUPONS) ──────────────────────────────────────────
+    const benefits = rawData?.benefits || [];
+    const normalizedBenefits = benefits.map(b => ({
+      name: b.name || b.campaign?.name,
+      value: b.sponsorshipValues?.reduce((s, v) => s + (parseFloat(v.value) || 0), 0) || 0,
+      target: b.target, // ITEM, SUBTOTAL, DELIVERY_FEE
+      sponsorship: b.sponsorship,
+    }));
+
     // ─── RETORNO NORMALIZADO ──────────────────────────────────────
     return {
       orderType: orderType === 'PICKUP' ? 'PICKUP' : 'DELIVERY',
@@ -102,6 +115,7 @@ class IfoodOrderAdapter extends IntegrationBaseService {
       customer: {
         name: customer?.name || 'Cliente iFood',
         phone: customer?.phone?.number || customer?.phone || '',
+        document: customer?.document || null, // CPF ou CNPJ
       },
       deliveryData,
       payment: {
@@ -120,6 +134,11 @@ class IfoodOrderAdapter extends IntegrationBaseService {
         total,
       },
       customerNote: rawData?.extraInfo || null,
+      // === CAMPOS IFOOD (Homologação) ===
+      displayId: rawData.displayId || null,
+      scheduledDateTime,
+      customerDocument: customer?.document || null,
+      benefits: normalizedBenefits.length > 0 ? normalizedBenefits : null,
     };
   }
 

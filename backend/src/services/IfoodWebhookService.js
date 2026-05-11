@@ -14,6 +14,7 @@ class IfoodWebhookService {
     this._processingQueue = [];
     this._isProcessing = false;
     this.adapter = IfoodOrderAdapter;
+    this._processedEventIds = [];
   }
 
   /**
@@ -88,7 +89,7 @@ class IfoodWebhookService {
    * Processa webhook do iFood.
    * Recebe eventos POST e processa de forma assíncrona (resposta rápida).
    */
-  async handleWebhook(req, res) {
+async handleWebhook(req, res) {
     const rawBody = JSON.stringify(req.body);
     const signature = req.headers['x-ifood-signature'];
 
@@ -103,7 +104,6 @@ class IfoodWebhookService {
       const { orderId, code, id: eventId } = event;
       const eventType = code;
 
-      // Verifica se evento já foi processado (não verifica se não tem orderId)
       const alreadyProcessed = orderId ? await this._isEventProcessed(platform, orderId, eventType) : false;
       if (alreadyProcessed) {
         logger.info(`[IFOOD WEBHOOK] Evento ${orderId || eventId} (${eventType}) já processado, ignorando`);
@@ -111,10 +111,26 @@ class IfoodWebhookService {
       }
 
       this._processingQueue.push(event);
+      this._processedEventIds.push(event.id);
       logger.info(`[IFOOD WEBHOOK] Evento ${eventId} (${eventType}) enfileirado para processamento`);
     }
 
     this._processQueue();
+
+    if (this._processedEventIds.length > 0 && this._processedEventIds.length <= 2000) {
+      const idsToAck = [...this._processedEventIds];
+      this._processedEventIds = [];
+      this._sendDelayedAcknowledgment(idsToAck);
+    }
+  }
+
+  async _sendDelayedAcknowledgment(eventIds) {
+    setTimeout(async () => {
+      const token = await IfoodAuthService.getValidToken();
+      if (token) {
+        await this.sendAcknowledgment(token, eventIds);
+      }
+    }, 2000);
   }
 
   /**
@@ -248,6 +264,14 @@ class IfoodWebhookService {
         await this._handleCancellationRequest(restaurantId, orderId, event);
         break;
 
+      case 'HANDSHAKE_DISPUTE':
+        await this._handleDisputeRequest(restaurantId, orderId, event);
+        break;
+
+      case 'HANDSHAKE_SETTLEMENT':
+        await this._handleDisputeSettlement(restaurantId, orderId, event);
+        break;
+
       default:
         logger.info(`[IFOOD WEBHOOK] Evento ${code} não requer processamento`);
     }
@@ -316,6 +340,7 @@ class IfoodWebhookService {
 
   /**
    * Lida com solicitação de cancelamento.
+   * Salva campos no banco + emite socket.
    */
   async _handleCancellationRequest(restaurantId, ifoodOrderId, event) {
     try {
@@ -325,17 +350,136 @@ class IfoodWebhookService {
 
       if (!order) return;
 
+      const deadline = new Date(Date.now() + 5 * 60 * 1000);
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          cancellationRequested: true,
+          cancellationReason: event.metadata?.cancelCodeId || event.metadata?.reason || 'Motivo não informado',
+          cancellationDeadline: deadline,
+          cancellationSource: 'CUSTOMER'
+        }
+      });
+
       const socketLib = require('../lib/socket');
       socketLib.emitToRestaurant(restaurantId, 'ifood_cancellation_requested', {
         orderId: order.id,
         ifoodOrderId,
-        reason: event.metadata?.cancelCodeId || 'Motivo não informado',
+        reason: event.metadata?.cancelCodeId || event.metadata?.reason || 'Motivo não informado',
+        deadline: deadline.toISOString(),
         source: 'IFOOD'
       });
 
       logger.info(`[IFOOD WEBHOOK] Solicitação de cancelamento recebida para pedido ${order.id}`);
     } catch (error) {
       logger.error(`[IFOOD WEBHOOK] Erro ao processar solicitação de cancelamento:`, error.message);
+    }
+  }
+
+  /**
+   * Lida com disputa pós-entrega (Handshake).
+   * Salva campos no banco + emite socket.
+   */
+  async _handleDisputeRequest(restaurantId, ifoodOrderId, event) {
+    try {
+      const order = await prisma.order.findFirst({
+        where: { restaurantId, ifoodOrderId }
+      });
+
+      if (!order) return;
+
+      const disputeId = event.metadata?.dispute?.id || event.metadata?.disputeId || event.id;
+      const expiresAt = event.metadata?.dispute?.expiresAt
+        ? new Date(event.metadata.dispute.expiresAt)
+        : new Date(Date.now() + 5 * 60 * 1000);
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          disputeId,
+          disputeExpiresAt: expiresAt,
+          disputeReason: event.metadata?.dispute?.reason || event.metadata?.reason || 'Disputa pós-entrega',
+          disputeEvidence: event.metadata?.dispute?.evidence || event.metadata?.evidence || null
+        }
+      });
+
+      const socketLib = require('../lib/socket');
+      socketLib.emitToRestaurant(restaurantId, 'ifood_dispute_opened', {
+        orderId: order.id,
+        ifoodOrderId,
+        disputeId,
+        reason: event.metadata?.dispute?.reason || event.metadata?.reason,
+        expiresAt: expiresAt.toISOString(),
+        evidence: event.metadata?.dispute?.evidence || event.metadata?.evidence,
+        source: 'IFOOD'
+      });
+
+      logger.info(`[IFOOD WEBHOOK] Disputa aberta para pedido ${order.id}`);
+    } catch (error) {
+      logger.error(`[IFOOD WEBHOOK] Erro ao processar disputa:`, error.message);
+    }
+  }
+
+  /**
+   * Lida com resolução de disputa (Handshake Settled).
+   * Limpa campos do banco + emite socket.
+   */
+  async _handleDisputeSettlement(restaurantId, ifoodOrderId, event) {
+    try {
+      const order = await prisma.order.findFirst({
+        where: { restaurantId, ifoodOrderId }
+      });
+
+      if (!order) return;
+
+      const settlement = event.metadata?.dispute?.status || event.metadata?.settlement || event.metadata?.result;
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          disputeId: null,
+          disputeExpiresAt: null,
+          disputeReason: null,
+          disputeEvidence: null,
+          ...(settlement === 'MERCHANT_ACCEPTED' || settlement === 'ACCEPTED' ? {
+            status: 'CANCELED',
+            canceledAt: new Date()
+          } : {})
+        }
+      });
+
+      const socketLib = require('../lib/socket');
+      socketLib.emitToRestaurant(restaurantId, 'ifood_dispute_settled', {
+        orderId: order.id,
+        ifoodOrderId,
+        settlement,
+        source: 'IFOOD'
+      });
+
+      logger.info(`[IFOOD WEBHOOK] Disputa resolvida para pedido ${order.id}: ${settlement}`);
+    } catch (error) {
+      logger.error(`[IFOOD WEBHOOK] Erro ao processar resolução de disputa:`, error.message);
+    }
+  }
+
+  async sendAcknowledgment(token, eventIds) {
+    try {
+      await axios.post(
+        `${this.BASE_URL}/events/v1.0/events/acknowledgment`,
+        eventIds.map(id => ({ id })),
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+      logger.info(`[IFOOD WEBHOOK] ${eventIds.length} evento(s) confirmado(s) via API`);
+    } catch (error) {
+      logger.error(`[IFOOD WEBHOOK] Erro ao enviar acknowledgment:`,
+        error.response?.status, error.response?.data || error.message);
     }
   }
 }
