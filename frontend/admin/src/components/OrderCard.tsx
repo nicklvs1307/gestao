@@ -3,9 +3,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Order } from '@/types/index.ts';
 import { getSettings, markOrderAsPrinted } from '../services/api';
+import { validateIfoodPickupCode } from '../services/api/integrations';
 import { printOrder } from '../services/printer';
 import { formatElapsed } from '@/lib/timezone';
-import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag, XCircle, ChevronDown, ShoppingCart, ChefHat, Wine } from 'lucide-react';
+import { Clock, Utensils, Truck, MapPin, Printer, Loader2, Phone, ChevronRight, Eye, CreditCard, CheckCircle, ShoppingBag, XCircle, ChevronDown, ShoppingCart, ChefHat, Wine, Ticket, AlertTriangle, Calendar, Percent } from 'lucide-react';
 import { resolvePaymentLabel } from '@/utils/paymentUtils';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -14,6 +15,8 @@ import type { PrintTarget } from '../services/printer';
 import ifoodLogo from '../assets/ifood-logo.png';
 import uairangoLogo from '../assets/uairango-logo.png';
 import food99Logo from '../assets/99food-logo.png';
+import { Input } from './ui/Input';
+import { Button } from './ui/Button';
 
 const OrderTimer = memo(({ createdAt, status }: { createdAt: string; status: string }) => {
   const [timeElapsedStr, setTimeElapsedStr] = useState('');
@@ -45,13 +48,19 @@ interface OrderCardProps {
   onSelect?: () => void;
   onStatusChange?: (orderId: string, newStatus: string) => void;
   onCancelOrder?: (orderId: string) => void;
+  onValidatePickup?: (orderId: string) => void;
 }
 
-const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSelected, onSelect, onStatusChange, onCancelOrder }) => {
+const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSelected, onSelect, onStatusChange, onCancelOrder, onValidatePickup }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: order.id });
   const [isPrinting, setIsPrinting] = useState(false);
   const [printMenuAnchor, setPrintMenuAnchor] = useState<null | HTMLElement>(null);
   const [printingTarget, setPrintingTarget] = useState<PrintTarget | null>(null);
+  
+  // Estado para validação de retirada
+  const [showPickupModal, setShowPickupModal] = useState(false);
+  const [pickupCode, setPickupCode] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
 
   const printTargetLabels: Record<PrintTarget, string> = {
     all: 'Imprimir Todos',
@@ -127,6 +136,46 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
     }
   }, [order.id, order.dailyOrderNumber, onCancelOrder]);
 
+  const handleOpenPickupModal = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowPickupModal(true);
+    setPickupCode('');
+  }, []);
+
+  const handleClosePickupModal = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setShowPickupModal(false);
+    setPickupCode('');
+  }, []);
+
+  const handleValidatePickupCode = useCallback(async () => {
+    if (!pickupCode.trim() || pickupCode.length < 4) {
+      toast.error('Digite o código de retirada (mínimo 4 dígitos)');
+      return;
+    }
+
+    setIsValidating(true);
+    try {
+      const result = await validateIfoodPickupCode(order.id, pickupCode);
+      
+      if (result.success) {
+        if (result.valid) {
+          toast.success('Retirada validada! Pedido concluído.');
+          setShowPickupModal(false);
+          onStatusChange?.(order.id, 'COMPLETED');
+        } else {
+          toast.error(result.error || 'Código inválido');
+        }
+      } else {
+        toast.error(result.error || 'Erro ao validar código');
+      }
+    } catch (error) {
+      toast.error('Erro ao validar código de retirada');
+    } finally {
+      setIsValidating(false);
+    }
+  }, [order.id, pickupCode, onStatusChange]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -182,6 +231,31 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                 )}
                 {order.food99OrderId && (
                     <img src={food99Logo} alt="99Food" className="h-7 w-auto" />
+                )}
+                {order.displayId && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold">
+                    <Ticket size={12} /> {order.displayId}
+                  </div>
+                )}
+                {order.scheduledDateTime && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold" title={`Agendado: ${order.scheduledDateTime}`}>
+                    <Calendar size={12} /> {new Date(order.scheduledDateTime).toLocaleDateString('pt-BR')} {new Date(order.scheduledDateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )}
+                {order.cancellationRequested && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold animate-pulse" title={order.cancellationReason || 'Cancelamento solicitado'}>
+                    <AlertTriangle size={12} /> Cancelamento
+                  </div>
+                )}
+                {order.disputeId && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-bold animate-pulse" title={order.disputeReason || 'Disputa aberta'}>
+                    <AlertTriangle size={12} /> Disputa
+                  </div>
+                )}
+                {order.benefits && Array.isArray(order.benefits) && order.benefits.length > 0 && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold" title={`Cupom: ${order.benefits.map(b => b.name).join(', ')}`}>
+                    <Percent size={12} /> -R$ {order.benefits.reduce((sum, b) => sum + (b.value || 0), 0).toFixed(2).replace('.', ',')}
+                  </div>
                 )}
                 <OrderTimer createdAt={order.createdAt} status={order.status} />
             </div>
@@ -297,13 +371,27 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
               <Eye size={12} /> Detalhes
             </button>
 
-            <button 
-              onClick={handleAdvance}
-              aria-label="Avançar status"
-              className="h-10 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center transition-all shadow-sm"
-            >
-              <ChevronRight size={16} strokeWidth={3} />
-            </button>
+            {/* Botão de Validação de Retirada - apenas para pedidos PICKUP prontos */}
+            {isPickup && order.status === 'READY' && (
+              <button 
+                onClick={handleOpenPickupModal}
+                aria-label="Validar retirada"
+                className="h-10 px-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                title="Validar código de retirada"
+              >
+                <Ticket size={14} /> Retirada
+              </button>
+            )}
+
+            {(!isPickup || order.status !== 'READY') && (
+              <button 
+                onClick={handleAdvance}
+                aria-label="Avançar status"
+                className="h-10 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center transition-all shadow-sm"
+              >
+                <ChevronRight size={16} strokeWidth={3} />
+              </button>
+            )}
 
             {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
               <button 
@@ -315,6 +403,65 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
               </button>
             )}
         </div>
+
+        {/* Modal de Validação de Retirada */}
+        {showPickupModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={handleClosePickupModal} />
+            <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900">Validar Retirada</h3>
+                <button onClick={handleClosePickupModal} className="text-slate-400 hover:text-slate-600">
+                  <XCircle size={20} />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="text-sm text-slate-600">
+                  <p>Digite o código de retirada informado pelo cliente:</p>
+                  {order.displayId && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Código do pedido: <span className="font-bold text-orange-600">{order.displayId}</span>
+                    </p>
+                  )}
+                </div>
+
+                <Input
+                  type="text"
+                  value={pickupCode}
+                  onChange={(e) => setPickupCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="Ex: 123456"
+                  className="text-center text-2xl font-bold tracking-widest"
+                  maxLength={8}
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleValidatePickupCode()}
+                />
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleClosePickupModal}
+                    className="flex-1"
+                    disabled={isValidating}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleValidatePickupCode}
+                    className="flex-1 bg-orange-500 hover:bg-orange-600"
+                    disabled={isValidating || !pickupCode.trim()}
+                  >
+                    {isValidating ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      'Validar'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

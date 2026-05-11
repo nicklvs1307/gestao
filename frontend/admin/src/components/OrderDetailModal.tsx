@@ -6,6 +6,13 @@ import {
     getDrivers, assignDriver, getSettings, updateDeliveryType, 
     markOrderAsPrinted, emitInvoice 
 } from '../services/api';
+import { 
+    acceptIfoodCancellation, 
+    refuseIfoodCancellation,
+    acceptIfoodDispute,
+    rejectIfoodDispute,
+    offerIfoodAlternative
+} from '../services/api/integrations';
 import { printOrder } from '../services/printer';
 import { formatSP } from '@/lib/timezone';
 import { 
@@ -14,7 +21,7 @@ import {
   ExternalLink, Package, CreditCard, Loader2, FileText,
   ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck, List,
   DollarSign, Receipt, ArrowRight, ShieldCheck, Hash, Wallet, Smartphone, Landmark,
-  ShoppingCart
+  ShoppingCart, Ticket, AlertTriangle, Calendar, FileText as IDCard
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -46,6 +53,11 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const [drivers, setDrivers] = useState<{id: string, name: string}[]>([]);
   const [selectedDriver, setSelectedDriver] = useState<string>(order?.deliveryOrder?.driverId || "");
   const [deliveryType, setDeliveryType] = useState<string>(order?.deliveryOrder?.deliveryType || "retirada");
+  const [isHandlingCancellation, setIsHandlingCancellation] = useState(false);
+  const [isHandlingDispute, setIsHandlingDispute] = useState(false);
+  const [showAlternativeModal, setShowAlternativeModal] = useState(false);
+  const [alternativeType, setAlternativeType] = useState<string>('');
+  const [alternativeValue, setAlternativeValue] = useState<string>('');
   useEffect(() => {
     if (order) {
       setSelectedDriver(order.deliveryOrder?.driverId || "");
@@ -105,6 +117,100 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
         toast.success("Impressão enviada!");
     } catch (error) { toast.error("Falha na impressão."); }
     finally { setIsPrinting(false); }
+  };
+
+  const handleAcceptCancellation = async () => {
+    if (!order.ifoodOrderId) return;
+    setIsHandlingCancellation(true);
+    try {
+      const result = await acceptIfoodCancellation(order.id);
+      if (result.success) {
+        toast.success('Cancelamento aceito');
+        onStatusChange?.(order.id, 'CANCELED');
+        onClose();
+      } else {
+        toast.error(result.error || 'Erro ao aceitar cancelamento');
+      }
+    } catch (e) {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingCancellation(false);
+    }
+  };
+
+  const handleRefuseCancellation = async () => {
+    if (!order.ifoodOrderId) return;
+    setIsHandlingCancellation(true);
+    try {
+      const result = await refuseIfoodCancellation(order.id);
+      if (result.success) {
+        toast.success('Cancelamento recusado');
+        onStatusChange?.(order.id, order.status);
+      } else {
+        toast.error(result.error || 'Erro ao recusar cancelamento');
+      }
+    } catch (e) {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingCancellation(false);
+    }
+  };
+
+  const handleAcceptDispute = async () => {
+    if (!order.disputeId) return;
+    setIsHandlingDispute(true);
+    try {
+      const result = await acceptIfoodDispute(order.disputeId, order.id, 'CUSTOMER_SATISFACTION');
+      if (result.success) {
+        toast.success('Disputa aceita - reembolso processado');
+        onStatusChange?.(order.id, 'CANCELED');
+        onClose();
+      } else {
+        toast.error(result.error || 'Erro ao aceitar disputa');
+      }
+    } catch (e) {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingDispute(false);
+    }
+  };
+
+  const handleRejectDispute = async () => {
+    if (!order.disputeId) return;
+    setIsHandlingDispute(true);
+    try {
+      const result = await rejectIfoodDispute(order.disputeId, order.id, 'Loja não concorda com a solicitação');
+      if (result.success) {
+        toast.success('Disputa recusada');
+        onStatusChange?.(order.id, order.status);
+      } else {
+        toast.error(result.error || 'Erro ao recusar disputa');
+      }
+    } catch (e) {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingDispute(false);
+    }
+  };
+
+  const handleOfferAlternative = async () => {
+    if (!order.disputeId || !alternativeType) return;
+    setIsHandlingDispute(true);
+    try {
+      const value = alternativeValue ? parseFloat(alternativeValue) : undefined;
+      const result = await offerIfoodAlternative(order.disputeId, order.id, alternativeType, value);
+      if (result.success) {
+        toast.success('Alternativa oferecida ao cliente');
+        setShowAlternativeModal(false);
+        onStatusChange?.(order.id, order.status);
+      } else {
+        toast.error(result.error || 'Erro ao oferecer alternativa');
+      }
+    } catch (e) {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingDispute(false);
+    }
   };
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
@@ -188,6 +294,153 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                             </div>
                         </div>
                     </div>
+
+                    {/* INFORMAÇÕES IFOOD (Homologação) */}
+                    {(order.ifoodOrderId || order.displayId || order.scheduledDateTime || order.customerDocument || order.benefits) && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-[10px] font-black uppercase text-orange-600 tracking-[0.2em] flex items-center gap-2">
+                                    <img src="https://www.ifood.com.br/static/images/ifood-logo.svg" className="h-4" alt="iFood" />
+                                    Dados do Pedido
+                                </h3>
+                                <div className="h-px flex-1 bg-orange-100 ml-4" />
+                            </div>
+                            <div className="bg-orange-50 border border-orange-100 rounded-3xl p-4 space-y-3">
+                                {order.displayId && (
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Ticket size={14} className="text-orange-600" />
+                                            <span className="text-[10px] font-black text-slate-500 uppercase">Código de Coleta</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-orange-600 uppercase">{order.displayId}</span>
+                                    </div>
+                                )}
+                                {order.scheduledDateTime && (
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar size={14} className="text-blue-600" />
+                                            <span className="text-[10px] font-black text-slate-500 uppercase">Agendado para</span>
+                                        </div>
+                                        <span className="text-xs font-bold text-blue-600 uppercase">
+                                            {formatSP(order.scheduledDateTime, 'dd/MM/yyyy HH:mm')}
+                                        </span>
+                                    </div>
+                                )}
+                                {order.customerDocument && (
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <IDCard size={14} className="text-slate-600" />
+                                            <span className="text-[10px] font-black text-slate-500 uppercase">Documento</span>
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-600 uppercase">{order.customerDocument}</span>
+                                    </div>
+                                )}
+                                {order.benefits && order.benefits.length > 0 && (
+                                    <div className="space-y-2 pt-2 border-t border-orange-100">
+                                        <span className="text-[10px] font-black text-green-600 uppercase flex items-center gap-2">
+                                            <ShoppingBag size={12} /> Cupons Aplicados
+                                        </span>
+                                        {order.benefits.map((benefit, idx) => (
+                                            <div key={idx} className="flex items-center justify-between bg-white/60 p-2 rounded-xl">
+                                                <span className="text-xs font-bold text-slate-600">{benefit.name}</span>
+                                                <span className="text-xs font-bold text-green-600">- R$ {benefit.value.toFixed(2)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SOLICITAÇÃO DE CANCELAMENTO (iFood) */}
+                    {order.cancellationRequested && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-[10px] font-black uppercase text-rose-600 tracking-[0.2em] flex items-center gap-2">
+                                    <AlertTriangle size={12} />
+                                    Cancelamento Solicitado
+                                </h3>
+                                <div className="h-px flex-1 bg-rose-200 ml-4" />
+                            </div>
+                            <div className="bg-rose-50 border border-rose-200 rounded-3xl p-4 space-y-4">
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-black text-rose-500 uppercase">Motivo:</p>
+                                    <p className="text-xs font-bold text-slate-700">{order.cancellationReason || 'Cliente solicitou cancelamento'}</p>
+                                    {order.cancellationDeadline && (
+                                        <p className="text-[10px] font-bold text-orange-600">
+                                            Prazo: {formatSP(order.cancellationDeadline, 'HH:mm:ss')}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        onClick={handleAcceptCancellation}
+                                        disabled={isHandlingCancellation}
+                                        className="flex-1 bg-rose-500 hover:bg-rose-600 text-white h-10 text-xs font-black uppercase"
+                                    >
+                                        {isHandlingCancellation ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                    </Button>
+                                    <Button 
+                                        onClick={handleRefuseCancellation}
+                                        disabled={isHandlingCancellation}
+                                        variant="outline"
+                                        className="flex-1 border-rose-300 text-rose-600 hover:bg-rose-50 h-10 text-xs font-black uppercase"
+                                    >
+                                        Recusar
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* DISPUTA POST-ENTREGA (Handshake) */}
+                    {order.disputeId && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em] flex items-center gap-2">
+                                    <AlertTriangle size={12} />
+                                    Disputa Pós-Entrega
+                                </h3>
+                                <div className="h-px flex-1 bg-amber-200 ml-4" />
+                            </div>
+                            <div className="bg-amber-50 border border-amber-200 rounded-3xl p-4 space-y-4">
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-black text-amber-600 uppercase">Motivo:</p>
+                                    <p className="text-xs font-bold text-slate-700">{order.disputeReason || 'Cliente abriu disputa'}</p>
+                                    {order.disputeExpiresAt && (
+                                        <p className="text-[10px] font-bold text-orange-600">
+                                            Responder até: {formatSP(order.disputeExpiresAt, 'HH:mm:ss')}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        onClick={handleAcceptDispute}
+                                        disabled={isHandlingDispute}
+                                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-white h-10 text-xs font-black uppercase"
+                                    >
+                                        {isHandlingDispute ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                    </Button>
+                                    <Button 
+                                        onClick={handleRejectDispute}
+                                        disabled={isHandlingDispute}
+                                        variant="outline"
+                                        className="flex-1 border-amber-300 text-amber-600 hover:bg-amber-50 h-10 text-xs font-black uppercase"
+                                    >
+                                        Recusar
+                                    </Button>
+                                    <Button 
+                                        onClick={() => setShowAlternativeModal(true)}
+                                        disabled={isHandlingDispute}
+                                        variant="outline"
+                                        className="flex-1 border-blue-300 text-blue-600 hover:bg-blue-50 h-10 text-xs font-black uppercase"
+                                    >
+                                        Alternativa
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* LOGÍSTICA DE ENTREGA */}
                     {isDelivery && (

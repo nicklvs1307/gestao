@@ -86,6 +86,43 @@ export const getIfoodConnectionStatus = async () => {
   return response.data;
 };
 
+// === IFOOD - Cancelamento (Homologação) ===
+
+export const getIfoodCancellationReasons = async (orderId: string) => {
+  const response = await apiClient.get(`/integrations/ifood/cancellation-reasons/${orderId}`);
+  return response.data;
+};
+
+export const acceptIfoodCancellation = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/ifood/accept-cancellation', { orderId });
+  return response.data;
+};
+
+export const refuseIfoodCancellation = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/ifood/refuse-cancellation', { orderId });
+  return response.data;
+};
+
+export const validateIfoodPickupCode = async (orderId: string, code: string) => {
+  const response = await apiClient.post('/integrations/ifood/validate-pickup', { orderId, code });
+  return response.data;
+};
+
+export const acceptIfoodDispute = async (disputeId: string, orderId: string, reason?: string) => {
+  const response = await apiClient.post('/integrations/ifood/accept-dispute', { disputeId, orderId, reason });
+  return response.data;
+};
+
+export const rejectIfoodDispute = async (disputeId: string, orderId: string, reason?: string) => {
+  const response = await apiClient.post('/integrations/ifood/reject-dispute', { disputeId, orderId, reason });
+  return response.data;
+};
+
+export const offerIfoodAlternative = async (disputeId: string, orderId: string, alternativeType: string, value?: number) => {
+  const response = await apiClient.post('/integrations/ifood/alternative-dispute', { disputeId, orderId, alternativeType, value });
+  return response.data;
+};
+
 export const getFood99Settings = async () => {
   const response = await apiClient.get('/integrations/food99');
   return response.data;

@@ -165,6 +165,28 @@ export interface Order {
   canceledAt?: string | null;
   ifoodOrderId?: string | null;
   food99OrderId?: string | null;
+  
+  // === CAMPOS IFOOD (Homologação) ===
+  displayId?: string | null;
+  scheduledDateTime?: string | null;
+  customerDocument?: string | null;
+  benefits?: Array<{
+    name: string;
+    value: number;
+    target: string;
+  }> | null;
+  
+  // === CAMPOS DE CANCELAMENTO (Política iFood) ===
+  cancellationRequested?: boolean;
+  cancellationReason?: string | null;
+  cancellationDeadline?: string | null;
+  cancellationSource?: string | null;
+  
+  // === CAMPOS DE DISPUTA (Handshake pós-entrega) ===
+  disputeId?: string | null;
+  disputeExpiresAt?: string | null;
+  disputeReason?: string | null;
+  disputeEvidence?: unknown | null;
 }
 
 export interface TableSummary {
