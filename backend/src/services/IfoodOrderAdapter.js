@@ -45,23 +45,59 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     // ─── ITENS ────────────────────────────────────────────────────
     const rawItems = rawData?.items || [];
     const items = rawItems.map(item => {
-      const itemAddons = (item.subItems || []).map(sub => ({
-        name: sub.name,
-        price: sub.totalPrice || sub.price || 0,
-        quantity: sub.quantity || 1,
-        integrationCode: sub.externalCode || null,
+      // Usar item.options (NÃO subItems que não existe no iFood)
+      const rawOptions = item.options || [];
+      
+      // Separar opções por type (CRUST = massa/borda, TOPPING = sabores)
+      const crustOptions = rawOptions.filter(opt => opt.type === 'CRUST');
+      const toppingOptions = rawOptions.filter(opt => opt.type === 'TOPPING');
+      
+      // Mapear sabores (TOPPING = flavors)
+      const flavorsData = toppingOptions.map(opt => ({
+        name: opt.name,
+        price: parseFloat(opt.unitPrice) || 0,
+        addition: parseFloat(opt.addition) || 0,
+        quantity: opt.quantity || 1,
+        groupName: opt.groupName || null,
+        integrationCode: opt.externalCode || null,
       }));
+      
+      // Mapear adicionais (customizations de 3º nível)
+      const customizationsData = [];
+      toppingOptions.forEach(opt => {
+        if (opt.customizations && Array.isArray(opt.customizations)) {
+          opt.customizations.forEach(cust => {
+            customizationsData.push({
+              name: cust.name,
+              price: parseFloat(cust.unitPrice) || parseFloat(cust.addition) || 0,
+              quantity: cust.quantity || 1,
+              parentFlavor: opt.name, // Indica qual sabor tem esse adicional
+              integrationCode: cust.externalCode || null,
+            });
+          });
+        }
+      });
+      
+      // Mapear tamanho/massa (CRUST = sizeJson)
+      const sizeData = crustOptions[0] ? {
+        name: crustOptions[0].name,
+        price: parseFloat(crustOptions[0].unitPrice) || 0,
+        integrationCode: crustOptions[0].externalCode || null,
+      } : null;
+      
+      // Usar optionsPrice como preço total da pizza (já inclui todos os sabores)
+      const itemPrice = item.optionsPrice || item.totalPrice || item.price || 0;
 
       return {
         name: item.name || `Item iFood (${item.id || item.productId || 'diversos'})`,
         externalId: item.id || item.productId,
         integrationCode: item.externalCode || null,
-        price: item.unitPrice || item.totalPrice || item.price || 0,
+        price: itemPrice,
         quantity: item.quantity || 1,
         observations: item.observations || null,
-        addons: itemAddons,
-        sizeJson: null,
-        flavorsJson: null,
+        addons: customizationsData, // Adicionais de 3º nível
+        sizeJson: sizeData ? JSON.stringify(sizeData) : null,
+        flavorsJson: flavorsData.length ? JSON.stringify(flavorsData) : null,
       };
     });
 
