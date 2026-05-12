@@ -231,30 +231,33 @@ class FiscalService {
                     dest: config.environment === 'production' ? undefined : {
                         xNome: "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL"
                     },
-                    det: items.map((item, index) => ({
+                    det: items.map((item, index) => {
+                        const product = item.product || {};
+                        return {
                         "@_nItem": index + 1,
                         prod: {
-                            cProd: item.product.id.slice(0, 10),
+                            cProd: (product.id || 'INT').slice(0, 10),
                             cEAN: "SEM GTIN",
-                            xProd: item.product.name,
-                            NCM: item.product.ncm || "00000000",
-                            CFOP: item.product.cfop || "5102",
-                            uCom: item.product.measureUnit || "UN",
+                            xProd: product.name || "Item Integrado",
+                            NCM: product.ncm || "00000000",
+                            CFOP: product.cfop || "5102",
+                            uCom: product.measureUnit || "UN",
                             qCom: item.quantity.toFixed(4),
                             vUnCom: item.priceAtTime.toFixed(10),
                             vProd: (item.priceAtTime * item.quantity).toFixed(2),
                             cEANTrib: "SEM GTIN",
-                            uTrib: item.product.measureUnit || "UN",
+                            uTrib: product.measureUnit || "UN",
                             qTrib: item.quantity.toFixed(4),
                             vUnTrib: item.priceAtTime.toFixed(10),
                             indTot: 1
                         },
                         imposto: {
-                            ICMS: { ICMSSN102: { orig: item.product.origin || 0, CSOSN: "102" } },
+                            ICMS: { ICMSSN102: { orig: product.origin || 0, CSOSN: "102" } },
                             PIS: { PISOutr: { CST: "99", vBC: "0.00", pPIS: "0.00", vPIS: "0.00" } },
                             COFINS: { COFINSOutr: { CST: "99", vBC: "0.00", pCOFINS: "0.00", vCOFINS: "0.00" } }
                         }
-                    })),
+                    };
+                    }),
                     total: {
                         ICMSTot: {
                             vBC: "0.00", vICMS: "0.00", vICMSDeson: "0.00", vFCP: "0.00",

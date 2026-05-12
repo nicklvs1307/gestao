@@ -547,17 +547,31 @@ if (isPickup && !hasValidPhone) {
         name: addon.name,
         price: parseFloat(addon.price) || 0,
         quantity: parseInt(addon.quantity) || 1,
+        integrationCode: addon.integrationCode || null,
       }));
 
-      orderItems.push({
-        productId: product.id,
+      const sizeData = item.sizeJson ? (typeof item.sizeJson === 'string' ? JSON.parse(item.sizeJson) : item.sizeJson) : null;
+
+      const itemData = {
         quantity: parseInt(item.quantity) || 1,
-        priceAtTime: parseFloat(item.price) || product.price,
+        priceAtTime: parseFloat(item.price) || 0,
         observations: item.observations || null,
         addonsJson: addonsData.length > 0 ? JSON.stringify(addonsData) : null,
         sizeJson: item.sizeJson || null,
         flavorsJson: item.flavorsJson || null,
-      });
+      };
+
+      if (product) {
+        itemData.productId = product.id;
+        if (!itemData.priceAtTime) {
+          itemData.priceAtTime = product.price;
+        }
+      } else {
+        itemData.productId = null;
+        logger.warn(`[ORDER-INTEGRATION] Item sem produto vinculado: ${item.name || 'Sem nome'}`);
+      }
+
+      orderItems.push(itemData);
     }
 
     let localCustomer = null;
@@ -766,34 +780,46 @@ if (isPickup && !hasValidPhone) {
   }
 
   /**
-   * Busca ou cria produto a partir de dados de integração.
+   * Busca produto a partir de dados de integração.
+   * Prioridade: 1) integrationCode, 2) nome
+   * Se não encontrar E não tem código → retorna null (não cria produto)
    * Usado por createOrderFromIntegration.
    */
   async _findOrCreateIntegrationProduct(restaurantId, item) {
     const name = item.name || `Item Integração (${item.externalId || 'diversos'})`;
-    const price = parseFloat(item.price) || 0;
+    const integrationCode = item.integrationCode || null;
 
-    let product = await prisma.product.findFirst({
-      where: {
-        restaurantId,
-        name: { equals: name, mode: 'insensitive' },
-      },
-    });
-
-    if (!product) {
-      product = await prisma.product.create({
-        data: {
-          name,
-          description: `Produto importado via integração`,
-          price,
+    // 1️⃣ PRIORIDADE: Buscar por integrationCode
+    if (integrationCode) {
+      const product = await prisma.product.findFirst({
+        where: {
           restaurantId,
-          isAvailable: true,
+          integrationCode: integrationCode,
         },
       });
-      logger.info(`[ORDER-INTEGRATION] Produto criado: ${product.id} - ${name}`);
+      if (product) {
+        logger.info(`[ORDER-INTEGRATION] Produto encontrado por integrationCode: ${integrationCode}`);
+        return product;
+      }
     }
 
-    return product;
+    // 2️⃣ FALLBACK: Buscar por nome (apenas se tiver nome)
+    if (name && name !== `Item Integração (${item.externalId || 'diversos'})`) {
+      const product = await prisma.product.findFirst({
+        where: {
+          restaurantId,
+          name: { equals: name, mode: 'insensitive' },
+        },
+      });
+      if (product) {
+        logger.info(`[ORDER-INTEGRATION] Produto encontrado por nome: ${name}`);
+        return product;
+      }
+    }
+
+    // 3️⃣ SE NÃO TEM CÓDIGO E NÃO ACHOU POR NOME → NÃO CRIA PRODUTO
+    logger.warn(`[ORDER-INTEGRATION] Produto não encontrado para: ${name} (código: ${integrationCode || 'N/A'}). Item será adicionado sem vincular a produto.`);
+    return null;
   }
 
   /**

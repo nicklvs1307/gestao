@@ -43,11 +43,13 @@ class Food99OrderAdapter extends IntegrationBaseService {
         name: sub.name || `Adicional ${sub.app_item_id}`,
         price: (sub.total_price || sub.sku_price || 0) / 100,
         quantity: sub.amount || 1,
+        integrationCode: sub.integrationCode || sub.codigo || sub.app_item_id || null,
       }));
 
       return {
         name: item.name || `Item ${item.app_item_id}`,
         externalId: item.app_item_id,
+        integrationCode: item.integrationCode || item.codigo || null,
         price: (item.total_price || item.sku_price || 0) / 100,
         quantity: item.amount || 1,
         observations: item.remark || null,

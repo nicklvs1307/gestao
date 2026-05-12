@@ -77,7 +77,8 @@ class WhatsAppNotificationService {
               const subtotal = item.priceAtTime * item.quantity;
               itemsTotal += subtotal;
 
-              message += `${item.quantity}x ${item.product.name}${size ? ` ${size.name}` : ''} (R$ ${item.priceAtTime.toFixed(2).replace('.', ',')})\n`;
+              const itemName = item.product?.name || item.addonsJson ? 'Item Integrado' : 'Produto';
+              message += `${item.quantity}x ${itemName}${size ? ` ${size.name}` : ''} (R$ ${item.priceAtTime.toFixed(2).replace('.', ',')})\n`;
               
               // Inclui Sabores
               if (item.flavorsJson) {

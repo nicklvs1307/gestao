@@ -55,17 +55,23 @@ class UairangoOrderAdapter extends IntegrationBaseService {
         name: addon.name || addon.nome || 'Adicional',
         price: parseFloat(addon.price || addon.valor || 0),
         quantity: parseInt(addon.quantity || addon.quantidade || 1),
+        integrationCode: addon.integrationCode || addon.codigo || null,
       })) : [];
+
+      const sizeData = item.size 
+        ? { name: item.size.name || item.size, price: parseFloat(item.size.price || 0), integrationCode: item.size.integrationCode || item.size.codigo || null }
+        : null;
 
       return {
         name: item.name || item.nome || `Item Uairango`,
         externalId: item.id || item.cod_produto || null,
+        integrationCode: item.integrationCode || item.codigo || null,
         price: parseFloat(item.priceAtTime || item.valor || 0),
         quantity: parseInt(item.quantity || item.quantidade || 1),
         observations: item.observations || item.obs || null,
         addons: addonsData,
-        sizeJson: item.size ? JSON.stringify({ name: item.size.name || item.size, price: parseFloat(item.size.price || 0) }) : null,
-        flavorsJson: null,
+        sizeJson: sizeData ? JSON.stringify(sizeData) : null,
+        flavorsJson: item.flavorsJson || null,
       };
     });
 

@@ -38,20 +38,26 @@ class IfoodOrderAdapter extends IntegrationBaseService {
 
     // ─── ITENS ────────────────────────────────────────────────────
     const rawItems = rawData?.items || [];
-    const items = rawItems.map(item => ({
-      name: item.name || `Item iFood (${item.id || item.productId || 'diversos'})`,
-      externalId: item.id || item.productId,
-      price: item.unitPrice || item.totalPrice || item.price || 0,
-      quantity: item.quantity || 1,
-      observations: item.observations || null,
-      addons: (item.subItems || []).map(sub => ({
+    const items = rawItems.map(item => {
+      const itemAddons = (item.subItems || []).map(sub => ({
         name: sub.name,
         price: sub.totalPrice || sub.price || 0,
         quantity: sub.quantity || 1,
-      })),
-      sizeJson: null,
-      flavorsJson: null,
-    }));
+        integrationCode: sub.externalCode || null,
+      }));
+
+      return {
+        name: item.name || `Item iFood (${item.id || item.productId || 'diversos'})`,
+        externalId: item.id || item.productId,
+        integrationCode: item.externalCode || null,
+        price: item.unitPrice || item.totalPrice || item.price || 0,
+        quantity: item.quantity || 1,
+        observations: item.observations || null,
+        addons: itemAddons,
+        sizeJson: null,
+        flavorsJson: null,
+      };
+    });
 
     // ─── PAGAMENTO ────────────────────────────────────────────────
     // API v2 do iFood: payments é um OBJETO { prepaid, pending, methods }
