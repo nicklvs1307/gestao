@@ -229,8 +229,13 @@ async handleWebhook(req, res) {
 
       case 'CANCELLED':
       case 'CAN':
-      case 'CANCELLATION_REQUEST_FAILED':
         await IntegrationOrderService.cancelFromIntegration(platform, restaurantId, orderId);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
+        break;
+
+      case 'CANCELLATION_REQUEST_FAILED':
+        // Cancelamento foi REJEITADO pelo sistema - pedido continua ativo
+        await this._clearCancellationRequest(restaurantId, orderId);
         await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
@@ -460,6 +465,41 @@ async handleWebhook(req, res) {
       logger.info(`[IFOOD WEBHOOK] Disputa resolvida para pedido ${order.id}: ${settlement}`);
     } catch (error) {
       logger.error(`[IFOOD WEBHOOK] Erro ao processar resolução de disputa:`, error.message);
+    }
+  }
+
+  /**
+   * Limpa flag de cancelamento quando o iFood rejeita a tentativa.
+   * O pedido continua ativo normalmente.
+   */
+  async _clearCancellationRequest(restaurantId, ifoodOrderId) {
+    try {
+      const order = await prisma.order.findFirst({
+        where: { restaurantId, ifoodOrderId }
+      });
+
+      if (!order) return;
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          cancellationRequested: false,
+          cancellationReason: 'Cancelamento rejeitado pelo sistema',
+          cancellationDeadline: null
+        }
+      });
+
+      const socketLib = require('../lib/socket');
+      socketLib.emitToRestaurant(restaurantId, 'ifood_cancellation_failed', {
+        orderId: order.id,
+        ifoodOrderId,
+        message: 'O cancelamento foi rejeitado. O pedido continua ativo.',
+        source: 'IFOOD'
+      });
+
+      logger.info(`[IFOOD WEBHOOK] Cancelamento rejeitado para pedido ${order.id}`);
+    } catch (error) {
+      logger.error(`[IFOOD WEBHOOK] Erro ao limpar solicitação de cancelamento:`, error.message);
     }
   }
 
