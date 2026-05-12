@@ -41,6 +41,13 @@ class IntegrationBaseService {
    */
   async processNewOrder(restaurantId, rawData) {
     try {
+      // 🔍 LOG TEMPORÁRIO - REMOVER DEPOIS
+      console.log('=== ANTES DO PARSE ===');
+      console.log('Platform:', this.platform);
+      console.log('Restaurant:', restaurantId);
+      console.log('Payload:', JSON.stringify(rawData, null, 2));
+      console.log('========================');
+
       const normalized = this.parseOrder(rawData, restaurantId);
       const platformOrderId = this.getPlatformOrderId(rawData);
 
