@@ -66,6 +66,7 @@ class IntegrationBaseService {
         totals: normalized.totals,
         notes: normalized.customerNote || null,
         displayId: normalized.displayId || null,
+        pickupCode: normalized.pickupCode || null,
         scheduledDateTime: normalized.scheduledDateTime || null,
         customerDocument: normalized.customerDocument || null,
         benefits: normalized.benefits || null,

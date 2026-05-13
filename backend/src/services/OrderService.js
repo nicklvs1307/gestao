@@ -481,9 +481,10 @@ if (isPickup && !hasValidPhone) {
     customer,           // { name, phone }
     deliveryData,       // { address, complement, neighborhood, city, state, zipCode, ... }
     payment,            // { rawMethod, isPrepaid, prepaidAmount, pendingAmount, changeFor }
-    totals,             // { subtotal, deliveryFee, discount, total }
+    totals,             // { subtotal, deliveryFee, discount, platformFee, total }
     notes,              // observações do pedido
     displayId,          // iFood: código de coleta
+    pickupCode,         // iFood: código de conferência para motoboy
     scheduledDateTime,  // iFood: data/hora do agendamento
     customerDocument,   // iFood: CPF/CNPJ do cliente
     benefits,           // iFood: cupons/benefícios aplicados
@@ -654,6 +655,7 @@ if (isPickup && !hasValidPhone) {
           uairangoOrderId: platform === 'uairango' ? platformOrderId : null,
           // === CAMPOS IFOOD (Homologação) ===
           displayId: displayId || null,
+          pickupCode: pickupCode || null,
           scheduledDateTime: scheduledDateTime ? new Date(scheduledDateTime) : null,
           customerDocument: customerDocument || null,
           benefits: benefits || null,

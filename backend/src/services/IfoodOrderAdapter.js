@@ -180,8 +180,9 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     const subtotal = rawData?.total?.subTotal || 
       rawItems.reduce((sum, item) => sum + ((item.totalPrice || item.unitPrice || 0) * (item.quantity || 1)), 0);
     const deliveryFee = rawData?.total?.deliveryFee || rawData?.deliveryFee || 0;
-    const discount = rawData?.total?.discount || 0;
-    const total = rawData?.total?.orderAmount || (subtotal + deliveryFee - discount);
+    const additionalFees = rawData?.total?.additionalFees || rawData?.additionalFees || 0;
+    const benefitsAmount = rawData?.total?.benefits || 0;
+    const total = rawData?.total?.orderAmount || (subtotal + deliveryFee + additionalFees - benefitsAmount);
 
     // ─── SCHEDULE (AGENDAMENTO) ────────────────────────────────────
     const schedule = rawData?.schedule || {};
@@ -218,12 +219,14 @@ class IfoodOrderAdapter extends IntegrationBaseService {
       totals: {
         subtotal,
         deliveryFee,
-        discount,
+        discount: benefitsAmount,
+        platformFee: additionalFees,
         total,
       },
       customerNote: rawData?.extraInfo || null,
       // === CAMPOS IFOOD (Homologação) ===
       displayId: rawData.displayId || null,
+      pickupCode: rawData?.delivery?.pickupCode || null,
       scheduledDateTime,
       customerDocument: customer?.document || null,
       benefits: normalizedBenefits.length > 0 ? normalizedBenefits : null,

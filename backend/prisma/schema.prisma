@@ -881,6 +881,7 @@ model Order {
 
   // === CAMPOS IFOOD (Homologação) ===
   displayId           String?    // Código de coleta do iFood (ex: #A1B2)
+  pickupCode          String?    // Código de conferência para o motoboy (iFood)
   scheduledDateTime   DateTime? // Data/hora do agendamento
   customerDocument    String?    // CPF ou CNPJ do cliente
   benefits            Json?     // Cupons/benefícios aplicados (JSON)
