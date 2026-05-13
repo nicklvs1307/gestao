@@ -228,7 +228,7 @@ class IfoodOrderAdapter extends IntegrationBaseService {
       displayId: rawData.displayId || null,
       pickupCode: rawData?.delivery?.pickupCode || null,
       scheduledDateTime,
-      customerDocument: customer?.document || null,
+      customerDocument: customer?.documentNumber || null,
       benefits: normalizedBenefits.length > 0 ? normalizedBenefits : null,
     };
   }
