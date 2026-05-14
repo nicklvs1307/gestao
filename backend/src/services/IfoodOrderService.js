@@ -119,12 +119,12 @@ class IfoodOrderService {
       if (error.response?.status === 400) {
         const errorMsg = 'Pedido já aceito no iFood — não é mais possível recusar. Cancele pelo motivo correto.';
         logger.error(`[IFOOD] Erro ao rejeitar pedido (400 - já aceito): ${errorMsg}`);
-        this._notifySyncError(restaurantId, orderId, errorMsg);
+        this._notifySyncError(order.restaurantId, orderId, errorMsg);
         return { success: false, error: errorMsg, alreadyAccepted: true };
       }
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao rejeitar pedido:`, errorMsg);
-      this._notifySyncError(restaurantId, orderId, `Erro ao rejeitar: ${errorMsg}`);
+      this._notifySyncError(order?.restaurantId, orderId, `Erro ao rejeitar: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }

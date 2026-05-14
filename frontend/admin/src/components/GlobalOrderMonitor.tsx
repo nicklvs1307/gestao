@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
-import { confirmIfoodOrder, rejectIfoodOrder } from '../services/api/integrations';
+import { confirmIfoodOrder, rejectIfoodOrder, getIfoodCancellationReasons } from '../services/api/integrations';
 import { printOrder, checkAgentStatus, getPrinterConfigFromStorage } from '../services/printer';
 import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
@@ -9,6 +9,8 @@ import TableRequestAlert from './TableRequestAlert';
 import { useSocket } from '../hooks/useSocket';
 import { Bell, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog } from './ui/Dialog';
+import { Button } from './ui/Button';
 
 const getApiBaseUrl = () => {
   return import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || window.location.origin;
@@ -26,6 +28,12 @@ const GlobalOrderMonitor: React.FC = () => {
   
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const [cancellationReasons, setCancellationReasons] = useState<{code: string; description: string}[]>([]);
+  const [selectedReason, setSelectedReason] = useState<string>('');
+  const [isLoadingReasons, setIsLoadingReasons] = useState(false);
   
   const lastOrderIdsRef = useRef<Set<string>>(new Set());
   const printedIdsRef = useRef<Set<string>>(new Set());
@@ -331,6 +339,33 @@ const GlobalOrderMonitor: React.FC = () => {
   const hasAlerts = (pendingOrders.length > 0 || pendingRequests.length > 0) && !isKdsPage;
   if (!hasAlerts) return null;
 
+  const handleConfirmCancellation = async () => {
+    if (!cancelOrderId || !selectedReason) return;
+    
+    try {
+      const result = await rejectIfoodOrder(cancelOrderId, selectedReason);
+      if (!result.success) {
+        toast.error(result.error || 'Erro ao cancelar pedido no iFood');
+        return;
+      }
+      
+      const order = allOrders.find(o => o.id === cancelOrderId);
+      if (order) {
+        await updateOrderStatus(cancelOrderId, 'CANCELED');
+      }
+      
+      toast.success('Pedido cancelado com sucesso!');
+      setCancelModalOpen(false);
+      setCancelOrderId(null);
+      setSelectedReason('');
+      
+      const pendingOrdersNow = allOrders.filter(o => o.status === 'PENDING');
+      if (pendingOrdersNow.length <= 1) setIsOrderModalOpen(false);
+    } catch (err) {
+      toast.error('Erro ao cancelar pedido');
+    }
+  };
+
   return (
     <>
       <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3 pointer-events-auto">
@@ -379,11 +414,27 @@ const GlobalOrderMonitor: React.FC = () => {
                 const result = await rejectIfoodOrder(id, '501');
                 if (!result.success) {
                   if (result.alreadyAccepted) {
-                    toast.error('Pedido já aceito no iFood. Não é possível recusar.');
+                    try {
+                      setIsLoadingReasons(true);
+                      const reasonsResult = await getIfoodCancellationReasons(id);
+                      if (reasonsResult.success && reasonsResult.reasons) {
+                        setCancellationReasons(reasonsResult.reasons);
+                        setCancelOrderId(id);
+                        setSelectedReason(reasonsResult.reasons[0]?.code || '');
+                        setCancelModalOpen(true);
+                      } else {
+                        toast.error('Não foi possível buscar os motivos de cancelamento');
+                      }
+                    } catch (err) {
+                      toast.error('Erro ao buscar motivos de cancelamento');
+                    } finally {
+                      setIsLoadingReasons(false);
+                    }
+                    return;
                   } else {
                     toast.error(result.error || 'Erro ao recusar pedido no iFood');
+                    return;
                   }
-                  return;
                 }
               }
               await updateOrderStatus(id, 'CANCELED');
@@ -399,6 +450,70 @@ const GlobalOrderMonitor: React.FC = () => {
             onResolve={handleResolveRequest}
             onClose={() => setIsRequestModalOpen(false)}
           />
+      )}
+
+      {cancelModalOpen && (
+        <Dialog
+          isOpen={cancelModalOpen}
+          onClose={() => {
+            setCancelModalOpen(false);
+            setCancelOrderId(null);
+            setSelectedReason('');
+          }}
+          title="Selecione o motivo do cancelamento"
+          size="sm"
+          footer={
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCancelModalOpen(false);
+                  setCancelOrderId(null);
+                  setSelectedReason('');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmCancellation}
+                disabled={!selectedReason || isLoadingReasons}
+              >
+                Confirmar Cancelamento
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              O pedido já foi aceito no iFood. Para cancelar, é necessário selecionar um motivo:
+            </p>
+            <div className="space-y-2">
+              {cancellationReasons.map((reason) => (
+                <label
+                  key={reason.code}
+                  className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
+                    selectedReason === reason.code
+                      ? 'border-primary bg-primary/10'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="cancellationReason"
+                    value={reason.code}
+                    checked={selectedReason === reason.code}
+                    onChange={(e) => setSelectedReason(e.target.value)}
+                    className="mr-3"
+                  />
+                  <span className="text-sm font-medium">{reason.description}</span>
+                </label>
+              ))}
+            </div>
+            {isLoadingReasons && (
+              <p className="text-sm text-muted-foreground">Carregando motivos...</p>
+            )}
+          </div>
+        </Dialog>
       )}
     </>
   );
