@@ -54,7 +54,7 @@ class IfoodOrderService {
     return { order, token };
   }
 
-  async confirmOrder(orderId, restaurantId) {
+  async confirmOrder(orderId) {
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
@@ -82,12 +82,12 @@ class IfoodOrderService {
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao confirmar pedido:`, errorMsg);
-      this._notifySyncError(restaurantId, orderId, `Erro ao confirmar: ${errorMsg}`);
+      this._notifySyncError(order.restaurantId, orderId, `Erro ao confirmar: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }
 
-  async rejectOrder(orderId, restaurantId, reason) {
+  async rejectOrder(orderId, reason) {
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
@@ -116,6 +116,12 @@ class IfoodOrderService {
 
       return { success: true };
     } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMsg = 'Pedido já aceito no iFood — não é mais possível recusar. Cancele pelo motivo correto.';
+        logger.error(`[IFOOD] Erro ao rejeitar pedido (400 - já aceito): ${errorMsg}`);
+        this._notifySyncError(restaurantId, orderId, errorMsg);
+        return { success: false, error: errorMsg, alreadyAccepted: true };
+      }
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao rejeitar pedido:`, errorMsg);
       this._notifySyncError(restaurantId, orderId, `Erro ao rejeitar: ${errorMsg}`);
@@ -123,7 +129,7 @@ class IfoodOrderService {
     }
   }
 
-  async startPreparation(orderId, restaurantId) {
+  async startPreparation(orderId) {
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
@@ -154,12 +160,12 @@ class IfoodOrderService {
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao iniciar preparação:`, errorMsg);
-      this._notifySyncError(restaurantId, orderId, `Erro ao iniciar preparação: ${errorMsg}`);
+      this._notifySyncError(order?.restaurantId, orderId, `Erro ao iniciar preparação: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }
 
-  async markReady(orderId, restaurantId) {
+  async markReady(orderId) {
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
@@ -190,20 +196,16 @@ class IfoodOrderService {
         }
       });
 
-      return { success: true };
+return { success: true };
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao marcar pronto:`, errorMsg);
-      this._notifySyncError(restaurantId, orderId, `Erro ao marcar pronto: ${errorMsg}`);
+      this._notifySyncError(order?.restaurantId, orderId, `Erro ao marcar pronto: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }
 
-  /**
-   * Buscar códigos de cancelamento disponíveis para um pedido
-   * Usado quando a loja inicia o cancelamento
-   */
-  async getCancellationReasons(orderId, restaurantId) {
+  async getCancellationReasons(orderId) {
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
@@ -261,7 +263,7 @@ class IfoodOrderService {
         }
       });
 
-      socketLib.emitToRestaurant(restaurantId, 'order_updated', {
+      socketLib.emitToRestaurant(order.restaurantId, 'order_updated', {
         orderId,
         status: 'CANCELED',
         source: 'IFOOD'
@@ -271,15 +273,12 @@ class IfoodOrderService {
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao aceitar cancelamento:`, errorMsg);
-      this._notifySyncError(restaurantId, orderId, `Erro ao aceitar cancelamento: ${errorMsg}`);
+      this._notifySyncError(order?.restaurantId, orderId, `Erro ao aceitar cancelamento: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }
 
-  /**
-   * Recusar cancelamento solicitado pelo cliente
-   */
-  async refuseCancellation(orderId, restaurantId) {
+  async refuseCancellation(orderId) {
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
@@ -310,15 +309,12 @@ class IfoodOrderService {
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao recusar cancelamento:`, errorMsg);
-      this._notifySyncError(restaurantId, orderId, `Erro ao recusar cancelamento: ${errorMsg}`);
+      this._notifySyncError(order?.restaurantId, orderId, `Erro ao recusar cancelamento: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }
 
-  /**
-   * Validar código de retirada (pickup code)
-   */
-  async validatePickupCode(orderId, code, restaurantId) {
+  async validatePickupCode(orderId, code) {
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
@@ -346,7 +342,7 @@ class IfoodOrderService {
           }
         });
 
-        socketLib.emitToRestaurant(restaurantId, 'order_updated', {
+        socketLib.emitToRestaurant(order.restaurantId, 'order_updated', {
           orderId,
           status: 'COMPLETED',
           source: 'IFOOD'
@@ -363,10 +359,7 @@ class IfoodOrderService {
     }
   }
 
-  /**
-   * Aceitar disputa pós-entrega (Handshake)
-   */
-  async acceptDispute(disputeId, restaurantId, reason = 'CUSTOMER_SATISFACTION') {
+  async acceptDispute(disputeId, reason = 'CUSTOMER_SATISFACTION') {
     try {
       const token = await IfoodAuthService.getValidToken();
       if (!token) {
@@ -393,10 +386,7 @@ class IfoodOrderService {
     }
   }
 
-  /**
-   * Recusar disputa pós-entrega (Handshake)
-   */
-  async rejectDispute(disputeId, restaurantId, reason) {
+  async rejectDispute(disputeId, reason) {
     try {
       const token = await IfoodAuthService.getValidToken();
       if (!token) {
@@ -423,10 +413,7 @@ class IfoodOrderService {
     }
   }
 
-  /**
-   * Oferecer alternativa na disputa (reembolso parcial, cupom, reenvio)
-   */
-  async offerAlternativeDispute(disputeId, restaurantId, alternativeType, value = null) {
+  async offerAlternativeDispute(disputeId, alternativeType, value = null) {
     try {
       const token = await IfoodAuthService.getValidToken();
       if (!token) {

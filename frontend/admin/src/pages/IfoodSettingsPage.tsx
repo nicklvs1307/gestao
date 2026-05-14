@@ -13,6 +13,7 @@ const IfoodSettingsPage: React.FC = () => {
   const [merchantId, setMerchantId] = useState('');
   const [env, setEnv] = useState<'production' | 'homologation'>('production');
   const [isActive, setIsActive] = useState(false);
+  const [autoAcceptOrders, setAutoAcceptOrders] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [credentialsConfigured, setCredentialsConfigured] = useState(false);
@@ -26,6 +27,7 @@ const IfoodSettingsPage: React.FC = () => {
         setMerchantId(settings.ifoodMerchantId || '');
         setEnv(settings.ifoodEnv || 'production');
         setIsActive(settings.ifoodIntegrationActive || false);
+        setAutoAcceptOrders(settings.ifoodAutoAcceptOrders || false);
         setCredentialsConfigured(settings.ifoodCredentialsConfigured || false);
         
         if (settings.ifoodIntegrationActive) {
@@ -49,7 +51,8 @@ const IfoodSettingsPage: React.FC = () => {
       await updateIfoodSettings({ 
         ifoodMerchantId: merchantId,
         ifoodEnv: env,
-        ifoodIntegrationActive: isActive 
+        ifoodIntegrationActive: isActive,
+        ifoodAutoAcceptOrders: autoAcceptOrders
       });
       
       if (isActive) {
@@ -207,6 +210,28 @@ const IfoodSettingsPage: React.FC = () => {
                   Salvar
                 </Button>
               </div>
+
+              {isActive && (
+                <div className="flex items-center justify-between p-4 rounded-xl bg-orange-50 border border-orange-200">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="autoAcceptOrders"
+                      checked={autoAcceptOrders}
+                      onChange={(e) => setAutoAcceptOrders(e.target.checked)}
+                      className="w-5 h-5 rounded border-orange-300 text-orange-500 focus:ring-orange-500"
+                    />
+                    <div>
+                      <label htmlFor="autoAcceptOrders" className="text-sm font-black text-orange-700">
+                        Aceitar pedidos automaticamente
+                      </label>
+                      <p className="text-[10px] text-orange-600 mt-0.5 leading-tight">
+                        Ao ativar, os pedidos são aceitos no iFood imediatamente (envia CFM) sem precisar aceitar manualmente na tela. Recomendado apenas para restaurantes com auto-preparo.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           </Card>
 

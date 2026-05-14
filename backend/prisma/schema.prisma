@@ -511,6 +511,7 @@ model IntegrationSettings {
   ifoodAuthCodeVerifier     String?   // Verifier temporário durante fluxo OAuth (não sobrecarrega accessToken) — não usado no centralizado
   ifoodRestaurantId         String?   // ID do restaurante no iFood (legacy, mantido para compatibilidade)
   ifoodIntegrationActive    Boolean   @default(false)
+  ifoodAutoAcceptOrders     Boolean   @default(false) // Se true, aceita pedidos automaticamente (envia CFM ao iFood na criação)
   ifoodEnv                  String    @default("production")
   // ifoodClientId e ifoodClientSecret removidos — agora são variáveis de ambiente centralizadas (Docker secrets)
 

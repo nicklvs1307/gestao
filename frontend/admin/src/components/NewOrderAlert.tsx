@@ -11,8 +11,8 @@ import food99Logo from '../assets/99food-logo.png';
 
 interface NewOrderAlertProps {
   orders: Order[];
-  onAccept: (orderId: string) => void;
-  onReject: (orderId: string) => void;
+  onAccept: (orderId: string, order: Order) => void;
+  onReject: (orderId: string, order: Order) => void;
   onClose: () => void;
 }
 
@@ -204,10 +204,10 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onRejec
                   </div>
 
                   <div className="bg-slate-50/80 p-3 flex flex-row gap-3 border-t border-slate-100">
-                      <button onClick={() => onAccept(order.id)} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 text-white font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-emerald-600 transition-all shadow-md hover:shadow-lg">
+                      <button onClick={() => onAccept(order.id, order)} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 text-white font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-emerald-600 transition-all shadow-md hover:shadow-lg">
                           <CheckCircle size={18} /> Aceitar
                       </button>
-                      <button onClick={() => onReject(order.id)} className="flex-1 flex items-center justify-center gap-2 bg-white text-red-500 border border-red-100 font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-red-50 transition-all">
+                      <button onClick={() => onReject(order.id, order)} className="flex-1 flex items-center justify-center gap-2 bg-white text-red-500 border border-red-100 font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-red-50 transition-all">
                           <XCircle size={18} /> Recusar
                       </button>
                   </div>

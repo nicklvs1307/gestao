@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
+import { confirmIfoodOrder, rejectIfoodOrder } from '../services/api/integrations';
 import { printOrder, checkAgentStatus, getPrinterConfigFromStorage } from '../services/printer';
 import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
@@ -359,20 +360,38 @@ const GlobalOrderMonitor: React.FC = () => {
           {pendingOrders.length > 0 && !isAutoAccept && <div className="bg-red-600 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-1 text-center shadow-lg animate-pulse">PEDIDO AGUARDANDO ACEITE</div>}
       </div>
 
-      {isOrderModalOpen && (
+{isOrderModalOpen && (
           <NewOrderAlert 
             orders={pendingOrders}
-            onAccept={async (id) => {
-                await updateOrderStatus(id, 'PREPARING');
-                if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+            onAccept={async (id, order) => {
+              if (order.ifoodOrderId) {
+                const result = await confirmIfoodOrder(id);
+                if (!result.success) {
+                  toast.error(result.error || 'Erro ao aceitar pedido no iFood');
+                  return;
+                }
+              }
+              await updateOrderStatus(id, 'PREPARING');
+              if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
             }}
-            onReject={async (id) => {
-                await updateOrderStatus(id, 'CANCELED');
-                if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+            onReject={async (id, order) => {
+              if (order.ifoodOrderId) {
+                const result = await rejectIfoodOrder(id, '501');
+                if (!result.success) {
+                  if (result.alreadyAccepted) {
+                    toast.error('Pedido já aceito no iFood. Não é possível recusar.');
+                  } else {
+                    toast.error(result.error || 'Erro ao recusar pedido no iFood');
+                  }
+                  return;
+                }
+              }
+              await updateOrderStatus(id, 'CANCELED');
+              if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
             }}
             onClose={() => setIsOrderModalOpen(false)}
           />
-      )}
+        )}
 
       {isRequestModalOpen && (
           <TableRequestAlert 

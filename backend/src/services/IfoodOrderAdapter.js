@@ -234,6 +234,12 @@ class IfoodOrderAdapter extends IntegrationBaseService {
   }
 
   async confirmOrderOnPlatform(restaurantId, platformOrderId) {
+    const settings = await this.getSettings(restaurantId);
+    if (!settings?.ifoodAutoAcceptOrders) {
+      logger.info(`[IFOOD] Auto-accept desativado para ${restaurantId}, pulando confirmação automática`);
+      return;
+    }
+
     const token = await this.getAccessToken(restaurantId);
     if (!token) return;
 

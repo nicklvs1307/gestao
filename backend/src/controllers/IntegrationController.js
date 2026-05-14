@@ -153,13 +153,14 @@ const getIfoodSettings = async (req, res) => {
 };
 
 const updateIfoodSettings = async (req, res) => {
-    const { ifoodMerchantId, ifoodIntegrationActive, ifoodEnv } = req.body;
+    const { ifoodMerchantId, ifoodIntegrationActive, ifoodEnv, ifoodAutoAcceptOrders } = req.body;
 
     try {
         const updateData = {
             ifoodMerchantId,
             ifoodIntegrationActive,
-            ifoodEnv
+            ifoodEnv,
+            ifoodAutoAcceptOrders
         };
 
         const settings = await prisma.integrationSettings.upsert({
@@ -191,7 +192,7 @@ const confirmIfoodOrder = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.confirmOrder(orderId, req.restaurantId);
+        const result = await IfoodOrderService.confirmOrder(orderId);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao confirmar pedido:', error);
@@ -207,7 +208,7 @@ const rejectIfoodOrder = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.rejectOrder(orderId, req.restaurantId, reason);
+        const result = await IfoodOrderService.rejectOrder(orderId, reason);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao rejeitar pedido:', error);
@@ -223,7 +224,7 @@ const startIfoodPreparation = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.startPreparation(orderId, req.restaurantId);
+        const result = await IfoodOrderService.startPreparation(orderId);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao iniciar preparação:', error);
@@ -239,7 +240,7 @@ const markIfoodReady = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.markReady(orderId, req.restaurantId);
+        const result = await IfoodOrderService.markReady(orderId);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao marcar pronto:', error);
@@ -315,7 +316,7 @@ const getIfoodCancellationReasons = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.getCancellationReasons(orderId, req.restaurantId);
+        const result = await IfoodOrderService.getCancellationReasons(orderId);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao buscar motivos de cancelamento:', error);
@@ -331,7 +332,7 @@ const acceptIfoodCancellation = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.acceptCancellation(orderId, req.restaurantId);
+        const result = await IfoodOrderService.acceptCancellation(orderId);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao aceitar cancelamento:', error);
@@ -347,7 +348,7 @@ const refuseIfoodCancellation = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.refuseCancellation(orderId, req.restaurantId);
+        const result = await IfoodOrderService.refuseCancellation(orderId);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao recusar cancelamento:', error);
@@ -363,7 +364,7 @@ const validateIfoodPickupCode = async (req, res) => {
             return res.status(400).json({ error: 'orderId e code são obrigatórios' });
         }
 
-        const result = await IfoodOrderService.validatePickupCode(orderId, code, req.restaurantId);
+        const result = await IfoodOrderService.validatePickupCode(orderId, code);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao validar código de retirada:', error);
@@ -379,7 +380,7 @@ const acceptIfoodDispute = async (req, res) => {
             return res.status(400).json({ error: 'disputeId e orderId são obrigatórios' });
         }
 
-        const result = await IfoodOrderService.acceptDispute(disputeId, req.restaurantId, reason);
+        const result = await IfoodOrderService.acceptDispute(disputeId, reason);
 
         if (result.success) {
             await prisma.order.update({
@@ -406,7 +407,7 @@ const rejectIfoodDispute = async (req, res) => {
             return res.status(400).json({ error: 'disputeId e orderId são obrigatórios' });
         }
 
-        const result = await IfoodOrderService.rejectDispute(disputeId, req.restaurantId, reason);
+        const result = await IfoodOrderService.rejectDispute(disputeId, reason);
 
         if (result.success) {
             await prisma.order.update({
@@ -434,7 +435,7 @@ const offerIfoodAlternative = async (req, res) => {
             return res.status(400).json({ error: 'disputeId, orderId e alternativeType são obrigatórios' });
         }
 
-        const result = await IfoodOrderService.offerAlternativeDispute(disputeId, req.restaurantId, alternativeType, value);
+        const result = await IfoodOrderService.offerAlternativeDispute(disputeId, alternativeType, value);
 
         if (result.success) {
             await prisma.order.update({
