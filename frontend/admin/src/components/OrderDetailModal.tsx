@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { 
     getDrivers, assignDriver, getSettings, updateDeliveryType, 
-    markOrderAsPrinted, emitInvoice 
+    markOrderAsPrinted, emitInvoice, updateOrderStatus as updateOrderStatusApi
 } from '../services/api';
 import { 
     acceptIfoodCancellation, 
@@ -251,7 +251,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
       const result = await rejectIfoodOrder(order.id, selectedCancelReason);
       if (result.success) {
         toast.success('Pedido cancelado no iFood');
-        onStatusChange?.(order.id, 'CANCELED');
+        await handleStatusChange(order.id, 'CANCELED');
         setShowCancelReasonModal(false);
         onClose();
       } else {
@@ -264,13 +264,22 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
     }
   };
 
+  // Função para atualizar status - usa onStatusChange ou API diretamente
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    if (onStatusChange) {
+      onStatusChange(orderId, newStatus);
+    } else {
+      await updateOrderStatusApi(orderId, newStatus);
+    }
+  };
+
   // Intercepta o clique de status: se for CANCELED em pedido iFood já aceito, abre modal de motivos
-  const handleStatusClick = (orderId: string, newStatus: string) => {
+  const handleStatusClick = async (orderId: string, newStatus: string) => {
     if (newStatus === 'CANCELED' && order.ifoodOrderId && order.status !== 'PENDING') {
       handleRequestIfoodCancellation();
       return;
     }
-    onStatusChange?.(orderId, newStatus);
+    await handleStatusChange(orderId, newStatus);
   };
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
