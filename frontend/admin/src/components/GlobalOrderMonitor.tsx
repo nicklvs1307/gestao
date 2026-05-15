@@ -34,6 +34,7 @@ const GlobalOrderMonitor: React.FC = () => {
   const [cancellationReasons, setCancellationReasons] = useState<{code: string; description: string}[]>([]);
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [isLoadingReasons, setIsLoadingReasons] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const lastOrderIdsRef = useRef<Set<string>>(new Set());
   const printedIdsRef = useRef<Set<string>>(new Set());
@@ -342,10 +343,11 @@ const GlobalOrderMonitor: React.FC = () => {
   const handleConfirmCancellation = async () => {
     if (!cancelOrderId || !selectedReason) return;
     
+    setIsProcessing(true);
     try {
       const result = await rejectIfoodOrder(cancelOrderId, selectedReason);
       if (!result.success) {
-        toast.error(result.error || 'Erro ao cancelar pedido no iFood');
+        toast.error(result.error || 'iFood recusou o cancelamento. O pedido continua ativo.');
         return;
       }
       
@@ -361,8 +363,10 @@ const GlobalOrderMonitor: React.FC = () => {
       
       const pendingOrdersNow = allOrders.filter(o => o.status === 'PENDING');
       if (pendingOrdersNow.length <= 1) setIsOrderModalOpen(false);
-    } catch (err) {
-      toast.error('Erro ao cancelar pedido');
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao cancelar pedido');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -398,47 +402,63 @@ const GlobalOrderMonitor: React.FC = () => {
 {isOrderModalOpen && (
           <NewOrderAlert 
             orders={pendingOrders}
+            isProcessing={isProcessing}
             onAccept={async (id, order) => {
-              if (order.ifoodOrderId) {
-                const result = await confirmIfoodOrder(id);
-                if (!result.success) {
-                  toast.error(result.error || 'Erro ao aceitar pedido no iFood');
-                  return;
-                }
-              }
-              await updateOrderStatus(id, 'PREPARING');
-              if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
-            }}
-            onReject={async (id, order) => {
-              if (order.ifoodOrderId) {
-                const result = await rejectIfoodOrder(id, '501');
-                if (!result.success) {
-                  if (result.alreadyAccepted) {
-                    try {
-                      setIsLoadingReasons(true);
-                      const reasonsResult = await getIfoodCancellationReasons(id);
-                      if (reasonsResult.success && reasonsResult.reasons) {
-                        setCancellationReasons(reasonsResult.reasons);
-                        setCancelOrderId(id);
-                        setSelectedReason(reasonsResult.reasons[0]?.code || '');
-                        setCancelModalOpen(true);
-                      } else {
-                        toast.error('Não foi possível buscar os motivos de cancelamento');
-                      }
-                    } catch (err) {
-                      toast.error('Erro ao buscar motivos de cancelamento');
-                    } finally {
-                      setIsLoadingReasons(false);
-                    }
-                    return;
-                  } else {
-                    toast.error(result.error || 'Erro ao recusar pedido no iFood');
+              setIsProcessing(true);
+              try {
+                if (order.ifoodOrderId) {
+                  const result = await confirmIfoodOrder(id);
+                  if (!result.success) {
+                    toast.error(result.error || 'Erro ao aceitar pedido no iFood');
                     return;
                   }
                 }
+                await updateOrderStatus(id, 'PREPARING');
+                if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+              } catch (err: any) {
+                toast.error(err?.message || 'Erro ao aceitar pedido. Tente novamente.');
+              } finally {
+                setIsProcessing(false);
               }
-              await updateOrderStatus(id, 'CANCELED');
-              if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+            }}
+            onReject={async (id, order) => {
+              setIsProcessing(true);
+              try {
+                if (order.ifoodOrderId) {
+                  const result = await rejectIfoodOrder(id, '501');
+                  if (!result.success) {
+                    if (result.alreadyAccepted) {
+                      try {
+                        setIsLoadingReasons(true);
+                        const reasonsResult = await getIfoodCancellationReasons(id);
+                        if (reasonsResult.success && reasonsResult.reasons) {
+                          setCancellationReasons(reasonsResult.reasons);
+                          setCancelOrderId(id);
+                          setSelectedReason(reasonsResult.reasons[0]?.code || '');
+                          setIsOrderModalOpen(false);
+                          setCancelModalOpen(true);
+                        } else {
+                          toast.error('Não foi possível buscar os motivos de cancelamento');
+                        }
+                      } catch (err) {
+                        toast.error('Erro ao buscar motivos de cancelamento');
+                      } finally {
+                        setIsLoadingReasons(false);
+                      }
+                      return;
+                    } else {
+                      toast.error(result.error || 'Erro ao recusar pedido no iFood');
+                      return;
+                    }
+                  }
+                }
+                await updateOrderStatus(id, 'CANCELED');
+                if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+              } catch (err: any) {
+                toast.error(err?.message || 'Erro ao recusar pedido. Tente novamente.');
+              } finally {
+                setIsProcessing(false);
+              }
             }}
             onClose={() => setIsOrderModalOpen(false)}
           />

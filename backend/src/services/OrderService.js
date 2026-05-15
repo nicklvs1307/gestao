@@ -954,7 +954,7 @@ if (isPickup && !hasValidPhone) {
         this._triggerAutomaticInvoice(updatedOrder).catch(err => logger.error('[FISCAL BACKGROUND]', err));
     }
     
-    OrderPlatformService.syncStatus(updatedOrder, status).catch(err => logger.error('[Platform Sync] Error:', err));
+    OrderPlatformService.syncStatus(updatedOrder, status, null, { reason: updatedOrder.cancellationReason }).catch(err => logger.error('[Platform Sync] Error:', err));
     
     emitOrderUpdate(updatedOrder.id);
     WhatsAppNotificationService.notifyOrderUpdate(updatedOrder.id, status).catch(err => logger.error('[WhatsApp Notification] Error:', err));

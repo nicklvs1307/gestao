@@ -32,12 +32,6 @@ class IfoodOrderAdapter extends IntegrationBaseService {
    * APENAS tradução de formato. Zero lógica financeira.
    */
   parseOrder(rawData, restaurantId) {
-    // 🔍 LOG TEMPORÁRIO - REMOVER DEPOIS
-    console.log('=== IFOOD RAW PAYLOAD - parseOrder ===');
-    console.log('restaurantId:', restaurantId);
-    console.log('Items:', JSON.stringify(rawData?.items, null, 2));
-    console.log('=====================================');
-
     const orderType = rawData.orderType || rawData.type;
     const deliveryAddress = rawData?.delivery?.deliveryAddress;
     const customer = rawData?.customer;

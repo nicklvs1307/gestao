@@ -25,6 +25,7 @@ class IntegrationOrderService {
         OR: [
           { ifoodOrderId: platformOrderId },
           { uairangoOrderId: platformOrderId },
+          { food99OrderId: platformOrderId },
         ],
       },
     });
@@ -63,6 +64,7 @@ class IntegrationOrderService {
         OR: [
           { ifoodOrderId: platformOrderId },
           { uairangoOrderId: platformOrderId },
+          { food99OrderId: platformOrderId },
         ],
       },
     });

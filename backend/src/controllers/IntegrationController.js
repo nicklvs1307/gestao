@@ -332,7 +332,13 @@ const acceptIfoodCancellation = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.acceptCancellation(orderId);
+        // Verificar se o pedido pertence ao restaurante do usuário
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
+        const result = await IfoodOrderService.acceptCancellation(orderId, req.restaurantId);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao aceitar cancelamento:', error);
@@ -346,6 +352,12 @@ const refuseIfoodCancellation = async (req, res) => {
 
         if (!orderId) {
             return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        // Verificar se o pedido pertence ao restaurante do usuário
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
         }
 
         const result = await IfoodOrderService.refuseCancellation(orderId);

@@ -6,9 +6,6 @@ const IfoodAuthService = require('./IfoodAuthService');
 const IfoodOrderAdapter = require('./IfoodOrderAdapter');
 const IntegrationOrderService = require('./IntegrationOrderService');
 
-// Polling agora é apenas fallback - verifica se webhook já processou o evento
-const FALLBACK_MODE = true;
-
 class IfoodPollingService {
   constructor() {
     this.pollingJob = null;
@@ -18,13 +15,11 @@ class IfoodPollingService {
 
 /**
     * Inicia o cron job de polling de eventos do iFood.
-    * ATENÇÃO: Polling agora é apenas FALLBACK quando webhook não funcionar.
-    * Rode a cada 30 segundos apenas como backup.
+    * Polling é apenas FALLBACK - webhook é o primário.
+    * Verifica via IntegrationEvent se webhook já processou antes de agir.
     */
   init() {
-    if (FALLBACK_MODE) {
-      logger.info('[IFOOD POLLING] Modo FALLBACK ativado - apenas backup do webhook');
-    }
+    logger.info('[IFOOD POLLING] Modo FALLBACK ativado - apenas backup do webhook');
 
     this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
       if (this.isPolling) {
@@ -139,10 +134,28 @@ class IfoodPollingService {
 
   /**
    * Processa um evento individual do iFood.
-   * Ignora eventos já processados pelo webhook.
+   * Verifica via IntegrationEvent se o webhook já processou antes de agir.
    */
   async processEvent(event, token) {
     const { code, orderId, id: eventId, merchantId } = event;
+    const platform = 'ifood';
+
+    // Deduplicação: verificar se webhook já processou este evento
+    if (orderId) {
+      const alreadyProcessed = await prisma.integrationEvent.findUnique({
+        where: {
+          platform_platformOrderId_eventType: {
+            platform,
+            platformOrderId: orderId,
+            eventType: code
+          }
+        }
+      });
+      if (alreadyProcessed?.status === 'PROCESSED') {
+        logger.debug(`[IFOOD POLLING] Evento ${code} para ${orderId} já processado pelo webhook, ignorando`);
+        return;
+      }
+    }
 
     logger.info(`[IFOOD POLLING] Processando evento ${code} (${eventId}) para pedido ${orderId}`);
 
@@ -168,20 +181,21 @@ class IfoodPollingService {
         const orderDetails = await this.getOrderDetails(orderId, token);
         if (orderDetails) {
           // Usa o mesmo adapter do webhook → OrderService.createOrderFromIntegration()
-          await IfoodOrderAdapter.processNewOrder(restaurantId, orderDetails);
+          const order = await IfoodOrderAdapter.processNewOrder(restaurantId, orderDetails);
+          await this._markEventProcessed(platform, orderId, code, restaurantId, order?.id);
         }
         break;
       }
 
       case 'CANCELLED':
       case 'CAN':
-        // Pedido cancelado confirmado
         await IntegrationOrderService.cancelFromIntegration('ifood', restaurantId, orderId);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'CANCELLATION_REQUEST_FAILED':
-        // Cancelamento rejeitado pelo sistema - limpar flag
         await this.clearCancellationRequest(restaurantId, orderId);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'ORDER_PATCHED': {
@@ -189,39 +203,57 @@ class IfoodPollingService {
         if (updatedDetails) {
           await IntegrationOrderService.updateFromIntegration('ifood', restaurantId, orderId, updatedDetails);
         }
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
       }
 
       case 'READY_TO_PICKUP':
         await this.updateLocalOrderStatus(restaurantId, orderId, 'READY');
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'DISPATCHED':
-        await this.updateLocalOrderStatus(restaurantId, orderId, 'DELIVERING');
+        await this.updateLocalOrderStatus(restaurantId, orderId, 'SHIPPED');
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'CONCLUDED':
         await this.updateLocalOrderStatus(restaurantId, orderId, 'COMPLETED');
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'CANCELLATION_REQUESTED':
-        // Cliente solicitou cancelamento - notificar e salvar no banco
         await this.handleCancellationRequest(restaurantId, orderId, event);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'HANDSHAKE_DISPUTE':
-        // Cliente abriu disputa pós-entrega
         await this.handleDisputeRequest(restaurantId, orderId, event);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'HANDSHAKE_SETTLEMENT':
-        // Disputa resolvida
         await this.handleDisputeSettlement(restaurantId, orderId, event);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       default:
         logger.info(`[IFOOD POLLING] Evento ${code} não requer processamento`);
     }
+  }
+
+  /**
+   * Registra evento como processado no banco para deduplicação com webhook.
+   */
+  async _markEventProcessed(platform, platformOrderId, eventType, restaurantId, orderId) {
+    await IntegrationOrderService.registerEvent(
+      platform,
+      platformOrderId,
+      eventType,
+      restaurantId,
+      orderId,
+      'PROCESSED'
+    );
   }
 
   async getOrderDetails(orderId, token) {

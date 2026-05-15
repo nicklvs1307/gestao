@@ -93,6 +93,12 @@ async handleWebhook(req, res) {
     const rawBody = JSON.stringify(req.body);
     const signature = req.headers['x-ifood-signature'];
 
+    // Validar assinatura HMAC se CLIENT_SECRET estiver configurado
+    if (!this.validateSignature(rawBody, signature)) {
+      logger.warn('[IFOOD WEBHOOK] Assinatura inválida, rejeitando request');
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
     logger.info(`[IFOOD WEBHOOK] Recebido evento(s): ${req.body?.length || 1}`);
 
     res.status(202).json({ received: true });
@@ -117,9 +123,9 @@ async handleWebhook(req, res) {
 
     this._processQueue();
 
-    if (this._processedEventIds.length > 0 && this._processedEventIds.length <= 2000) {
-      const idsToAck = [...this._processedEventIds];
-      this._processedEventIds = [];
+    if (this._processedEventIds.length > 0) {
+      // Enviar em batches de no máximo 2000 para evitar memory leak
+      const idsToAck = this._processedEventIds.splice(0, 2000);
       this._sendDelayedAcknowledgment(idsToAck);
     }
   }
@@ -267,14 +273,17 @@ async handleWebhook(req, res) {
 
       case 'CANCELLATION_REQUESTED':
         await this._handleCancellationRequest(restaurantId, orderId, event);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'HANDSHAKE_DISPUTE':
         await this._handleDisputeRequest(restaurantId, orderId, event);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       case 'HANDSHAKE_SETTLEMENT':
         await this._handleDisputeSettlement(restaurantId, orderId, event);
+        await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
       default:

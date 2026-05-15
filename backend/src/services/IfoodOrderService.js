@@ -55,11 +55,13 @@ class IfoodOrderService {
   }
 
   async confirmOrder(orderId) {
+    let order = null;
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      ({ order } = result);
+      const { token } = result;
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/confirm`,
@@ -82,17 +84,19 @@ class IfoodOrderService {
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao confirmar pedido:`, errorMsg);
-      this._notifySyncError(order.restaurantId, orderId, `Erro ao confirmar: ${errorMsg}`);
+      this._notifySyncError(order?.restaurantId, orderId, `Erro ao confirmar: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }
 
   async rejectOrder(orderId, reason) {
+    let order = null;
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      ({ order } = result);
+      const { token } = result;
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/requestCancellation`,
@@ -117,9 +121,16 @@ class IfoodOrderService {
       return { success: true };
     } catch (error) {
       if (error.response?.status === 400) {
+        // Se já tem um reason code específico, é uma rejeição real do iFood
+        if (reason && reason !== '501') {
+          const errorMsg = 'iFood recusou o cancelamento. O pedido continua ativo.';
+          logger.error(`[IFOOD] Cancelamento rejeitado pelo iFood: ${errorMsg}`);
+          this._notifySyncError(order?.restaurantId, orderId, errorMsg);
+          return { success: false, error: errorMsg };
+        }
         const errorMsg = 'Pedido já aceito no iFood — não é mais possível recusar. Cancele pelo motivo correto.';
         logger.error(`[IFOOD] Erro ao rejeitar pedido (400 - já aceito): ${errorMsg}`);
-        this._notifySyncError(order.restaurantId, orderId, errorMsg);
+        this._notifySyncError(order?.restaurantId, orderId, errorMsg);
         return { success: false, error: errorMsg, alreadyAccepted: true };
       }
       const errorMsg = error.response?.data?.message || error.message;
@@ -130,11 +141,13 @@ class IfoodOrderService {
   }
 
   async startPreparation(orderId) {
+    let order = null;
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      ({ order } = result);
+      const { token } = result;
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/startPreparation`,
@@ -166,11 +179,13 @@ class IfoodOrderService {
   }
 
   async markReady(orderId) {
+    let order = null;
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      ({ order } = result);
+      const { token } = result;
 
       const endpoint = order.orderType === 'PICKUP'
         ? `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/readyToPickup`
@@ -196,7 +211,7 @@ class IfoodOrderService {
         }
       });
 
-return { success: true };
+      return { success: true };
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
       logger.error(`[IFOOD] Erro ao marcar pronto:`, errorMsg);
@@ -235,11 +250,13 @@ return { success: true };
    * Aceitar cancelamento solicitado pelo cliente
    */
   async acceptCancellation(orderId, restaurantId) {
+    let order = null;
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      ({ order } = result);
+      const { token } = result;
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/acceptCancellation`,
@@ -279,11 +296,13 @@ return { success: true };
   }
 
   async refuseCancellation(orderId) {
+    let order = null;
     try {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      ({ order } = result);
+      const { token } = result;
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/refuseCancellation`,

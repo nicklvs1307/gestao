@@ -11,6 +11,7 @@ import food99Logo from '../assets/99food-logo.png';
 
 interface NewOrderAlertProps {
   orders: Order[];
+  isProcessing?: boolean;
   onAccept: (orderId: string, order: Order) => void;
   onReject: (orderId: string, order: Order) => void;
   onClose: () => void;
@@ -55,7 +56,7 @@ const getIntegrationInfo = (order: Order): IntegrationInfo | null => {
   return null;
 };
 
-const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onReject, onClose }) => {
+const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = false, onAccept, onReject, onClose }) => {
   
   useScrollLock(Array.isArray(orders) && orders.length > 0);
 
@@ -204,11 +205,31 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, onAccept, onRejec
                   </div>
 
                   <div className="bg-slate-50/80 p-3 flex flex-row gap-3 border-t border-slate-100">
-                      <button onClick={() => onAccept(order.id, order)} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 text-white font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-emerald-600 transition-all shadow-md hover:shadow-lg">
-                          <CheckCircle size={18} /> Aceitar
+                      <button
+                        onClick={() => onAccept(order.id, order)}
+                        disabled={isProcessing}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-2 font-black uppercase text-xs tracking-widest rounded-xl py-3 transition-all shadow-md hover:shadow-lg",
+                          isProcessing
+                            ? "bg-emerald-300 text-white cursor-not-allowed opacity-70"
+                            : "bg-emerald-500 text-white hover:bg-emerald-600"
+                        )}
+                      >
+                          {isProcessing ? <Clock size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                          {isProcessing ? 'Processando...' : 'Aceitar'}
                       </button>
-                      <button onClick={() => onReject(order.id, order)} className="flex-1 flex items-center justify-center gap-2 bg-white text-red-500 border border-red-100 font-black uppercase text-xs tracking-widest rounded-xl py-3 hover:bg-red-50 transition-all">
-                          <XCircle size={18} /> Recusar
+                      <button
+                        onClick={() => onReject(order.id, order)}
+                        disabled={isProcessing}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-2 font-black uppercase text-xs tracking-widest rounded-xl py-3 transition-all",
+                          isProcessing
+                            ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-70"
+                            : "bg-white text-red-500 border border-red-100 hover:bg-red-50"
+                        )}
+                      >
+                          {isProcessing ? <Clock size={18} className="animate-spin" /> : <XCircle size={18} />}
+                          {isProcessing ? 'Processando...' : 'Recusar'}
                       </button>
                   </div>
                 </div>

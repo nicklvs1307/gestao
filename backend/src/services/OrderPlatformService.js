@@ -21,7 +21,7 @@ class OrderPlatformService {
     return null;
   }
 
-  async syncStatus(order, newStatus, oldStatus) {
+  async syncStatus(order, newStatus, oldStatus, metadata = {}) {
     const platform = this._getPlatform(order);
     if (!platform) return;
 
@@ -39,8 +39,11 @@ class OrderPlatformService {
         case 'READY':
           await handlers.onReady?.(order.id, order.restaurantId);
           break;
+        case 'SHIPPED':
+          await handlers.onShipped?.(order.id, order.restaurantId);
+          break;
         case 'CANCELED':
-          await handlers.onCanceled?.(order.id, order.restaurantId);
+          await handlers.onCanceled?.(order.id, order.restaurantId, metadata.reason);
           break;
       }
     } catch (error) {
@@ -60,9 +63,13 @@ orderPlatformService.register('ifood', {
     const IfoodOrderService = require('./IfoodOrderService');
     return await IfoodOrderService.markReady(orderId, restaurantId);
   },
-  onCanceled: async (orderId, restaurantId) => {
+  onShipped: async (orderId, restaurantId) => {
     const IfoodOrderService = require('./IfoodOrderService');
-    return await IfoodOrderService.rejectOrder(orderId, restaurantId, '501');
+    return await IfoodOrderService.markReady(orderId, restaurantId);
+  },
+  onCanceled: async (orderId, restaurantId, reason) => {
+    const IfoodOrderService = require('./IfoodOrderService');
+    return await IfoodOrderService.rejectOrder(orderId, reason || '501');
   }
 });
 
