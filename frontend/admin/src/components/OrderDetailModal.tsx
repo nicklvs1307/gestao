@@ -11,7 +11,9 @@ import {
     refuseIfoodCancellation,
     acceptIfoodDispute,
     rejectIfoodDispute,
-    offerIfoodAlternative
+    offerIfoodAlternative,
+    getIfoodCancellationReasons,
+    rejectIfoodOrder
 } from '../services/api/integrations';
 import { printOrder } from '../services/printer';
 import { formatSP } from '@/lib/timezone';
@@ -58,6 +60,11 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const [showAlternativeModal, setShowAlternativeModal] = useState(false);
   const [alternativeType, setAlternativeType] = useState<string>('');
   const [alternativeValue, setAlternativeValue] = useState<string>('');
+  const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
+  const [cancelReasons, setCancelReasons] = useState<{cancelCodeId: string, description: string}[]>([]);
+  const [selectedCancelReason, setSelectedCancelReason] = useState<string>('');
+  const [isLoadingReasons, setIsLoadingReasons] = useState(false);
+  const [isCancellingOnIfood, setIsCancellingOnIfood] = useState(false);
   useEffect(() => {
     if (order) {
       setSelectedDriver(order.deliveryOrder?.driverId || "");
@@ -211,6 +218,59 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
     } finally {
       setIsHandlingDispute(false);
     }
+  };
+
+  // === Cancelamento iniciado pelo restaurante (pedido iFood já aceito) ===
+  const handleRequestIfoodCancellation = async () => {
+    if (!order.ifoodOrderId) return;
+    setIsLoadingReasons(true);
+    setShowCancelReasonModal(true);
+    try {
+      const result = await getIfoodCancellationReasons(order.id);
+      if (result.success && result.reasons) {
+        setCancelReasons(Array.isArray(result.reasons) ? result.reasons : []);
+      } else {
+        toast.error(result.error || 'Erro ao buscar motivos de cancelamento');
+        setShowCancelReasonModal(false);
+      }
+    } catch (e) {
+      toast.error('Erro ao buscar motivos');
+      setShowCancelReasonModal(false);
+    } finally {
+      setIsLoadingReasons(false);
+    }
+  };
+
+  const handleConfirmIfoodCancellation = async () => {
+    if (!selectedCancelReason) {
+      toast.error('Selecione um motivo de cancelamento');
+      return;
+    }
+    setIsCancellingOnIfood(true);
+    try {
+      const result = await rejectIfoodOrder(order.id, selectedCancelReason);
+      if (result.success) {
+        toast.success('Pedido cancelado no iFood');
+        onStatusChange?.(order.id, 'CANCELED');
+        setShowCancelReasonModal(false);
+        onClose();
+      } else {
+        toast.error(result.error || 'iFood recusou o cancelamento');
+      }
+    } catch (e) {
+      toast.error('Erro ao cancelar no iFood');
+    } finally {
+      setIsCancellingOnIfood(false);
+    }
+  };
+
+  // Intercepta o clique de status: se for CANCELED em pedido iFood já aceito, abre modal de motivos
+  const handleStatusClick = (orderId: string, newStatus: string) => {
+    if (newStatus === 'CANCELED' && order.ifoodOrderId && order.status !== 'PENDING') {
+      handleRequestIfoodCancellation();
+      return;
+    }
+    onStatusChange?.(orderId, newStatus);
   };
 
   const currentStatus = STATUS_OPTIONS.find(s => s.value === order.status) || STATUS_OPTIONS[0];
@@ -643,7 +703,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                         return (
                             <button 
                                 key={status.value} 
-                                onClick={() => onStatusChange(order.id, status.value)} 
+                                onClick={() => handleStatusClick(order.id, status.value)} 
                                 disabled={isActive || isDisabled}
                                 className={cn(
                                     "flex items-center gap-3 h-12 px-6 rounded-2xl text-[10px] uppercase tracking-widest italic font-black transition-all border shadow-sm group",
@@ -662,6 +722,73 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                 </footer>
             </main>
         </div>
+
+        {/* MODAL DE MOTIVO DE CANCELAMENTO (restaurante cancela pedido iFood aceito) */}
+        {showCancelReasonModal && (
+          <div className="absolute inset-0 z-[400] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !isCancellingOnIfood && setShowCancelReasonModal(false)} />
+            <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
+              <div className="bg-rose-500 px-6 py-5 text-white">
+                <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3">
+                  <AlertTriangle size={18} /> Cancelar Pedido iFood
+                </h3>
+                <p className="text-[10px] font-bold text-rose-100 mt-1 uppercase tracking-wider">
+                  Selecione o motivo para enviar ao iFood
+                </p>
+              </div>
+              <div className="p-6 space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar">
+                {isLoadingReasons ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 size={24} className="animate-spin text-rose-500" />
+                    <span className="ml-3 text-xs font-bold text-slate-500 uppercase">Buscando motivos...</span>
+                  </div>
+                ) : cancelReasons.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-xs font-bold text-slate-400 uppercase">Nenhum motivo disponivel</p>
+                    <p className="text-[10px] text-slate-400 mt-1">O iFood nao retornou motivos para este pedido</p>
+                  </div>
+                ) : (
+                  cancelReasons.map((reason) => (
+                    <button
+                      key={reason.cancelCodeId}
+                      onClick={() => setSelectedCancelReason(reason.cancelCodeId)}
+                      className={cn(
+                        "w-full text-left p-4 rounded-2xl border-2 transition-all",
+                        selectedCancelReason === reason.cancelCodeId
+                          ? "border-rose-500 bg-rose-50 shadow-lg"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      )}
+                    >
+                      <p className={cn(
+                        "text-xs font-black uppercase",
+                        selectedCancelReason === reason.cancelCodeId ? "text-rose-600" : "text-slate-700"
+                      )}>
+                        {reason.description}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+              <div className="p-6 border-t border-slate-200 flex gap-3">
+                <Button
+                  onClick={() => { setShowCancelReasonModal(false); setSelectedCancelReason(''); }}
+                  disabled={isCancellingOnIfood}
+                  variant="outline"
+                  className="flex-1 h-12 border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-black uppercase"
+                >
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleConfirmIfoodCancellation}
+                  disabled={!selectedCancelReason || isCancellingOnIfood}
+                  className="flex-1 h-12 bg-rose-500 hover:bg-rose-600 text-white text-xs font-black uppercase"
+                >
+                  {isCancellingOnIfood ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar Cancelamento'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

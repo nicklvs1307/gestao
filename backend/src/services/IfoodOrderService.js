@@ -96,6 +96,15 @@ class IfoodOrderService {
       if (result.success === false) return result;
 
       ({ order } = result);
+
+      // IDEMPOTÊNCIA: Se o pedido já está CANCELED localmente, significa que foi cancelado
+      // anteriormente (ex: via modal de cancelamento do frontend). Não precisamos chamar
+      // a API do iFood novamente - apenas retornamos sucesso para evitar erro de sync.
+      if (order.status === 'CANCELED') {
+        logger.info(`[IFOOD] Pedido ${orderId} já está CANCELED localmente. Pulando chamada de API (idempotente).`);
+        return { success: true, alreadyCanceled: true };
+      }
+
       const { token } = result;
 
       await axios.post(
@@ -120,8 +129,14 @@ class IfoodOrderService {
 
       return { success: true };
     } catch (error) {
+      // IDEMPOTÊNCIA: Se receber 400 (Order already cancelled) mas o pedido já está
+      // CANCELED localmente, retornamos sucesso para evitar ruído no sync.
+      if (error.response?.status === 400 && order?.status === 'CANCELED') {
+        logger.info(`[IFOOD] Pedido ${orderId} já cancelado localmente. 400 do iFood ignorado (idempotente).`);
+        return { success: true, alreadyCanceled: true };
+      }
+
       if (error.response?.status === 400) {
-        // Se já tem um reason code específico, é uma rejeição real do iFood
         if (reason && reason !== '501') {
           const errorMsg = 'iFood recusou o cancelamento. O pedido continua ativo.';
           logger.error(`[IFOOD] Cancelamento rejeitado pelo iFood: ${errorMsg}`);
