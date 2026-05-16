@@ -371,8 +371,8 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
               <Eye size={12} /> Detalhes
             </button>
 
-            {/* Botão de Validação de Retirada - apenas para pedidos PICKUP prontos */}
-            {isPickup && order.status === 'READY' && (
+            {/* Botão de Validação de Retirada - apenas para pedidos PICKUP prontos com código ou iFood */}
+            {isPickup && order.status === 'READY' && (order.pickupCode || order.ifoodOrderId) && (
               <button 
                 onClick={handleOpenPickupModal}
                 aria-label="Validar retirada"

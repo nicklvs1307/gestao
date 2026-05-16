@@ -192,8 +192,11 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     }));
 
     // ─── RETORNO NORMALIZADO ──────────────────────────────────────
+    // Considera PICKUP se: orderType === 'PICKUP' OU se não há endereço de entrega
+    const isPickupOrder = orderType === 'PICKUP' || !deliveryAddress;
+
     return {
-      orderType: orderType === 'PICKUP' ? 'PICKUP' : 'DELIVERY',
+      orderType: isPickupOrder ? 'PICKUP' : 'DELIVERY',
       items,
       customer: {
         name: customer?.name || 'Cliente iFood',
