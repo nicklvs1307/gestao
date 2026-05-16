@@ -89,7 +89,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
   // Estados para modal de cancelamento iFood
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancellationReasons, setCancellationReasons] = useState<Array<{ code: string; description: string }>>([]);
+  const [cancellationReasons, setCancellationReasons] = useState<Array<{ cancelCodeId: string; description: string }>>([]);
   const [selectedCancelReason, setSelectedCancelReason] = useState('');
   const [isLoadingReasons, setIsLoadingReasons] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -310,8 +310,8 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
         
         if (result.success && Array.isArray(reasons) && reasons.length > 0) {
           setCancellationReasons(reasons);
-          setSelectedCancelReason(reasons[0]?.code || '');
-          console.log('[DEBUG] Primeiro código selecionado:', reasons[0]?.code);
+          setSelectedCancelReason(reasons[0]?.cancelCodeId || '');
+          console.log('[DEBUG] Primeiro código selecionado:', reasons[0]?.cancelCodeId);
           setShowCancelModal(true);
         } else {
           // Se não conseguir motivos, tenta cancelamento direto (rejeição)
@@ -740,14 +740,14 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {cancellationReasons.map((reason, index) => {
-                    const isSelected = selectedCancelReason === reason.code;
+                    const isSelected = selectedCancelReason === reason.cancelCodeId;
                     return (
                       <button
-                        key={`${reason.code}-${index}`}
+                        key={`${reason.cancelCodeId}-${index}`}
                         type="button"
                         onClick={() => {
-                          console.log('[DEBUG] Cliquei no motivo:', reason.code, 'selecionado:', !isSelected);
-                          setSelectedCancelReason(reason.code);
+                          console.log('[DEBUG] Cliquei no motivo:', reason.cancelCodeId, 'selecionado:', !isSelected);
+                          setSelectedCancelReason(reason.cancelCodeId);
                         }}
                         className={`w-full flex items-center p-3 rounded-lg border cursor-pointer transition-all text-left ${
                           isSelected

@@ -31,7 +31,7 @@ const GlobalOrderMonitor: React.FC = () => {
   
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
-  const [cancellationReasons, setCancellationReasons] = useState<{code: string; description: string}[]>([]);
+  const [cancellationReasons, setCancellationReasons] = useState<{cancelCodeId: string; description: string}[]>([]);
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [isLoadingReasons, setIsLoadingReasons] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -443,7 +443,7 @@ const GlobalOrderMonitor: React.FC = () => {
                         if (reasonsResult.success && reasons.length > 0) {
                           setCancellationReasons(reasons);
                           setCancelOrderId(id);
-                          setSelectedReason(reasons[0]?.code || '');
+                          setSelectedReason(reasons[0]?.cancelCodeId || '');
                           setIsOrderModalOpen(false);
                           setCancelModalOpen(true);
                         } else {
@@ -519,20 +519,20 @@ const GlobalOrderMonitor: React.FC = () => {
             <div className="space-y-2">
               {cancellationReasons.map((reason) => (
                 <div
-                  key={reason.code}
-                  onClick={() => setSelectedReason(reason.code)}
+                  key={reason.cancelCodeId}
+                  onClick={() => setSelectedReason(reason.cancelCodeId)}
                   className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedReason === reason.code
+                    selectedReason === reason.cancelCodeId
                       ? 'border-orange-500 bg-orange-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
-                    selectedReason === reason.code
+                    selectedReason === reason.cancelCodeId
                       ? 'border-orange-500 bg-orange-500'
                       : 'border-slate-300'
                   }`}>
-                    {selectedReason === reason.code && (
+                    {selectedReason === reason.cancelCodeId && (
                       <div className="w-1.5 h-1.5 rounded-full bg-white" />
                     )}
                   </div>
