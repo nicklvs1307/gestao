@@ -286,9 +286,13 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       setIsLoadingReasons(true);
       try {
         const result = await getIfoodCancellationReasons(order.id);
-        if (result.success && result.reasons && result.reasons.length > 0) {
-          setCancellationReasons(result.reasons);
-          setSelectedCancelReason(result.reasons[0]?.code || '');
+        console.log('[DEBUG] Motivos de cancelamento:', result);
+        
+        // Garantir que reasons é um array válido
+        const reasons = result.reasons || [];
+        if (result.success && Array.isArray(reasons) && reasons.length > 0) {
+          setCancellationReasons(reasons);
+          setSelectedCancelReason(reasons[0]?.code || '');
           setShowCancelModal(true);
         } else {
           // Se não conseguir motivos, tenta cancelamento direto (rejeição)
@@ -717,24 +721,29 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {cancellationReasons.map((reason) => (
-                    <label
+                    <div
                       key={reason.code}
+                      onClick={() => {
+                        console.log('[DEBUG] Selecionado:', reason.code);
+                        setSelectedCancelReason(reason.code);
+                      }}
                       className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
                         selectedCancelReason === reason.code
                           ? 'border-orange-500 bg-orange-50'
                           : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
-                      <input
-                        type="radio"
-                        name="cancelReason"
-                        value={reason.code}
-                        checked={selectedCancelReason === reason.code}
-                        onChange={(e) => setSelectedCancelReason(e.target.value)}
-                        className="mr-3"
-                      />
+                      <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                        selectedCancelReason === reason.code
+                          ? 'border-orange-500 bg-orange-500'
+                          : 'border-slate-300'
+                      }`}>
+                        {selectedCancelReason === reason.code && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                        )}
+                      </div>
                       <span className="text-sm font-medium text-slate-700">{reason.description}</span>
-                    </label>
+                    </div>
                   ))}
                 </div>
               )}

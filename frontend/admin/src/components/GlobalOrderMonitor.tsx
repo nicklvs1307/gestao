@@ -433,10 +433,17 @@ const GlobalOrderMonitor: React.FC = () => {
                       try {
                         setIsLoadingReasons(true);
                         const reasonsResult = await getIfoodCancellationReasons(id);
-                        if (reasonsResult.success && reasonsResult.reasons) {
-                          setCancellationReasons(reasonsResult.reasons);
+                        console.log('[DEBUG] Motivos de cancelamento:', reasonsResult);
+                        
+                        // Garantir que reasons é um array válido
+                        const reasons = Array.isArray(reasonsResult.reasons) 
+                          ? reasonsResult.reasons 
+                          : [];
+                        
+                        if (reasonsResult.success && reasons.length > 0) {
+                          setCancellationReasons(reasons);
                           setCancelOrderId(id);
-                          setSelectedReason(reasonsResult.reasons[0]?.code || '');
+                          setSelectedReason(reasons[0]?.code || '');
                           setIsOrderModalOpen(false);
                           setCancelModalOpen(true);
                         } else {
@@ -511,24 +518,26 @@ const GlobalOrderMonitor: React.FC = () => {
             </p>
             <div className="space-y-2">
               {cancellationReasons.map((reason) => (
-                <label
+                <div
                   key={reason.code}
+                  onClick={() => setSelectedReason(reason.code)}
                   className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
                     selectedReason === reason.code
-                      ? 'border-primary bg-primary/10'
+                      ? 'border-orange-500 bg-orange-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <input
-                    type="radio"
-                    name="cancellationReason"
-                    value={reason.code}
-                    checked={selectedReason === reason.code}
-                    onChange={(e) => setSelectedReason(e.target.value)}
-                    className="mr-3"
-                  />
-                  <span className="text-sm font-medium">{reason.description}</span>
-                </label>
+                  <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                    selectedReason === reason.code
+                      ? 'border-orange-500 bg-orange-500'
+                      : 'border-slate-300'
+                  }`}>
+                    {selectedReason === reason.code && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">{reason.description}</span>
+                </div>
               ))}
             </div>
             {isLoadingReasons && (

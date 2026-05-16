@@ -2,6 +2,7 @@ export interface AddonOption {
   id: string;
   name: string;
   price: number;
+  integrationCode?: string | null;
 }
 
 export interface Addon {
@@ -10,6 +11,8 @@ export interface Addon {
   price: number;
   order: number;
   addonGroupId: string;
+  integrationCode?: string | null;
+  saiposIntegrationCode?: string | null;
 }
 
 export interface AddonGroup {
@@ -19,6 +22,8 @@ export interface AddonGroup {
   order: number;
   productId: string;
   addons: Addon[];
+  integrationCode?: string | null;
+  saiposIntegrationCode?: string | null;
 }
 
 export interface SizeOption {
@@ -27,6 +32,8 @@ export interface SizeOption {
   price: number;
   order: number;
   productId: string;
+  integrationCode?: string | null;
+  saiposIntegrationCode?: string | null;
 }
 
 export interface Category {
@@ -35,6 +42,8 @@ export interface Category {
   order: number;
   restaurantId: string;
   products: Product[]; // Pode ser omitido se não for necessário no cliente
+  integrationCode?: string | null;
+  saiposIntegrationCode?: string | null;
   // For sub-categories
   parentId?: string | null;
   subCategories?: Category[];
@@ -56,6 +65,8 @@ export interface Product {
   category: Category;
   sizes: SizeOption[];
   addonGroups: AddonGroup[];
+  integrationCode?: string | null;
+  saiposIntegrationCode?: string | null;
   pizzaConfig?: {
     maxFlavors: number;
     flavorCategoryId: string;
