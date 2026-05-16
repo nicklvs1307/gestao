@@ -202,13 +202,13 @@ const confirmIfoodOrder = async (req, res) => {
 
 const rejectIfoodOrder = async (req, res) => {
     try {
-        const { orderId, reason } = req.body;
+        const { orderId, reason, force } = req.body;
 
         if (!orderId) {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await IfoodOrderService.rejectOrder(orderId, reason);
+        const result = await IfoodOrderService.rejectOrder(orderId, reason, force);
         res.json(result);
     } catch (error) {
         logger.error('[IFOOD] Erro ao rejeitar pedido:', error);

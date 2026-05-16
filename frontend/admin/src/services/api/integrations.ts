@@ -66,8 +66,8 @@ export const confirmIfoodOrder = async (orderId: string) => {
   return response.data;
 };
 
-export const rejectIfoodOrder = async (orderId: string, reason?: string) => {
-  const response = await apiClient.post('/integrations/ifood/reject', { orderId, reason });
+export const rejectIfoodOrder = async (orderId: string, reason?: string, force?: boolean) => {
+  const response = await apiClient.post('/integrations/ifood/reject', { orderId, reason, force });
   return response.data;
 };
 

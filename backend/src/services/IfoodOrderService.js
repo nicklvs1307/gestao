@@ -89,7 +89,7 @@ class IfoodOrderService {
     }
   }
 
-  async rejectOrder(orderId, reason) {
+  async rejectOrder(orderId, reason, force = false) {
     let order = null;
     try {
       const result = await this._getOrderAndToken(orderId);
@@ -97,12 +97,23 @@ class IfoodOrderService {
 
       ({ order } = result);
 
-      // IDEMPOTÊNCIA: Se o pedido já está CANCELED localmente, significa que foi cancelado
-      // anteriormente (ex: via modal de cancelamento do frontend). Não precisamos chamar
-      // a API do iFood novamente - apenas retornamos sucesso para evitar erro de sync.
-      if (order.status === 'CANCELED') {
+      // IDEMPOTÊNCIA: Se o pedido já está CANCELED localmente E não é um cancelamento forçado,
+      // significa que foi cancelado anteriormente. Não precisamos chamar a API novamente.
+      // MAS se force=true (usuário escolheu motivo no modal), DEVEMOS enviar ao iFood.
+      if (order.status === 'CANCELED' && !force) {
         logger.info(`[IFOOD] Pedido ${orderId} já está CANCELED localmente. Pulando chamada de API (idempotente).`);
         return { success: true, alreadyCanceled: true };
+      }
+
+      // Se está forçando o cancelamento (usuário selecionou motivo), garantir status local como CANCELED
+      if (force && order.status !== 'CANCELED') {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            status: 'CANCELED',
+            canceledAt: new Date()
+          }
+        });
       }
 
       const { token } = result;
@@ -119,21 +130,32 @@ class IfoodOrderService {
         }
       );
 
-      await prisma.order.update({
-        where: { id: orderId },
-        data: {
-          status: 'CANCELED',
-          canceledAt: new Date()
-        }
-      });
+      // Atualizar status local após sucesso na API (se ainda não foi atualizado)
+      if (order.status !== 'CANCELED') {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            status: 'CANCELED',
+            canceledAt: new Date()
+          }
+        });
+      }
 
       return { success: true };
     } catch (error) {
       // IDEMPOTÊNCIA: Se receber 400 (Order already cancelled) mas o pedido já está
-      // CANCELED localmente, retornamos sucesso para evitar ruído no sync.
-      if (error.response?.status === 400 && order?.status === 'CANCELED') {
+      // CANCELED localmente E não está forçando, retornamos sucesso para evitar ruído no sync.
+      if (error.response?.status === 400 && order?.status === 'CANCELED' && !force) {
         logger.info(`[IFOOD] Pedido ${orderId} já cancelado localmente. 400 do iFood ignorado (idempotente).`);
         return { success: true, alreadyCanceled: true };
+      }
+
+      // Se está forçando e recebe 400, significa que o iFood realmente não aceita mais cancelamento
+      if (error.response?.status === 400 && force) {
+        const errorMsg = 'O iFood não permitiu o cancelamento. Verifique o status do pedido.';
+        logger.error(`[IFOOD] Cancelamento forçado rejeitado pelo iFood: ${errorMsg}`);
+        this._notifySyncError(order?.restaurantId, orderId, errorMsg);
+        return { success: false, error: errorMsg };
       }
 
       if (error.response?.status === 400) {

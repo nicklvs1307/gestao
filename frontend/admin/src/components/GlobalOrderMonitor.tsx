@@ -346,7 +346,8 @@ const GlobalOrderMonitor: React.FC = () => {
     
     setIsProcessing(true);
     try {
-      const result = await rejectIfoodOrder(cancelOrderId, selectedReason);
+      // Usar force=true para garantir que o cancelamento seja enviado ao iFood
+      const result = await rejectIfoodOrder(cancelOrderId, selectedReason, true);
       if (!result.success) {
         toast.error(result.error || 'iFood recusou o cancelamento. O pedido continua ativo.');
         return;
