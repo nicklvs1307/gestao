@@ -288,11 +288,30 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
         const result = await getIfoodCancellationReasons(order.id);
         console.log('[DEBUG] Motivos de cancelamento:', result);
         
+        // Debug da estrutura
+        console.log('[DEBUG] result.reasons:', result.reasons);
+        console.log('[DEBUG] Tipo:', typeof result.reasons);
+        console.log('[DEBUG] É array:', Array.isArray(result.reasons));
+        
         // Garantir que reasons é um array válido
-        const reasons = result.reasons || [];
+        let reasons = result.reasons;
+        
+        // Se não for array, tentar converter
+        if (!Array.isArray(reasons)) {
+          if (reasons && typeof reasons === 'object') {
+            // Pode ser um objeto com keys como array
+            reasons = Object.values(reasons);
+          } else {
+            reasons = [];
+          }
+        }
+        
+        console.log('[DEBUG] Reasons processado:', reasons);
+        
         if (result.success && Array.isArray(reasons) && reasons.length > 0) {
           setCancellationReasons(reasons);
           setSelectedCancelReason(reasons[0]?.code || '');
+          console.log('[DEBUG] Primeiro código selecionado:', reasons[0]?.code);
           setShowCancelModal(true);
         } else {
           // Se não conseguir motivos, tenta cancelamento direto (rejeição)
@@ -720,31 +739,35 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 </div>
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {cancellationReasons.map((reason) => (
-                    <div
-                      key={reason.code}
-                      onClick={() => {
-                        console.log('[DEBUG] Selecionado:', reason.code);
-                        setSelectedCancelReason(reason.code);
-                      }}
-                      className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
-                        selectedCancelReason === reason.code
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
-                        selectedCancelReason === reason.code
-                          ? 'border-orange-500 bg-orange-500'
-                          : 'border-slate-300'
-                      }`}>
-                        {selectedCancelReason === reason.code && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <span className="text-sm font-medium text-slate-700">{reason.description}</span>
-                    </div>
-                  ))}
+                  {cancellationReasons.map((reason, index) => {
+                    const isSelected = selectedCancelReason === reason.code;
+                    return (
+                      <button
+                        key={`${reason.code}-${index}`}
+                        type="button"
+                        onClick={() => {
+                          console.log('[DEBUG] Cliquei no motivo:', reason.code, 'selecionado:', !isSelected);
+                          setSelectedCancelReason(reason.code);
+                        }}
+                        className={`w-full flex items-center p-3 rounded-lg border cursor-pointer transition-all text-left ${
+                          isSelected
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center shrink-0 ${
+                          isSelected
+                            ? 'border-orange-500 bg-orange-500'
+                            : 'border-slate-300'
+                        }`}>
+                          {isSelected && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="text-sm font-medium text-slate-700">{reason.description}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
