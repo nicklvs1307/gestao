@@ -195,11 +195,14 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     // Considera PICKUP se: orderType === 'PICKUP' OU se não há endereço de entrega
     const isPickupOrder = orderType === 'PICKUP' || !deliveryAddress;
 
+    // Nome do cliente: buscar em vários campos possíveis do iFood
+    const customerName = customer?.name || customer?.documentNumber || 'Cliente iFood';
+
     return {
       orderType: isPickupOrder ? 'PICKUP' : 'DELIVERY',
       items,
       customer: {
-        name: customer?.name || 'Cliente iFood',
+        name: customerName,
         phone: customer?.phone?.number || customer?.phone || '',
         document: customer?.document || null, // CPF ou CNPJ
       },
@@ -223,7 +226,8 @@ class IfoodOrderAdapter extends IntegrationBaseService {
       customerNote: rawData?.extraInfo || null,
       // === CAMPOS IFOOD (Homologação) ===
       displayId: rawData.displayId || null,
-      pickupCode: rawData?.delivery?.pickupCode || null,
+      // pickupCode: para pedidos DELIVERY usa o código do motoboy, para PICKUP usa o displayId (código de coleta)
+      pickupCode: isPickupOrder ? (rawData.displayId || null) : (rawData?.delivery?.pickupCode || null),
       scheduledDateTime,
       customerDocument: customer?.documentNumber || null,
       benefits: normalizedBenefits.length > 0 ? normalizedBenefits : null,

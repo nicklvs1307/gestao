@@ -371,8 +371,8 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
               <Eye size={12} /> Detalhes
             </button>
 
-            {/* Botão de Validação de Retirada - apenas para pedidos PICKUP prontos com código ou iFood */}
-            {isPickup && order.status === 'READY' && (order.pickupCode || order.ifoodOrderId) && (
+            {/* Botão de Validação de Retirada - apenas para pedidos PICKUP prontos com código */}
+            {isPickup && order.status === 'READY' && order.pickupCode ? (
               <button 
                 onClick={handleOpenPickupModal}
                 aria-label="Validar retirada"
@@ -381,16 +381,14 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
               >
                 <Ticket size={14} /> Retirada
               </button>
-            )}
-
-            {(!isPickup || order.status !== 'READY') && (
-              <button 
-                onClick={handleAdvance}
-                aria-label="Avançar status"
-                className="h-10 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center transition-all shadow-sm"
-              >
-                <ChevronRight size={16} strokeWidth={3} />
-              </button>
+            ) : (
+            <button 
+              onClick={handleAdvance}
+              aria-label="Avançar status"
+              className="h-10 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center transition-all shadow-sm"
+            >
+              <ChevronRight size={16} strokeWidth={3} />
+            </button>
             )}
 
             {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
