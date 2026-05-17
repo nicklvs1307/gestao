@@ -63,41 +63,42 @@ export const useLocalCart = () => {
     const priceAtTime = basePrice + addonsPrice;
     
     const currentAddonsIds = selectedAddons.flatMap(a => Array(a.quantity || 1).fill(a.id));
-    
-    const existingItemIndex = prevItems.findIndex(item => 
-      item.productId === product.id &&
-      item.sizeId === (selectedSize ? selectedSize.id : null) &&
-      item.sizeJson === (selectedSize ? JSON.stringify(selectedSize) : null) &&
-      JSON.stringify(item.addonsIds) === JSON.stringify(currentAddonsIds) &&
-      item.addonsJson === (selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null) &&
-      item.flavorsJson === (selectedFlavors && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : null)
-    );
-    
-    if (existingItemIndex !== -1) {
-      setLocalCartItems(prevItems => prevItems.map((item, index) => 
-        index === existingItemIndex 
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      ));
-      return;
-    }
 
-    const newCartItem: LocalCartItem = {
-      localId: Date.now() + Math.random(),
-      product,
-      productId: product.id,
-      quantity,
-      priceAtTime,
-      sizeId: selectedSize ? selectedSize.id : null,
-      addonsIds: currentAddonsIds,
-      flavorIds: selectedFlavors?.map(f => f.id) || [],
-      sizeJson: selectedSize ? JSON.stringify(selectedSize) : null,
-      addonsJson: selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null,
-      flavorsJson: selectedFlavors && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : null,
-      observations: observations || null,
-    };
+    setLocalCartItems(prevItems => {
+      const existingItemIndex = prevItems.findIndex(item => 
+        item.productId === product.id &&
+        item.sizeId === (selectedSize ? selectedSize.id : null) &&
+        item.sizeJson === (selectedSize ? JSON.stringify(selectedSize) : null) &&
+        JSON.stringify(item.addonsIds) === JSON.stringify(currentAddonsIds) &&
+        item.addonsJson === (selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null) &&
+        item.flavorsJson === (selectedFlavors && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : null)
+      );
+      
+      if (existingItemIndex !== -1) {
+        return prevItems.map((item, index) => 
+          index === existingItemIndex 
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
 
-    setLocalCartItems(prevItems => [...prevItems, newCartItem]);
+      const newCartItem: LocalCartItem = {
+        localId: Date.now() + Math.random(),
+        product,
+        productId: product.id,
+        quantity,
+        priceAtTime,
+        sizeId: selectedSize ? selectedSize.id : null,
+        addonsIds: currentAddonsIds,
+        flavorIds: selectedFlavors?.map(f => f.id) || [],
+        sizeJson: selectedSize ? JSON.stringify(selectedSize) : null,
+        addonsJson: selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null,
+        flavorsJson: selectedFlavors && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : null,
+        observations: observations || null,
+      };
+
+      return [...prevItems, newCartItem];
+    });
   };
 
   const handleRemoveFromCart = (localId: number) => {
