@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Order } from '@/types/index.ts';
 import { useNavigate } from 'react-router-dom';
 import { useScrollLock } from '../hooks/useScrollLock';
@@ -23,7 +23,7 @@ import {
   ExternalLink, Package, CreditCard, Loader2, FileText,
   ShoppingBag, Bike, Utensils, Info, ChevronRight, User, Truck, List,
   DollarSign, Receipt, ArrowRight, ShieldCheck, Hash, Wallet, Smartphone, Landmark,
-  ShoppingCart, Ticket, AlertTriangle, Calendar, FileText as IDCard
+  ShoppingCart, Ticket, AlertTriangle, Calendar, FileText as IDCard, Tag, Layers, Hash as HashIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -47,6 +47,7 @@ const STATUS_OPTIONS = [
 
 const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onStatusChange }) => {
   const navigate = useNavigate();
+  const modalRef = useRef<HTMLDivElement>(null);
   
   useScrollLock(true);
 
@@ -65,6 +66,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const [selectedCancelReason, setSelectedCancelReason] = useState<string>('');
   const [isLoadingReasons, setIsLoadingReasons] = useState(false);
   const [isCancellingOnIfood, setIsCancellingOnIfood] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'logistics' | 'financial'>('details');
   useEffect(() => {
     if (order) {
       setSelectedDriver(order.deliveryOrder?.driverId || "");
@@ -287,11 +289,15 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
   const isDelivery = order.orderType === 'DELIVERY' || (!!order.deliveryOrder && !isPickup);
   const isPaid = order.status === 'COMPLETED' || (order.payments && order.payments.length > 0);
 
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.stopPropagation();
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200" onWheel={handleWheel}>
       <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={onClose} />
       
-      <div className="relative w-full max-w-6xl h-[95vh] lg:h-auto lg:max-h-[85vh] flex flex-col bg-slate-50 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20">
+      <div ref={modalRef} className="relative w-full max-w-6xl h-[95vh] lg:h-auto lg:max-h-[85vh] flex flex-col bg-slate-50 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20">
         
         {/* HEADER DE ALTO NÍVEL */}
         <header className="h-20 bg-slate-900 text-white px-8 flex items-center justify-between shrink-0 z-10 shadow-xl">
@@ -328,287 +334,449 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
         </header>
 
         <div className="flex-1 flex overflow-hidden">
-            {/* PAINEL LATERAL: GESTÃO E FINANCEIRO */}
+            {/* PAINEL LATERAL: TABS + CONTEUDO */}
             <aside className="w-[380px] border-r border-slate-200 bg-white flex flex-col shrink-0">
+                {/* TABS */}
+                <div className="flex border-b border-slate-200 shrink-0">
+                    <button
+                        onClick={() => setActiveTab('details')}
+                        className={cn(
+                            "flex-1 h-12 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                            activeTab === 'details'
+                                ? "text-slate-900 border-b-2 border-slate-900 bg-slate-50"
+                                : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        <Layers size={14} /> Detalhes
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('logistics')}
+                        className={cn(
+                            "flex-1 h-12 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                            activeTab === 'logistics'
+                                ? "text-slate-900 border-b-2 border-slate-900 bg-slate-50"
+                                : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        <Truck size={14} /> Logística
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('financial')}
+                        className={cn(
+                            "flex-1 h-12 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                            activeTab === 'financial'
+                                ? "text-slate-900 border-b-2 border-slate-900 bg-slate-50"
+                                : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        <DollarSign size={14} /> Financeiro
+                    </button>
+                </div>
+
                 <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                     
-                    {/* ORIGEM: MESA OU CLIENTE */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Origem</h3>
-                            <div className="h-px flex-1 bg-slate-100 ml-4" />
-                        </div>
-                        
-                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 relative overflow-hidden group">
-                            <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:scale-110 transition-transform"><ShoppingCart size={100} /></div>
-                            
-                            <div className="space-y-5">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white rounded-2xl border border-slate-200 flex items-center justify-center text-slate-900 shadow-sm"><User size={24} strokeWidth={2.5}/></div>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-black text-slate-900 uppercase italic truncate tracking-tight">{order.deliveryOrder?.name || 'Consumidor'}</p>
-                                        <p className="text-xs font-bold text-blue-600 flex items-center gap-1.5 mt-0.5"><Phone size={12}/> {order.deliveryOrder?.phone || 'Sem Telefone'}</p>
-                                    </div>
+                    {/* TAB: DETALHES */}
+                    {activeTab === 'details' && (
+                        <>
+                            {/* DADOS DO PEDIDO */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Dados do Pedido</h3>
+                                    <div className="h-px flex-1 bg-slate-100 ml-4" />
                                 </div>
-                                {order.deliveryOrder?.address && (
-                                    <div className="space-y-2">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12} className="text-rose-500"/> Local de Entrega</p>
-                                        <p className="text-xs font-bold text-slate-600 uppercase italic leading-relaxed bg-white/60 p-4 rounded-2xl border border-white shadow-sm">
-                                          {order.deliveryOrder.address}
-                                          {order.deliveryOrder.complement && <><br/><span className="text-amber-600">Comp: {order.deliveryOrder.complement}</span></>}
-                                          {order.deliveryOrder.reference && <><br/><span className="text-blue-600">Ref: {order.deliveryOrder.reference}</span></>}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* INFORMAÇÕES IFOOD (Homologação) */}
-                    {(order.ifoodOrderId || order.displayId || order.scheduledDateTime || order.customerDocument || order.benefits) && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-black uppercase text-orange-600 tracking-[0.2em] flex items-center gap-2">
-                                    <img src="https://www.ifood.com.br/static/images/ifood-logo.svg" className="h-4" alt="iFood" />
-                                    Dados do Pedido
-                                </h3>
-                                <div className="h-px flex-1 bg-orange-100 ml-4" />
-                            </div>
-                            <div className="bg-orange-50 border border-orange-100 rounded-3xl p-4 space-y-3">
-                                {order.displayId && (
+                                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Ticket size={14} className="text-orange-600" />
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">Código de Coleta</span>
-                                        </div>
-                                        <span className="text-sm font-bold text-orange-600 uppercase">{order.displayId}</span>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nº Pedido</span>
+                                        <span className="text-sm font-bold text-slate-900">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</span>
                                     </div>
-                                )}
-                                {order.scheduledDateTime && (
-                                    <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="bg-blue-100 p-1.5 rounded-lg">
-                                                <Calendar size={16} className="text-blue-600" />
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ID</span>
+                                        <span className="text-[10px] font-bold text-slate-500 font-mono">{order.id.slice(-8).toUpperCase()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tipo</span>
+                                        <span className={cn(
+                                            "text-[9px] font-black px-2 py-0.5 rounded-md uppercase",
+                                            order.orderType === 'PICKUP' ? "bg-purple-100 text-purple-700" :
+                                            order.orderType === 'DELIVERY' ? "bg-blue-100 text-blue-700" :
+                                            "bg-emerald-100 text-emerald-700"
+                                        )}>
+                                            {order.orderType === 'PICKUP' ? 'Retirada' : order.orderType === 'DELIVERY' ? 'Delivery' : 'Mesa'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Criado em</span>
+                                        <span className="text-xs font-bold text-slate-700">{formatSP(order.createdAt, 'dd/MM/yyyy HH:mm:ss')}</span>
+                                    </div>
+                                    {order.pendingAt && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pendente desde</span>
+                                            <span className="text-xs font-bold text-amber-600">{formatSP(order.pendingAt, 'HH:mm:ss')}</span>
+                                        </div>
+                                    )}
+                                    {order.preparingAt && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Preparo iniciou</span>
+                                            <span className="text-xs font-bold text-blue-600">{formatSP(order.preparingAt, 'HH:mm:ss')}</span>
+                                        </div>
+                                    )}
+                                    {order.readyAt && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pronto em</span>
+                                            <span className="text-xs font-bold text-emerald-600">{formatSP(order.readyAt, 'HH:mm:ss')}</span>
+                                        </div>
+                                    )}
+                                    {order.completedAt && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Finalizado em</span>
+                                            <span className="text-xs font-bold text-slate-600">{formatSP(order.completedAt, 'dd/MM HH:mm')}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* AGENDAMENTO */}
+                            {order.scheduledDateTime && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black uppercase text-blue-600 tracking-[0.2em] flex items-center gap-2">
+                                            <Calendar size={12} />
+                                            Agendamento
+                                        </h3>
+                                        <div className="h-px flex-1 bg-blue-100 ml-4" />
+                                    </div>
+                                    <div className="bg-blue-50 border border-blue-200 rounded-3xl p-4 space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-blue-100 p-2 rounded-xl">
+                                                <Calendar size={20} className="text-blue-600" />
                                             </div>
                                             <div>
                                                 <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest block">Pedido Agendado</span>
-                                                <span className="text-xs font-bold text-blue-800">
-                                                    Entrega em {formatSP(order.scheduledDateTime, 'dd/MM/yyyy')} às {formatSP(order.scheduledDateTime, 'HH:mm')}
+                                                <span className="text-sm font-bold text-blue-800">
+                                                    {formatSP(order.scheduledDateTime, 'dd/MM/yyyy')} às {formatSP(order.scheduledDateTime, 'HH:mm')}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
-                                )}
-                                {order.customerDocument && (
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <IDCard size={14} className="text-slate-600" />
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">Documento</span>
+                                </div>
+                            )}
+
+                            {/* CLIENTE */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Cliente</h3>
+                                    <div className="h-px flex-1 bg-slate-100 ml-4" />
+                                </div>
+                                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-slate-900 shadow-sm"><User size={20} strokeWidth={2.5}/></div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-black text-slate-900 uppercase italic truncate">{order.deliveryOrder?.name || order.customerName || 'Consumidor'}</p>
+                                            <p className="text-xs font-bold text-blue-600 flex items-center gap-1"><Phone size={12}/> {order.deliveryOrder?.phone || 'Sem telefone'}</p>
                                         </div>
-                                        <span className="text-xs font-bold text-slate-600 uppercase">{order.customerDocument}</span>
                                     </div>
-                                )}
-                                {order.benefits && order.benefits.length > 0 && (
-                                    <div className="space-y-2 pt-2 border-t border-orange-100">
-                                        <span className="text-[10px] font-black text-green-600 uppercase flex items-center gap-2">
-                                            <ShoppingBag size={12} /> Cupons Aplicados
-                                        </span>
-                                        {order.benefits.map((benefit, idx) => (
-                                            <div key={idx} className="flex items-center justify-between bg-white/60 p-2 rounded-xl">
-                                                <span className="text-xs font-bold text-slate-600">{benefit.name}</span>
-                                                <span className="text-xs font-bold text-green-600">- R$ {benefit.value.toFixed(2)}</span>
+                                    {order.deliveryOrder?.address && (
+                                        <div className="space-y-1 pt-2 border-t border-slate-200">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12} className="text-rose-500"/> Endereço</p>
+                                            <p className="text-xs font-bold text-slate-600 bg-white/60 p-3 rounded-xl border border-white shadow-sm">
+                                                {order.deliveryOrder.address}
+                                                {order.deliveryOrder.complement && <><br/><span className="text-amber-600">Comp: {order.deliveryOrder.complement}</span></>}
+                                                {order.deliveryOrder.reference && <><br/><span className="text-blue-600">Ref: {order.deliveryOrder.reference}</span></>}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {order.deliveryOrder?.neighborhood && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bairro</span>
+                                            <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.neighborhood}</span>
+                                        </div>
+                                    )}
+                                    {order.deliveryOrder?.city && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cidade</span>
+                                            <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.city}/{order.deliveryOrder.state}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* INTEGRAÇÃO (iFood/Uairango) */}
+                            {(order.ifoodOrderId || order.displayId || order.customerDocument || order.benefits) && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black uppercase text-orange-600 tracking-[0.2em] flex items-center gap-2">
+                                            <img src="https://www.ifood.com.br/static/images/ifood-logo.svg" className="h-4" alt="iFood" />
+                                            Integração
+                                        </h3>
+                                        <div className="h-px flex-1 bg-orange-100 ml-4" />
+                                    </div>
+                                    <div className="bg-orange-50 border border-orange-100 rounded-3xl p-5 space-y-3">
+                                        {order.ifoodOrderId && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">iFood ID</span>
+                                                <span className="text-[10px] font-bold text-slate-600 font-mono">{order.ifoodOrderId}</span>
+                                            </div>
+                                        )}
+                                        {order.displayId && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Código Coleta</span>
+                                                <span className="text-sm font-bold text-orange-600">{order.displayId}</span>
+                                            </div>
+                                        )}
+                                        {order.customerDocument && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Documento</span>
+                                                <span className="text-xs font-bold text-slate-600">{order.customerDocument}</span>
+                                            </div>
+                                        )}
+                                        {order.benefits && order.benefits.length > 0 && (
+                                            <div className="space-y-2 pt-2 border-t border-orange-200">
+                                                <span className="text-[9px] font-black text-green-600 uppercase flex items-center gap-2">
+                                                    <Tag size={12} /> Cupons
+                                                </span>
+                                                {order.benefits.map((benefit, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between bg-white/60 p-2 rounded-xl">
+                                                        <span className="text-xs font-bold text-slate-600">{benefit.name}</span>
+                                                        <span className="text-xs font-bold text-green-600">- R$ {benefit.value.toFixed(2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* OBSERVAÇÕES GERAIS */}
+                            {order.deliveryOrder?.notes && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em] flex items-center gap-2">
+                                            <Info size={12} />
+                                            Observações
+                                        </h3>
+                                        <div className="h-px flex-1 bg-amber-100 ml-4" />
+                                    </div>
+                                    <div className="bg-amber-50 border border-amber-200 rounded-3xl p-4">
+                                        <p className="text-xs font-bold text-amber-800">{order.deliveryOrder.notes}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CANCELAMENTO SOLICITADO */}
+                            {order.cancellationRequested && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black uppercase text-rose-600 tracking-[0.2em] flex items-center gap-2">
+                                            <AlertTriangle size={12} />
+                                            Cancelamento Solicitado
+                                        </h3>
+                                        <div className="h-px flex-1 bg-rose-200 ml-4" />
+                                    </div>
+                                    <div className="bg-rose-50 border border-rose-200 rounded-3xl p-4 space-y-4">
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-black text-rose-500 uppercase">Motivo:</p>
+                                            <p className="text-xs font-bold text-slate-700">{order.cancellationReason || 'Cliente solicitou cancelamento'}</p>
+                                            {order.cancellationDeadline && (
+                                                <p className="text-[10px] font-bold text-orange-600">
+                                                    Prazo: {formatSP(order.cancellationDeadline, 'HH:mm:ss')}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                onClick={handleAcceptCancellation}
+                                                disabled={isHandlingCancellation}
+                                                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white h-10 text-xs font-black uppercase"
+                                            >
+                                                {isHandlingCancellation ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                            </Button>
+                                            <Button 
+                                                onClick={handleRefuseCancellation}
+                                                disabled={isHandlingCancellation}
+                                                variant="outline"
+                                                className="flex-1 border-rose-300 text-rose-600 hover:bg-rose-50 h-10 text-xs font-black uppercase"
+                                            >
+                                                Recusar
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* DISPUTA */}
+                            {order.disputeId && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em] flex items-center gap-2">
+                                            <AlertTriangle size={12} />
+                                            Disputa Pós-Entrega
+                                        </h3>
+                                        <div className="h-px flex-1 bg-amber-200 ml-4" />
+                                    </div>
+                                    <div className="bg-amber-50 border border-amber-200 rounded-3xl p-4 space-y-4">
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-black text-amber-600 uppercase">Motivo:</p>
+                                            <p className="text-xs font-bold text-slate-700">{order.disputeReason || 'Cliente abriu disputa'}</p>
+                                            {order.disputeExpiresAt && (
+                                                <p className="text-[10px] font-bold text-orange-600">
+                                                    Responder até: {formatSP(order.disputeExpiresAt, 'HH:mm:ss')}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                onClick={handleAcceptDispute}
+                                                disabled={isHandlingDispute}
+                                                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white h-10 text-xs font-black uppercase"
+                                            >
+                                                {isHandlingDispute ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                            </Button>
+                                            <Button 
+                                                onClick={handleRejectDispute}
+                                                disabled={isHandlingDispute}
+                                                variant="outline"
+                                                className="flex-1 border-amber-300 text-amber-600 hover:bg-amber-50 h-10 text-xs font-black uppercase"
+                                            >
+                                                Recusar
+                                            </Button>
+                                            <Button 
+                                                onClick={() => setShowAlternativeModal(true)}
+                                                disabled={isHandlingDispute}
+                                                variant="outline"
+                                                className="flex-1 border-blue-300 text-blue-600 hover:bg-blue-50 h-10 text-xs font-black uppercase"
+                                            >
+                                                Alternativa
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* TAB: LOGÍSTICA */}
+                    {activeTab === 'logistics' && (
+                        <>
+                            {isDelivery ? (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Logística de Entrega</h3>
+                                        <div className="h-px flex-1 bg-slate-100 ml-4" />
+                                    </div>
+                                    <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-3xl space-y-4">
+                                        <div className="flex gap-2 p-1.5 bg-white border border-blue-100 rounded-2xl shadow-inner">
+                                            <button onClick={() => handleUpdateDeliveryType('retirada')} className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", deliveryType === 'retirada' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}>
+                                                <ShoppingBag size={14} /> Balcão
+                                            </button>
+                                            <button onClick={() => handleUpdateDeliveryType('delivery')} className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", deliveryType === 'delivery' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}>
+                                                <Truck size={14} /> Entrega
+                                            </button>
+                                        </div>
+                                        {deliveryType === 'delivery' && (
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-blue-600 uppercase ml-2 tracking-widest">Atribuir Motoboy</label>
+                                                <select className="w-full bg-white border-2 border-blue-100 rounded-2xl h-12 px-4 text-xs font-black text-slate-900 outline-none shadow-sm focus:border-blue-500 appearance-none cursor-pointer" value={selectedDriver} onChange={(e) => handleAssignDriver(e.target.value)}>
+                                                    <option value="">Aguardando seleção...</option>
+                                                    {drivers.map(d => <option key={d.id} value={d.id}>{d.name.toUpperCase()}</option>)}
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-64 text-center">
+                                    <ShoppingBag size={48} className="text-slate-300 mb-4" />
+                                    <p className="text-sm font-bold text-slate-400 uppercase">Sem logística de entrega</p>
+                                    <p className="text-[10px] text-slate-300 mt-1">Pedido de mesa ou retirada</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* TAB: FINANCEIRO */}
+                    {activeTab === 'financial' && (
+                        <div className="space-y-4">
+                            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+                                <div className="absolute -bottom-6 -right-6 opacity-[0.05] group-hover:rotate-12 transition-transform duration-500"><Wallet size={120} /></div>
+                                <div className="space-y-6 relative z-10">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>Consumo Base</span>
+                                            <span className="text-white">R$ {(order.subtotal || order.total).toFixed(2)}</span>
+                                        </div>
+                                        {(order.deliveryFee || order.deliveryOrder?.deliveryFee) > 0 && (
+                                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                <span>Taxa de Entrega</span>
+                                                <span className="text-blue-400">+ R$ {(order.deliveryFee || order.deliveryOrder?.deliveryFee || 0).toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        {(order.platformFee || 0) > 0 && (
+                                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                <span>Taxa Plataforma</span>
+                                                <span className="text-amber-400">+ R$ {(order.platformFee || 0).toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        {order.discount && order.discount > 0 && (
+                                            <div className="flex justify-between items-center text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                                                <span>Desconto</span>
+                                                <span>- R$ {order.discount.toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        {order.extraCharge && order.extraCharge > 0 && (
+                                            <div className="flex justify-between items-center text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                                                <span>Acréscimo</span>
+                                                <span>+ R$ {order.extraCharge.toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        {order.deliveryOrder?.paymentMethod && (
+                                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest pt-2 border-t border-white/5">
+                                                <span>Pagamento</span>
+                                                <span className="text-emerald-400 italic">{order.deliveryOrder.paymentMethod}</span>
+                                            </div>
+                                        )}
+                                        {order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > 0 && (
+                                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                <span>Troco Para</span>
+                                                <span className="text-amber-400 italic">R$ {order.deliveryOrder.changeFor.toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="pt-6 border-t border-white/10 flex justify-between items-end">
+                                        <div>
+                                            <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Total Final</p>
+                                            <h3 className="text-4xl font-black text-white italic tracking-tighter leading-none">
+                                                R$ {order.total.toFixed(2).replace('.', ',')}
+                                            </h3>
+                                        </div>
+                                        <div className={cn("px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-lg", isPaid ? "bg-emerald-500 text-white border-transparent" : "bg-rose-500 text-white border-transparent animate-pulse")}>
+                                            {isPaid ? 'PAGO' : 'PENDENTE'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PAGAMENTOS REGISTRADOS */}
+                            {order.payments && order.payments.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Pagamentos</h3>
+                                        <div className="h-px flex-1 bg-slate-100 ml-4" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        {order.payments.map((p: { id?: string; method: string; amount: number }, idx: number) => (
+                                            <div key={p.id || idx} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <CreditCard size={14} className="text-slate-400" />
+                                                    <span className="text-xs font-bold text-slate-700">{p.method}</span>
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-900">R$ {p.amount.toFixed(2)}</span>
                                             </div>
                                         ))}
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
                     )}
-
-                    {/* SOLICITAÇÃO DE CANCELAMENTO (iFood) */}
-                    {order.cancellationRequested && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-black uppercase text-rose-600 tracking-[0.2em] flex items-center gap-2">
-                                    <AlertTriangle size={12} />
-                                    Cancelamento Solicitado
-                                </h3>
-                                <div className="h-px flex-1 bg-rose-200 ml-4" />
-                            </div>
-                            <div className="bg-rose-50 border border-rose-200 rounded-3xl p-4 space-y-4">
-                                <div className="space-y-2">
-                                    <p className="text-[10px] font-black text-rose-500 uppercase">Motivo:</p>
-                                    <p className="text-xs font-bold text-slate-700">{order.cancellationReason || 'Cliente solicitou cancelamento'}</p>
-                                    {order.cancellationDeadline && (
-                                        <p className="text-[10px] font-bold text-orange-600">
-                                            Prazo: {formatSP(order.cancellationDeadline, 'HH:mm:ss')}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button 
-                                        onClick={handleAcceptCancellation}
-                                        disabled={isHandlingCancellation}
-                                        className="flex-1 bg-rose-500 hover:bg-rose-600 text-white h-10 text-xs font-black uppercase"
-                                    >
-                                        {isHandlingCancellation ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
-                                    </Button>
-                                    <Button 
-                                        onClick={handleRefuseCancellation}
-                                        disabled={isHandlingCancellation}
-                                        variant="outline"
-                                        className="flex-1 border-rose-300 text-rose-600 hover:bg-rose-50 h-10 text-xs font-black uppercase"
-                                    >
-                                        Recusar
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* DISPUTA POST-ENTREGA (Handshake) */}
-                    {order.disputeId && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-black uppercase text-amber-600 tracking-[0.2em] flex items-center gap-2">
-                                    <AlertTriangle size={12} />
-                                    Disputa Pós-Entrega
-                                </h3>
-                                <div className="h-px flex-1 bg-amber-200 ml-4" />
-                            </div>
-                            <div className="bg-amber-50 border border-amber-200 rounded-3xl p-4 space-y-4">
-                                <div className="space-y-2">
-                                    <p className="text-[10px] font-black text-amber-600 uppercase">Motivo:</p>
-                                    <p className="text-xs font-bold text-slate-700">{order.disputeReason || 'Cliente abriu disputa'}</p>
-                                    {order.disputeExpiresAt && (
-                                        <p className="text-[10px] font-bold text-orange-600">
-                                            Responder até: {formatSP(order.disputeExpiresAt, 'HH:mm:ss')}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button 
-                                        onClick={handleAcceptDispute}
-                                        disabled={isHandlingDispute}
-                                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-white h-10 text-xs font-black uppercase"
-                                    >
-                                        {isHandlingDispute ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
-                                    </Button>
-                                    <Button 
-                                        onClick={handleRejectDispute}
-                                        disabled={isHandlingDispute}
-                                        variant="outline"
-                                        className="flex-1 border-amber-300 text-amber-600 hover:bg-amber-50 h-10 text-xs font-black uppercase"
-                                    >
-                                        Recusar
-                                    </Button>
-                                    <Button 
-                                        onClick={() => setShowAlternativeModal(true)}
-                                        disabled={isHandlingDispute}
-                                        variant="outline"
-                                        className="flex-1 border-blue-300 text-blue-600 hover:bg-blue-50 h-10 text-xs font-black uppercase"
-                                    >
-                                        Alternativa
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* LOGÍSTICA DE ENTREGA */}
-                    {isDelivery && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Logística</h3>
-                                <div className="h-px flex-1 bg-slate-100 ml-4" />
-                            </div>
-                            <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-3xl space-y-4">
-                                <div className="flex gap-2 p-1.5 bg-white border border-blue-100 rounded-2xl shadow-inner">
-                                    <button onClick={() => handleUpdateDeliveryType('retirada')} className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", deliveryType === 'retirada' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}>
-                                        <ShoppingBag size={14} /> Balcão
-                                    </button>
-                                    <button onClick={() => handleUpdateDeliveryType('delivery')} className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", deliveryType === 'delivery' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:bg-slate-50")}>
-                                        <Truck size={14} /> Entrega
-                                    </button>
-                                </div>
-                                {deliveryType === 'delivery' && (
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] font-black text-blue-600 uppercase ml-2 tracking-widest">Atribuir Motoboy</label>
-                                        <select className="w-full bg-white border-2 border-blue-100 rounded-2xl h-12 px-4 text-xs font-black text-slate-900 outline-none shadow-sm focus:border-blue-500 appearance-none cursor-pointer" value={selectedDriver} onChange={(e) => handleAssignDriver(e.target.value)}>
-                                            <option value="">Aguardando seleção...</option>
-                                            {drivers.map(d => <option key={d.id} value={d.id}>{d.name.toUpperCase()}</option>)}
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* BALANCE FINANCEIRO */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Financeiro</h3>
-                            <div className="h-px flex-1 bg-slate-100 ml-4" />
-                        </div>
-                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-                            <div className="absolute -bottom-6 -right-6 opacity-[0.05] group-hover:rotate-12 transition-transform duration-500"><Wallet size={120} /></div>
-                            <div className="space-y-6 relative z-10">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                        <span>Consumo Base</span>
-                                        <span className="text-white">R$ {(order.subtotal || order.total).toFixed(2)}</span>
-                                    </div>
-                                    {(order.deliveryFee || order.deliveryOrder?.deliveryFee) > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                            <span>Taxa de Entrega</span>
-                                            <span className="text-blue-400">+ R$ {(order.deliveryFee || order.deliveryOrder?.deliveryFee || 0).toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    {(order.platformFee || 0) > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                            <span>Taxa Plataforma</span>
-                                            <span className="text-amber-400">+ R$ {(order.platformFee || 0).toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    {order.discount && order.discount > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-black text-rose-500 uppercase tracking-widest">
-                                            <span>Desconto</span>
-                                            <span>- R$ {order.discount.toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    {order.extraCharge && order.extraCharge > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-black text-amber-500 uppercase tracking-widest">
-                                            <span>Acréscimo</span>
-                                            <span>+ R$ {order.extraCharge.toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    {order.deliveryOrder?.paymentMethod && (
-                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest pt-2 border-t border-white/5">
-                                            <span>Pagamento</span>
-                                            <span className="text-emerald-400 italic">{order.deliveryOrder.paymentMethod}</span>
-                                        </div>
-                                    )}
-                                    {order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                            <span>Troco Para</span>
-                                            <span className="text-amber-400 italic">R$ {order.deliveryOrder.changeFor.toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="pt-6 border-t border-white/10 flex justify-between items-end">
-                                    <div>
-                                        <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Total Final</p>
-                                        <h3 className="text-4xl font-black text-white italic tracking-tighter leading-none">
-                                            R$ {order.total.toFixed(2).replace('.', ',')}
-                                        </h3>
-                                    </div>
-                                    <div className={cn("px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-lg", isPaid ? "bg-emerald-500 text-white border-transparent" : "bg-rose-500 text-white border-transparent animate-pulse")}>
-                                        {isPaid ? 'PAGO' : 'PENDENTE'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* ÁREA DE AÇÃO DE PAGAMENTO (RENOVADA) */}
