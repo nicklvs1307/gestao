@@ -201,8 +201,8 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
         noPadding
       >
         {/* Header: Checkbox, ID e Timer */}
-        <div className="flex justify-between items-start px-4 pt-3">
-            <div className="flex items-center gap-2.5">
+        <div className="flex justify-between items-start px-4 pt-3 gap-2">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <button 
                   onClick={handleSelect}
                   aria-label={isSelected ? "Desselecionar pedido" : "Selecionar pedido"}
@@ -213,8 +213,8 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                 >
                   {isSelected && <CheckCircle size={12} strokeWidth={3} />}
                 </button>
-                <div>
-                  <span className="block text-sm font-bold text-slate-900 leading-tight">
+                <div className="min-w-0">
+                  <span className="block text-sm font-bold text-slate-900 leading-tight truncate">
                     #{order.dailyOrderNumber || '0'} <span className="text-xs font-medium text-slate-500">- {deliveryData?.name || order.customerName || 'Consumidor'}</span>
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -222,39 +222,39 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                   </span>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end max-w-[55%]">
                 {order.ifoodOrderId && (
-                    <img src={ifoodLogo} alt="iFood" className="h-7 w-auto" />
+                    <img src={ifoodLogo} alt="iFood" className="h-6 w-auto shrink-0" />
                 )}
                 {order.uairangoOrderId && (
-                    <img src={uairangoLogo} alt="Uai Rangô" className="h-7 w-auto" />
+                    <img src={uairangoLogo} alt="Uai Rangô" className="h-6 w-auto shrink-0" />
                 )}
                 {order.food99OrderId && (
-                    <img src={food99Logo} alt="99Food" className="h-7 w-auto" />
+                    <img src={food99Logo} alt="99Food" className="h-6 w-auto shrink-0" />
                 )}
                 {order.displayId && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold">
-                    <Ticket size={12} /> {order.displayId}
+                  <div className="flex items-center gap-1 px-1.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold shrink-0">
+                    <Ticket size={10} /> {order.displayId}
                   </div>
                 )}
                 {order.scheduledDateTime && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold" title={`Agendado: ${order.scheduledDateTime}`}>
-                    <Calendar size={12} /> {new Date(order.scheduledDateTime).toLocaleDateString('pt-BR')} {new Date(order.scheduledDateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  <div className="flex items-center gap-1 px-1.5 py-1 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold shrink-0" title={`Agendado: ${order.scheduledDateTime}`}>
+                    <Calendar size={10} /> {new Date(order.scheduledDateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
                 {order.cancellationRequested && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold animate-pulse" title={order.cancellationReason || 'Cancelamento solicitado'}>
-                    <AlertTriangle size={12} /> Cancelamento
+                  <div className="flex items-center gap-1 px-1.5 py-1 bg-rose-100 text-rose-700 rounded-lg text-[10px] font-bold shrink-0 animate-pulse" title={order.cancellationReason || 'Cancelamento solicitado'}>
+                    <AlertTriangle size={10} /> Cancelamento
                   </div>
                 )}
                 {order.disputeId && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-bold animate-pulse" title={order.disputeReason || 'Disputa aberta'}>
-                    <AlertTriangle size={12} /> Disputa
+                  <div className="flex items-center gap-1 px-1.5 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-bold shrink-0 animate-pulse" title={order.disputeReason || 'Disputa aberta'}>
+                    <AlertTriangle size={10} /> Disputa
                   </div>
                 )}
                 {order.benefits && Array.isArray(order.benefits) && order.benefits.length > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold" title={`Cupom: ${order.benefits.map(b => b.name).join(', ')}`}>
-                    <Percent size={12} /> -R$ {order.benefits.reduce((sum, b) => sum + (b.value || 0), 0).toFixed(2).replace('.', ',')}
+                  <div className="flex items-center gap-1 px-1.5 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold shrink-0" title={`Cupom: ${order.benefits.map(b => b.name).join(', ')}`}>
+                    <Percent size={10} /> -R$ {order.benefits.reduce((sum, b) => sum + (b.value || 0), 0).toFixed(2).replace('.', ',')}
                   </div>
                 )}
                 <OrderTimer createdAt={order.createdAt} status={order.status} />
