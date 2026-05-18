@@ -48,7 +48,6 @@ const summaryOrderSelect = {
   isPrinted: true,
   ifoodOrderId: true,
   uairangoOrderId: true,
-  food99OrderId: true,
   displayId: true,
   pickupCode: true,
   scheduledDateTime: true,
