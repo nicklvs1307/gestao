@@ -9,8 +9,9 @@ import {
 import { formatSP } from '@/lib/timezone';
 import {
     CheckCircle, Printer,
-    Loader2, FileText, User, MapPin,
-    Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck, XCircle, ChevronDown, ShoppingCart, ChefHat, Wine
+    Loader2, FileText, User, MapPin, Phone,
+    Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck, XCircle, ChevronDown, ShoppingCart, ChefHat, Wine,
+    Calendar, Ticket, Tag, Clock, Info, Wallet
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
@@ -48,7 +49,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'items' | 'payment'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'payment' | 'details'>('items');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodType[]>([]);
@@ -443,7 +444,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   }, [order]);
 
   return (
-    <div className="fixed inset-0 z-[300] flex flex-col animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[300] flex flex-col animate-in fade-in duration-300" onWheel={(e) => e.stopPropagation()}>
       {/* Overlay escuro com backdrop blur */}
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} />
       
@@ -546,6 +547,17 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
           )}
         >
           <CreditCard size={14} /> Pagamento
+        </button>
+        <button
+          onClick={() => setActiveTab('details')}
+          className={cn(
+            "flex items-center gap-2 h-9 px-5 rounded-xl text-[10px] font-black uppercase italic tracking-widest transition-all",
+            activeTab === 'details'
+              ? "bg-orange-600 text-white shadow-md"
+              : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+          )}
+        >
+          <Info size={14} /> Detalhes
         </button>
         <div className="flex-1" />
         {remainingToPay > 0 && (
@@ -693,6 +705,198 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                     onNewPaymentChange={setNewPayment}
                     onInternalObsChange={setInternalObs}
                 />
+            ) : (
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <div className="max-w-2xl mx-auto space-y-6">
+                        {/* DADOS DO PEDIDO */}
+                        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><List size={14} /> Dados do Pedido</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Nº Pedido</span>
+                                    <span className="text-lg font-black text-slate-900">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</span>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Tipo</span>
+                                    <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-md uppercase inline-block", order.orderType === 'PICKUP' ? "bg-purple-100 text-purple-700" : order.orderType === 'DELIVERY' ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700")}>
+                                        {order.orderType === 'PICKUP' ? 'Retirada' : order.orderType === 'DELIVERY' ? 'Delivery' : 'Mesa'}
+                                    </span>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Criado em</span>
+                                    <span className="text-xs font-bold text-slate-700">{formatSP(order.createdAt, 'dd/MM/yyyy HH:mm:ss')}</span>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Status</span>
+                                    <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-md uppercase inline-block", currentStatus.bg, currentStatus.color, currentStatus.border)}>{currentStatus.label}</span>
+                                </div>
+                                {order.pendingAt && (
+                                    <div className="bg-slate-50 rounded-xl p-3">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Pendente desde</span>
+                                        <span className="text-xs font-bold text-amber-600">{formatSP(order.pendingAt, 'HH:mm:ss')}</span>
+                                    </div>
+                                )}
+                                {order.preparingAt && (
+                                    <div className="bg-slate-50 rounded-xl p-3">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Preparo iniciou</span>
+                                        <span className="text-xs font-bold text-blue-600">{formatSP(order.preparingAt, 'HH:mm:ss')}</span>
+                                    </div>
+                                )}
+                                {order.readyAt && (
+                                    <div className="bg-slate-50 rounded-xl p-3">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Pronto em</span>
+                                        <span className="text-xs font-bold text-emerald-600">{formatSP(order.readyAt, 'HH:mm:ss')}</span>
+                                    </div>
+                                )}
+                                {order.completedAt && (
+                                    <div className="bg-slate-50 rounded-xl p-3">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Finalizado em</span>
+                                        <span className="text-xs font-bold text-slate-600">{formatSP(order.completedAt, 'dd/MM HH:mm')}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* AGENDAMENTO */}
+                        {order.scheduledDateTime && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 shadow-sm">
+                                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2"><Calendar size={14} /> Pedido Agendado</h3>
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-blue-100 p-3 rounded-xl">
+                                        <Calendar size={24} className="text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-bold text-blue-800 block">
+                                            {formatSP(order.scheduledDateTime, 'dd/MM/yyyy')} às {formatSP(order.scheduledDateTime, 'HH:mm')}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-blue-500 uppercase">Entrega agendada</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* CLIENTE */}
+                        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><User size={14} /> Cliente</h3>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome</span>
+                                    <span className="text-sm font-bold text-slate-900">{order.deliveryOrder?.name || order.customerName || 'Consumidor'}</span>
+                                </div>
+                                {order.deliveryOrder?.phone && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Telefone</span>
+                                        <span className="text-xs font-bold text-blue-600 flex items-center gap-1"><Phone size={12} /> {order.deliveryOrder.phone}</span>
+                                    </div>
+                                )}
+                                {order.deliveryOrder?.address && (
+                                    <div className="pt-2 border-t border-slate-100">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Endereço</span>
+                                        <p className="text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded-xl">
+                                            {order.deliveryOrder.address}
+                                            {order.deliveryOrder.complement && <><br/><span className="text-amber-600">Comp: {order.deliveryOrder.complement}</span></>}
+                                            {order.deliveryOrder.reference && <><br/><span className="text-blue-600">Ref: {order.deliveryOrder.reference}</span></>}
+                                        </p>
+                                    </div>
+                                )}
+                                {order.deliveryOrder?.neighborhood && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bairro</span>
+                                        <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.neighborhood}</span>
+                                    </div>
+                                )}
+                                {order.deliveryOrder?.city && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cidade</span>
+                                        <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.city}/{order.deliveryOrder.state}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* INTEGRAÇÃO */}
+                        {(order.ifoodOrderId || order.displayId || order.customerDocument || order.benefits) && (
+                            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 shadow-sm">
+                                <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                    <img src="https://www.ifood.com.br/static/images/ifood-logo.svg" className="h-4" alt="iFood" /> Integração
+                                </h3>
+                                <div className="space-y-3">
+                                    {order.ifoodOrderId && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">iFood ID</span>
+                                            <span className="text-[10px] font-bold text-slate-600 font-mono">{order.ifoodOrderId}</span>
+                                        </div>
+                                    )}
+                                    {order.displayId && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Código Coleta</span>
+                                            <span className="text-sm font-bold text-orange-600 flex items-center gap-1"><Ticket size={14} /> {order.displayId}</span>
+                                        </div>
+                                    )}
+                                    {order.customerDocument && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Documento</span>
+                                            <span className="text-xs font-bold text-slate-600">{order.customerDocument}</span>
+                                        </div>
+                                    )}
+                                    {order.benefits && order.benefits.length > 0 && (
+                                        <div className="pt-2 border-t border-orange-200">
+                                            <span className="text-[9px] font-black text-green-600 uppercase flex items-center gap-2 mb-2"><Tag size={12} /> Cupons</span>
+                                            {order.benefits.map((benefit, idx) => (
+                                                <div key={idx} className="flex items-center justify-between bg-white/60 p-2 rounded-xl mb-1">
+                                                    <span className="text-xs font-bold text-slate-600">{benefit.name}</span>
+                                                    <span className="text-xs font-bold text-green-600">- R$ {benefit.value.toFixed(2)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* OBSERVAÇÕES */}
+                        {order.deliveryOrder?.notes && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+                                <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Info size={14} /> Observações</h3>
+                                <p className="text-xs font-bold text-amber-800">{order.deliveryOrder.notes}</p>
+                            </div>
+                        )}
+
+                        {/* FINANCEIRO */}
+                        <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Wallet size={14} /> Financeiro</h3>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                    <span>Subtotal</span><span className="text-white">R$ {subtotal.toFixed(2)}</span>
+                                </div>
+                                {deliveryFee > 0 && (
+                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                        <span>Taxa Entrega</span><span className="text-blue-400">+ R$ {deliveryFee.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                {(order.platformFee || 0) > 0 && (
+                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                        <span>Taxa Plataforma</span><span className="text-amber-400">+ R$ {(order.platformFee || 0).toFixed(2)}</span>
+                                    </div>
+                                )}
+                                {discount > 0 && (
+                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                        <span>Desconto</span><span className="text-rose-400">- R$ {discount.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                {surcharge > 0 && (
+                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                        <span>Acréscimo</span><span className="text-amber-400">+ R$ {surcharge.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div className="pt-3 border-t border-white/10 flex justify-between items-end">
+                                    <span className="text-[9px] font-black text-blue-400 uppercase">Total</span>
+                                    <span className="text-2xl font-black italic">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
       </div>
