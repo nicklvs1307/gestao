@@ -464,12 +464,12 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
     </div>
   );
 }, (prev, next) => {
-  // Custom comparator: only re-render if these specific fields change
   return (
     prev.order.id === next.order.id &&
     prev.order.status === next.order.status &&
     prev.order.updatedAt === next.order.updatedAt &&
     prev.order.total === next.order.total &&
+    prev.order.scheduledDateTime === next.order.scheduledDateTime &&
     prev.isSelected === next.isSelected
   );
 });
