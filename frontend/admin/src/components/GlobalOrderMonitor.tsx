@@ -276,7 +276,7 @@ const GlobalOrderMonitor: React.FC = () => {
   }, [isKdsPage, hasUser, isAutoAccept, playNotificationSound]);
 
   // --- MEMOIZED VALUES ---
-  // Não mostra solicitações de cancelamento do cliente no NewOrderAlert - elas aparecem no OrderDetailModal
+  // Não mostra solicitações de cancelamento do cliente no NewOrderAlert - elas aparecem no OrderEditor
   const pendingOrders = useMemo(() => allOrders.filter(o => o.status === 'PENDING' && !o.cancellationRequested), [allOrders]);
 
   // --- PRINTING LOGIC - uses ref to avoid re-triggering on every allOrders change ---

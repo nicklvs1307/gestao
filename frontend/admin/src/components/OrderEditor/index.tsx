@@ -1,17 +1,25 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Order, Product, Category, PaymentMethod as PaymentMethodType } from '@/types/index.ts';
+import { useNavigate } from 'react-router-dom';
 import {
     getDrivers, assignDriver, getProducts, getCategories,
     getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem,
     updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType, updateOrderStatus, getSettings, markOrderAsPrinted,
-    getIfoodCancellationReasons, rejectIfoodOrder
+    getIfoodCancellationReasons, rejectIfoodOrder, emitInvoice
 } from '../../services/api';
+import {
+    acceptIfoodCancellation,
+    refuseIfoodCancellation,
+    acceptIfoodDispute,
+    rejectIfoodDispute,
+    offerIfoodAlternative
+} from '../../services/api/integrations';
 import { formatSP } from '@/lib/timezone';
 import {
     CheckCircle, Printer,
     Loader2, FileText, User, MapPin, Phone,
     Search, Plus, Trash2, ArrowLeft, List, CreditCard, Truck, XCircle, ChevronDown, ShoppingCart, ChefHat, Wine,
-    Calendar, Ticket, Tag, Clock, Info, Wallet
+    Calendar, Ticket, Tag, Clock, Info, Wallet, ArrowRight, ShieldCheck, AlertTriangle, Package, PlayCircle, Circle
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
@@ -29,13 +37,13 @@ interface OrderEditorProps {
 }
 
 const STATUS_OPTIONS = [
-    { value: 'PENDING', label: 'Pendente', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-    { value: 'PREPARING', label: 'Cozinha', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-    { value: 'READY', label: 'Pronto', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { value: 'SHIPPED', label: 'Em Rota', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
-    { value: 'DELIVERED', label: 'Entregue', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
-    { value: 'COMPLETED', label: 'Finalizado', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { value: 'CANCELED', label: 'Cancelado', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
+    { value: 'PENDING', label: 'Pendente', icon: Circle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+    { value: 'PREPARING', label: 'Cozinha', icon: PlayCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+    { value: 'READY', label: 'Pronto', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+    { value: 'SHIPPED', label: 'Em Rota', icon: Truck, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+    { value: 'DELIVERED', label: 'Entregue', icon: Package, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
+    { value: 'COMPLETED', label: 'Finalizado', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+    { value: 'CANCELED', label: 'Cancelado', icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
 ];
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -49,6 +57,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'items' | 'payment' | 'details'>('items');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -85,6 +94,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const [, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isEmitting, setIsEmitting] = useState(false);
   const [printMenuAnchor, setPrintMenuAnchor] = useState<null | HTMLElement>(null);
   const [printingTarget, setPrintingTarget] = useState<PrintTarget | null>(null);
 
@@ -94,6 +104,15 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   const [selectedCancelReason, setSelectedCancelReason] = useState('');
   const [isLoadingReasons, setIsLoadingReasons] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+
+  // Estados para disputas iFood
+  const [isHandlingDispute, setIsHandlingDispute] = useState(false);
+  const [showAlternativeModal, setShowAlternativeModal] = useState(false);
+  const [alternativeType, setAlternativeType] = useState<string>('');
+  const [alternativeValue, setAlternativeValue] = useState<string>('');
+
+  // Estados para cancelamento solicitado pelo cliente
+  const [isHandlingCancellation, setIsHandlingCancellation] = useState(false);
 
   useScrollLock(true);
 
@@ -383,6 +402,134 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       toast.error("Erro ao cancelar pedido");
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleAcceptCancellation = async () => {
+    if (!order.ifoodOrderId) return;
+    setIsHandlingCancellation(true);
+    try {
+      const result = await acceptIfoodCancellation(order.id);
+      if (result.success) {
+        toast.success('Cancelamento aceito');
+        await updateOrderStatus(order.id, 'CANCELED');
+        onRefresh();
+        onClose();
+      } else {
+        toast.error(result.error || 'Erro ao aceitar cancelamento');
+      }
+    } catch {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingCancellation(false);
+    }
+  };
+
+  const handleRefuseCancellation = async () => {
+    if (!order.ifoodOrderId) return;
+    setIsHandlingCancellation(true);
+    try {
+      const result = await refuseIfoodCancellation(order.id);
+      if (result.success) {
+        toast.success('Cancelamento recusado');
+        onRefresh();
+      } else {
+        toast.error(result.error || 'Erro ao recusar cancelamento');
+      }
+    } catch {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingCancellation(false);
+    }
+  };
+
+  const handleAcceptDispute = async () => {
+    if (!order.disputeId) return;
+    setIsHandlingDispute(true);
+    try {
+      const result = await acceptIfoodDispute(order.disputeId, order.id, 'CUSTOMER_SATISFACTION');
+      if (result.success) {
+        toast.success('Disputa aceita - reembolso processado');
+        await updateOrderStatus(order.id, 'CANCELED');
+        onRefresh();
+        onClose();
+      } else {
+        toast.error(result.error || 'Erro ao aceitar disputa');
+      }
+    } catch {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingDispute(false);
+    }
+  };
+
+  const handleRejectDispute = async () => {
+    if (!order.disputeId) return;
+    setIsHandlingDispute(true);
+    try {
+      const result = await rejectIfoodDispute(order.disputeId, order.id, 'Loja não concorda com a solicitação');
+      if (result.success) {
+        toast.success('Disputa recusada');
+        onRefresh();
+      } else {
+        toast.error(result.error || 'Erro ao recusar disputa');
+      }
+    } catch {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingDispute(false);
+    }
+  };
+
+  const handleOfferAlternative = async () => {
+    if (!order.disputeId || !alternativeType) return;
+    setIsHandlingDispute(true);
+    try {
+      const value = alternativeValue ? parseFloat(alternativeValue) : undefined;
+      const result = await offerIfoodAlternative(order.disputeId, order.id, alternativeType, value);
+      if (result.success) {
+        toast.success('Alternativa oferecida ao cliente');
+        setShowAlternativeModal(false);
+        onRefresh();
+      } else {
+        toast.error(result.error || 'Erro ao oferecer alternativa');
+      }
+    } catch {
+      toast.error('Erro ao processar');
+    } finally {
+      setIsHandlingDispute(false);
+    }
+  };
+
+  const handleEmitInvoice = async () => {
+    setIsEmitting(true);
+    try {
+      const res = await emitInvoice(order.id);
+      toast.success("Nota emitida com sucesso!");
+      if (res.pdfUrl) window.open(res.pdfUrl, '_blank');
+      onRefresh();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao emitir nota.");
+    } finally {
+      setIsEmitting(false);
+    }
+  };
+
+  const handleNavigateToCheckout = () => {
+    navigate(`/pos/checkout/${order.id}`);
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === 'CANCELED' && order.ifoodOrderId && order.status !== 'PENDING') {
+      handleCancelOrder();
+      return;
+    }
+    try {
+      await updateOrderStatus(order.id, newStatus);
+      toast.success(`Status alterado para ${STATUS_OPTIONS.find(s => s.value === newStatus)?.label}`);
+      onRefresh();
+    } catch {
+      toast.error("Erro ao alterar status.");
     }
   };
 
@@ -676,7 +823,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         ))}
                     </div>
                 </div>
-            ) : (
+            ) : activeTab === 'payment' ? (
                 <OrderEditorPayment
                     order={order}
                     subtotal={subtotal}
@@ -854,6 +1001,81 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                             </div>
                         )}
 
+                        {/* CANCELAMENTO SOLICITADO PELO CLIENTE */}
+                        {order.cancellationRequested && (
+                            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 shadow-sm">
+                                <h3 className="text-[10px] font-black text-rose-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2"><AlertTriangle size={14} /> Cancelamento Solicitado</h3>
+                                <div className="space-y-3">
+                                    <div className="bg-white/60 p-3 rounded-xl">
+                                        <p className="text-[9px] font-black text-rose-500 uppercase mb-1">Motivo:</p>
+                                        <p className="text-xs font-bold text-slate-700">{order.cancellationReason || 'Cliente solicitou cancelamento'}</p>
+                                        {order.cancellationDeadline && (
+                                            <p className="text-[10px] font-bold text-orange-600 mt-1">
+                                                Prazo: {formatSP(order.cancellationDeadline, 'HH:mm:ss')}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleAcceptCancellation}
+                                            disabled={isHandlingCancellation}
+                                            className="flex-1 h-10 bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
+                                        >
+                                            {isHandlingCancellation ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                        </button>
+                                        <button
+                                            onClick={handleRefuseCancellation}
+                                            disabled={isHandlingCancellation}
+                                            className="flex-1 h-10 bg-white border-2 border-rose-300 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
+                                        >
+                                            Recusar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* DISPUTA IFOOD */}
+                        {order.disputeId && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+                                <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2"><AlertTriangle size={14} /> Disputa Pós-Entrega</h3>
+                                <div className="space-y-3">
+                                    <div className="bg-white/60 p-3 rounded-xl">
+                                        <p className="text-[9px] font-black text-amber-600 uppercase mb-1">Motivo:</p>
+                                        <p className="text-xs font-bold text-slate-700">{order.disputeReason || 'Cliente abriu disputa'}</p>
+                                        {order.disputeExpiresAt && (
+                                            <p className="text-[10px] font-bold text-orange-600 mt-1">
+                                                Responder até: {formatSP(order.disputeExpiresAt, 'HH:mm:ss')}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleAcceptDispute}
+                                            disabled={isHandlingDispute}
+                                            className="flex-1 h-10 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
+                                        >
+                                            {isHandlingDispute ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                        </button>
+                                        <button
+                                            onClick={handleRejectDispute}
+                                            disabled={isHandlingDispute}
+                                            className="flex-1 h-10 bg-white border-2 border-amber-300 text-amber-600 hover:bg-amber-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
+                                        >
+                                            Recusar
+                                        </button>
+                                        <button
+                                            onClick={() => setShowAlternativeModal(true)}
+                                            disabled={isHandlingDispute}
+                                            className="flex-1 h-10 bg-white border-2 border-blue-300 text-blue-600 hover:bg-blue-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
+                                        >
+                                            Alternativa
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* OBSERVAÇÕES */}
                         {order.deliveryOrder?.notes && (
                             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
@@ -994,6 +1216,120 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Modal de Alternativa de Disputa */}
+      {showAlternativeModal && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowAlternativeModal(false)} />
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black text-slate-900 uppercase italic">Oferecer Alternativa</h2>
+              <button onClick={() => setShowAlternativeModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <XCircle size={20} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tipo de Alternativa</label>
+                <select
+                  value={alternativeType}
+                  onChange={e => setAlternativeType(e.target.value)}
+                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="REFUND_PARTIAL">Reembolso Parcial</option>
+                  <option value="REFUND_TOTAL">Reembolso Total</option>
+                  <option value="CREDIT">Crédito para Próximo Pedido</option>
+                  <option value="REPLACEMENT">Substituição do Produto</option>
+                </select>
+              </div>
+              {(alternativeType === 'REFUND_PARTIAL' || alternativeType === 'CREDIT') && (
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Valor (R$)</label>
+                  <input
+                    type="number"
+                    value={alternativeValue}
+                    onChange={e => setAlternativeValue(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                  />
+                </div>
+              )}
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  onClick={() => setShowAlternativeModal(false)}
+                  className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  disabled={isHandlingDispute}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleOfferAlternative}
+                  disabled={!alternativeType || isHandlingDispute}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isHandlingDispute && <Loader2 size={16} className="animate-spin" />}
+                  Oferecer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer de Status */}
+      {activeTab === 'details' && (
+        <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+          <div className="flex flex-wrap justify-center gap-2">
+            {STATUS_OPTIONS.map((status) => {
+              const isActive = order.status === status.value;
+              const isPaid = order.status === 'COMPLETED' || (order.payments && order.payments.length > 0);
+              const isDisabled = (status.value === 'COMPLETED' && !isPaid);
+              const StatusIcon = status.icon;
+              return (
+                <button
+                  key={status.value}
+                  onClick={() => handleStatusChange(status.value)}
+                  disabled={isActive || isDisabled}
+                  className={cn(
+                    "flex items-center gap-2 h-10 px-4 rounded-xl text-[10px] uppercase tracking-wider font-black transition-all border shadow-sm",
+                    isActive
+                      ? cn(status.bg, status.color, status.border, "scale-105 shadow-md")
+                      : isDisabled
+                        ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                        : "bg-white border-slate-200 text-slate-500 hover:border-slate-900 hover:text-slate-900 active:scale-95"
+                  )}
+                >
+                  <StatusIcon size={14} strokeWidth={isActive ? 3 : 2} className={isActive ? "animate-pulse" : ""} />
+                  {status.label}
+                </button>
+              );
+            })}
+          </div>
+          {order.status === 'COMPLETED' && (
+            <div className="flex gap-2 mt-3 justify-center">
+              <button
+                onClick={handleEmitInvoice}
+                disabled={isEmitting}
+                className="flex items-center gap-2 h-10 px-6 bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white rounded-xl transition-all font-black uppercase tracking-wider text-[10px]"
+              >
+                {isEmitting ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                {order.invoice ? 'Visualizar NF-e' : 'Emitir NF-e'}
+              </button>
+            </div>
+          )}
+          {order.status !== 'COMPLETED' && order.status !== 'CANCELED' && remainingToPay > 0 && (
+            <div className="flex gap-2 mt-3 justify-center">
+              <button
+                onClick={handleNavigateToCheckout}
+                className="flex items-center gap-2 h-12 px-8 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-100 active:scale-95"
+              >
+                Ir para Pagamento <ArrowRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
       )}
       </div>
