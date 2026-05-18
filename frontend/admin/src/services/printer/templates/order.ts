@@ -65,6 +65,14 @@ function buildOrderType(order: Order, width: number = PAPER_WIDTH): string {
 function buildOrderInfo(order: Order, width: number = PAPER_WIDTH): string {
   let buf = '';
   buf += formatSP(order.createdAt, 'dd/MM/yyyy HH:mm') + '\n';
+  
+  if (order.scheduledDateTime) {
+    buf += ESC_POS.ALIGN_CENTER;
+    buf += double(bold('*** PEDIDO AGENDADO ***')) + '\n';
+    buf += double(`ENTREGA: ${formatSP(order.scheduledDateTime, 'dd/MM HH:mm')}`) + '\n';
+    buf += ESC_POS.ALIGN_LEFT;
+  }
+  
   if (order.user?.name) {
     buf += bold(`ATEND: ${order.user.name.toUpperCase()}`) + '\n';
   }
@@ -335,6 +343,13 @@ function buildFooter(order: Order, settings: ReceiptSettings, isProduction: bool
     buf += line('-', width);
     buf += alignCenter(bold('*** PEDIDO IFOOD ***'));
     buf += alignCenter(`Pedido: ${order.ifoodOrderId}`);
+    buf += line('-', width);
+  }
+
+  if (order.scheduledDateTime) {
+    buf += line('-', width);
+    buf += alignCenter(bold('*** PEDIDO AGENDADO ***'));
+    buf += alignCenter(`Entrega: ${formatSP(order.scheduledDateTime, 'dd/MM/yyyy HH:mm')}`);
     buf += line('-', width);
   }
 

@@ -135,6 +135,12 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
                                   <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
                                       #{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}
                                   </span>
+                                  {order.scheduledDateTime && (
+                                    <span className="bg-blue-100 text-blue-700 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                                      <Clock size={10} />
+                                      Agendado: {formatSP(order.scheduledDateTime, 'HH:mm')}
+                                    </span>
+                                  )}
                                   {order.isPrinted && (
                                     <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1">
                                       <ShoppingBag size={10} /> Impresso

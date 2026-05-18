@@ -385,14 +385,18 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ onClose, order, onS
                                     </div>
                                 )}
                                 {order.scheduledDateTime && (
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-3">
                                         <div className="flex items-center gap-2">
-                                            <Calendar size={14} className="text-blue-600" />
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">Agendado para</span>
+                                            <div className="bg-blue-100 p-1.5 rounded-lg">
+                                                <Calendar size={16} className="text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest block">Pedido Agendado</span>
+                                                <span className="text-xs font-bold text-blue-800">
+                                                    Entrega em {formatSP(order.scheduledDateTime, 'dd/MM/yyyy')} às {formatSP(order.scheduledDateTime, 'HH:mm')}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span className="text-xs font-bold text-blue-600 uppercase">
-                                            {formatSP(order.scheduledDateTime, 'dd/MM/yyyy HH:mm')}
-                                        </span>
                                     </div>
                                 )}
                                 {order.customerDocument && (
