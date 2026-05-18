@@ -180,7 +180,10 @@ class IfoodOrderAdapter extends IntegrationBaseService {
 
     // ─── SCHEDULE (AGENDAMENTO) ────────────────────────────────────
     const schedule = rawData?.schedule || {};
-    const scheduledDateTime = schedule?.scheduledDateTime || null;
+    const orderTiming = rawData?.orderTiming || 'IMMEDIATE';
+    const scheduledDateTime = (orderTiming === 'SCHEDULED') 
+      ? (schedule?.deliveryDateTimeStart || schedule?.scheduledDateTime || null)
+      : null;
 
     // ─── BENEFITS (CUPONS) ──────────────────────────────────────────
     const benefits = rawData?.benefits || [];
