@@ -156,6 +156,7 @@ async handleWebhook(req, res) {
         await this._processEvent(event);
       } catch (error) {
         logger.error(`[IFOOD WEBHOOK] Erro ao processar evento ${event?.id}:`, error.message);
+        logger.error(`[IFOOD WEBHOOK] Stack trace:`, error.stack);
       }
     }
 
@@ -235,7 +236,17 @@ async handleWebhook(req, res) {
 
       case 'CANCELLED':
       case 'CAN':
-        await IntegrationOrderService.cancelFromIntegration(platform, restaurantId, orderId);
+        try {
+          logger.info(`[IFOOD WEBHOOK] Evento CAN recebido para pedido iFood ${orderId}, buscando pedido local...`);
+          const result = await IntegrationOrderService.cancelFromIntegration(platform, restaurantId, orderId);
+          if (result) {
+            logger.info(`[IFOOD WEBHOOK] Pedido ${result.id} cancelado com sucesso via evento CAN`);
+          } else {
+            logger.warn(`[IFOOD WEBHOOK] Pedido não encontrado ou já cancelado para evento CAN ${orderId}`);
+          }
+        } catch (error) {
+          logger.error(`[IFOOD WEBHOOK] Erro ao processar cancelamento CAN: ${error.message}`, error.stack);
+        }
         await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 

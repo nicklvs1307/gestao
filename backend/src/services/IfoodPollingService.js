@@ -104,6 +104,7 @@ class IfoodPollingService {
           processedEventIds.push(event.id);
         } catch (error) {
           logger.error(`[IFOOD POLLING] Erro ao processar evento ${event.id}:`, error.message);
+          logger.error(`[IFOOD POLLING] Stack trace:`, error.stack);
           processedEventIds.push(event.id);
         }
       }
@@ -189,7 +190,17 @@ class IfoodPollingService {
 
       case 'CANCELLED':
       case 'CAN':
-        await IntegrationOrderService.cancelFromIntegration('ifood', restaurantId, orderId);
+        try {
+          logger.info(`[IFOOD POLLING] Evento CAN recebido para pedido iFood ${orderId}, buscando pedido local...`);
+          const result = await IntegrationOrderService.cancelFromIntegration('ifood', restaurantId, orderId);
+          if (result) {
+            logger.info(`[IFOOD POLLING] Pedido ${result.id} cancelado com sucesso via evento CAN`);
+          } else {
+            logger.warn(`[IFOOD POLLING] Pedido não encontrado ou já cancelado para evento CAN ${orderId}`);
+          }
+        } catch (error) {
+          logger.error(`[IFOOD POLLING] Erro ao processar cancelamento CAN: ${error.message}`, error.stack);
+        }
         await this._markEventProcessed(platform, orderId, code, restaurantId, null);
         break;
 
