@@ -151,6 +151,7 @@ export interface Order {
   total: number;
   subtotal?: number;
   customerName?: string | null;
+  notes?: string | null;
   createdAt: string;
   updatedAt: string;
   restaurantId: string;

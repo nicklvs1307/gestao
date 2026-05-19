@@ -199,11 +199,16 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
                               </div>
                               <div className="space-y-1.5 bg-slate-50/50 p-3 rounded-xl border border-slate-100/50 max-h-32 overflow-y-auto">
                                   {order.items?.map((item, idx) => (
-                                      <div key={idx} className="flex justify-between items-center">
-                                          <p className="text-xs font-bold text-slate-800 truncate pr-4">
-                                              <span className="text-orange-600 font-black">{item.quantity}x</span> {item.product?.name || 'Produto'}
-                                          </p>
-                                          <span className="text-[10px] font-bold text-slate-500 shrink-0">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
+                                      <div key={idx} className="space-y-0.5">
+                                          <div className="flex justify-between items-center">
+                                              <p className="text-xs font-bold text-slate-800 truncate pr-4">
+                                                  <span className="text-orange-600 font-black">{item.quantity}x</span> {item.product?.name || 'Produto'}
+                                              </p>
+                                              <span className="text-[10px] font-bold text-slate-500 shrink-0">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
+                                          </div>
+                                          {item.observations && (
+                                              <p className="text-[9px] font-bold text-rose-600 pl-4">OBS: {item.observations}</p>
+                                          )}
                                       </div>
                                   ))}
                               </div>

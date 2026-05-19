@@ -764,6 +764,14 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                {(order.notes || order.deliveryOrder?.notes) && (
+                    <div className="mx-2 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                        <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                            <Tag size={10} /> Observação do Cliente
+                        </p>
+                        <p className="text-xs font-bold text-amber-800 leading-snug">{order.notes || order.deliveryOrder?.notes}</p>
+                    </div>
+                )}
                 <div className="grid grid-cols-12 px-2 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
                     <div className="col-span-2">Qtd</div>
                     <div className="col-span-7">Item</div>
@@ -781,6 +789,9 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                             {item.addonsJson && JSON.parse(item.addonsJson).map((a: { name: string; quantity?: number }, i: number) => (
                                 <p key={`addon-${i}`} className="text-[8px] text-slate-500 font-bold mt-1 bg-slate-100 px-1.5 py-0.5 rounded-md inline-block mr-1">+ {a.quantity || 1}x {a.name}</p>
                             ))}
+                            {item.observations && (
+                                <p className="text-[8px] text-rose-600 font-bold mt-1 bg-rose-50 px-1.5 py-0.5 rounded-md inline-block mr-1">OBS: {item.observations}</p>
+                            )}
                         </div>
                         <div className="col-span-3 text-right font-black text-slate-900 italic text-[11px]">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</div>
                         <button onClick={() => handleRemoveItem(item.id)} className="absolute -right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 bg-rose-50 text-rose-500 rounded-lg transition-all"><Trash2 size={12} /></button>

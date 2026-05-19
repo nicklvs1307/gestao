@@ -908,6 +908,7 @@ model Order {
   user         User?       @relation("CreatedOrders", fields: [userId], references: [id])
   
   customerName String?     // Nome do cliente na mesa (Comanda individual)
+  notes        String?     // Observações do cliente (para pedidos PICKUP e mesa)
 
   // Relações
   items        OrderItem[]
