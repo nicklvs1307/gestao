@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Order } from '../types';
 import { formatSP } from '@/lib/timezone';
+import { resolvePaymentLabel } from '@/utils/paymentUtils';
 import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag, Truck, UtensilsCrossed, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useScrollLock } from '../hooks/useScrollLock';
@@ -148,13 +149,13 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
                                   )}
                               </div>
                               <h3 className="text-lg font-black text-slate-900 leading-tight">
-                                  {order.deliveryOrder?.name || 'Cliente'}
+                                  {order.customerName || order.deliveryOrder?.name || 'Consumidor'}
                               </h3>
                               <p className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
-                                  <Clock size={12}/> {formatSP(order.createdAt, "HH:mm:ss")}
+                                  <Clock size={12}/> {formatSP(order.createdAt, "HH:mm")}
                                   <span className="text-slate-300">•</span>
                                   <span className="text-slate-500">
-                                    {order.paymentMethod || 'Pagamento não informado'}
+                                    {resolvePaymentLabel(order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method) || 'PENDENTE'}
                                   </span>
                               </p>
                           </div>

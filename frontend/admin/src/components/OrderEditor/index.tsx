@@ -930,6 +930,12 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome</span>
                                     <span className="text-sm font-bold text-slate-900">{order.deliveryOrder?.name || order.customerName || 'Consumidor'}</span>
                                 </div>
+                                {order.customerDocument && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">CPF/CNPJ</span>
+                                        <span className="text-xs font-bold text-slate-600 font-mono">{order.customerDocument}</span>
+                                    </div>
+                                )}
                                 {order.deliveryOrder?.phone && (
                                     <div className="flex items-center justify-between">
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Telefone</span>

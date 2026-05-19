@@ -674,6 +674,7 @@ if (isPickup && !hasValidPhone) {
           scheduledDateTime: scheduledDateTime ? new Date(scheduledDateTime) : null,
           customerDocument: customerDocument || null,
           benefits: benefits || null,
+          customerName: customer?.name || null,
           items: { create: orderItems },
         },
         include: { items: true },
