@@ -879,6 +879,7 @@ model Order {
   saiposOrderId String?
   ifoodOrderId String?
   uairangoOrderId String?
+  food99OrderId String?
 
   // === CAMPOS IFOOD (Homologação) ===
   displayId           String?    // Código de coleta do iFood (ex: #A1B2)
