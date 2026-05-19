@@ -298,7 +298,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 <div className="w-1 h-4 bg-orange-500 rounded-full" /> Obs. do Cliente
               </h3>
               <div className="p-3 bg-orange-50/50 border border-orange-100 rounded-xl text-[10px] font-bold text-slate-600 h-20 overflow-y-auto custom-scrollbar leading-snug italic">
-                {order.deliveryOrder?.notes || 'Nenhuma observação informada pelo cliente.'}
+                {order.notes || order.deliveryOrder?.notes || 'Nenhuma observação informada pelo cliente.'}
               </div>
             </div>
           </Card>

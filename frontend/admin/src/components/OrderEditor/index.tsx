@@ -1094,10 +1094,10 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         )}
 
                         {/* OBSERVAÇÕES */}
-                        {order.deliveryOrder?.notes && (
+                        {(order.notes || order.deliveryOrder?.notes) && (
                             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
                                 <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Info size={14} /> Observações</h3>
-                                <p className="text-xs font-bold text-amber-800">{order.deliveryOrder.notes}</p>
+                                <p className="text-xs font-bold text-amber-800">{order.notes || order.deliveryOrder?.notes}</p>
                             </div>
                         )}
 

@@ -182,12 +182,12 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
                               </div>
                           </div>
 
-                          {order.deliveryOrder?.notes && (
+                          {(order.notes || order.deliveryOrder?.notes) && (
                             <div className="flex items-start gap-3 bg-amber-50 p-3 rounded-xl border border-amber-100">
                               <Tag size={14} className="text-amber-600 mt-0.5 shrink-0" />
                               <div>
                                 <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-0.5">Observação</p>
-                                <p className="text-xs font-bold text-amber-800">{order.deliveryOrder.notes}</p>
+                                <p className="text-xs font-bold text-amber-800">{order.notes || order.deliveryOrder?.notes}</p>
                               </div>
                             </div>
                           )}
