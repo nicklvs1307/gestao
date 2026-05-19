@@ -298,43 +298,28 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   };
 
   const handleCancelOrder = async () => {
-    // Verificar se é pedido iFood para fluxo de cancelamento correto
     const isIfoodOrder = !!order.ifoodOrderId;
     
     if (isIfoodOrder) {
-      // Para pedidos iFood, buscar motivos de cancelamento
       setIsLoadingReasons(true);
       try {
         const result = await getIfoodCancellationReasons(order.id);
-        console.log('[DEBUG] Motivos de cancelamento:', result);
         
-        // Debug da estrutura
-        console.log('[DEBUG] result.reasons:', result.reasons);
-        console.log('[DEBUG] Tipo:', typeof result.reasons);
-        console.log('[DEBUG] É array:', Array.isArray(result.reasons));
-        
-        // Garantir que reasons é um array válido
         let reasons = result.reasons;
         
-        // Se não for array, tentar converter
         if (!Array.isArray(reasons)) {
           if (reasons && typeof reasons === 'object') {
-            // Pode ser um objeto com keys como array
             reasons = Object.values(reasons);
           } else {
             reasons = [];
           }
         }
         
-        console.log('[DEBUG] Reasons processado:', reasons);
-        
         if (result.success && Array.isArray(reasons) && reasons.length > 0) {
           setCancellationReasons(reasons);
           setSelectedCancelReason(reasons[0]?.cancelCodeId || '');
-          console.log('[DEBUG] Primeiro código selecionado:', reasons[0]?.cancelCodeId);
           setShowCancelModal(true);
         } else {
-          // Se não conseguir motivos, tenta cancelamento direto (rejeição)
           if (!window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()} no iFood?`)) return;
           setIsCancelling(true);
           const rejectResult = await rejectIfoodOrder(order.id, '501');
@@ -346,8 +331,11 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             toast.error(rejectResult.error || 'Erro ao cancelar pedido no iFood');
             return;
           }
-          await updateOrderStatus(order.id, 'CANCELED');
-          toast.success("Pedido cancelado!");
+          if (rejectResult.pendingConfirmation) {
+            toast.info("Solicitação de cancelamento enviada. Aguardando confirmação do iFood...");
+          } else {
+            toast.success("Pedido cancelado!");
+          }
           onRefresh();
           onClose();
         }
@@ -358,7 +346,6 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
         setIsLoadingReasons(false);
       }
     } else {
-      // Pedidos não-iFood usam o fluxo normal
       if (!window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}?`)) return;
       try {
         await updateOrderStatus(order.id, 'CANCELED');
@@ -380,7 +367,6 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
     
     setIsCancelling(true);
     try {
-      // Usar force=true para garantir que o cancelamento seja enviado ao iFood
       const result = await rejectIfoodOrder(order.id, selectedCancelReason, true);
       if (!result.success) {
         if (result.alreadyAccepted) {
@@ -391,9 +377,14 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
         return;
       }
       
-      // Atualizar status local após cancelamento no iFood
-      await updateOrderStatus(order.id, 'CANCELED');
-      toast.success("Pedido cancelado!");
+      // O cancelamento é assíncrono — o iFood responde via webhook/polling
+      // O status será atualizado automaticamente quando chegar o evento CANCELLED
+      if (result.pendingConfirmation) {
+        toast.info("Solicitação de cancelamento enviada. Aguardando confirmação do iFood...");
+      } else {
+        toast.success("Pedido cancelado!");
+      }
+      
       setShowCancelModal(false);
       onRefresh();
       onClose();

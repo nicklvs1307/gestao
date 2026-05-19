@@ -377,8 +377,11 @@ class IfoodPollingService {
         where: { id: order.id },
         data: {
           cancellationRequested: false,
-          cancellationReason: 'Cancelamento rejeitado pelo sistema',
-          cancellationDeadline: null
+          cancellationReason: order.cancellationSource === 'MERCHANT'
+            ? 'Cancelamento solicitado pelo restaurante foi rejeitado pelo iFood'
+            : 'Cancelamento rejeitado pelo sistema',
+          cancellationDeadline: null,
+          cancellationSource: null
         }
       });
 

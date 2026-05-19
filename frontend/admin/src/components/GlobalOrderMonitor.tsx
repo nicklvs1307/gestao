@@ -346,19 +346,18 @@ const GlobalOrderMonitor: React.FC = () => {
     
     setIsProcessing(true);
     try {
-      // Usar force=true para garantir que o cancelamento seja enviado ao iFood
       const result = await rejectIfoodOrder(cancelOrderId, selectedReason, true);
       if (!result.success) {
         toast.error(result.error || 'iFood recusou o cancelamento. O pedido continua ativo.');
         return;
       }
       
-      const order = allOrders.find(o => o.id === cancelOrderId);
-      if (order) {
-        await updateOrderStatus(cancelOrderId, 'CANCELED');
+      if (result.pendingConfirmation) {
+        toast.info('Solicitação de cancelamento enviada. Aguardando confirmação do iFood...');
+      } else {
+        toast.success('Pedido cancelado com sucesso!');
       }
       
-      toast.success('Pedido cancelado com sucesso!');
       setCancelModalOpen(false);
       setCancelOrderId(null);
       setSelectedReason('');
@@ -433,9 +432,7 @@ const GlobalOrderMonitor: React.FC = () => {
                       try {
                         setIsLoadingReasons(true);
                         const reasonsResult = await getIfoodCancellationReasons(id);
-                        console.log('[DEBUG] Motivos de cancelamento:', reasonsResult);
                         
-                        // Garantir que reasons é um array válido
                         const reasons = Array.isArray(reasonsResult.reasons) 
                           ? reasonsResult.reasons 
                           : [];
@@ -460,6 +457,13 @@ const GlobalOrderMonitor: React.FC = () => {
                       return;
                     }
                   }
+                  if (result.pendingConfirmation) {
+                    toast.info('Solicitação de cancelamento enviada. Aguardando confirmação do iFood...');
+                  } else {
+                    toast.success('Pedido cancelado!');
+                  }
+                  if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+                  return;
                 }
                 await updateOrderStatus(id, 'CANCELED');
                 if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
