@@ -121,7 +121,7 @@ class IfoodOrderService {
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/requestCancellation`,
-        { reason: reason || '501' },
+        { cancellationCode: reason || '501' },
         {
           headers: {
             'Authorization': `Bearer ${token}`,
