@@ -26,10 +26,11 @@ export function useIfoodSettings(): UseIfoodSettingsReturn {
     fetchingRef.current = true;
     getIfoodSettings()
       .then((data) => {
+        const rawMerchantId = data.ifoodMerchantId;
         const result: IfoodSettings = {
-          ifoodMerchantId: data.ifoodMerchantId,
-          ifoodIntegrationActive: data.ifoodIntegrationActive,
-          ifoodCredentialsConfigured: data.ifoodCredentialsConfigured,
+          ifoodMerchantId: rawMerchantId && rawMerchantId.trim() !== '' ? rawMerchantId : null,
+          ifoodIntegrationActive: data.ifoodIntegrationActive === true,
+          ifoodCredentialsConfigured: data.ifoodCredentialsConfigured === true,
         };
         cachedSettings = result;
         setSettings(result);
