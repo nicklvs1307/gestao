@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import TopbarAdmin from './TopbarAdmin';
 import NavigationLauncher from './NavigationLauncher';
 import GlobalOrderMonitor from './GlobalOrderMonitor';
+import IfoodWidget from './IfoodWidget';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,8 +19,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
 
     const isWaiter = useMemo(() => user?.role === 'waiter', [user?.role]);
 
-    // Rota Fullscreen (como KDS)
     const isFullscreenPage = location.pathname === '/kds';
+
+    const showIfoodWidget = ['/pos', '/orders'].includes(location.pathname);
 
     if (isWaiter) {
         return (
@@ -62,6 +64,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
                     {children}
                 </div>
             </main>
+
+            {showIfoodWidget && <IfoodWidget />}
         </div>
     );
 };
