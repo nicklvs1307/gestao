@@ -20,7 +20,6 @@ interface IfoodWidgetWindow extends Window {
 function initWidget(merchantId: string) {
   const win = window as IfoodWidgetWindow;
   if (win.iFoodWidget) {
-    console.log('[iFoodWidget] Initializing with merchantId:', merchantId);
     win.iFoodWidget.init({
       widgetId: WIDGET_ID,
       merchantIds: [merchantId],
@@ -28,7 +27,6 @@ function initWidget(merchantId: string) {
     });
     return true;
   }
-  console.warn('[iFoodWidget] iFoodWidget not available on window');
   return false;
 }
 
@@ -42,24 +40,7 @@ export default function IfoodWidget() {
   }, [merchantId]);
 
   useEffect(() => {
-    console.log('[iFoodWidget] Effect triggered', { merchantId, isActive, loading, initialized: initializedRef.current });
-
-    if (loading) {
-      console.log('[iFoodWidget] Still loading settings...');
-      return;
-    }
-    if (!isActive) {
-      console.log('[iFoodWidget] Integration is not active');
-      return;
-    }
-    if (!merchantId) {
-      console.log('[iFoodWidget] No merchantId configured');
-      return;
-    }
-    if (initializedRef.current) {
-      console.log('[iFoodWidget] Already initialized');
-      return;
-    }
+    if (loading || !isActive || !merchantId || initializedRef.current) return;
 
     if (initWidget(merchantId)) {
       initializedRef.current = true;
@@ -67,22 +48,16 @@ export default function IfoodWidget() {
     }
 
     if (!scriptLoaded && !scriptLoading) {
-      console.log('[iFoodWidget] Loading script from', WIDGET_SCRIPT_URL);
       scriptLoading = true;
       const script = document.createElement('script');
       script.src = WIDGET_SCRIPT_URL;
       script.async = true;
       script.onload = () => {
-        console.log('[iFoodWidget] Script loaded successfully');
         scriptLoaded = true;
         scriptLoading = false;
         if (merchantRef.current && !initializedRef.current) {
           initializedRef.current = initWidget(merchantRef.current);
         }
-      };
-      script.onerror = () => {
-        console.error('[iFoodWidget] Failed to load script');
-        scriptLoading = false;
       };
       document.head.appendChild(script);
     }
