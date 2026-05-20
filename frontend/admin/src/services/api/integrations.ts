@@ -153,3 +153,58 @@ export const getFood99ConnectionStatus = async (appShopId?: string) => {
   const response = await apiClient.get('/integrations/food99/status', { params });
   return response.data;
 };
+
+export const getFood99AuthorizationUrl = async () => {
+  const response = await apiClient.post('/integrations/food99/authorize');
+  return response.data;
+};
+
+export const listFood99Shops = async (pageNo = 1, pageSize = 30) => {
+  const response = await apiClient.get('/integrations/food99/shops', { params: { pageNo, pageSize } });
+  return response.data;
+};
+
+export const setFood99ShopOnline = async (online: boolean) => {
+  const response = await apiClient.post('/integrations/food99/set-online', { online });
+  return response.data;
+};
+
+export const setFood99ConfirmMethod = async (method: 1 | 2) => {
+  const response = await apiClient.post('/integrations/food99/set-confirm-method', { method });
+  return response.data;
+};
+
+export const getFood99ShopDetail = async () => {
+  const response = await apiClient.get('/integrations/food99/shop-detail');
+  return response.data;
+};
+
+export const syncFood99Menu = async () => {
+  const response = await apiClient.post('/integrations/food99/sync-menu');
+  return response.data;
+};
+
+export const getFood99MenuStatus = async (taskId: string) => {
+  const response = await apiClient.get('/integrations/food99/menu-status', { params: { taskId } });
+  return response.data;
+};
+
+export const getFood99CurrentMenu = async () => {
+  const response = await apiClient.get('/integrations/food99/current-menu');
+  return response.data;
+};
+
+export const updateFood99ItemStatus = async (integrationCode: string, available: boolean) => {
+  const response = await apiClient.put('/integrations/food99/item-status', { integrationCode, available });
+  return response.data;
+};
+
+export const refreshFood99Token = async () => {
+  const response = await apiClient.post('/integrations/food99/refresh-token');
+  return response.data;
+};
+
+export const unbindFood99Shop = async () => {
+  const response = await apiClient.post('/integrations/food99/unbind');
+  return response.data;
+};

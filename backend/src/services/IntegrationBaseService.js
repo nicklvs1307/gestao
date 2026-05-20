@@ -128,6 +128,8 @@ class IntegrationBaseService {
         return settings.ifoodIntegrationActive;
       case 'uairango':
         return settings.uairangoActive;
+      case 'food99':
+        return settings.food99IntegrationActive;
       default:
         return true;
     }

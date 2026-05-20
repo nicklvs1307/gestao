@@ -515,6 +515,12 @@ model IntegrationSettings {
   ifoodEnv                  String    @default("production")
   // ifoodClientId e ifoodClientSecret removidos — agora são variáveis de ambiente centralizadas (Docker secrets)
 
+  // === CAMPOS 99FOOD ===
+  food99MerchantId         String?   // Merchant ID no portal 99Food
+  food99AppShopId          String?   // App Shop ID (identificador da loja no sistema externo)
+  food99IntegrationActive  Boolean   @default(false)
+  food99Env                String    @default("production") // "production" ou "homologation"
+
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 

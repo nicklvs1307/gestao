@@ -1,4 +1,5 @@
 const axios = require('axios');
+const crypto = require('crypto');
 const logger = require('../config/logger');
 
 const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
@@ -170,6 +171,189 @@ class Food99AuthService {
     this._tokenCache = null;
     logger.info('[FOOD99 AUTH] Cache limpo');
     return { success: true };
+  }
+
+  _generateSign(appId, timestamp, secret) {
+    return crypto.createHash('md5').update(`${appId}${timestamp}${secret}`).digest('hex');
+  }
+
+  async getAuthorizationUrl(appShopId) {
+    const { clientId } = this._getCredentials();
+
+    try {
+      const response = await axios.post(`${BASE_URL}/v1/auth/authorizationpage/getUrl`, {
+        app_id: clientId,
+        app_shop_id: appShopId,
+      }, {
+        timeout: 15000,
+      });
+
+      const data = response.data?.data || response.data;
+
+      if (response.data?.errno !== 0 && data.errno !== 0) {
+        throw new Error(response.data?.errmsg || 'Erro ao obter URL de autorização');
+      }
+
+      logger.info(`[FOOD99 AUTH] URL de autorização obtido para shop ${appShopId}`);
+
+      return data;
+    } catch (error) {
+      logger.error('[FOOD99 AUTH] Erro ao obter URL de autorização:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao obter URL de autorização');
+    }
+  }
+
+  async listShops(pageNo = 1, pageSize = 30) {
+    const { clientId, clientSecret } = this._getCredentials();
+
+    try {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const sign = this._generateSign(clientId, timestamp, clientSecret);
+
+      const response = await axios.post(`${BASE_URL}/v1/shop/shop/list`, {
+        app_id: clientId,
+        timestamp,
+        sign,
+        page_no: pageNo,
+        page_size: pageSize,
+      }, {
+        timeout: 15000,
+      });
+
+      const data = response.data?.data || response.data;
+
+      if (response.data?.errno !== 0 && data.errno !== 0) {
+        throw new Error(response.data?.errmsg || 'Erro ao listar lojas');
+      }
+
+      logger.info(`[FOOD99 AUTH] Lista de lojas obtida (página ${pageNo})`);
+
+      return data;
+    } catch (error) {
+      logger.error('[FOOD99 AUTH] Erro ao listar lojas:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao listar lojas');
+    }
+  }
+
+  async setConfirmMethod(authToken, method = 2) {
+    try {
+      const response = await axios.post(`${BASE_URL}/v1/shop/shop/setconfirmmethod`, {
+        auth_token: authToken,
+        order_confirm_method: method,
+      }, {
+        timeout: 15000,
+      });
+
+      const data = response.data?.data || response.data;
+
+      if (response.data?.errno !== 0 && data.errno !== 0) {
+        throw new Error(response.data?.errmsg || 'Erro ao definir método de confirmação');
+      }
+
+      logger.info(`[FOOD99 AUTH] Método de confirmação definido: ${method}`);
+
+      return data;
+    } catch (error) {
+      logger.error('[FOOD99 AUTH] Erro ao definir método de confirmação:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao definir método de confirmação');
+    }
+  }
+
+  async setShopStatus(authToken, bizStatus = 1, autoSwitch = 1) {
+    try {
+      const response = await axios.post(`${BASE_URL}/v1/shop/shop/setStatus`, {
+        auth_token: authToken,
+        biz_status: bizStatus,
+        auto_switch: autoSwitch,
+      }, {
+        timeout: 15000,
+      });
+
+      const data = response.data?.data || response.data;
+
+      if (response.data?.errno !== 0 && data.errno !== 0) {
+        throw new Error(response.data?.errmsg || 'Erro ao definir status da loja');
+      }
+
+      logger.info(`[FOOD99 AUTH] Status da loja definido: biz_status=${bizStatus}, auto_switch=${autoSwitch}`);
+
+      return data;
+    } catch (error) {
+      logger.error('[FOOD99 AUTH] Erro ao definir status da loja:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao definir status da loja');
+    }
+  }
+
+  async getShopDetail(authToken) {
+    try {
+      const response = await axios.get(`${BASE_URL}/v1/shop/shop/detail`, {
+        params: {
+          auth_token: authToken,
+        },
+        timeout: 15000,
+      });
+
+      const data = response.data?.data || response.data;
+
+      if (response.data?.errno !== 0 && data.errno !== 0) {
+        throw new Error(response.data?.errmsg || 'Erro ao obter detalhes da loja');
+      }
+
+      logger.info('[FOOD99 AUTH] Detalhes da loja obtidos');
+
+      return data;
+    } catch (error) {
+      logger.error('[FOOD99 AUTH] Erro ao obter detalhes da loja:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao obter detalhes da loja');
+    }
+  }
+
+  async setApplyNotifications(authToken, receiveCancelApply = 1, receiveRefundApply = 1) {
+    try {
+      const response = await axios.post(`${BASE_URL}/v1/shop/apply/set`, {
+        auth_token: authToken,
+        receive_cancel_apply: receiveCancelApply,
+        receive_refund_apply: receiveRefundApply,
+      }, {
+        timeout: 15000,
+      });
+
+      const data = response.data?.data || response.data;
+
+      if (response.data?.errno !== 0 && data.errno !== 0) {
+        throw new Error(response.data?.errmsg || 'Erro ao configurar notificações');
+      }
+
+      logger.info('[FOOD99 AUTH] Notificações configuradas com sucesso');
+
+      return data;
+    } catch (error) {
+      logger.error('[FOOD99 AUTH] Erro ao configurar notificações:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao configurar notificações');
+    }
+  }
+
+  async unbindShop(authToken) {
+    try {
+      const response = await axios.post(`${BASE_URL}/v1/shop/shop/unbind`, {
+        auth_token: authToken,
+      }, {
+        timeout: 15000,
+      });
+
+      const data = response.data?.data || response.data;
+
+      if (response.data?.errno !== 0 && data.errno !== 0) {
+        throw new Error(response.data?.errmsg || 'Erro ao desvincular loja');
+      }
+
+      logger.info('[FOOD99 AUTH] Loja desvinculada com sucesso');
+
+      return data;
+    } catch (error) {
+      logger.error('[FOOD99 AUTH] Erro ao desvincular loja:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao desvincular loja');
+    }
   }
 }
 

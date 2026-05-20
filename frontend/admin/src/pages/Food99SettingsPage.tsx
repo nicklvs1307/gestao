@@ -1,6 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { getFood99Settings, updateFood99Settings, getFood99ConnectionStatus } from '../services/api/integrations';
-import { ArrowLeft, Save, Loader2, CheckCircle, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import {
+  getFood99Settings,
+  updateFood99Settings,
+  getFood99ConnectionStatus,
+  getFood99AuthorizationUrl,
+  listFood99Shops,
+  setFood99ShopOnline,
+  setFood99ConfirmMethod,
+  getFood99ShopDetail,
+  syncFood99Menu,
+  getFood99MenuStatus,
+  refreshFood99Token,
+  unbindFood99Shop,
+} from '../services/api/integrations';
+import {
+  ArrowLeft,
+  Save,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Wifi,
+  WifiOff,
+  ExternalLink,
+  RefreshCw,
+  Upload,
+  Store,
+  Power,
+  Link2,
+  Trash2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -18,6 +46,13 @@ const Food99SettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [credentialsConfigured, setCredentialsConfigured] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; status: string; message: string } | null>(null);
+  const [isOnline, setIsOnline] = useState(false);
+  const [shopDetail, setShopDetail] = useState<any>(null);
+  const [menuTaskId, setMenuTaskId] = useState<string | null>(null);
+  const [menuTaskStatus, setMenuTaskStatus] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [shops, setShops] = useState<any[]>([]);
+  const [showShops, setShowShops] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -33,6 +68,14 @@ const Food99SettingsPage: React.FC = () => {
         if (settings.food99IntegrationActive && settings.food99AppShopId) {
           const status = await getFood99ConnectionStatus(settings.food99AppShopId);
           setConnectionStatus(status);
+
+          try {
+            const detail = await getFood99ShopDetail();
+            setShopDetail(detail);
+            setIsOnline(detail?.biz_status === 1);
+          } catch {
+            // shop detail may fail if not yet bound
+          }
         }
       } catch (error) {
         console.error(error);
@@ -52,7 +95,7 @@ const Food99SettingsPage: React.FC = () => {
         food99MerchantId: merchantId,
         food99AppShopId: appShopId,
         food99Env: env,
-        food99IntegrationActive: isActive
+        food99IntegrationActive: isActive,
       });
 
       if (isActive && appShopId) {
@@ -71,6 +114,107 @@ const Food99SettingsPage: React.FC = () => {
       toast.error(error?.response?.data?.error || 'Falha ao salvar configurações.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAuthorize = async () => {
+    try {
+      const result = await getFood99AuthorizationUrl();
+      if (result?.url) {
+        window.open(result.url, '_blank');
+        toast.info('Página de autorização aberta. Selecione sua loja e confirme.');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erro ao gerar URL de autorização.');
+    }
+  };
+
+  const handleRefreshToken = async () => {
+    try {
+      const result = await refreshFood99Token();
+      if (result.success) {
+        toast.success('Token renovado com sucesso!');
+        const status = await getFood99ConnectionStatus(appShopId);
+        setConnectionStatus(status);
+      } else {
+        toast.error('Falha ao renovar token.');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erro ao renovar token.');
+    }
+  };
+
+  const handleSetOnline = async (online: boolean) => {
+    try {
+      await setFood99ShopOnline(online);
+      setIsOnline(online);
+      toast.success(online ? 'Loja definida como ONLINE' : 'Loja definida como OFFLINE');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erro ao alterar status.');
+    }
+  };
+
+  const handleSetConfirmMethod = async () => {
+    try {
+      await setFood99ConfirmMethod(2);
+      toast.success('Método de confirmação definido como OPENAPI');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erro ao definir método.');
+    }
+  };
+
+  const handleSyncMenu = async () => {
+    setIsSyncing(true);
+    try {
+      const result = await syncFood99Menu();
+      if (result?.taskId) {
+        setMenuTaskId(result.taskId);
+        toast.success('Sincronização iniciada! Acompanhe o progresso.');
+        pollMenuStatus(result.taskId);
+      } else {
+        toast.success('Cardápio sincronizado!');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erro ao sincronizar cardápio.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const pollMenuStatus = async (taskId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const status = await getFood99MenuStatus(taskId);
+        setMenuTaskStatus(status?.status || 'unknown');
+        if (status?.status === 'completed' || status?.status === 'failed') {
+          clearInterval(interval);
+          toast.info(status.status === 'completed' ? 'Cardápio sincronizado com sucesso!' : 'Falha na sincronização do cardápio.');
+        }
+      } catch {
+        clearInterval(interval);
+      }
+    }, 5000);
+  };
+
+  const handleListShops = async () => {
+    try {
+      const result = await listFood99Shops();
+      setShops(result?.data?.shops || []);
+      setShowShops(true);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erro ao listar lojas.');
+    }
+  };
+
+  const handleUnbind = async () => {
+    if (!confirm('Tem certeza que deseja desvincular esta loja?')) return;
+    try {
+      await unbindFood99Shop();
+      toast.success('Loja desvinculada com sucesso.');
+      setIsActive(false);
+      setConnectionStatus(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erro ao desvincular loja.');
     }
   };
 
@@ -228,8 +372,123 @@ const Food99SettingsPage: React.FC = () => {
             <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <AlertCircle size={18} className="text-amber-600" />
+                  <Link2 size={18} className="text-amber-600" />
                 </div>
+                <div>
+                  <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Autorização e Vinculação</h2>
+                  <p className="text-[10px] text-slate-400 font-medium">Conecte sua loja ao sistema</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={handleAuthorize}
+                  disabled={!isActive || !appShopId}
+                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-700 font-black text-sm uppercase tracking-wider transition-all hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ExternalLink size={16} />
+                  Gerar Link de Autorização
+                </button>
+                <button
+                  onClick={handleRefreshToken}
+                  disabled={!isActive || !appShopId}
+                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-slate-200 bg-white text-slate-600 font-black text-sm uppercase tracking-wider transition-all hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw size={16} />
+                  Renovar Token
+                </button>
+                <button
+                  onClick={handleListShops}
+                  disabled={!credentialsConfigured}
+                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-slate-200 bg-white text-slate-600 font-black text-sm uppercase tracking-wider transition-all hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Store size={16} />
+                  Ver Lojas Vinculadas
+                </button>
+                <button
+                  onClick={handleUnbind}
+                  disabled={!isActive}
+                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-red-200 bg-red-50 text-red-600 font-black text-sm uppercase tracking-wider transition-all hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={16} />
+                  Desvincular Loja
+                </button>
+              </div>
+
+              {showShops && shops.length > 0 && (
+                <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <h3 className="text-xs font-black text-slate-700 uppercase mb-3">Lojas Vinculadas</h3>
+                  <div className="space-y-2">
+                    {shops.map((shop: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-100">
+                        <div>
+                          <p className="text-sm font-bold text-slate-800">{shop.app_shop_id || shop.name || 'Loja'}</p>
+                          <p className="text-xs text-slate-400">ID: {shop.id || shop.shop_id || '-'}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          shop.status === 1 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {shop.status === 1 ? 'Online' : 'Offline'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Upload size={18} className="text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Cardápio</h2>
+                  <p className="text-[10px] text-slate-400 font-medium">Sincronização de produtos e categorias</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={handleSyncMenu}
+                  disabled={!isActive || !appShopId || isSyncing}
+                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-700 font-black text-sm uppercase tracking-wider transition-all hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                  {isSyncing ? 'Sincronizando...' : 'Sincronizar Cardápio'}
+                </button>
+                <button
+                  onClick={handleSetConfirmMethod}
+                  disabled={!isActive || !appShopId}
+                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-slate-200 bg-white text-slate-600 font-black text-sm uppercase tracking-wider transition-all hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Link2 size={16} />
+                  Set OPENAPI
+                </button>
+              </div>
+
+              {menuTaskId && menuTaskStatus && (
+                <div className={`p-3 rounded-xl border ${
+                  menuTaskStatus === 'completed' ? 'bg-emerald-50 border-emerald-200' :
+                  menuTaskStatus === 'failed' ? 'bg-red-50 border-red-200' :
+                  'bg-blue-50 border-blue-200'
+                }`}>
+                  <p className="text-xs font-bold">
+                    Task: {menuTaskId} — Status: {menuTaskStatus}
+                  </p>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={18} className="text-amber-600" />
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Sobre a Integração</h2>
                   <p className="text-[10px] text-slate-400 font-medium">Modelo centralizado</p>
@@ -251,11 +510,15 @@ const Food99SettingsPage: React.FC = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-500">•</span>
-                  <span>Suporta Webhook para eventos em tempo real</span>
+                  <span>Webhook primário para eventos em tempo real</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-500">•</span>
-                  <span>Polling é usado como fallback se webhook não funcionar</span>
+                  <span>Polling como fallback a cada 30 segundos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-500">•</span>
+                  <span>Cardápio sincronizado via API v3 (recomendada)</span>
                 </li>
               </ul>
             </div>
@@ -267,7 +530,7 @@ const Food99SettingsPage: React.FC = () => {
             <div className="p-6 border-b border-slate-100">
               <h3 className="font-black text-slate-900 uppercase text-sm tracking-tight">Status da Conexão</h3>
             </div>
-            <div className="p-6">
+            <div className="p-6 space-y-4">
               {connectionStatus ? (
                 <div className={`p-4 rounded-xl border ${
                   connectionStatus.connected
@@ -294,12 +557,25 @@ const Food99SettingsPage: React.FC = () => {
                 <div className="p-4 rounded-xl border bg-slate-50 border-slate-200">
                   <div className="flex items-center gap-3">
                     <AlertCircle size={24} className="text-slate-400" />
-                    <p className="text-sm text-slate-500">
-                      Integração desativada
-                    </p>
+                    <p className="text-sm text-slate-500">Integração desativada</p>
                   </div>
                 </div>
               )}
+
+              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-sm font-bold text-slate-700">Loja Online</span>
+                <button
+                  onClick={() => handleSetOnline(!isOnline)}
+                  disabled={!isActive || !appShopId}
+                  className={`relative w-14 h-7 rounded-full transition-colors disabled:opacity-50 ${
+                    isOnline ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                    isOnline ? 'translate-x-7' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
             </div>
           </Card>
 
@@ -317,6 +593,30 @@ const Food99SettingsPage: React.FC = () => {
                   : 'https://seudominio.com/webhooks/food99'
                 }
               </div>
+            </div>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="font-black text-slate-900 uppercase text-sm tracking-tight">Ações Rápidas</h3>
+            </div>
+            <div className="p-6 space-y-3">
+              <button
+                onClick={() => handleSetConfirmMethod()}
+                disabled={!isActive || !appShopId}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Power size={14} />
+                Set Confirm Method (OPENAPI)
+              </button>
+              <button
+                onClick={handleListShops}
+                disabled={!credentialsConfigured}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Store size={14} />
+                Listar Lojas
+              </button>
             </div>
           </Card>
         </div>
