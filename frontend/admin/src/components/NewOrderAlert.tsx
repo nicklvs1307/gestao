@@ -283,15 +283,6 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
       </div>
     </div>
   );
-            })}
-        </div>
-
-        <button onClick={onClose} className="w-full py-2 text-white/40 font-black uppercase tracking-[0.2em] text-[10px] hover:text-white/70 transition-colors">
-            [ Fechar e decidir depois ]
-        </button>
-      </div>
-    </div>
-  );
 };
 
 export default NewOrderAlert;
