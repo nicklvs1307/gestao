@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const Food99OrderAdapter = require('./Food99OrderAdapter');
@@ -7,18 +8,19 @@ const socketLib = require('../lib/socket');
 
 const PLATFORM = 'food99';
 
-const STATUS_MAP = {
-  1: 'PENDING',
-  2: 'PREPARING',
-  3: 'READY',
-  4: 'SHIPPED',
-  5: 'CANCELED',
-  6: 'CANCELED',
-  7: 'CANCELED',
-  8: 'COMPLETED',
-};
-
 class Food99WebhookService {
+
+  _verifySignature(body, signature, secret) {
+    if (!signature || !secret) return false;
+
+    const sortedKeys = Object.keys(body).sort();
+    const queryString = sortedKeys
+      .map(key => `${key}=${body[key]}`)
+      .join('&');
+    const expectedSignature = crypto.createHash('md5').update(`${queryString}${secret}`).digest('hex');
+
+    return expectedSignature === signature;
+  }
 
   async _isEventProcessed(platform, platformOrderId, eventType) {
     if (!platformOrderId) return false;
@@ -59,18 +61,104 @@ class Food99WebhookService {
    *   before_status: 0,
    *   ...OrderModel fields
    * }
+   *
+   * Eventos de apply (quando receive_cancel_apply=1 ou receive_refund_apply=1):
+   * {
+   *   event: 'cancel_apply' | 'refund_apply',
+   *   order_id: 2352921557674426622,
+   *   apply_id: 2352921557674426621,
+   *   reason: 'motivo do cliente',
+   *   ...
+   * }
    */
   async handleWebhook(req, res) {
     const body = req.body;
-    logger.info(`[FOOD99 WEBHOOK] Recebido: order_id=${body?.order_id}, status=${body?.status}, shop_accept_status=${body?.shop_accept_status}`);
+    logger.info(`[FOOD99 WEBHOOK] Recebido: order_id=${body?.order_id}, event=${body?.event}, status=${body?.status}`);
+
+    const signature = req.headers['x-didi-signature'] || req.query.sign;
+    if (signature && process.env.FOOD99_CLIENT_SECRET) {
+      const isValid = this._verifySignature(body, signature, process.env.FOOD99_CLIENT_SECRET);
+      if (!isValid) {
+        logger.warn('[FOOD99 WEBHOOK] Assinatura inválida, rejeitando request');
+        return res.status(403).json({ error: 'Assinatura inválida' });
+      }
+    }
 
     res.status(200).json({ received: true });
 
     try {
+      if (body?.event === 'cancel_apply') {
+        await this._handleCancelApply(body);
+        return;
+      }
+      if (body?.event === 'refund_apply') {
+        await this._handleRefundApply(body);
+        return;
+      }
       await this._processWebhook(body);
     } catch (error) {
       logger.error('[FOOD99 WEBHOOK] Erro ao processar webhook:', error.message);
     }
+  }
+
+  async _handleCancelApply(body) {
+    const { order_id: orderId, apply_id: applyId, reason } = body;
+    if (!orderId || !applyId) {
+      logger.warn('[FOOD99 WEBHOOK] cancel_apply sem order_id ou apply_id');
+      return;
+    }
+
+    logger.info(`[FOOD99 WEBHOOK] Solicitação de cancelamento recebida: order=${orderId}, apply=${applyId}, reason=${reason}`);
+
+    const settings = await prisma.integrationSettings.findMany({
+      where: { food99IntegrationActive: true, food99MerchantId: { not: null } },
+    });
+
+    if (settings.length === 0) return;
+
+    const appShopId = body.shop?.app_shop_id || body.app_shop_id;
+    let targetSetting = appShopId ? settings.find(s => s.food99AppShopId === appShopId) : null;
+    if (!targetSetting && settings.length === 1) targetSetting = settings[0];
+    if (!targetSetting) return;
+
+    socketLib.emitToRestaurant(targetSetting.restaurantId, 'cancel_apply_request', {
+      platform: PLATFORM,
+      orderId,
+      applyId,
+      reason,
+    });
+
+    logger.info(`[FOOD99 WEBHOOK] Notificação de cancel apply enviada para restaurante ${targetSetting.restaurantId}`);
+  }
+
+  async _handleRefundApply(body) {
+    const { order_id: orderId, apply_id: applyId, reason } = body;
+    if (!orderId || !applyId) {
+      logger.warn('[FOOD99 WEBHOOK] refund_apply sem order_id ou apply_id');
+      return;
+    }
+
+    logger.info(`[FOOD99 WEBHOOK] Solicitação de reembolso recebida: order=${orderId}, apply=${applyId}, reason=${reason}`);
+
+    const settings = await prisma.integrationSettings.findMany({
+      where: { food99IntegrationActive: true, food99MerchantId: { not: null } },
+    });
+
+    if (settings.length === 0) return;
+
+    const appShopId = body.shop?.app_shop_id || body.app_shop_id;
+    let targetSetting = appShopId ? settings.find(s => s.food99AppShopId === appShopId) : null;
+    if (!targetSetting && settings.length === 1) targetSetting = settings[0];
+    if (!targetSetting) return;
+
+    socketLib.emitToRestaurant(targetSetting.restaurantId, 'refund_apply_request', {
+      platform: PLATFORM,
+      orderId,
+      applyId,
+      reason,
+    });
+
+    logger.info(`[FOOD99 WEBHOOK] Notificação de refund apply enviada para restaurante ${targetSetting.restaurantId}`);
   }
 
   async _processWebhook(body) {
@@ -115,38 +203,36 @@ class Food99WebhookService {
       return;
     }
 
-    const kiStatus = STATUS_MAP[shopAcceptStatus] || STATUS_MAP[status] || 'PENDING';
+    const kiStatus = IntegrationTypeService.mapStatus(PLATFORM, String(shopAcceptStatus || status));
 
-    switch (shopAcceptStatus || status) {
-      case 1:
+    switch (kiStatus) {
+      case 'PENDING':
         await this._handleNewOrder(restaurantId, platformOrderId, body);
         await this._markEventProcessed(PLATFORM, String(platformOrderId), eventType, restaurantId, null);
         break;
 
-      case 2:
+      case 'PREPARING':
         await IntegrationOrderService.updateFromIntegration(PLATFORM, restaurantId, String(platformOrderId), { status: 'PREPARING' });
         await this._markEventProcessed(PLATFORM, String(platformOrderId), eventType, restaurantId, null);
         break;
 
-      case 3:
+      case 'READY':
         await IntegrationOrderService.updateFromIntegration(PLATFORM, restaurantId, String(platformOrderId), { status: 'READY' });
         await this._markEventProcessed(PLATFORM, String(platformOrderId), eventType, restaurantId, null);
         break;
 
-      case 5:
-      case 6:
-      case 7:
+      case 'CANCELED':
         await IntegrationOrderService.cancelFromIntegration(PLATFORM, restaurantId, String(platformOrderId));
         await this._markEventProcessed(PLATFORM, String(platformOrderId), eventType, restaurantId, null);
         break;
 
-      case 8:
+      case 'COMPLETED':
         await IntegrationOrderService.updateFromIntegration(PLATFORM, restaurantId, String(platformOrderId), { status: 'COMPLETED' });
         await this._markEventProcessed(PLATFORM, String(platformOrderId), eventType, restaurantId, null);
         break;
 
       default:
-        logger.info(`[FOOD99 WEBHOOK] Evento ${shopAcceptStatus} não requer processamento específico`);
+        logger.info(`[FOOD99 WEBHOOK] Evento ${kiStatus} não requer processamento específico`);
     }
   }
 

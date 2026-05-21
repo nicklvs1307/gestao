@@ -489,7 +489,7 @@ if (isPickup && !hasValidPhone) {
    * de formato e chamam este método.
    */
   async createOrderFromIntegration({
-    platform,           // 'ifood' | 'uairango'
+    platform,           // 'ifood' | 'uairango' | 'food99'
     platformOrderId,    // ID externo (para idempotência)
     restaurantId,
     items,              // [{ name, price, quantity, observations, addons }]
@@ -530,7 +530,10 @@ if (isPickup && !hasValidPhone) {
     }
 
     // Verificar pedido existente por ID da plataforma
-    const platformField = platform === 'ifood' ? 'ifoodOrderId' : 'uairangoOrderId';
+    let platformField;
+    if (platform === 'ifood') platformField = 'ifoodOrderId';
+    else if (platform === 'food99') platformField = 'food99OrderId';
+    else platformField = 'uairangoOrderId';
     const existingOrder = await prisma.order.findFirst({
       where: { restaurantId, [platformField]: platformOrderId },
     });
@@ -669,6 +672,7 @@ if (isPickup && !hasValidPhone) {
           pendingAt: new Date(),
           ifoodOrderId: platform === 'ifood' ? platformOrderId : null,
           uairangoOrderId: platform === 'uairango' ? platformOrderId : null,
+          food99OrderId: platform === 'food99' ? platformOrderId : null,
           // === CAMPOS IFOOD (Homologação) ===
           displayId: displayId || null,
           pickupCode: pickupCode || null,

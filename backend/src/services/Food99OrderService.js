@@ -1,10 +1,8 @@
-const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const socketLib = require('../lib/socket');
 const Food99AuthService = require('./Food99AuthService');
-
-const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
+const Food99OrderAdapter = require('./Food99OrderAdapter');
 
 class Food99OrderService {
 
@@ -41,7 +39,7 @@ class Food99OrderService {
       return { success: false, error: 'Token 99Food expirado ou indisponível' };
     }
 
-    return { order, token };
+    return { order, token, settings };
   }
 
   async confirmOrder(orderId, restaurantId) {
@@ -49,13 +47,9 @@ class Food99OrderService {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      const { order } = result;
 
-      await axios.post(
-        `${BASE_URL}/v1/order/order/confirm`,
-        { auth_token: token, order_id: order.food99OrderId },
-        { timeout: 10000 },
-      );
+      await Food99OrderAdapter.confirmOrderOnPlatform(restaurantId, order.food99OrderId);
 
       await prisma.order.update({
         where: { id: orderId },
@@ -76,18 +70,9 @@ class Food99OrderService {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      const { order } = result;
 
-      await axios.post(
-        `${BASE_URL}/v1/order/order/cancel`,
-        {
-          auth_token: token,
-          order_id: order.food99OrderId,
-          reason_id: reasonId,
-          reason,
-        },
-        { timeout: 10000 },
-      );
+      await Food99OrderAdapter.rejectOrderOnPlatform(restaurantId, order.food99OrderId, reasonId);
 
       await prisma.order.update({
         where: { id: orderId },
@@ -108,12 +93,9 @@ class Food99OrderService {
       const result = await this._getOrderAndToken(orderId);
       if (result.success === false) return result;
 
-      const { order, token } = result;
+      const { order } = result;
 
-      await axios.get(`${BASE_URL}/v1/order/order/ready`, {
-        params: { auth_token: token, order_id: order.food99OrderId },
-        timeout: 10000,
-      });
+      await Food99OrderAdapter.markReadyOnPlatform(restaurantId, order.food99OrderId);
 
       await prisma.order.update({
         where: { id: orderId },
@@ -136,6 +118,8 @@ class Food99OrderService {
     const { order, token } = result;
 
     try {
+      const axios = require('axios');
+      const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
       const response = await axios.get(`${BASE_URL}/v1/order/order/detail`, {
         params: { auth_token: token, order_id: order.food99OrderId },
         timeout: 10000,

@@ -323,6 +323,62 @@ const unbindShop = async (req, res) => {
   }
 };
 
+const handleCancelApply = async (req, res) => {
+  try {
+    const { orderId, applyId, agree, reason } = req.body;
+    if (!orderId || !applyId || agree === undefined) {
+      return res.status(400).json({ error: 'orderId, applyId e agree são obrigatórios' });
+    }
+
+    const settings = await prisma.integrationSettings.findUnique({
+      where: { restaurantId: req.restaurantId },
+    });
+
+    if (!settings?.food99AppShopId) {
+      return res.status(400).json({ error: 'App Shop ID não configurado' });
+    }
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
+    if (!token) {
+      return res.status(500).json({ error: 'Token não disponível' });
+    }
+
+    const result = await Food99AuthService.handleCancelApply(token, orderId, applyId, agree, reason);
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao processar cancel apply:', error);
+    res.status(500).json({ error: error.message || 'Erro ao processar solicitação de cancelamento' });
+  }
+};
+
+const handleRefundApply = async (req, res) => {
+  try {
+    const { orderId, applyId, agree, reason } = req.body;
+    if (!orderId || !applyId || agree === undefined) {
+      return res.status(400).json({ error: 'orderId, applyId e agree são obrigatórios' });
+    }
+
+    const settings = await prisma.integrationSettings.findUnique({
+      where: { restaurantId: req.restaurantId },
+    });
+
+    if (!settings?.food99AppShopId) {
+      return res.status(400).json({ error: 'App Shop ID não configurado' });
+    }
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
+    if (!token) {
+      return res.status(500).json({ error: 'Token não disponível' });
+    }
+
+    const result = await Food99AuthService.handleRefundApply(token, orderId, applyId, agree, reason);
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao processar refund apply:', error);
+    res.status(500).json({ error: error.message || 'Erro ao processar solicitação de reembolso' });
+  }
+};
+
 module.exports = {
   getFood99Settings,
   updateFood99Settings,
@@ -341,4 +397,6 @@ module.exports = {
   updateItemStatus,
   refreshToken,
   unbindShop,
+  handleCancelApply,
+  handleRefundApply,
 };

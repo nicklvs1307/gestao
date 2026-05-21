@@ -208,3 +208,13 @@ export const unbindFood99Shop = async () => {
   const response = await apiClient.post('/integrations/food99/unbind');
   return response.data;
 };
+
+export const handleFood99CancelApply = async (orderId: number, applyId: number, agree: boolean, reason?: string) => {
+  const response = await apiClient.post('/integrations/food99/cancel-apply', { orderId, applyId, agree, reason });
+  return response.data;
+};
+
+export const handleFood99RefundApply = async (orderId: number, applyId: number, agree: boolean, reason?: string) => {
+  const response = await apiClient.post('/integrations/food99/refund-apply', { orderId, applyId, agree, reason });
+  return response.data;
+};

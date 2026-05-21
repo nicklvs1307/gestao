@@ -5,19 +5,9 @@ const prisma = require('../lib/prisma');
 const Food99AuthService = require('./Food99AuthService');
 const Food99OrderAdapter = require('./Food99OrderAdapter');
 const IntegrationOrderService = require('./IntegrationOrderService');
+const IntegrationTypeService = require('./IntegrationTypeService');
 
 const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
-
-const STATUS_MAP = {
-  1: 'PENDING',
-  2: 'PREPARING',
-  3: 'READY',
-  4: 'SHIPPED',
-  5: 'CANCELED',
-  6: 'CANCELED',
-  7: 'CANCELED',
-  8: 'COMPLETED',
-};
 
 class Food99PollingService {
   constructor() {
@@ -196,7 +186,7 @@ class Food99PollingService {
     }
 
     const food99Status = orderDetails.status;
-    const mappedStatus = STATUS_MAP[food99Status];
+    const mappedStatus = IntegrationTypeService.mapStatus('food99', String(food99Status));
 
     if (!mappedStatus) {
       logger.warn(`[FOOD99 POLLING] Status desconhecido ${food99Status} para pedido ${orderId}`);

@@ -7,238 +7,187 @@ const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
 
 class Food99MenuService {
 
-  async syncMenu(restaurantId) {
+  async _getAuthToken(restaurantId) {
+    const settings = await prisma.integrationSettings.findUnique({
+      where: { restaurantId },
+    });
+
+    if (!settings?.food99AppShopId) {
+      throw new Error('Configuração 99Food não encontrada para este restaurante');
+    }
+
+    const authToken = await Food99AuthService.getValidToken(settings.food99AppShopId);
+    if (!authToken) {
+      throw new Error('Não foi possível obter token válido para 99Food');
+    }
+
+    return authToken;
+  }
+
+  _extractData(response) {
+    return response.data?.data || response.data;
+  }
+
+  _checkError(response, data, defaultMsg) {
+    const errno = response.data?.errno ?? data?.errno;
+    if (errno !== 0) {
+      throw new Error(response.data?.errmsg || data?.errmsg || defaultMsg);
+    }
+  }
+
+  async _apiRequest(config) {
+    const { method = 'get', url, params, data: body, timeout = 15000, logContext, logSuccess, defaultErrorMsg } = config;
+
     try {
-      const settings = await prisma.integrationSettings.findUnique({
-        where: { restaurantId },
-      });
+      const response = await axios({ method, url, params, data: body, timeout });
+      const data = this._extractData(response);
+      this._checkError(response, data, defaultErrorMsg);
+      if (logSuccess) logger.info(`[FOOD99 MENU] ${logSuccess}`);
+      return data;
+    } catch (error) {
+      logger.error(`[FOOD99 MENU] ${logContext}:`, error.response?.data || error.message);
+      throw new Error(error.response?.data?.errmsg || error.message || defaultErrorMsg);
+    }
+  }
 
-      if (!settings || !settings.food99AppShopId) {
-        throw new Error('Configuração 99Food não encontrada para este restaurante');
-      }
+  async syncMenu(restaurantId) {
+    const authToken = await this._getAuthToken(restaurantId);
 
-      const authToken = await Food99AuthService.getValidToken(settings.food99AppShopId);
-      if (!authToken) {
-        throw new Error('Não foi possível obter token válido para 99Food');
-      }
-
-      const categories = await prisma.category.findMany({
-        where: { restaurantId, isActive: true },
-        orderBy: { order: 'asc' },
-        include: {
-          products: {
-            where: { showInMenu: true },
-            orderBy: { order: 'asc' },
-          },
+    const categories = await prisma.category.findMany({
+      where: { restaurantId, isActive: true },
+      orderBy: { order: 'asc' },
+      include: {
+        products: {
+          where: { showInMenu: true },
+          orderBy: { order: 'asc' },
         },
-      });
+      },
+    });
 
-      const products = await prisma.product.findMany({
-        where: { restaurantId, showInMenu: true },
-        orderBy: { order: 'asc' },
-        include: {
-          addonGroups: {
-            include: {
-              addons: {
-                orderBy: { order: 'asc' },
-              },
+    const products = await prisma.product.findMany({
+      where: { restaurantId, showInMenu: true },
+      orderBy: { order: 'asc' },
+      include: {
+        addonGroups: {
+          include: {
+            addons: {
+              orderBy: { order: 'asc' },
             },
           },
         },
-      });
+      },
+    });
 
-      const menus = this._buildMenus(categories);
-      const categoriesPayload = this._buildCategories(categories, products);
-      const itemsPayload = this._buildItems(products);
-      const modifierGroupsPayload = this._buildModifierGroups(products);
+    const menus = this._buildMenus(categories);
+    const categoriesPayload = this._buildCategories(categories, products);
+    const itemsPayload = this._buildItems(products);
+    const modifierGroupsPayload = this._buildModifierGroups(products);
 
-      const payload = {
-        auth_token: authToken,
-        menus,
-        categories: categoriesPayload,
-        items: itemsPayload,
-        modifier_groups: modifierGroupsPayload,
-      };
+    const payload = {
+      auth_token: authToken,
+      menus,
+      categories: categoriesPayload,
+      items: itemsPayload,
+      modifier_groups: modifierGroupsPayload,
+    };
 
-      logger.info(`[FOOD99 MENU] Enviando cardápio para restaurante ${restaurantId}: ${menus.length} menus, ${categoriesPayload.length} categorias, ${itemsPayload.length} itens, ${modifierGroupsPayload.length} grupos`);
+    logger.info(`[FOOD99 MENU] Enviando cardápio para restaurante ${restaurantId}: ${menus.length} menus, ${categoriesPayload.length} categorias, ${itemsPayload.length} itens, ${modifierGroupsPayload.length} grupos`);
 
-      const response = await axios.post(
-        `${BASE_URL}/v3/item/item/upload`,
-        payload,
-        { timeout: 30000 },
-      );
+    const data = await this._apiRequest({
+      method: 'post',
+      url: `${BASE_URL}/v3/item/item/upload`,
+      data: payload,
+      timeout: 30000,
+      logContext: 'Erro ao sincronizar cardápio',
+      logSuccess: `Cardápio enviado com sucesso para restaurante ${restaurantId}`,
+      defaultErrorMsg: 'Falha ao sincronizar cardápio',
+    });
 
-      const data = response.data?.data || response.data;
-
-      if (response.data?.errno !== 0) {
-        throw new Error(response.data?.errmsg || 'Erro ao enviar cardápio');
-      }
-
-      const taskId = data?.taskID || data?.taskId;
-
-      logger.info(`[FOOD99 MENU] Cardápio enviado com sucesso. Task ID: ${taskId}`);
-
-      return { success: true, taskId, data };
-    } catch (error) {
-      logger.error('[FOOD99 MENU] Erro ao sincronizar cardápio:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao sincronizar cardápio');
-    }
+    const taskId = data?.taskID || data?.taskId;
+    return { success: true, taskId, data };
   }
 
   async getMenuStatus(authToken, taskId) {
-    try {
-      const response = await axios.get(`${BASE_URL}/v1/item/item/getMenuTaskInfo`, {
-        params: { auth_token: authToken, task_id: taskId },
-        timeout: 15000,
-      });
+    const data = await this._apiRequest({
+      method: 'get',
+      url: `${BASE_URL}/v1/item/item/getMenuTaskInfo`,
+      params: { auth_token: authToken, task_id: taskId },
+      logContext: 'Erro ao consultar status',
+      logSuccess: `Status do task ${taskId} consultado`,
+      defaultErrorMsg: 'Falha ao consultar status',
+    });
 
-      const data = response.data?.data || response.data;
-
-      if (response.data?.errno !== 0) {
-        throw new Error(response.data?.errmsg || 'Erro ao consultar status');
-      }
-
-      return {
-        success: true,
-        taskId: data?.taskID,
-        status: data?.status,
-        message: data?.message,
-        createTime: data?.createTime,
-        operationList: data?.operationList,
-        appShopID: data?.appShopID,
-      };
-    } catch (error) {
-      logger.error('[FOOD99 MENU] Erro ao consultar status:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao consultar status');
-    }
+    return {
+      success: true,
+      taskId: data?.taskID,
+      status: data?.status,
+      message: data?.message,
+      createTime: data?.createTime,
+      operationList: data?.operationList,
+      appShopID: data?.appShopID,
+    };
   }
 
   async getCurrentMenu(restaurantId) {
-    try {
-      const settings = await prisma.integrationSettings.findUnique({
-        where: { restaurantId },
-      });
+    const authToken = await this._getAuthToken(restaurantId);
 
-      if (!settings || !settings.food99AppShopId) {
-        throw new Error('Configuração 99Food não encontrada para este restaurante');
-      }
+    const data = await this._apiRequest({
+      method: 'get',
+      url: `${BASE_URL}/v3/item/item/list`,
+      params: { auth_token: authToken },
+      logContext: 'Erro ao buscar cardápio atual',
+      logSuccess: 'Cardápio atual obtido',
+      defaultErrorMsg: 'Falha ao buscar cardápio atual',
+    });
 
-      const authToken = await Food99AuthService.getValidToken(settings.food99AppShopId);
-      if (!authToken) {
-        throw new Error('Não foi possível obter token válido para 99Food');
-      }
-
-      const response = await axios.get(`${BASE_URL}/v3/item/item/list`, {
-        params: { auth_token: authToken },
-        timeout: 15000,
-      });
-
-      const data = response.data?.data || response.data;
-
-      if (response.data?.errno !== 0) {
-        throw new Error(response.data?.errmsg || 'Erro ao buscar cardápio atual');
-      }
-
-      return {
-        success: true,
-        menus: data?.menus || [],
-        categories: data?.categories || [],
-        items: data?.items || [],
-        modifierGroups: data?.modifier_groups || [],
-      };
-    } catch (error) {
-      logger.error('[FOOD99 MENU] Erro ao buscar cardápio atual:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao buscar cardápio atual');
-    }
+    return {
+      success: true,
+      menus: data?.menus || [],
+      categories: data?.categories || [],
+      items: data?.items || [],
+      modifierGroups: data?.modifier_groups || [],
+    };
   }
 
   async updateItemStatus(restaurantId, integrationCode, available) {
-    try {
-      const settings = await prisma.integrationSettings.findUnique({
-        where: { restaurantId },
-      });
+    const authToken = await this._getAuthToken(restaurantId);
+    const status = available ? 1 : 2;
 
-      if (!settings || !settings.food99AppShopId) {
-        throw new Error('Configuração 99Food não encontrada para este restaurante');
-      }
+    const data = await this._apiRequest({
+      method: 'post',
+      url: `${BASE_URL}/v3/item/item/updateItemStatus`,
+      data: { auth_token: authToken, app_item_ids: [integrationCode], status },
+      logContext: 'Erro ao atualizar status do item',
+      logSuccess: `Status do item ${integrationCode} atualizado para ${status}`,
+      defaultErrorMsg: 'Falha ao atualizar status do item',
+    });
 
-      const authToken = await Food99AuthService.getValidToken(settings.food99AppShopId);
-      if (!authToken) {
-        throw new Error('Não foi possível obter token válido para 99Food');
-      }
-
-      const status = available ? 1 : 2;
-
-      const response = await axios.post(
-        `${BASE_URL}/v3/item/item/updateItemStatus`,
-        {
-          auth_token: authToken,
-          app_item_ids: [integrationCode],
-          status,
-        },
-        { timeout: 15000 },
-      );
-
-      const data = response.data?.data || response.data;
-
-      if (response.data?.errno !== 0) {
-        throw new Error(response.data?.errmsg || 'Erro ao atualizar status do item');
-      }
-
-      logger.info(`[FOOD99 MENU] Status do item ${integrationCode} atualizado para ${status}`);
-
-      return {
-        success: true,
-        integrationCode,
-        status,
-        successList: data?.success || [],
-        failedList: data?.failed || [],
-      };
-    } catch (error) {
-      logger.error('[FOOD99 MENU] Erro ao atualizar status:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao atualizar status do item');
-    }
+    return {
+      success: true,
+      integrationCode,
+      status,
+      successList: data?.success || [],
+      failedList: data?.failed || [],
+    };
   }
 
   async uploadImage(restaurantId, imageUrl, ext) {
-    try {
-      const settings = await prisma.integrationSettings.findUnique({
-        where: { restaurantId },
-      });
+    const authToken = await this._getAuthToken(restaurantId);
 
-      if (!settings || !settings.food99AppShopId) {
-        throw new Error('Configuração 99Food não encontrada para este restaurante');
-      }
+    const body = { auth_token: authToken, image_url: imageUrl };
+    if (ext) body.ext = ext;
 
-      const authToken = await Food99AuthService.getValidToken(settings.food99AppShopId);
-      if (!authToken) {
-        throw new Error('Não foi possível obter token válido para 99Food');
-      }
+    const data = await this._apiRequest({
+      method: 'post',
+      url: `${BASE_URL}/v3/image/image/uploadImage`,
+      data: body,
+      timeout: 30000,
+      logContext: 'Erro ao enviar imagem',
+      logSuccess: `Imagem enviada com sucesso: ${imageUrl}`,
+      defaultErrorMsg: 'Falha ao enviar imagem',
+    });
 
-      const body = { auth_token: authToken, image_url: imageUrl };
-      if (ext) {
-        body.ext = ext;
-      }
-
-      const response = await axios.post(
-        `${BASE_URL}/v3/image/image/uploadImage`,
-        body,
-        { timeout: 30000 },
-      );
-
-      const data = response.data?.data || response.data;
-
-      if (response.data?.errno !== 0) {
-        throw new Error(response.data?.errmsg || 'Erro ao enviar imagem');
-      }
-
-      logger.info(`[FOOD99 MENU] Imagem enviada com sucesso: ${imageUrl}`);
-
-      return { success: true, data };
-    } catch (error) {
-      logger.error('[FOOD99 MENU] Erro ao enviar imagem:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.errmsg || error.message || 'Falha ao enviar imagem');
-    }
+    return { success: true, data };
   }
 
   _buildMenus(categories) {
@@ -282,13 +231,8 @@ class Food99MenuService {
           is_sold_separately: true,
         };
 
-        if (product.description) {
-          item.short_desc = product.description;
-        }
-
-        if (product.imageUrl) {
-          item.head_img = product.imageUrl;
-        }
+        if (product.description) item.short_desc = product.description;
+        if (product.imageUrl) item.head_img = product.imageUrl;
 
         return item;
       });
@@ -303,7 +247,7 @@ class Food99MenuService {
         if (seen.has(group.id)) continue;
         seen.add(group.id);
 
-        const modifierGroup = {
+        groups.push({
           app_modifier_group_id: group.integrationCode || group.id,
           modifier_group_name: group.name,
           is_required: group.isRequired ? 1 : 2,
@@ -314,9 +258,7 @@ class Food99MenuService {
             app_item_id: addon.integrationCode || addon.id,
             price: Math.round(addon.price * 100),
           })),
-        };
-
-        groups.push(modifierGroup);
+        });
       }
     }
 

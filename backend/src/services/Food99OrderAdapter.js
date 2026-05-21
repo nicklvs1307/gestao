@@ -166,24 +166,8 @@ class Food99OrderAdapter extends IntegrationBaseService {
       logger.error(`[FOOD99] Erro ao marcar pronto ${platformOrderId}:`, error.message);
     }
   }
-
-  async markDeliveredOnPlatform(restaurantId, platformOrderId) {
-    const token = await this.getAccessToken(restaurantId);
-    if (!token) return;
-
-    try {
-      await axios.get(`${BASE_URL}/v1/order/order/delivered`, {
-        params: { auth_token: token, order_id: platformOrderId },
-        timeout: 10000,
-      });
-      logger.info(`[FOOD99] Pedido ${platformOrderId} marcado como entregue`);
-    } catch (error) {
-      logger.error(`[FOOD99] Erro ao marcar entregue ${platformOrderId}:`, error.message);
-    }
-  }
 }
 
 const food99OrderAdapter = new Food99OrderAdapter();
 
 module.exports = food99OrderAdapter;
-module.exports.Food99OrderAdapter = Food99OrderAdapter;

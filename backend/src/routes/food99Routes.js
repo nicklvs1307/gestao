@@ -25,5 +25,7 @@ router.get('/food99/current-menu', Food99Controller.getCurrentMenu);
 router.put('/food99/item-status', Food99Controller.updateItemStatus);
 router.post('/food99/refresh-token', Food99Controller.refreshToken);
 router.post('/food99/unbind', Food99Controller.unbindShop);
+router.post('/food99/cancel-apply', Food99Controller.handleCancelApply);
+router.post('/food99/refund-apply', Food99Controller.handleRefundApply);
 
 module.exports = router;
