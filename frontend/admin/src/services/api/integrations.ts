@@ -40,6 +40,31 @@ export const markUairangoReady = async (orderId: string) => {
   return response.data;
 };
 
+export const getUairangoConnectionStatus = async () => {
+  const response = await apiClient.get('/integrations/uairango/status');
+  return response.data;
+};
+
+export const updateUairangoMerchantStatus = async (status: string, operations?: { name: string; status: string; estimatedTime?: number }[]) => {
+  const response = await apiClient.put('/integrations/uairango/merchant-status', { status, operations });
+  return response.data;
+};
+
+export const dispatchUairangoOrder = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/uairango/dispatch', { orderId });
+  return response.data;
+};
+
+export const getUairangoCancellationReasons = async (orderId: string) => {
+  const response = await apiClient.get(`/integrations/uairango/cancellation-reasons/${orderId}`);
+  return response.data;
+};
+
+export const requestUairangoCancellation = async (orderId: string, cancellationCode: number, reason?: string) => {
+  const response = await apiClient.post('/integrations/uairango/cancel-order', { orderId, cancellationCode, reason });
+  return response.data;
+};
+
 export const importSaiposMenu = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

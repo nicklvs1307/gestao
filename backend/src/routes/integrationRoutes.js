@@ -18,6 +18,11 @@ router.post('/uairango/import', IntegrationController.importUairangoMenu);
 router.post('/uairango/confirm', IntegrationController.confirmUairangoOrder);
 router.post('/uairango/reject', IntegrationController.rejectUairangoOrder);
 router.post('/uairango/ready', IntegrationController.markUairangoReady);
+router.get('/uairango/status', IntegrationController.getUairangoConnectionStatus);
+router.put('/uairango/merchant-status', IntegrationController.updateUairangoMerchantStatus);
+router.post('/uairango/dispatch', IntegrationController.dispatchUairangoOrder);
+router.get('/uairango/cancellation-reasons/:orderId', IntegrationController.getUairangoCancellationReasons);
+router.post('/uairango/cancel-order', IntegrationController.requestUairangoCancellation);
 
 router.get('/ifood', IntegrationController.getIfoodSettings);
 router.put('/ifood', IntegrationController.updateIfoodSettings);

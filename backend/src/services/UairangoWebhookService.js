@@ -7,6 +7,10 @@ const IntegrationOrderService = require('./IntegrationOrderService');
 const IntegrationTypeService = require('./IntegrationTypeService');
 
 class UairangoWebhookService {
+  constructor() {
+    this.BASE_URL = 'https://www.uairango.com/api2';
+  }
+
   /**
    * Processa webhook recebido do Uai Rangô
    * O webhook envia os mesmos eventos da Events API

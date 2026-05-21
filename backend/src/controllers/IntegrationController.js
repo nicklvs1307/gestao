@@ -1,7 +1,8 @@
 const prisma = require('../lib/prisma');
 const logger = require('../config/logger');
 const UairangoService = require('../services/UairangoService');
-const UairangoOrderService = require('../services/UairangoOrderService');
+const UairangoOrderAdapter = require('../services/UairangoOrderAdapter');
+const UairangoMerchantService = require('../services/UairangoMerchantService');
 const SaiposImportService = require('../services/SaiposImportService');
 const IfoodOrderService = require('../services/IfoodOrderService');
 const IfoodAuthService = require('../services/IfoodAuthService');
@@ -125,6 +126,110 @@ const importUairangoMenu = async (req, res) => {
     } catch (error) {
         logger.error('Erro ao importar cardápio do UaiRango:', error);
         res.status(500).json({ error: error.message || 'Erro ao importar cardápio do UaiRango.' });
+    }
+};
+
+const getUairangoConnectionStatus = async (req, res) => {
+    try {
+        const status = await UairangoMerchantService.getConnectionStatus(req.restaurantId);
+        res.json(status);
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao verificar status da conexão:', error);
+        res.status(500).json({ error: error.message || 'Erro ao verificar status da conexão' });
+    }
+};
+
+const updateUairangoMerchantStatus = async (req, res) => {
+    try {
+        const { status, operations } = req.body;
+
+        if (!status) {
+            return res.status(400).json({ error: 'status é obrigatório (AVAILABLE ou UNAVAILABLE)' });
+        }
+
+        const result = await UairangoMerchantService.updateMerchantStatus(req.restaurantId, status, operations);
+        res.json(result);
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao atualizar status da loja:', error);
+        res.status(500).json({ error: error.message || 'Erro ao atualizar status da loja' });
+    }
+};
+
+const dispatchUairangoOrder = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const UairangoOrderAdapter = require('../services/UairangoOrderAdapter');
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
+        await UairangoOrderAdapter.dispatchOrderOnPlatform(req.restaurantId, order.uairangoOrderId);
+
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'SHIPPED', shippedAt: new Date() }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao despachar pedido:', error);
+        res.status(500).json({ error: error.message || 'Erro ao despachar pedido' });
+    }
+};
+
+const getUairangoCancellationReasons = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
+        const reasons = await UairangoMerchantService.getCancellationReasons(req.restaurantId, order.uairangoOrderId);
+        res.json(reasons);
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao buscar motivos de cancelamento:', error);
+        res.status(500).json({ error: error.message || 'Erro ao buscar motivos de cancelamento' });
+    }
+};
+
+const requestUairangoCancellation = async (req, res) => {
+    try {
+        const { orderId, cancellationCode, reason } = req.body;
+
+        if (!orderId || !cancellationCode) {
+            return res.status(400).json({ error: 'orderId e cancellationCode são obrigatórios' });
+        }
+
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
+        const result = await UairangoMerchantService.requestCancellation(
+            req.restaurantId, order.uairangoOrderId, cancellationCode, reason
+        );
+
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'CANCELED', canceledAt: new Date() }
+        });
+
+        res.json(result);
+    } catch (error) {
+        logger.error('[UAIRANGO] Erro ao solicitar cancelamento:', error);
+        res.status(500).json({ error: error.message || 'Erro ao solicitar cancelamento' });
     }
 };
 
@@ -266,8 +371,19 @@ const confirmUairangoOrder = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await UairangoOrderService.confirmOrder(orderId, req.restaurantId);
-        res.json(result);
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'PREPARING', preparingAt: new Date() }
+        });
+
+        await UairangoOrderAdapter.confirmOrderOnPlatform(req.restaurantId, order.uairangoOrderId);
+
+        res.json({ success: true });
     } catch (error) {
         logger.error('[UAIRANGO] Erro ao confirmar pedido:', error);
         res.status(500).json({ error: error.message || 'Erro ao confirmar pedido' });
@@ -282,8 +398,19 @@ const rejectUairangoOrder = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await UairangoOrderService.rejectOrder(orderId, req.restaurantId, reason);
-        res.json(result);
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'CANCELED', canceledAt: new Date(), cancellationReason: reason }
+        });
+
+        await UairangoOrderAdapter.rejectOrderOnPlatform(req.restaurantId, order.uairangoOrderId);
+
+        res.json({ success: true });
     } catch (error) {
         logger.error('[UAIRANGO] Erro ao rejeitar pedido:', error);
         res.status(500).json({ error: error.message || 'Erro ao rejeitar pedido' });
@@ -298,8 +425,19 @@ const markUairangoReady = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
-        const result = await UairangoOrderService.markReady(orderId, req.restaurantId);
-        res.json(result);
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'READY', readyAt: new Date() }
+        });
+
+        await UairangoOrderAdapter.markReadyOnPlatform(req.restaurantId, order.uairangoOrderId);
+
+        res.json({ success: true });
     } catch (error) {
         logger.error('[UAIRANGO] Erro ao marcar pronto:', error);
         res.status(500).json({ error: error.message || 'Erro ao marcar pronto' });
@@ -484,6 +622,11 @@ module.exports = {
     confirmUairangoOrder,
     rejectUairangoOrder,
     markUairangoReady,
+    getUairangoConnectionStatus,
+    updateUairangoMerchantStatus,
+    dispatchUairangoOrder,
+    getUairangoCancellationReasons,
+    requestUairangoCancellation,
     getIfoodCancellationReasons,
     acceptIfoodCancellation,
     refuseIfoodCancellation,

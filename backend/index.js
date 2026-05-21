@@ -161,9 +161,14 @@ app.post('/webhooks/ifood/test', (req, res) => res.status(200).json({ status: 'o
 
 // Webhook Uai Rango (PRIORITÁRIO - Polling é fallback)
 const UairangoWebhookService = require('./src/services/UairangoWebhookService');
-app.post('/webhooks/uairango', (req, res) => {
-  const result = UairangoWebhookService.handleWebhook(req.body);
-  res.status(200).json(result);
+app.post('/webhooks/uairango', async (req, res) => {
+  try {
+    const result = await UairangoWebhookService.handleWebhook(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('[WEBHOOK UAIRANGO] Erro:', error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
 });
 app.get('/webhooks/uairango/test', (req, res) => res.status(200).json({ status: 'ok' }));
 

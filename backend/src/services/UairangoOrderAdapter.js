@@ -134,7 +134,7 @@ class UairangoOrderAdapter extends IntegrationBaseService {
 
   async confirmOrderOnPlatform(restaurantId, platformOrderId) {
     const token = await this.getAccessToken(restaurantId);
-    if (!token) return;
+    if (!token) { logger.warn(`[UAIRANGO] Sem token para confirmar ${platformOrderId}`); return false; }
 
     try {
       await withRetry(async () => {
@@ -148,14 +148,16 @@ class UairangoOrderAdapter extends IntegrationBaseService {
         );
       });
       logger.info(`[UAIRANGO] Pedido ${platformOrderId} confirmado`);
+      return true;
     } catch (error) {
       logger.error(`[UAIRANGO] Erro ao confirmar ${platformOrderId}:`, error.message);
+      return false;
     }
   }
 
   async rejectOrderOnPlatform(restaurantId, platformOrderId, reasonCode = '501') {
     const token = await this.getAccessToken(restaurantId);
-    if (!token) return;
+    if (!token) { logger.warn(`[UAIRANGO] Sem token para cancelar ${platformOrderId}`); return false; }
 
     try {
       await withRetry(async () => {
@@ -169,14 +171,39 @@ class UairangoOrderAdapter extends IntegrationBaseService {
         );
       });
       logger.info(`[UAIRANGO] Pedido ${platformOrderId} cancelado`);
+      return true;
     } catch (error) {
       logger.error(`[UAIRANGO] Erro ao cancelar ${platformOrderId}:`, error.message);
+      return false;
+    }
+  }
+
+  async dispatchOrderOnPlatform(restaurantId, platformOrderId) {
+    const token = await this.getAccessToken(restaurantId);
+    if (!token) { logger.warn(`[UAIRANGO] Sem token para despachar ${platformOrderId}`); return false; }
+
+    try {
+      await withRetry(async () => {
+        return await axios.post(
+          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/dispatch`,
+          {},
+          {
+            headers: { 'Authorization': `Bearer ${token}` },
+            timeout: 10000
+          }
+        );
+      });
+      logger.info(`[UAIRANGO] Pedido ${platformOrderId} despachado para entrega`);
+      return true;
+    } catch (error) {
+      logger.error(`[UAIRANGO] Erro ao despachar ${platformOrderId}:`, error.message);
+      return false;
     }
   }
 
   async markReadyOnPlatform(restaurantId, platformOrderId) {
     const token = await this.getAccessToken(restaurantId);
-    if (!token) return;
+    if (!token) { logger.warn(`[UAIRANGO] Sem token para notificar pronto ${platformOrderId}`); return false; }
 
     try {
       await withRetry(async () => {
@@ -190,8 +217,10 @@ class UairangoOrderAdapter extends IntegrationBaseService {
         );
       });
       logger.info(`[UAIRANGO] Pedido ${platformOrderId} marcado como pronto`);
+      return true;
     } catch (error) {
       logger.error(`[UAIRANGO] Erro ao notificar pronto ${platformOrderId}:`, error.message);
+      return false;
     }
   }
 }

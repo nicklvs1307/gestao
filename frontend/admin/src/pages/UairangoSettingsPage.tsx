@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getUairangoSettings, updateUairangoSettings, importUairangoMenu } from '../services/api';
-import { ArrowLeft, Save, Loader2, Info, ShoppingBag, RefreshCw, Database, Download, CheckCircle, XCircle, Key, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { getUairangoSettings, updateUairangoSettings, importUairangoMenu, getUairangoConnectionStatus, updateUairangoMerchantStatus } from '../services/api';
+import { ArrowLeft, Save, Loader2, Info, ShoppingBag, Database, Download, CheckCircle, XCircle, Key, Link as LinkIcon, AlertTriangle, Wifi, WifiOff, Store, Power, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -8,9 +8,16 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import uairangoLogo from '../assets/uairango-logo.png';
 
+function maskValue(val: string, showFull = false) {
+  if (!val) return '';
+  if (showFull) return val;
+  if (val.length <= 8) return '•'.repeat(val.length);
+  return val.substring(0, 4) + '•'.repeat(8) + val.substring(val.length - 4);
+}
+
 const UairangoSettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [token, setToken] = useState(''); // Legacy (opcional)
+  const [token, setToken] = useState('');
   const [establishmentId, setEstablishmentId] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
@@ -19,6 +26,16 @@ const UairangoSettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [lastImport, setLastImport] = useState<Date | null>(null);
+
+  const [showSecret, setShowSecret] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+
+  const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; merchant?: any; operations?: any[]; tokenExpiresAt?: string; error?: string } | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const [merchantName, setMerchantName] = useState<string | null>(null);
+  const [isMerchantOnline, setIsMerchantOnline] = useState(false);
+  const [isTogglingMerchant, setIsTogglingMerchant] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -40,12 +57,12 @@ const UairangoSettingsPage: React.FC = () => {
     fetchSettings();
   }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       await updateUairangoSettings({ 
-        uairangoToken: token, // Legacy (opcional)
+        uairangoToken: token,
         uairangoEstablishmentId: establishmentId,
         uairangoClientId: clientId,
         uairangoClientSecret: clientSecret,
@@ -59,8 +76,50 @@ const UairangoSettingsPage: React.FC = () => {
     }
   };
 
+  const handleTestConnection = async () => {
+    if (!clientId || !clientSecret) {
+      toast.error('Configure o Client ID e Client Secret antes de testar.');
+      return;
+    }
+    setIsTesting(true);
+    setConnectionStatus(null);
+    try {
+      const status = await getUairangoConnectionStatus();
+      setConnectionStatus(status);
+      if (status.connected) {
+        setMerchantName(status.merchant?.name || 'Loja');
+        const deliveryOp = Array.isArray(status.operations) ? status.operations.find((op: any) => op.operation === 'DELIVERY') : null;
+        setIsMerchantOnline(deliveryOp?.available || false);
+        toast.success('Conexão com UaiRango estabelecida!');
+      } else {
+        toast.error(status.error || 'Falha na conexão.');
+      }
+    } catch (error) {
+      toast.error('Erro ao testar conexão.');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleToggleMerchantStatus = async () => {
+    setIsTogglingMerchant(true);
+    try {
+      const newStatus = isMerchantOnline ? 'UNAVAILABLE' : 'AVAILABLE';
+      const operations = [
+        { name: 'DELIVERY', status: newStatus, estimatedTime: 20 },
+        { name: 'TAKEOUT', status: newStatus, estimatedTime: 15 }
+      ];
+      await updateUairangoMerchantStatus(newStatus, operations);
+      setIsMerchantOnline(!isMerchantOnline);
+      toast.success(`Loja ${isMerchantOnline ? 'fechada' : 'aberta'} no UaiRango!`);
+    } catch (error) {
+      toast.error('Erro ao alterar status da loja.');
+    } finally {
+      setIsTogglingMerchant(false);
+    }
+  };
+
   const handleImportMenu = async () => {
-    // Prioriza OAuth 2.0, fallback para token legado
     if ((!clientId || !clientSecret) && !token) {
       toast.error('Configure o Client ID e Client Secret (OAuth 2.0) ou Token legado antes de importar.');
       return;
@@ -91,9 +150,10 @@ const UairangoSettingsPage: React.FC = () => {
     );
   }
 
+  const credentialsOk = clientId && clientSecret;
+
   return (
     <div className="space-y-6">
-      {/* Header Premium */}
       <div className="flex items-center gap-4">
         <button 
           onClick={() => navigate('/integrations')}
@@ -116,15 +176,13 @@ const UairangoSettingsPage: React.FC = () => {
                 {isActive ? 'Conectado' : 'Desativado'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Integração de Cardápio</p>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Integração de Cardápio e Pedidos</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Coluna Principal */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Card de Configuração */}
           <Card className="overflow-hidden">
             <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
               <div className="flex items-center gap-3">
@@ -133,70 +191,77 @@ const UairangoSettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Configuração da API</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Token de acesso e ID do estabelecimento</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Credenciais de acesso OAuth 2.0</p>
                 </div>
               </div>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Token de Desenvolvedor (Legado)</label>
-                <Input 
-                  value={token} 
-                  onChange={e => setToken(e.target.value)} 
-                  placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." 
-                  className="h-12 bg-slate-50 border-slate-200 focus:bg-white font-mono text-sm"
-                />
-                <p className="text-[10px] text-slate-400">Use OAuth 2.0 abaixo (preferencial)</p>
-              </div>
-              
-              {/* Novos campos OAuth 2.0 */}
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <p className="text-xs font-bold text-blue-800 uppercase tracking-tight mb-3">OAuth 2.0 (Novo - Preferencial)</p>
+                <p className="text-xs font-bold text-blue-800 uppercase tracking-tight mb-3">OAuth 2.0 (Recomendado)</p>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Client ID</label>
                     <Input 
                       value={clientId} 
                       onChange={e => setClientId(e.target.value)} 
-                      placeholder="Ex: 573eeed8-c028-43f6-8957-12006e31f457" 
+                      placeholder="Cole o Client ID aqui" 
                       className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Client Secret</label>
-                    <Input 
-                      value={clientSecret} 
-                      onChange={e => setClientSecret(e.target.value)} 
-                      placeholder="Ex: 2d1ff9303270b2efdac5b1c2d8a5e622" 
-                      type="password"
-                      className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
-                    />
+                    <div className="relative">
+                      <Input 
+                        value={clientSecret} 
+                        onChange={e => setClientSecret(e.target.value)} 
+                        placeholder="Cole o Client Secret aqui" 
+                        type={showSecret ? 'text' : 'password'}
+                        className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSecret(!showSecret)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold uppercase hover:text-blue-800"
+                      >
+                        {showSecret ? 'Ocultar' : 'Mostrar'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-500 uppercase tracking-tight">ID do Estabelecimento (Merchant ID)</label>
                 <Input 
                   value={establishmentId} 
                   onChange={e => setEstablishmentId(e.target.value)} 
-                  placeholder="Ex: f4af41ba-e01e-4500-b5cf-0bcb130589db" 
+                  placeholder="Cole o ID do estabelecimento" 
                   className="h-12 bg-slate-50 border-slate-200 focus:bg-white font-mono"
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">ID do Estabelecimento</label>
-                <Input 
-                  value={establishmentId} 
-                  onChange={e => setEstablishmentId(e.target.value)} 
-                  placeholder="Ex: 12345" 
-                  className="h-12 bg-slate-50 border-slate-200 focus:bg-white"
-                />
+                <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Token de Desenvolvedor (Legado - opcional)</label>
+                <div className="relative">
+                  <Input 
+                    value={token} 
+                    onChange={e => setToken(e.target.value)} 
+                    placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." 
+                    type={showToken ? 'text' : 'password'}
+                    className="h-12 bg-slate-50 border-slate-200 focus:bg-white font-mono text-sm pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowToken(!showToken)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-bold uppercase hover:text-slate-800"
+                  >
+                    {showToken ? 'Ocultar' : 'Mostrar'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400">Use apenas se OAuth 2.0 não estiver disponível</p>
               </div>
 
-              {/* Toggle Ativo */}
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <button
                   type="button"
@@ -211,7 +276,7 @@ const UairangoSettingsPage: React.FC = () => {
                 </button>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-slate-700">Ativar Integração UaiRango</p>
-                  <p className="text-[10px] text-slate-400">Sincronizar cardápio automaticamente</p>
+                  <p className="text-[10px] text-slate-400">Sincronizar cardápio e receber pedidos</p>
                 </div>
                 {isActive ? (
                   <CheckCircle size={20} className="text-emerald-500" />
@@ -220,7 +285,6 @@ const UairangoSettingsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3 pt-4 border-t border-slate-100">
                 <Button type="button" variant="outline" onClick={() => navigate('/integrations')} className="flex-1 h-12">
                   Voltar
@@ -233,7 +297,6 @@ const UairangoSettingsPage: React.FC = () => {
             </form>
           </Card>
 
-          {/* Card de Importação */}
           <Card className="overflow-hidden">
             <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-amber-50 to-white">
               <div className="flex items-center justify-between">
@@ -273,7 +336,7 @@ const UairangoSettingsPage: React.FC = () => {
 
               <Button 
                 onClick={handleImportMenu} 
-                disabled={isImporting || ((!clientId || !clientSecret) && !token) || !establishmentId}
+                disabled={isImporting || (!credentialsOk && !token) || !establishmentId}
                 className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xl shadow-orange-500/30 text-lg font-black uppercase tracking-wider"
               >
                 {isImporting ? (
@@ -288,19 +351,11 @@ const UairangoSettingsPage: React.FC = () => {
                   </>
                 )}
               </Button>
-              
-              {(!token || !establishmentId) && (
-                <p className="text-center text-xs text-slate-400">
-                  Configure o Token e o ID para habilitar a importação
-                </p>
-              )}
             </div>
           </Card>
         </div>
 
-        {/* Coluna Lateral - Info */}
         <div className="space-y-6">
-          {/* Info */}
           <Card className="overflow-hidden">
             <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-white">
               <div className="flex items-center gap-2">
@@ -310,11 +365,11 @@ const UairangoSettingsPage: React.FC = () => {
             </div>
             <div className="p-5 space-y-4">
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-black text-slate-500">1</span>
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[10px] font-bold text-blue-600">1</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Acesse o painel do <span className="font-black">UaiRango</span> e vá em Configurações
+                  Acesse o painel do <span className="font-bold">UaiRango → Meus Apps</span>
                 </p>
               </div>
               <div className="flex gap-3">
@@ -322,7 +377,7 @@ const UairangoSettingsPage: React.FC = () => {
                   <span className="text-[10px] font-bold text-blue-600">2</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  No portal UaiRango, vá em <span className="font-bold">Meus Apps → API OAuth 2.0</span>
+                  Em <span className="font-bold">API OAuth 2.0</span>, copie o <span className="font-bold">Client ID e Client Secret</span>
                 </p>
               </div>
               <div className="flex gap-3">
@@ -330,67 +385,127 @@ const UairangoSettingsPage: React.FC = () => {
                   <span className="text-[10px] font-bold text-blue-600">3</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Copie o <span className="font-bold">Client ID e Client Secret</span> (OAuth 2.0 - Preferencial)
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-bold text-slate-500">4</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
                   O <span className="font-bold">Merchant ID</span> está no perfil da sua conta
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-black text-slate-500">5</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Copie o <span className="font-black">Token de Desenvolvedor</span> da seção API
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-black text-slate-500">6</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  O <span className="font-black">ID do Estabelecimento</span> está no perfil da sua conta
                 </p>
               </div>
             </div>
           </Card>
 
-          {/* Status */}
+          <Card className="overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center gap-2">
+                <Search size={16} className="text-slate-500" />
+                <h3 className="font-black text-slate-800 text-sm uppercase">Testar Conexão</h3>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              <Button
+                type="button"
+                onClick={handleTestConnection}
+                disabled={isTesting || !credentialsOk}
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20"
+              >
+                {isTesting ? (
+                  <><Loader2 className="animate-spin mr-2" size={14} /> Testando...</>
+                ) : (
+                  <><Wifi size={14} className="mr-2" /> Testar Conexão</>
+                )}
+              </Button>
+
+              {connectionStatus && (
+                <div className="mt-3 p-3 rounded-xl border text-xs space-y-2" style={{
+                  backgroundColor: connectionStatus.connected ? '#f0fdf4' : '#fef2f2',
+                  borderColor: connectionStatus.connected ? '#bbf7d0' : '#fecaca'
+                }}>
+                  <div className="flex items-center gap-2">
+                    {connectionStatus.connected ? (
+                      <><Wifi size={14} className="text-emerald-600" /><span className="font-bold text-emerald-700">Conectado</span></>
+                    ) : (
+                      <><WifiOff size={14} className="text-red-600" /><span className="font-bold text-red-700">Falha: {connectionStatus.error}</span></>
+                    )}
+                  </div>
+                  {connectionStatus.merchant && (
+                    <>
+                      <p className="text-slate-600"><span className="font-semibold">Loja:</span> {connectionStatus.merchant.name}</p>
+                      <p className="text-slate-600"><span className="font-semibold">Razão Social:</span> {connectionStatus.merchant.corporateName}</p>
+                      <p className="text-slate-600"><span className="font-semibold">Cidade:</span> {connectionStatus.merchant.address?.city}/{connectionStatus.merchant.address?.state}</p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-violet-50 to-white">
+              <div className="flex items-center gap-2">
+                <Store size={16} className="text-violet-500" />
+                <h3 className="font-black text-slate-800 text-sm uppercase">Status da Loja</h3>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              {connectionStatus?.connected ? (
+                <>
+                  {merchantName && (
+                    <p className="text-xs text-slate-500"><span className="font-semibold">{merchantName}</span></p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500">Delivery</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      isMerchantOnline ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                    }`}>
+                      {isMerchantOnline ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleToggleMerchantStatus}
+                    disabled={isTogglingMerchant}
+                    className={`w-full h-12 ${isMerchantOnline ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'} shadow-lg`}
+                  >
+                    {isTogglingMerchant ? (
+                      <><Loader2 className="animate-spin mr-2" size={14} /> Alterando...</>
+                    ) : (
+                      <><Power size={14} className="mr-2" /> {isMerchantOnline ? 'Fechar Loja' : 'Abrir Loja'}</>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-2">Teste a conexão primeiro</p>
+              )}
+            </div>
+          </Card>
+
           <Card className="overflow-hidden">
             <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
               <div className="flex items-center gap-2">
                 <Key size={16} className="text-slate-500" />
-                <h3 className="font-black text-slate-800 text-sm uppercase">Status</h3>
+                <h3 className="font-black text-slate-800 text-sm uppercase">Status das Credenciais</h3>
               </div>
             </div>
             <div className="p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">OAuth 2.0</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  clientId && clientSecret ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                  credentialsOk ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
                 }`}>
-                  {clientId && clientSecret ? 'Configurado' : 'Pendente'}
+                  {credentialsOk ? 'Configurado' : 'Pendente'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Client ID</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  clientId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
-                }`}>
-                  {clientId ? clientId.substring(0, 8) + '...' : 'Pendente'}
-                </span>
+                <span className="text-[10px] font-mono text-slate-500">{maskValue(clientId)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Client Secret</span>
+                <span className="text-[10px] font-mono text-slate-500">{maskValue(clientSecret)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Merchant ID</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                   establishmentId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
                 }`}>
-                  {establishmentId ? establishmentId.substring(0, 8) + '...' : 'Pendente'}
+                  {establishmentId ? 'Configurado' : 'Pendente'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -404,22 +519,6 @@ const UairangoSettingsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Integração</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
-                }`}>
-                  {isActive ? 'Ativa' : 'Inativa'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Estabelecimento</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                  establishmentId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
-                }`}>
-                  {establishmentId ? establishmentId : 'Pendente'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Integração</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
                   isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
                 }`}>
                   {isActive ? 'Ativa' : 'Inativa'}
