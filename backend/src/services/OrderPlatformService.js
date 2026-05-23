@@ -82,6 +82,10 @@ orderPlatformService.register('uairango', {
     const UairangoOrderAdapter = require('./UairangoOrderAdapter');
     return await UairangoOrderAdapter.markReadyOnPlatform(restaurantId, orderId);
   },
+  onShipped: async (orderId, restaurantId) => {
+    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
+    return await UairangoOrderAdapter.dispatchOrderOnPlatform(restaurantId, orderId);
+  },
   onCanceled: async (orderId, restaurantId) => {
     const UairangoOrderAdapter = require('./UairangoOrderAdapter');
     return await UairangoOrderAdapter.rejectOrderOnPlatform(restaurantId, orderId);

@@ -318,6 +318,8 @@ async handleWebhook(req, res) {
         }
       );
 
+      logger.info(`[IFOOD WEBHOOK] Raw API response for order ${orderId}: ${JSON.stringify(response.data)}`);
+
       return response.data;
     } catch (error) {
       logger.error(`[IFOOD WEBHOOK] Erro ao buscar detalhes do pedido ${orderId}:`, 

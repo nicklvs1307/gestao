@@ -4,7 +4,6 @@ const prisma = require('../lib/prisma');
 const IntegrationBaseService = require('./IntegrationBaseService');
 const UairangoAuthService = require('./UairangoAuthService');
 
-// Retry com backoff exponencial
 async function withRetry(fn, retries = 3, delayMs = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -34,75 +33,67 @@ class UairangoOrderAdapter extends IntegrationBaseService {
   }
 
   getPlatformOrderId(rawData) {
-    return rawData.orderId || rawData.cod_pedido || rawData.id;
+    return rawData.id || rawData.orderId || null;
   }
 
-  /**
-   * Traduz o formato bruto da API do Uairango para o formato normalizado
-   * que o OrderService.createOrderFromIntegration() espera.
-   * 
-   * APENAS tradução de formato. Zero lógica financeira.
-   */
   parseOrder(rawData, restaurantId) {
-    const isDelivery = rawData.orderType === 'DELIVERY' || rawData.tipo_entrega === 'Delivery';
-    const orderType = isDelivery ? 'DELIVERY' : 'PICKUP';
+    const orderType = rawData.orderType === 'TAKEOUT' ? 'PICKUP' : 'DELIVERY';
+    const isDelivery = orderType === 'DELIVERY';
 
-    // ─── ITENS ────────────────────────────────────────────────────
-    const products = rawData.items || rawData.produtos || [];
-    const items = products.map(item => {
-      const addons = item.addons || item.adicionais || [];
-      const addonsData = Array.isArray(addons) ? addons.map(addon => ({
-        name: addon.name || addon.nome || 'Adicional',
-        price: parseFloat(addon.price || addon.valor || 0),
-        quantity: parseInt(addon.quantity || addon.quantidade || 1),
-        integrationCode: addon.integrationCode || addon.codigo || null,
-      })) : [];
+    const items = (rawData.items || []).map(item => {
+      const options = item.options || [];
+      const addons = options.map(opt => ({
+        name: opt.name || 'Adicional',
+        price: parseFloat(opt.unitPrice || 0),
+        quantity: parseInt(opt.quantity || 1),
+        integrationCode: opt.id || null,
+      }));
 
-      const sizeData = item.size 
-        ? { name: item.size.name || item.size, price: parseFloat(item.size.price || 0), integrationCode: item.size.integrationCode || item.size.codigo || null }
+      const sizeData = options.length > 0
+        ? { name: options[0].name, price: parseFloat(options[0].unitPrice || 0), integrationCode: options[0].id || null }
         : null;
 
       return {
-        name: item.name || item.nome || `Item Uairango`,
-        externalId: item.id || item.cod_produto || null,
-        integrationCode: item.integrationCode || item.codigo || null,
-        price: parseFloat(item.priceAtTime || item.valor || 0),
-        quantity: parseInt(item.quantity || item.quantidade || 1),
-        observations: item.observations || item.obs || null,
-        addons: addonsData,
+        name: item.name || `Item Uairango`,
+        externalId: item.id || null,
+        integrationCode: item.externalCode || item.id || null,
+        price: parseFloat(item.unitPrice || 0),
+        quantity: parseInt(item.quantity || 1),
+        observations: item.observations || null,
+        addons,
         sizeJson: sizeData ? JSON.stringify(sizeData) : null,
-        flavorsJson: item.flavorsJson || null,
+        flavorsJson: null,
       };
     });
 
-    // ─── DELIVERY DATA ────────────────────────────────────────────
-    const deliveryData = isDelivery ? {
-      address: this._formatAddress(rawData.delivery?.address || rawData.endereco),
-      complement: rawData.delivery?.complement || rawData.endereco?.complemento || '',
-      reference: rawData.delivery?.reference || rawData.endereco?.ponto_referencia || '',
-      neighborhood: rawData.delivery?.neighborhood || rawData.endereco?.bairro || '',
-      city: rawData.delivery?.city || rawData.endereco?.cidade || '',
-      state: rawData.delivery?.state || rawData.endereco?.uf || '',
-      zipCode: rawData.delivery?.postalCode || rawData.endereco?.cep || '',
+    const deliveryData = isDelivery && rawData.delivery?.deliveryAddress ? {
+      address: this._formatAddress(rawData.delivery.deliveryAddress),
+      complement: rawData.delivery.deliveryAddress.complement || '',
+      reference: rawData.delivery.deliveryAddress.reference || '',
+      neighborhood: rawData.delivery.deliveryAddress.neighborhood || '',
+      city: rawData.delivery.deliveryAddress.city || '',
+      state: rawData.delivery.deliveryAddress.state || '',
+      zipCode: rawData.delivery.deliveryAddress.postalCode?.toString() || '',
       deliveryType: 'delivery',
-      deliveryFee: parseFloat(rawData.delivery?.fee || rawData.taxa_entrega || 0),
-      latitude: rawData.delivery?.latitude || rawData.endereco?.lat ? parseFloat(rawData.delivery?.latitude || rawData.endereco?.lat) : null,
-      longitude: rawData.delivery?.longitude || rawData.endereco?.lng ? parseFloat(rawData.delivery?.longitude || rawData.endereco?.lng) : null,
+      deliveryFee: parseFloat(rawData.total?.deliveryFee || 0),
+      latitude: rawData.delivery.deliveryAddress.coordinates?.latitude || null,
+      longitude: rawData.delivery.deliveryAddress.coordinates?.longitude || null,
     } : null;
 
-    // ─── CUSTOMER ─────────────────────────────────────────────────
-    const customer = isDelivery ? {
-      name: rawData.customer?.name || rawData.usuario?.nome || 'Cliente',
-      phone: rawData.customer?.phone || rawData.usuario?.tel1 || rawData.usuario?.tel_localizador || '',
+    const customer = rawData.customer ? {
+      name: rawData.customer.name || 'Cliente',
+      phone: rawData.customer.phone?.number?.toString() || '',
     } : null;
 
-    // ─── PAGAMENTO ────────────────────────────────────────────────
-    const rawMethod = rawData.payment?.method || rawData.forma_pagamento || 'CASH';
-    const changeFor = rawData.payment?.changeFor || rawData.troco || null;
+    const paymentMethods = rawData.payments?.methods || [];
+    const mainMethod = paymentMethods[0] || {};
+    const rawMethod = mainMethod.method || 'CASH';
+    const changeFor = null;
 
-    // ─── TOTAIS ───────────────────────────────────────────────────
-    const total = parseFloat(rawData.total || rawData.valor_total || 0);
-    const deliveryFee = isDelivery ? parseFloat(rawData.delivery?.fee || rawData.taxa_entrega || 0) : 0;
+    const subtotal = parseFloat(rawData.total?.subTotal || 0);
+    const deliveryFee = parseFloat(rawData.total?.deliveryFee || 0);
+    const discount = parseFloat(rawData.total?.benefits || 0);
+    const total = parseFloat(rawData.total?.orderAmount || (subtotal + deliveryFee - discount));
 
     return {
       orderType,
@@ -111,25 +102,37 @@ class UairangoOrderAdapter extends IntegrationBaseService {
       deliveryData,
       payment: {
         rawMethod,
-        isPrepaid: false, // Uairango geralmente não tem pagamento online
-        prepaidAmount: 0,
-        pendingAmount: 0,
-        changeFor: changeFor ? parseFloat(changeFor) : null,
+        isPrepaid: (rawData.payments?.prepaid || 0) > 0,
+        prepaidAmount: parseFloat(rawData.payments?.prepaid || 0),
+        pendingAmount: parseFloat(rawData.payments?.pending || 0),
+        changeFor,
       },
       totals: {
-        subtotal: total - deliveryFee,
+        subtotal,
         deliveryFee,
-        discount: 0,
+        discount,
         total,
       },
-      customerNote: rawData.notes || rawData.observacao || null,
+      customerNote: !isDelivery ? rawData.takeout?.observations || null : null,
+      displayId: rawData.displayId || null,
+      pickupCode: null,
+      isTest: rawData.isTest || false,
     };
   }
 
-  _formatAddress(addressData) {
-    if (!addressData) return '';
-    if (typeof addressData === 'string') return addressData;
-    return `${addressData.street || addressData.rua || ''}, ${addressData.number || addressData.num || 'S/N'} - ${addressData.neighborhood || addressData.bairro || ''}, ${addressData.city || addressData.cidade || ''}/${addressData.state || addressData.uf || ''}`;
+  _formatAddress(addr) {
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    const parts = [
+      addr.streetName || addr.street || '',
+      addr.streetNumber || addr.number || 'S/N',
+    ].filter(Boolean).join(', ');
+    const rest = [
+      addr.neighborhood || '',
+      addr.city || '',
+      addr.state || '',
+    ].filter(Boolean).join(', ');
+    return [parts, rest].filter(Boolean).join(' - ');
   }
 
   async confirmOrderOnPlatform(restaurantId, platformOrderId) {
@@ -155,15 +158,15 @@ class UairangoOrderAdapter extends IntegrationBaseService {
     }
   }
 
-  async rejectOrderOnPlatform(restaurantId, platformOrderId, reasonCode = '501') {
+  async rejectOrderOnPlatform(restaurantId, platformOrderId, reasonCode = '1') {
     const token = await this.getAccessToken(restaurantId);
     if (!token) { logger.warn(`[UAIRANGO] Sem token para cancelar ${platformOrderId}`); return false; }
 
     try {
       await withRetry(async () => {
         return await axios.post(
-          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/cancel`,
-          { reasonCode },
+          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/requestCancellation`,
+          { cancellationCode: parseInt(reasonCode), reason: 'Cancelamento solicitado pelo estabelecimento' },
           {
             headers: { 'Authorization': `Bearer ${token}` },
             timeout: 10000
@@ -208,7 +211,7 @@ class UairangoOrderAdapter extends IntegrationBaseService {
     try {
       await withRetry(async () => {
         return await axios.post(
-          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/ready`,
+          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/readyToPickup`,
           {},
           {
             headers: { 'Authorization': `Bearer ${token}` },

@@ -279,6 +279,8 @@ class IfoodPollingService {
           timeout: 10000
         }
       );
+      logger.info(`[IFOOD POLLING] Raw API response for order ${orderId}: ${JSON.stringify(response.data)}`);
+
       return response.data;
     } catch (error) {
       logger.error(`[IFOOD POLLING] Erro ao buscar detalhes do pedido ${orderId}:`, 
