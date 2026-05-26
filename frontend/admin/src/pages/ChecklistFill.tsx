@@ -25,9 +25,12 @@ const ChecklistFill: React.FC = () => {
     const [uploadingTask, setUploadingTask] = useState<string | null>(null);
     const [startedAt] = useState(new Date().toISOString());
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     const API_URL = import.meta.env.VITE_API_URL || '/api';
     const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+    const mountedRef = useRef(true);
+    const submitControllerRef = useRef<AbortController | null>(null);
 
     // Autosave draft
     const saveDraft = useCallback(() => {
@@ -73,6 +76,27 @@ const ChecklistFill: React.FC = () => {
     useEffect(() => {
         if (id) loadChecklist();
     }, [id]);
+
+    // Monitorar conectividade
+    useEffect(() => {
+        const goOnline = () => setIsOnline(true);
+        const goOffline = () => setIsOnline(false);
+        window.addEventListener('online', goOnline);
+        window.addEventListener('offline', goOffline);
+        return () => {
+            window.removeEventListener('online', goOnline);
+            window.removeEventListener('offline', goOffline);
+        };
+    }, []);
+
+    // Cleanup no unmount
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            submitControllerRef.current?.abort();
+        };
+    }, []);
 
     const loadChecklist = async () => {
         try {
@@ -146,6 +170,11 @@ const ChecklistFill: React.FC = () => {
             return;
         }
 
+        if (!isOnline) {
+            toast.error("Sem conexão com a internet. Tente novamente mais tarde.");
+            return;
+        }
+
         setUploadingTask(taskId);
         
         const formData = new FormData();
@@ -165,11 +194,14 @@ const ChecklistFill: React.FC = () => {
                 }
             });
 
+            if (!mountedRef.current) return;
+
             const newPhotos = [...currentPhotos, response.data.url];
             handleUpdateResponse(taskId, 'value', newPhotos);
             handleUpdateResponse(taskId, 'isOk', true);
             toast.success(isVideo ? "Vídeo anexado" : "Foto anexada");
         } catch (error: any) {
+            if (!mountedRef.current) return;
             console.error("Upload error:", error);
             const message = error.response?.data?.message || error.message;
             if (error.code === 'ECONNABORTED' || error.code === 'ERR_CANCELED') {
@@ -180,9 +212,11 @@ const ChecklistFill: React.FC = () => {
                 toast.error(`Erro ao enviar ${typeLabel}. Tente novamente.`);
             }
         } finally {
-            setUploadingTask(null);
-            if (fileInputRefs.current[taskId]) {
-                fileInputRefs.current[taskId]!.value = '';
+            if (mountedRef.current) {
+                setUploadingTask(null);
+                if (fileInputRefs.current[taskId]) {
+                    fileInputRefs.current[taskId]!.value = '';
+                }
             }
         }
     };
@@ -251,12 +285,23 @@ const ChecklistFill: React.FC = () => {
         if (!userName) return toast.error("Identifique-se");
 
         if (!validateResponses()) {
-            toast.error("Existem itens pendentes ou irregulares sem justificativa");
-            return;
+            return toast.error("Existem itens pendentes ou irregulares sem justificativa");
+        }
+
+        if (uploadingTask) {
+            return toast.error("Aguarde o upload de mídia concluir antes de enviar");
+        }
+
+        if (!isOnline) {
+            return toast.error("Você está offline. Verifique sua conexão e tente novamente.");
         }
 
         setSubmitting(true);
-        try {
+
+        const controller = new AbortController();
+        submitControllerRef.current = controller;
+
+        const attemptSubmit = async (): Promise<void> => {
             await axios.post(`${API_URL}/checklists/submit`, {
                 checklistId: id,
                 userName,
@@ -270,15 +315,32 @@ const ChecklistFill: React.FC = () => {
                     isOk: r.isOk ?? false,
                     notes: r.itemNotes
                 }))
-            });
+            }, { signal: controller.signal });
+        };
 
-            // Clear draft on success
+        try {
+            await attemptSubmit();
+
+            if (!mountedRef.current) return;
             localStorage.removeItem(`checklist-draft-${id}`);
             setStep('success');
-        } catch (error) {
-            toast.error("Erro ao enviar");
+        } catch (error: any) {
+            if (axios.isCancel(error)) return;
+            if (!mountedRef.current) return;
+
+            if (!error.response) {
+                toast.error("Falha de conexão. Seu rascunho foi salvo automaticamente.", { duration: 5000 });
+            } else {
+                const msg = error.response?.data?.message || "Erro ao enviar checklist";
+                toast.error(msg);
+            }
         } finally {
-            setSubmitting(false);
+            if (mountedRef.current) {
+                setSubmitting(false);
+            }
+            if (submitControllerRef.current === controller) {
+                submitControllerRef.current = null;
+            }
         }
     };
 
@@ -361,6 +423,16 @@ const ChecklistFill: React.FC = () => {
                     animate={{ width: `${progress}%` }}
                 />
             </div>
+
+            {/* Offline Warning */}
+            {!isOnline && (
+                <div className="bg-rose-50 border-b border-rose-200 px-4 py-2 flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-rose-600 shrink-0" />
+                    <span className="text-xs font-medium text-rose-800">
+                        Sem conexão com a internet. Seus dados serão salvos localmente até a conexão voltar.
+                    </span>
+                </div>
+            )}
 
             {/* Pending Items Indicator */}
             {step === 'filling' && pendingTasks > 0 && (
@@ -591,8 +663,8 @@ const ChecklistFill: React.FC = () => {
                                                             {/* Photo Grid */}
                                                             {Array.isArray(resp.value) && resp.value.length > 0 && (
                                                                 <div className="grid grid-cols-2 gap-3">
-                                                                    {resp.value.map((photoUrl: string, pIdx: number) => (
-                                                                        <div key={pIdx} className="relative rounded-lg overflow-hidden shadow-md group aspect-square">
+                                                                    {resp.value.map((photoUrl: string) => (
+                                                                        <div key={photoUrl} className="relative rounded-lg overflow-hidden shadow-md group aspect-square">
                                                                             <img
                                                                                 src={`${import.meta.env.VITE_API_URL || ''}${photoUrl}`}
                                                                                 className="w-full h-full object-cover"

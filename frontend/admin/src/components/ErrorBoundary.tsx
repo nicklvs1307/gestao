@@ -2,7 +2,7 @@ import React, { Component, ReactNode } from 'react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode;
+  fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
 }
 
 interface ErrorBoundaryState {
@@ -24,9 +24,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.error('[ErrorBoundary]', error, errorInfo.componentStack);
   }
 
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) return this.props.fallback;
+      if (this.props.fallback) {
+        if (typeof this.props.fallback === 'function') {
+          return (this.props.fallback as (error: Error, reset: () => void) => ReactNode)(this.state.error!, this.handleReset);
+        }
+        return this.props.fallback;
+      }
       return (
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4 p-8">
           <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 text-2xl font-black">
@@ -34,13 +43,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </div>
           <h2 className="text-lg font-black text-slate-900 uppercase italic">Algo deu errado</h2>
           <p className="text-xs text-slate-400 font-bold uppercase max-w-md text-center">
-            {this.state.error?.message || 'Erro inesperado. Tente recarregar a página.'}
+            {this.state.error?.message || 'Erro inesperado. Tente novamente.'}
           </p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={this.handleReset}
             className="h-10 px-6 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
           >
-            Recarregar
+            Tentar novamente
           </button>
         </div>
       );

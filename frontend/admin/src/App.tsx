@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ModalProvider, useModals } from './context/ModalContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -225,6 +225,36 @@ function AdminRoutes() {
   );
 }
 
+function ChecklistFillWrapper() {
+  const [retry, setRetry] = useState(0);
+  const { id } = useParams<{ id: string }>();
+
+  return (
+    <ErrorBoundary
+      key={`checklist-fill-${id}-${retry}`}
+      fallback={() => (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-white p-8">
+          <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 text-2xl font-black mb-4">
+            <span>!</span>
+          </div>
+          <h2 className="text-lg font-black text-slate-900 uppercase italic mb-2">Algo deu errado</h2>
+          <p className="text-xs text-slate-400 font-bold uppercase max-w-md text-center mb-6">
+            Ocorreu um erro ao processar o checklist. Seu rascunho foi salvo automaticamente.
+          </p>
+          <button
+            onClick={() => setRetry(r => r + 1)}
+            className="h-10 px-6 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+    >
+      <ChecklistFill />
+    </ErrorBoundary>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -238,7 +268,7 @@ function App() {
                 <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/waiter" element={<ProtectedRoute permission="waiter:pos"><WaiterPos /></ProtectedRoute>} />
-                <Route path="/checklist/fill/:id" element={<ChecklistFill />} />
+                <Route path="/checklist/fill/:id" element={<ChecklistFillWrapper />} />
                 <Route path="/checklist/report/:id" element={<ChecklistReportView />} />
                 <Route path="/driver/dashboard" element={<ProtectedRoute permission="delivery:manage"><DriverDashboard /></ProtectedRoute>} />
                 <Route path="/*" element={<ProtectedRoute><AdminRoutes /></ProtectedRoute>} />
