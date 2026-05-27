@@ -26,6 +26,8 @@ function maskValue(val: string, showFull = false) {
 
 const UairangoSettingsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
   const [token, setToken] = useState('');
   const [establishmentId, setEstablishmentId] = useState('');
   const [isActive, setIsActive] = useState(false);
@@ -60,6 +62,8 @@ const UairangoSettingsPage: React.FC = () => {
       setIsLoading(true);
       try {
         const settings = await getUairangoSettings();
+        setClientId(settings.uairangoClientId || '');
+        setClientSecret(settings.uairangoClientSecret || '');
         setToken(settings.uairangoToken || '');
         setEstablishmentId(settings.uairangoEstablishmentId || '');
         setIsActive(settings.uairangoActive || false);
