@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { getUairangoSettings, updateUairangoSettings, importUairangoMenu, getUairangoConnectionStatus, updateUairangoMerchantStatus } from '../services/api';
-import { ArrowLeft, Save, Loader2, Info, ShoppingBag, Database, Download, CheckCircle, XCircle, Key, Link as LinkIcon, AlertTriangle, Wifi, WifiOff, Store, Power, Search } from 'lucide-react';
+import { 
+  getUairangoSettings, 
+  updateUairangoSettings, 
+  importUairangoMenu, 
+  getUairangoConnectionStatus, 
+  updateUairangoMerchantStatus,
+  initiateUairangoAuthorization,
+  completeUairangoAuthorization,
+  getUairangoAuthStatus
+} from '../services/api';
+import { ArrowLeft, Save, Loader2, Info, ShoppingBag, Database, Download, CheckCircle, XCircle, Key, Link as LinkIcon, AlertTriangle, Wifi, WifiOff, Store, Power, Search, Globe, PhoneOff, RefreshCw, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -19,15 +28,24 @@ const UairangoSettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [token, setToken] = useState('');
   const [establishmentId, setEstablishmentId] = useState('');
-  const [clientId, setClientId] = useState('');
-  const [clientSecret, setClientSecret] = useState('');
   const [isActive, setIsActive] = useState(false);
+  const [env, setEnv] = useState('production');
+  const [autoAccept, setAutoAccept] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [lastImport, setLastImport] = useState<Date | null>(null);
 
-  const [showSecret, setShowSecret] = useState(false);
+  // Authorization Flow States
+  const [authStatus, setAuthStatus] = useState<'PENDING' | 'AUTHORIZED' | 'EXPIRED' | 'REVOKED' | 'FAILED'>('PENDING');
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
+  const [userCode, setUserCode] = useState<string | null>(null);
+  const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
+  const [verificationUrlComplete, setVerificationUrlComplete] = useState<string | null>(null);
+  const [authExpiresIn, setAuthExpiresIn] = useState<number | null>(null);
+  const [authCountdown, setAuthCountdown] = useState<number | null>(null);
+  const [authCountdownInterval, setAuthCountdownInterval] = useState<NodeJS.Timeout | null>(null);
+
   const [showToken, setShowToken] = useState(false);
 
   const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; merchant?: any; operations?: any[]; tokenExpiresAt?: string; error?: string } | null>(null);
@@ -44,9 +62,10 @@ const UairangoSettingsPage: React.FC = () => {
         const settings = await getUairangoSettings();
         setToken(settings.uairangoToken || '');
         setEstablishmentId(settings.uairangoEstablishmentId || '');
-        setClientId(settings.uairangoClientId || '');
-        setClientSecret(settings.uairangoClientSecret || '');
         setIsActive(settings.uairangoActive || false);
+        setEnv(settings.uairangoEnv || 'production');
+        setAutoAccept(settings.uairangoAutoAcceptOrders || false);
+        setAuthStatus(settings.uairangoAuthStatus || 'PENDING');
       } catch (error) {
         console.error(error);
         toast.error('Erro ao carregar configurações do UaiRango.');
@@ -55,7 +74,46 @@ const UairangoSettingsPage: React.FC = () => {
       }
     };
     fetchSettings();
+    
+    // Also check auth status on mount
+    checkAuthStatus();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (authCountdownInterval) {
+        clearInterval(authCountdownInterval);
+      }
+    };
+  }, [authCountdownInterval]);
+
+  const checkAuthStatus = async () => {
+    try {
+      const statusData = await getUairangoAuthStatus();
+      setAuthStatus(statusData.authStatus as 'PENDING' | 'AUTHORIZED' | 'EXPIRED' | 'REVOKED' | 'FAILED');
+    } catch (error) {
+      console.error('Failed to check auth status:', error);
+    }
+  };
+
+  const startAuthCountdown = (seconds: number) => {
+    setAuthCountdown(seconds);
+    if (authCountdownInterval) {
+      clearInterval(authCountdownInterval);
+    }
+    
+    const interval = setInterval(() => {
+      setAuthCountdown(prev => {
+        if (prev === null || prev <= 0) {
+          clearInterval(interval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    setAuthCountdownInterval(interval);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +122,9 @@ const UairangoSettingsPage: React.FC = () => {
       await updateUairangoSettings({ 
         uairangoToken: token,
         uairangoEstablishmentId: establishmentId,
-        uairangoClientId: clientId,
-        uairangoClientSecret: clientSecret,
-        uairangoActive: isActive 
+        uairangoActive: isActive,
+        uairangoEnv: env,
+        uairangoAutoAcceptOrders: autoAccept,
       });
       toast.success('Configurações UaiRango salvas!');
     } catch (error) {
@@ -77,8 +135,9 @@ const UairangoSettingsPage: React.FC = () => {
   };
 
   const handleTestConnection = async () => {
-    if (!clientId || !clientSecret) {
-      toast.error('Configure o Client ID e Client Secret antes de testar.');
+    // For connection test, we just need to be active and have establishment ID
+    if (!isActive || !establishmentId) {
+      toast.error('Ative a integração e configure o ID do Estabelecimento antes de testar.');
       return;
     }
     setIsTesting(true);
@@ -98,6 +157,67 @@ const UairangoSettingsPage: React.FC = () => {
       toast.error('Erro ao testar conexão.');
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const handleInitiateAuthorization = async () => {
+    setIsAuthorizing(true);
+    try {
+      const authData = await initiateUairangoAuthorization();
+      setUserCode(authData.userCode);
+      setVerificationUrl(authData.verificationUrl);
+      setVerificationUrlComplete(authData.verificationUrlComplete);
+      setAuthExpiresIn(authData.expiresIn);
+      startAuthCountdown(authData.expiresIn);
+      setAuthStatus('PENDING');
+      toast.success('Código de autorização gerado! Siga as instruções para completar a autorização.');
+    } catch (error) {
+      console.error(error);
+      toast.error('Falha ao gerar código de autorização.');
+    } finally {
+      setIsAuthorizing(false);
+    }
+  };
+
+  const handleCompleteAuthorization = async () => {
+    setIsAuthorizing(true);
+    try {
+      await completeUairangoAuthorization();
+      setAuthStatus('AUTHORIZED');
+      // Clear the auth codes as they're no longer needed
+      setUserCode(null);
+      setVerificationUrl(null);
+      setVerificationUrlComplete(null);
+      setAuthExpiresIn(null);
+      setAuthCountdown(null);
+      if (authCountdownInterval) {
+        clearInterval(authCountdownInterval);
+        setAuthCountdownInterval(null);
+      }
+      toast.success('Autorização concluída com sucesso!');
+      // Refresh settings to get latest data
+      const settings = await getUairangoSettings();
+      setToken(settings.uairangoToken || '');
+      setEstablishmentId(settings.uairangoEstablishmentId || '');
+    } catch (error) {
+      console.error(error);
+      setAuthStatus('FAILED');
+      toast.error('Falha ao completar autorização. Verifique se o código foi inserido corretamente no prazo.');
+    } finally {
+      setIsAuthorizing(false);
+    }
+  };
+
+  const handleCheckAuthorization = async () => {
+    setIsAuthorizing(true);
+    try {
+      await checkAuthStatus();
+      toast.success('Status de autorização verificado!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao verificar status de autorização.');
+    } finally {
+      setIsAuthorizing(false);
     }
   };
 
@@ -181,7 +301,7 @@ const UairangoSettingsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card className="overflow-hidden">
             <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
@@ -191,7 +311,7 @@ const UairangoSettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Configuração da API</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Credenciais de acesso OAuth 2.0</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Credenciais de acesso OAuth 2.0 (Nível de Aplicação)</p>
                 </div>
               </div>
             </div>
@@ -201,36 +321,210 @@ const UairangoSettingsPage: React.FC = () => {
                 <p className="text-xs font-bold text-blue-800 uppercase tracking-tight mb-3">OAuth 2.0 (Recomendado)</p>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Client ID</label>
-                    <Input 
-                      value={clientId} 
-                      onChange={e => setClientId(e.target.value)} 
-                      placeholder="Cole o Client ID aqui" 
-                      className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Client Secret</label>
-                    <div className="relative">
-                      <Input 
-                        value={clientSecret} 
-                        onChange={e => setClientSecret(e.target.value)} 
-                        placeholder="Cole o Client Secret aqui" 
-                        type={showSecret ? 'text' : 'password'}
-                        className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowSecret(!showSecret)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold uppercase hover:text-blue-800"
-                      >
-                        {showSecret ? 'Ocultar' : 'Mostrar'}
-                      </button>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-tight">Status da Autorização</label>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        authStatus === 'AUTHORIZED' 
+                          ? 'bg-emerald-100 text-emerald-600'
+                          : authStatus === 'PENDING'
+                            ? 'bg-slate-100 text-slate-500'
+                            : authStatus === 'EXPIRED' || authStatus === 'REVOKED'
+                              ? 'bg-rose-100 text-rose-600'
+                              : authStatus === 'FAILED'
+                                ? 'bg-red-100 text-red-600'
+                                : 'bg-amber-100 text-amber-600'
+                      }`}>
+                        {authStatus === 'AUTHORIZED' ? (
+                          <CheckCircle size={14} />
+                        ) : authStatus === 'PENDING' ? (
+                          <LinkIcon size={14} />
+                        ) : authStatus === 'EXPIRED' || authStatus === 'REVOKED' ? (
+                          <AlertTriangle size={14} />
+                        ) : authStatus === 'FAILED' ? (
+                          <XCircle size={14} />
+                        ) : (
+                          <Loader2 className="animate-spin" size={14} />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">{ 
+                          authStatus === 'AUTHORIZED' ? 'Autorizado' 
+                          : authStatus === 'PENDING' ? 'Pendente' 
+                          : authStatus === 'EXPIRED' ? 'Expirado' 
+                          : authStatus === 'REVOKED' ? 'Revogado' 
+                          : authStatus === 'FAILED' ? 'Falha' 
+                          : 'Verificando...'
+                        }</p>
+                        {authStatus === 'AUTHORIZED' && (
+                          <p className="text-[10px] text-slate-400">
+                            Autorizado em: {new Date().toLocaleString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {authStatus === 'PENDING' && (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-tight">Código de Usuário</label>
+                        <div className="relative">
+                          <Input 
+                            value={userCode || ''} 
+                            onChange={e => setUserCode(e.target.value)} 
+                            placeholder="Código gerado automaticamente" 
+                            className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
+                            readOnly
+                          />
+                          {userCode && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(userCode);
+                                toast.success('Código copiado para área de transferência!');
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold uppercase hover:text-blue-800"
+                            >
+                              Copiar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-tight">URL de Verificação</label>
+                        <div className="relative">
+                          <Input 
+                            value={verificationUrl || ''} 
+                            onChange={e => setVerificationUrl(e.target.value)} 
+                            placeholder="URL para autorização" 
+                            className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
+                            readOnly
+                          />
+                          {verificationUrl && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(verificationUrl);
+                                toast.success('URL copiada para área de transferência!');
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold uppercase hover:text-blue-800"
+                            >
+                              Copiar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-tight">URL Completa</label>
+                        <div className="relative">
+                          <Input 
+                            value={verificationUrlComplete || ''} 
+                            onChange={e => setVerificationUrlComplete(e.target.value)} 
+                            placeholder="URL completa com código" 
+                            className="h-12 bg-white border-blue-200 focus:bg-white font-mono text-sm"
+                            readOnly
+                          />
+                          {verificationUrlComplete && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(verificationUrlComplete);
+                                toast.success('URL completa copiada para área de transferência!');
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold uppercase hover:text-blue-800"
+                            >
+                              Copiar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {authCountdown !== null && (
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-tight">Tempo Restante</label>
+                          <p className="text-xs font-mono text-slate-600">{authCountdown}s</p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={handleInitiateAuthorization}
+                          disabled={isAuthorizing}
+                          className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
+                        >
+                          {isAuthorizing ? (
+                            <>
+                              <Loader2 className="animate-spin mr-2" size={14} />
+                              Gerando...
+                            </>
+                          ) : (
+                            <>
+                              <LinkIcon size={14} className="mr-2" />
+                              Gerar Código de Autorização
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleCompleteAuthorization}
+                          disabled={!userCode || isAuthorizing}
+                          className="flex-1 h-12 bg-green-600 hover:bg-green-700"
+                        >
+                          {isAuthorizing ? (
+                            <>
+                              <Loader2 className="animate-spin mr-2" size={14} />
+                              Completando...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle size={14} className="mr-2" />
+                              Completar Autorização
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleCheckAuthorization}
+                          disabled={isAuthorizing}
+                          className="flex-1 h-12 bg-gray-600 hover:bg-gray-700"
+                        >
+                          {isAuthorizing ? <Loader2 className="animate-spin mr-2" size={14} /> : <RefreshCw size={14} className="mr-2" />}
+                          Verificar Status
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 text-center">
+                        Passo 1: Gerar código de autorização<br />
+                        Passo 2: Acessar a URL acima e inserir o código<br />
+                        Passo 3: Clicar em "Completar Autorização" após inserir o código
+                      </p>
+                    </div>
+                  )}
+                  {authStatus === 'AUTHORIZED' && (
+                    <div className="space-y-4">
+                      <p className="text-xs font-bold text-slate-500">
+                        Sua aplicação está autorizada para acessar os dados deste estabelecimento no Uairango.
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={handleInitiateAuthorization}
+                          className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
+                        >
+                          <LinkIcon size={14} className="mr-2" />
+                          Renovar Autorização
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleCheckAuthorization}
+                          className="flex-1 h-12 bg-gray-600 hover:bg-gray-700"
+                        >
+                          <RefreshCw size={14} className="mr-2" />
+                          Verificar Status
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-
+              
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-500 uppercase tracking-tight">ID do Estabelecimento (Merchant ID)</label>
                 <Input 
@@ -240,7 +534,7 @@ const UairangoSettingsPage: React.FC = () => {
                   className="h-12 bg-slate-50 border-slate-200 focus:bg-white font-mono"
                 />
               </div>
-
+              
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Token de Desenvolvedor (Legado - opcional)</label>
                 <div className="relative">
@@ -261,7 +555,40 @@ const UairangoSettingsPage: React.FC = () => {
                 </div>
                 <p className="text-[10px] text-slate-400">Use apenas se OAuth 2.0 não estiver disponível</p>
               </div>
-
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Ambiente</label>
+                  <select
+                    value={env}
+                    onChange={e => setEnv(e.target.value)}
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-mono focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
+                  >
+                    <option value="production">Produção</option>
+                    <option value="development">Desenvolvimento</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Aceitar Pedidos</label>
+                  <div className="flex items-center gap-3 h-12 px-4 rounded-xl border border-slate-200 bg-slate-50">
+                    <button
+                      type="button"
+                      onClick={() => setAutoAccept(!autoAccept)}
+                      className={`relative w-12 h-7 rounded-full transition-all shrink-0 ${
+                        autoAccept ? 'bg-emerald-500' : 'bg-slate-300'
+                      }`}
+                    >
+                      <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all ${
+                        autoAccept ? 'left-5' : 'left-0.5'
+                      }`} />
+                    </button>
+                    <span className="text-xs text-slate-600 font-medium">
+                      {autoAccept ? 'Automático' : 'Manual'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <button
                   type="button"
@@ -284,7 +611,7 @@ const UairangoSettingsPage: React.FC = () => {
                   <XCircle size={20} className="text-slate-400" />
                 )}
               </div>
-
+              
               <div className="flex gap-3 pt-4 border-t border-slate-100">
                 <Button type="button" variant="outline" onClick={() => navigate('/integrations')} className="flex-1 h-12">
                   Voltar
@@ -514,6 +841,22 @@ const UairangoSettingsPage: React.FC = () => {
                   token ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'
                 }`}>
                   {token ? 'Configurado' : 'Opcional'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <Globe size={14} className="text-slate-400" />
+                <span className="text-xs text-slate-500 flex-1 ml-2">Ambiente</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  env === 'production' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
+                }`}>
+                  {env === 'production' ? 'Produção' : 'Desenvolvimento'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <PhoneOff size={14} className="text-slate-400" />
+                <span className="text-xs text-slate-500 flex-1 ml-2">Telefone (0800)</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-400">
+                  Protegido
                 </span>
               </div>
               <div className="flex items-center justify-between">

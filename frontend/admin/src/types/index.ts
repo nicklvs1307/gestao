@@ -176,6 +176,7 @@ export interface Order {
   completedAt?: string | null;
   canceledAt?: string | null;
   ifoodOrderId?: string | null;
+  uairangoOrderId?: string | null;
   food99OrderId?: string | null;
   
   // === CAMPOS IFOOD (Homologação) ===

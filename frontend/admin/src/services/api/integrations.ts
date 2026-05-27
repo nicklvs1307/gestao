@@ -16,7 +16,25 @@ export const getUairangoSettings = async () => {
 };
 
 export const updateUairangoSettings = async (settingsData: Record<string, unknown>) => {
-  const response = await apiClient.put('/integrations/uairango', settingsData);
+  // Remove client credentials from settings data as they are now handled at application level
+  const { uairangoClientId, uairangoClientSecret, ...settingsWithoutCredentials } = settingsData;
+  const response = await apiClient.put('/integrations/uairango', settingsWithoutCredentials);
+  return response.data;
+};
+
+// Uairango Authorization Flow (Centralized Application)
+export const initiateUairangoAuthorization = async () => {
+  const response = await apiClient.post('/integrations/uairango/authorize');
+  return response.data;
+};
+
+export const completeUairangoAuthorization = async () => {
+  const response = await apiClient.post('/integrations/uairango/complete-authorization');
+  return response.data;
+};
+
+export const getUairangoAuthStatus = async () => {
+  const response = await apiClient.get('/integrations/uairango/auth-status');
   return response.data;
 };
 
@@ -30,13 +48,18 @@ export const confirmUairangoOrder = async (orderId: string) => {
   return response.data;
 };
 
-export const rejectUairangoOrder = async (orderId: string, reason?: string) => {
-  const response = await apiClient.post('/integrations/uairango/reject', { orderId, reason });
+export const rejectUairangoOrder = async (orderId: string, cancellationCode?: number, reason?: string) => {
+  const response = await apiClient.post('/integrations/uairango/reject', { orderId, cancellationCode, reason });
   return response.data;
 };
 
 export const markUairangoReady = async (orderId: string) => {
   const response = await apiClient.post('/integrations/uairango/ready', { orderId });
+  return response.data;
+};
+
+export const startUairangoPreparation = async (orderId: string) => {
+  const response = await apiClient.post('/integrations/uairango/start-preparation', { orderId });
   return response.data;
 };
 

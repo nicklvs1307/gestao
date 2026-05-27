@@ -5,15 +5,18 @@ import {
     getDrivers, assignDriver, getProducts, getCategories,
     getPaymentMethods, updateOrderFinancials, addItemsToOrder, removeOrderItem,
     updateOrderCustomer, addOrderPayment, removeOrderPayment, updateDeliveryType, updateOrderStatus, getSettings, markOrderAsPrinted,
-    getIfoodCancellationReasons, rejectIfoodOrder, emitInvoice
+    getIfoodCancellationReasons, rejectIfoodOrder, rejectUairangoOrder, emitInvoice
 } from '../../services/api';
 import {
     acceptIfoodCancellation,
     refuseIfoodCancellation,
     acceptIfoodDispute,
     rejectIfoodDispute,
-    offerIfoodAlternative
+    offerIfoodAlternative,
+    getUairangoCancellationReasons,
+    requestUairangoCancellation
 } from '../../services/api/integrations';
+import uairangoLogo from '../../assets/uairango-logo.png';
 import { formatSP } from '@/lib/timezone';
 import {
     CheckCircle, Printer,
@@ -299,6 +302,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
   const handleCancelOrder = async () => {
     const isIfoodOrder = !!order.ifoodOrderId;
+    const isUairangoOrder = !!order.uairangoOrderId;
     
     if (isIfoodOrder) {
       setIsLoadingReasons(true);
@@ -345,6 +349,38 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       } finally {
         setIsLoadingReasons(false);
       }
+    } else if (isUairangoOrder) {
+      setIsLoadingReasons(true);
+      try {
+        const result = await getUairangoCancellationReasons(order.id);
+        
+        let reasons = Array.isArray(result) ? result : [];
+        if (!Array.isArray(reasons) && result?.reasons) {
+          reasons = Array.isArray(result.reasons) ? result.reasons : [];
+        }
+        
+        if (reasons.length > 0) {
+          setCancellationReasons(reasons);
+          setSelectedCancelReason(reasons[0]?.cancelCodeId || '');
+          setShowCancelModal(true);
+        } else {
+          if (!window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()} no UaiRango?`)) return;
+          setIsCancelling(true);
+          const rejectResult = await rejectUairangoOrder(order.id, 1, 'Cancelamento manual');
+          if (!rejectResult.success) {
+            toast.error(rejectResult.error || 'Erro ao cancelar pedido no UaiRango');
+            return;
+          }
+          toast.success("Pedido cancelado!");
+          onRefresh();
+          onClose();
+        }
+      } catch (err) {
+        console.error('Erro ao buscar motivos de cancelamento UaiRango:', err);
+        toast.error("Erro ao buscar motivos de cancelamento");
+      } finally {
+        setIsLoadingReasons(false);
+      }
     } else {
       if (!window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}?`)) return;
       try {
@@ -358,7 +394,6 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
     }
   };
 
-  // Função para confirmar o cancelamento com motivo
   const handleConfirmCancellation = async () => {
     if (!selectedCancelReason) {
       toast.error("Selecione um motivo de cancelamento");
@@ -367,22 +402,36 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
     
     setIsCancelling(true);
     try {
-      const result = await rejectIfoodOrder(order.id, selectedCancelReason, true);
-      if (!result.success) {
-        if (result.alreadyAccepted) {
-          toast.error("O iFood recusou o cancelamento. O pedido continua ativo.");
-        } else {
-          toast.error(result.error || 'Erro ao cancelar pedido no iFood');
+      const isUairango = !!order.uairangoOrderId;
+
+      if (isUairango) {
+        const reasonObj = cancellationReasons.find(r => r.cancelCodeId === selectedCancelReason);
+        const result = await rejectUairangoOrder(
+          order.id,
+          parseInt(selectedCancelReason),
+          reasonObj?.description || 'Cancelamento solicitado'
+        );
+        if (!result.success) {
+          toast.error(result.error || 'Erro ao cancelar pedido no UaiRango');
+          return;
         }
-        return;
-      }
-      
-      // O cancelamento é assíncrono — o iFood responde via webhook/polling
-      // O status será atualizado automaticamente quando chegar o evento CANCELLED
-      if (result.pendingConfirmation) {
-        toast.info("Solicitação de cancelamento enviada. Aguardando confirmação do iFood...");
+        toast.success("Pedido cancelado no UaiRango!");
       } else {
-        toast.success("Pedido cancelado!");
+        const result = await rejectIfoodOrder(order.id, selectedCancelReason, true);
+        if (!result.success) {
+          if (result.alreadyAccepted) {
+            toast.error("O iFood recusou o cancelamento. O pedido continua ativo.");
+          } else {
+            toast.error(result.error || 'Erro ao cancelar pedido no iFood');
+          }
+          return;
+        }
+
+        if (result.pendingConfirmation) {
+          toast.info("Solicitação de cancelamento enviada. Aguardando confirmação do iFood...");
+        } else {
+          toast.success("Pedido cancelado!");
+        }
       }
       
       setShowCancelModal(false);
@@ -970,16 +1019,24 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         </div>
 
                         {/* INTEGRAÇÃO */}
-                        {(order.ifoodOrderId || order.displayId || order.customerDocument || order.benefits) && (
+                        {(order.ifoodOrderId || order.uairangoOrderId || order.displayId || order.customerDocument || order.benefits) && (
                             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 shadow-sm">
                                 <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                    <img src="https://www.ifood.com.br/static/images/ifood-logo.svg" className="h-4" alt="iFood" /> Integração
+                                    <img src="https://www.ifood.com.br/static/images/ifood-logo.svg" className="h-4" alt="iFood" />
+                                    {order.uairangoOrderId && <img src={uairangoLogo} className="h-5" alt="UaiRango" />}
+                                    Integração
                                 </h3>
                                 <div className="space-y-3">
                                     {order.ifoodOrderId && (
                                         <div className="flex items-center justify-between">
                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">iFood ID</span>
                                             <span className="text-[10px] font-bold text-slate-600 font-mono">{order.ifoodOrderId}</span>
+                                        </div>
+                                    )}
+                                    {order.uairangoOrderId && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">UaiRango ID</span>
+                                            <span className="text-[10px] font-bold text-slate-600 font-mono">{order.uairangoOrderId}</span>
                                         </div>
                                     )}
                                     {order.displayId && (
@@ -1163,7 +1220,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             
             <div className="mb-4">
               <p className="text-sm text-slate-600 mb-3">
-                O pedido já foi aceito no iFood. Para cancelar, selecione o motivo:
+                Selecione o motivo do cancelamento:
               </p>
               
               {isLoadingReasons ? (

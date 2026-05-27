@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
-import { confirmIfoodOrder, rejectIfoodOrder, getIfoodCancellationReasons } from '../services/api/integrations';
+import { confirmIfoodOrder, rejectIfoodOrder, getIfoodCancellationReasons, confirmUairangoOrder, rejectUairangoOrder, getUairangoCancellationReasons, requestUairangoCancellation } from '../services/api/integrations';
 import { printOrder, checkAgentStatus, getPrinterConfigFromStorage } from '../services/printer';
 import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
@@ -346,16 +346,33 @@ const GlobalOrderMonitor: React.FC = () => {
     
     setIsProcessing(true);
     try {
-      const result = await rejectIfoodOrder(cancelOrderId, selectedReason, true);
-      if (!result.success) {
-        toast.error(result.error || 'iFood recusou o cancelamento. O pedido continua ativo.');
-        return;
-      }
-      
-      if (result.pendingConfirmation) {
-        toast.info('Solicitação de cancelamento enviada. Aguardando confirmação do iFood...');
+      const order = allOrders.find(o => o.id === cancelOrderId);
+      const isUairango = order?.uairangoOrderId;
+
+      if (isUairango) {
+        const reasonObj = cancellationReasons.find(r => r.cancelCodeId === selectedReason);
+        const result = await rejectUairangoOrder(
+          cancelOrderId,
+          parseInt(selectedReason),
+          reasonObj?.description || 'Cancelamento solicitado'
+        );
+        if (!result.success) {
+          toast.error(result.error || 'Erro ao cancelar pedido no UaiRango');
+          return;
+        }
+        toast.success('Pedido cancelado no UaiRango!');
       } else {
-        toast.success('Pedido cancelado com sucesso!');
+        const result = await rejectIfoodOrder(cancelOrderId, selectedReason, true);
+        if (!result.success) {
+          toast.error(result.error || 'iFood recusou o cancelamento. O pedido continua ativo.');
+          return;
+        }
+        
+        if (result.pendingConfirmation) {
+          toast.info('Solicitação de cancelamento enviada. Aguardando confirmação do iFood...');
+        } else {
+          toast.success('Pedido cancelado com sucesso!');
+        }
       }
       
       setCancelModalOpen(false);
@@ -413,6 +430,12 @@ const GlobalOrderMonitor: React.FC = () => {
                     toast.error(result.error || 'Erro ao aceitar pedido no iFood');
                     return;
                   }
+                } else if (order.uairangoOrderId) {
+                  const result = await confirmUairangoOrder(id);
+                  if (!result.success) {
+                    toast.error(result.error || 'Erro ao aceitar pedido no UaiRango');
+                    return;
+                  }
                 }
                 await updateOrderStatus(id, 'PREPARING');
                 if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
@@ -463,6 +486,38 @@ const GlobalOrderMonitor: React.FC = () => {
                     toast.success('Pedido cancelado!');
                   }
                   if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+                  return;
+                } else if (order.uairangoOrderId) {
+                  setIsLoadingReasons(true);
+                  try {
+                    const reasonsResult = await getUairangoCancellationReasons(id);
+
+                    const reasons = Array.isArray(reasonsResult)
+                      ? reasonsResult
+                      : Array.isArray(reasonsResult.reasons)
+                        ? reasonsResult.reasons
+                        : [];
+
+                    if (reasons.length > 0) {
+                      setCancellationReasons(reasons);
+                      setCancelOrderId(id);
+                      setSelectedReason(reasons[0]?.cancelCodeId || '');
+                      setIsOrderModalOpen(false);
+                      setCancelModalOpen(true);
+                    } else {
+                      const result = await rejectUairangoOrder(id, 1, 'Cancelamento direto');
+                      if (!result.success) {
+                        toast.error(result.error || 'Erro ao recusar pedido no UaiRango');
+                        return;
+                      }
+                      toast.success('Pedido cancelado!');
+                      if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
+                    }
+                  } catch (err) {
+                    toast.error('Erro ao buscar motivos de cancelamento');
+                  } finally {
+                    setIsLoadingReasons(false);
+                  }
                   return;
                 }
                 await updateOrderStatus(id, 'CANCELED');
@@ -518,7 +573,7 @@ const GlobalOrderMonitor: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              O pedido já foi aceito no iFood. Para cancelar, é necessário selecionar um motivo:
+              Selecione o motivo do cancelamento:
             </p>
             <div className="space-y-2">
               {cancellationReasons.map((reason) => (
