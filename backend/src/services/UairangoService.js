@@ -1,18 +1,10 @@
-const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
-const UairangoAuthService = require('./UairangoAuthService');
+const api = require('./UairangoApiClient');
 
 class UairangoService {
-  baseUrl = 'https://www.uairango.com/api2';
-
-  async getAccessToken(restaurantId) {
-    return await UairangoAuthService.getAccessToken(restaurantId);
-  }
-
   async importMenu(restaurantId) {
     const settings = await prisma.integrationSettings.findUnique({ where: { restaurantId } });
-    const token = await this.getAccessToken(restaurantId);
     const merchantId = settings.uairangoEstablishmentId;
 
     if (!merchantId) throw new Error('Merchant ID não configurado');
@@ -20,11 +12,11 @@ class UairangoService {
     let importedCount = 0;
 
     try {
-      const catalogs = await this._getCatalogs(token, merchantId);
+      const catalogs = await this._getCatalogs(restaurantId, merchantId);
       if (!catalogs.length) throw new Error('Nenhum catálogo encontrado');
 
       const defaultCatalog = catalogs[0];
-      const categories = await this._getCategoriesWithItems(token, merchantId, defaultCatalog.catalogId);
+      const categories = await this._getCategoriesWithItems(restaurantId, merchantId, defaultCatalog.catalogId);
 
       for (const cat of categories) {
         const category = await prisma.category.upsert({
@@ -106,19 +98,15 @@ class UairangoService {
     }
   }
 
-  async _getCatalogs(token, merchantId) {
-    const response = await axios.get(
-      `${this.baseUrl}/catalog/v2.0/merchants/${merchantId}/catalogs`,
-      { headers: { 'Authorization': `Bearer ${token}` }, timeout: 15000 }
-    );
+  async _getCatalogs(restaurantId, merchantId) {
+    const response = await api.get(restaurantId, `/catalog/v2.0/merchants/${merchantId}/catalogs`);
     return Array.isArray(response.data) ? response.data : [];
   }
 
-  async _getCategoriesWithItems(token, merchantId, catalogId) {
-    const response = await axios.get(
-      `${this.baseUrl}/catalog/v2.0/merchants/${merchantId}/catalogs/${catalogId}/categories`,
-      { params: { includeItems: true }, headers: { 'Authorization': `Bearer ${token}` }, timeout: 15000 }
-    );
+  async _getCategoriesWithItems(restaurantId, merchantId, catalogId) {
+    const response = await api.get(restaurantId, `/catalog/v2.0/merchants/${merchantId}/catalogs/${catalogId}/categories`, {
+      params: { includeItems: true }
+    });
     return Array.isArray(response.data) ? response.data : [];
   }
 }

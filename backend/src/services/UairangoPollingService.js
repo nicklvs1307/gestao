@@ -1,31 +1,15 @@
 const cron = require('node-cron');
-const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
-const UairangoAuthService = require('./UairangoAuthService');
-const UairangoOrderAdapter = require('./UairangoOrderAdapter');
-const IntegrationOrderService = require('./IntegrationOrderService');
-const IntegrationTypeService = require('./IntegrationTypeService');
+const api = require('./UairangoApiClient');
+const UairangoWebhookService = require('./UairangoWebhookService');
 
 class UairangoPollingService {
   constructor() {
     this.pollingJob = null;
     this.isPolling = false;
-    this.BASE_URL = 'https://www.uairango.com/api2';
   }
 
-  /**
-   * Obtém token válido via OAuth 2.0
-   */
-  async getAccessToken(restaurantId) {
-    return await UairangoAuthService.getAccessToken(restaurantId);
-  }
-
-  /**
-   * Inicia o cron job de polling de eventos do Uai Rangô.
-   * ATENÇÃO: Webhook é PRIORITÁRIO. Polling é FALLBACK.
-   * Roda a cada 30 segundos.
-   */
   init() {
     this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
       if (this.isPolling) {
@@ -47,9 +31,6 @@ class UairangoPollingService {
     logger.info('[UAIRANGO POLLING] Serviço de polling iniciado (FALLBACK - Webhook é prioritário)');
   }
 
-  /**
-   * Para o cron job de polling.
-   */
   stop() {
     if (this.pollingJob) {
       this.pollingJob.stop();
@@ -57,10 +38,6 @@ class UairangoPollingService {
     }
   }
 
-  /**
-   * Faz polling de eventos para todos os restaurantes com integração Uai Rangô ativa.
-   * Usa a Events API: /events/v1.0/events:polling
-   */
   async pollEvents() {
     const settings = await prisma.integrationSettings.findMany({
       where: { uairangoActive: true }
@@ -77,29 +54,15 @@ class UairangoPollingService {
     }
   }
 
-  /**
-   * Faz polling de eventos para um restaurante específico.
-   */
   async pollRestaurantEvents(setting) {
-    const token = await this.getAccessToken(setting.restaurantId);
-    if (!token) return;
-
     try {
-      // Busca eventos via Events API
-      const response = await axios.get(
-        `${this.BASE_URL}/events/v1.0/events:polling`,
-        {
-          params: {
-            types: 'PLC,CFM,RTP,DSP,CAN',
-            groups: 'ORDER_STATUS'
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 15000
-        }
-      );
+      const response = await api.get(setting.restaurantId, '/events/v1.0/events:polling', {
+        params: {
+          types: 'PLC,CFM,RTP,DSP,CAN',
+          groups: 'ORDER_STATUS'
+        },
+        timeout: 15000
+      });
 
       const events = Array.isArray(response.data) ? response.data : [];
 
@@ -110,20 +73,45 @@ class UairangoPollingService {
 
       logger.info(`[UAIRANGO POLLING] ${events.length} evento(s) recebido(s) para ${setting.restaurantId}`);
 
-      // Processa eventos
       const eventIds = [];
       for (const event of events) {
         try {
-          await this._processEvent(event, setting.restaurantId);
-          eventIds.push(event.id);
+          const { orderId, code, id: eventId } = event;
+
+          if (!orderId || !code) {
+            logger.warn(`[UAIRANGO POLLING] Evento inválido:`, event);
+            continue;
+          }
+
+          // Deduplicação: verificar se webhook já processou
+          const eventType = code === 'PLC' || code === 'PLACED' ? 'ORDER_PLACED' : code;
+          const alreadyProcessed = await prisma.integrationEvent.findUnique({
+            where: {
+              platform_platformOrderId_eventType: {
+                platform: 'uairango',
+                platformOrderId: orderId,
+                eventType,
+              },
+            },
+          });
+
+          if (alreadyProcessed?.status === 'PROCESSED') {
+            logger.debug(`[UAIRANGO POLLING] Evento ${code} para ${orderId} já processado pelo webhook, ignorando`);
+            eventIds.push(eventId);
+            continue;
+          }
+
+          // Usar mesma lógica do webhook
+          await UairangoWebhookService.processEvent(event, setting.restaurantId);
+          eventIds.push(eventId);
         } catch (error) {
           logger.error(`[UAIRANGO POLLING] Erro ao processar evento ${event.id}:`, error.message);
+          eventIds.push(event.id);
         }
       }
 
-      // Acknowlegment obrigatório (para não receber os mesmos eventos novamente)
       if (eventIds.length > 0) {
-        await this._acknowledgeEvents(token, eventIds);
+        await this._acknowledgeEvents(setting.restaurantId, eventIds);
       }
     } catch (error) {
       if (error.response?.status === 204) {
@@ -134,84 +122,13 @@ class UairangoPollingService {
     }
   }
 
-  /**
-   * Processa um evento individual
-   */
-  async _processEvent(event, restaurantId) {
-    const { id: eventId, code, orderId: platformOrderId, merchantId } = event;
-
-    if (!platformOrderId || !code) {
-      logger.warn(`[UAIRANGO POLLING] Evento inválido:`, event);
-      return;
-    }
-
-    // Se for evento de pedido novo (PLC)
-    if (code === 'PLC' || code === 'PLACED') {
-      const fullOrderData = await this._fetchOrderDetails(restaurantId, platformOrderId);
-      if (fullOrderData) {
-        // Usa o adapter centralizado → OrderService.createOrderFromIntegration()
-        await UairangoOrderAdapter.processNewOrder(restaurantId, fullOrderData);
-      }
-    } else if (code === 'CAN' || code === 'CANCELLED') {
-      await IntegrationOrderService.cancelFromIntegration('uairango', restaurantId, platformOrderId);
-    } else {
-      // Outros eventos: mapear e atualizar status
-      const newStatus = IntegrationTypeService.mapStatus('uairango', code);
-      await IntegrationOrderService.updateFromIntegration(
-        'uairango',
-        restaurantId,
-        platformOrderId,
-        { status: newStatus }
-      );
-    }
-
-    logger.info(`[UAIRANGO POLLING] Evento ${eventId} (${code}) processado`);
-  }
-
-  /**
-   * Acknowlegment de eventos (obrigatório)
-   */
-  async _acknowledgeEvents(token, eventIds) {
+  async _acknowledgeEvents(restaurantId, eventIds) {
     try {
-      await axios.post(
-        `${this.BASE_URL}/events/v1.0/events/acknowledgment`,
-        { ids: eventIds },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        }
-      );
+      const body = eventIds.map(id => ({ id }));
+      await api.post(restaurantId, '/events/v1.0/events/acknowledgment', body, { timeout: 10000 });
       logger.info(`[UAIRANGO POLLING] ${eventIds.length} evento(s) confirmado(s) via acknowledgment`);
     } catch (error) {
       logger.error(`[UAIRANGO POLLING] Erro no acknowledgment:`, error.message);
-    }
-  }
-
-  /**
-   * Busca detalhes do pedido via API
-   */
-  async _fetchOrderDetails(restaurantId, orderId) {
-    const token = await this.getAccessToken(restaurantId);
-    if (!token) return null;
-
-    try {
-      const response = await axios.get(
-        `${this.BASE_URL}/order/v1.0/orders/${orderId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        }
-      );
-      return response.data;
-    } catch (error) {
-      logger.error(`[UAIRANGO POLLING] Erro ao buscar pedido ${orderId}:`, error.message);
-      return null;
     }
   }
 }

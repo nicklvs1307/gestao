@@ -491,17 +491,21 @@ model IntegrationSettings {
   saiposToken             String?   // Token de autenticação da Saipos
   saiposTokenExpiresAt    DateTime? // Data de expiração do token
 
-  // === CAMPOS UAIRANGO ===
-  uairangoToken           String?   // Token de Desenvolvedor (Legacy)
-  uairangoEstablishmentId String?   // ID do estabelecimento no UaiRango (Merchant ID)
-  uairangoActive          Boolean   @default(false)
-  uairangoImportedAt      DateTime? // Última importação realizada
-  // Campos para Nova API UaiRango Connect (OAuth 2.0)
-  uairangoClientId        String?   // Client ID para OAuth 2.0
-  uairangoClientSecret    String?   // Client Secret para OAuth 2.0
-  uairangoAccessToken     String?   // Access Token OAuth atual
-  uairangoTokenExpiresAt DateTime? // Expiração do access token (6h)
-  uairangoRefreshToken    String?   // Refresh Token (168h)
+// === CAMPOS UAIRANGO ===
+   uairangoToken           String?   // Token de Desenvolvedor (Legacy)
+   uairangoEstablishmentId String?   // ID do estabelecimento no UaiRango (Merchant ID)
+   uairangoActive          Boolean   @default(false)
+   uairangoImportedAt      DateTime? // Última importação realizada
+   uairangoEnv             String    @default("production") // "production" ou "development"
+   uairangoAutoAcceptOrders Boolean  @default(false) // Se true, aceita pedidos automaticamente
+    // Campos para Nova API UaiRango Connect (OAuth 2.0)
+    uairangoAccessToken     String?   // Access Token OAuth atual
+    uairangoTokenExpiresAt DateTime? // Expiração do access token (6h)
+    uairangoRefreshToken    String?   // Refresh Token (168h)
+    uairangoAuthStatus      String    @default("PENDING") // PENDING, AUTHORIZED, EXPIRED, REVOKED
+    uairangoAuthorizedAt    DateTime? // Timestamp da autorização bem-sucedida
+    uairangoAuthCodeVerifier String?  // PKCE Verifier (temporário durante OAuth)
+    uairangoUserCode        String?   // User Code retornado na autorização (código que usuário digita no portal)
 
   // === CAMPOS IFOOD ===
   ifoodMerchantId           String?   // ID do Merchant no iFood (usado no modelo centralizado)
@@ -886,6 +890,10 @@ model Order {
   ifoodOrderId String?
   uairangoOrderId String?
   food99OrderId String?
+
+  // === CAMPOS UAIRANGO (Phone Masking - 0800) ===
+  localizer           String?   // ID de conexão para chamadas via 0800
+  localizerExpiration DateTime? // Data de expiração do vínculo do localizer
 
   // === CAMPOS IFOOD (Homologação) ===
   displayId           String?    // Código de coleta do iFood (ex: #A1B2)

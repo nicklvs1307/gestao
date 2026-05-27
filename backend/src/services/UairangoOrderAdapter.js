@@ -1,25 +1,12 @@
-const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const IntegrationBaseService = require('./IntegrationBaseService');
 const UairangoAuthService = require('./UairangoAuthService');
-
-async function withRetry(fn, retries = 3, delayMs = 1000) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i === retries - 1) throw error;
-      logger.warn(`[UAIRANGO] Tentativa ${i + 1} falhou, tentando novamente em ${delayMs * Math.pow(2, i)}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delayMs * Math.pow(2, i)));
-    }
-  }
-}
+const api = require('./UairangoApiClient');
 
 class UairangoOrderAdapter extends IntegrationBaseService {
   constructor() {
     super('uairango');
-    this.BASE_URL = 'https://www.uairango.com/api2';
   }
 
   async getSettings(restaurantId) {
@@ -42,27 +29,55 @@ class UairangoOrderAdapter extends IntegrationBaseService {
 
     const items = (rawData.items || []).map(item => {
       const options = item.options || [];
-      const addons = options.map(opt => ({
-        name: opt.name || 'Adicional',
-        price: parseFloat(opt.unitPrice || 0),
-        quantity: parseInt(opt.quantity || 1),
-        integrationCode: opt.id || null,
-      }));
 
-      const sizeData = options.length > 0
-        ? { name: options[0].name, price: parseFloat(options[0].unitPrice || 0), integrationCode: options[0].id || null }
-        : null;
+      // Separar opções por tipo: PIZZA tem sabores (TOPPING) e massa (CRUST)
+      const toppingOptions = options.filter(o => o.type === 'TOPPING');
+      const crustOptions = options.filter(o => o.type === 'CRUST');
+      const regularOptions = options.filter(o => o.type !== 'TOPPING' && o.type !== 'CRUST');
+
+      const hasPizzaStructure = toppingOptions.length > 0;
+
+      let flavorsData = [];
+      let sizeData = null;
+      let addons = [];
+
+      if (hasPizzaStructure) {
+        flavorsData = toppingOptions.map(opt => ({
+          name: opt.name || 'Sabor',
+          price: parseFloat(opt.unitPrice || 0),
+          quantity: parseInt(opt.quantity || 1),
+          integrationCode: opt.id || null,
+        }));
+
+        sizeData = crustOptions.length > 0
+          ? { name: crustOptions[0].name, price: parseFloat(crustOptions[0].unitPrice || 0), integrationCode: crustOptions[0].id || null }
+          : null;
+
+        addons = regularOptions.map(opt => ({
+          name: opt.name || 'Adicional',
+          price: parseFloat(opt.unitPrice || 0),
+          quantity: parseInt(opt.quantity || 1),
+          integrationCode: opt.id || null,
+        }));
+      } else {
+        addons = options.map(opt => ({
+          name: opt.name || 'Adicional',
+          price: parseFloat(opt.unitPrice || 0),
+          quantity: parseInt(opt.quantity || 1),
+          integrationCode: opt.id || null,
+        }));
+      }
 
       return {
-        name: item.name || `Item Uairango`,
-        externalId: item.id || null,
+        name: item.name || 'Item Uairango',
+        externalId: item.uniqueId || item.id || null,
         integrationCode: item.externalCode || item.id || null,
         price: parseFloat(item.unitPrice || 0),
         quantity: parseInt(item.quantity || 1),
         observations: item.observations || null,
         addons,
         sizeJson: sizeData ? JSON.stringify(sizeData) : null,
-        flavorsJson: null,
+        flavorsJson: flavorsData.length > 0 ? JSON.stringify(flavorsData) : null,
       };
     });
 
@@ -80,20 +95,60 @@ class UairangoOrderAdapter extends IntegrationBaseService {
       longitude: rawData.delivery.deliveryAddress.coordinates?.longitude || null,
     } : null;
 
+    const rawPhone = rawData.customer?.phone?.number;
+    const phone = rawPhone?.toString() || '';
+    const isPhoneMasked = phone === 'Omitido' || phone.startsWith('0800');
+
     const customer = rawData.customer ? {
       name: rawData.customer.name || 'Cliente',
-      phone: rawData.customer.phone?.number?.toString() || '',
+      phone,
+      isPhoneMasked,
+      localizer: rawData.customer.localizer || null,
+      localizerExpiration: rawData.customer.localizerExpiration || null,
     } : null;
 
-    const paymentMethods = rawData.payments?.methods || [];
+    // === PAGAMENTO: Separar ONLINE (já pago) de OFFLINE (pendente) ===
+    const payments = rawData.payments || {};
+    const paymentMethods = payments.methods || [];
+
+    const onlineMethods = paymentMethods.filter(m => m.type === 'ONLINE');
+    const offlineMethods = paymentMethods.filter(m => m.type === 'OFFLINE');
+
+    const prepaidAmount = onlineMethods.reduce((sum, m) => sum + (parseFloat(m.value) || 0), 0) || parseFloat(payments.prepaid) || 0;
+    const pendingAmount = offlineMethods.reduce((sum, m) => sum + (parseFloat(m.value) || 0), 0) || parseFloat(payments.pending) || 0;
+
+    const isPrepaid = prepaidAmount > 0;
+    const firstOfflineMethod = offlineMethods[0] || {};
+    const firstOnlineMethod = onlineMethods[0] || {};
     const mainMethod = paymentMethods[0] || {};
-    const rawMethod = mainMethod.method || 'CASH';
-    const changeFor = null;
+
+    const rawMethod = offlineMethods.length > 0
+      ? (firstOfflineMethod.method || 'CASH')
+      : (isPrepaid ? firstOnlineMethod.method || 'ONLINE_PAID' : 'CASH');
 
     const subtotal = parseFloat(rawData.total?.subTotal || 0);
     const deliveryFee = parseFloat(rawData.total?.deliveryFee || 0);
     const discount = parseFloat(rawData.total?.benefits || 0);
-    const total = parseFloat(rawData.total?.orderAmount || (subtotal + deliveryFee - discount));
+    const additionalFees = parseFloat(rawData.total?.additionalFees || 0);
+    const total = parseFloat(rawData.total?.orderAmount || (subtotal + deliveryFee - discount + additionalFees));
+
+    // === BENEFITS (Cupons) ===
+    const rawBenefits = rawData.benefits || [];
+    const normalizedBenefits = Array.isArray(rawBenefits) && rawBenefits.length > 0
+      ? rawBenefits.map(b => ({
+          name: b.name || 'Cupom',
+          value: b.sponsorshipValues?.reduce((s, v) => s + (parseFloat(v.value) || 0), 0)
+            || parseFloat(rawData.total?.benefits || 0) / (rawBenefits.length || 1),
+          target: b.target,
+          sponsorship: b.sponsorship,
+        }))
+      : null;
+
+    // === AGENDAMENTO ===
+    const orderTiming = rawData.orderTiming || 'IMMEDIATE';
+    const scheduledDateTime = orderTiming === 'SCHEDULED'
+      ? (rawData.delivery?.deliveryDateTime || rawData.takeout?.takeoutDateTime || null)
+      : null;
 
     return {
       orderType,
@@ -102,22 +157,71 @@ class UairangoOrderAdapter extends IntegrationBaseService {
       deliveryData,
       payment: {
         rawMethod,
-        isPrepaid: (rawData.payments?.prepaid || 0) > 0,
-        prepaidAmount: parseFloat(rawData.payments?.prepaid || 0),
-        pendingAmount: parseFloat(rawData.payments?.pending || 0),
-        changeFor,
+        isPrepaid,
+        prepaidAmount,
+        pendingAmount,
+        changeFor: firstOfflineMethod?.cash?.changeFor
+          ? parseFloat(firstOfflineMethod.cash.changeFor)
+          : (firstOfflineMethod?.changeFor ? parseFloat(firstOfflineMethod.changeFor) : null),
+        cardBrand: mainMethod.card?.brand || null,
       },
       totals: {
         subtotal,
         deliveryFee,
         discount,
+        additionalFees,
         total,
       },
       customerNote: !isDelivery ? rawData.takeout?.observations || null : null,
       displayId: rawData.displayId || null,
-      pickupCode: null,
+      pickupCode: rawData.pickupCode || null,
+      scheduledDateTime,
+      customerDocument: rawData.customer?.documentNumber || null,
+      benefits: normalizedBenefits,
       isTest: rawData.isTest || false,
     };
+  }
+
+  async confirmOrderOnPlatform(restaurantId, platformOrderId) {
+    try {
+      await api.post(restaurantId, `/order/v1.0/orders/${platformOrderId}/confirm`);
+      logger.info(`[UAIRANGO] Pedido ${platformOrderId} confirmado na plataforma`);
+    } catch (error) {
+      logger.error(`[UAIRANGO] Erro ao confirmar pedido ${platformOrderId}:`, error.message);
+    }
+  }
+
+  async rejectOrderOnPlatform(restaurantId, platformOrderId, reason = '1') {
+    try {
+      await api.post(restaurantId, `/order/v1.0/orders/${platformOrderId}/requestCancellation`, {
+        cancellationCode: parseInt(reason),
+        reason: 'Cancelamento solicitado pelo estabelecimento'
+      });
+      logger.info(`[UAIRANGO] Pedido ${platformOrderId} rejeitado na plataforma`);
+    } catch (error) {
+      logger.error(`[UAIRANGO] Erro ao rejeitar pedido ${platformOrderId}:`, error.message);
+    }
+  }
+
+  async startPreparationOnPlatform(restaurantId, platformOrderId) {
+    try {
+      await api.post(restaurantId, `/order/v1.0/orders/${platformOrderId}/confirm`);
+      logger.info(`[UAIRANGO] Preparação iniciada para ${platformOrderId}`);
+    } catch (error) {
+      logger.error(`[UAIRANGO] Erro ao iniciar preparação ${platformOrderId}:`, error.message);
+    }
+  }
+
+  async markReadyOnPlatform(restaurantId, platformOrderId, orderType = 'DELIVERY') {
+    try {
+      const endpoint = orderType === 'PICKUP'
+        ? `/order/v1.0/orders/${platformOrderId}/readyToPickup`
+        : `/order/v1.0/orders/${platformOrderId}/dispatch`;
+      await api.post(restaurantId, endpoint);
+      logger.info(`[UAIRANGO] Pedido ${platformOrderId} marcado como pronto`);
+    } catch (error) {
+      logger.error(`[UAIRANGO] Erro ao marcar pronto ${platformOrderId}:`, error.message);
+    }
   }
 
   _formatAddress(addr) {
@@ -133,98 +237,6 @@ class UairangoOrderAdapter extends IntegrationBaseService {
       addr.state || '',
     ].filter(Boolean).join(', ');
     return [parts, rest].filter(Boolean).join(' - ');
-  }
-
-  async confirmOrderOnPlatform(restaurantId, platformOrderId) {
-    const token = await this.getAccessToken(restaurantId);
-    if (!token) { logger.warn(`[UAIRANGO] Sem token para confirmar ${platformOrderId}`); return false; }
-
-    try {
-      await withRetry(async () => {
-        return await axios.post(
-          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/confirm`,
-          {},
-          {
-            headers: { 'Authorization': `Bearer ${token}` },
-            timeout: 10000
-          }
-        );
-      });
-      logger.info(`[UAIRANGO] Pedido ${platformOrderId} confirmado`);
-      return true;
-    } catch (error) {
-      logger.error(`[UAIRANGO] Erro ao confirmar ${platformOrderId}:`, error.message);
-      return false;
-    }
-  }
-
-  async rejectOrderOnPlatform(restaurantId, platformOrderId, reasonCode = '1') {
-    const token = await this.getAccessToken(restaurantId);
-    if (!token) { logger.warn(`[UAIRANGO] Sem token para cancelar ${platformOrderId}`); return false; }
-
-    try {
-      await withRetry(async () => {
-        return await axios.post(
-          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/requestCancellation`,
-          { cancellationCode: parseInt(reasonCode), reason: 'Cancelamento solicitado pelo estabelecimento' },
-          {
-            headers: { 'Authorization': `Bearer ${token}` },
-            timeout: 10000
-          }
-        );
-      });
-      logger.info(`[UAIRANGO] Pedido ${platformOrderId} cancelado`);
-      return true;
-    } catch (error) {
-      logger.error(`[UAIRANGO] Erro ao cancelar ${platformOrderId}:`, error.message);
-      return false;
-    }
-  }
-
-  async dispatchOrderOnPlatform(restaurantId, platformOrderId) {
-    const token = await this.getAccessToken(restaurantId);
-    if (!token) { logger.warn(`[UAIRANGO] Sem token para despachar ${platformOrderId}`); return false; }
-
-    try {
-      await withRetry(async () => {
-        return await axios.post(
-          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/dispatch`,
-          {},
-          {
-            headers: { 'Authorization': `Bearer ${token}` },
-            timeout: 10000
-          }
-        );
-      });
-      logger.info(`[UAIRANGO] Pedido ${platformOrderId} despachado para entrega`);
-      return true;
-    } catch (error) {
-      logger.error(`[UAIRANGO] Erro ao despachar ${platformOrderId}:`, error.message);
-      return false;
-    }
-  }
-
-  async markReadyOnPlatform(restaurantId, platformOrderId) {
-    const token = await this.getAccessToken(restaurantId);
-    if (!token) { logger.warn(`[UAIRANGO] Sem token para notificar pronto ${platformOrderId}`); return false; }
-
-    try {
-      await withRetry(async () => {
-        return await axios.post(
-          `${this.BASE_URL}/order/v1.0/orders/${platformOrderId}/readyToPickup`,
-          {},
-          {
-            headers: { 'Authorization': `Bearer ${token}` },
-            timeout: 10000
-          }
-        );
-      });
-      logger.info(`[UAIRANGO] Pedido ${platformOrderId} marcado como pronto`);
-      return true;
-    } catch (error) {
-      logger.error(`[UAIRANGO] Erro ao notificar pronto ${platformOrderId}:`, error.message);
-      return false;
-    }
   }
 }
 

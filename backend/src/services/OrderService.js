@@ -680,6 +680,8 @@ if (isPickup && !hasValidPhone) {
           customerDocument: customerDocument || null,
           benefits: benefits || null,
           customerName: customer?.name || null,
+          localizer: customer?.localizer || null,
+          localizerExpiration: customer?.localizerExpiration ? new Date(customer.localizerExpiration) : null,
           notes: notes || null,
           items: { create: orderItems },
         },

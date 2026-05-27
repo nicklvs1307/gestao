@@ -63,6 +63,14 @@ if (!process.env.FOOD99_CLIENT_SECRET && fs.existsSync('/run/secrets/food99_clie
   process.env.FOOD99_CLIENT_SECRET = fs.readFileSync('/run/secrets/food99_client_secret', 'utf8').trim();
 }
 
+// UAIRANGO APP CREDENTIALS (application-level, not per-restaurant)
+if (!process.env.UAIRANGO_CLIENT_ID && fs.existsSync('/run/secrets/uairango_client_id')) {
+  process.env.UAIRANGO_CLIENT_ID = fs.readFileSync('/run/secrets/uairango_client_id', 'utf8').trim();
+}
+if (!process.env.UAIRANGO_CLIENT_SECRET && fs.existsSync('/run/secrets/uairango_client_secret')) {
+  process.env.UAIRANGO_CLIENT_SECRET = fs.readFileSync('/run/secrets/uairango_client_secret', 'utf8').trim();
+}
+
 if (!process.env.JWT_SECRET) {
   throw new Error('ERRO FATAL: JWT_SECRET não está definido. Verifique seu arquivo .env.');
 }
@@ -161,19 +169,7 @@ app.post('/webhooks/ifood/test', (req, res) => res.status(200).json({ status: 'o
 
 // Webhook Uai Rango (PRIORITÁRIO - Polling é fallback)
 const UairangoWebhookService = require('./src/services/UairangoWebhookService');
-app.post('/webhooks/uairango', async (req, res) => {
-  try {
-    const result = await UairangoWebhookService.handleWebhook(req.body);
-    if (result.success) {
-      res.status(200).json(result);
-    } else {
-      res.status(500).json(result);
-    }
-  } catch (error) {
-    logger.error('[WEBHOOK UAIRANGO] Erro:', error.message);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+app.post('/webhooks/uairango', (req, res) => UairangoWebhookService.handleWebhook(req, res));
 app.get('/webhooks/uairango/test', (req, res) => res.status(200).json({ status: 'ok' }));
 
 // Webhook 99Food

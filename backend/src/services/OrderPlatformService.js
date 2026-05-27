@@ -75,20 +75,28 @@ orderPlatformService.register('ifood', {
 
 orderPlatformService.register('uairango', {
   onPreparing: async (orderId, restaurantId) => {
-    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
-    return await UairangoOrderAdapter.confirmOrderOnPlatform(restaurantId, orderId);
+    const UairangoOrderService = require('./UairangoOrderService');
+    const prisma = require('../lib/prisma');
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    return await UairangoOrderService.confirmOrder(restaurantId, order.uairangoOrderId);
   },
   onReady: async (orderId, restaurantId) => {
-    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
-    return await UairangoOrderAdapter.markReadyOnPlatform(restaurantId, orderId);
+    const UairangoOrderService = require('./UairangoOrderService');
+    const prisma = require('../lib/prisma');
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    return await UairangoOrderService.readyToPickup(restaurantId, order.uairangoOrderId);
   },
   onShipped: async (orderId, restaurantId) => {
-    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
-    return await UairangoOrderAdapter.dispatchOrderOnPlatform(restaurantId, orderId);
+    const UairangoOrderService = require('./UairangoOrderService');
+    const prisma = require('../lib/prisma');
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    return await UairangoOrderService.dispatchOrder(restaurantId, order.uairangoOrderId);
   },
   onCanceled: async (orderId, restaurantId) => {
-    const UairangoOrderAdapter = require('./UairangoOrderAdapter');
-    return await UairangoOrderAdapter.rejectOrderOnPlatform(restaurantId, orderId);
+    const UairangoOrderService = require('./UairangoOrderService');
+    const prisma = require('../lib/prisma');
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    return await UairangoOrderService.rejectOrder(restaurantId, order.uairangoOrderId);
   }
 });
 
