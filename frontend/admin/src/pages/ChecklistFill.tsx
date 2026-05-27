@@ -663,7 +663,7 @@ const ChecklistFill: React.FC = () => {
                                                             {/* Photo Grid */}
                                                             {Array.isArray(resp.value) && resp.value.length > 0 && (
                                                                 <div className="grid grid-cols-2 gap-3">
-                                                                    {resp.value.map((photoUrl: string) => (
+                                                                    {resp.value.map((photoUrl: string, pIdx: number) => (
                                                                         <div key={photoUrl} className="relative rounded-lg overflow-hidden shadow-md group aspect-square">
                                                                             <img
                                                                                 src={`${import.meta.env.VITE_API_URL || ''}${photoUrl}`}
