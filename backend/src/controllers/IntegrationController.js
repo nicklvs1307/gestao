@@ -637,57 +637,6 @@ const offerIfoodAlternative = async (req, res) => {
     }
 };
 
-// Uairango Authorization Flow Methods (Centralized Application)
-const initiateUairangoAuthorization = async (req, res) => {
-  try {
-    const result = await UairangoAuthService.initiateUserAuthorization(req.restaurantId);
-    res.json(result);
-  } catch (error) {
-    logger.error('[UAIRANGO AUTH] Erro ao iniciar autorização:', error);
-    res.status(500).json({ error: error.message || 'Erro ao iniciar autorização' });
-  }
-};
-
-const completeUairangoAuthorization = async (req, res) => {
-  try {
-    const result = await UairangoAuthService.completeUserAuthorization(req.restaurantId);
-    res.json(result);
-  } catch (error) {
-    logger.error('[UAIRANGO AUTH] Erro ao completar autorização:', error);
-    res.status(500).json({ error: error.message || 'Erro ao completar autorização' });
-  }
-};
-
-const getUairangoAuthStatus = async (req, res) => {
-  try {
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId: req.restaurantId },
-      select: {
-        uairangoAuthStatus: true,
-        uairangoAuthorizedAt: true,
-        uairangoEstablishmentId: true,
-        uairangoEnv: true,
-        uairangoActive: true
-      }
-    });
-
-    if (!settings) {
-      return res.status(404).json({ error: 'Configurações de integração não encontradas' });
-    }
-
-    res.json({
-      authStatus: settings.uairangoAuthStatus || 'PENDING',
-      authorizedAt: settings.uairangoAuthorizedAt,
-      establishmentId: settings.uairangoEstablishmentId,
-      env: settings.uairangoEnv,
-      active: settings.uairangoActive
-    });
-  } catch (error) {
-    logger.error('[UAIRANGO AUTH] Erro ao buscar status de autorização:', error);
-    res.status(500).json({ error: 'Erro ao buscar status de autorização' });
-  }
-};
-
 module.exports = {
     getSaiposSettings,
     updateSaiposSettings,
@@ -711,9 +660,6 @@ module.exports = {
     dispatchUairangoOrder,
     getUairangoCancellationReasons,
     requestUairangoCancellation,
-    initiateUairangoAuthorization,
-    completeUairangoAuthorization,
-    getUairangoAuthStatus,
     getIfoodCancellationReasons,
     acceptIfoodCancellation,
     refuseIfoodCancellation,

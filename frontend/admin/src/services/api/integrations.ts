@@ -16,25 +16,7 @@ export const getUairangoSettings = async () => {
 };
 
 export const updateUairangoSettings = async (settingsData: Record<string, unknown>) => {
-  // Remove client credentials from settings data as they are now handled at application level
-  const { uairangoClientId, uairangoClientSecret, ...settingsWithoutCredentials } = settingsData;
-  const response = await apiClient.put('/integrations/uairango', settingsWithoutCredentials);
-  return response.data;
-};
-
-// Uairango Authorization Flow (Centralized Application)
-export const initiateUairangoAuthorization = async () => {
-  const response = await apiClient.post('/integrations/uairango/authorize');
-  return response.data;
-};
-
-export const completeUairangoAuthorization = async () => {
-  const response = await apiClient.post('/integrations/uairango/complete-authorization');
-  return response.data;
-};
-
-export const getUairangoAuthStatus = async () => {
-  const response = await apiClient.get('/integrations/uairango/auth-status');
+  const response = await apiClient.put('/integrations/uairango', settingsData);
   return response.data;
 };
 

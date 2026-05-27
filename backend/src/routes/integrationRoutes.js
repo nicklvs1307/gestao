@@ -25,11 +25,6 @@ router.post('/uairango/dispatch', IntegrationController.dispatchUairangoOrder);
 router.get('/uairango/cancellation-reasons/:orderId', IntegrationController.getUairangoCancellationReasons);
 router.post('/uairango/cancel-order', IntegrationController.requestUairangoCancellation);
 
-// Uairango Authorization Flow (Centralized Application)
-router.post('/uairango/authorize', IntegrationController.initiateUairangoAuthorization);
-router.post('/uairango/complete-authorization', IntegrationController.completeUairangoAuthorization);
-router.get('/uairango/auth-status', IntegrationController.getUairangoAuthStatus);
-
 router.get('/ifood', IntegrationController.getIfoodSettings);
 router.put('/ifood', IntegrationController.updateIfoodSettings);
 router.get('/ifood/status', IntegrationController.getIfoodConnectionStatus);
