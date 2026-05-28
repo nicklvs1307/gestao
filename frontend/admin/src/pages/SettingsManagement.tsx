@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printer';
-import PrinterLayoutEditor, { type ReceiptLayout } from '../components/PrinterLayoutEditor';
 import { Save, Settings, Palette, Link, Printer, Sliders, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -49,21 +48,6 @@ const SettingsManagement: React.FC = () => {
     };
   });
 
-  const [receiptLayout, setReceiptLayout] = useState<ReceiptLayout>(() => {
-    const saved = localStorage.getItem('receipt_layout');
-    return saved ? JSON.parse(saved) : {
-      showLogo: true,
-      showAddress: true,
-      showOrderDate: true,
-      fontSize: 'medium',
-      headerText: '',
-      footerText: 'OBRIGADO PELA PREFERÊNCIA!',
-      itemSpacing: 2,
-      paperFeed: 3,
-      useInit: false
-    };
-  });
-
   useEffect(() => {
     const path = location.pathname;
     if (path.includes('/printing')) setActiveTab('printing');
@@ -76,7 +60,6 @@ const SettingsManagement: React.FC = () => {
   const handleSaveChanges = async () => {
     await handleSave();
     localStorage.setItem('printer_config', JSON.stringify(printerConfig));
-    localStorage.setItem('receipt_layout', JSON.stringify(receiptLayout));
   };
 
   const handleSlugChange = (slug: string) => {
@@ -193,12 +176,10 @@ const SettingsManagement: React.FC = () => {
           agentStatus={agentStatus}
           availablePrinters={availablePrinters}
           printerConfig={printerConfig}
-          receiptLayout={receiptLayout}
           categories={categories}
           operation={operation}
           onLoadPrinters={loadPrinters}
           onPrinterConfigChange={setPrinterConfig}
-          onReceiptLayoutChange={setReceiptLayout}
           onOperationChange={(op) => setOperation(prev => ({ ...prev, autoPrint: op.autoPrint }))}
           restaurantName={general.name}
           restaurantLogo={appearance.logo}

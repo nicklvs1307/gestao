@@ -12,6 +12,7 @@ import { generateCashierClosureReceipt } from './templates/closure';
 import { generateDriverSettlementReceipt } from './templates/settlement';
 import { downloadCashierClosurePDF } from './templates/closurePDF';
 import { escPosToBase64 } from './utils';
+import type { PrintLayoutConfig } from '../../types/printLayout';
 
 // Export type re-exports
 export type { PrinterConfig, ReceiptSettings, RestaurantInfo, CashierClosureData, DriverSettlementData };
@@ -97,6 +98,18 @@ const getRestaurantInfoFromStorage = (): RestaurantInfo => {
 };
 
 const getReceiptSettingsFromStorage = (): ReceiptSettings => {
+  // First, try to read from the new backend-cached config
+  const backendConfig = localStorage.getItem('print_layout_config');
+  if (backendConfig) {
+    try {
+      const config: PrintLayoutConfig = JSON.parse(backendConfig);
+      return convertBackendConfigToReceiptSettings(config);
+    } catch {
+      // Fall through to legacy
+    }
+  }
+
+  // Fallback to legacy localStorage
   const layout = localStorage.getItem('receipt_layout') || localStorage.getItem('receipt_settings');
   return layout ? JSON.parse(layout) : {
     showLogo: true,
@@ -109,6 +122,37 @@ const getReceiptSettingsFromStorage = (): ReceiptSettings => {
     useInit: false,
   };
 };
+
+/**
+ * Converts backend PrintLayoutConfig to legacy ReceiptSettings format
+ * This ensures backward compatibility while the block-based ESC/POS
+ * template system is being developed
+ */
+function convertBackendConfigToReceiptSettings(config: PrintLayoutConfig): ReceiptSettings {
+  const blocks = config.blocks || [];
+  
+  const getBlockVisibility = (blockType: string) => {
+    const block = blocks.find(b => b.blockType === blockType);
+    return block?.isVisible ?? true;
+  };
+
+  const getBlockContent = (blockType: string) => {
+    const block = blocks.find(b => b.blockType === blockType);
+    return block?.customContent || '';
+  };
+
+  return {
+    showLogo: getBlockVisibility('logo'),
+    showAddress: getBlockVisibility('address'),
+    showOrderDate: getBlockVisibility('orderDate'),
+    fontSize: config.fontSize || 'medium',
+    headerText: getBlockContent('header'),
+    footerText: getBlockContent('footer') || 'OBRIGADO PELA PREFERÊNCIA!',
+    itemSpacing: config.itemSpacing,
+    paperFeed: config.paperFeed,
+    useInit: config.useInit,
+  };
+}
 
 // ─── FUNÇÕES PÚBLICAS DE IMPRESSÃO ────────────────────────────────────
 

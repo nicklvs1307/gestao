@@ -168,6 +168,68 @@ model Restaurant {
   checklists          Checklist[]
   checklistExecutions ChecklistExecution[]
   checklistReportSettings ChecklistReportSettings?
+
+  // === CONFIGURAÇÃO DE LAYOUT DE IMPRESSÃO ===
+  printLayoutConfigs  PrintLayoutConfig[]
+}
+
+// === MÓDULO DE LAYOUT DE IMPRESSÃO ===
+
+model PrintLayoutConfig {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  // Configurações globais de tipografia
+  fontFamily      String   @default("monospace") // monospace, sans-serif, serif
+  fontSize        String   @default("medium") // small, medium, large
+  lineHeight      Float    @default(1.2)
+
+  // Configurações globais de layout
+  paperWidth      Int      @default(80) // mm (58, 80, etc.)
+  sectionSpacing  Int      @default(8) // px entre blocos
+  itemSpacing     Int      @default(2) // px entre itens
+  paperFeed       Int      @default(3) // linhas antes de cortar
+  useInit         Boolean  @default(true) // Enviar comando ESC @ INIT antes de cada impressão
+
+  // Metadados
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relações
+  blocks          PrintLayoutBlock[]
+
+  @@unique([restaurantId])
+  @@map("print_layout_configs")
+}
+
+model PrintLayoutBlock {
+  id              String   @id @default(cuid())
+  layoutId        String
+  layout          PrintLayoutConfig @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+
+  // Identificação do bloco
+  blockType       String   // logo, address, orderDate, header, orderNumber, customerInfo, tableInfo, items, observations, totals, payment, change, footer, qrcode, custom
+  label           String   // Nome amigável (ex: "Logo do Restaurante")
+
+  // Configurações do bloco
+  isVisible       Boolean  @default(true)
+  order           Int      // Ordem de exibição (0, 1, 2...)
+
+  // Personalização individual (override do global)
+  fontSize        String?  // small, medium, large
+  fontWeight      String?  // normal, bold
+  fontStyle       String?  // normal, italic
+  textAlign       String?  // left, center, right
+
+  // Conteúdo customizado (para blocos tipo "custom", "header" ou "footer")
+  customContent   String?  @db.Text
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([layoutId, blockType])
+  @@map("print_layout_blocks")
 }
 
 model PaymentMethod {

@@ -206,6 +206,7 @@ const paymentRoutes = require('./src/routes/paymentRoutes');
 const superAdminRoutes = require('./src/routes/superAdminRoutes');
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 const whatsappRoutes = require('./src/routes/whatsappRoutes');
+const printLayoutRoutes = require('./src/routes/printLayoutRoutes');
 // ifoodRoutes removido - integração iFood agora usa polling (IfoodPollingService) ao invés de webhook
 
 // SuperAdmin / Admin Role Management Alias
@@ -236,6 +237,7 @@ app.use('/api/fiscal', fiscalRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/admin/print-layout', printLayoutRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/integrations', food99Routes);
 app.use('/api/tables', tableRoutes);

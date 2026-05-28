@@ -1,24 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
-import PrinterLayoutEditor, { type ReceiptLayout } from '../PrinterLayoutEditor';
+import PrintLayoutBlockEditor from '../PrintLayoutBlockEditor';
 import { type PrinterConfig } from '../../services/printer';
+import { usePrintLayout } from '../../hooks/usePrintLayout';
 import { 
   Printer as PrinterIcon, RefreshCw, CreditCard, ChefHat, LayoutTemplate, 
   Plus, Trash2, Wifi, WifiOff, CheckCircle, XCircle, Loader2, Zap,
-  Printer as PrinterIcon2
+  Printer as PrinterIcon2, Settings
 } from 'lucide-react';
 
 interface SettingsPrintingTabProps {
   agentStatus: 'online' | 'offline' | 'checking';
   availablePrinters: string[];
   printerConfig: PrinterConfig;
-  receiptLayout: ReceiptLayout;
   categories: { id: string; name: string }[];
   operation: { autoPrint: boolean };
   onLoadPrinters: () => Promise<void>;
   onPrinterConfigChange: (config: PrinterConfig) => void;
-  onReceiptLayoutChange: (layout: ReceiptLayout) => void;
   onOperationChange: (operation: { autoPrint: boolean }) => void;
   restaurantName: string;
   restaurantLogo: string;
@@ -66,10 +65,24 @@ const ToggleSwitch: React.FC<{
 );
 
 export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
-  agentStatus, availablePrinters, printerConfig, receiptLayout, categories,
-  operation, onLoadPrinters, onPrinterConfigChange, onReceiptLayoutChange, onOperationChange,
+  agentStatus, availablePrinters, printerConfig, categories,
+  operation, onLoadPrinters, onPrinterConfigChange, onOperationChange,
   restaurantName, restaurantLogo, restaurantAddress
 }) => {
+  const {
+    config: printLayoutConfig,
+    blocks,
+    globalSettings,
+    isLoading: isLayoutLoading,
+    isSaving: isLayoutSaving,
+    exists: layoutExists,
+    createDefault,
+    updateGlobalSettings,
+    updateBlocks,
+    addCustomBlock,
+    removeBlock,
+  } = usePrintLayout();
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
       {/* SIDEBAR - Status & Automation */}
@@ -347,13 +360,48 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
 
         {/* Layout Editor */}
         <div className="border-t border-slate-100">
-          <PrinterLayoutEditor 
-            layout={receiptLayout}
-            onChange={onReceiptLayoutChange}
-            restaurantName={restaurantName}
-            restaurantLogo={restaurantLogo}
-            restaurantAddress={restaurantAddress}
-          />
+          {isLayoutLoading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center animate-pulse mb-4">
+                <Settings size={20} className="text-orange-400" />
+              </div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                Carregando configurações de layout...
+              </p>
+            </div>
+          ) : !layoutExists ? (
+            <div className="flex flex-col items-center justify-center py-16 px-6">
+              <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                <LayoutTemplate size={28} className="text-slate-300" />
+              </div>
+              <h3 className="text-[11px] font-black uppercase text-slate-700 mb-2">
+                Layout de Comanda Não Configurado
+              </h3>
+              <p className="text-[9px] text-slate-400 text-center mb-6 max-w-md">
+                Configure o layout personalizado das suas comandas com blocos arrastáveis, 
+                tipografia customizada e muito mais.
+              </p>
+              <button
+                onClick={() => createDefault()}
+                className="px-6 py-3 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg shadow-orange-200"
+              >
+                Criar Layout Padrão
+              </button>
+            </div>
+          ) : globalSettings ? (
+            <PrintLayoutBlockEditor
+              blocks={blocks}
+              globalSettings={globalSettings}
+              isSaving={isLayoutSaving}
+              onUpdateGlobalSettings={updateGlobalSettings}
+              onUpdateBlocks={updateBlocks}
+              onAddCustomBlock={addCustomBlock}
+              onRemoveBlock={removeBlock}
+              restaurantName={restaurantName}
+              restaurantLogo={restaurantLogo}
+              restaurantAddress={restaurantAddress}
+            />
+          ) : null}
         </div>
       </Card>
     </div>
