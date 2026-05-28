@@ -273,8 +273,31 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
   }, [allVisibleProducts]);
 
   if (isLoading) return (
-    <div className="flex items-center justify-center min-h-screen bg-background text-foreground text-sm font-bold animate-pulse" role="status" aria-live="polite">
-      Carregando cardápio...
+    <div className="min-h-screen bg-background">
+      {/* Skeleton Header */}
+      <div className="h-32 md:h-44 bg-slate-200 skeleton" />
+      <div className="px-5 -mt-8 relative z-10">
+        <div className="w-20 h-20 bg-slate-300 rounded-xl skeleton mx-auto" />
+      </div>
+      <div className="mt-4 px-5 space-y-3">
+        <div className="h-5 bg-slate-200 skeleton w-48 mx-auto" />
+        <div className="h-3 bg-slate-200 skeleton w-32 mx-auto" />
+      </div>
+      {/* Skeleton Featured */}
+      <div className="mt-6 px-5">
+        <div className="h-4 bg-slate-200 skeleton w-24 mb-3" />
+        <div className="flex gap-3 overflow-hidden">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="min-w-[110px] h-40 bg-slate-200 skeleton rounded-lg" />
+          ))}
+        </div>
+      </div>
+      {/* Skeleton Products */}
+      <div className="mt-6 px-5 space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex h-36 bg-slate-200 skeleton rounded-lg" />
+        ))}
+      </div>
     </div>
   );
   
@@ -289,28 +312,28 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
       <RestaurantMeta restaurant={restaurant} />
       <div className="bg-background min-h-screen pb-28 font-sans selection:bg-primary selection:text-white transition-colors duration-500">
         {!isStoreOpen && (
-          <div className="bg-destructive text-destructive-foreground p-3 text-center sticky top-0 z-[100] font-black uppercase text-xs tracking-widest animate-pulse flex items-center justify-center gap-2" role="alert">
-            <Clock size={16} aria-hidden="true" /> Loja Fechada no Momento - Não estamos aceitando pedidos
+          <div className="bg-destructive text-destructive-foreground p-3 text-center sticky top-0 z-[var(--z-header)] font-bold uppercase text-xs tracking-wider animate-pulse flex items-center justify-center gap-2" role="alert">
+            <Clock size={14} aria-hidden="true" /> Loja Fechada no Momento - Não estamos aceitando pedidos
           </div>
         )}
 
-        <div className="absolute top-3 right-4 z-20 flex gap-2">
+        <div className="absolute top-3 right-4 z-[var(--z-header)] flex gap-2">
           <Button 
             onClick={handleSearchClick} 
             variant="ghost" 
             size="icon" 
-            className="bg-black/20 backdrop-blur-md rounded-full h-8 w-8 text-white hover:bg-black/40 border border-white/10"
+            className="bg-black/20 backdrop-blur-md rounded-lg h-10 w-10 text-white hover:bg-black/40 border border-white/10"
             aria-label="Buscar produtos"
           >
-            <Search size={14} />
+            <Search size={16} />
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="bg-black/20 backdrop-blur-md rounded-full h-8 w-8 text-white hover:bg-black/40 border border-white/10"
+            className="bg-black/20 backdrop-blur-md rounded-lg h-10 w-10 text-white hover:bg-black/40 border border-white/10"
             aria-label="Favoritos"
           >
-            <Heart size={14} />
+            <Heart size={16} />
           </Button>
         </div>
 

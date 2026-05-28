@@ -71,12 +71,15 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 24.6 95% 53.1%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    --z-dropdown: 50;
-    --z-overlay: 100;
-    --z-modal: 200;
-    --z-toast: 300;
+    --z-base: 0;
+    --z-sticky: 10;
+    --z-header: 20;
+    --z-overlay: 40;
+    --z-modal: 50;
+    --z-sheet: 60;
+    --z-toast: 70;
   }
 }
 
@@ -86,6 +89,9 @@
   }
   body {
     @apply bg-background text-foreground transition-colors duration-300;
+    font-family: 'Rubik', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -143,4 +149,17 @@
   background: hsl(var(--card));
   border-radius: inherit;
   z-index: -1;
+}
+
+/* Skeleton Shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
 }

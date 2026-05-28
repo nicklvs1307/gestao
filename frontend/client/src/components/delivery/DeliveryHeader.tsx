@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, ShoppingBag } from 'lucide-react';
+import { Clock, ShoppingBag, MapPin } from 'lucide-react';
 import type { Restaurant, RestaurantSettings } from '../../types';
 import { getImageUrl } from '../../utils/image';
 
@@ -32,7 +32,7 @@ const DeliveryHeader: React.FC<DeliveryHeaderProps> = ({ restaurant, isStoreOpen
       </div>
 
       <div className="relative -mt-16 flex justify-center z-20">
-        <div className="w-24 h-24 rounded-full border-[4px] border-background bg-card shadow-2xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
+        <div className="w-24 h-24 rounded-xl border-[4px] border-background bg-card shadow-xl overflow-hidden flex items-center justify-center transition-transform hover:scale-105 duration-300">
           {restaurant.logoUrl ? (
             <img src={getImageUrl(restaurant.logoUrl)} className="w-full h-full object-cover" alt="Logo" loading="lazy" />
           ) : (
@@ -51,9 +51,9 @@ const DeliveryHeader: React.FC<DeliveryHeaderProps> = ({ restaurant, isStoreOpen
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
             target="_blank"
             rel="noreferrer"
-            className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-8 block truncate hover:text-primary transition-colors text-center"
+            className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-8 flex items-center justify-center gap-1.5 truncate hover:text-primary transition-colors text-center"
           >
-            📍 {restaurant.address}
+            <MapPin size={12} className="shrink-0" /> {restaurant.address}
           </a>
         )}
         

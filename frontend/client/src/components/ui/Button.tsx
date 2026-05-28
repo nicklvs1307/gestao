@@ -18,22 +18,22 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-xl font-bold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
+  const baseStyles = "inline-flex items-center justify-center rounded-lg font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
   
   const variants = {
-    primary: "bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110 border border-transparent",
+    primary: "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:brightness-110 border border-transparent",
     secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-transparent",
     outline: "border-2 border-primary text-primary hover:bg-primary/10",
     ghost: "text-primary hover:bg-primary/10 border-transparent",
-    danger: "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30 hover:brightness-110 border border-transparent",
-    success: "bg-success text-success-foreground shadow-lg shadow-success/30 hover:brightness-110 border border-transparent",
-    warning: "bg-warning text-warning-foreground shadow-lg shadow-warning/30 hover:brightness-110 border border-transparent",
+    danger: "bg-destructive text-destructive-foreground shadow-md shadow-destructive/20 hover:brightness-110 border border-transparent",
+    success: "bg-success text-success-foreground shadow-md shadow-success/20 hover:brightness-110 border border-transparent",
+    warning: "bg-warning text-warning-foreground shadow-md shadow-warning/20 hover:brightness-110 border border-transparent",
   };
 
   const sizes = {
     sm: "h-8 px-3 text-xs",
     md: "h-11 px-5 text-sm",
-    lg: "h-14 px-8 text-base",
+    lg: "h-12 px-8 text-sm",
     icon: "h-10 w-10 p-2"
   };
 

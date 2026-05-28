@@ -38,10 +38,10 @@ const ProductSection: React.FC<ProductSectionProps> = ({ categories, activeCateg
         
         return (
           <section key={category.id} aria-labelledby={`category-${category.id}`}>
-            <h2 id={`category-${category.id}`} className="text-lg font-black text-foreground mb-4 italic uppercase tracking-tighter">
+            <h2 id={`category-${category.id}`} className="text-lg font-bold text-foreground mb-4 uppercase tracking-tight">
               {category.name}
             </h2>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {products.map(product => (
                 <DeliveryProductCard
                   key={product.id}

@@ -63,7 +63,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
       {/* Overlay */}
       <div 
         className={cn(
-          "fixed inset-0 bg-foreground/50 backdrop-blur-sm z-[150] transition-opacity duration-300",
+          "fixed inset-0 bg-foreground/50 backdrop-blur-sm z-[var(--z-overlay)] transition-opacity duration-300",
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         )} 
         onClick={handleCloseWrapper}
@@ -71,7 +71,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
 
       {/* Slide Panel */}
       <div className={cn(
-        "fixed top-0 right-0 w-full max-w-[400px] h-full bg-background shadow-2xl ring-1 ring-black/5 flex flex-col z-[200]",
+        "fixed top-0 right-0 w-full max-w-[400px] h-full bg-background shadow-xl ring-1 ring-black/5 flex flex-col z-[var(--z-sheet)]",
         "transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
@@ -103,8 +103,8 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
                 </div>
               ) : (
                 items.map(item => (
-                  <Card key={item.localId} className="flex gap-4 p-3">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0 shadow-inner bg-muted">
+                  <Card key={item.localId} className="flex gap-4 p-3 rounded-lg">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 shadow-inner bg-muted">
                         {item.product.imageUrl ? (
                           <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
                         ) : (
@@ -128,11 +128,11 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
                       <div className="text-sm font-bold text-foreground">R$ {item.priceAtTime.toFixed(2).replace('.', ',')}</div>
                     </div>
                     <div className="flex flex-col items-end justify-between">
-                      <button className="p-2 text-muted-foreground hover:text-destructive transition-colors" onClick={() => onRemoveItem(item.localId)}><Trash2 size={16} /></button>
-                      <div className="flex items-center bg-muted rounded-xl p-0.5 border border-border">
-                        <button className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors" onClick={() => onUpdateItemQuantity(item.localId, item.quantity - 1)}><Minus size={12} strokeWidth={3} /></button>
-                        <span className="w-6 text-center text-xs font-bold text-foreground">{item.quantity}</span>
-                        <button className="w-9 h-9 flex items-center justify-center text-foreground" onClick={() => onUpdateItemQuantity(item.localId, item.quantity + 1)}><Plus size={12} strokeWidth={3} /></button>
+                      <button className="p-2.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg" onClick={() => onRemoveItem(item.localId)} aria-label="Remover item"><Trash2 size={16} /></button>
+                      <div className="flex items-center bg-muted rounded-lg p-0.5 border border-border">
+                        <button className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors" onClick={() => onUpdateItemQuantity(item.localId, item.quantity - 1)} aria-label="Diminuir quantidade"><Minus size={14} strokeWidth={3} /></button>
+                        <span className="w-7 text-center text-sm font-bold text-foreground">{item.quantity}</span>
+                        <button className="w-10 h-10 flex items-center justify-center text-foreground" onClick={() => onUpdateItemQuantity(item.localId, item.quantity + 1)} aria-label="Aumentar quantidade"><Plus size={14} strokeWidth={3} /></button>
                       </div>
                     </div>
                   </Card>
@@ -162,7 +162,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
                 <div className="grid grid-cols-2 gap-3 w-full">
                     <Button 
                         variant="secondary"
-                        className="h-14 rounded-2xl text-[10px] uppercase tracking-widest"
+                        className="h-12 rounded-lg text-xs uppercase tracking-widest"
                         onClick={handleCloseWrapper}
                     >
                         Adicionar Mais
@@ -170,7 +170,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
                     
                     <Button 
                       className={cn(
-                        "h-14 rounded-2xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2",
+                        "h-12 rounded-lg text-xs uppercase tracking-widest flex items-center justify-center gap-2",
                         !isStoreOpen && "bg-destructive/10 text-destructive border-destructive/20 shadow-none hover:bg-destructive/10"
                       )}
                       onClick={handleProceedToCheckout}

@@ -44,9 +44,9 @@ const ReorderSection: React.FC<ReorderSectionProps> = ({ onProductClick, onReord
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
             <History size={16} className="text-primary" />
-            <h3 className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none">Peça Novamente</h3>
+            <h3 className="text-sm font-bold uppercase tracking-tight text-slate-900 leading-none">Peça Novamente</h3>
         </div>
-        <a href="#" className="text-[10px] font-bold text-primary uppercase tracking-widest">Ver todos</a>
+        <a href="#" className="text-xs font-bold text-primary uppercase tracking-wider">Ver todos</a>
       </div>
 
       <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
@@ -54,12 +54,12 @@ const ReorderSection: React.FC<ReorderSectionProps> = ({ onProductClick, onReord
           <motion.div
             key={order.id}
             whileTap={{ scale: 0.98 }}
-            className="min-w-[250px] bg-white rounded-2xl p-3 border border-slate-100 shadow-lg shadow-slate-100/70 flex flex-col justify-between"
+            className="min-w-[250px] bg-white rounded-lg p-3 border border-slate-100 shadow-sm flex flex-col justify-between"
           >
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Pedido #{order.dailyOrderNumber || order.id.slice(-4)}</span>
-                <span className="text-[9px] font-bold text-emerald-500">Concluído</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pedido #{order.dailyOrderNumber || order.id.slice(-4)}</span>
+                <span className="text-[10px] font-bold text-emerald-500">Concluído</span>
               </div>
               
               <div className="space-y-1.5 mb-3">
@@ -69,26 +69,27 @@ const ReorderSection: React.FC<ReorderSectionProps> = ({ onProductClick, onReord
                       <img src={item.product.imageUrl} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-black text-slate-800 truncate italic uppercase">{item.quantity}x {item.product.name}</p>
+                      <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight">{item.quantity}x {item.product.name}</p>
                     </div>
                   </div>
                 ))}
                 {order.items.length > 2 && (
-                  <p className="text-[9px] text-slate-400 font-bold ml-10">+ {order.items.length - 2} itens</p>
+                  <p className="text-[10px] text-slate-400 font-medium ml-10">+ {order.items.length - 2} itens</p>
                 )}
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total</span>
-                  <span className="text-base font-black text-slate-900 italic tracking-tighter">R$ {order.total.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Total</span>
+                  <span className="text-base font-bold text-slate-900 tracking-tight">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                </div>
                <button 
                 onClick={() => onReorder(order.items)}
-                className="bg-primary text-white h-9 w-9 rounded-lg flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                className="bg-primary text-white h-10 w-10 rounded-lg flex items-center justify-center hover:bg-primary/90 transition-colors duration-200 shadow-md shadow-primary/20"
+                aria-label="Pedir novamente"
                >
-                 <PlusCircle size={16} />
+                 <PlusCircle size={18} />
                </button>
             </div>
           </motion.div>

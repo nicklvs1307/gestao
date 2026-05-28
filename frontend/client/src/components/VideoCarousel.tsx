@@ -20,14 +20,14 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
   if (!videos || videos.length === 0) return null;
 
   return (
-    <div className="relative w-full h-40 md:h-56 overflow-hidden">
+    <div className="relative w-full h-40 md:h-56 overflow-hidden rounded-lg">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0, scale: 1.1 }}
+          initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 1, ease: "easeInOut" }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
           className="absolute inset-0"
         >
           <video
@@ -38,15 +38,15 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
             playsInline
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10" />
         </motion.div>
       </AnimatePresence>
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
         {videos.map((_, idx) => (
           <div 
             key={idx}
-            className={`h-1 rounded-full transition-all duration-500 ${
-              idx === currentIndex ? "w-8 bg-white" : "w-2 bg-white/40"
+            className={`h-1 rounded-full transition-all duration-300 ${
+              idx === currentIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
             }`}
           />
         ))}

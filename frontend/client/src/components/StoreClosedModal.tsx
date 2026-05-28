@@ -41,7 +41,7 @@ const StoreClosedModal: React.FC<StoreClosedModalProps> = ({ isOpen, onClose, re
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
@@ -53,36 +53,36 @@ const StoreClosedModal: React.FC<StoreClosedModalProps> = ({ isOpen, onClose, re
             initial={{ scale: 0.9, opacity: 0, y: 20 }} 
             animate={{ scale: 1, opacity: 1, y: 0 }} 
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden p-8 text-center"
+            className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden p-8 text-center"
           >
             <div className="absolute top-4 right-4">
-                <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-slate-100">
-                    <X size={20} className="text-slate-400" />
+                <Button variant="ghost" size="icon" onClick={onClose} className="rounded-lg hover:bg-slate-100" aria-label="Fechar">
+                    <X size={18} className="text-slate-400" />
                 </Button>
             </div>
 
-            <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border-2 border-rose-100 shadow-xl shadow-rose-500/10">
-                <Clock size={40} className="text-rose-500 animate-pulse" />
+            <div className="w-16 h-16 bg-rose-50 rounded-xl flex items-center justify-center mx-auto mb-5 border border-rose-100 shadow-lg shadow-rose-500/10">
+                <Clock size={32} className="text-rose-500 animate-pulse" />
             </div>
 
-            <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-2 leading-none">
+            <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight mb-2 leading-none">
                 Estamos Fechados
             </h3>
-            <p className="text-slate-500 text-sm font-bold uppercase tracking-tight leading-relaxed mb-2">
+            <p className="text-slate-500 text-sm font-medium leading-relaxed mb-2">
                 Desculpe, o {restaurantName || 'restaurante'} não está aceitando novos pedidos no momento.
             </p>
             {nextOpening ? (
-              <p className="text-emerald-600 text-xs font-black uppercase tracking-wider mb-6">
+              <p className="text-emerald-600 text-xs font-bold uppercase tracking-wider mb-5">
                 Abriremos {nextOpening}
               </p>
             ) : (
-              <span className="text-slate-400 text-[10px] mt-2 block mb-6">Você ainda pode navegar pelo nosso cardápio e conhecer nossas delícias!</span>
+              <span className="text-slate-400 text-xs mt-2 block mb-5">Você ainda pode navegar pelo nosso cardápio e conhecer nossas delícias!</span>
             )}
 
             <div className="space-y-3">
                 <Button 
                     fullWidth 
-                    className="h-14 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest italic"
+                    className="h-12 rounded-lg bg-slate-900 text-xs font-bold uppercase tracking-wider"
                     onClick={onClose}
                 >
                     Continuar Navegando

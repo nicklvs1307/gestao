@@ -31,7 +31,7 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
   return (
     <Card 
       hoverEffect 
-      className={`flex h-36 overflow-hidden relative active:scale-[0.98] transition-all duration-300 ${hasDiscount ? 'border-primary/20 shadow-primary/5' : ''}`}
+      className={`flex h-36 overflow-hidden relative active:scale-[0.98] transition-all duration-200 rounded-lg ${hasDiscount ? 'border-primary/20 shadow-primary/5' : ''}`}
       noPadding
       onClick={handleClick}
     >
@@ -78,8 +78,8 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
         
         {/* Badge de Promoção Pequena na Imagem */}
         {hasDiscount && (
-             <div className="absolute top-2 left-2 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-lg z-20 flex items-center gap-1">
-                <Zap size={8} fill="white" /> Oferta
+             <div className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-tight shadow-md z-20 flex items-center gap-1">
+                <Zap size={10} fill="white" /> Oferta
              </div>
         )}
       </div>
@@ -88,22 +88,22 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
       <div className="flex flex-col flex-grow p-4 min-w-0 justify-between bg-white">
           <div className="space-y-1">
               <div className="flex justify-between items-start gap-2">
-                <h3 className="text-sm font-black text-slate-900 leading-tight uppercase italic tracking-tighter truncate">{product.name}</h3>
+                <h3 className="text-sm font-bold text-slate-900 leading-tight uppercase tracking-tight truncate">{product.name}</h3>
               </div>
-              <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed font-medium">{product.description}</p>
+              <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium">{product.description}</p>
           </div>
           
           <div className="flex justify-between items-end">
             <div className="flex flex-col">
                  {showFromLabel && (
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-0.5">A partir de</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none mb-0.5">A partir de</span>
                  )}
                  {hasDiscount && (
-                     <span className="text-[10px] text-slate-400 line-through font-bold leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
+                     <span className="text-xs text-slate-400 line-through font-medium leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
                  )}
                  <div className="flex items-baseline gap-1">
-                    <span className="text-xs font-black text-primary">R$</span>
-                    <span className="text-xl font-black text-slate-900 tracking-tighter">
+                    <span className="text-xs font-bold text-primary">R$</span>
+                    <span className="text-lg font-bold text-slate-900 tracking-tight">
                         {finalPrice.toFixed(2).replace('.', ',')}
                     </span>
                  </div>
@@ -112,10 +112,10 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
             {/* Botão de Adicionar padronizado */}
             <Button 
                 size="icon" 
-                className="w-10 h-10 rounded-2xl shadow-md active:scale-90"
+                className="w-10 h-10 rounded-lg shadow-sm active:scale-90 transition-all duration-200"
                 onClick={handleClick}
             >
-                <Plus size={20} strokeWidth={3} />
+                <Plus size={18} strokeWidth={3} />
             </Button>
           </div>
       </div>

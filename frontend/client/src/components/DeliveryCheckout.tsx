@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { IMaskInput } from 'react-imask';
 import { 
   CreditCard, ShoppingBag, 
-  ChevronRight, ArrowLeft, CheckCircle2, Truck, Info, Search, User, Package, MapPin, Loader2
+  ChevronRight, ArrowLeft, CheckCircle2, Truck, Info, Search, User, Package, MapPin, Loader2, Banknote, Smartphone, FileText
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLocalCart } from '../hooks/useLocalCart';
 import { LocationService } from '../services/LocationService';
 import { getPaymentMethods } from '../services/api';
-import { useRestaurant } from '../contexts/RestaurantContext'; // Adicionado
+import { useRestaurant } from '../contexts/RestaurantContext';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
@@ -215,11 +215,11 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
     <div className="bg-slate-50 min-h-full flex flex-col relative">
       
       {/* HEADER */}
-      <div className="sticky top-0 bg-white/90 backdrop-blur-md z-20 px-6 py-4 border-b border-slate-100 flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="rounded-full" onClick={() => step === 'review' ? setStep('form') : onClose()}>
-              <ArrowLeft size={20} />
+      <div className="sticky top-0 bg-white/90 backdrop-blur-md z-20 px-5 py-4 border-b border-slate-100 flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="rounded-lg" onClick={() => step === 'review' ? setStep('form') : onClose()} aria-label={step === 'review' ? 'Voltar' : 'Fechar'}>
+              <ArrowLeft size={18} />
           </Button>
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-900 italic">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
               {step === 'form' ? 'Dados do Pedido' : 'Revise seu Pedido'}
           </h2>
       </div>
@@ -230,7 +230,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
             /* --- TELA 1: FORMULÁRIO --- */
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                 <section className="space-y-4">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                         <User size={14} className="text-primary" /> Informações Pessoais
                     </h3>
                     <div className="space-y-1">
@@ -252,12 +252,12 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                 </section>
 
                 <section className="space-y-4">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                         <Package size={14} className="text-primary" /> Forma de Entrega
                     </h3>
-                    <div className="flex gap-2 p-1 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                        <button onClick={() => setDeliveryType('delivery')} className={cn("flex-1 py-3 rounded-xl font-black text-xs uppercase transition-all", deliveryType === 'delivery' ? "bg-slate-900 text-white shadow-md" : "text-slate-400")}>Entrega</button>
-                        <button onClick={() => setDeliveryType('pickup')} className={cn("flex-1 py-3 rounded-xl font-black text-xs uppercase transition-all", deliveryType === 'pickup' ? "bg-slate-900 text-white shadow-md" : "text-slate-400")}>Retirada</button>
+                    <div className="flex gap-2 p-1 bg-white border border-slate-100 rounded-lg shadow-sm">
+                        <button onClick={() => setDeliveryType('delivery')} className={cn("flex-1 py-3 rounded-md font-bold text-xs uppercase transition-all duration-200", deliveryType === 'delivery' ? "bg-slate-900 text-white shadow-md" : "text-slate-400")}>Entrega</button>
+                        <button onClick={() => setDeliveryType('pickup')} className={cn("flex-1 py-3 rounded-md font-bold text-xs uppercase transition-all duration-200", deliveryType === 'pickup' ? "bg-slate-900 text-white shadow-md" : "text-slate-400")}>Retirada</button>
                     </div>
 
                     {deliveryType === 'delivery' && (
@@ -282,7 +282,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                                     type="button"
                                     variant="outline" 
                                     fullWidth 
-                                    className="h-12 rounded-xl border-dashed border-2 border-slate-200 text-slate-500 hover:border-primary hover:text-primary hover:bg-primary/5 gap-2 text-[10px] font-black uppercase tracking-widest"
+                                    className="h-11 rounded-lg border-dashed border-2 border-slate-200 text-slate-500 hover:border-primary hover:text-primary hover:bg-primary/5 gap-2 text-xs font-bold uppercase tracking-wider"
                                     onClick={handleUseMyLocation}
                                     disabled={isLocating}
                                 >
@@ -349,7 +349,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                 </section>
 
                 <section className="space-y-4 pb-10">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                         <CreditCard size={14} className="text-primary" /> Forma de Pagamento
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -358,16 +358,16 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                                 key={m.id} 
                                 onClick={() => setPaymentMethod(m.name)} 
                                 className={cn(
-                                    "p-4 border-2 transition-all flex flex-col items-center gap-2 text-center", 
+                                    "p-4 border-2 transition-all duration-200 flex flex-col items-center gap-2 text-center rounded-lg", 
                                     paymentMethod === m.name ? "border-primary bg-orange-50 text-primary" : "border-slate-100 text-slate-400 opacity-60"
                                 )}
                             >
-                                <span className="text-2xl">
-                                    {m.type === 'CASH' ? '💵' : 
-                                     m.type === 'PIX' ? '📱' : 
-                                     m.type.includes('CARD') ? '💳' : '📄'}
+                                <span className="text-xl">
+                                    {m.type === 'CASH' ? <Banknote size={24} /> : 
+                                     m.type === 'PIX' ? <Smartphone size={24} /> : 
+                                     m.type.includes('CARD') ? <CreditCard size={24} /> : <FileText size={24} />}
                                 </span>
-                                <span className="text-[9px] font-black uppercase tracking-widest">{m.name}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider">{m.name}</span>
                             </Card>
                         ))}
                     </div>
@@ -388,44 +388,44 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
         ) : (
             /* --- TELA 2: REVISÃO --- */
             <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
-                <Card className="bg-emerald-50 border-emerald-100 p-6 flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
-                      <CheckCircle2 size={32} className="text-emerald-500" />
+                <Card className="bg-emerald-50 border-emerald-100 p-5 flex flex-col items-center text-center rounded-lg">
+                    <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-3">
+                      <CheckCircle2 size={28} className="text-emerald-500" />
                     </div>
-                    <h3 className="text-xl font-black text-emerald-900 italic tracking-tighter uppercase leading-none mb-1">Quase lá, {name.split(' ')[0]}!</h3>
-                    <p className="text-emerald-700 text-xs font-bold uppercase tracking-widest opacity-70">Confira seu pedido antes de enviar</p>
+                    <h3 className="text-lg font-bold text-emerald-900 tracking-tight uppercase leading-none mb-1">Quase lá, {name.split(' ')[0]}!</h3>
+                    <p className="text-emerald-700 text-xs font-medium uppercase tracking-wider opacity-70">Confira seu pedido antes de enviar</p>
                 </Card>
 
                 {/* Resumo dos Itens */}
                 <div className="space-y-3">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Itens na Sacola</h4>
-                    <Card className="p-6 border-slate-100">
-                      <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-2">Itens na Sacola</h4>
+                    <Card className="p-5 border-slate-100 rounded-lg">
+                      <div className="space-y-3">
                           {localCartItems.map((item, i) => (
                               <div key={i} className="flex justify-between items-start text-sm">
                                   <div className="flex flex-col">
-                                    <span className="font-black text-slate-800 uppercase text-xs italic tracking-tight leading-tight">
+                                    <span className="font-bold text-slate-800 uppercase text-xs tracking-tight leading-tight">
                                       <b className="text-primary not-italic mr-1">{item.quantity}x</b> {item.product.name}
                                     </span>
-                                    {item.sizeJson && <span className="text-[9px] font-bold text-slate-400 uppercase">{JSON.parse(item.sizeJson).name}</span>}
+                                    {item.sizeJson && <span className="text-[10px] font-medium text-slate-400 uppercase">{JSON.parse(item.sizeJson).name}</span>}
                                   </div>
-                                  <span className="font-black text-slate-900 text-xs shrink-0">R$ {(item.priceAtTime * item.quantity).toFixed(2).replace('.', ',')}</span>
+                                  <span className="font-bold text-slate-900 text-xs shrink-0">R$ {(item.priceAtTime * item.quantity).toFixed(2).replace('.', ',')}</span>
                               </div>
                           ))}
-                          <div className="pt-4 border-t border-dashed border-slate-200 space-y-3">
-                              <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          <div className="pt-3 border-t border-dashed border-slate-200 space-y-2">
+                              <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
                                   <span>Subtotal</span>
                                   <span>R$ {total.toFixed(2).replace('.', ',')}</span>
                               </div>
-                              <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
                                   <span>Taxa de Entrega</span>
                                   <span className={deliveryType === 'delivery' ? 'text-primary' : 'text-emerald-500'}>
                                     {deliveryType === 'delivery' ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}` : 'Grátis'}
                                   </span>
                               </div>
                               <div className="flex justify-between items-center pt-2">
-                                  <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Total do Pedido</span>
-                                  <span className="text-2xl font-black text-slate-900 italic tracking-tighter">
+                                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Total do Pedido</span>
+                                  <span className="text-xl font-bold text-slate-900 tracking-tight">
                                     R$ {(total + (deliveryType === 'delivery' ? deliveryFee : 0)).toFixed(2).replace('.', ',')}
                                   </span>
                               </div>
@@ -436,32 +436,32 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
 
                 {/* Detalhes de Entrega e Pagamento */}
                 <div className="grid grid-cols-1 gap-3">
-                    <Card className="p-4 flex items-center gap-4 border-slate-50">
-                        <div className="bg-blue-50 text-blue-600 p-3 rounded-2xl"><Truck size={20} /></div>
+                    <Card className="p-4 flex items-center gap-4 border-slate-50 rounded-lg">
+                        <div className="bg-blue-50 text-blue-600 p-2.5 rounded-lg"><Truck size={18} /></div>
                         <div className="min-w-0">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Onde Entregar</p>
-                            <p className="text-xs font-black text-slate-800 leading-tight uppercase truncate">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Onde Entregar</p>
+                            <p className="text-xs font-bold text-slate-800 leading-tight uppercase truncate">
                               {deliveryType === 'delivery' ? 
                                 `${street}, ${number}` : 
                                 'Retirada no Balcão'}
                             </p>
                             {deliveryType === 'delivery' && (
-                              <p className="text-[10px] text-slate-500 font-bold uppercase truncate">{neighborhood} • {city}/{state}</p>
+                              <p className="text-[10px] text-slate-500 font-medium uppercase truncate">{neighborhood} • {city}/{state}</p>
                             )}
                         </div>
                     </Card>
-                    <Card className="p-4 flex items-center gap-4 border-slate-50">
-                        <div className="bg-orange-50 text-orange-600 p-3 rounded-2xl"><CreditCard size={20} /></div>
+                    <Card className="p-4 flex items-center gap-4 border-slate-50 rounded-lg">
+                        <div className="bg-orange-50 text-orange-600 p-2.5 rounded-lg"><CreditCard size={18} /></div>
                         <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Como pagar</p>
-                            <p className="text-xs font-black text-slate-800 uppercase italic leading-tight">{paymentMethod}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Como pagar</p>
+                            <p className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-tight">{paymentMethod}</p>
                         </div>
                     </Card>
                 </div>
 
-                <div className="bg-amber-50 rounded-2xl p-4 flex gap-3 items-center border border-amber-100 mb-10">
-                    <Info size={18} className="text-amber-600 shrink-0" />
-                    <p className="text-[10px] font-bold text-amber-800 leading-tight italic">
+                <div className="bg-amber-50 rounded-lg p-4 flex gap-3 items-center border border-amber-100 mb-10">
+                    <Info size={16} className="text-amber-600 shrink-0" />
+                    <p className="text-xs font-medium text-amber-800 leading-tight">
                         Ao finalizar, seu pedido entrará em produção imediatamente.
                     </p>
                 </div>
@@ -470,24 +470,24 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
       </div>
 
       {/* BOTÃO FIXO */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-slate-100 z-30 shadow-[0_-20px_50px_rgba(0,0,0,0.05)]">
+      <div className="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-slate-100 z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
           {step === 'form' ? (
               <Button 
                 onClick={validateAndNext}
                 fullWidth
                 size="lg"
-                className="rounded-[2rem] text-sm uppercase tracking-widest italic gap-3"
+                className="rounded-lg text-sm uppercase tracking-wider gap-2"
               >
-                Revisar Pedido <ChevronRight size={20} strokeWidth={3} />
+                Revisar Pedido <ChevronRight size={18} strokeWidth={3} />
               </Button>
           ) : (
               <Button 
                 onClick={handleFinalSubmit}
                 fullWidth
                 size="lg"
-                className="rounded-[2rem] text-sm uppercase tracking-widest italic gap-3 bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100"
+                className="rounded-lg text-sm uppercase tracking-wider gap-2 bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100"
               >
-                Tudo Certo, Enviar! <CheckCircle2 size={20} />
+                Tudo Certo, Enviar! <CheckCircle2 size={18} />
               </Button>
           )}
       </div>

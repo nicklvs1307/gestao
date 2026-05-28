@@ -71,8 +71,7 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
             key={product.id}
               whileTap={{ scale: 0.98 }}
               onClick={() => onProductClick(product)}
-              // Largura calculada para caber 3 itens com gaps
-              className="min-w-[105px] max-w-[105px] bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm shadow-slate-200/50 flex flex-col group active:bg-slate-50 transition-colors"
+              className="min-w-[110px] max-w-[110px] bg-white rounded-lg overflow-hidden border border-slate-100 shadow-sm flex flex-col group active:bg-slate-50 transition-colors duration-200"
             >
               {/* Media Container - Mini 16:11 */}
               <div className="aspect-[16/11] relative overflow-hidden bg-slate-100">
@@ -83,7 +82,7 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
                 )}
                 
                 {activePromotion && (
-                  <div className="absolute top-1 left-1 bg-red-600 text-white text-[5px] font-black px-1 py-0.5 rounded-full uppercase z-10 animate-pulse">
+                  <div className="absolute top-1 left-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase z-10">
                     Oferta
                   </div>
                 )}
@@ -92,20 +91,20 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
               {/* Info Container - Ultra compacto */}
               <div className="p-2 flex flex-col flex-1 justify-between">
                 <div>
-                  <h4 className="text-[8px] font-black text-slate-900 uppercase italic tracking-tighter line-clamp-1 leading-tight mb-0.5">
+                  <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-tight line-clamp-1 leading-tight mb-0.5">
                     {product.name}
                   </h4>
-                  <p className="text-[6px] text-slate-400 font-medium line-clamp-1 leading-none">
+                  <p className="text-[10px] text-slate-400 font-medium line-clamp-1 leading-none">
                     {product.description}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-[9px] font-black text-slate-900 italic tracking-tighter">
+                  <span className="text-xs font-bold text-slate-900 tracking-tight">
                     R$ {finalPrice.toFixed(2).replace('.', ',')}
                   </span>
-                  <div className="bg-primary text-white p-0.5 rounded-md">
-                    <Plus size={10} strokeWidth={4} />
+                  <div className="bg-primary text-white p-1 rounded-md">
+                    <Plus size={12} strokeWidth={4} />
                   </div>
                 </div>
               </div>

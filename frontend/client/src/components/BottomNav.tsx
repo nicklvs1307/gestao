@@ -17,7 +17,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, hasOrders
   ] as const;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-100 px-6 py-2 pb-3 z-40 md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-slate-100 px-6 py-2 pb-3 z-[var(--z-header)] md:hidden">
       <div className="flex justify-between items-center max-w-md mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -27,28 +27,30 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, hasOrders
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className="relative flex flex-col items-center gap-0.5 group"
+              className="relative flex flex-col items-center gap-0.5 group min-w-[48px] min-h-[48px] justify-center"
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
             >
               <motion.div
                 animate={isActive ? { scale: 1.1, y: -1 } : { scale: 1, y: 0 }}
-                className={`${isActive ? 'text-primary' : 'text-slate-400'} transition-colors duration-300`}
+                className={`${isActive ? 'text-primary' : 'text-slate-400'} transition-colors duration-200`}
               >
-                <Icon size={20} strokeWidth={isActive ? 3 : 2} />
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
               </motion.div>
               
-              <span className={`text-[9px] font-black uppercase tracking-tighter ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
+              <span className={`text-[10px] font-bold tracking-tight ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
                 {tab.label}
               </span>
 
               {isActive && (
                 <motion.div 
                   layoutId="activeTab"
-                  className="absolute -top-3 w-1 h-1 bg-primary rounded-full"
+                  className="absolute -top-1 w-5 h-0.5 bg-primary rounded-full"
                 />
               )}
 
               {tab.badge && !isActive && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
               )}
             </button>
           );
