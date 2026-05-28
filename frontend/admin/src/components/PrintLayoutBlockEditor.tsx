@@ -44,6 +44,7 @@ import {
   Code,
   ChevronDown,
   ChevronUp,
+  LayoutPanelTop,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type {
@@ -795,7 +796,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
         {/* Block List */}
         <div>
           <h3 className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-2 mb-4">
-            <LayoutPanelLeft size={14} className="text-orange-500" />
+            <LayoutPanelTop size={14} className="text-orange-500" />
             Blocos da Comanda
             <span className="text-[8px] font-bold text-slate-400 normal-case tracking-normal">
               (arraste para reordenar)
@@ -843,7 +844,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
       <div className="flex flex-col items-center">
         <div className="mb-4">
           <h3 className="text-[11px] font-black uppercase text-slate-900 italic flex items-center gap-2">
-            <LayoutPanelLeft size={14} className="text-orange-500" />
+            <LayoutPanelTop size={14} className="text-orange-500" />
             Simulador de Cupom ({globalSettings.paperWidth}mm)
           </h3>
           <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
