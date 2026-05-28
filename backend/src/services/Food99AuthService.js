@@ -111,7 +111,8 @@ class Food99AuthService {
 
       return this._tokenCache[appShopId].authToken;
     } catch (error) {
-      logger.error(`[FOOD99 AUTH] Erro ao obter token para shop ${appShopId}:`, error.message);
+      const apiDetail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      logger.error(`[FOOD99 AUTH] Erro ao obter token para shop ${appShopId}: ${apiDetail}`);
       return null;
     }
   }

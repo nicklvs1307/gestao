@@ -28,6 +28,8 @@ services:
       IFOOD_CLIENT_SECRET_FILE: /run/secrets/ifood_client_secret
       FOOD99_CLIENT_ID_FILE: /run/secrets/food99_client_id
       FOOD99_CLIENT_SECRET_FILE: /run/secrets/food99_client_secret
+      UAIRANGO_CLIENT_ID_FILE: /run/secrets/uairango_client_id
+      UAIRANGO_CLIENT_SECRET_FILE: /run/secrets/uairango_client_secret
       VITE_OPENROUTE_KEY: ${VITE_OPENROUTE_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api"]
