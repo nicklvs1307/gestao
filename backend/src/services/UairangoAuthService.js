@@ -61,7 +61,8 @@ class UairangoAuthService {
 
       return null;
     } catch (error) {
-      logger.error(`[UAIRANGO AUTH] Erro ao obter token para ${restaurantId}:`, error.message);
+      const apiDetail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      logger.error(`[UAIRANGO AUTH] Erro ao obter token para ${restaurantId}: ${apiDetail}`);
 
       // Fallback para token em cache do banco
       if (settings?.uairangoAccessToken && settings.uairangoTokenExpiresAt > new Date()) {
