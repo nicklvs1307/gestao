@@ -32,8 +32,15 @@ class UairangoMerchantService {
   async getConnectionStatus(restaurantId) {
     try {
       const settings = await prisma.integrationSettings.findUnique({ where: { restaurantId } });
+
+      if (!settings?.uairangoActive) {
+        return { connected: false, error: 'Integração não ativa' };
+      }
+
       const merchantId = settings?.uairangoEstablishmentId;
-      if (!merchantId) return { connected: false, error: 'Merchant ID não configurado' };
+      if (!merchantId) {
+        return { connected: false, error: 'Merchant ID não configurado' };
+      }
 
       const [merchant, statusList] = await Promise.allSettled([
         this.getMerchantDetails(restaurantId),
@@ -43,6 +50,21 @@ class UairangoMerchantService {
       const merchantData = merchant.status === 'fulfilled' ? merchant.value : null;
       const statusData = statusList.status === 'fulfilled' ? statusList.value : [];
 
+      const bothFailed = merchant.status === 'rejected' && statusList.status === 'rejected';
+
+      if (bothFailed) {
+        const merchantError = merchant.reason?.message || 'Erro desconhecido';
+        const statusError = statusList.reason?.message || 'Erro desconhecido';
+
+        logger.error(`[UAIRANGO MERCHANT] Conexão falhou para restaurante ${restaurantId}: merchant=${merchantError}, status=${statusError}`);
+
+        if (merchantError.includes('token') || merchantError.includes('401') || statusError.includes('token') || statusError.includes('401')) {
+          return { connected: false, error: 'Credenciais do aplicativo inválidas' };
+        }
+
+        return { connected: false, error: merchantError };
+      }
+
       return {
         connected: true,
         merchant: merchantData,
@@ -50,7 +72,7 @@ class UairangoMerchantService {
         tokenExpiresAt: settings.uairangoTokenExpiresAt
       };
     } catch (error) {
-      logger.error(`[UAIRANGO MERCHANT] Erro ao testar conexão:`, error.message);
+      logger.error(`[UAIRANGO MERCHANT] Erro ao testar conexão para restaurante ${restaurantId}:`, error.message);
       return { connected: false, error: error.message };
     }
   }

@@ -161,7 +161,7 @@ const UairangoSettingsPage: React.FC = () => {
                   ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
                   : 'bg-slate-100 text-slate-500 border-slate-200'
               }`}>
-                {isActive ? 'Conectado' : 'Desativado'}
+                {isActive ? 'Ativo' : 'Desativado'}
               </span>
             </div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Integração Centralizada</p>
@@ -388,7 +388,7 @@ const UairangoSettingsPage: React.FC = () => {
                   <Button
                     type="button"
                     onClick={handleToggleMerchantStatus}
-                    disabled={isTogglingMerchant}
+                    disabled={isTogglingMerchant || !connectionStatus?.connected}
                     className={`w-full h-12 ${isMerchantOnline ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'} shadow-lg`}
                   >
                     {isTogglingMerchant ? (
@@ -397,6 +397,9 @@ const UairangoSettingsPage: React.FC = () => {
                       <><Power size={14} className="mr-2" />{isMerchantOnline ? 'Fechar Loja' : 'Abrir Loja'}</>
                     )}
                   </Button>
+                  {!connectionStatus?.connected && (
+                    <p className="text-[10px] text-slate-400 text-center mt-1">Teste a conexão primeiro</p>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-6">

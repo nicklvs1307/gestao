@@ -83,8 +83,8 @@ const IntegrationManagement: React.FC = () => {
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
                                     saiposStatus ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
-                                )}>
-                                    {saiposStatus ? 'CONECTADO' : 'DESATIVADO'}
+                                )}                                >
+                                    {saiposStatus ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
                             )}
                         </div>
@@ -132,8 +132,8 @@ const IntegrationManagement: React.FC = () => {
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
                                     uairangoStatus ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
-                                )}>
-                                    {uairangoStatus ? 'CONECTADO' : 'DESATIVADO'}
+                                )}                                >
+                                    {uairangoStatus ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
                             )}
                         </div>
@@ -181,8 +181,8 @@ const IntegrationManagement: React.FC = () => {
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
                                     ifoodStatus ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
-                                )}>
-                                    {ifoodStatus ? 'CONECTADO' : 'DESATIVADO'}
+                                )}                                >
+                                    {ifoodStatus ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
                             )}
                         </div>
@@ -230,8 +230,8 @@ const IntegrationManagement: React.FC = () => {
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
                                     food99Status ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
-                                )}>
-                                    {food99Status ? 'CONECTADO' : 'DESATIVADO'}
+                                )}                                >
+                                    {food99Status ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
                             )}
                         </div>

@@ -79,12 +79,12 @@ class Food99AuthService {
     const { clientId, clientSecret } = this._getCredentials();
 
     if (!clientId || !clientSecret) {
-      logger.warn('[FOOD99 AUTH] Credenciais não configuradas');
+      logger.error(`[FOOD99 AUTH] Credenciais do APP não configuradas - FOOD99_CLIENT_ID=${clientId ? 'OK' : 'MISSING'}, FOOD99_CLIENT_SECRET=${clientSecret ? 'OK' : 'MISSING'}`);
       return null;
     }
 
     if (!appShopId) {
-      logger.warn('[FOOD99 AUTH] app_shop_id não fornecido');
+      logger.warn('[FOOD99 AUTH] app_shop_id não configurado no restaurante');
       return null;
     }
 
@@ -111,8 +111,15 @@ class Food99AuthService {
 
       return this._tokenCache[appShopId].authToken;
     } catch (error) {
-      const apiDetail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-      logger.error(`[FOOD99 AUTH] Erro ao obter token para shop ${appShopId}: ${apiDetail}`);
+      const statusCode = error.response?.status;
+      const apiMsg = error.response?.data?.errmsg || error.response?.data?.message || error.message;
+
+      if (statusCode === 401 || apiMsg?.includes('authorization')) {
+        logger.error(`[FOOD99 AUTH] Loja ${appShopId} não autorizada na plataforma 99Food: ${apiMsg}`);
+      } else {
+        logger.error(`[FOOD99 AUTH] Erro ${statusCode || 'desconhecido'} ao obter token para shop ${appShopId}: ${apiMsg}`);
+      }
+
       return null;
     }
   }
