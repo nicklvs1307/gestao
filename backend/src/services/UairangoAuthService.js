@@ -4,7 +4,7 @@ const prisma = require('../lib/prisma');
 
 class UairangoAuthService {
   constructor() {
-    this.BASE_URL = 'https://www.uairango.com/api2';
+    this.BASE_URL = 'https://merchant-api.uairango.com';
     this.tokenCache = new Map();
   }
 

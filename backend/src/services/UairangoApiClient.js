@@ -3,7 +3,7 @@ const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const UairangoAuthService = require('./UairangoAuthService');
 
-const BASE_URL = 'https://www.uairango.com/api2';
+const BASE_URL = 'https://merchant-api.uairango.com';
 
 async function withRetry(fn, retries = 3, delayMs = 1000) {
   for (let i = 0; i < retries; i++) {
