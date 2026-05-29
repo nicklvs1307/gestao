@@ -38,12 +38,17 @@ class UairangoAuthService {
       params.append('clientId', clientId);
       params.append('clientSecret', clientSecret);
 
-      const response = await axios.post(`${this.BASE_URL}/authentication/v1.0/oauth/token`, params.toString(), {
+      const url = `${this.BASE_URL}/authentication/v1.0/oauth/token`;
+      logger.info(`[UAIRANGO AUTH] Request: POST ${url} | x-env=${env} | clientId=${clientId?.substring(0, 8)}***`);
+
+      const response = await axios.post(url, params.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'x-env': env,
         }
       });
+
+      logger.info(`[UAIRANGO AUTH] Response ${response.status}: ${JSON.stringify(response.data).substring(0, 200)}`);
 
       if (response.data && response.data.accessToken) {
         const token = response.data.accessToken;
@@ -69,7 +74,17 @@ class UairangoAuthService {
     } catch (error) {
       const statusCode = error.response?.status;
       const apiData = error.response?.data;
+      const apiHeaders = error.response?.headers;
       const apiMsg = apiData?.error?.message || apiData?.message || '';
+      const fullBody = JSON.stringify(apiData || {});
+      const reqUrl = `${this.BASE_URL}/authentication/v1.0/oauth/token`;
+      const reqEnv = settings?.uairangoEnv || 'production';
+
+      logger.error(`[UAIRANGO AUTH] FAILED POST ${reqUrl}`);
+      logger.error(`[UAIRANGO AUTH] x-env=${reqEnv} | clientId=${clientId?.substring(0, 8)}***`);
+      logger.error(`[UAIRANGO AUTH] Status: ${statusCode}`);
+      logger.error(`[UAIRANGO AUTH] Response Headers: ${JSON.stringify(apiHeaders || {})}`);
+      logger.error(`[UAIRANGO AUTH] Response Body: ${fullBody.substring(0, 500)}`);
 
       if (statusCode === 401) {
         logger.error(`[UAIRANGO AUTH] Credenciais do APP inválidas (401) para restaurante ${restaurantId}: ${apiMsg}`);
@@ -116,7 +131,10 @@ class UairangoAuthService {
       params.append('clientSecret', clientSecret);
       params.append('refreshToken', settings.uairangoRefreshToken);
 
-      const response = await axios.post(`${this.BASE_URL}/authentication/v1.0/oauth/token`, params.toString(), {
+      const url = `${this.BASE_URL}/authentication/v1.0/oauth/token`;
+      logger.info(`[UAIRANGO AUTH] Refresh: POST ${url} | x-env=${env} | clientId=${clientId?.substring(0, 8)}***`);
+
+      const response = await axios.post(url, params.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'x-env': env,
@@ -143,7 +161,18 @@ class UairangoAuthService {
       }
     } catch (error) {
       const statusCode = error.response?.status;
-      const apiMsg = error.response?.data?.error?.message || error.message;
+      const apiData = error.response?.data;
+      const apiHeaders = error.response?.headers;
+      const apiMsg = apiData?.error?.message || error.message;
+      const fullBody = JSON.stringify(apiData || {});
+      const reqUrl = `${this.BASE_URL}/authentication/v1.0/oauth/token`;
+      const reqEnv = settings?.uairangoEnv || 'production';
+
+      logger.error(`[UAIRANGO AUTH] Refresh FAILED POST ${reqUrl}`);
+      logger.error(`[UAIRANGO AUTH] x-env=${reqEnv} | clientId=${clientId?.substring(0, 8)}***`);
+      logger.error(`[UAIRANGO AUTH] Status: ${statusCode}`);
+      logger.error(`[UAIRANGO AUTH] Response Headers: ${JSON.stringify(apiHeaders || {})}`);
+      logger.error(`[UAIRANGO AUTH] Response Body: ${fullBody.substring(0, 500)}`);
       logger.error(`[UAIRANGO AUTH] Erro ao renovar token (${statusCode}) para restaurante ${restaurantId}: ${apiMsg}`);
       return await this.getAccessToken(restaurantId);
     }

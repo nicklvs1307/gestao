@@ -11,7 +11,11 @@ class UairangoMerchantService {
       const response = await api.get(restaurantId, `/merchant/v1.0/merchants/${merchantId}`);
       return response.data;
     } catch (error) {
-      logger.error(`[UAIRANGO MERCHANT] Erro ao buscar detalhes:`, error.message);
+      const statusCode = error.response?.status;
+      const apiData = error.response?.data;
+      const fullBody = JSON.stringify(apiData || {});
+      logger.error(`[UAIRANGO MERCHANT] FAILED GET /merchant/v1.0/merchants/${merchantId}`);
+      logger.error(`[UAIRANGO MERCHANT] Status: ${statusCode} | Response: ${fullBody.substring(0, 300)}`);
       throw new Error('Falha ao buscar detalhes do estabelecimento');
     }
   }
@@ -24,7 +28,11 @@ class UairangoMerchantService {
       const response = await api.get(restaurantId, `/merchant/v1.0/merchants/${merchantId}/status`);
       return response.data;
     } catch (error) {
-      logger.error(`[UAIRANGO MERCHANT] Erro ao buscar status:`, error.message);
+      const statusCode = error.response?.status;
+      const apiData = error.response?.data;
+      const fullBody = JSON.stringify(apiData || {});
+      logger.error(`[UAIRANGO MERCHANT] FAILED GET /merchant/v1.0/merchants/${merchantId}/status`);
+      logger.error(`[UAIRANGO MERCHANT] Status: ${statusCode} | Response: ${fullBody.substring(0, 300)}`);
       throw new Error('Falha ao buscar status do estabelecimento');
     }
   }
@@ -86,7 +94,11 @@ class UairangoMerchantService {
       logger.info(`[UAIRANGO MERCHANT] Status atualizado para ${status}`);
       return { success: true };
     } catch (error) {
-      logger.error(`[UAIRANGO MERCHANT] Erro ao atualizar status:`, error.message);
+      const statusCode = error.response?.status;
+      const apiData = error.response?.data;
+      const fullBody = JSON.stringify(apiData || {});
+      logger.error(`[UAIRANGO MERCHANT] FAILED PUT /merchant/v1.0/merchants/${merchantId}`);
+      logger.error(`[UAIRANGO MERCHANT] Status: ${statusCode} | Response: ${fullBody.substring(0, 300)}`);
       throw new Error(error.response?.data?.error?.message || 'Falha ao atualizar status');
     }
   }

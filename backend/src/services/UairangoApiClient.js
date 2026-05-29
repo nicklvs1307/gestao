@@ -36,7 +36,7 @@ async function request(method, restaurantId, path, options = {}) {
     method,
     url,
     headers: {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${token?.substring(0, 20)}...`,
       'Content-Type': 'application/json',
       'x-env': env,
       ...options.headers,
@@ -47,7 +47,26 @@ async function request(method, restaurantId, path, options = {}) {
   if (options.params) config.params = options.params;
   if (options.data) config.data = options.data;
 
-  return await withRetry(() => axios(config), options.retries, options.delayMs);
+  try {
+    const response = await withRetry(() => axios({
+      ...config,
+      headers: {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`,
+      }
+    }), options.retries, options.delayMs);
+
+    logger.debug(`[UAIRANGO API] ${method} ${url} | x-env=${env} | ${response.status}`);
+    return response;
+  } catch (error) {
+    const statusCode = error.response?.status;
+    const apiData = error.response?.data;
+    const fullBody = JSON.stringify(apiData || {});
+    logger.error(`[UAIRANGO API] FAILED ${method} ${url}`);
+    logger.error(`[UAIRANGO API] x-env=${env} | Status: ${statusCode}`);
+    logger.error(`[UAIRANGO API] Response: ${fullBody.substring(0, 300)}`);
+    throw error;
+  }
 }
 
 async function get(restaurantId, path, options = {}) {
