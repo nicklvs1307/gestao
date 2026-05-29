@@ -71,6 +71,11 @@ if (!process.env.UAIRANGO_CLIENT_SECRET && fs.existsSync('/run/secrets/uairango_
   process.env.UAIRANGO_CLIENT_SECRET = fs.readFileSync('/run/secrets/uairango_client_secret', 'utf8').trim();
 }
 
+// UAIRANGO_WEBHOOK_SECRET
+if (!process.env.UAIRANGO_WEBHOOK_SECRET && fs.existsSync('/run/secrets/uairango_webhook_secret')) {
+  process.env.UAIRANGO_WEBHOOK_SECRET = fs.readFileSync('/run/secrets/uairango_webhook_secret', 'utf8').trim();
+}
+
 if (!process.env.JWT_SECRET) {
   throw new Error('ERRO FATAL: JWT_SECRET não está definido. Verifique seu arquivo .env.');
 }
@@ -169,7 +174,9 @@ app.post('/webhooks/ifood/test', (req, res) => res.status(200).json({ status: 'o
 
 // Webhook Uai Rango (PRIORITÁRIO - Polling é fallback)
 const UairangoWebhookService = require('./src/services/UairangoWebhookService');
-app.post('/webhooks/uairango', (req, res) => UairangoWebhookService.handleWebhook(req, res));
+const uairangoWebhookAuth = require('./src/middlewares/uairangoWebhookAuth');
+const uairangoWebhookRateLimit = require('./src/middlewares/uairangoWebhookRateLimit');
+app.post('/webhooks/uairango/:secret', uairangoWebhookRateLimit, uairangoWebhookAuth, (req, res) => UairangoWebhookService.handleWebhook(req, res));
 app.get('/webhooks/uairango/test', (req, res) => res.status(200).json({ status: 'ok' }));
 
 // Webhook 99Food

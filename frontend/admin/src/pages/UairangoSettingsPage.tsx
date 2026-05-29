@@ -23,6 +23,7 @@ const UairangoSettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [lastImport, setLastImport] = useState<Date | null>(null);
+  const [uairangoEnv, setUairangoEnv] = useState<'production' | 'development'>('production');
 
   const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; merchant?: any; operations?: any[]; error?: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
@@ -39,6 +40,7 @@ const UairangoSettingsPage: React.FC = () => {
         setEstablishmentId(settings.uairangoEstablishmentId || '');
         setIsActive(settings.uairangoActive || false);
         setAutoAccept(settings.uairangoAutoAcceptOrders || false);
+        setUairangoEnv(settings.uairangoEnv || 'production');
       } catch (error) {
         console.error(error);
         toast.error('Erro ao carregar configurações do UaiRango.');
@@ -57,6 +59,7 @@ const UairangoSettingsPage: React.FC = () => {
         uairangoEstablishmentId: establishmentId,
         uairangoActive: isActive,
         uairangoAutoAcceptOrders: autoAccept,
+        uairangoEnv: uairangoEnv,
       });
       toast.success('Configurações salvas!');
     } catch (error) {
@@ -235,6 +238,26 @@ const UairangoSettingsPage: React.FC = () => {
                   <p className="text-sm font-bold text-slate-700">Aceitar Pedidos Automaticamente</p>
                   <p className="text-[10px] text-slate-400">Novos pedidos são aceitos sem intervenção</p>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-700">Ambiente</p>
+                  <p className="text-[10px] text-slate-400">
+                    {uairangoEnv === 'production' ? 'Produção (dados reais)' : 'Sandbox (teste)'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUairangoEnv(uairangoEnv === 'production' ? 'development' : 'production')}
+                  className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                    uairangoEnv === 'production' 
+                      ? 'bg-emerald-500 text-white' 
+                      : 'bg-amber-500 text-white'
+                  }`}
+                >
+                  {uairangoEnv === 'production' ? 'PRODUÇÃO' : 'SANDBOX'}
+                </button>
               </div>
               
               <div className="flex gap-3 pt-4 border-t border-slate-100">

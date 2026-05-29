@@ -8,9 +8,27 @@ class UairangoPollingService {
   constructor() {
     this.pollingJob = null;
     this.isPolling = false;
+    this.started = false;
   }
 
-  init() {
+  async init() {
+    if (this.started) return;
+
+    const activeCount = await prisma.integrationSettings.count({
+      where: { uairangoActive: true }
+    });
+
+    if (activeCount === 0) {
+      logger.info('[UAIRANGO POLLING] Nenhum restaurante ativo, polling não iniciado');
+      return;
+    }
+
+    this.start();
+  }
+
+  start() {
+    if (this.pollingJob) return;
+
     this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
       if (this.isPolling) {
         logger.debug('[UAIRANGO POLLING] Polling anterior ainda em execução, pulando...');
@@ -28,13 +46,28 @@ class UairangoPollingService {
       }
     });
 
+    this.started = true;
     logger.info('[UAIRANGO POLLING] Serviço de polling iniciado (FALLBACK - Webhook é prioritário)');
   }
 
   stop() {
     if (this.pollingJob) {
       this.pollingJob.stop();
+      this.pollingJob = null;
+      this.started = false;
       logger.info('[UAIRANGO POLLING] Serviço de polling parado');
+    }
+  }
+
+  async restartIfNeeded() {
+    const activeCount = await prisma.integrationSettings.count({
+      where: { uairangoActive: true }
+    });
+
+    if (activeCount === 0 && this.started) {
+      this.stop();
+    } else if (activeCount > 0 && !this.started) {
+      this.start();
     }
   }
 

@@ -30,6 +30,7 @@ services:
       FOOD99_CLIENT_SECRET_FILE: /run/secrets/food99_client_secret
       UAIRANGO_CLIENT_ID_FILE: /run/secrets/uairango_client_id
       UAIRANGO_CLIENT_SECRET_FILE: /run/secrets/uairango_client_secret
+      UAIRANGO_WEBHOOK_SECRET_FILE: /run/secrets/uairango_webhook_secret
       VITE_OPENROUTE_KEY: ${VITE_OPENROUTE_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api"]
@@ -54,6 +55,7 @@ services:
       - food99_client_secret
       - uairango_client_id
       - uairango_client_secret
+      - uairango_webhook_secret
     deploy:
       replicas: 1
       restart_policy:
@@ -169,4 +171,6 @@ secrets:
   uairango_client_id:
     external: true
   uairango_client_secret:
+    external: true
+  uairango_webhook_secret:
     external: true

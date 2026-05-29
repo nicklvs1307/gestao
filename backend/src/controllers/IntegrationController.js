@@ -90,13 +90,12 @@ const getUairangoSettings = async (req, res) => {
 };
 
 const updateUairangoSettings = async (req, res) => {
-  const { uairangoToken, uairangoEstablishmentId, uairangoActive, uairangoEnv, uairangoAutoAcceptOrders } = req.body;
+  const { uairangoEstablishmentId, uairangoActive, uairangoEnv, uairangoAutoAcceptOrders } = req.body;
 
   try {
     const settings = await prisma.integrationSettings.upsert({
       where: { restaurantId: req.restaurantId },
       update: {
-        uairangoToken,
         uairangoEstablishmentId,
         uairangoActive,
         uairangoEnv,
@@ -104,7 +103,6 @@ const updateUairangoSettings = async (req, res) => {
       },
       create: {
         restaurantId: req.restaurantId,
-        uairangoToken,
         uairangoEstablishmentId,
         uairangoActive,
         uairangoEnv,
@@ -113,6 +111,11 @@ const updateUairangoSettings = async (req, res) => {
     });
 
     res.json(settings);
+
+    if (uairangoActive !== undefined) {
+      const UairangoPollingService = require('../services/UairangoPollingService');
+      await UairangoPollingService.restartIfNeeded();
+    }
   } catch (error) {
     logger.error('Erro ao atualizar configurações do UaiRango:', error);
     res.status(500).json({ error: 'Erro ao atualizar configurações do UaiRango.' });
