@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getPrinters, checkAgentStatus, type PrinterConfig } from '../services/printer';
-import { Save, Settings, Palette, Link, Printer, Sliders, Zap } from 'lucide-react';
+import { Save, Settings, Palette, Printer, Sliders } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { useSettings } from '../components/settings';
-import { SettingsGeneralTab, SettingsAppearanceTab, SettingsPrintingTab, SettingsLinksTab, SettingsIntegrationsTab } from '../components/settings';
+import { SettingsGeneralTab, SettingsAppearanceTab, SettingsPrintingTab } from '../components/settings';
 
 const SettingsManagement: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'printing' | 'links' | 'integrations'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'printing'>('general');
   const [isNavigating, setIsNavigating] = useState(false);
 
   const {
@@ -52,8 +52,6 @@ const SettingsManagement: React.FC = () => {
     const path = location.pathname;
     if (path.includes('/printing')) setActiveTab('printing');
     else if (path.includes('/appearance')) setActiveTab('appearance');
-    else if (path.includes('/links')) setActiveTab('links');
-    else if (path.includes('/integrations')) setActiveTab('integrations');
     else setActiveTab('general');
   }, [location.pathname]);
 
@@ -68,10 +66,8 @@ const SettingsManagement: React.FC = () => {
 
   const tabs = [
     { id: 'general', label: 'GERAL', icon: Sliders },
-    { id: 'integrations', label: 'INTEGRAÇÕES', icon: Zap },
-    { id: 'appearance', label: 'VISUAL', icon: Palette },
+    { id: 'appearance', label: 'APARÊNCIA', icon: Palette },
     { id: 'printing', label: 'IMPRESSÃO', icon: Printer },
-    { id: 'links', label: 'LINKS', icon: Link },
   ] as const;
 
   if (isLoading) {
@@ -152,6 +148,9 @@ const SettingsManagement: React.FC = () => {
           operatingHours={operatingHours}
           loyalty={loyalty}
           pixels={pixels}
+          isSlugAvailable={isSlugAvailable}
+          isCheckingSlug={isCheckingSlug}
+          onSlugChange={handleSlugChange}
           setGeneral={setGeneral}
           setOperation={setOperation}
           setOperatingHours={setOperatingHours}
@@ -167,10 +166,6 @@ const SettingsManagement: React.FC = () => {
         />
       )}
 
-      {activeTab === 'integrations' && (
-        <SettingsIntegrationsTab />
-      )}
-
       {activeTab === 'printing' && (
         <SettingsPrintingTab
           agentStatus={agentStatus}
@@ -184,15 +179,6 @@ const SettingsManagement: React.FC = () => {
           restaurantName={general.name}
           restaurantLogo={appearance.logo}
           restaurantAddress={general.address}
-        />
-      )}
-
-      {activeTab === 'links' && (
-        <SettingsLinksTab
-          slug={general.slug}
-          isSlugAvailable={isSlugAvailable}
-          isCheckingSlug={isCheckingSlug}
-          onSlugChange={handleSlugChange}
         />
       )}
     </div>
