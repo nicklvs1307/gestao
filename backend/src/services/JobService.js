@@ -9,7 +9,6 @@ const IfoodAuthService = require('./IfoodAuthService');
 const IfoodPollingService = require('./IfoodPollingService');
 const UairangoPollingService = require('./UairangoPollingService');
 const Food99PollingService = require('./Food99PollingService');
-const FiscalQueueService = require('./FiscalQueueService');
 
 class JobService {
   constructor() {
@@ -165,20 +164,6 @@ class JobService {
     });
 
     this.jobs.push({ name: 'IfoodTokenRefresh', job: ifoodTokenRefreshJob });
-
-    // Cron Job para Processar Fila Fiscal (a cada 5 minutos)
-    const fiscalQueueJob = cron.schedule('*/5 * * * *', async () => {
-      try {
-        const result = await FiscalQueueService.processQueue();
-        if (result.processed > 0) {
-          logger.info(`[JobService] Fila fiscal processada: ${result.processed} itens (sucesso: ${result.successful || 0}, falha: ${result.failed || 0})`);
-        }
-      } catch (error) {
-        logger.error('[JobService] Erro ao processar fila fiscal:', error);
-      }
-    });
-
-    this.jobs.push({ name: 'FiscalQueue', job: fiscalQueueJob });
 
     // Iniciar polling de eventos do iFood
     try {
