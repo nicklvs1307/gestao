@@ -1,9 +1,8 @@
-const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const Food99AuthService = require('./Food99AuthService');
-
-const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
+const { requestWithRetry, UPLOAD_TIMEOUT } = require('../lib/food99Client');
+const food99Config = require('../config/food99');
 
 class Food99MenuService {
 
@@ -21,37 +20,11 @@ class Food99MenuService {
       throw new Error('Não foi possível obter token válido para 99Food');
     }
 
-    return authToken;
-  }
-
-  _extractData(response) {
-    return response.data?.data || response.data;
-  }
-
-  _checkError(response, data, defaultMsg) {
-    const errno = response.data?.errno ?? data?.errno;
-    if (errno !== 0) {
-      throw new Error(response.data?.errmsg || data?.errmsg || defaultMsg);
-    }
-  }
-
-  async _apiRequest(config) {
-    const { method = 'get', url, params, data: body, timeout = 15000, logContext, logSuccess, defaultErrorMsg } = config;
-
-    try {
-      const response = await axios({ method, url, params, data: body, timeout });
-      const data = this._extractData(response);
-      this._checkError(response, data, defaultErrorMsg);
-      if (logSuccess) logger.info(`[FOOD99 MENU] ${logSuccess}`);
-      return data;
-    } catch (error) {
-      logger.error(`[FOOD99 MENU] ${logContext}:`, error.response?.data || error.message);
-      throw new Error(error.response?.data?.errmsg || error.message || defaultErrorMsg);
-    }
+    return { authToken, settings };
   }
 
   async syncMenu(restaurantId) {
-    const authToken = await this._getAuthToken(restaurantId);
+    const { authToken, settings } = await this._getAuthToken(restaurantId);
 
     const categories = await prisma.category.findMany({
       where: { restaurantId, isActive: true },
@@ -93,101 +66,130 @@ class Food99MenuService {
 
     logger.info(`[FOOD99 MENU] Enviando cardápio para restaurante ${restaurantId}: ${menus.length} menus, ${categoriesPayload.length} categorias, ${itemsPayload.length} itens, ${modifierGroupsPayload.length} grupos`);
 
-    const data = await this._apiRequest({
+    const env = settings.food99Env;
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v3/item/item/upload`,
+      url: '/v3/item/item/upload',
+      env,
       data: payload,
-      timeout: 30000,
+      timeout: UPLOAD_TIMEOUT,
       logContext: 'Erro ao sincronizar cardápio',
-      logSuccess: `Cardápio enviado com sucesso para restaurante ${restaurantId}`,
-      defaultErrorMsg: 'Falha ao sincronizar cardápio',
+      retries: 3,
     });
 
-    const taskId = data?.taskID || data?.taskId;
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao sincronizar cardápio');
+    }
+
+    const data = result.data || {};
+    const taskId = data.taskID || data.taskId;
+    logger.info(`[FOOD99 MENU] Cardápio enviado com sucesso (taskId=${taskId})`);
     return { success: true, taskId, data };
   }
 
-  async getMenuStatus(authToken, taskId) {
-    const data = await this._apiRequest({
+  async getMenuStatus(restaurantId, taskId) {
+    const { authToken, settings } = await this._getAuthToken(restaurantId);
+    const env = settings.food99Env;
+
+    const result = await requestWithRetry({
       method: 'get',
-      url: `${BASE_URL}/v1/item/item/getMenuTaskInfo`,
+      url: '/v1/item/item/getMenuTaskInfo',
+      env,
       params: { auth_token: authToken, task_id: taskId },
-      logContext: 'Erro ao consultar status',
-      logSuccess: `Status do task ${taskId} consultado`,
-      defaultErrorMsg: 'Falha ao consultar status',
+      logContext: `Erro ao consultar status (task ${taskId})`,
     });
 
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao consultar status');
+    }
+
+    const data = result.data || {};
     return {
       success: true,
-      taskId: data?.taskID,
-      status: data?.status,
-      message: data?.message,
-      createTime: data?.createTime,
-      operationList: data?.operationList,
-      appShopID: data?.appShopID,
+      taskId: data.taskID,
+      status: food99Config.mapMenuTaskStatus(data.status),
+      rawStatus: data.status,
+      message: data.message,
+      createTime: data.createTime,
+      operationList: data.operationList,
+      appShopID: data.appShopID,
     };
   }
 
   async getCurrentMenu(restaurantId) {
-    const authToken = await this._getAuthToken(restaurantId);
+    const { authToken, settings } = await this._getAuthToken(restaurantId);
+    const env = settings.food99Env;
 
-    const data = await this._apiRequest({
+    const result = await requestWithRetry({
       method: 'get',
-      url: `${BASE_URL}/v3/item/item/list`,
+      url: '/v3/item/item/list',
+      env,
       params: { auth_token: authToken },
       logContext: 'Erro ao buscar cardápio atual',
-      logSuccess: 'Cardápio atual obtido',
-      defaultErrorMsg: 'Falha ao buscar cardápio atual',
     });
 
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao buscar cardápio atual');
+    }
+
+    const data = result.data || {};
     return {
       success: true,
-      menus: data?.menus || [],
-      categories: data?.categories || [],
-      items: data?.items || [],
-      modifierGroups: data?.modifier_groups || [],
+      menus: data.menus || [],
+      categories: data.categories || [],
+      items: data.items || [],
+      modifierGroups: data.modifier_groups || [],
     };
   }
 
   async updateItemStatus(restaurantId, integrationCode, available) {
-    const authToken = await this._getAuthToken(restaurantId);
+    const { authToken, settings } = await this._getAuthToken(restaurantId);
+    const env = settings.food99Env;
     const status = available ? 1 : 2;
 
-    const data = await this._apiRequest({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v3/item/item/updateItemStatus`,
+      url: '/v3/item/item/updateItemStatus',
+      env,
       data: { auth_token: authToken, app_item_ids: [integrationCode], status },
-      logContext: 'Erro ao atualizar status do item',
-      logSuccess: `Status do item ${integrationCode} atualizado para ${status}`,
-      defaultErrorMsg: 'Falha ao atualizar status do item',
+      logContext: `Erro ao atualizar status do item ${integrationCode}`,
     });
 
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao atualizar status do item');
+    }
+
+    const data = result.data || {};
     return {
       success: true,
       integrationCode,
       status,
-      successList: data?.success || [],
-      failedList: data?.failed || [],
+      successList: data.success || [],
+      failedList: data.failed || [],
     };
   }
 
   async uploadImage(restaurantId, imageUrl, ext) {
-    const authToken = await this._getAuthToken(restaurantId);
+    const { authToken, settings } = await this._getAuthToken(restaurantId);
+    const env = settings.food99Env;
 
     const body = { auth_token: authToken, image_url: imageUrl };
     if (ext) body.ext = ext;
 
-    const data = await this._apiRequest({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v3/image/image/uploadImage`,
+      url: '/v3/image/image/uploadImage',
+      env,
       data: body,
-      timeout: 30000,
-      logContext: 'Erro ao enviar imagem',
-      logSuccess: `Imagem enviada com sucesso: ${imageUrl}`,
-      defaultErrorMsg: 'Falha ao enviar imagem',
+      timeout: UPLOAD_TIMEOUT,
+      logContext: `Erro ao enviar imagem ${imageUrl}`,
     });
 
-    return { success: true, data };
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao enviar imagem');
+    }
+
+    return { success: true, data: result.data };
   }
 
   _buildMenus(categories) {

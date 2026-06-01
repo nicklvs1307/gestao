@@ -225,7 +225,7 @@ export const getFood99CurrentMenu = async () => {
 };
 
 export const updateFood99ItemStatus = async (integrationCode: string, available: boolean) => {
-  const response = await apiClient.put('/integrations/food99/item-status', { integrationCode, available });
+  const response = await apiClient.post('/integrations/food99/item-status', { integrationCode, available });
   return response.data;
 };
 

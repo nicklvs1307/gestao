@@ -185,15 +185,18 @@ const Food99SettingsPage: React.FC = () => {
     const interval = setInterval(async () => {
       try {
         const status = await getFood99MenuStatus(taskId);
-        setMenuTaskStatus(status?.status || 'unknown');
-        if (status?.status === 'completed' || status?.status === 'failed') {
+        const mapped = status?.status || 'unknown';
+        setMenuTaskStatus(mapped);
+        if (mapped === 'completed' || mapped === 'failed') {
           clearInterval(interval);
-          toast.info(status.status === 'completed' ? 'Cardápio sincronizado com sucesso!' : 'Falha na sincronização do cardápio.');
+          toast.info(mapped === 'completed' ? 'Cardápio sincronizado com sucesso!' : 'Falha na sincronização do cardápio.');
         }
       } catch {
         clearInterval(interval);
       }
     }, 5000);
+
+    setTimeout(() => clearInterval(interval), 5 * 60 * 1000);
   };
 
   const handleListShops = async () => {

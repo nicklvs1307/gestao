@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 const logger = require('../config/logger');
 const Food99AuthService = require('../services/Food99AuthService');
-const Food99OrderService = require('../services/Food99OrderService');
+const Food99OrderAdapter = require('../services/Food99OrderAdapter');
 const Food99MenuService = require('../services/Food99MenuService');
 
 const getFood99Settings = async (req, res) => {
@@ -46,20 +46,11 @@ const updateFood99Settings = async (req, res) => {
 
 const getFood99ConnectionStatus = async (req, res) => {
   try {
-    const status = await Food99AuthService.checkConnectionStatus();
+    const appShopId = req.query.app_shop_id || (await prisma.integrationSettings.findUnique({
+      where: { restaurantId: req.restaurantId },
+    }))?.food99AppShopId || null;
 
-    if (status.connected && req.query.app_shop_id) {
-      try {
-        const token = await Food99AuthService.getValidToken(req.query.app_shop_id);
-        status.tokenActive = !!token;
-        status.message = token
-          ? `Token ativo para shop ${req.query.app_shop_id}`
-          : `Sem token válido para shop ${req.query.app_shop_id}`;
-      } catch {
-        status.tokenActive = false;
-      }
-    }
-
+    const status = await Food99AuthService.checkConnectionStatus(appShopId);
     res.json(status);
   } catch (error) {
     logger.error('Erro ao verificar status da 99Food:', error);
@@ -72,7 +63,7 @@ const confirmFood99Order = async (req, res) => {
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ error: 'orderId é obrigatório' });
 
-    const result = await Food99OrderService.confirmOrder(orderId, req.restaurantId);
+    const result = await Food99OrderAdapter.confirmOrder(orderId, req.restaurantId);
     res.json(result);
   } catch (error) {
     logger.error('[FOOD99] Erro ao confirmar pedido:', error);
@@ -85,7 +76,7 @@ const rejectFood99Order = async (req, res) => {
     const { orderId, reasonId, reason } = req.body;
     if (!orderId) return res.status(400).json({ error: 'orderId é obrigatório' });
 
-    const result = await Food99OrderService.rejectOrder(orderId, req.restaurantId, reasonId, reason);
+    const result = await Food99OrderAdapter.rejectOrder(orderId, req.restaurantId, reasonId, reason);
     res.json(result);
   } catch (error) {
     logger.error('[FOOD99] Erro ao rejeitar pedido:', error);
@@ -98,7 +89,7 @@ const markFood99Ready = async (req, res) => {
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ error: 'orderId é obrigatório' });
 
-    const result = await Food99OrderService.markReady(orderId, req.restaurantId);
+    const result = await Food99OrderAdapter.markReady(orderId, req.restaurantId);
     res.json(result);
   } catch (error) {
     logger.error('[FOOD99] Erro ao marcar pronto:', error);
@@ -232,20 +223,7 @@ const getMenuStatus = async (req, res) => {
     const { taskId } = req.query;
     if (!taskId) return res.status(400).json({ error: 'taskId é obrigatório' });
 
-    const settings = await prisma.integrationSettings.findUnique({
-      where: { restaurantId: req.restaurantId },
-    });
-
-    if (!settings?.food99AppShopId) {
-      return res.status(400).json({ error: 'App Shop ID não configurado' });
-    }
-
-    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
-    if (!token) {
-      return res.status(500).json({ error: 'Token não disponível' });
-    }
-
-    const result = await Food99MenuService.getMenuStatus(token, taskId);
+    const result = await Food99MenuService.getMenuStatus(req.restaurantId, taskId);
     res.json(result);
   } catch (error) {
     logger.error('[FOOD99] Erro ao verificar status do cardápio:', error);

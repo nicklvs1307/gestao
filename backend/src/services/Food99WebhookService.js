@@ -10,16 +10,39 @@ const PLATFORM = 'food99';
 
 class Food99WebhookService {
 
-  _verifySignature(body, signature, secret) {
+  _getSignHeaders() {
+    return ['x-didi-signature', 'x-food99-signature', 'x-signature'];
+  }
+
+  _extractSignature(headers) {
+    if (!headers) return null;
+    for (const h of this._getSignHeaders()) {
+      const v = headers[h];
+      if (v) return { header: h, value: String(v).trim() };
+    }
+    if (headers.sign) return { header: 'query.sign', value: String(headers.sign).trim() };
+    return null;
+  }
+
+  _verifySignature(body, signature, secret, algo = 'md5') {
     if (!signature || !secret) return false;
 
-    const sortedKeys = Object.keys(body).sort();
-    const queryString = sortedKeys
-      .map(key => `${key}=${body[key]}`)
-      .join('&');
-    const expectedSignature = crypto.createHash('md5').update(`${queryString}${secret}`).digest('hex');
+    let payload;
+    if (body && typeof body === 'object' && !Array.isArray(body)) {
+      const sortedKeys = Object.keys(body).sort();
+      payload = sortedKeys.map(key => `${key}=${body[key]}`).join('&');
+    } else if (typeof body === 'string') {
+      payload = body;
+    } else {
+      payload = JSON.stringify(body);
+    }
 
-    return expectedSignature === signature;
+    const candidates = [
+      crypto.createHash(algo).update(`${payload}${secret}`).digest('hex'),
+      crypto.createHash(algo).update(`${secret}${payload}`).digest('hex'),
+    ];
+
+    return candidates.includes(signature.toLowerCase());
   }
 
   async _isEventProcessed(platform, platformOrderId, eventType) {
@@ -49,116 +72,83 @@ class Food99WebhookService {
     );
   }
 
-  /**
-   * Handler do webhook /webhooks/food99.
-   * Recebe payload da 99Food e processa eventos.
-   *
-   * Evento típico:
-   * {
-   *   order_id: 2352921557674426622,
-   *   status: 1,
-   *   shop_accept_status: 1,
-   *   before_status: 0,
-   *   ...OrderModel fields
-   * }
-   *
-   * Eventos de apply (quando receive_cancel_apply=1 ou receive_refund_apply=1):
-   * {
-   *   event: 'cancel_apply' | 'refund_apply',
-   *   order_id: 2352921557674426622,
-   *   apply_id: 2352921557674426621,
-   *   reason: 'motivo do cliente',
-   *   ...
-   * }
-   */
+  async _findSettingForWebhook(body) {
+    const settings = await prisma.integrationSettings.findMany({
+      where: { food99IntegrationActive: true, food99AppShopId: { not: null } },
+    });
+
+    if (settings.length === 0) return null;
+
+    const appShopId = body?.shop?.app_shop_id || body?.app_shop_id || body?.appShopId;
+    if (appShopId) {
+      const found = settings.find(s => s.food99AppShopId === appShopId);
+      if (found) return found;
+    }
+
+    if (settings.length === 1) return settings[0];
+
+    return null;
+  }
+
+  async _handleApplyRequest(body, kind) {
+    const orderId = body?.order_id;
+    const applyId = body?.apply_id;
+    const reason = body?.reason;
+
+    if (!orderId || !applyId) {
+      logger.warn(`[FOOD99 WEBHOOK] ${kind}_apply sem order_id ou apply_id`);
+      return;
+    }
+
+    logger.info(`[FOOD99 WEBHOOK] ${kind}_apply recebido: order=${orderId}, apply=${applyId}, reason=${reason}`);
+
+    const setting = await this._findSettingForWebhook(body);
+    if (!setting) {
+      logger.warn(`[FOOD99 WEBHOOK] Nenhuma loja 99Food ativa para ${kind}_apply`);
+      return;
+    }
+
+    const eventName = kind === 'cancel' ? 'cancel_apply_request' : 'refund_apply_request';
+    socketLib.emitToRestaurant(setting.restaurantId, eventName, {
+      platform: PLATFORM,
+      orderId,
+      applyId,
+      reason,
+    });
+
+    logger.info(`[FOOD99 WEBHOOK] Notificação de ${kind} apply enviada para restaurante ${setting.restaurantId}`);
+  }
+
   async handleWebhook(req, res) {
     const body = req.body;
     logger.info(`[FOOD99 WEBHOOK] Recebido: order_id=${body?.order_id}, event=${body?.event}, status=${body?.status}`);
 
-    const signature = req.headers['x-didi-signature'] || req.query.sign;
-    if (signature && process.env.FOOD99_CLIENT_SECRET) {
-      const isValid = this._verifySignature(body, signature, process.env.FOOD99_CLIENT_SECRET);
+    const sig = this._extractSignature(req.headers);
+    if (sig && process.env.FOOD99_CLIENT_SECRET) {
+      const isValid = this._verifySignature(body, sig.value, process.env.FOOD99_CLIENT_SECRET);
       if (!isValid) {
-        logger.warn('[FOOD99 WEBHOOK] Assinatura inválida, rejeitando request');
+        logger.warn(`[FOOD99 WEBHOOK] Assinatura inválida (header=${sig.header}), rejeitando request`);
         return res.status(403).json({ error: 'Assinatura inválida' });
       }
+    } else {
+      logger.debug(`[FOOD99 WEBHOOK] Sem assinatura presente (header=${sig?.header || 'none'}), processando sem validar`);
     }
 
     res.status(200).json({ received: true });
 
     try {
       if (body?.event === 'cancel_apply') {
-        await this._handleCancelApply(body);
+        await this._handleApplyRequest(body, 'cancel');
         return;
       }
       if (body?.event === 'refund_apply') {
-        await this._handleRefundApply(body);
+        await this._handleApplyRequest(body, 'refund');
         return;
       }
       await this._processWebhook(body);
     } catch (error) {
       logger.error('[FOOD99 WEBHOOK] Erro ao processar webhook:', error.message);
     }
-  }
-
-  async _handleCancelApply(body) {
-    const { order_id: orderId, apply_id: applyId, reason } = body;
-    if (!orderId || !applyId) {
-      logger.warn('[FOOD99 WEBHOOK] cancel_apply sem order_id ou apply_id');
-      return;
-    }
-
-    logger.info(`[FOOD99 WEBHOOK] Solicitação de cancelamento recebida: order=${orderId}, apply=${applyId}, reason=${reason}`);
-
-    const settings = await prisma.integrationSettings.findMany({
-      where: { food99IntegrationActive: true, food99MerchantId: { not: null } },
-    });
-
-    if (settings.length === 0) return;
-
-    const appShopId = body.shop?.app_shop_id || body.app_shop_id;
-    let targetSetting = appShopId ? settings.find(s => s.food99AppShopId === appShopId) : null;
-    if (!targetSetting && settings.length === 1) targetSetting = settings[0];
-    if (!targetSetting) return;
-
-    socketLib.emitToRestaurant(targetSetting.restaurantId, 'cancel_apply_request', {
-      platform: PLATFORM,
-      orderId,
-      applyId,
-      reason,
-    });
-
-    logger.info(`[FOOD99 WEBHOOK] Notificação de cancel apply enviada para restaurante ${targetSetting.restaurantId}`);
-  }
-
-  async _handleRefundApply(body) {
-    const { order_id: orderId, apply_id: applyId, reason } = body;
-    if (!orderId || !applyId) {
-      logger.warn('[FOOD99 WEBHOOK] refund_apply sem order_id ou apply_id');
-      return;
-    }
-
-    logger.info(`[FOOD99 WEBHOOK] Solicitação de reembolso recebida: order=${orderId}, apply=${applyId}, reason=${reason}`);
-
-    const settings = await prisma.integrationSettings.findMany({
-      where: { food99IntegrationActive: true, food99MerchantId: { not: null } },
-    });
-
-    if (settings.length === 0) return;
-
-    const appShopId = body.shop?.app_shop_id || body.app_shop_id;
-    let targetSetting = appShopId ? settings.find(s => s.food99AppShopId === appShopId) : null;
-    if (!targetSetting && settings.length === 1) targetSetting = settings[0];
-    if (!targetSetting) return;
-
-    socketLib.emitToRestaurant(targetSetting.restaurantId, 'refund_apply_request', {
-      platform: PLATFORM,
-      orderId,
-      applyId,
-      reason,
-    });
-
-    logger.info(`[FOOD99 WEBHOOK] Notificação de refund apply enviada para restaurante ${targetSetting.restaurantId}`);
   }
 
   async _processWebhook(body) {
@@ -169,28 +159,9 @@ class Food99WebhookService {
 
     const { order_id: platformOrderId, status, shop_accept_status: shopAcceptStatus } = body;
 
-    const settings = await prisma.integrationSettings.findMany({
-      where: { food99IntegrationActive: true, food99MerchantId: { not: null } },
-    });
-
-    if (settings.length === 0) {
-      logger.warn('[FOOD99 WEBHOOK] Nenhuma loja 99Food ativa');
-      return;
-    }
-
-    const appShopId = body.shop?.app_shop_id || body.app_shop_id;
-    let targetSetting = null;
-
-    if (appShopId) {
-      targetSetting = settings.find(s => s.food99AppShopId === appShopId);
-    }
-
-    if (!targetSetting && settings.length === 1) {
-      targetSetting = settings[0];
-    }
-
+    const targetSetting = await this._findSettingForWebhook(body);
     if (!targetSetting) {
-      logger.warn(`[FOOD99 WEBHOOK] Loja não encontrada para app_shop_id=${appShopId}`);
+      logger.warn(`[FOOD99 WEBHOOK] Loja não encontrada para app_shop_id=${body.shop?.app_shop_id || body.app_shop_id}`);
       return;
     }
 

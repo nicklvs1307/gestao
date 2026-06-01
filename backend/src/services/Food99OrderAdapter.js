@@ -1,10 +1,9 @@
-const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const Food99AuthService = require('./Food99AuthService');
 const IntegrationBaseService = require('./IntegrationBaseService');
-
-const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
+const { requestWithRetry } = require('../lib/food99Client');
+const food99Config = require('../config/food99');
 
 class Food99OrderAdapter extends IntegrationBaseService {
   constructor() {
@@ -36,7 +35,6 @@ class Food99OrderAdapter extends IntegrationBaseService {
     const orderItems = rawData.order_items || [];
     const customer = rawData.receive_address || {};
     const shop = rawData.shop || {};
-    const promotions = rawData.promotions || [];
 
     const items = orderItems.map(item => {
       const subItems = (item.sub_item_list || []).map(sub => ({
@@ -59,12 +57,8 @@ class Food99OrderAdapter extends IntegrationBaseService {
       };
     });
 
-    const payType = rawData.pay_type;
-    const deliveryType = rawData.delivery_type;
-    const orderType = deliveryType === 2 ? 'PICKUP' : 'DELIVERY';
-
-    const isPrepaid = payType === 1 || payType === 4;
-    const rawMethod = payType === 2 ? 'CASH' : payType === 1 ? 'ONLINE_PAID' : 'ONLINE_PAID';
+    const paymentMeta = food99Config.mapPayType(rawData.pay_type);
+    const orderType = food99Config.mapDeliveryType(rawData.delivery_type);
 
     const subtotal = (price.order_price || 0) / 100;
     const deliveryFee = (price.delivery_price || 0) / 100;
@@ -99,10 +93,10 @@ class Food99OrderAdapter extends IntegrationBaseService {
       },
       deliveryData,
       payment: {
-        rawMethod,
-        isPrepaid,
-        prepaidAmount: isPrepaid ? total : 0,
-        pendingAmount: !isPrepaid ? total : 0,
+        rawMethod: paymentMeta.rawMethod,
+        isPrepaid: paymentMeta.isPrepaid,
+        prepaidAmount: paymentMeta.isPrepaid ? total : 0,
+        pendingAmount: !paymentMeta.isPrepaid ? total : 0,
         changeFor: null,
       },
       totals: {
@@ -112,58 +106,207 @@ class Food99OrderAdapter extends IntegrationBaseService {
         total,
       },
       customerNote: rawData.remark || null,
+      displayId: rawData.pickup_code || rawData.display_id || null,
+      pickupCode: rawData.pickup_code || rawData.pickupCode || null,
+      scheduledDateTime: rawData.delivery_time || rawData.scheduled_time || null,
+      customerDocument: rawData.customer_document || rawData.receiver_document || null,
+      benefits: rawData.benefits || rawData.coupons || null,
     };
   }
 
+  async getOrderDetails(restaurantId, platformOrderId) {
+    const settings = await this.getSettings(restaurantId);
+    if (!settings?.food99AppShopId) return null;
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
+    if (!token) return null;
+
+    const result = await requestWithRetry({
+      method: 'get',
+      url: '/v1/order/order/detail',
+      env: settings.food99Env,
+      params: { auth_token: token, order_id: platformOrderId },
+      logContext: `Erro ao buscar detalhes do pedido ${platformOrderId}`,
+    });
+
+    if (!result.ok) return null;
+    return result.data;
+  }
+
   async confirmOrderOnPlatform(restaurantId, platformOrderId) {
-    const token = await this.getAccessToken(restaurantId);
+    const settings = await this.getSettings(restaurantId);
+    if (!settings?.food99AppShopId) return;
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
     if (!token) return;
 
-    try {
-      await axios.post(
-        `${BASE_URL}/v1/order/order/confirm`,
-        { auth_token: token, order_id: platformOrderId },
-        { timeout: 10000 },
-      );
+    const result = await requestWithRetry({
+      method: 'post',
+      url: '/v1/order/order/confirm',
+      env: settings.food99Env,
+      data: { auth_token: token, order_id: platformOrderId },
+      logContext: `Erro ao confirmar pedido ${platformOrderId}`,
+    });
+
+    if (result.ok) {
       logger.info(`[FOOD99] Pedido ${platformOrderId} confirmado`);
-    } catch (error) {
-      logger.error(`[FOOD99] Erro ao confirmar ${platformOrderId}:`, error.message);
+    } else {
+      logger.error(`[FOOD99] Erro ao confirmar ${platformOrderId}: ${result.error}`);
     }
   }
 
   async rejectOrderOnPlatform(restaurantId, platformOrderId, reasonId = 1010) {
-    const token = await this.getAccessToken(restaurantId);
+    const settings = await this.getSettings(restaurantId);
+    if (!settings?.food99AppShopId) return;
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
     if (!token) return;
 
-    try {
-      await axios.post(
-        `${BASE_URL}/v1/order/order/cancel`,
-        {
-          auth_token: token,
-          order_id: platformOrderId,
-          reason_id: reasonId,
-          reason: 'Pedido recusado pelo restaurante',
-        },
-        { timeout: 10000 },
-      );
+    const result = await requestWithRetry({
+      method: 'post',
+      url: '/v1/order/order/cancel',
+      env: settings.food99Env,
+      data: {
+        auth_token: token,
+        order_id: platformOrderId,
+        reason_id: reasonId,
+        reason: 'Pedido recusado pelo restaurante',
+      },
+      logContext: `Erro ao cancelar pedido ${platformOrderId}`,
+    });
+
+    if (result.ok) {
       logger.info(`[FOOD99] Pedido ${platformOrderId} cancelado`);
-    } catch (error) {
-      logger.error(`[FOOD99] Erro ao cancelar ${platformOrderId}:`, error.message);
+    } else {
+      logger.error(`[FOOD99] Erro ao cancelar ${platformOrderId}: ${result.error}`);
     }
   }
 
   async markReadyOnPlatform(restaurantId, platformOrderId) {
-    const token = await this.getAccessToken(restaurantId);
+    const settings = await this.getSettings(restaurantId);
+    if (!settings?.food99AppShopId) return;
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
     if (!token) return;
 
-    try {
-      await axios.get(`${BASE_URL}/v1/order/order/ready`, {
-        params: { auth_token: token, order_id: platformOrderId },
-        timeout: 10000,
-      });
+    const result = await requestWithRetry({
+      method: 'get',
+      url: '/v1/order/order/ready',
+      env: settings.food99Env,
+      params: { auth_token: token, order_id: platformOrderId },
+      logContext: `Erro ao marcar pronto ${platformOrderId}`,
+    });
+
+    if (result.ok) {
       logger.info(`[FOOD99] Pedido ${platformOrderId} marcado como pronto`);
+    } else {
+      logger.error(`[FOOD99] Erro ao marcar pronto ${platformOrderId}: ${result.error}`);
+    }
+  }
+
+  async notifySyncError(restaurantId, orderId, message) {
+    const socketLib = require('../lib/socket');
+    logger.error(`[FOOD99 SYNC ERROR] Order ${orderId}: ${message}`);
+    socketLib.emitToRestaurant(restaurantId, 'sync_error', {
+      orderId,
+      service: 'FOOD99',
+      message: message || 'Falha desconhecida na integração',
+    });
+  }
+
+  async _getOrderAndToken(orderId) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        restaurant: {
+          include: { integrationSettings: true },
+        },
+      },
+    });
+
+    if (!order || !order.food99OrderId) {
+      return { success: false, error: 'Pedido não encontrado ou não é da 99Food' };
+    }
+
+    const settings = order.restaurant?.integrationSettings;
+    if (!settings?.food99AppShopId) {
+      return { success: false, error: 'app_shop_id não configurado para esta loja' };
+    }
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
+    if (!token) {
+      return { success: false, error: 'Token 99Food expirado ou indisponível' };
+    }
+
+    return { order, token, settings };
+  }
+
+  async confirmOrder(orderId, restaurantId) {
+    try {
+      const result = await this._getOrderAndToken(orderId);
+      if (result.success === false) return result;
+
+      const { order } = result;
+
+      await this.confirmOrderOnPlatform(restaurantId, order.food99OrderId);
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'PREPARING' },
+      });
+
+      return { success: true };
     } catch (error) {
-      logger.error(`[FOOD99] Erro ao marcar pronto ${platformOrderId}:`, error.message);
+      const errorMsg = error.response?.data?.errmsg || error.message;
+      logger.error(`[FOOD99] Erro ao confirmar: ${errorMsg}`);
+      await this.notifySyncError(restaurantId, orderId, `Erro ao confirmar: ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  async rejectOrder(orderId, restaurantId, reasonId = 1010, reason = 'Pedido recusado') {
+    try {
+      const result = await this._getOrderAndToken(orderId);
+      if (result.success === false) return result;
+
+      const { order } = result;
+
+      await this.rejectOrderOnPlatform(restaurantId, order.food99OrderId, reasonId);
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'CANCELED', canceledAt: new Date() },
+      });
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error.response?.data?.errmsg || error.message;
+      logger.error(`[FOOD99] Erro ao rejeitar: ${errorMsg}`);
+      await this.notifySyncError(restaurantId, orderId, `Erro ao rejeitar: ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  async markReady(orderId, restaurantId) {
+    try {
+      const result = await this._getOrderAndToken(orderId);
+      if (result.success === false) return result;
+
+      const { order } = result;
+
+      await this.markReadyOnPlatform(restaurantId, order.food99OrderId);
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'READY', readyAt: new Date() },
+      });
+
+      return { success: true };
+    } catch (error) {
+      const errorMsg = error.response?.data?.errmsg || error.message;
+      logger.error(`[FOOD99] Erro ao marcar pronto: ${errorMsg}`);
+      await this.notifySyncError(restaurantId, orderId, `Erro ao marcar pronto: ${errorMsg}`);
+      return { success: false, error: errorMsg };
     }
   }
 }

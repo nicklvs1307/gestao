@@ -1,64 +1,37 @@
-const axios = require('axios');
 const crypto = require('crypto');
 const logger = require('../config/logger');
-
-const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
+const food99Config = require('../config/food99');
+const { requestWithRetry } = require('../lib/food99Client');
 
 class Food99AuthService {
 
   _getCredentials() {
-    const clientId = process.env.FOOD99_CLIENT_ID;
-    const clientSecret = process.env.FOOD99_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
-      throw new Error('FOOD99_CLIENT_ID ou FOOD99_CLIENT_SECRET não configurados nas variáveis de ambiente');
-    }
-
-    return { clientId, clientSecret };
+    return food99Config.getCredentials();
   }
 
-  _extractData(response) {
-    return response.data?.data || response.data;
-  }
-
-  _checkError(response, data, defaultMsg) {
-    const errno = response.data?.errno ?? data?.errno;
-    if (errno !== 0) {
-      throw new Error(response.data?.errmsg || data?.errmsg || defaultMsg);
-    }
-  }
-
-  _logAndThrow(error, context, defaultMsg) {
-    logger.error(`[FOOD99 AUTH] ${context}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.errmsg || error.message || defaultMsg);
-  }
-
-  async _request(config) {
-    const { method = 'get', url, params, data: body, timeout = 15000, logContext, logSuccess, defaultErrorMsg } = config;
-
-    try {
-      const response = await axios({ method, url, params, data: body, timeout });
-      const data = this._extractData(response);
-      this._checkError(response, data, defaultErrorMsg);
-      if (logSuccess) logger.info(`[FOOD99 AUTH] ${logSuccess}`);
-      return data;
-    } catch (error) {
-      this._logAndThrow(error, logContext, defaultErrorMsg);
-    }
+  _generateSign(appId, timestamp, secret) {
+    return crypto.createHash('md5').update(`${appId}${timestamp}${secret}`).digest('hex');
   }
 
   async requestAccessToken(appShopId) {
     const { clientId, clientSecret } = this._getCredentials();
+    if (!clientId || !clientSecret) {
+      throw new Error('FOOD99_CLIENT_ID ou FOOD99_CLIENT_SECRET não configurados nas variáveis de ambiente');
+    }
 
-    const data = await this._request({
+    const result = await requestWithRetry({
       method: 'get',
-      url: `${BASE_URL}/v1/auth/authtoken/get`,
+      url: '/v1/auth/authtoken/get',
       params: { app_id: clientId, app_secret: clientSecret, app_shop_id: appShopId },
-      logContext: 'Erro ao obter token',
-      logSuccess: `Token obtido para shop ${appShopId}`,
-      defaultErrorMsg: 'Falha ao obter auth_token',
+      logContext: `Erro ao obter token (shop ${appShopId})`,
+      retries: 2,
     });
 
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao obter auth_token');
+    }
+
+    const data = result.data || {};
     const authToken = data.auth_token;
     const tokenExpirationTime = data.token_expiration_time;
 
@@ -76,9 +49,9 @@ class Food99AuthService {
   }
 
   async getValidToken(appShopId) {
-    const { clientId, clientSecret } = this._getCredentials();
+    const { clientId, clientSecret, configured } = this._getCredentials();
 
-    if (!clientId || !clientSecret) {
+    if (!configured) {
       logger.error(`[FOOD99 AUTH] Credenciais do APP não configuradas - FOOD99_CLIENT_ID=${clientId ? 'OK' : 'MISSING'}, FOOD99_CLIENT_SECRET=${clientSecret ? 'OK' : 'MISSING'}`);
       return null;
     }
@@ -111,13 +84,11 @@ class Food99AuthService {
 
       return this._tokenCache[appShopId].authToken;
     } catch (error) {
-      const statusCode = error.response?.status;
-      const apiMsg = error.response?.data?.errmsg || error.response?.data?.message || error.message;
+      const apiMsg = error.message;
+      logger.error(`[FOOD99 AUTH] Erro ao obter token para shop ${appShopId}: ${apiMsg}`);
 
-      if (statusCode === 401 || apiMsg?.includes('authorization')) {
+      if (apiMsg?.toLowerCase().includes('authorization') || apiMsg?.toLowerCase().includes('unauthorized')) {
         logger.error(`[FOOD99 AUTH] Loja ${appShopId} não autorizada na plataforma 99Food: ${apiMsg}`);
-      } else {
-        logger.error(`[FOOD99 AUTH] Erro ${statusCode || 'desconhecido'} ao obter token para shop ${appShopId}: ${apiMsg}`);
       }
 
       return null;
@@ -125,16 +96,22 @@ class Food99AuthService {
   }
 
   async refreshToken(appShopId) {
-    const { clientId, clientSecret } = this._getCredentials();
+    const { clientId, clientSecret, configured } = this._getCredentials();
+    if (!configured) {
+      throw new Error('FOOD99_CLIENT_ID ou FOOD99_CLIENT_SECRET não configurados');
+    }
 
-    await this._request({
+    const result = await requestWithRetry({
       method: 'get',
-      url: `${BASE_URL}/v1/auth/authtoken/refresh`,
+      url: '/v1/auth/authtoken/refresh',
       params: { app_id: clientId, app_secret: clientSecret, app_shop_id: appShopId },
-      logContext: `Erro ao renovar token para shop ${appShopId}`,
-      logSuccess: `Token renovado para shop ${appShopId}`,
-      defaultErrorMsg: 'Falha ao renovar token',
+      logContext: `Erro ao renovar token (shop ${appShopId})`,
+      retries: 2,
     });
+
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao renovar token');
+    }
 
     if (this._tokenCache?.[appShopId]) {
       delete this._tokenCache[appShopId];
@@ -143,21 +120,62 @@ class Food99AuthService {
     return await this.getValidToken(appShopId);
   }
 
-  async checkConnectionStatus() {
-    const { clientId, clientSecret } = this._getCredentials();
+  async _probeCredentials() {
+    const { clientId, clientSecret, configured } = this._getCredentials();
+    if (!configured) {
+      return { ok: false, reason: 'Credenciais do APP não configuradas no sistema' };
+    }
 
-    if (!clientId || !clientSecret) {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const sign = this._generateSign(clientId, timestamp, clientSecret);
+
+    const result = await requestWithRetry({
+      method: 'post',
+      url: '/v1/shop/shop/list',
+      data: { app_id: clientId, timestamp, sign, page_no: 1, page_size: 1 },
+      logContext: 'Probe de credenciais 99Food (shop/list)',
+      retries: 1,
+    });
+
+    if (!result.ok) {
+      return { ok: false, reason: result.error || 'Falha no probe' };
+    }
+
+    const data = result.data;
+    if (data && typeof data === 'object' && 'errno' in data && data.errno !== 0) {
+      return { ok: false, reason: data.errmsg || `errno ${data.errno}` };
+    }
+
+    return { ok: true };
+  }
+
+  async checkConnectionStatus(appShopId = null) {
+    const probe = await this._probeCredentials();
+
+    if (!probe.ok) {
       return {
         connected: false,
         status: 'not_configured',
-        message: 'Credenciais não configuradas no sistema',
+        message: probe.reason,
       };
     }
 
+    if (!appShopId) {
+      return {
+        connected: true,
+        status: 'ready',
+        message: 'Credenciais válidas na 99Food (app ativo)',
+      };
+    }
+
+    const token = await this.getValidToken(appShopId);
     return {
-      connected: true,
-      status: 'ready',
-      message: 'Credenciais configuradas e prontas para uso',
+      connected: !!token,
+      status: token ? 'ready' : 'shop_unbound',
+      tokenActive: !!token,
+      message: token
+        ? `Token ativo para shop ${appShopId}`
+        : `Sem token válido para shop ${appShopId} (loja pode não estar vinculada)`,
     };
   }
 
@@ -167,97 +185,118 @@ class Food99AuthService {
     return { success: true };
   }
 
-  _generateSign(appId, timestamp, secret) {
-    return crypto.createHash('md5').update(`${appId}${timestamp}${secret}`).digest('hex');
-  }
-
   async getAuthorizationUrl(appShopId) {
-    const { clientId } = this._getCredentials();
+    const { clientId, configured } = this._getCredentials();
+    if (!configured) {
+      throw new Error('FOOD99_CLIENT_ID ou FOOD99_CLIENT_SECRET não configurados');
+    }
 
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/auth/authorizationpage/getUrl`,
+      url: '/v1/auth/authorizationpage/getUrl',
       data: { app_id: clientId, app_shop_id: appShopId },
-      logContext: 'Erro ao obter URL de autorização',
-      logSuccess: `URL de autorização obtido para shop ${appShopId}`,
-      defaultErrorMsg: 'Falha ao obter URL de autorização',
+      logContext: `Erro ao obter URL de autorização (shop ${appShopId})`,
+      retries: 2,
     });
+
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao obter URL de autorização');
+    }
+
+    const data = result.data;
+    const url = Array.isArray(data) ? data[0] : (typeof data === 'string' ? data : null);
+
+    if (!url) {
+      throw new Error('URL de autorização não retornada pela API 99Food');
+    }
+
+    logger.info(`[FOOD99 AUTH] URL de autorização obtida para shop ${appShopId}`);
+    return { url, appShopId };
   }
 
   async listShops(pageNo = 1, pageSize = 30) {
-    const { clientId, clientSecret } = this._getCredentials();
+    const { clientId, clientSecret, configured } = this._getCredentials();
+    if (!configured) {
+      throw new Error('FOOD99_CLIENT_ID ou FOOD99_CLIENT_SECRET não configurados');
+    }
+
     const timestamp = Math.floor(Date.now() / 1000);
     const sign = this._generateSign(clientId, timestamp, clientSecret);
 
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/shop/shop/list`,
+      url: '/v1/shop/shop/list',
       data: { app_id: clientId, timestamp, sign, page_no: pageNo, page_size: pageSize },
-      logContext: 'Erro ao listar lojas',
-      logSuccess: `Lista de lojas obtida (página ${pageNo})`,
-      defaultErrorMsg: 'Falha ao listar lojas',
+      logContext: `Erro ao listar lojas (página ${pageNo})`,
+      retries: 2,
     });
+
+    if (!result.ok) {
+      throw new Error(result.error || 'Falha ao listar lojas');
+    }
+
+    return result.data;
   }
 
   async setConfirmMethod(authToken, method = 2) {
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/shop/shop/setconfirmmethod`,
+      url: '/v1/shop/shop/setconfirmmethod',
       data: { auth_token: authToken, order_confirm_method: method },
-      logContext: 'Erro ao definir método de confirmação',
-      logSuccess: `Método de confirmação definido: ${method}`,
-      defaultErrorMsg: 'Falha ao definir método de confirmação',
+      logContext: `Erro ao definir método de confirmação (${method})`,
     });
+    if (!result.ok) throw new Error(result.error);
+    return result.data;
   }
 
   async setShopStatus(authToken, bizStatus = 1, autoSwitch = 1) {
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/shop/shop/setStatus`,
+      url: '/v1/shop/shop/setStatus',
       data: { auth_token: authToken, biz_status: bizStatus, auto_switch: autoSwitch },
-      logContext: 'Erro ao definir status da loja',
-      logSuccess: `Status da loja definido: biz_status=${bizStatus}, auto_switch=${autoSwitch}`,
-      defaultErrorMsg: 'Falha ao definir status da loja',
+      logContext: `Erro ao definir status da loja (biz=${bizStatus})`,
     });
+    if (!result.ok) throw new Error(result.error);
+    return result.data;
   }
 
   async getShopDetail(authToken) {
-    return this._request({
+    const result = await requestWithRetry({
       method: 'get',
-      url: `${BASE_URL}/v1/shop/shop/detail`,
+      url: '/v1/shop/shop/detail',
       params: { auth_token: authToken },
       logContext: 'Erro ao obter detalhes da loja',
-      logSuccess: 'Detalhes da loja obtidos',
-      defaultErrorMsg: 'Falha ao obter detalhes da loja',
     });
+    if (!result.ok) throw new Error(result.error);
+    return result.data;
   }
 
   async setApplyNotifications(authToken, receiveCancelApply = 1, receiveRefundApply = 1) {
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/shop/apply/set`,
+      url: '/v1/shop/apply/set',
       data: { auth_token: authToken, receive_cancel_apply: receiveCancelApply, receive_refund_apply: receiveRefundApply },
       logContext: 'Erro ao configurar notificações',
-      logSuccess: 'Notificações configuradas com sucesso',
-      defaultErrorMsg: 'Falha ao configurar notificações',
     });
+    if (!result.ok) throw new Error(result.error);
+    return result.data;
   }
 
   async unbindShop(authToken) {
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/shop/shop/unbind`,
+      url: '/v1/shop/shop/unbind',
       data: { auth_token: authToken },
       logContext: 'Erro ao desvincular loja',
-      logSuccess: 'Loja desvinculada com sucesso',
-      defaultErrorMsg: 'Falha ao desvincular loja',
     });
+    if (!result.ok) throw new Error(result.error);
+    return result.data;
   }
 
   async handleCancelApply(authToken, orderId, applyId, agree, reason) {
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/order/apply/cancel`,
+      url: '/v1/order/apply/cancel',
       data: {
         auth_token: authToken,
         order_id: orderId,
@@ -266,16 +305,16 @@ class Food99AuthService {
         reason_id: agree ? 0 : 1010,
         reason: agree ? '' : (reason || 'Pedido já em preparo'),
       },
-      logContext: 'Erro ao processar cancel apply',
-      logSuccess: `Solicitação de cancelamento ${agree ? 'aceita' : 'recusada'} para pedido ${orderId}`,
-      defaultErrorMsg: 'Falha ao processar solicitação de cancelamento',
+      logContext: `Erro ao processar cancel apply (order ${orderId})`,
     });
+    if (!result.ok) throw new Error(result.error);
+    return result.data;
   }
 
   async handleRefundApply(authToken, orderId, applyId, agree, reason) {
-    return this._request({
+    const result = await requestWithRetry({
       method: 'post',
-      url: `${BASE_URL}/v1/order/apply/refund`,
+      url: '/v1/order/apply/refund',
       data: {
         auth_token: authToken,
         order_id: orderId,
@@ -283,10 +322,10 @@ class Food99AuthService {
         agree,
         custom_reason: agree ? '' : (reason || 'Itens entregues conforme pedido'),
       },
-      logContext: 'Erro ao processar refund apply',
-      logSuccess: `Solicitação de reembolso ${agree ? 'aceita' : 'recusada'} para pedido ${orderId}`,
-      defaultErrorMsg: 'Falha ao processar solicitação de reembolso',
+      logContext: `Erro ao processar refund apply (order ${orderId})`,
     });
+    if (!result.ok) throw new Error(result.error);
+    return result.data;
   }
 }
 

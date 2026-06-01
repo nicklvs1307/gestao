@@ -1,13 +1,11 @@
 const cron = require('node-cron');
-const axios = require('axios');
 const logger = require('../config/logger');
 const prisma = require('../lib/prisma');
 const Food99AuthService = require('./Food99AuthService');
 const Food99OrderAdapter = require('./Food99OrderAdapter');
 const IntegrationOrderService = require('./IntegrationOrderService');
 const IntegrationTypeService = require('./IntegrationTypeService');
-
-const BASE_URL = process.env.FOOD99_BASE_URL || 'https://openapi.didi-food.com';
+const { requestWithRetry } = require('../lib/food99Client');
 
 class Food99PollingService {
   constructor() {
@@ -69,7 +67,7 @@ class Food99PollingService {
       return;
     }
 
-    const shopHealthy = await this._validateTokenHealth(token, setting.food99AppShopId);
+    const shopHealthy = await this._validateTokenHealth(token, setting.food99AppShopId, setting.food99Env);
 
     if (!shopHealthy) {
       logger.warn(`[FOOD99 POLLING] Token inválido para shop ${setting.food99AppShopId}, tentando renovar...`);
@@ -103,37 +101,35 @@ class Food99PollingService {
     }
   }
 
-  async _validateTokenHealth(token, appShopId) {
-    try {
-      const response = await axios.get(`${BASE_URL}/v1/shop/shop/detail`, {
-        params: { auth_token: token },
-        timeout: 10000,
-      });
+  async _validateTokenHealth(token, appShopId, env) {
+    const result = await requestWithRetry({
+      method: 'get',
+      url: '/v1/shop/shop/detail',
+      env,
+      params: { auth_token: token },
+      logContext: `Health check shop ${appShopId}`,
+      retries: 1,
+    });
 
-      const data = response.data;
-
-      if (data?.errno !== 0) {
-        logger.warn(`[FOOD99 POLLING] Health check falhou para shop ${appShopId}: ${data?.errmsg || 'errno != 0'}`);
-        return false;
-      }
-
-      logger.debug(`[FOOD99 POLLING] Health check OK para shop ${appShopId}`);
-      return true;
-    } catch (error) {
-      const status = error.response?.status;
-
-      if (status === 401 || status === 403) {
-        return false;
-      }
-
+    if (!result.ok) {
+      const status = result.status;
+      if (status === 401 || status === 403) return false;
       if (status === 429) {
         logger.warn('[FOOD99 POLLING] Rate limit no health check, considerando token válido');
         return true;
       }
-
-      logger.error(`[FOOD99 POLLING] Erro no health check:`, error.response?.data || error.message);
+      logger.error(`[FOOD99 POLLING] Erro no health check: ${result.error}`);
       return false;
     }
+
+    const data = result.data;
+    if (data && typeof data === 'object' && 'errno' in data && data.errno !== 0) {
+      logger.warn(`[FOOD99 POLLING] Health check falhou para shop ${appShopId}: ${data.errmsg || `errno ${data.errno}`}`);
+      return false;
+    }
+
+    logger.debug(`[FOOD99 POLLING] Health check OK para shop ${appShopId}`);
+    return true;
   }
 
   async _retryFailedEvent(event, token, setting) {
@@ -170,7 +166,7 @@ class Food99PollingService {
 
     logger.info(`[FOOD99 POLLING] Retrying evento ${eventType} para pedido ${orderId}`);
 
-    const orderDetails = await this._fetchOrderDetails(orderId, token);
+    const orderDetails = await Food99OrderAdapter.getOrderDetails(setting.restaurantId, orderId);
 
     if (!orderDetails) {
       await IntegrationOrderService.registerEvent(
@@ -276,39 +272,6 @@ class Food99PollingService {
 
       default:
         logger.info(`[FOOD99 POLLING] Status ${mappedStatus} não requer ação para retry`);
-    }
-  }
-
-  async _fetchOrderDetails(orderId, token) {
-    try {
-      const response = await axios.get(`${BASE_URL}/v1/order/order/detail`, {
-        params: { auth_token: token, order_id: orderId },
-        timeout: 10000,
-      });
-
-      const data = response.data;
-
-      if (data?.errno !== 0) {
-        logger.error(`[FOOD99 POLLING] Erro ao buscar detalhes do pedido ${orderId}: ${data?.errmsg || 'errno != 0'}`);
-        return null;
-      }
-
-      return data?.data || data;
-    } catch (error) {
-      const status = error.response?.status;
-
-      if (status === 401) {
-        logger.warn('[FOOD99 POLLING] Token expirado ao buscar detalhes do pedido');
-        return null;
-      }
-
-      if (status === 429) {
-        logger.warn('[FOOD99 POLLING] Rate limit ao buscar detalhes do pedido');
-        return null;
-      }
-
-      logger.error(`[FOOD99 POLLING] Erro HTTP ao buscar detalhes do pedido ${orderId}:`, error.response?.data || error.message);
-      return null;
     }
   }
 
