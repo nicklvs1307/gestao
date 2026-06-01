@@ -121,39 +121,68 @@ class Food99WebhookService {
 
   async handleWebhook(req, res) {
     const body = req.body;
-    logger.info(`[FOOD99 WEBHOOK] Recebido: order_id=${body?.order_id}, event=${body?.event}, status=${body?.status}`);
+    const startedAt = Date.now();
+
+    const headersLog = {
+      'content-type': req.headers['content-type'],
+      'user-agent': req.headers['user-agent'],
+      'x-didi-signature': req.headers['x-didi-signature'] ? 'presente' : 'ausente',
+      'x-food99-signature': req.headers['x-food99-signature'] ? 'presente' : 'ausente',
+      'x-signature': req.headers['x-signature'] ? 'presente' : 'ausente',
+      'x-forwarded-for': req.headers['x-forwarded-for'] || req.ip,
+    };
+    const bodyPreview = JSON.stringify(body)?.slice(0, 500);
+
+    logger.info(`[FOOD99 WEBHOOK] Recebido: order_id=${body?.order_id}, event=${body?.event}, status=${body?.status}, shop_accept_status=${body?.shop_accept_status}`);
+    logger.info(`[FOOD99 WEBHOOK] Headers: ${JSON.stringify(headersLog)}`);
+    logger.debug(`[FOOD99 WEBHOOK] Body raw: ${bodyPreview}`);
 
     const sig = this._extractSignature(req.headers);
     if (sig && process.env.FOOD99_CLIENT_SECRET) {
       const isValid = this._verifySignature(body, sig.value, process.env.FOOD99_CLIENT_SECRET);
       if (!isValid) {
-        logger.warn(`[FOOD99 WEBHOOK] Assinatura inválida (header=${sig.header}), rejeitando request`);
+        logger.warn(`[FOOD99 WEBHOOK] Assinatura inválida (header=${sig.header}, value=${sig.value?.slice(0, 16)}...), rejeitando request`);
         return res.status(403).json({ error: 'Assinatura inválida' });
       }
+      logger.debug(`[FOOD99 WEBHOOK] Assinatura válida (header=${sig.header})`);
     } else {
-      logger.debug(`[FOOD99 WEBHOOK] Sem assinatura presente (header=${sig?.header || 'none'}), processando sem validar`);
+      logger.debug(`[FOOD99 WEBHOOK] Sem assinatura presente (header=${sig?.header || 'none'}, secret=${process.env.FOOD99_CLIENT_SECRET ? 'OK' : 'MISSING'}), processando sem validar`);
     }
 
     res.status(200).json({ received: true });
 
     try {
       if (body?.event === 'cancel_apply') {
+        logger.info(`[FOOD99 WEBHOOK] Processando cancel_apply para order=${body.order_id}`);
         await this._handleApplyRequest(body, 'cancel');
+        this._logProcessingTime(startedAt, 'cancel_apply');
         return;
       }
       if (body?.event === 'refund_apply') {
+        logger.info(`[FOOD99 WEBHOOK] Processando refund_apply para order=${body.order_id}`);
         await this._handleApplyRequest(body, 'refund');
+        this._logProcessingTime(startedAt, 'refund_apply');
         return;
       }
       await this._processWebhook(body);
+      this._logProcessingTime(startedAt, body?.event || 'unknown');
     } catch (error) {
-      logger.error('[FOOD99 WEBHOOK] Erro ao processar webhook:', error.message);
+      logger.error('[FOOD99 WEBHOOK] Erro ao processar webhook:', error.message, error.stack);
+    }
+  }
+
+  _logProcessingTime(startedAt, event) {
+    const ms = Date.now() - startedAt;
+    if (ms > 1000) {
+      logger.warn(`[FOOD99 WEBHOOK] Processamento lento: ${event} levou ${ms}ms`);
+    } else {
+      logger.debug(`[FOOD99 WEBHOOK] Processado ${event} em ${ms}ms`);
     }
   }
 
   async _processWebhook(body) {
     if (!body || !body.order_id) {
-      logger.warn('[FOOD99 WEBHOOK] Payload sem order_id, ignorando');
+      logger.warn(`[FOOD99 WEBHOOK] Payload sem order_id, ignorando. Body keys: ${Object.keys(body || {}).join(',')}`);
       return;
     }
 
@@ -161,7 +190,7 @@ class Food99WebhookService {
 
     const targetSetting = await this._findSettingForWebhook(body);
     if (!targetSetting) {
-      logger.warn(`[FOOD99 WEBHOOK] Loja não encontrada para app_shop_id=${body.shop?.app_shop_id || body.app_shop_id}`);
+      logger.warn(`[FOOD99 WEBHOOK] Loja não encontrada para app_shop_id=${body.shop?.app_shop_id || body.app_shop_id || 'não informado'}. Body: ${JSON.stringify({ order_id: platformOrderId, status, shop_accept_status: shopAcceptStatus, shop: body.shop })}`);
       return;
     }
 
@@ -175,6 +204,7 @@ class Food99WebhookService {
     }
 
     const kiStatus = IntegrationTypeService.mapStatus(PLATFORM, String(shopAcceptStatus || status));
+    logger.info(`[FOOD99 WEBHOOK] Processando order=${platformOrderId} status=${status} shop_accept_status=${shopAcceptStatus} -> ki=${kiStatus} (restaurantId=${restaurantId})`);
 
     switch (kiStatus) {
       case 'PENDING':
@@ -203,7 +233,7 @@ class Food99WebhookService {
         break;
 
       default:
-        logger.info(`[FOOD99 WEBHOOK] Evento ${kiStatus} não requer processamento específico`);
+        logger.info(`[FOOD99 WEBHOOK] Evento ${kiStatus} (raw: status=${status}, shop_accept_status=${shopAcceptStatus}) não requer processamento específico`);
     }
   }
 

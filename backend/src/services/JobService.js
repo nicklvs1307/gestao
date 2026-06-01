@@ -9,6 +9,7 @@ const IfoodAuthService = require('./IfoodAuthService');
 const IfoodPollingService = require('./IfoodPollingService');
 const UairangoPollingService = require('./UairangoPollingService');
 const Food99PollingService = require('./Food99PollingService');
+const FiscalQueueService = require('./FiscalQueueService');
 
 class JobService {
   constructor() {
@@ -165,6 +166,20 @@ class JobService {
 
     this.jobs.push({ name: 'IfoodTokenRefresh', job: ifoodTokenRefreshJob });
 
+    // Cron Job para Processar Fila Fiscal (a cada 5 minutos)
+    const fiscalQueueJob = cron.schedule('*/5 * * * *', async () => {
+      try {
+        const result = await FiscalQueueService.processQueue();
+        if (result.processed > 0) {
+          logger.info(`[JobService] Fila fiscal processada: ${result.processed} itens (sucesso: ${result.successful || 0}, falha: ${result.failed || 0})`);
+        }
+      } catch (error) {
+        logger.error('[JobService] Erro ao processar fila fiscal:', error);
+      }
+    });
+
+    this.jobs.push({ name: 'FiscalQueue', job: fiscalQueueJob });
+
     // Iniciar polling de eventos do iFood
     try {
       IfoodPollingService.init();
@@ -181,12 +196,21 @@ class JobService {
       logger.error('[JobService] Erro ao iniciar Uai Rangô Polling Service:', error);
     }
 
-    // Iniciar polling de eventos da 99Food (fallback)
-    try {
-      Food99PollingService.init();
-      logger.info('[JobService] 99Food Polling Service iniciado com sucesso.');
-    } catch (error) {
-      logger.error('[JobService] Erro ao iniciar 99Food Polling Service:', error);
+    // 99Food: polling DESABILITADO por padrão.
+    // 99Food API não tem endpoint de listagem de eventos/pedidos - o webhook
+    // (/webhooks/food99) é a ÚNICA fonte de novos pedidos.
+    // O polling antigo só consumia rate-limit (1 chamada/60s em /v1/shop/shop/detail)
+    // e retry de eventos FAILED, que podem ser retentados manualmente.
+    // Para reativar (não recomendado): FOOD99_POLLING_ENABLED=true
+    if (process.env.FOOD99_POLLING_ENABLED === 'true') {
+      try {
+        Food99PollingService.init();
+        logger.info('[JobService] 99Food Polling Service iniciado (FOOD99_POLLING_ENABLED=true).');
+      } catch (error) {
+        logger.error('[JobService] Erro ao iniciar 99Food Polling Service:', error);
+      }
+    } else {
+      logger.info('[JobService] 99Food Polling Service DESABILITADO (FOOD99_POLLING_ENABLED != true). Webhook é a única fonte de pedidos.');
     }
 
     logger.info('[JobService] Tarefas agendadas com sucesso.');

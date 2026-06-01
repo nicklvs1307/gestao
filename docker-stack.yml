@@ -28,6 +28,7 @@ services:
       IFOOD_CLIENT_SECRET_FILE: /run/secrets/ifood_client_secret
       FOOD99_CLIENT_ID_FILE: /run/secrets/food99_client_id
       FOOD99_CLIENT_SECRET_FILE: /run/secrets/food99_client_secret
+      FOOD99_POLLING_ENABLED: "false"
       UAIRANGO_CLIENT_ID_FILE: /run/secrets/uairango_client_id
       UAIRANGO_CLIENT_SECRET_FILE: /run/secrets/uairango_client_secret
       UAIRANGO_WEBHOOK_SECRET_FILE: /run/secrets/uairango_webhook_secret

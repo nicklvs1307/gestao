@@ -11,9 +11,19 @@ class Food99PollingService {
   constructor() {
     this.pollingJob = null;
     this.isPolling = false;
+    this._enabled = process.env.FOOD99_POLLING_ENABLED === 'true';
+  }
+
+  isEnabled() {
+    return this._enabled;
   }
 
   init() {
+    if (!this._enabled) {
+      logger.info('[FOOD99 POLLING] Polling desabilitado por FOOD99_POLLING_ENABLED. Webhook é a única fonte de pedidos.');
+      return;
+    }
+
     logger.info('[FOOD99 POLLING] Modo FALLBACK ativado - retry de eventos falhos e health check');
 
     this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
