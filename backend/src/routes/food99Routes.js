@@ -9,6 +9,7 @@ router.use(checkPermission('integrations:manage'));
 router.get('/food99', Food99Controller.getFood99Settings);
 router.put('/food99', Food99Controller.updateFood99Settings);
 router.get('/food99/status', Food99Controller.getFood99ConnectionStatus);
+router.get('/food99/debug', Food99Controller.getDebug);
 
 router.post('/food99/confirm', Food99Controller.confirmFood99Order);
 router.post('/food99/reject', Food99Controller.rejectFood99Order);

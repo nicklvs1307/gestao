@@ -50,9 +50,24 @@ async function requestWithRetry({ method, url, env, params, data, timeout = DEFA
   const client = getClientWithTimeout(env, timeout);
   let lastError = null;
 
+  const reqId = `${method.toUpperCase()} ${url} [${logContext || 'request'}]`;
+  const reqSummary = {
+    method: method.toUpperCase(),
+    url,
+    env: env || 'production',
+    params: params ? JSON.stringify(params).slice(0, 300) : undefined,
+    bodyKeys: data && typeof data === 'object' ? Object.keys(data).join(',') : undefined,
+    hasBody: data ? true : false,
+  };
+  logger.info(`[FOOD99 HTTP] >>> ${reqId} | ${JSON.stringify(reqSummary)}`);
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const response = await client.request({ method, url, params, data });
+
+      const rawBody = response.data;
+      const rawBodyStr = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);
+      logger.info(`[FOOD99 HTTP] <<< ${reqId} attempt=${attempt + 1}/${retries + 1} status=${response.status} ct=${response.headers?.['content-type']} body=${rawBodyStr?.slice(0, 600)}`);
 
       if (response.status >= 200 && response.status < 300) {
         return { ok: true, status: response.status, data: unwrap(response) };
@@ -66,10 +81,15 @@ async function requestWithRetry({ method, url, env, params, data, timeout = DEFA
         return { ok: false, status: response.status, error: errMsg, data: unwrap(response) };
       }
 
+      logger.warn(`[FOOD99 HTTP] ${reqId} attempt ${attempt + 1} falhou (HTTP ${response.status}: ${errMsg}) - retryable, aguardando ${RETRY_DELAY_MS * Math.pow(2, attempt)}ms`);
       lastError = new Error(errMsg);
     } catch (error) {
       lastError = error;
       const isNetwork = !error.response;
+      logger.error(`[FOOD99 HTTP] ${reqId} attempt ${attempt + 1} EXCEPTION: ${error.message} | code=${error.code} | hasResponse=${!!error.response}`);
+      if (error.response) {
+        logger.error(`[FOOD99 HTTP] ${reqId} exception response: status=${error.response.status} body=${JSON.stringify(error.response.data)?.slice(0, 600)}`);
+      }
       if (!isNetwork || attempt === retries) {
         logger.error(`[FOOD99] ${logContext || 'request'} → ${error.message}`);
         return { ok: false, status: error.response?.status || 0, error: error.message };
@@ -80,6 +100,7 @@ async function requestWithRetry({ method, url, env, params, data, timeout = DEFA
     await sleep(delay);
   }
 
+  logger.error(`[FOOD99 HTTP] ${reqId} esgotou ${retries + 1} tentativas`);
   return { ok: false, status: 0, error: lastError?.message || 'unknown error' };
 }
 

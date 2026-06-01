@@ -19,37 +19,45 @@ class Food99AuthService {
       throw new Error('FOOD99_CLIENT_ID ou FOOD99_CLIENT_SECRET não configurados nas variáveis de ambiente');
     }
 
+    logger.info(`[FOOD99 AUTH] requestAccessToken iniciando para shop=${appShopId}, clientId length=${clientId?.length}, clientSecret length=${clientSecret?.length}`);
+
     const result = await requestWithRetry({
       method: 'get',
       url: '/v1/auth/authtoken/get',
       params: { app_id: clientId, app_secret: clientSecret, app_shop_id: appShopId },
-      logContext: `Erro ao obter token (shop ${appShopId})`,
+      logContext: `get-token shop ${appShopId}`,
       retries: 2,
     });
 
     if (!result.ok) {
+      logger.error(`[FOOD99 AUTH] requestAccessToken falhou para shop ${appShopId}: status=${result.status} error=${result.error} data=${JSON.stringify(result.data)?.slice(0, 500)}`);
       throw new Error(result.error || 'Falha ao obter auth_token');
     }
 
     const data = result.data || {};
+    logger.info(`[FOOD99 AUTH] requestAccessToken retorno para shop ${appShopId}: dataKeys=${Object.keys(data).join(',')} hasAuthToken=${!!data.auth_token} hasExpTime=${!!data.token_expiration_time} dataPreview=${JSON.stringify(data).slice(0, 500)}`);
+
     const authToken = data.auth_token;
     const tokenExpirationTime = data.token_expiration_time;
 
     if (!authToken) {
-      throw new Error('auth_token não retornado pela API 99Food');
+      logger.error(`[FOOD99 AUTH] requestAccessToken: 99Food NÃO retornou auth_token. Resposta completa: ${JSON.stringify(data).slice(0, 800)}`);
+      throw new Error(`auth_token não retornado pela API 99Food (data keys: ${Object.keys(data).join(',') || 'vazio'})`);
     }
 
     const expiresAt = tokenExpirationTime
       ? new Date(tokenExpirationTime * 1000)
       : new Date(Date.now() + 6 * 60 * 60 * 1000);
 
-    logger.info(`[FOOD99 AUTH] Token para shop ${appShopId} expira em ${new Date(expiresAt).toISOString()}`);
+    logger.info(`[FOOD99 AUTH] Token para shop ${appShopId} obtido, expira em ${new Date(expiresAt).toISOString()} (tokenExpirationTime=${tokenExpirationTime})`);
 
     return { authToken, expiresAt, tokenExpirationTime };
   }
 
   async getValidToken(appShopId) {
     const { clientId, clientSecret, configured } = this._getCredentials();
+
+    logger.debug(`[FOOD99 AUTH] getValidToken chamado: shop=${appShopId} configured=${configured} clientIdLen=${clientId?.length || 0} secretLen=${clientSecret?.length || 0}`);
 
     if (!configured) {
       logger.error(`[FOOD99 AUTH] Credenciais do APP não configuradas - FOOD99_CLIENT_ID=${clientId ? 'OK' : 'MISSING'}, FOOD99_CLIENT_SECRET=${clientSecret ? 'OK' : 'MISSING'}`);
@@ -65,10 +73,16 @@ class Food99AuthService {
     const cacheEntry = this._tokenCache?.[appShopId];
 
     if (cacheEntry && cacheEntry.expiresAt && cacheEntry.expiresAt > now) {
+      const remainingSec = Math.round((cacheEntry.expiresAt - now) / 1000);
+      logger.debug(`[FOOD99 AUTH] Cache HIT para shop ${appShopId}, expira em ${remainingSec}s`);
       if ((cacheEntry.expiresAt - now) > 5 * 60 * 1000) {
         return cacheEntry.authToken;
       }
-      logger.info(`[FOOD99 AUTH] Token para shop ${appShopId} expirando em breve, renovando...`);
+      logger.info(`[FOOD99 AUTH] Token para shop ${appShopId} expirando em ${remainingSec}s, renovando...`);
+    } else if (cacheEntry) {
+      logger.info(`[FOOD99 AUTH] Cache EXPIRED para shop ${appShopId}, renovando...`);
+    } else {
+      logger.info(`[FOOD99 AUTH] Cache MISS para shop ${appShopId}, solicitando novo token...`);
     }
 
     const MIN_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
@@ -92,10 +106,12 @@ class Food99AuthService {
         lastRefreshAt: new Date(),
       };
 
+      logger.info(`[FOOD99 AUTH] Token cache atualizado para shop ${appShopId} (tokenLen=${result.authToken?.length})`);
       return this._tokenCache[appShopId].authToken;
     } catch (error) {
       const apiMsg = error.message;
       logger.error(`[FOOD99 AUTH] Erro ao obter token para shop ${appShopId}: ${apiMsg}`);
+      logger.error(`[FOOD99 AUTH] Stack: ${error.stack}`);
 
       if (apiMsg?.toLowerCase().includes('authorization') || apiMsg?.toLowerCase().includes('unauthorized')) {
         logger.error(`[FOOD99 AUTH] Loja ${appShopId} não autorizada na plataforma 99Food: ${apiMsg}`);
@@ -160,9 +176,11 @@ class Food99AuthService {
   }
 
   async checkConnectionStatus(appShopId = null) {
+    logger.info(`[FOOD99 AUTH] checkConnectionStatus chamado: appShopId=${appShopId}`);
     const probe = await this._probeCredentials();
 
     if (!probe.ok) {
+      logger.error(`[FOOD99 AUTH] checkConnectionStatus: probe FALHOU: ${probe.reason}`);
       return {
         connected: false,
         status: 'not_configured',
@@ -171,6 +189,7 @@ class Food99AuthService {
     }
 
     if (!appShopId) {
+      logger.info(`[FOOD99 AUTH] checkConnectionStatus: probe OK, sem appShopId, retornando 'ready'`);
       return {
         connected: true,
         status: 'ready',
@@ -179,6 +198,7 @@ class Food99AuthService {
     }
 
     const token = await this.getValidToken(appShopId);
+    logger.info(`[FOOD99 AUTH] checkConnectionStatus shop ${appShopId}: token obtito=${!!token} (tokenLen=${token?.length || 0})`);
     return {
       connected: !!token,
       status: token ? 'ready' : 'shop_unbound',
@@ -186,6 +206,40 @@ class Food99AuthService {
       message: token
         ? `Token ativo para shop ${appShopId}`
         : `Sem token válido para shop ${appShopId} (loja pode não estar vinculada)`,
+    };
+  }
+
+  /**
+   * Retorna estado atual para debug.
+   */
+  getDebugInfo() {
+    const creds = this._getCredentials();
+    const cache = this._tokenCache || {};
+    const cacheEntries = Object.entries(cache).map(([shopId, entry]) => ({
+      shopId,
+      tokenLength: entry.authToken?.length || 0,
+      expiresAt: entry.expiresAt?.toISOString(),
+      lastRefreshAt: entry.lastRefreshAt?.toISOString(),
+      expired: entry.expiresAt ? entry.expiresAt < new Date() : true,
+    }));
+
+    let pollingEnabled = false;
+    try {
+      const Polling = require('./Food99PollingService');
+      pollingEnabled = Polling.isEnabled();
+    } catch (e) { /* ignore */ }
+
+    return {
+      credentials: {
+        clientIdConfigured: !!creds.clientId,
+        clientIdLength: creds.clientId?.length || 0,
+        clientSecretConfigured: !!creds.clientSecret,
+        clientSecretLength: creds.clientSecret?.length || 0,
+      },
+      baseUrl: food99Config.getBaseUrl(),
+      tokenCache: cacheEntries,
+      pollingEnabled,
+      timestamp: new Date().toISOString(),
     };
   }
 

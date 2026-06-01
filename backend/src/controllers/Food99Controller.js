@@ -58,6 +58,28 @@ const getFood99ConnectionStatus = async (req, res) => {
   }
 };
 
+const getDebug = async (req, res) => {
+  try {
+    const settings = await prisma.integrationSettings.findUnique({
+      where: { restaurantId: req.restaurantId },
+    });
+    const debug = Food99AuthService.getDebugInfo();
+    res.json({
+      restaurantId: req.restaurantId,
+      settings: {
+        food99AppShopId: settings?.food99AppShopId,
+        food99MerchantId: settings?.food99MerchantId,
+        food99Env: settings?.food99Env,
+        food99IntegrationActive: settings?.food99IntegrationActive,
+      },
+      ...debug,
+    });
+  } catch (error) {
+    logger.error('[FOOD99 CTRL] Erro em getDebug:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const confirmFood99Order = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -187,9 +209,13 @@ const setConfirmMethod = async (req, res) => {
 
 const getShopDetail = async (req, res) => {
   try {
+    logger.info(`[FOOD99 CTRL] getShopDetail chamado: restaurantId=${req.restaurantId} userId=${req.userId}`);
+
     const settings = await prisma.integrationSettings.findUnique({
       where: { restaurantId: req.restaurantId },
     });
+
+    logger.info(`[FOOD99 CTRL] getShopDetail settings: appShopId=${settings?.food99AppShopId || 'AUSENTE'} env=${settings?.food99Env || 'production'} active=${settings?.food99IntegrationActive}`);
 
     if (!settings?.food99AppShopId) {
       return res.status(400).json({ error: 'App Shop ID não configurado' });
@@ -197,14 +223,16 @@ const getShopDetail = async (req, res) => {
 
     const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
     if (!token) {
+      logger.error(`[FOOD99 CTRL] getShopDetail: token não obtido para shop ${settings.food99AppShopId}`);
       return res.status(500).json({ error: 'Token não disponível' });
     }
 
     const result = await Food99AuthService.getShopDetail(token);
+    logger.info(`[FOOD99 CTRL] getShopDetail: sucesso, retornou ${JSON.stringify(result)?.slice(0, 200)}`);
     res.json(result);
   } catch (error) {
     logger.error('[FOOD99] Erro ao buscar detalhes da loja:', error);
-    res.status(500).json({ error: error.message || 'Erro ao buscar detalhes da loja' });
+    res.status(500).json({ error: 'Erro ao buscar detalhes da loja.' });
   }
 };
 
@@ -361,6 +389,7 @@ module.exports = {
   getFood99Settings,
   updateFood99Settings,
   getFood99ConnectionStatus,
+  getDebug,
   confirmFood99Order,
   rejectFood99Order,
   markFood99Ready,
