@@ -110,6 +110,11 @@ async handleWebhook(req, res) {
       const { orderId, code, id: eventId } = event;
       const eventType = code;
 
+      if (code === 'KEEPALIVE' || !code) {
+        logger.debug(`[IFOOD WEBHOOK] Evento ${eventId || 'sem id'} (${code || 'sem código'}) é keepalive/sem código, apenas acknowledge`);
+        continue;
+      }
+
       const alreadyProcessed = orderId ? await this._isEventProcessed(platform, orderId, eventType) : false;
       if (alreadyProcessed) {
         logger.info(`[IFOOD WEBHOOK] Evento ${orderId || eventId} (${eventType}) já processado, ignorando`);

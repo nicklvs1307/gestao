@@ -71,6 +71,15 @@ class Food99AuthService {
       logger.info(`[FOOD99 AUTH] Token para shop ${appShopId} expirando em breve, renovando...`);
     }
 
+    const MIN_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+    if (cacheEntry && cacheEntry.lastRefreshAt) {
+      const elapsed = now - cacheEntry.lastRefreshAt;
+      if (elapsed < MIN_REFRESH_INTERVAL_MS) {
+        logger.debug(`[FOOD99 AUTH] Refresh de token para shop ${appShopId} suprimido (último refresh há ${Math.round(elapsed / 1000)}s)`);
+        return cacheEntry.authToken;
+      }
+    }
+
     try {
       const result = await this.requestAccessToken(appShopId);
 
@@ -80,6 +89,7 @@ class Food99AuthService {
         authToken: result.authToken,
         expiresAt: result.expiresAt,
         tokenExpirationTime: result.tokenExpirationTime,
+        lastRefreshAt: new Date(),
       };
 
       return this._tokenCache[appShopId].authToken;
@@ -204,10 +214,19 @@ class Food99AuthService {
     }
 
     const data = result.data;
-    const url = Array.isArray(data) ? data[0] : (typeof data === 'string' ? data : null);
+    logger.info(`[FOOD99 AUTH] Resposta bruta de getAuthorizationUrl para shop ${appShopId}: ${JSON.stringify(data)?.slice(0, 300)}`);
 
-    if (!url) {
-      throw new Error('URL de autorização não retornada pela API 99Food');
+    let url = null;
+    if (Array.isArray(data)) {
+      url = data.find(v => typeof v === 'string' && v.startsWith('http')) || data[0];
+    } else if (typeof data === 'string' && data.startsWith('http')) {
+      url = data;
+    } else if (data && typeof data === 'object') {
+      url = data.url || data.authorization_url || data.authorizationUrl || data.link;
+    }
+
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+      throw new Error(`URL de autorização não retornada pela API 99Food (resposta: ${JSON.stringify(data)?.slice(0, 200)})`);
     }
 
     logger.info(`[FOOD99 AUTH] URL de autorização obtida para shop ${appShopId}`);

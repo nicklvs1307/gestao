@@ -101,7 +101,30 @@ class Food99PollingService {
     }
   }
 
+  _isRateLimitError(errmsg) {
+    if (!errmsg) return false;
+    const lower = String(errmsg).toLowerCase();
+    return lower.includes('frequency') ||
+           lower.includes('rate limit') ||
+           lower.includes('exceeds') ||
+           lower.includes('too many');
+  }
+
+  _healthCheckIntervalMs() {
+    return parseInt(process.env.FOOD99_HEALTH_CHECK_INTERVAL_MS, 10) || 10 * 60 * 1000;
+  }
+
   async _validateTokenHealth(token, appShopId, env) {
+    if (!this._lastHealthCheckAt) this._lastHealthCheckAt = {};
+    const now = Date.now();
+    const lastCheck = this._lastHealthCheckAt[appShopId] || 0;
+    const interval = this._healthCheckIntervalMs();
+
+    if (now - lastCheck < interval) {
+      logger.debug(`[FOOD99 POLLING] Health check suprimido para shop ${appShopId} (próximo em ${Math.round((interval - (now - lastCheck)) / 1000)}s)`);
+      return true;
+    }
+
     const result = await requestWithRetry({
       method: 'get',
       url: '/v1/shop/shop/detail',
@@ -111,11 +134,13 @@ class Food99PollingService {
       retries: 1,
     });
 
+    this._lastHealthCheckAt[appShopId] = Date.now();
+
     if (!result.ok) {
       const status = result.status;
       if (status === 401 || status === 403) return false;
-      if (status === 429) {
-        logger.warn('[FOOD99 POLLING] Rate limit no health check, considerando token válido');
+      if (status === 429 || this._isRateLimitError(result.error)) {
+        logger.warn(`[FOOD99 POLLING] Rate limit no health check, considerando token válido`);
         return true;
       }
       logger.error(`[FOOD99 POLLING] Erro no health check: ${result.error}`);
@@ -124,7 +149,12 @@ class Food99PollingService {
 
     const data = result.data;
     if (data && typeof data === 'object' && 'errno' in data && data.errno !== 0) {
-      logger.warn(`[FOOD99 POLLING] Health check falhou para shop ${appShopId}: ${data.errmsg || `errno ${data.errno}`}`);
+      const errmsg = data.errmsg || `errno ${data.errno}`;
+      if (this._isRateLimitError(errmsg)) {
+        logger.warn(`[FOOD99 POLLING] Rate limit detectado (${errmsg}), considerando token válido`);
+        return true;
+      }
+      logger.warn(`[FOOD99 POLLING] Health check falhou para shop ${appShopId}: ${errmsg}`);
       return false;
     }
 
