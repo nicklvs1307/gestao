@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const logger = require('../config/logger');
 const food99Config = require('../config/food99');
 const { requestWithRetry } = require('../lib/food99Client');
@@ -9,9 +8,9 @@ class Food99AuthService {
     return food99Config.getCredentials();
   }
 
-  _generateSign(appId, timestamp, secret) {
-    return crypto.createHash('md5').update(`${appId}${timestamp}${secret}`).digest('hex');
-  }
+  // _generateSign removido: o endpoint /v1/shop/shop/list exige sign MD5,
+  // mas a fórmula exata não está documentada no swagger. Todos os endpoints
+  // essenciais usam auth_token (não sign).
 
   async requestAccessToken(appShopId) {
     const { clientId, clientSecret } = this._getCredentials();
@@ -146,59 +145,20 @@ class Food99AuthService {
     return await this.getValidToken(appShopId);
   }
 
-  async _probeCredentials() {
-    const { clientId, clientSecret, configured } = this._getCredentials();
-    if (!configured) {
-      return { ok: false, reason: 'Credenciais do APP não configuradas no sistema' };
-    }
-
-    const timestamp = Math.floor(Date.now() / 1000);
-    const sign = this._generateSign(clientId, timestamp, clientSecret);
-
-    const result = await requestWithRetry({
-      method: 'post',
-      url: '/v1/shop/shop/list',
-      data: { app_id: clientId, timestamp, sign, page_no: 1, page_size: 1 },
-      logContext: 'Probe de credenciais 99Food (shop/list)',
-      retries: 1,
-    });
-
-    if (!result.ok) {
-      return { ok: false, reason: result.error || 'Falha no probe' };
-    }
-
-    const data = result.data;
-    if (data && typeof data === 'object' && 'errno' in data && data.errno !== 0) {
-      return { ok: false, reason: data.errmsg || `errno ${data.errno}` };
-    }
-
-    return { ok: true };
-  }
-
   async checkConnectionStatus(appShopId = null) {
     logger.info(`[FOOD99 AUTH] checkConnectionStatus chamado: appShopId=${appShopId}`);
-    const probe = await this._probeCredentials();
-
-    if (!probe.ok) {
-      logger.error(`[FOOD99 AUTH] checkConnectionStatus: probe FALHOU: ${probe.reason}`);
-      return {
-        connected: false,
-        status: 'not_configured',
-        message: probe.reason,
-      };
-    }
 
     if (!appShopId) {
-      logger.info(`[FOOD99 AUTH] checkConnectionStatus: probe OK, sem appShopId, retornando 'ready'`);
+      const { configured } = this._getCredentials();
       return {
-        connected: true,
-        status: 'ready',
-        message: 'Credenciais válidas na 99Food (app ativo)',
+        connected: false,
+        status: configured ? 'ready' : 'not_configured',
+        message: configured ? 'Credenciais configuradas, aguardando app_shop_id' : 'Credenciais do APP não configuradas',
       };
     }
 
     const token = await this.getValidToken(appShopId);
-    logger.info(`[FOOD99 AUTH] checkConnectionStatus shop ${appShopId}: token obtito=${!!token} (tokenLen=${token?.length || 0})`);
+    logger.info(`[FOOD99 AUTH] checkConnectionStatus shop ${appShopId}: token obtido=${!!token} (tokenLen=${token?.length || 0})`);
     return {
       connected: !!token,
       status: token ? 'ready' : 'shop_unbound',
@@ -288,27 +248,14 @@ class Food99AuthService {
   }
 
   async listShops(pageNo = 1, pageSize = 30) {
-    const { clientId, clientSecret, configured } = this._getCredentials();
+    const { configured } = this._getCredentials();
     if (!configured) {
       throw new Error('FOOD99_CLIENT_ID ou FOOD99_CLIENT_SECRET não configurados');
     }
 
-    const timestamp = Math.floor(Date.now() / 1000);
-    const sign = this._generateSign(clientId, timestamp, clientSecret);
-
-    const result = await requestWithRetry({
-      method: 'post',
-      url: '/v1/shop/shop/list',
-      data: { app_id: clientId, timestamp, sign, page_no: pageNo, page_size: pageSize },
-      logContext: `Erro ao listar lojas (página ${pageNo})`,
-      retries: 2,
-    });
-
-    if (!result.ok) {
-      throw new Error(result.error || 'Falha ao listar lojas');
-    }
-
-    return result.data;
+    // Endpoint /v1/shop/shop/list requer sign MD5 não documentado.
+    // Retorna erro amigável em vez de falhar com sign inválido.
+    throw new Error('Listagem de lojas indisponível (sign não documentado). Use o getShopDetail para verificar a loja vinculada.');
   }
 
   async setConfirmMethod(authToken, method = 2) {
