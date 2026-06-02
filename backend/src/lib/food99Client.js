@@ -6,7 +6,9 @@ const DEFAULT_TIMEOUT = 15000;
 const UPLOAD_TIMEOUT = 60000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 800;
+const RATE_LIMIT_DELAY_MS = 65000;
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const RATE_LIMIT_ERRNO = new Set([10005, 6]);
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -70,7 +72,27 @@ async function requestWithRetry({ method, url, env, params, data, timeout = DEFA
       logger.info(`[FOOD99 HTTP] <<< ${reqId} attempt=${attempt + 1}/${retries + 1} status=${response.status} ct=${response.headers?.['content-type']} body=${rawBodyStr?.slice(0, 600)}`);
 
       if (response.status >= 200 && response.status < 300) {
-        return { ok: true, status: response.status, data: unwrap(response) };
+        const unwrapped = unwrap(response);
+
+        // Detecta errno no body (99Food retorna HTTP 200 mesmo com erro)
+        if (unwrapped && typeof unwrapped === 'object' && 'errno' in unwrapped && unwrapped.errno !== 0) {
+          const errno = unwrapped.errno;
+          const isRateLimit = RATE_LIMIT_ERRNO.has(errno);
+          const isRetryableErrno = isRateLimit || errno === 10001; // 10001 = Data not exist (pode ser temporário)
+
+          if (isRateLimit && attempt < retries) {
+            logger.warn(`[FOOD99 HTTP] ${reqId} errno=${errno} (rate limit) — aguardando ${RATE_LIMIT_DELAY_MS / 1000}s antes do retry`);
+            await sleep(RATE_LIMIT_DELAY_MS);
+            continue;
+          }
+
+          if (!isRetryableErrno || attempt === retries) {
+            logger.warn(`[FOOD99] ${logContext || 'request'} → errno ${errno}: ${unwrapped.errmsg}`);
+            return { ok: false, status: response.status, error: unwrapped.errmsg || `errno ${errno}`, data: unwrapped };
+          }
+        }
+
+        return { ok: true, status: response.status, data: unwrapped };
       }
 
       const errMsg = extractError(response, `HTTP ${response.status}`);

@@ -99,6 +99,12 @@ class Food99MenuService {
 
     const data = result.data || {};
     const taskId = data.taskID || data.taskId;
+
+    if (!taskId) {
+      logger.error(`[FOOD99 MENU] Upload não retornou taskId. Resposta: ${JSON.stringify(data).slice(0, 300)}`);
+      throw new Error('Upload não retornou taskId (pode ter sido rate-limited ou rejeitado pela API)');
+    }
+
     logger.info(`[FOOD99 MENU] Cardápio enviado com sucesso (taskId=${taskId})`);
     return { success: true, taskId, data, imagesUploaded: imageMap.size };
   }
