@@ -110,10 +110,39 @@ class Food99AuthService {
     } catch (error) {
       const apiMsg = error.message;
       logger.error(`[FOOD99 AUTH] Erro ao obter token para shop ${appShopId}: ${apiMsg}`);
-      logger.error(`[FOOD99 AUTH] Stack: ${error.stack}`);
 
-      if (apiMsg?.toLowerCase().includes('authorization') || apiMsg?.toLowerCase().includes('unauthorized')) {
-        logger.error(`[FOOD99 AUTH] Loja ${appShopId} não autorizada na plataforma 99Food: ${apiMsg}`);
+      // Auto-refresh: se token expirou, tenta renovar e retry
+      if (apiMsg?.includes('expired') || apiMsg?.includes('10102')) {
+        logger.info(`[FOOD99 AUTH] Token expirado para shop ${appShopId}, tentando auto-refresh...`);
+        try {
+          const { clientId, clientSecret } = this._getCredentials();
+          await requestWithRetry({
+            method: 'get',
+            url: '/v1/auth/authtoken/refresh',
+            params: { app_id: clientId, app_secret: clientSecret, app_shop_id: appShopId },
+            logContext: `Auto-refresh token (shop ${appShopId})`,
+            retries: 1,
+          });
+
+          if (this._tokenCache?.[appShopId]) {
+            delete this._tokenCache[appShopId];
+          }
+
+          const retryResult = await this.requestAccessToken(appShopId);
+
+          if (!this._tokenCache) this._tokenCache = {};
+          this._tokenCache[appShopId] = {
+            authToken: retryResult.authToken,
+            expiresAt: retryResult.expiresAt,
+            tokenExpirationTime: retryResult.tokenExpirationTime,
+            lastRefreshAt: new Date(),
+          };
+
+          logger.info(`[FOOD99 AUTH] Auto-refresh OK para shop ${appShopId} (tokenLen=${retryResult.authToken?.length})`);
+          return retryResult.authToken;
+        } catch (retryError) {
+          logger.error(`[FOOD99 AUTH] Auto-refresh falhou para shop ${appShopId}: ${retryError.message}`);
+        }
       }
 
       return null;
