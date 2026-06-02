@@ -6,7 +6,7 @@ const UairangoMerchantService = require('../services/UairangoMerchantService');
 const SaiposImportService = require('../services/SaiposImportService');
 const IfoodOrderService = require('../services/IfoodOrderService');
 const IfoodAuthService = require('../services/IfoodAuthService');
-// Webhook handler removido - integração iFood agora usa polling (IfoodPollingService)
+// Webhook handler: iFood usa webhook como fonte primária de eventos
 
 const getSaiposSettings = async (req, res) => {
     try {

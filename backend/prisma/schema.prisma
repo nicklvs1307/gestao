@@ -389,6 +389,21 @@ model Invoice {
   @@index([restaurantId])
 }
 
+// === Fila de Retry para Emissão Fiscal ===
+model FiscalRetryQueue {
+  id            String   @id @default(cuid())
+  orderId       String
+  attempts      Int      @default(0)
+  lastError     String?  // Último erro encountered
+  status        String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  scheduledFor  DateTime @default(now()) // Quando tentar novamente
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
 // === MÓDULO FINANCEIRO ===
 
 model Supplier {
@@ -582,10 +597,15 @@ model IntegrationSettings {
   // ifoodClientId e ifoodClientSecret removidos — agora são variáveis de ambiente centralizadas (Docker secrets)
 
   // === CAMPOS 99FOOD ===
-  food99MerchantId         String?   // Merchant ID no portal 99Food
-  food99AppShopId          String?   // App Shop ID (identificador da loja no sistema externo)
-  food99IntegrationActive  Boolean   @default(false)
-  food99Env                String    @default("production") // "production" ou "homologation"
+  food99MerchantId           String?   // Merchant ID no portal 99Food
+  food99AppShopId            String?   // App Shop ID (identificador da loja no sistema externo)
+  food99IntegrationActive    Boolean   @default(false)
+  food99Env                  String    @default("production") // "production" ou "homologation"
+  food99AutoAcceptOrders     Boolean   @default(false) // Se true, confirma pedidos automaticamente ao receber via webhook
+  food99ConfirmMethod        Int       @default(2) // 1=BAPP (app da 99Food), 2=OPENAPI (seu sistema confirma)
+  food99AutoUploadImages     Boolean   @default(true) // Se true, faz upload de imageUrl do produto para 99Food no sync
+  food99ReceiveCancelApply   Int       @default(1) // 0=ignorar cancel_apply (CS da 99Food trata), 1=receber e notificar
+  food99ReceiveRefundApply   Int       @default(1) // 0=ignorar refund_apply, 1=receber e notificar
 
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
@@ -969,6 +989,9 @@ model Order {
   cancellationReason      String?   // Motivo do cancelamento (do cliente ou sistema)
   cancellationDeadline    DateTime? // Prazo para responder (5 minutos)
   cancellationSource      String?   // Origem: 'CUSTOMER', 'IFOOD', 'MERCHANT'
+
+  // === CAMPOS DE CONFIRMAÇÃO IFOOD ===
+  ifoodConfirmed          Boolean   @default(false) // Controle de confirmação duplicada
 
   // === CAMPOS DE DISPUTA (Handshake - pós-entrega) ===
   disputeId          String?    // ID da disputa no iFood

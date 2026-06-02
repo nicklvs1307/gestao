@@ -61,6 +61,13 @@ class IfoodOrderService {
       if (result.success === false) return result;
 
       ({ order } = result);
+
+      // Verificar se já foi confirmado anteriormente (evitar confirmação duplicada)
+      if (order.ifoodConfirmed) {
+        logger.info(`[IFOOD] Pedido ${orderId} já confirmado anteriormente, ignorando`);
+        return { success: true, alreadyConfirmed: true };
+      }
+
       const { token } = result;
 
       await axios.post(
@@ -77,7 +84,10 @@ class IfoodOrderService {
 
       await prisma.order.update({
         where: { id: orderId },
-        data: { status: 'PREPARING' }
+        data: { 
+          status: 'PREPARING',
+          ifoodConfirmed: true
+        }
       });
 
       return { success: true };

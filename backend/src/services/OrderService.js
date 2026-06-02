@@ -631,8 +631,10 @@ if (isPickup && !hasValidPhone) {
     const finalSubtotal = parseFloat(totals?.subtotal) || 0;
     const finalDiscount = parseFloat(totals?.discount) || 0;
     const finalDeliveryFee = parseFloat(totals?.deliveryFee) || 0;
-    // platformFee = total - subtotal - deliveryFee + discount (taxas da plataforma iFood, etc.)
-    const finalPlatformFee = money.subtract(finalTotal, money.add(finalSubtotal, money.subtract(finalDeliveryFee, finalDiscount)));
+    // platformFee: usar valor direto do adapter (additionalFees do iFood)
+    // Se não vier do adapter, calcular pela fórmula inversa
+    const finalPlatformFee = parseFloat(totals?.platformFee) || 
+      money.subtract(finalTotal, money.add(finalSubtotal, money.subtract(finalDeliveryFee, finalDiscount)));
 
     const order = await prisma.$transaction(async (tx) => {
       // Numeração diária (mesma lógica do PDV)
@@ -1633,8 +1635,117 @@ const resolvePaymentMethodName = (methodValue) => {
   }
 
   async _triggerAutomaticInvoice(order) {
-      logger.info(`[FISCAL] Analisando pedido #${order.id} para emissão automática...`);
-  }
+    try {
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({ 
+            where: { restaurantId: order.restaurantId } 
+        });
+        
+        if (!fiscalConfig) {
+            logger.info(`[FISCAL] Pedido #${order.id} - Sem configuração fiscal, pulando auto-emissão`);
+            return;
+        }
+        
+        if (fiscalConfig.emissionMode !== 'AUTOMATIC') {
+            logger.info(`[FISCAL] Pedido #${order.id} - Modo Manual configurado, pulando`);
+            return;
+        }
+        
+        if (fiscalConfig.environment === 'HOMOLOGACAO') {
+            logger.info(`[FISCAL] Pedido #${order.id} - Ambiente Homologação, pulando auto-emissão`);
+            return;
+        }
+        
+        if (!fiscalConfig.certificate || !fiscalConfig.certPassword) {
+            logger.warn(`[FISCAL] Pedido #${order.id} - Certificado não configurado`);
+            await this._queueForFiscalRetry(order.id, 'CERTIFICATE_NOT_CONFIGURED');
+            return;
+        }
+        
+        logger.info(`[FISCAL] Emitindo NFC-e automática para pedido #${order.id}...`);
+        
+        const orderWithItems = await prisma.order.findUnique({
+            where: { id: order.id },
+            include: { items: { include: { product: true } } }
+        });
+        
+        if (!orderWithItems || !orderWithItems.items.length) {
+            logger.error(`[FISCAL] Pedido #${order.id} - Sem itens`);
+            return;
+        }
+        
+        const lastInvoice = await prisma.invoice.findFirst({
+            where: { restaurantId: order.restaurantId },
+            orderBy: { number: 'desc' }
+        });
+        
+        const nextNumber = (lastInvoice?.number || 0) + 1;
+        const serie = 1;
+        
+        const FiscalService = require('./FiscalService');
+        const result = await FiscalService.autorizarNfce(
+            orderWithItems,
+            fiscalConfig,
+            orderWithItems.items,
+            nextNumber,
+            serie
+        );
+        
+        if (result.success) {
+            await prisma.invoice.create({
+                data: {
+                    restaurantId: order.restaurantId,
+                    orderId: order.id,
+                    type: 'NFCe',
+                    status: 'AUTHORIZED',
+                    number: nextNumber,
+                    series: serie,
+                    accessKey: result.accessKey,
+                    protocol: result.data?.protNFe?.infProt?.nProt || result.data?.nProt || null,
+                    xml: result.xml,
+                    issuedAt: new Date()
+                }
+            });
+            
+            logger.info(`[FISCAL] NFC-e #${nextNumber} autorizada para pedido #${order.id} - Chave: ${result.accessKey}`);
+            
+            const socket = require('../lib/socket');
+            socket.emitToRestaurant(order.restaurantId, 'fiscal:invoiceAuthorized', {
+                orderId: order.id,
+                accessKey: result.accessKey,
+                number: nextNumber
+            });
+        } else {
+            logger.error(`[FISCAL] Falha ao emitir NFC-e para #${order.id}: ${result.error}`);
+            await this._queueForFiscalRetry(order.id, result.error);
+            
+            const socket = require('../lib/socket');
+            socket.emitToRestaurant(order.restaurantId, 'fiscal:invoiceFailed', {
+                orderId: order.id,
+                error: result.error
+            });
+        }
+        
+    } catch (err) {
+        logger.error(`[FISCAL] Erro no trigger automático #${order.id}:`, err);
+        await this._queueForFiscalRetry(order.id, err.message);
+    }
+}
+
+async _queueForFiscalRetry(orderId, error) {
+    try {
+        await prisma.fiscalRetryQueue.create({
+            data: {
+                orderId,
+                lastError: error?.substring(0, 500) || 'Unknown error',
+                status: 'PENDING',
+                attempts: 0,
+                scheduledFor: new Date()
+            }
+        });
+    } catch (e) {
+        logger.error('[FISCAL] Falha ao criar entrada na fila de retry:', e);
+    }
+}
 }
 
 module.exports = new OrderService();

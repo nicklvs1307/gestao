@@ -15,30 +15,12 @@ class IfoodPollingService {
 
 /**
     * Inicia o cron job de polling de eventos do iFood.
-    * Polling é apenas FALLBACK - webhook é o primário.
-    * Verifica via IntegrationEvent se webhook já processou antes de agir.
+    * DESABILITADO: webhook é a única fonte de eventos.
+    * Este método não deve mais ser chamado.
     */
   init() {
-    logger.info('[IFOOD POLLING] Modo FALLBACK ativado - apenas backup do webhook');
-
-    this.pollingJob = cron.schedule('*/30 * * * * *', async () => {
-      if (this.isPolling) {
-        logger.debug('[IFOOD POLLING] Polling anterior ainda em execução, pulando...');
-        return;
-      }
-
-      this.isPolling = true;
-
-      try {
-        await this.pollEvents();
-      } catch (error) {
-        logger.error('[IFOOD POLLING] Erro geral no polling:', error.message);
-      } finally {
-        this.isPolling = false;
-      }
-    });
-
-    logger.info('[IFOOD POLLING] Serviço de polling iniciado (fallback a cada 30 segundos)');
+    logger.warn('[IFOOD POLLING] DESABILITADO - webhook é a única fonte de eventos. Polling não será iniciado.');
+    // Não inicia mais o polling - webhook é a fonte primária
   }
 
   /**

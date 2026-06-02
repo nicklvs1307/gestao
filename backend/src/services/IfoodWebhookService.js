@@ -15,6 +15,10 @@ class IfoodWebhookService {
     this._isProcessing = false;
     this.adapter = IfoodOrderAdapter;
     this._processedEventIds = [];
+    // Configuração de batch para ACK
+    this.ACK_BATCH_SIZE = 100; // Tamanho do lote para ACK
+    this.ACK_DELAY_MS = 1000; // Delay antes de enviar ACK em lote
+    this._ackTimeout = null;
   }
 
   /**
@@ -128,20 +132,46 @@ async handleWebhook(req, res) {
 
     this._processQueue();
 
+    // ACK em lote: agrupar eventos e enviar em batch dinâmico
     if (this._processedEventIds.length > 0) {
-      // Enviar em batches de no máximo 2000 para evitar memory leak
-      const idsToAck = this._processedEventIds.splice(0, 2000);
-      this._sendDelayedAcknowledgment(idsToAck);
+      // Se já tem timeout agendado, cancelar (agrupar mais eventos)
+      if (this._ackTimeout) {
+        clearTimeout(this._ackTimeout);
+      }
+      
+      // Agendar envio em lote com delay para agrupar mais eventos
+      this._ackTimeout = setTimeout(() => {
+        this._sendBatchAcknowledgment();
+      }, this.ACK_DELAY_MS);
     }
   }
 
-  async _sendDelayedAcknowledgment(eventIds) {
-    setTimeout(async () => {
+  /**
+   * Envia ACK em lote de forma dinâmica.
+   * Agrupa eventos e envia em batches configuráveis.
+   */
+  async _sendBatchAcknowledgment() {
+    if (this._processedEventIds.length === 0) {
+      return;
+    }
+
+    // Extrair IDs em lote
+    const idsToAck = this._processedEventIds.splice(0, this.ACK_BATCH_SIZE);
+    
+    if (idsToAck.length > 0) {
       const token = await IfoodAuthService.getValidToken();
       if (token) {
-        await this.sendAcknowledgment(token, eventIds);
+        await this.sendAcknowledgment(token, idsToAck);
+        logger.info(`[IFOOD WEBHOOK] ACK enviado para ${idsToAck.length} evento(s) em lote`);
       }
-    }, 2000);
+    }
+
+    // Se ainda há eventos pendentes, agendar próximo lote
+    if (this._processedEventIds.length > 0) {
+      this._ackTimeout = setTimeout(() => {
+        this._sendBatchAcknowledgment();
+      }, this.ACK_DELAY_MS);
+    }
   }
 
   /**

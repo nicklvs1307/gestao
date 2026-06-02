@@ -6,7 +6,6 @@ const socketLib = require('../lib/socket');
 const { format, parse } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
 const IfoodAuthService = require('./IfoodAuthService');
-const IfoodPollingService = require('./IfoodPollingService');
 const UairangoPollingService = require('./UairangoPollingService');
 const Food99PollingService = require('./Food99PollingService');
 
@@ -165,13 +164,8 @@ class JobService {
 
     this.jobs.push({ name: 'IfoodTokenRefresh', job: ifoodTokenRefreshJob });
 
-    // Iniciar polling de eventos do iFood
-    try {
-      IfoodPollingService.init();
-      logger.info('[JobService] iFood Polling Service iniciado com sucesso.');
-    } catch (error) {
-      logger.error('[JobService] Erro ao iniciar iFood Polling Service:', error);
-    }
+    // iFood: polling DESABILITADO - webhook é a única fonte de eventos
+    logger.info('[JobService] iFood Polling DESABILITADO - webhook é a única fonte de eventos');
 
     // Iniciar polling de pedidos do Uai Rangô
     try {

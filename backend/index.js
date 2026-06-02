@@ -214,7 +214,7 @@ const superAdminRoutes = require('./src/routes/superAdminRoutes');
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 const whatsappRoutes = require('./src/routes/whatsappRoutes');
 const printLayoutRoutes = require('./src/routes/printLayoutRoutes');
-// ifoodRoutes removido - integração iFood agora usa polling (IfoodPollingService) ao invés de webhook
+// ifood: webhook é a única fonte de eventos (polling desabilitado)
 
 // SuperAdmin / Admin Role Management Alias
 const SuperAdminController = require('./src/controllers/SuperAdminController');
@@ -258,7 +258,7 @@ app.use('/api/delivery-areas', deliveryAreaRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
-// Rota /api/ifood removida - integração iFood agora usa polling ativo ao invés de webhook passivo
+// iFood: webhook é a fonte primária de eventos
 
 // KDS Alias
 const OrderController = require('./src/controllers/OrderController');

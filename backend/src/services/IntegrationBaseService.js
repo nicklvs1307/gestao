@@ -66,7 +66,17 @@ class IntegrationBaseService {
       });
 
       if (result && !result.isReplayed) {
-        await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
+        // Verificar se já foi confirmado antes (evitar confirmação duplicada)
+        if (result.order && !result.order.ifoodConfirmed) {
+          await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
+          // Marcar como confirmado para evitar futuras duplicações
+          await prisma.order.update({
+            where: { id: result.order.id },
+            data: { ifoodConfirmed: true }
+          });
+        } else {
+          logger.info(`[${this.platform.toUpperCase()}] Pedido ${platformOrderId} já confirmado, ignorando confirmação duplicada`);
+        }
       }
 
       return result;

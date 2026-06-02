@@ -154,7 +154,7 @@ describe('IfoodOrderAdapter.parseOrder', () => {
         orderType: 'DELIVERY',
         items: [{ id: 'item_1', name: 'X-Burger', quantity: 1, unitPrice: 20.00, totalPrice: 20.00 }],
         payments: { prepaid: 0, pending: 23.00, methods: [{ type: 'OFFLINE', method: 'CASH', value: 23.00 }] },
-        total: { subTotal: 20.00, deliveryFee: 5.00, discount: 2.00, orderAmount: 23.00 },
+        total: { subTotal: 20.00, deliveryFee: 5.00, benefits: 2.00, orderAmount: 23.00 },
       };
 
       const result = adapter.parseOrder(rawData, 'rest_123');
@@ -220,8 +220,8 @@ describe('IfoodOrderAdapter.parseOrder', () => {
             unitPrice: 45.00,
             totalPrice: 45.00,
             observations: 'Sem cebola',
-            subItems: [
-              { name: 'Borda Recheada', price: 5.00, totalPrice: 5.00, quantity: 1 }
+            options: [
+              { name: 'Borda Recheada', unitPrice: 5.00, totalPrice: 5.00, quantity: 1 }
             ]
           }
         ],
@@ -232,7 +232,7 @@ describe('IfoodOrderAdapter.parseOrder', () => {
             { type: 'ONLINE', method: 'PIX', value: 55.00 }
           ]
         },
-        total: { subTotal: 50.00, deliveryFee: 5.00, discount: 0, orderAmount: 55.00 },
+        total: { subTotal: 50.00, deliveryFee: 5.00, benefits: 0, orderAmount: 55.00 },
         delivery: {
           deliveryAddress: {
             formattedAddress: 'Rua Teste, 123',

@@ -171,8 +171,10 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     } : null;
 
     // ─── TOTAIS ───────────────────────────────────────────────────
+    // CORREÇÃO: iFood retorna totalPrice já multiplicado por quantity
+    // Não devemos multiplicar novamente para evitar duplicação de valores
     const subtotal = rawData?.total?.subTotal || 
-      rawItems.reduce((sum, item) => sum + ((item.totalPrice || item.unitPrice || 0) * (item.quantity || 1)), 0);
+      rawItems.reduce((sum, item) => sum + (item.totalPrice || item.unitPrice || 0), 0);
     const deliveryFee = rawData?.total?.deliveryFee || rawData?.deliveryFee || 0;
     const additionalFees = rawData?.total?.additionalFees || rawData?.additionalFees || 0;
     const benefitsAmount = rawData?.total?.benefits || 0;
