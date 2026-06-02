@@ -42,6 +42,14 @@ const checkAdmin = (req, res, next) => {
   }
 };
 
+const checkSuperAdmin = (req, res, next) => {
+  if (!req.user) return res.status(401).json({ error: 'Autenticação necessária.' });
+  if (req.user.isSuperAdmin || req.user.role === 'superadmin') {
+    return next();
+  }
+  return res.status(403).json({ error: 'Acesso negado. Requer privilégios de super-admin.' });
+};
+
 const setRestaurantId = async (req, res, next) => {
   const requestedRestaurantId = req.headers['x-restaurant-id'] || req.query.restaurantId;
 
@@ -94,6 +102,7 @@ module.exports = {
   authenticateToken,
   checkPermission,
   checkAdmin,
+  checkSuperAdmin,
   setRestaurantId,
   needsAuth,
   needsAdmin
