@@ -266,7 +266,7 @@ exports.getInvoiceById = async (req, res) => {
     }
 };
 
-// Cancelar/Inutilizar NFC-e
+// Cancelar NFC-e (Evento 110110 via NFeRecepcaoEvento4)
 exports.cancelInvoice = async (req, res) => {
     const { restaurantId } = req;
     const { invoiceId, reason } = req.body;
@@ -296,19 +296,17 @@ exports.cancelInvoice = async (req, res) => {
             return res.status(400).json({ error: 'Certificado não configurado.' });
         }
 
-        // Chama serviço de cancelamento
         const result = await FiscalService.cancelNfce(invoice, fiscalConfig, reason);
 
         if (result.success) {
             await prisma.invoice.update({
                 where: { id: invoiceId },
-                data: { 
+                data: {
                     status: 'CANCELED',
                     errorMessage: `Cancelada: ${reason} - Protocolo: ${result.protocol}`,
                     updatedAt: new Date()
                 }
             });
-            
             logger.info(`NFC-e ${invoice.number} cancelada com sucesso. Protocolo: ${result.protocol}`);
             res.json({ success: true, message: 'NFC-e cancelada com sucesso!', protocol: result.protocol });
         } else {
@@ -317,6 +315,117 @@ exports.cancelInvoice = async (req, res) => {
     } catch (error) {
         logger.error('Erro ao cancelar NFC-e:', error);
         res.status(500).json({ error: 'Erro ao processar cancelamento.' });
+    }
+};
+
+// Inutilizar numeração de NFC-e
+exports.inutilizeInvoice = async (req, res) => {
+    const { restaurantId } = req;
+    const { nNFInicio, nNFFim, reason } = req.body;
+
+    if (!nNFInicio || !nNFFim || !reason) {
+        return res.status(400).json({ error: 'Número inicial, final e motivo são obrigatórios.' });
+    }
+
+    try {
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({
+            where: { restaurantId }
+        });
+
+        if (!fiscalConfig?.certificate) {
+            return res.status(400).json({ error: 'Certificado não configurado.' });
+        }
+
+        const result = await FiscalService.inutilizarNfce(fiscalConfig, parseInt(nNFInicio), parseInt(nNFFim), reason);
+
+        if (result.success) {
+            logger.info(`Numeração ${nNFInicio}-${nNFFim} inutilizada. Protocolo: ${result.protocol}`);
+            res.json({ success: true, message: 'Numeração inutilizada com sucesso!', protocol: result.protocol });
+        } else {
+            res.status(400).json({ error: result.error });
+        }
+    } catch (error) {
+        logger.error('Erro ao inutilizar numeração:', error);
+        res.status(500).json({ error: 'Erro ao processar inutilização.' });
+    }
+};
+
+// Carta de Correção
+exports.sendCartaCorrecao = async (req, res) => {
+    const { restaurantId } = req;
+    const { invoiceId, corrections } = req.body;
+
+    if (!invoiceId || !corrections) {
+        return res.status(400).json({ error: 'ID da nota e correções são obrigatórios.' });
+    }
+
+    try {
+        const invoice = await prisma.invoice.findFirst({
+            where: { id: invoiceId, restaurantId }
+        });
+
+        if (!invoice) {
+            return res.status(404).json({ error: 'Nota não encontrada.' });
+        }
+
+        if (invoice.status !== 'AUTHORIZED') {
+            return res.status(400).json({ error: 'Apenas notas autorizadas podem receber carta de correção.' });
+        }
+
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({
+            where: { restaurantId }
+        });
+
+        if (!fiscalConfig?.certificate) {
+            return res.status(400).json({ error: 'Certificado não configurado.' });
+        }
+
+        const result = await FiscalService.cartaCorrecao(invoice, fiscalConfig, corrections);
+
+        if (result.success) {
+            const currentCount = invoice.ccorrectionCount || 0;
+            await prisma.invoice.update({
+                where: { id: invoiceId },
+                data: {
+                    ccorrectionCount: currentCount + 1,
+                    lastCorrection: corrections,
+                    updatedAt: new Date()
+                }
+            });
+            logger.info(`Carta de correção enviada para NFC-e ${invoice.number}. Protocolo: ${result.protocol}`);
+            res.json({ success: true, message: 'Carta de correção enviada com sucesso!', protocol: result.protocol });
+        } else {
+            res.status(400).json({ error: result.error });
+        }
+    } catch (error) {
+        logger.error('Erro ao enviar carta de correção:', error);
+        res.status(500).json({ error: 'Erro ao processar carta de correção.' });
+    }
+};
+
+// Status do Rate Limit
+exports.getRateLimitStatus = async (req, res) => {
+    const { restaurantId } = req;
+    try {
+        const config = await prisma.restaurantFiscalConfig.findUnique({ where: { restaurantId } });
+        if (!config?.cnpj) return res.json({ count: 0, threshold: FiscalService.REJECTION_THRESHOLD });
+
+        const cnpj = config.cnpj.replace(/\D/g, '');
+        const counter = FiscalService.rejectionCounters.get(cnpj);
+        const now = Date.now();
+
+        if (!counter || now - counter.firstRejectionAt > FiscalService.REJECTION_WINDOW_MS) {
+            return res.json({ count: 0, threshold: FiscalService.REJECTION_THRESHOLD, windowMs: FiscalService.REJECTION_WINDOW_MS });
+        }
+
+        res.json({
+            count: counter.count,
+            threshold: FiscalService.REJECTION_THRESHOLD,
+            firstRejectionAt: new Date(counter.firstRejectionAt).toISOString(),
+            windowMs: FiscalService.REJECTION_WINDOW_MS
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao verificar rate limit.' });
     }
 };
 

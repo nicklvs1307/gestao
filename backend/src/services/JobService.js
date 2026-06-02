@@ -192,6 +192,22 @@ class JobService {
       logger.info('[JobService] 99Food Polling Service DESABILITADO (FOOD99_POLLING_ENABLED != true). Webhook é a única fonte de pedidos.');
     }
 
+    // Cron Job para Fila de Retry Fiscal (a cada 2 minutos)
+    let isRunningFiscalQueue = false;
+    const fiscalQueueJob = cron.schedule('*/2 * * * *', async () => {
+      if (isRunningFiscalQueue) return;
+      try {
+        isRunningFiscalQueue = true;
+        const FiscalQueueService = require('./FiscalQueueService');
+        await FiscalQueueService.processQueue();
+      } catch (error) {
+        logger.error('[JobService] Erro ao processar fila fiscal:', error);
+      } finally {
+        isRunningFiscalQueue = false;
+      }
+    });
+    this.jobs.push({ name: 'FiscalRetryQueue', job: fiscalQueueJob });
+
     logger.info('[JobService] Tarefas agendadas com sucesso.');
   }
 }

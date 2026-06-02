@@ -379,6 +379,9 @@ model Invoice {
   xmlUrl        String?  // URL para baixar o XML
   pdfUrl        String?  // URL para o DANFE/Cupom
   errorMessage  String?  // Retorno de erro da SEFAZ
+  attemptLog    Json?    // Histórico de tentativas [{attempt, timestamp, error, status}]
+  ccorrectionCount Int @default(0) // Número de cartas de correção enviadas
+  lastCorrection  String? // Última correção aplicada
 
   issuedAt      DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -402,6 +405,21 @@ model FiscalRetryQueue {
 
   @@index([orderId])
   @@index([status])
+}
+
+// === Log de Auditoria Fiscal ===
+model FiscalAuditLog {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  action        String   // AUTORIZACAO, CANCELAMENTO, INUTILIZACAO, CARTA_CORRECAO
+  requestXml    String?  // XML enviado (truncado 2000 chars)
+  responseXml   String?  // Resposta SEFAZ (truncada 2000 chars)
+  statusCode    String?  // HTTP status code
+  durationMs    Int?     // Tempo de resposta em ms
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId])
+  @@index([action])
 }
 
 // === MÓDULO FINANCEIRO ===

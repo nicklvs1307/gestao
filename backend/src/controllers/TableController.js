@@ -333,14 +333,98 @@ class TableController {
     res.status(201).json({ success: true, request: tableRequest });
   });
 
-  // Helper privado para emissão fiscal
+  // Helper privado para emissão fiscal (sincronizado com OrderService._triggerAutomaticInvoice)
   async _triggerFiscalEmission(restaurantId, orders) {
-    const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({ where: { restaurantId } });
-    if (fiscalConfig?.emissionMode === 'AUTOMATIC') {
-        const FiscalService = require('../services/FiscalService');
-        for (const order of orders) {
-            await FiscalService.autorizarNfce(order, fiscalConfig, order.items);
+    try {
+        const fiscalConfig = await prisma.restaurantFiscalConfig.findUnique({ where: { restaurantId } });
+        if (!fiscalConfig) return;
+        if (fiscalConfig.emissionMode !== 'AUTOMATIC') return;
+        if (fiscalConfig.environment === 'HOMOLOGACAO') return;
+        if (!fiscalConfig.certificate || !fiscalConfig.certPassword) {
+            logger.warn(`[FISCAL TABLE] Restaurante ${restaurantId} - Certificado não configurado`);
+            return;
         }
+
+        const FiscalService = require('../services/FiscalService');
+        const socketLib = require('../lib/socket');
+
+        for (const order of orders) {
+            try {
+                const orderWithItems = await prisma.order.findUnique({
+                    where: { id: order.id },
+                    include: { items: { include: { product: true } } }
+                });
+                if (!orderWithItems || !orderWithItems.items.length) continue;
+
+                const lastInvoice = await prisma.invoice.findFirst({
+                    where: { restaurantId },
+                    orderBy: { number: 'desc' }
+                });
+                const nextNumber = (lastInvoice?.number || 0) + 1;
+                const serie = 1;
+
+                const result = await FiscalService.autorizarNfce(orderWithItems, fiscalConfig, orderWithItems.items, nextNumber, serie);
+
+                if (result.success) {
+                    const body = result.data?.['soap:Envelope']?.['soap:Body'] || result.data?.['Envelope']?.['Body'];
+                    const retEnvi = body?.['nfeResultMsg']?.['retEnviNFe'] || body?.['retEnviNFe'];
+                    const protNFe = retEnvi?.protNFe?.infProt || retEnvi?.protNFe;
+                    const cStat = protNFe?.cStat;
+
+                    if (cStat === 100 || cStat === 150 || cStat === '100' || cStat === '150') {
+                        await prisma.invoice.create({
+                            data: {
+                                restaurantId,
+                                orderId: order.id,
+                                type: 'NFCe',
+                                status: 'AUTHORIZED',
+                                number: nextNumber,
+                                series: serie,
+                                accessKey: result.accessKey,
+                                xml: result.xml,
+                                protocol: protNFe?.nProt?.toString(),
+                                issuedAt: new Date()
+                            }
+                        });
+                        socketLib.emitToRestaurant(restaurantId, 'fiscal:invoiceAuthorized', {
+                            orderId: order.id, accessKey: result.accessKey, number: nextNumber
+                        });
+                    } else {
+                        const motivo = protNFe?.xMotivo || 'Erro na autorização SEFAZ';
+                        await this._queueForFiscalRetry(order.id, `[${cStat}] ${motivo}`);
+                        socketLib.emitToRestaurant(restaurantId, 'fiscal:invoiceFailed', {
+                            orderId: order.id, error: motivo
+                        });
+                    }
+                } else {
+                    await this._queueForFiscalRetry(order.id, result.error);
+                    socketLib.emitToRestaurant(restaurantId, 'fiscal:invoiceFailed', {
+                        orderId: order.id, error: result.error
+                    });
+                }
+            } catch (err) {
+                logger.error(`[FISCAL TABLE] Erro ao emitir nota para pedido ${order.id}:`, err);
+                await this._queueForFiscalRetry(order.id, err.message);
+            }
+        }
+    } catch (error) {
+        logger.error(`[FISCAL TABLE] Erro no trigger fiscal para restaurante ${restaurantId}:`, error);
+    }
+  }
+
+  async _queueForFiscalRetry(orderId, error) {
+    try {
+        await prisma.fiscalRetryQueue.create({
+            data: {
+                orderId,
+                lastError: error?.substring(0, 500) || 'Unknown error',
+                status: 'PENDING',
+                attempts: 0,
+                scheduledFor: new Date()
+            }
+        });
+    } catch (e) {
+        logger.error('[FISCAL TABLE] Falha ao criar entrada na fila de retry:', e);
     }
   }
 }
