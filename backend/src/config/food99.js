@@ -8,6 +8,22 @@ const PAY_TYPE_MAP = {
   2: { rawMethod: 'CASH', isPrepaid: false },
   3: { rawMethod: 'MEAL_VOUCHER', isPrepaid: false },
   4: { rawMethod: 'PIX', isPrepaid: true },
+  // Nota: 5+ não estão documentados no swagger atual.
+  // Adicione aqui quando a 99Food introduzir novos pay_types.
+};
+
+// Mapeamento explícito de errno codes conhecidos (99Food)
+// 0 = sucesso, demais = erro
+const ERRNO_MAP = {
+  0: { code: 'OK', severity: 'info' },
+  1: { code: 'PARAM_ERROR', severity: 'warn' },
+  2: { code: 'AUTH_FAILED', severity: 'error' },
+  3: { code: 'PERMISSION_DENIED', severity: 'error' },
+  5: { code: 'INVALID_REQUEST', severity: 'warn' },
+  6: { code: 'RATE_LIMIT', severity: 'warn' },
+  7: { code: 'RESOURCE_NOT_FOUND', severity: 'warn' },
+  100: { code: 'SERVER_ERROR', severity: 'error' },
+  101: { code: 'SERVICE_UNAVAILABLE', severity: 'error' },
 };
 
 const DELIVERY_TYPE_MAP = {
@@ -37,8 +53,14 @@ function getCredentials() {
 function mapPayType(payType) {
   const found = PAY_TYPE_MAP[payType];
   if (found) return found;
-  logger.warn(`[FOOD99] pay_type não mapeado: ${payType}, usando ONLINE_PAID`);
-  return { rawMethod: 'ONLINE_PAID', isPrepaid: true };
+  // Fallback seguro: CASH (não pré-pago) para evitar marcar como pago o que não foi
+  logger.warn(`[FOOD99] pay_type não mapeado: ${payType}, usando CASH (fallback seguro)`);
+  return { rawMethod: 'CASH', isPrepaid: false };
+}
+
+function mapErrno(errno) {
+  const n = Number(errno);
+  return ERRNO_MAP[n] || { code: `UNKNOWN_${n}`, severity: 'error' };
 }
 
 function mapDeliveryType(deliveryType) {
@@ -56,9 +78,11 @@ module.exports = {
   PAY_TYPE_MAP,
   DELIVERY_TYPE_MAP,
   MENU_TASK_STATUS_MAP,
+  ERRNO_MAP,
   getBaseUrl,
   getCredentials,
   mapPayType,
   mapDeliveryType,
   mapMenuTaskStatus,
+  mapErrno,
 };

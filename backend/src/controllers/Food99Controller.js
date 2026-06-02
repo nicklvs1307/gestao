@@ -3,6 +3,8 @@ const logger = require('../config/logger');
 const Food99AuthService = require('../services/Food99AuthService');
 const Food99OrderAdapter = require('../services/Food99OrderAdapter');
 const Food99MenuService = require('../services/Food99MenuService');
+const Food99ImageService = require('../services/Food99ImageService');
+const Food99DeliveryAreaService = require('../services/Food99DeliveryAreaService');
 
 const getFood99Settings = async (req, res) => {
   try {
@@ -385,6 +387,220 @@ const handleRefundApply = async (req, res) => {
   }
 };
 
+// ============================================================================
+// ATUALIZAÇÃO EM LOTE DE ITENS
+// ============================================================================
+
+const updateItemStatusBatch = async (req, res) => {
+  try {
+    const { integrationCodes, available } = req.body;
+    if (!Array.isArray(integrationCodes) || integrationCodes.length === 0 || available === undefined) {
+      return res.status(400).json({ error: 'integrationCodes (array) e available são obrigatórios' });
+    }
+
+    const result = await Food99MenuService.updateItemStatusBatch(
+      req.restaurantId,
+      integrationCodes,
+      available
+    );
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao atualizar status dos itens em lote:', error);
+    res.status(500).json({ error: error.message || 'Erro ao atualizar status dos itens' });
+  }
+};
+
+// ============================================================================
+// IMAGENS
+// ============================================================================
+
+const uploadImage = async (req, res) => {
+  try {
+    const { imageUrl, ext } = req.body;
+    if (!imageUrl) {
+      return res.status(400).json({ error: 'imageUrl é obrigatório' });
+    }
+
+    const result = await Food99ImageService.uploadFromUrl(req.restaurantId, imageUrl, ext);
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao enviar imagem:', error);
+    res.status(500).json({ error: error.message || 'Erro ao enviar imagem' });
+  }
+};
+
+const listImages = async (req, res) => {
+  try {
+    const { currentPage, pageSize, giftUrl, ext } = req.query;
+    const result = await Food99ImageService.list(req.restaurantId, {
+      currentPage: currentPage ? parseInt(currentPage) : undefined,
+      pageSize: pageSize ? parseInt(pageSize) : undefined,
+      giftUrl,
+      ext,
+    });
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao listar imagens:', error);
+    res.status(500).json({ error: error.message || 'Erro ao listar imagens' });
+  }
+};
+
+// ============================================================================
+// ÁREAS DE ENTREGA
+// ============================================================================
+
+const addDeliveryArea = async (req, res) => {
+  try {
+    const { areaType, radius, points, avgDeliveryEta, enableTimeList, price } = req.body;
+
+    const result = await Food99DeliveryAreaService.add(req.restaurantId, {
+      areaType,
+      radius,
+      points,
+      avgDeliveryEta,
+      enableTimeList,
+      price,
+    });
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao adicionar área de entrega:', error);
+    res.status(500).json({ error: error.message || 'Erro ao adicionar área de entrega' });
+  }
+};
+
+const listDeliveryAreas = async (req, res) => {
+  try {
+    const result = await Food99DeliveryAreaService.list(req.restaurantId);
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao listar áreas de entrega:', error);
+    res.status(500).json({ error: error.message || 'Erro ao listar áreas de entrega' });
+  }
+};
+
+const updateDeliveryArea = async (req, res) => {
+  try {
+    const { areaIds, areaType, radius, points, avgDeliveryEta, enableTimeList, price } = req.body;
+
+    if (!Array.isArray(areaIds) || areaIds.length === 0) {
+      return res.status(400).json({ error: 'areaIds (array não vazio) é obrigatório' });
+    }
+
+    const result = await Food99DeliveryAreaService.update(req.restaurantId, areaIds, {
+      areaType,
+      radius,
+      points,
+      avgDeliveryEta,
+      enableTimeList,
+      price,
+    });
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao atualizar área de entrega:', error);
+    res.status(500).json({ error: error.message || 'Erro ao atualizar área de entrega' });
+  }
+};
+
+const deleteDeliveryArea = async (req, res) => {
+  try {
+    const { areaIds } = req.body;
+
+    if (!Array.isArray(areaIds) || areaIds.length === 0) {
+      return res.status(400).json({ error: 'areaIds (array não vazio) é obrigatório' });
+    }
+
+    const result = await Food99DeliveryAreaService.delete(req.restaurantId, areaIds);
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao deletar área de entrega:', error);
+    res.status(500).json({ error: error.message || 'Erro ao deletar área de entrega' });
+  }
+};
+
+const updateDeliveryAreaPrice = async (req, res) => {
+  try {
+    const { price, avgDeliveryEta } = req.body;
+
+    if (price === undefined || avgDeliveryEta === undefined) {
+      return res.status(400).json({ error: 'price e avgDeliveryEta são obrigatórios' });
+    }
+
+    const result = await Food99DeliveryAreaService.updatePriceAndEta(
+      req.restaurantId,
+      price,
+      avgDeliveryEta
+    );
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao atualizar preço/ETA:', error);
+    res.status(500).json({ error: error.message || 'Erro ao atualizar preço/ETA' });
+  }
+};
+
+// ============================================================================
+// NOTIFICAÇÕES DE SOLICITAÇÕES (cancel/refund apply)
+// ============================================================================
+
+const setApplyNotifications = async (req, res) => {
+  try {
+    const { receiveCancelApply, receiveRefundApply } = req.body;
+
+    if (receiveCancelApply === undefined && receiveRefundApply === undefined) {
+      return res.status(400).json({ error: 'Pelo menos um dos campos receiveCancelApply ou receiveRefundApply é obrigatório' });
+    }
+
+    const settings = await prisma.integrationSettings.findUnique({
+      where: { restaurantId: req.restaurantId },
+    });
+
+    if (!settings?.food99AppShopId) {
+      return res.status(400).json({ error: 'App Shop ID não configurado' });
+    }
+
+    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
+    if (!token) {
+      return res.status(500).json({ error: 'Token não disponível' });
+    }
+
+    const result = await Food99AuthService.setApplyNotifications(
+      token,
+      receiveCancelApply,
+      receiveRefundApply
+    );
+    res.json(result);
+  } catch (error) {
+    logger.error('[FOOD99] Erro ao configurar notificações de apply:', error);
+    res.status(500).json({ error: error.message || 'Erro ao configurar notificações' });
+  }
+};
+
+// ============================================================================
+// HEALTH CHECK
+// ============================================================================
+
+const healthCheck = async (req, res) => {
+  try {
+    const settings = await prisma.integrationSettings.findUnique({
+      where: { restaurantId: req.restaurantId },
+    });
+
+    if (!settings?.food99AppShopId) {
+      return res.json({ healthy: false, reason: 'App Shop ID não configurado' });
+    }
+
+    const status = await Food99AuthService.checkConnectionStatus(settings.food99AppShopId);
+    res.json({
+      healthy: status.connected,
+      status: status.status,
+      message: status.message,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('[FOOD99] Erro no health check:', error);
+    res.json({ healthy: false, reason: error.message, timestamp: new Date().toISOString() });
+  }
+};
+
 module.exports = {
   getFood99Settings,
   updateFood99Settings,
@@ -406,4 +622,14 @@ module.exports = {
   unbindShop,
   handleCancelApply,
   handleRefundApply,
+  updateItemStatusBatch,
+  uploadImage,
+  listImages,
+  addDeliveryArea,
+  listDeliveryAreas,
+  updateDeliveryArea,
+  deleteDeliveryArea,
+  updateDeliveryAreaPrice,
+  setApplyNotifications,
+  healthCheck,
 };

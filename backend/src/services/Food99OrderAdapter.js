@@ -135,23 +135,49 @@ class Food99OrderAdapter extends IntegrationBaseService {
 
   async confirmOrderOnPlatform(restaurantId, platformOrderId) {
     const settings = await this.getSettings(restaurantId);
-    if (!settings?.food99AppShopId) return;
+    if (!settings?.food99AppShopId) return { success: false, reason: 'no_app_shop_id' };
 
-    const token = await Food99AuthService.getValidToken(settings.food99AppShopId);
-    if (!token) return;
+    // Respeita config de auto-aceitação (parity com iFood)
+    if (!settings.food99AutoAcceptOrders) {
+      logger.info(`[FOOD99] Auto-accept desativado para ${restaurantId}, pulando confirmação automática`);
+      return { success: true, skipped: true, reason: 'auto_accept_disabled' };
+    }
 
-    const result = await requestWithRetry({
+    let token = await Food99AuthService.getValidToken(settings.food99AppShopId);
+    if (!token) return { success: false, reason: 'no_token' };
+
+    // Primeiro tentativa com token atual
+    let result = await requestWithRetry({
       method: 'post',
       url: '/v1/order/order/confirm',
       env: settings.food99Env,
       data: { auth_token: token, order_id: platformOrderId },
       logContext: `Erro ao confirmar pedido ${platformOrderId}`,
+      retries: 1,
     });
+
+    // Se falhou por token (401/403), força refresh e tenta 1x mais
+    if (!result.ok && (result.status === 401 || result.status === 403)) {
+      logger.warn(`[FOOD99] Token possivelmente expirado para ${platformOrderId}, forçando refresh`);
+      token = await Food99AuthService.refreshToken(settings.food99AppShopId);
+      if (token) {
+        result = await requestWithRetry({
+          method: 'post',
+          url: '/v1/order/order/confirm',
+          env: settings.food99Env,
+          data: { auth_token: token, order_id: platformOrderId },
+          logContext: `Retry confirmar pedido ${platformOrderId} (token refreshed)`,
+          retries: 0,
+        });
+      }
+    }
 
     if (result.ok) {
       logger.info(`[FOOD99] Pedido ${platformOrderId} confirmado`);
+      return { success: true };
     } else {
       logger.error(`[FOOD99] Erro ao confirmar ${platformOrderId}: ${result.error}`);
+      return { success: false, reason: result.error, status: result.status };
     }
   }
 
@@ -248,7 +274,15 @@ class Food99OrderAdapter extends IntegrationBaseService {
 
       const { order } = result;
 
-      await this.confirmOrderOnPlatform(restaurantId, order.food99OrderId);
+      const confirmResult = await this.confirmOrderOnPlatform(restaurantId, order.food99OrderId);
+
+      if (!confirmResult.success) {
+        // NÃO atualiza o pedido local se a plataforma não confirmou
+        const errMsg = `Falha ao confirmar na 99Food: ${confirmResult.reason || 'unknown'}`;
+        logger.error(`[FOOD99] ${errMsg} (order local ${orderId} mantido em PENDING)`);
+        await this.notifySyncError(restaurantId, orderId, errMsg);
+        return { success: false, error: errMsg };
+      }
 
       await prisma.order.update({
         where: { id: orderId },
