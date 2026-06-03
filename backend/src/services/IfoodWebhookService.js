@@ -14,7 +14,8 @@ class IfoodWebhookService {
     this._processingQueue = [];
     this._isProcessing = false;
     this.adapter = IfoodOrderAdapter;
-    this._processedEventIds = [];
+    this._processedEventIds = new Set();
+    this._processingKeys = new Set(); // Dedup síncrona: "orderId:eventType"
     // Configuração de batch para ACK
     this.ACK_BATCH_SIZE = 100; // Tamanho do lote para ACK
     this.ACK_DELAY_MS = 1000; // Delay antes de enviar ACK em lote
@@ -112,28 +113,39 @@ async handleWebhook(req, res) {
 
     for (const event of events) {
       const { orderId, code, id: eventId } = event;
-      const eventType = code;
 
       if (code === 'KEEPALIVE' || !code) {
         logger.debug(`[IFOOD WEBHOOK] Evento ${eventId || 'sem id'} (${code || 'sem código'}) é keepalive/sem código, apenas acknowledge`);
         continue;
       }
 
-      const alreadyProcessed = orderId ? await this._isEventProcessed(platform, orderId, eventType) : false;
-      if (alreadyProcessed) {
-        logger.info(`[IFOOD WEBHOOK] Evento ${orderId || eventId} (${eventType}) já processado, ignorando`);
+      // Dedup síncrona — pega retries dentro da janela de 1s antes do DB
+      const dedupKey = `${orderId}:${code}`;
+      if (this._processingKeys.has(dedupKey)) {
+        logger.debug(`[IFOOD WEBHOOK] Evento ${orderId} (${code}) já enfileirado, ignorando processamento duplicado`);
+        if (eventId) this._processedEventIds.add(eventId);
         continue;
       }
 
+      // Dedup via DB — pega eventos de sessões anteriores
+      const alreadyProcessed = orderId ? await this._isEventProcessed(platform, orderId, code) : false;
+      if (alreadyProcessed) {
+        logger.info(`[IFOOD WEBHOOK] Evento ${orderId || eventId} (${code}) já processado, ignorando`);
+        if (eventId) this._processedEventIds.add(eventId);
+        continue;
+      }
+
+      // Marcar como "em processamento" para dedup síncrona
+      this._processingKeys.add(dedupKey);
       this._processingQueue.push(event);
-      this._processedEventIds.push(event.id);
-      logger.info(`[IFOOD WEBHOOK] Evento ${eventId} (${eventType}) enfileirado para processamento`);
+      if (eventId) this._processedEventIds.add(eventId);
+      logger.info(`[IFOOD WEBHOOK] Evento ${eventId} (${code}) enfileirado para processamento`);
     }
 
     this._processQueue();
 
     // ACK em lote: agrupar eventos e enviar em batch dinâmico
-    if (this._processedEventIds.length > 0) {
+    if (this._processedEventIds.size > 0) {
       // Se já tem timeout agendado, cancelar (agrupar mais eventos)
       if (this._ackTimeout) {
         clearTimeout(this._ackTimeout);
@@ -151,12 +163,13 @@ async handleWebhook(req, res) {
    * Agrupa eventos e envia em batches configuráveis.
    */
   async _sendBatchAcknowledgment() {
-    if (this._processedEventIds.length === 0) {
+    if (this._processedEventIds.size === 0) {
       return;
     }
 
-    // Extrair IDs em lote
-    const idsToAck = this._processedEventIds.splice(0, this.ACK_BATCH_SIZE);
+    // Extrair todos os IDs do Set
+    const idsToAck = [...this._processedEventIds];
+    this._processedEventIds.clear();
     
     if (idsToAck.length > 0) {
       const token = await IfoodAuthService.getValidToken();
@@ -166,12 +179,8 @@ async handleWebhook(req, res) {
       }
     }
 
-    // Se ainda há eventos pendentes, agendar próximo lote
-    if (this._processedEventIds.length > 0) {
-      this._ackTimeout = setTimeout(() => {
-        this._sendBatchAcknowledgment();
-      }, this.ACK_DELAY_MS);
-    }
+    // Limpar chaves de processamento após ACK enviado
+    this._processingKeys.clear();
   }
 
   /**
