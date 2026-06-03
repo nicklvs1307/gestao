@@ -278,7 +278,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
           setIsSaving(true);
           const currentItems = Array.isArray(order.items) ? order.items : [];
           const subtotal = currentItems.reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
-          const newTotal = subtotal + deliveryFee + surcharge - discount;
+          const newTotal = subtotal + deliveryFee + surcharge - discount + (order.platformFee || 0);
           await updateOrderFinancials(order.id, { deliveryFee, total: newTotal, discount, surcharge });
           toast.success("Dados financeiros atualizados!");
           onRefresh();
@@ -580,7 +580,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   }, [products, debouncedSearch, selectedCategory]);
 
   const subtotal = (Array.isArray(order.items) ? order.items : []).reduce((acc, item) => acc + (item.priceAtTime * item.quantity), 0);
-  const totalGeral = subtotal + deliveryFee + surcharge - discount;
+  const totalGeral = subtotal + deliveryFee + surcharge - discount + (order.platformFee || 0);
   const totalPaid = (Array.isArray(order.payments) ? order.payments : []).reduce((acc, p) => acc + p.amount, 0) || 0;
   const remainingToPay = totalGeral - totalPaid;
 
