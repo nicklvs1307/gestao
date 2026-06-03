@@ -117,10 +117,12 @@ class IfoodOrderAdapter extends IntegrationBaseService {
         });
       }
       
-      // Usar optionsPrice como preço total quando existir (já inclui complementos)
-      const itemPrice = item.optionsPrice > 0 
-        ? item.optionsPrice + item.price  // base + options
-        : (item.totalPrice || item.price || 0);
+      // Calcular preço por unidade (unitPrice + options por unidade + customization por unidade)
+      // iFood retorna totalPrice já multiplicado por quantity, então usamos unitPrice como base
+      const quantity = item.quantity || 1;
+      const perUnitOptions = (item.optionsPrice || 0) / quantity;
+      const perUnitCustomization = (item.customizationPrice || 0) / quantity;
+      const itemPrice = item.unitPrice + perUnitOptions + perUnitCustomization;
 
       return {
         name: item.name || `Item iFood (${item.id || item.productId || 'diversos'})`,
