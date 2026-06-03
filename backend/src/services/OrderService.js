@@ -204,7 +204,7 @@ class OrderService {
   /**
    * Cria um pedido completo de forma transacional.
    */
-  async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName, discount = 0, extraCharge = 0 }) {
+  async createOrder({ restaurantId, items, orderType, deliveryInfo, tableNumber, paymentMethod, userId, customerName, discount = 0, couponCode = null, extraCharge = 0 }) {
     logger.info(`[ORDER] Iniciando criação de pedido para restaurante: ${restaurantId}`);
     logger.info(`[ORDER] Itens recebidos: ${JSON.stringify(items, (key, val) => typeof val === 'object' ? val : String(val))}`);
     logger.info(`[ORDER] orderType: ${orderType}, deliveryInfo: ${JSON.stringify(deliveryInfo)}`);
@@ -246,6 +246,46 @@ class OrderService {
         }
     }
 
+    // === VALIDAÇÃO SERVER-SIDE DE CUPOM ===
+    let validatedDiscount = parseFloat(discount) || 0;
+    let validatedCouponCode = null;
+    let validatedPromotionId = null;
+
+    if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+        const code = couponCode.trim().toUpperCase();
+        const promotion = await prisma.promotion.findFirst({
+            where: {
+                restaurantId: realRestaurantId,
+                code,
+                isActive: true,
+                startDate: { lte: new Date() },
+                endDate: { gte: new Date() }
+            }
+        });
+
+        if (!promotion) {
+            throw new Error('Cupom inválido ou expirado.');
+        }
+        if (promotion.usageLimit && promotion.usedCount >= promotion.usageLimit) {
+            throw new Error('Limite de uso do cupom atingido.');
+        }
+        if (promotion.minOrderValue && orderTotal < promotion.minOrderValue) {
+            throw new Error(`Valor mínimo para este cupom é R$ ${promotion.minOrderValue.toFixed(2)}.`);
+        }
+
+        // Calcular desconto baseado no cupom validado (NUNCA confiar no client)
+        if (promotion.discountType === 'percentage') {
+            validatedDiscount = (orderTotal * promotion.discountValue) / 100;
+        } else {
+            validatedDiscount = Math.min(promotion.discountValue, orderTotal);
+        }
+        validatedDiscount = parseFloat(validatedDiscount.toFixed(2));
+        validatedCouponCode = code;
+        validatedPromotionId = promotion.id;
+
+        logger.info(`[ORDER] Cupom "${code}" validado. Desconto: R$ ${validatedDiscount}`);
+    }
+
     let coords = null;
     let fullAddress = 'Retirada no Balcão';
 
@@ -282,8 +322,8 @@ class OrderService {
         }
     }
 
-    // Validar desconto antes de criar pedido
-    const discountValidation = money.validateDiscount(parseFloat(discount) || 0, orderTotal);
+    // Validar desconto antes de criar pedido (usa desconto validado server-side)
+    const discountValidation = money.validateDiscount(validatedDiscount, orderTotal);
     if (!discountValidation.valid) {
         throw new Error(discountValidation.reason || 'Desconto inválido');
     }
@@ -293,7 +333,7 @@ class OrderService {
         const totalPedido = money.calcOrderTotal({
             subtotal: orderTotal,
             extraCharge,
-            discount,
+            discount: validatedDiscount,
             deliveryFee: deliveryInfo?.deliveryFee
         });
         const changeFor = parseFloat(deliveryInfo.changeFor);
@@ -304,9 +344,9 @@ class OrderService {
 
     const orderData = {
       restaurantId: realRestaurantId,
-      total: money.calcOrderTotal({ subtotal: orderTotal, extraCharge, discount, deliveryFee: deliveryInfo?.deliveryFee }),
+      total: money.calcOrderTotal({ subtotal: orderTotal, extraCharge, discount: validatedDiscount, deliveryFee: deliveryInfo?.deliveryFee }),
       subtotal: orderTotal,
-      discount: parseFloat(discount),
+      discount: validatedDiscount,
       extraCharge: parseFloat(extraCharge),
       deliveryFee: parseFloat(deliveryInfo?.deliveryFee || 0),
       platformFee: 0, // Plataforma PDV não tem taxa de plataforma
@@ -348,6 +388,15 @@ class OrderService {
         }
 
         const createdOrder = await tx.order.create({ data: orderData });
+
+        // Incrementar usedCount do cupom se válido
+        if (validatedPromotionId) {
+            await tx.promotion.update({
+                where: { id: validatedPromotionId },
+                data: { usedCount: { increment: 1 } }
+            });
+            logger.info(`[ORDER] Cupom "${validatedCouponCode}" usage incremented`);
+        }
 
         if (finalOrderType === 'TABLE' && tableNumber) {
             await tx.table.updateMany({
@@ -443,7 +492,7 @@ if (isPickup && !hasValidPhone) {
 
         if (paymentMethod) {
             const finalFee = (finalOrderType === 'DELIVERY' && deliveryInfo?.deliveryFee) ? deliveryInfo.deliveryFee : 0;
-            const totalToPay = money.calcOrderTotal({ subtotal: orderTotal, deliveryFee: finalFee, extraCharge, discount });
+            const totalToPay = money.calcOrderTotal({ subtotal: orderTotal, deliveryFee: finalFee, extraCharge, discount: validatedDiscount });
 
             await tx.payment.create({
                 data: { orderId: createdOrder.id, amount: totalToPay, method: paymentMethod }

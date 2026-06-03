@@ -73,6 +73,24 @@ export const getActivePromotions = async (restaurantId: string): Promise<Promoti
     return response.data;
 };
 
+export interface CouponValidation {
+  id: string;
+  name: string;
+  code: string;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+  minOrderValue?: number;
+}
+
+export const validateCoupon = async (code: string, cartTotal: number, restaurantId: string): Promise<CouponValidation> => {
+    const response = await api.post(`/client/promotions/validate-coupon`, {
+      code,
+      cartTotal,
+      restaurantId,
+    });
+    return response.data;
+};
+
 export const getIntegrationSettings = async (restaurantId: string) => {
   const response = await api.get(`/client/integration-settings/${restaurantId}`);
   return response.data;

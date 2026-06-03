@@ -78,7 +78,8 @@ class OrderController {
       tableNumber: validatedData.tableNumber,
       customerName: req.body.customerName || validatedData.deliveryInfo?.name,
       userId: validatedData.userId || req.user?.id,
-      discount: req.body.discount,
+      discount: validatedData.deliveryInfo?.discount || req.body.discount,
+      couponCode: validatedData.deliveryInfo?.couponCode || req.body.couponCode,
       extraCharge: req.body.extraCharge
     });
 

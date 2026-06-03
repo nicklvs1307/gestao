@@ -204,7 +204,8 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
 
     try {
       const deliveryFee = deliveryInfo.deliveryType === 'delivery' ? (restaurant.settings?.deliveryFee || 0) : 0;
-      const finalTotal = localCartTotal + deliveryFee;
+      const discount = deliveryInfo.discount || 0;
+      const finalTotal = Math.max(0, localCartTotal + deliveryFee - discount);
 
       const itemsForTracking = localCartItems.map(item => ({
         productId: item.productId,
@@ -221,7 +222,9 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
         total: finalTotal, 
         deliveryInfo: {
           ...deliveryInfo,
-          deliveryFee: deliveryFee 
+          deliveryFee: deliveryFee,
+          couponCode: deliveryInfo.couponCode || null,
+          discount: discount
         },
       });
 
@@ -230,6 +233,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
       const updatedIds = [newOrder.id, ...ids.filter((id: string) => id !== newOrder.id)].slice(0, 5);
       localStorage.setItem('recent_orders', JSON.stringify(updatedIds));
 
+      // trackPurchase só dispara APÓS pedido confirmado com sucesso
       trackPurchase(newOrder.id, finalTotal, itemsForTracking);
 
       if (deliveryInfo.paymentMethod === 'pix_online') {

@@ -35,10 +35,12 @@ interface DeliveryCheckoutProps {
   onClose: () => void;
   total: number;
   deliveryFee: number;
+  discount?: number;
+  couponCode?: string | null;
   restaurantId: string;
 }
 
-const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, total, deliveryFee, restaurantId }) => {
+const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, total, deliveryFee, discount = 0, couponCode, restaurantId }) => {
   const { localCartItems } = useLocalCart();
   const { restaurantSettings } = useRestaurant(); // Acesso ao contexto
   const [step, setStep] = useState<'form' | 'review'>('form');
@@ -184,7 +186,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
   };
 
   const handleFinalSubmit = () => {
-    const deliveryInfo: DeliveryInfo = {
+    const deliveryInfo: DeliveryInfo & { couponCode?: string | null; discount?: number } = {
       name, 
       phone,
       deliveryType, 
@@ -200,7 +202,9 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
         complement: savedData.complement || ''
       } : 'Retirada no Balcão',
       deliveryFee: deliveryType === 'delivery' ? deliveryFee : 0,
-      notes: notes
+      notes: notes,
+      couponCode: couponCode || null,
+      discount: discount || 0
     };
 
     // SALVA OS DADOS PARA A PRÓXIMA COMPRA
@@ -423,10 +427,16 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                                     {deliveryType === 'delivery' ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}` : 'Grátis'}
                                   </span>
                               </div>
+                              {discount > 0 && (
+                              <div className="flex justify-between text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                                  <span>Cupom {couponCode ? `(${couponCode})` : ''}</span>
+                                  <span>- R$ {discount.toFixed(2).replace('.', ',')}</span>
+                              </div>
+                              )}
                               <div className="flex justify-between items-center pt-2">
                                   <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Total do Pedido</span>
                                   <span className="text-xl font-bold text-slate-900 tracking-tight">
-                                    R$ {(total + (deliveryType === 'delivery' ? deliveryFee : 0)).toFixed(2).replace('.', ',')}
+                                    R$ {(total + (deliveryType === 'delivery' ? deliveryFee : 0) - discount).toFixed(2).replace('.', ',')}
                                   </span>
                               </div>
                           </div>

@@ -82,13 +82,13 @@ export const usePixelTracking = (config: PixelConfig) => {
   const trackPageView = useCallback((pagePath?: string) => {
     const { metaPixelId, googleAnalyticsId } = configRef.current;
 
-    if (metaPixelId) {
+    if (metaPixelId && window.fbq) {
       window.fbq('track', 'PageView', {
         page_path: pagePath,
       });
     }
 
-    if (googleAnalyticsId) {
+    if (googleAnalyticsId && window.gtag) {
       window.gtag('event', 'page_view', {
         page_path: pagePath,
       });
@@ -98,7 +98,7 @@ export const usePixelTracking = (config: PixelConfig) => {
   const trackViewContent = useCallback((productName: string, productId: string, price: number, category?: string) => {
     const { metaPixelId, googleAnalyticsId } = configRef.current;
 
-    if (metaPixelId) {
+    if (metaPixelId && window.fbq) {
       window.fbq('track', 'ViewContent', {
         content_name: productName,
         content_type: 'product',
@@ -109,7 +109,7 @@ export const usePixelTracking = (config: PixelConfig) => {
       });
     }
 
-    if (googleAnalyticsId) {
+    if (googleAnalyticsId && window.gtag) {
       window.gtag('event', 'view_item', {
         item_id: productId,
         item_name: productName,
@@ -123,7 +123,7 @@ export const usePixelTracking = (config: PixelConfig) => {
   const trackAddToCart = useCallback((productName: string, productId: string, price: number, quantity: number = 1, category?: string) => {
     const { metaPixelId, googleAnalyticsId } = configRef.current;
 
-    if (metaPixelId) {
+    if (metaPixelId && window.fbq) {
       window.fbq('track', 'AddToCart', {
         content_name: productName,
         content_type: 'product',
@@ -135,7 +135,7 @@ export const usePixelTracking = (config: PixelConfig) => {
       });
     }
 
-    if (googleAnalyticsId) {
+    if (googleAnalyticsId && window.gtag) {
       window.gtag('event', 'add_to_cart', {
         items: [{
           item_id: productId,
@@ -152,7 +152,7 @@ export const usePixelTracking = (config: PixelConfig) => {
   const trackInitiateCheckout = useCallback((total: number, items: Array<{ productId: string; name: string; price: number; quantity: number; category?: string }>) => {
     const { metaPixelId, googleAnalyticsId } = configRef.current;
 
-    if (metaPixelId) {
+    if (metaPixelId && window.fbq) {
       window.fbq('track', 'InitiateCheckout', {
         value: total,
         currency: 'BRL',
@@ -165,7 +165,7 @@ export const usePixelTracking = (config: PixelConfig) => {
       });
     }
 
-    if (googleAnalyticsId) {
+    if (googleAnalyticsId && window.gtag) {
       window.gtag('event', 'begin_checkout', {
         value: total,
         currency: 'BRL',
@@ -184,7 +184,7 @@ export const usePixelTracking = (config: PixelConfig) => {
   const trackPurchase = useCallback((orderId: string, total: number, items: Array<{ productId: string; name: string; price: number; quantity: number; category?: string }>) => {
     const { metaPixelId, googleAnalyticsId, internalPixelId } = configRef.current;
 
-    if (metaPixelId) {
+    if (metaPixelId && window.fbq) {
       window.fbq('track', 'Purchase', {
         content_type: 'product',
         value: total,
@@ -199,7 +199,7 @@ export const usePixelTracking = (config: PixelConfig) => {
       });
     }
 
-    if (googleAnalyticsId) {
+    if (googleAnalyticsId && window.gtag) {
       window.gtag('event', 'purchase', {
         transaction_id: orderId,
         value: total,

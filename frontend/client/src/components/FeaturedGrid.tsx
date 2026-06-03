@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import type { Product } from '../types';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
@@ -21,6 +21,7 @@ interface ProcessedProduct {
 
 const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   const processedProducts = useMemo((): ProcessedProduct[] => {
     return products.map(product => {
@@ -33,23 +34,21 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
   }, [products]);
 
   useEffect(() => {
-    if (products.length <= 3) return;
+    if (products.length <= 3 || isPaused) return;
 
     const interval = setInterval(() => {
       if (scrollRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-        // Se estiver no final, volta para o começo
         if (scrollLeft + clientWidth >= scrollWidth - 20) {
           scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
-          // Rola aproximadamente a largura de um item (110px + 12px de gap)
           scrollRef.current.scrollBy({ left: 122, behavior: 'smooth' });
         }
       }
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [products]);
+  }, [products, isPaused]);
 
   if (products.length === 0) return null;
 
@@ -65,6 +64,13 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
       <div 
         ref={scrollRef}
         className="flex gap-3 overflow-x-auto px-5 no-scrollbar scroll-smooth pb-2"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Produtos em destaque"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onFocus={() => setIsPaused(true)}
+        onBlur={() => setIsPaused(false)}
       >
         {processedProducts.map(({ product, finalPrice, activePromotion, mediaUrl }) => (
           <motion.div
@@ -72,13 +78,16 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
               whileTap={{ scale: 0.98 }}
               onClick={() => onProductClick(product)}
               className="min-w-[110px] max-w-[110px] bg-white rounded-lg overflow-hidden border border-slate-100 shadow-sm flex flex-col group active:bg-slate-50 transition-colors duration-200"
+              role="group"
+              aria-roledescription="carousel item"
+              aria-label={product.name}
             >
               {/* Media Container - Mini 16:11 */}
               <div className="aspect-[16/11] relative overflow-hidden bg-slate-100">
                 {isVideo(product.imageUrl) ? (
                   <video src={mediaUrl} autoPlay muted loop playsInline className="w-full h-full object-cover" />
                 ) : (
-                  <img src={mediaUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={mediaUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
                 )}
                 
                 {activePromotion && (
@@ -116,3 +125,4 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
 };
 
 export default FeaturedGrid;
+

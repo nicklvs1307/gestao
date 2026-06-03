@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { LocalCartItem } from '../types';
 import DeliveryCheckout from './DeliveryCheckout';
-import { Trash2, Minus, Plus, X, ArrowLeft, ShoppingBasket, Truck } from 'lucide-react';
+import { Trash2, Minus, Plus, X, ArrowLeft, ShoppingBasket, Truck, Tag, Loader2, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useRestaurant } from '../contexts/RestaurantContext';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { toast } from 'sonner';
+import { validateCoupon, type CouponValidation } from '../services/api';
 
 interface CartProps {
   isOpen: boolean;
@@ -25,8 +26,52 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
   const { restaurantSettings } = useRestaurant();
   const isStoreOpen = restaurantSettings?.isOpen ?? true;
 
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidation | null>(null);
+  const [isCouponLoading, setIsCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+
   const deliveryFee = isDelivery && restaurantSettings?.deliveryFee ? restaurantSettings.deliveryFee : 0;
-  const finalTotal = total + deliveryFee;
+
+  const discount = React.useMemo(() => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.discountType === 'percentage') {
+      return (total * appliedCoupon.discountValue) / 100;
+    }
+    return Math.min(appliedCoupon.discountValue, total);
+  }, [appliedCoupon, total]);
+
+  const finalTotal = Math.max(0, total + deliveryFee - discount);
+
+  const handleApplyCoupon = useCallback(async () => {
+    const code = couponCode.trim();
+    if (!code) return;
+    if (!restaurantSettings?.restaurantId && !restaurantSettings?.restaurant?.id) {
+      toast.error('Erro interno: ID do restaurante não encontrado.');
+      return;
+    }
+    setIsCouponLoading(true);
+    setCouponError('');
+    try {
+      const restaurantId = restaurantSettings?.restaurantId || restaurantSettings?.restaurant?.id || '';
+      const result = await validateCoupon(code, total, restaurantId);
+      setAppliedCoupon(result);
+      setCouponError('');
+      toast.success(`Cupom "${result.name}" aplicado com sucesso!`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'Cupom inválido ou expirado.';
+      setCouponError(msg);
+      setAppliedCoupon(null);
+    } finally {
+      setIsCouponLoading(false);
+    }
+  }, [couponCode, total, restaurantSettings]);
+
+  const handleRemoveCoupon = useCallback(() => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  }, []);
 
   const handleBackOrClose = () => {
     if (isCheckoutMode) {
@@ -44,7 +89,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
   const handleProceedToCheckout = () => {
     if (items.length === 0) return;
 
-    if (isDelivery && restaurantSettings?.minOrderValue > 0) {
+    if (isDelivery && restaurantSettings?.minOrderValue && restaurantSettings.minOrderValue > 0) {
       if (total < restaurantSettings.minOrderValue) {
         toast.error(`O valor mínimo para entrega é R$ ${restaurantSettings.minOrderValue.toFixed(2).replace('.', ',')}. Faltam R$ ${(restaurantSettings.minOrderValue - total).toFixed(2).replace('.', ',')}!`);
         return;
@@ -54,7 +99,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
     if (isDelivery) {
       setCheckoutMode(true);
     } else {
-      onSubmitOrder(); 
+      onSubmitOrder({ couponCode: appliedCoupon?.code || null, discount }); 
     }
   };
 
@@ -138,6 +183,65 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
                   </Card>
                 ))
               )}
+
+              {/* Coupon Input - Only when items exist */}
+              {items.length > 0 && isDelivery && (
+                <div className="pt-2">
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CheckCircle2 size={16} className="text-green-600 shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest">Cupom aplicado</span>
+                          <p className="text-xs font-bold text-green-800 truncate">{appliedCoupon.code}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs font-black text-green-700">
+                          {appliedCoupon.discountType === 'percentage'
+                            ? `-${appliedCoupon.discountValue}%`
+                            : `-R$ ${appliedCoupon.discountValue.toFixed(2).replace('.', ',')}`}
+                        </span>
+                        <button
+                          onClick={handleRemoveCoupon}
+                          className="p-1 text-green-600 hover:text-red-500 transition-colors rounded"
+                          aria-label="Remover cupom"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                          placeholder="Cupom de desconto"
+                          className={cn(
+                            "w-full h-10 pl-9 pr-3 rounded-lg border bg-card text-xs font-bold uppercase tracking-widest placeholder:text-muted-foreground/50 placeholder:normal-case placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all",
+                            couponError ? "border-destructive" : "border-border"
+                          )}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleApplyCoupon(); }}
+                        />
+                      </div>
+                      <Button
+                        onClick={handleApplyCoupon}
+                        disabled={!couponCode.trim() || isCouponLoading}
+                        variant="secondary"
+                        className="h-10 px-4 rounded-lg text-xs uppercase tracking-widest shrink-0"
+                      >
+                        {isCouponLoading ? <Loader2 size={14} className="animate-spin" /> : 'Aplicar'}
+                      </Button>
+                    </div>
+                  )}
+                  {couponError && (
+                    <p className="text-[10px] font-bold text-destructive mt-1.5 px-1">{couponError}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -148,12 +252,20 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
                       <span className="text-base font-bold text-foreground">R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
                   </div>
                 )}
+
+                {discount > 0 && (
+                  <div className="flex justify-between items-center mb-2 px-2">
+                      <span className="text-xs font-bold text-green-600 uppercase tracking-widest flex items-center gap-1.5"><Tag size={12} /> Desconto</span>
+                      <span className="text-base font-bold text-green-600">- R$ {discount.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center mb-6 px-2">
                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Final</span>
                     <span className="text-3xl font-bold text-foreground">R$ {finalTotal.toFixed(2).replace('.', ',')}</span>
                 </div>
                 
-                {isDelivery && restaurantSettings?.minOrderValue > 0 && total < restaurantSettings.minOrderValue && (
+                {isDelivery && restaurantSettings?.minOrderValue && restaurantSettings.minOrderValue > 0 && total < restaurantSettings.minOrderValue && (
                   <div className="text-center bg-warning/10 text-warning rounded-lg py-2 px-3 mb-4 text-xs font-bold uppercase tracking-widest border border-warning/20">
                     Faltam R$ {(restaurantSettings.minOrderValue - total).toFixed(2).replace('.', ',')} para o mínimo
                   </div>
@@ -191,7 +303,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
                 onClose={() => setCheckoutMode(false)} 
                 total={total}
                 deliveryFee={deliveryFee}
-                restaurantId={restaurantSettings?.restaurantId || ''}
+                discount={discount}
+                couponCode={appliedCoupon?.code || null}
+                restaurantId={restaurantSettings?.restaurantId || restaurantSettings?.restaurant?.id || ''}
               />
             )}
           </div>

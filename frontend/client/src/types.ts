@@ -97,6 +97,8 @@ export interface Product {
   isAvailable: boolean;
   isFlavor: boolean; 
   showInMenu: boolean; 
+  allowDelivery: boolean;
+  allowOnline: boolean;
   stock: number;
   tags: string[];
   order: number;
@@ -139,6 +141,7 @@ export interface LocalCartItem {
   sizeJson: string | null;
   addonsJson: string | null;
   flavorsJson: string | null;
+  observations?: string | null;
 }
 
 export interface OrderItem {
@@ -236,6 +239,9 @@ export interface RestaurantSettings {
   autoOpenDelivery?: boolean;
   deliveryOpeningTime?: string;
   deliveryClosingTime?: string;
+  deliveryFee?: number;
+  deliveryTime?: string;
+  minOrderValue?: number;
   operatingHours?: OperatingHour[];
   restaurant: Restaurant;
 }

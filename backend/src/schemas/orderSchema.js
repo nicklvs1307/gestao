@@ -63,6 +63,8 @@ const CreateDeliveryOrderSchema = z.object({
     changeFor: z.union([z.number(), z.string()]).optional().nullable(),
     deliveryFee: z.union([z.number(), z.string()]).optional().default(0),
     notes: z.string().optional().nullable(),
+    couponCode: z.string().optional().nullable(),
+    discount: z.number().optional().default(0),
   }).optional().nullable(),
 
   // Campos opcionais de compatibilidade
