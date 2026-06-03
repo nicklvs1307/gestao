@@ -1002,6 +1002,11 @@ model Order {
   customerDocument    String?    // CPF ou CNPJ do cliente
   benefits            Json?     // Cupons/benefícios aplicados (JSON)
   
+  // === CAMPOS DE CUPOM DE DESCONTO ===
+  couponCode          String?   // Código do cupom utilizado (ex: "PIZZA10")
+  promotionId         String?   // FK para a promoção/cupom aplicado
+  promotion           Promotion? @relation(fields: [promotionId], references: [id])
+  
   // === CAMPOS DE CANCELAMENTO (Política iFood) ===
   cancellationRequested   Boolean   @default(false) // Cliente solicitou cancelamento
   cancellationReason      String?   // Motivo do cancelamento (do cliente ou sistema)
@@ -1262,6 +1267,8 @@ model Promotion {
 
   categoryId    String?
   category      Category?  @relation(fields: [categoryId], references: [id])
+
+  orders        Order[]    // Pedidos que usaram este cupom
 
   @@index([restaurantId])
   @@index([productId])

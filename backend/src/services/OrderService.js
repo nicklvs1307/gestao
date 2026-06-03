@@ -356,6 +356,8 @@ class OrderService {
       preparingAt: initialStatus === 'PREPARING' ? new Date() : null,
       userId: userId || null, 
       customerName: customerName || null,
+      couponCode: validatedCouponCode,
+      promotionId: validatedPromotionId,
       items: { create: processedItems },
       tableNumber: (finalOrderType === 'TABLE' && tableNumber) ? parseInt(tableNumber) : null
     };
