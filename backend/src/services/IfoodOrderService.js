@@ -219,11 +219,6 @@ class IfoodOrderService {
 
       ({ order } = result);
 
-      if (order.preparingAt) {
-        logger.info(`[IFOOD] Pedido ${orderId} já está em preparo (preparingAt: ${order.preparingAt}), ignorando startPreparation`);
-        return { success: true, alreadyPreparing: true };
-      }
-
       const { token } = result;
 
       logger.info(`[IFOOD] Chamando startPreparation para pedido iFood ${order.ifoodOrderId}`);
@@ -266,11 +261,6 @@ class IfoodOrderService {
       if (result.success === false) return result;
 
       ({ order } = result);
-
-      if (order.readyAt) {
-        logger.info(`[IFOOD] Pedido ${orderId} já marcado como pronto (readyAt: ${order.readyAt}), ignorando`);
-        return { success: true, alreadyReady: true };
-      }
 
       const { token } = result;
 
