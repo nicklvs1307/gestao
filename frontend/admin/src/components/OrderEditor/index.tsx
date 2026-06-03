@@ -649,7 +649,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 </h1>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">ID: {order.id}</p>
             </div>
-            <div className={cn("px-2.5 py-1 rounded-lg text-[8px] font-black border uppercase tracking-widest ml-2", currentStatus.bg, currentStatus.color, currentStatus.border)}>
+            <div className={cn("px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ml-2", currentStatus.bg, currentStatus.color, currentStatus.border)}>
                 {currentStatus.label} - {formatSP(order.createdAt, "dd/MMM 'às' HH:mm")}
             </div>
         </div>
@@ -748,14 +748,14 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
         <div className="flex-1" />
         {remainingToPay > 0 && (
           <div className="flex items-center gap-2 px-4 py-1.5 bg-rose-50 border border-rose-200 rounded-xl">
-            <span className="text-[8px] font-black text-rose-500 uppercase italic">A Pagar:</span>
+            <span className="text-[10px] font-black text-rose-500 uppercase italic">A Pagar:</span>
             <span className="text-sm font-black text-rose-600 italic">R$ {remainingToPay.toFixed(2).replace('.', ',')}</span>
           </div>
         )}
         {remainingToPay <= 0 && order.payments && order.payments.length > 0 && (
           <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl">
             <CheckCircle size={14} className="text-emerald-600" />
-            <span className="text-[9px] font-black text-emerald-600 uppercase italic">Pago</span>
+            <span className="text-[10px] font-black text-emerald-600 uppercase italic">Pago</span>
           </div>
         )}
       </div>
@@ -781,17 +781,17 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                     <User size={14} className="text-orange-500" /> {order.deliveryOrder?.name || order.customerName || 'Consumidor'}
                                 </h2>
                                 {isDelivery && order.deliveryOrder?.address && (
-                                    <p className="text-[9px] font-bold text-slate-500 uppercase italic leading-tight line-clamp-2">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase italic leading-tight line-clamp-2">
                                         <MapPin size={10} className="inline mr-1 text-slate-400" /> {order.deliveryOrder.address}
                                         {order.deliveryOrder.complement && <span className="text-amber-600"> ({order.deliveryOrder.complement})</span>}
                                         {order.deliveryOrder.reference && <span className="text-blue-600"> - Ref: {order.deliveryOrder.reference}</span>}
                                     </p>
                                 )}
                                 <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-black uppercase flex items-center gap-1">
+                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-black uppercase flex items-center gap-1">
                                       <Truck size={8} /> Delivery
                                     </span>
-                                    {order.deliveryOrder?.phone && <span className="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg font-black italic">{order.deliveryOrder.phone}</span>}
+                                    {order.deliveryOrder?.phone && <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg font-black italic">{order.deliveryOrder.phone}</span>}
                                 </div>
                             </>
                         )}
@@ -805,13 +805,13 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                 {(order.notes || order.deliveryOrder?.notes) && (
                     <div className="mx-2 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                        <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-1">
                             <Tag size={10} /> Observação do Cliente
                         </p>
                         <p className="text-xs font-bold text-amber-800 leading-snug">{order.notes || order.deliveryOrder?.notes}</p>
                     </div>
                 )}
-                <div className="grid grid-cols-12 px-2 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                <div className="grid grid-cols-12 px-2 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
                     <div className="col-span-2">Qtd</div>
                     <div className="col-span-7">Item</div>
                     <div className="col-span-3 text-right">Valor</div>
@@ -821,15 +821,15 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         <div className="col-span-2 font-black text-slate-900 italic">{item.quantity}</div>
                         <div className="col-span-7">
                             <p className="text-[11px] font-black text-slate-800 uppercase italic leading-none">{item.product.name}</p>
-                            {item.sizeJson && <p className="text-[8px] text-blue-600 font-bold mt-1 bg-blue-50 px-1.5 py-0.5 rounded-md inline-block mr-1">TAM: {JSON.parse(item.sizeJson).name}</p>}
+                            {item.sizeJson && <p className="text-[10px] text-blue-600 font-bold mt-1 bg-blue-50 px-1.5 py-0.5 rounded-md inline-block mr-1">TAM: {JSON.parse(item.sizeJson).name}</p>}
                             {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: { name: string }, i: number) => (
-                                <p key={`flavor-${i}`} className="text-[8px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded-md inline-block mr-1">SABOR: {f.name}</p>
+                                <p key={`flavor-${i}`} className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded-md inline-block mr-1">SABOR: {f.name}</p>
                             ))}
                             {item.addonsJson && JSON.parse(item.addonsJson).map((a: { name: string; quantity?: number }, i: number) => (
-                                <p key={`addon-${i}`} className="text-[8px] text-slate-500 font-bold mt-1 bg-slate-100 px-1.5 py-0.5 rounded-md inline-block mr-1">+ {a.quantity || 1}x {a.name}</p>
+                                <p key={`addon-${i}`} className="text-[10px] text-slate-500 font-bold mt-1 bg-slate-100 px-1.5 py-0.5 rounded-md inline-block mr-1">+ {a.quantity || 1}x {a.name}</p>
                             ))}
                             {item.observations && (
-                                <p className="text-[8px] text-rose-600 font-bold mt-1 bg-rose-50 px-1.5 py-0.5 rounded-md inline-block mr-1">OBS: {item.observations}</p>
+                                <p className="text-[10px] text-rose-600 font-bold mt-1 bg-rose-50 px-1.5 py-0.5 rounded-md inline-block mr-1">OBS: {item.observations}</p>
                             )}
                         </div>
                         <div className="col-span-3 text-right font-black text-slate-900 italic text-[11px]">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</div>
@@ -904,98 +904,145 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 />
             ) : (
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                    <div className="max-w-2xl mx-auto space-y-6">
+                    {/* ALERTAS NO TOPO — banners horizontais */}
+                    <div className="space-y-3 mb-6">
+                        {order.scheduledDateTime && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center gap-4">
+                                <div className="bg-blue-100 p-2.5 rounded-xl shrink-0">
+                                    <Calendar size={20} className="text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="text-xs font-black text-blue-700 uppercase tracking-wider">Pedido Agendado</span>
+                                    <span className="text-sm font-bold text-blue-800 block mt-0.5">
+                                        {formatSP(order.scheduledDateTime, 'dd/MM/yyyy')} às {formatSP(order.scheduledDateTime, 'HH:mm')}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                        {order.cancellationRequested && (
+                            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle size={16} className="text-rose-600" />
+                                        <span className="text-xs font-black text-rose-700 uppercase tracking-wider">Cancelamento Solicitado</span>
+                                    </div>
+                                    {order.cancellationDeadline && (
+                                        <span className="text-[10px] font-bold text-orange-600">Prazo: {formatSP(order.cancellationDeadline, 'HH:mm:ss')}</span>
+                                    )}
+                                </div>
+                                <p className="text-xs font-bold text-slate-600 mb-3">{order.cancellationReason || 'Cliente solicitou cancelamento'}</p>
+                                <div className="flex gap-2">
+                                    <button onClick={handleAcceptCancellation} disabled={isHandlingCancellation} className="flex-1 h-9 bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors">
+                                        {isHandlingCancellation ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                    </button>
+                                    <button onClick={handleRefuseCancellation} disabled={isHandlingCancellation} className="flex-1 h-9 bg-white border-2 border-rose-300 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors">
+                                        Recusar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {order.disputeId && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle size={16} className="text-amber-600" />
+                                        <span className="text-xs font-black text-amber-700 uppercase tracking-wider">Disputa Pós-Entrega</span>
+                                    </div>
+                                    {order.disputeExpiresAt && (
+                                        <span className="text-[10px] font-bold text-orange-600">Responder até: {formatSP(order.disputeExpiresAt, 'HH:mm:ss')}</span>
+                                    )}
+                                </div>
+                                <p className="text-xs font-bold text-slate-600 mb-3">{order.disputeReason || 'Cliente abriu disputa'}</p>
+                                <div className="flex gap-2">
+                                    <button onClick={handleAcceptDispute} disabled={isHandlingDispute} className="flex-1 h-9 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors">
+                                        {isHandlingDispute ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
+                                    </button>
+                                    <button onClick={handleRejectDispute} disabled={isHandlingDispute} className="flex-1 h-9 bg-white border-2 border-amber-300 text-amber-600 hover:bg-amber-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors">
+                                        Recusar
+                                    </button>
+                                    <button onClick={() => setShowAlternativeModal(true)} disabled={isHandlingDispute} className="flex-1 h-9 bg-white border-2 border-blue-300 text-blue-600 hover:bg-blue-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors">
+                                        Alternativa
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* GRID 2 COLUNAS */}
+                    <div className="grid grid-cols-2 gap-6">
                         {/* DADOS DO PEDIDO */}
                         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><List size={14} /> Dados do Pedido</h3>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><List size={14} /> Dados do Pedido</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Nº Pedido</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nº Pedido</span>
                                     <span className="text-lg font-black text-slate-900">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</span>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Tipo</span>
-                                    <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-md uppercase inline-block", order.orderType === 'PICKUP' ? "bg-purple-100 text-purple-700" : order.orderType === 'DELIVERY' ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700")}>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Tipo</span>
+                                    <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-md uppercase inline-block mt-1", order.orderType === 'PICKUP' ? "bg-purple-100 text-purple-700" : order.orderType === 'DELIVERY' ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700")}>
                                         {order.orderType === 'PICKUP' ? 'Retirada' : order.orderType === 'DELIVERY' ? 'Delivery' : 'Mesa'}
                                     </span>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Criado em</span>
-                                    <span className="text-xs font-bold text-slate-700">{formatSP(order.createdAt, 'dd/MM/yyyy HH:mm:ss')}</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Criado em</span>
+                                    <span className="text-xs font-bold text-slate-700 mt-1">{formatSP(order.createdAt, 'dd/MM/yyyy HH:mm:ss')}</span>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Status</span>
-                                    <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-md uppercase inline-block", currentStatus.bg, currentStatus.color, currentStatus.border)}>{currentStatus.label}</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Status</span>
+                                    <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-md uppercase inline-block mt-1", currentStatus.bg, currentStatus.color, currentStatus.border)}>{currentStatus.label}</span>
                                 </div>
                                 {order.pendingAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Pendente desde</span>
-                                        <span className="text-xs font-bold text-amber-600">{formatSP(order.pendingAt, 'HH:mm:ss')}</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Pendente desde</span>
+                                        <span className="text-xs font-bold text-amber-600 mt-1">{formatSP(order.pendingAt, 'HH:mm:ss')}</span>
                                     </div>
                                 )}
                                 {order.preparingAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Preparo iniciou</span>
-                                        <span className="text-xs font-bold text-blue-600">{formatSP(order.preparingAt, 'HH:mm:ss')}</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Preparo iniciou</span>
+                                        <span className="text-xs font-bold text-blue-600 mt-1">{formatSP(order.preparingAt, 'HH:mm:ss')}</span>
                                     </div>
                                 )}
                                 {order.readyAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Pronto em</span>
-                                        <span className="text-xs font-bold text-emerald-600">{formatSP(order.readyAt, 'HH:mm:ss')}</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Pronto em</span>
+                                        <span className="text-xs font-bold text-emerald-600 mt-1">{formatSP(order.readyAt, 'HH:mm:ss')}</span>
                                     </div>
                                 )}
                                 {order.completedAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Finalizado em</span>
-                                        <span className="text-xs font-bold text-slate-600">{formatSP(order.completedAt, 'dd/MM HH:mm')}</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Finalizado em</span>
+                                        <span className="text-xs font-bold text-slate-600 mt-1">{formatSP(order.completedAt, 'dd/MM HH:mm')}</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* AGENDAMENTO */}
-                        {order.scheduledDateTime && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 shadow-sm">
-                                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2"><Calendar size={14} /> Pedido Agendado</h3>
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-blue-100 p-3 rounded-xl">
-                                        <Calendar size={24} className="text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <span className="text-sm font-bold text-blue-800 block">
-                                            {formatSP(order.scheduledDateTime, 'dd/MM/yyyy')} às {formatSP(order.scheduledDateTime, 'HH:mm')}
-                                        </span>
-                                        <span className="text-[10px] font-bold text-blue-500 uppercase">Entrega agendada</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         {/* CLIENTE */}
                         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><User size={14} /> Cliente</h3>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={14} /> Cliente</h3>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome</span>
                                     <span className="text-sm font-bold text-slate-900">{order.deliveryOrder?.name || order.customerName || 'Consumidor'}</span>
                                 </div>
                                 {order.customerDocument && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">CPF/CNPJ</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF/CNPJ</span>
                                         <span className="text-xs font-bold text-slate-600 font-mono">{order.customerDocument}</span>
                                     </div>
                                 )}
                                 {order.deliveryOrder?.phone && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Telefone</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telefone</span>
                                         <span className="text-xs font-bold text-blue-600 flex items-center gap-1"><Phone size={12} /> {order.deliveryOrder.phone}</span>
                                     </div>
                                 )}
                                 {order.deliveryOrder?.address && (
                                     <div className="pt-2 border-t border-slate-100">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Endereço</span>
-                                        <p className="text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded-xl">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Endereço</span>
+                                        <p className="text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded-xl leading-relaxed">
                                             {order.deliveryOrder.address}
                                             {order.deliveryOrder.complement && <><br/><span className="text-amber-600">Comp: {order.deliveryOrder.complement}</span></>}
                                             {order.deliveryOrder.reference && <><br/><span className="text-blue-600">Ref: {order.deliveryOrder.reference}</span></>}
@@ -1004,13 +1051,13 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                 )}
                                 {order.deliveryOrder?.neighborhood && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bairro</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bairro</span>
                                         <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.neighborhood}</span>
                                     </div>
                                 )}
                                 {order.deliveryOrder?.city && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cidade</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cidade</span>
                                         <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.city}/{order.deliveryOrder.state}</span>
                                     </div>
                                 )}
@@ -1020,7 +1067,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         {/* INTEGRAÇÃO */}
                         {(order.ifoodOrderId || order.uairangoOrderId || order.displayId || order.customerDocument || order.benefits) && (
                             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 shadow-sm">
-                                <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                <h3 className="text-xs font-black text-orange-600 uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <img src="https://www.ifood.com.br/static/images/ifood-logo.svg" className="h-4" alt="iFood" />
                                     {order.uairangoOrderId && <img src={uairangoLogo} className="h-5" alt="UaiRango" />}
                                     Integração
@@ -1028,31 +1075,31 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                 <div className="space-y-3">
                                     {order.ifoodOrderId && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">iFood ID</span>
-                                            <span className="text-[10px] font-bold text-slate-600 font-mono">{order.ifoodOrderId}</span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">iFood ID</span>
+                                            <span className="text-xs font-bold text-slate-600 font-mono">{order.ifoodOrderId}</span>
                                         </div>
                                     )}
                                     {order.uairangoOrderId && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">UaiRango ID</span>
-                                            <span className="text-[10px] font-bold text-slate-600 font-mono">{order.uairangoOrderId}</span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">UaiRango ID</span>
+                                            <span className="text-xs font-bold text-slate-600 font-mono">{order.uairangoOrderId}</span>
                                         </div>
                                     )}
                                     {order.displayId && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Código Coleta</span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Código Coleta</span>
                                             <span className="text-sm font-bold text-orange-600 flex items-center gap-1"><Ticket size={14} /> {order.displayId}</span>
                                         </div>
                                     )}
                                     {order.customerDocument && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Documento</span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Documento</span>
                                             <span className="text-xs font-bold text-slate-600">{order.customerDocument}</span>
                                         </div>
                                     )}
                                     {order.benefits && order.benefits.length > 0 && (
                                         <div className="pt-2 border-t border-orange-200">
-                                            <span className="text-[9px] font-black text-green-600 uppercase flex items-center gap-2 mb-2"><Tag size={12} /> Cupons</span>
+                                            <span className="text-[10px] font-black text-green-600 uppercase flex items-center gap-2 mb-2"><Tag size={12} /> Cupons</span>
                                             {order.benefits.map((benefit, idx) => (
                                                 <div key={idx} className="flex items-center justify-between bg-white/60 p-2 rounded-xl mb-1">
                                                     <span className="text-xs font-bold text-slate-600">{benefit.name}</span>
@@ -1065,93 +1112,10 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                             </div>
                         )}
 
-                        {/* CANCELAMENTO SOLICITADO PELO CLIENTE */}
-                        {order.cancellationRequested && (
-                            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 shadow-sm">
-                                <h3 className="text-[10px] font-black text-rose-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2"><AlertTriangle size={14} /> Cancelamento Solicitado</h3>
-                                <div className="space-y-3">
-                                    <div className="bg-white/60 p-3 rounded-xl">
-                                        <p className="text-[9px] font-black text-rose-500 uppercase mb-1">Motivo:</p>
-                                        <p className="text-xs font-bold text-slate-700">{order.cancellationReason || 'Cliente solicitou cancelamento'}</p>
-                                        {order.cancellationDeadline && (
-                                            <p className="text-[10px] font-bold text-orange-600 mt-1">
-                                                Prazo: {formatSP(order.cancellationDeadline, 'HH:mm:ss')}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={handleAcceptCancellation}
-                                            disabled={isHandlingCancellation}
-                                            className="flex-1 h-10 bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
-                                        >
-                                            {isHandlingCancellation ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
-                                        </button>
-                                        <button
-                                            onClick={handleRefuseCancellation}
-                                            disabled={isHandlingCancellation}
-                                            className="flex-1 h-10 bg-white border-2 border-rose-300 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
-                                        >
-                                            Recusar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* DISPUTA IFOOD */}
-                        {order.disputeId && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
-                                <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2"><AlertTriangle size={14} /> Disputa Pós-Entrega</h3>
-                                <div className="space-y-3">
-                                    <div className="bg-white/60 p-3 rounded-xl">
-                                        <p className="text-[9px] font-black text-amber-600 uppercase mb-1">Motivo:</p>
-                                        <p className="text-xs font-bold text-slate-700">{order.disputeReason || 'Cliente abriu disputa'}</p>
-                                        {order.disputeExpiresAt && (
-                                            <p className="text-[10px] font-bold text-orange-600 mt-1">
-                                                Responder até: {formatSP(order.disputeExpiresAt, 'HH:mm:ss')}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={handleAcceptDispute}
-                                            disabled={isHandlingDispute}
-                                            className="flex-1 h-10 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
-                                        >
-                                            {isHandlingDispute ? <Loader2 size={14} className="animate-spin" /> : 'Aceitar'}
-                                        </button>
-                                        <button
-                                            onClick={handleRejectDispute}
-                                            disabled={isHandlingDispute}
-                                            className="flex-1 h-10 bg-white border-2 border-amber-300 text-amber-600 hover:bg-amber-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
-                                        >
-                                            Recusar
-                                        </button>
-                                        <button
-                                            onClick={() => setShowAlternativeModal(true)}
-                                            disabled={isHandlingDispute}
-                                            className="flex-1 h-10 bg-white border-2 border-blue-300 text-blue-600 hover:bg-blue-50 text-[10px] font-black uppercase rounded-xl disabled:opacity-50 transition-colors"
-                                        >
-                                            Alternativa
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* OBSERVAÇÕES */}
-                        {(order.notes || order.deliveryOrder?.notes) && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
-                                <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Info size={14} /> Observações</h3>
-                                <p className="text-xs font-bold text-amber-800">{order.notes || order.deliveryOrder?.notes}</p>
-                            </div>
-                        )}
-
                         {/* FINANCEIRO */}
-                        <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Wallet size={14} /> Financeiro</h3>
-                            <div className="space-y-2">
+                        <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-lg">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Wallet size={14} /> Financeiro</h3>
+                            <div className="space-y-2.5">
                                 <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
                                     <span>Subtotal</span><span className="text-white">R$ {subtotal.toFixed(2)}</span>
                                 </div>
@@ -1176,12 +1140,20 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                     </div>
                                 )}
                                 <div className="pt-3 border-t border-white/10 flex justify-between items-end">
-                                    <span className="text-[9px] font-black text-blue-400 uppercase">Total</span>
+                                    <span className="text-[10px] font-black text-blue-400 uppercase">Total</span>
                                     <span className="text-2xl font-black italic">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* OBSERVAÇÕES — full width */}
+                    {(order.notes || order.deliveryOrder?.notes) && (
+                        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+                            <h3 className="text-xs font-black text-amber-600 uppercase tracking-widest mb-2 flex items-center gap-2"><Info size={14} /> Observações</h3>
+                            <p className="text-xs font-bold text-amber-800 leading-relaxed">{order.notes || order.deliveryOrder?.notes}</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

@@ -52,7 +52,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
           {product.sizes?.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic">
                 <div className="w-1 h-3 bg-orange-500" /> Tamanho
               </h4>
               <div className="grid grid-cols-2 gap-2">
@@ -76,7 +76,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
 
           {product.addonGroups?.map(group => (
             <div key={group.id} className="space-y-3">
-              <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic">
                 <div className="w-1 h-3 bg-blue-500" /> {group.name}
               </h4>
               <div className="grid grid-cols-2 gap-2">
@@ -93,8 +93,8 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
                           : "border-slate-50 bg-white text-slate-500 hover:border-slate-200"
                       )}
                     >
-                      <span className="text-[9px] font-black uppercase italic leading-none">{addon.name}</span>
-                      {addon.price > 0 && <span className="text-[8px] font-black text-emerald-600">+R${addon.price.toFixed(2)}</span>}
+                      <span className="text-[10px] font-black uppercase italic leading-none">{addon.name}</span>
+                      {addon.price > 0 && <span className="text-[10px] font-black text-emerald-600">+R${addon.price.toFixed(2)}</span>}
                     </button>
                   );
                 })}
@@ -103,7 +103,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
           ))}
 
           <div className="space-y-3">
-            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Observações</h4>
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Observações</h4>
             <textarea
               className="w-full h-24 bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] font-bold outline-none focus:border-orange-500 resize-none"
               placeholder="Instruções específicas..."
@@ -125,7 +125,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
           </div>
           <div className="flex items-center gap-4 text-right">
             <div className="flex flex-col">
-              <span className="text-[8px] font-black text-slate-400 uppercase italic leading-none">Subtotal</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase italic leading-none">Subtotal</span>
               <span className="text-xl font-black text-slate-900 italic tracking-tighter leading-none">R$ {calculatedPrice.toFixed(2).replace('.', ',')}</span>
             </div>
             <button

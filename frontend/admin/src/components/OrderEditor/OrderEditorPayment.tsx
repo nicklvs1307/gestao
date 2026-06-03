@@ -60,7 +60,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
           {/* Resumo Financeiro */}
           <Card className="p-5 rounded-2xl border-slate-200 shadow-sm bg-white overflow-hidden relative">
             <div className="absolute top-0 right-0 p-3 opacity-[0.04]"><DollarSign size={60} /></div>
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
               <div className="w-1 h-4 bg-orange-500 rounded-full" /> Resumo Financeiro
             </h3>
             <div className="space-y-3">
@@ -119,12 +119,12 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               <div className="mt-4 pt-4 border-t-2 border-dashed border-slate-200">
                 <div className="flex justify-between items-end">
                   <div>
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
                     <div className="text-2xl font-black text-slate-900 tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</div>
                   </div>
                   {remainingToPay > 0.01 && (
                     <div className="text-right px-3 py-2 bg-rose-50 border border-rose-200 rounded-xl">
-                      <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest block">A Pagar</span>
+                      <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block">A Pagar</span>
                       <span className="text-lg font-black text-rose-600 tracking-tighter">R$ {remainingToPay.toFixed(2).replace('.', ',')}</span>
                     </div>
                   )}
@@ -154,7 +154,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
           {/* Registro de Pagamentos */}
           <Card className="p-5 rounded-2xl border-slate-200 shadow-sm bg-white overflow-hidden relative">
             <div className="absolute top-0 right-0 p-3 opacity-[0.04]"><Clock size={60} /></div>
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
               <div className="w-1 h-4 bg-blue-500 rounded-full" /> Pagamentos Registrados
             </h3>
             <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
@@ -192,11 +192,11 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                 <div className="flex items-center gap-2 text-amber-700">
                   <Lock size={14} />
-                  <span className="text-[9px] font-bold text-amber-700 uppercase">
+                  <span className="text-[10px] font-bold text-amber-700 uppercase">
                     Pagamento via iFood
                   </span>
                 </div>
-                <p className="text-[8px] text-amber-600 mt-1">
+                <p className="text-[10px] text-amber-600 mt-1">
                   Pagamento já realizado na plataforma
                 </p>
               </div>
@@ -223,7 +223,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
         {/* COLUNA 2: LOGÍSTICA DE ENTREGA */}
         <div className="col-span-4 space-y-4">
           <Card className="p-5 rounded-2xl border-slate-200 shadow-sm bg-white min-h-[400px]">
-            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2">
               <div className="w-1 h-4 bg-indigo-500 rounded-full" /> Logística de Entrega
             </h3>
 
@@ -253,18 +253,18 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
             {/* Info Grid */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Destinatário</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Destinatário</span>
                 <p className="text-[10px] font-black text-slate-900 uppercase truncate">{order.deliveryOrder?.name || 'Não informado'}</p>
               </div>
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Telefone</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Telefone</span>
                 <p className="text-[10px] font-black text-slate-900">{order.deliveryOrder?.phone || 'Não informado'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pagamento</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pagamento</span>
                 <p className="text-[10px] font-black text-emerald-600 uppercase truncate">{resolvePaymentLabel(order.deliveryOrder?.paymentMethod, paymentMethods) || 'Não informado'}</p>
               </div>
               {order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > 0 ? (
@@ -282,7 +282,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
 
             {/* Endereço */}
             <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-2">
-              <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
                 <MapPin size={10} /> Endereço de Entrega
               </span>
               <p className="text-[11px] font-bold text-slate-700 leading-snug">
@@ -294,10 +294,10 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
 
             {/* Observações do Cliente */}
             <div className="mt-4">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                 <div className="w-1 h-4 bg-orange-500 rounded-full" /> Obs. do Cliente
               </h3>
-              <div className="p-3 bg-orange-50/50 border border-orange-100 rounded-xl text-[10px] font-bold text-slate-600 h-20 overflow-y-auto custom-scrollbar leading-snug italic">
+              <div className="p-3 bg-orange-50/50 border border-orange-100 rounded-xl text-[10px] font-bold text-slate-600 h-20 overflow-y-auto custom-scrollbar leading-snug">
                 {order.notes || order.deliveryOrder?.notes || 'Nenhuma observação informada pelo cliente.'}
               </div>
             </div>
@@ -315,7 +315,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               </h3>
               <div className="space-y-3 mb-4">
                 <div>
-                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1 block mb-1">Forma de Pagamento</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 block mb-1">Forma de Pagamento</label>
                   <select 
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black text-slate-900 outline-none focus:ring-2 focus:ring-orange-500/20 uppercase" 
                     value={newPayment.methodId} 
@@ -326,7 +326,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1 block mb-1">Valor (R$)</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 block mb-1">Valor (R$)</label>
                   <input 
                     type="number" 
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:ring-2 focus:ring-orange-500/20" 
@@ -355,7 +355,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
 
           {/* Notas Internas */}
           <Card className="p-5 rounded-2xl border-slate-200 shadow-sm bg-white">
-            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
               <div className="w-1 h-4 bg-slate-400 rounded-full" /> Notas Internas
             </h3>
             <textarea 
@@ -364,7 +364,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               value={internalObs} 
               onChange={e => onInternalObsChange(e.target.value)} 
             />
-            <div className="mt-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+            <div className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <Info size={10} /> Visível apenas para a equipe administrativa
             </div>
           </Card>
