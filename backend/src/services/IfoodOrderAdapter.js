@@ -243,13 +243,14 @@ class IfoodOrderAdapter extends IntegrationBaseService {
     const settings = await this.getSettings(restaurantId);
     if (!settings?.ifoodAutoAcceptOrders) {
       logger.info(`[IFOOD] Auto-accept desativado para ${restaurantId}, pulando confirmação automática`);
-      return;
+      return false;
     }
 
     const IfoodOrderService = require('./IfoodOrderService');
     try {
       await IfoodOrderService.confirmOrder(platformOrderId);
       await IfoodOrderService.startPreparation(platformOrderId);
+      return true;
     } catch (error) {
       logger.error(`[IFOOD] Erro ao confirmar/iniciar preparo automático ${platformOrderId}:`, error.message);
       throw error;
