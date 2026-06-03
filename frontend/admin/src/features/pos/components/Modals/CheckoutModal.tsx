@@ -6,7 +6,7 @@ import { usePosStore } from '../../hooks/usePosStore';
 import { useCartTotal } from '../../hooks/useCartStore';
 import { PaymentMethod } from '../../../../types';
 import { usePrefersReducedMotion } from '../../../../hooks/usePrefersReducedMotion';
-import { useScrollLock } from '../../../../hooks/useScrollLock';
+import { ModalPortal } from '../../../../components/ui/ModalPortal';
 
 interface CheckoutModalProps {
   paymentMethods: PaymentMethod[];
@@ -34,8 +34,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
 
   const cartTotal = useCartTotal();
 
-  useScrollLock(activeModal === 'pos_checkout');
-
   const totalGeral = useMemo(() => {
     return cartTotal + parseFloat(posExtraCharge || '0') + parseFloat(posDeliveryFee || '0') - parseFloat(posDiscountValue || '0');
   }, [cartTotal, posExtraCharge, posDeliveryFee, posDiscountValue]);
@@ -60,6 +58,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
   const currentTab = tabLabels[activeTab] || tabLabels.table;
 
   return (
+    <ModalPortal isOpen={activeModal === 'pos_checkout'}>
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <div 
         onClick={handleCloseModal} 
@@ -260,5 +259,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 });

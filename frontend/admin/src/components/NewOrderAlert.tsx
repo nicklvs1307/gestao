@@ -4,7 +4,7 @@ import { formatSP } from '@/lib/timezone';
 import { resolvePaymentLabel } from '@/utils/paymentUtils';
 import { ShoppingBag, Bell, CheckCircle, XCircle, Clock, MapPin, Tag, Truck, UtensilsCrossed, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 import ifoodLogo from '../assets/ifood-logo.png';
 import saiposLogo from '../assets/saipos-logo.png';
 import uairangoLogo from '../assets/uairango-logo.png';
@@ -59,11 +59,10 @@ const getIntegrationInfo = (order: Order): IntegrationInfo | null => {
 
 const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = false, onAccept, onReject, onClose }) => {
   
-  useScrollLock(Array.isArray(orders) && orders.length > 0);
-
   if (!Array.isArray(orders) || orders.length === 0) return null;
 
   return (
+    <ModalPortal isOpen={Array.isArray(orders) && orders.length > 0}>
     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
       {/* Backdrop Profissional */}
       <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" onClick={onClose} />
@@ -282,6 +281,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
         </button>
       </div>
     </div>
+    </ModalPortal>
   );
 };
 

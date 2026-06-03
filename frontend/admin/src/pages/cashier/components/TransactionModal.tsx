@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect } from 'react';
 import { Minus, Plus, X, DollarSign } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Button } from '../../../components/ui/Button';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 import type { TransactionModalState } from '../hooks/useCashier';
 
 interface TransactionModalProps {
@@ -47,6 +48,7 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
   if (isOpen === 'none') return null;
 
   return (
+    <ModalPortal isOpen={isOpen !== 'none'}>
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
       <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl border-2 border-slate-200 overflow-hidden">
             <header className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
@@ -127,6 +129,7 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
             </form>
           </div>
     </div>
+    </ModalPortal>
   );
 });
 

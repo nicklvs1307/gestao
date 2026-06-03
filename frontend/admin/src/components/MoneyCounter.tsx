@@ -4,7 +4,7 @@ import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 
 interface MoneyCounterProps {
     isOpen: boolean;
@@ -17,7 +17,6 @@ const BILLS = [200, 100, 50, 20, 10, 5, 2];
 const COINS = [1, 0.50, 0.25, 0.10, 0.05];
 
 const MoneyCounter: React.FC<MoneyCounterProps> = memo(({ isOpen, onClose, onConfirm, initialDetails }) => {
-    useScrollLock(isOpen);
     const [counts, setCounts] = useState<Record<string, number>>({});
     const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
 
@@ -60,6 +59,7 @@ const MoneyCounter: React.FC<MoneyCounterProps> = memo(({ isOpen, onClose, onCon
     if (!isOpen) return null;
 
     return (
+        <ModalPortal isOpen={isOpen}>
         <AnimatePresence>
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
                 <motion.div 
@@ -192,6 +192,7 @@ const MoneyCounter: React.FC<MoneyCounterProps> = memo(({ isOpen, onClose, onCon
                 variant="warning"
             />
         </AnimatePresence>
+        </ModalPortal>
     );
 });
 

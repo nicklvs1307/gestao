@@ -30,7 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import { calculateProductPrice } from '../../features/pos/utils/priceCalculator';
 import { printOrder, type PrintTarget } from '../../services/printer';
 import { OrderEditorProductDrawer } from './OrderEditorProductDrawer';
-import { useScrollLock } from '../../hooks/useScrollLock';
+import { ModalPortal } from '../ui/ModalPortal';
 import { OrderEditorPayment } from './OrderEditorPayment';
 
 interface OrderEditorProps {
@@ -116,8 +116,6 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
   // Estados para cancelamento solicitado pelo cliente
   const [isHandlingCancellation, setIsHandlingCancellation] = useState(false);
-
-  useScrollLock(true);
 
   useEffect(() => {
     loadData();
@@ -631,6 +629,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
   }, [order]);
 
   return (
+    <ModalPortal isOpen={true}>
     <div className="fixed inset-0 z-[300] flex flex-col animate-in fade-in duration-300" onWheel={(e) => e.stopPropagation()}>
       {/* Overlay escuro com backdrop blur */}
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} />
@@ -1399,6 +1398,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
       )}
       </div>
     </div>
+    </ModalPortal>
   );
 };
 

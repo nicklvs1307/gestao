@@ -6,14 +6,12 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 
 const IngredientManagement: React.FC = () => {
     const [ingredients, setIngredients] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    useScrollLock(isModalOpen);
 
     const [editingIngredient, setEditingIngredient] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -190,6 +188,7 @@ const IngredientManagement: React.FC = () => {
 
             {/* Modal de Cadastro */}
             {isModalOpen && (
+                <ModalPortal isOpen={isModalOpen}>
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -264,6 +263,7 @@ const IngredientManagement: React.FC = () => {
                         </form>
                     </div>
                 </div>
+                </ModalPortal>
             )}
         </div>
     );

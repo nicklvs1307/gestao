@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Minus, Plus, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Product } from '../../types';
+import { ModalPortal } from '../ui/ModalPortal';
 
 interface OrderEditorProductDrawerProps {
   product: Product;
@@ -35,6 +36,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
   onClose,
 }) => {
   return (
+    <ModalPortal isOpen={true}>
     <div className="fixed inset-0 z-[350] flex justify-end animate-in fade-in duration-200">
       <div onClick={onClose} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
       <div className="relative w-[500px] bg-white shadow-2xl flex flex-col h-full border-l border-slate-200 animate-in slide-in-from-right duration-300">
@@ -137,5 +139,6 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
         </footer>
       </div>
     </div>
+    </ModalPortal>
   );
 };

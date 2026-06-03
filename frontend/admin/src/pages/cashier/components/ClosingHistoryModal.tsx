@@ -6,6 +6,7 @@ import { formatSP } from '@/lib/timezone';
 import { Button } from '../../../components/ui/Button';
 import { cn } from '../../../lib/utils';
 import { resolvePaymentLabel } from '@/utils/paymentUtils';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 interface SessionHistory {
   id: string;
@@ -83,6 +84,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
   if (!isOpen) return null;
 
   return (
+    <ModalPortal isOpen={isOpen}>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         
@@ -264,6 +266,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 });
 

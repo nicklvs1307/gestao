@@ -4,6 +4,7 @@ import { formatSP } from '@/lib/timezone';
 import { toast } from 'sonner';
 import type { PaymentMethod } from '../hooks/useCashier';
 import { updatePaymentMethodSpecific, removeOrderPayment, addOrderPayment } from '../../../services/api';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 interface Payment {
   id: string;
@@ -164,6 +165,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
     : order.deliveryOrder?.name || order.customerName || 'BALCÃO';
 
   return (
+    <ModalPortal isOpen={true}>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
@@ -374,6 +376,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 });
 

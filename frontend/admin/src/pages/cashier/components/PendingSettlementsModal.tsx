@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect } from 'react';
 import { formatSP } from '@/lib/timezone';
 import { CheckCircle, Truck, X, AlertTriangle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 interface PendingSettlementsModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
   if (!isOpen) return null;
 
   return (
+    <ModalPortal isOpen={isOpen}>
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
       <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl border-2 border-slate-200 overflow-hidden">
             <header className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-rose-50 to-white">
@@ -131,6 +133,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
             </footer>
           </div>
     </div>
+    </ModalPortal>
   );
 });
 

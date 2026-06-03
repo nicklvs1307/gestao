@@ -5,7 +5,7 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { toast } from 'sonner';
 import { api } from '../services/api';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 
 interface Permission {
   id: string;
@@ -54,7 +54,6 @@ const CATEGORIES = [
 const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({ 
   isOpen, onClose, roleId, roleName, currentPermissionIds, onSave 
 }) => {
-  useScrollLock(isOpen);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -109,6 +108,7 @@ const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({
   if (!isOpen) return null;
 
   return (
+    <ModalPortal isOpen={isOpen}>
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
       
@@ -206,6 +206,7 @@ const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };
 

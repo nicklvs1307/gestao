@@ -8,7 +8,7 @@ import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { searchCustomers, createCustomer, updateCustomer, createCustomerAddress, updateCustomerAddress, deleteCustomerAddress } from '../services/api';
 import { toast } from 'sonner';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 
 interface Address {
     street: string;
@@ -53,7 +53,6 @@ interface CustomerSelectionModalProps {
 }
 
 export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ isOpen, isDeliveryMode = false, onClose, onSelectCustomer }) => {
-    useScrollLock(isOpen);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [results, setResults] = useState<Customer[]>([]);
@@ -438,6 +437,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
     if (!isOpen) return null;
 
     return (
+        <ModalPortal isOpen={isOpen}>
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
             <div onClick={onClose} className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
             
@@ -645,6 +645,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                 </div>
             </div>
         </div>
+        </ModalPortal>
     );
 };
 

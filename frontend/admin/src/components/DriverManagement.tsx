@@ -3,14 +3,12 @@ import { getUsers, createUser, updateUser, deleteUser } from '../services/api';
 import { Truck, Plus, Trash2, Edit2, Loader2, Phone, Mail, User, DollarSign, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ConfirmDialog } from './ui/ConfirmDialog';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 
 const DriverManagement: React.FC = () => {
   const [drivers, setDrivers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useScrollLock(isModalOpen);
 
   const [editingDriver, setEditingDriver] = useState<any>(null);
 
@@ -179,6 +177,7 @@ const DriverManagement: React.FC = () => {
 
       {/* Modal de Formulário */}
       {isModalOpen && (
+        <ModalPortal isOpen={isModalOpen}>
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
@@ -248,6 +247,7 @@ const DriverManagement: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
       <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />
     </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createUser, updateUser, getRoles, getAvailablePermissions, sendResetEmail } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 import { 
     X, User, Mail, Lock, CheckCircle, Loader2, Award, 
     ChevronRight, ChevronLeft, ShieldCheck, CheckSquare, Square,
@@ -188,8 +188,6 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   
   const isEditing = !!userToEdit;
 
-  useScrollLock(isOpen);
-
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingData(true);
@@ -337,6 +335,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   if (!isOpen) return null;
 
   return (
+    <ModalPortal isOpen={isOpen}>
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} />
       
@@ -761,6 +760,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
         </div>
       </motion.div>
     </div>
+    </ModalPortal>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { X, Wallet, CheckCircle } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { usePosStore } from '../../hooks/usePosStore';
-import { useScrollLock } from '../../../../hooks/useScrollLock';
+import { ModalPortal } from '../../../../components/ui/ModalPortal';
 
 interface CashierOpenModalProps {
   onOpenCashier: (amount: string) => void;
@@ -11,8 +11,6 @@ interface CashierOpenModalProps {
 export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ onOpenCashier }) => {
   const { activeModal, setActiveModal } = usePosStore();
   const [cashierAmount, setCashierAmount] = useState('');
-
-  useScrollLock(activeModal === 'cashier_open');
 
   if (activeModal !== 'cashier_open') return null;
 
@@ -25,6 +23,7 @@ export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ o
   }, [setActiveModal]);
 
   return (
+    <ModalPortal isOpen={activeModal === 'cashier_open'}>
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div 
         onClick={handleClose} 
@@ -83,5 +82,6 @@ export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ o
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 });

@@ -2,7 +2,7 @@ import React from 'react';
 import { Bell, UserCheck, CreditCard, X, CheckCircle, Clock } from 'lucide-react';
 import { formatSP } from '@/lib/timezone';
 import { cn } from '../lib/utils';
-import { useScrollLock } from '../hooks/useScrollLock';
+import { ModalPortal } from './ui/ModalPortal';
 
 interface TableRequest {
   id: string;
@@ -19,10 +19,10 @@ interface TableRequestAlertProps {
 }
 
 const TableRequestAlert: React.FC<TableRequestAlertProps> = ({ requests, onResolve, onClose }) => {
-  useScrollLock(requests.length > 0);
   if (requests.length === 0) return null;
 
   return (
+    <ModalPortal isOpen={requests.length > 0}>
     <div className="fixed inset-0 z-[220] flex items-start justify-center bg-slate-950/40 backdrop-blur-sm p-4 pt-20 animate-in fade-in slide-in-from-top-4 duration-300">
       <div className="w-full max-w-md flex flex-col gap-3">
         
@@ -85,6 +85,7 @@ const TableRequestAlert: React.FC<TableRequestAlertProps> = ({ requests, onResol
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };
 
