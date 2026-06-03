@@ -62,13 +62,14 @@ class IfoodOrderService {
 
       ({ order } = result);
 
-      // Verificar se já foi confirmado anteriormente (evitar confirmação duplicada)
       if (order.ifoodConfirmed) {
-        logger.info(`[IFOOD] Pedido ${orderId} já confirmado anteriormente, ignorando`);
+        logger.info(`[IFOOD] Pedido ${orderId} já confirmado anteriormente (ifoodConfirmed: true), ignorando`);
         return { success: true, alreadyConfirmed: true };
       }
 
       const { token } = result;
+
+      logger.info(`[IFOOD] Chamando confirm para pedido iFood ${order.ifoodOrderId}`);
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/confirm`,
@@ -90,10 +91,12 @@ class IfoodOrderService {
         }
       });
 
+      logger.info(`[IFOOD] Confirm concluído com sucesso para pedido ${orderId}`);
       return { success: true };
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
-      logger.error(`[IFOOD] Erro ao confirmar pedido:`, errorMsg);
+      const errorStatus = error.response?.status;
+      logger.error(`[IFOOD] Erro ao confirmar pedido (status ${errorStatus}):`, errorMsg);
       this._notifySyncError(order?.restaurantId, orderId, `Erro ao confirmar: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
@@ -215,7 +218,15 @@ class IfoodOrderService {
       if (result.success === false) return result;
 
       ({ order } = result);
+
+      if (order.preparingAt) {
+        logger.info(`[IFOOD] Pedido ${orderId} já está em preparo (preparingAt: ${order.preparingAt}), ignorando startPreparation`);
+        return { success: true, alreadyPreparing: true };
+      }
+
       const { token } = result;
+
+      logger.info(`[IFOOD] Chamando startPreparation para pedido iFood ${order.ifoodOrderId}`);
 
       await axios.post(
         `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/startPreparation`,
@@ -237,10 +248,12 @@ class IfoodOrderService {
         }
       });
 
+      logger.info(`[IFOOD] StartPreparation concluído com sucesso para pedido ${orderId}`);
       return { success: true };
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
-      logger.error(`[IFOOD] Erro ao iniciar preparação:`, errorMsg);
+      const errorStatus = error.response?.status;
+      logger.error(`[IFOOD] Erro ao iniciar preparação (status ${errorStatus}):`, errorMsg);
       this._notifySyncError(order?.restaurantId, orderId, `Erro ao iniciar preparação: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
@@ -253,15 +266,26 @@ class IfoodOrderService {
       if (result.success === false) return result;
 
       ({ order } = result);
+
+      if (order.readyAt) {
+        logger.info(`[IFOOD] Pedido ${orderId} já marcado como pronto (readyAt: ${order.readyAt}), ignorando`);
+        return { success: true, alreadyReady: true };
+      }
+
       const { token } = result;
 
-      const endpoint = order.orderType === 'PICKUP'
+      const isPickup = order.orderType === 'PICKUP';
+      const endpoint = isPickup
         ? `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/readyToPickup`
         : `${BASE_URL}/order/v1.0/orders/${order.ifoodOrderId}/dispatch`;
 
+      const requestBody = isPickup ? {} : { deliveredBy: 'MERCHANT' };
+
+      logger.info(`[IFOOD] Chamando ${isPickup ? 'readyToPickup' : 'dispatch'} para pedido iFood ${order.ifoodOrderId} (tipo: ${order.orderType})`);
+
       await axios.post(
         endpoint,
-        order.orderType === 'DELIVERY' ? { deliveredBy: 'MERCHANT' } : {},
+        requestBody,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -279,10 +303,12 @@ class IfoodOrderService {
         }
       });
 
+      logger.info(`[IFOOD] ${isPickup ? 'ReadyToPickup' : 'Dispatch'} concluído com sucesso para pedido ${orderId}`);
       return { success: true };
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
-      logger.error(`[IFOOD] Erro ao marcar pronto:`, errorMsg);
+      const errorStatus = error.response?.status;
+      logger.error(`[IFOOD] Erro ao marcar pronto (status ${errorStatus}):`, errorMsg);
       this._notifySyncError(order?.restaurantId, orderId, `Erro ao marcar pronto: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }

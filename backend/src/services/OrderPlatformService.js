@@ -57,18 +57,45 @@ const orderPlatformService = new OrderPlatformService();
 orderPlatformService.register('ifood', {
   onPreparing: async (orderId, restaurantId) => {
     const IfoodOrderService = require('./IfoodOrderService');
-    return await IfoodOrderService.confirmOrder(orderId, restaurantId);
+    const logger = require('../config/logger');
+
+    logger.info(`[IFOOD SYNC] Iniciando fluxo de preparo para pedido ${orderId}`);
+
+    const confirmResult = await IfoodOrderService.confirmOrder(orderId);
+    logger.info(`[IFOOD SYNC] Confirm result para ${orderId}:`, JSON.stringify(confirmResult));
+
+    if (confirmResult?.success || confirmResult?.alreadyConfirmed) {
+      const prepResult = await IfoodOrderService.startPreparation(orderId);
+      logger.info(`[IFOOD SYNC] StartPreparation result para ${orderId}:`, JSON.stringify(prepResult));
+      return prepResult;
+    }
+
+    return confirmResult;
   },
   onReady: async (orderId, restaurantId) => {
     const IfoodOrderService = require('./IfoodOrderService');
-    return await IfoodOrderService.markReady(orderId, restaurantId);
+    const logger = require('../config/logger');
+
+    logger.info(`[IFOOD SYNC] Marcando pedido ${orderId} como pronto para entrega`);
+
+    const result = await IfoodOrderService.markReady(orderId);
+    logger.info(`[IFOOD SYNC] MarkReady result para ${orderId}:`, JSON.stringify(result));
+    return result;
   },
   onShipped: async (orderId, restaurantId) => {
     const IfoodOrderService = require('./IfoodOrderService');
-    return await IfoodOrderService.markReady(orderId, restaurantId);
+    const logger = require('../config/logger');
+
+    logger.info(`[IFOOD SYNC] Pedido ${orderId} marcado como saiu para entrega`);
+
+    return await IfoodOrderService.markReady(orderId);
   },
   onCanceled: async (orderId, restaurantId, reason) => {
     const IfoodOrderService = require('./IfoodOrderService');
+    const logger = require('../config/logger');
+
+    logger.info(`[IFOOD SYNC] Cancelando pedido ${orderId}. Motivo: ${reason || '501'}`);
+
     return await IfoodOrderService.rejectOrder(orderId, reason || '501');
   }
 });

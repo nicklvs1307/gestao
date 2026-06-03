@@ -262,8 +262,21 @@ class IfoodOrderAdapter extends IntegrationBaseService {
         }
       );
       logger.info(`[IFOOD] Pedido ${platformOrderId} confirmado no iFood`);
+
+      await axios.post(
+        `${BASE_URL}/order/v1.0/orders/${platformOrderId}/startPreparation`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+      logger.info(`[IFOOD] Preparação iniciada automaticamente para ${platformOrderId}`);
     } catch (error) {
-      logger.error(`[IFOOD] Erro ao confirmar pedido ${platformOrderId}:`, error.message);
+      logger.error(`[IFOOD] Erro ao confirmar/iniciar preparo automático ${platformOrderId}:`, error.message);
     }
   }
 
