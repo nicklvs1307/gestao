@@ -380,6 +380,7 @@ async handleWebhook(req, res) {
       const statusUpdateData = { status: newStatus };
 
       if (newStatus === 'READY') statusUpdateData.readyAt = new Date();
+      if (newStatus === 'SHIPPED') statusUpdateData.shippedAt = new Date();
       if (newStatus === 'COMPLETED') statusUpdateData.completedAt = new Date();
 
       await prisma.order.update({

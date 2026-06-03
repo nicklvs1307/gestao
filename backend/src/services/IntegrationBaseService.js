@@ -68,12 +68,16 @@ class IntegrationBaseService {
       if (result && !result.isReplayed) {
         // Verificar se já foi confirmado antes (evitar confirmação duplicada)
         if (result.order && !result.order.ifoodConfirmed) {
-          await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
-          // Marcar como confirmado para evitar futuras duplicações
-          await prisma.order.update({
-            where: { id: result.order.id },
-            data: { ifoodConfirmed: true }
-          });
+          try {
+            await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
+            // Marcar como confirmado APENAS após sucesso da API
+            await prisma.order.update({
+              where: { id: result.order.id },
+              data: { ifoodConfirmed: true }
+            });
+          } catch (confirmError) {
+            logger.error(`[${this.platform.toUpperCase()}] Falha ao confirmar pedido ${platformOrderId} na plataforma:`, confirmError.message);
+          }
         } else {
           logger.info(`[${this.platform.toUpperCase()}] Pedido ${platformOrderId} já confirmado, ignorando confirmação duplicada`);
         }

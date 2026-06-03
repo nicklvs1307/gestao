@@ -14,9 +14,11 @@ class IfoodPollingService {
   }
 
 /**
-    * Inicia o cron job de polling de eventos do iFood.
-    * DESABILITADO: webhook é a única fonte de eventos.
-    * Este método não deve mais ser chamado.
+    * [DESABILITADO] Polling de eventos do iFood.
+    * O webhook (/webhooks/ifood) é a fonte primária e única de eventos.
+    * Este serviço foi desativado em 2024 para reduzir carga na API do iFood.
+    * Mantido como referência caso seja necessário reativar como fallback.
+    * Não deve ser chamado — o init() é no-op propositalmente.
     */
   init() {
     logger.warn('[IFOOD POLLING] DESABILITADO - webhook é a única fonte de eventos. Polling não será iniciado.');

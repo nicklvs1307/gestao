@@ -326,6 +326,11 @@ const confirmIfoodOrder = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
         const result = await IfoodOrderService.confirmOrder(orderId);
         res.json(result);
     } catch (error) {
@@ -340,6 +345,11 @@ const rejectIfoodOrder = async (req, res) => {
 
         if (!orderId) {
             return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
         }
 
         const result = await IfoodOrderService.rejectOrder(orderId, reason, force);
@@ -358,6 +368,11 @@ const startIfoodPreparation = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
         const result = await IfoodOrderService.startPreparation(orderId);
         res.json(result);
     } catch (error) {
@@ -372,6 +387,11 @@ const markIfoodReady = async (req, res) => {
 
         if (!orderId) {
             return res.status(400).json({ error: 'orderId é obrigatório' });
+        }
+
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
         }
 
         const result = await IfoodOrderService.markReady(orderId);
@@ -489,6 +509,11 @@ const getIfoodCancellationReasons = async (req, res) => {
             return res.status(400).json({ error: 'orderId é obrigatório' });
         }
 
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
         const result = await IfoodOrderService.getCancellationReasons(orderId);
         res.json(result);
     } catch (error) {
@@ -549,6 +574,11 @@ const validateIfoodPickupCode = async (req, res) => {
             return res.status(400).json({ error: 'orderId e code são obrigatórios' });
         }
 
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
         const result = await IfoodOrderService.validatePickupCode(orderId, code);
         res.json(result);
     } catch (error) {
@@ -563,6 +593,11 @@ const acceptIfoodDispute = async (req, res) => {
 
         if (!disputeId || !orderId) {
             return res.status(400).json({ error: 'disputeId e orderId são obrigatórios' });
+        }
+
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
         }
 
         const result = await IfoodOrderService.acceptDispute(disputeId, reason);
@@ -592,6 +627,11 @@ const rejectIfoodDispute = async (req, res) => {
             return res.status(400).json({ error: 'disputeId e orderId são obrigatórios' });
         }
 
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
+        }
+
         const result = await IfoodOrderService.rejectDispute(disputeId, reason);
 
         if (result.success) {
@@ -618,6 +658,11 @@ const offerIfoodAlternative = async (req, res) => {
 
         if (!disputeId || !orderId || !alternativeType) {
             return res.status(400).json({ error: 'disputeId, orderId e alternativeType são obrigatórios' });
+        }
+
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order || order.restaurantId !== req.restaurantId) {
+            return res.status(403).json({ error: 'Pedido não pertence a este restaurante' });
         }
 
         const result = await IfoodOrderService.offerAlternativeDispute(disputeId, alternativeType, value);

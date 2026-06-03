@@ -167,8 +167,9 @@ app.use('/api/uploads', express.static(uploadsPath));
 // ==================================================================
 
 const IfoodWebhookService = require('./src/services/IfoodWebhookService');
+const ifoodWebhookRateLimit = require('./src/middlewares/ifoodWebhookRateLimit');
 app.get('/webhooks/ifood', (req, res) => res.status(200).json({ status: 'ok' }));
-app.post('/webhooks/ifood', (req, res) => IfoodWebhookService.handleWebhook(req, res));
+app.post('/webhooks/ifood', ifoodWebhookRateLimit, (req, res) => IfoodWebhookService.handleWebhook(req, res));
 app.get('/webhooks/ifood/test', (req, res) => res.status(200).json({ status: 'ok' }));
 app.post('/webhooks/ifood/test', (req, res) => res.status(200).json({ status: 'ok' }));
 

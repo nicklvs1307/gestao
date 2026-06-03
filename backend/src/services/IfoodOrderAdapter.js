@@ -246,37 +246,13 @@ class IfoodOrderAdapter extends IntegrationBaseService {
       return;
     }
 
-    const token = await this.getAccessToken(restaurantId);
-    if (!token) return;
-
+    const IfoodOrderService = require('./IfoodOrderService');
     try {
-      await axios.post(
-        `${BASE_URL}/order/v1.0/orders/${platformOrderId}/confirm`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        }
-      );
-      logger.info(`[IFOOD] Pedido ${platformOrderId} confirmado no iFood`);
-
-      await axios.post(
-        `${BASE_URL}/order/v1.0/orders/${platformOrderId}/startPreparation`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        }
-      );
-      logger.info(`[IFOOD] Preparação iniciada automaticamente para ${platformOrderId}`);
+      await IfoodOrderService.confirmOrder(platformOrderId);
+      await IfoodOrderService.startPreparation(platformOrderId);
     } catch (error) {
       logger.error(`[IFOOD] Erro ao confirmar/iniciar preparo automático ${platformOrderId}:`, error.message);
+      throw error;
     }
   }
 

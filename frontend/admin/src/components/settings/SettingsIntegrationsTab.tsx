@@ -231,9 +231,9 @@ export const SettingsIntegrationsTab: React.FC = () => {
                 <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1">
                   Recebimento de Pedidos
                 </p>
-                <p className="text-xs text-emerald-700 font-bold">Polling Ativo (a cada 30s)</p>
+                <p className="text-xs text-emerald-700 font-bold">Webhook Ativo</p>
                 <p className="text-[8px] text-slate-400 mt-2">
-                  O sistema busca automaticamente novos pedidos do iFood
+                  Pedidos recebidos automaticamente via webhook do iFood
                 </p>
               </div>
             )}
