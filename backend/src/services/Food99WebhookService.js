@@ -108,6 +108,15 @@ class Food99WebhookService {
       return;
     }
 
+    if (kind === 'cancel' && !setting.food99ReceiveCancelApply) {
+      logger.info(`[FOOD99 WEBHOOK] cancel_apply ignorado para restaurante ${setting.restaurantId} (config desabilitada)`);
+      return;
+    }
+    if (kind === 'refund' && !setting.food99ReceiveRefundApply) {
+      logger.info(`[FOOD99 WEBHOOK] refund_apply ignorado para restaurante ${setting.restaurantId} (config desabilitada)`);
+      return;
+    }
+
     const eventName = kind === 'cancel' ? 'cancel_apply_request' : 'refund_apply_request';
     socketLib.emitToRestaurant(setting.restaurantId, eventName, {
       platform: PLATFORM,

@@ -4,7 +4,6 @@ import {
   updateFood99Settings,
   getFood99ConnectionStatus,
   getFood99AuthorizationUrl,
-  listFood99Shops,
   setFood99ShopOnline,
   setFood99ConfirmMethod,
   getFood99ShopDetail,
@@ -24,10 +23,9 @@ import {
   ExternalLink,
   RefreshCw,
   Upload,
-  Store,
   Power,
-  Link2,
   Trash2,
+  Link2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -51,8 +49,6 @@ const Food99SettingsPage: React.FC = () => {
   const [menuTaskId, setMenuTaskId] = useState<string | null>(null);
   const [menuTaskStatus, setMenuTaskStatus] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [shops, setShops] = useState<any[]>([]);
-  const [showShops, setShowShops] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -185,9 +181,10 @@ const Food99SettingsPage: React.FC = () => {
     const interval = setInterval(async () => {
       try {
         const status = await getFood99MenuStatus(taskId);
+        const rawStatus = status?.rawStatus;
         const mapped = status?.status || 'unknown';
         setMenuTaskStatus(mapped);
-        if (mapped === 'completed' || mapped === 'failed') {
+        if (rawStatus === 1 || rawStatus === 2 || mapped === 'completed' || mapped === 'failed') {
           clearInterval(interval);
           toast.info(mapped === 'completed' ? 'Cardápio sincronizado com sucesso!' : 'Falha na sincronização do cardápio.');
         }
@@ -197,16 +194,6 @@ const Food99SettingsPage: React.FC = () => {
     }, 5000);
 
     setTimeout(() => clearInterval(interval), 5 * 60 * 1000);
-  };
-
-  const handleListShops = async () => {
-    try {
-      const result = await listFood99Shops();
-      setShops(result?.data?.shops || []);
-      setShowShops(true);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Erro ao listar lojas.');
-    }
   };
 
   const handleUnbind = async () => {
@@ -402,43 +389,14 @@ const Food99SettingsPage: React.FC = () => {
                   Renovar Token
                 </button>
                 <button
-                  onClick={handleListShops}
-                  disabled={!credentialsConfigured}
-                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-slate-200 bg-white text-slate-600 font-black text-sm uppercase tracking-wider transition-all hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Store size={16} />
-                  Ver Lojas Vinculadas
-                </button>
-                <button
                   onClick={handleUnbind}
                   disabled={!isActive}
-                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-red-200 bg-red-50 text-red-600 font-black text-sm uppercase tracking-wider transition-all hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-red-200 bg-red-50 text-red-600 font-black text-sm uppercase tracking-wider transition-all hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed col-span-1 sm:col-span-2"
                 >
                   <Trash2 size={16} />
                   Desvincular Loja
                 </button>
               </div>
-
-              {showShops && shops.length > 0 && (
-                <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-                  <h3 className="text-xs font-black text-slate-700 uppercase mb-3">Lojas Vinculadas</h3>
-                  <div className="space-y-2">
-                    {shops.map((shop: any, i: number) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-100">
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">{shop.app_shop_id || shop.name || 'Loja'}</p>
-                          <p className="text-xs text-slate-400">ID: {shop.id || shop.shop_id || '-'}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          shop.status === 1 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                        }`}>
-                          {shop.status === 1 ? 'Online' : 'Offline'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </Card>
 
@@ -463,14 +421,6 @@ const Food99SettingsPage: React.FC = () => {
                 >
                   {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                   {isSyncing ? 'Sincronizando...' : 'Sincronizar Cardápio'}
-                </button>
-                <button
-                  onClick={handleSetConfirmMethod}
-                  disabled={!isActive || !appShopId}
-                  className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-slate-200 bg-white text-slate-600 font-black text-sm uppercase tracking-wider transition-all hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Link2 size={16} />
-                  Set OPENAPI
                 </button>
               </div>
 
@@ -513,11 +463,7 @@ const Food99SettingsPage: React.FC = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-500">•</span>
-                  <span>Webhook primário para eventos em tempo real</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-500">•</span>
-                  <span>Polling como fallback a cada 30 segundos</span>
+                  <span>Webhook para eventos em tempo real (única fonte de pedidos)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-500">•</span>
@@ -584,23 +530,6 @@ const Food99SettingsPage: React.FC = () => {
 
           <Card className="overflow-hidden">
             <div className="p-6 border-b border-slate-100">
-              <h3 className="font-black text-slate-900 uppercase text-sm tracking-tight">URL do Webhook</h3>
-            </div>
-            <div className="p-6">
-              <p className="text-xs text-slate-500 mb-3">
-                Configure esta URL no portal do desenvolvedor 99Food:
-              </p>
-              <div className="p-3 rounded-lg bg-slate-900 text-slate-200 font-mono text-xs break-all">
-                {typeof window !== 'undefined'
-                  ? `${window.location.origin}/webhooks/food99`
-                  : 'https://seudominio.com/webhooks/food99'
-                }
-              </div>
-            </div>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
               <h3 className="font-black text-slate-900 uppercase text-sm tracking-tight">Ações Rápidas</h3>
             </div>
             <div className="p-6 space-y-3">
@@ -611,14 +540,6 @@ const Food99SettingsPage: React.FC = () => {
               >
                 <Power size={14} />
                 Set Confirm Method (OPENAPI)
-              </button>
-              <button
-                onClick={handleListShops}
-                disabled={!credentialsConfigured}
-                className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Store size={14} />
-                Listar Lojas
               </button>
             </div>
           </Card>

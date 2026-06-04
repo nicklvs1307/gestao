@@ -7,7 +7,7 @@ const { format, parse } = require('date-fns');
 const { ptBR } = require('date-fns/locale');
 const IfoodAuthService = require('./IfoodAuthService');
 const UairangoPollingService = require('./UairangoPollingService');
-const Food99PollingService = require('./Food99PollingService');
+
 
 class JobService {
   constructor() {
@@ -175,22 +175,7 @@ class JobService {
       logger.error('[JobService] Erro ao iniciar Uai Rangô Polling Service:', error);
     }
 
-    // 99Food: polling DESABILITADO por padrão.
-    // 99Food API não tem endpoint de listagem de eventos/pedidos - o webhook
-    // (/webhooks/food99) é a ÚNICA fonte de novos pedidos.
-    // O polling antigo só consumia rate-limit (1 chamada/60s em /v1/shop/shop/detail)
-    // e retry de eventos FAILED, que podem ser retentados manualmente.
-    // Para reativar (não recomendado): FOOD99_POLLING_ENABLED=true
-    if (process.env.FOOD99_POLLING_ENABLED === 'true') {
-      try {
-        Food99PollingService.init();
-        logger.info('[JobService] 99Food Polling Service iniciado (FOOD99_POLLING_ENABLED=true).');
-      } catch (error) {
-        logger.error('[JobService] Erro ao iniciar 99Food Polling Service:', error);
-      }
-    } else {
-      logger.info('[JobService] 99Food Polling Service DESABILITADO (FOOD99_POLLING_ENABLED != true). Webhook é a única fonte de pedidos.');
-    }
+    // 99Food: polling REMOVIDO. Webhook é a única fonte de pedidos.
 
     // Cron Job para Fila de Retry Fiscal (a cada 2 minutos)
     let isRunningFiscalQueue = false;

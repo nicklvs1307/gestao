@@ -212,12 +212,6 @@ class Food99AuthService {
       expired: entry.expiresAt ? entry.expiresAt < new Date() : true,
     }));
 
-    let pollingEnabled = false;
-    try {
-      const Polling = require('./Food99PollingService');
-      pollingEnabled = Polling.isEnabled();
-    } catch (e) { /* ignore */ }
-
     return {
       credentials: {
         clientIdConfigured: !!creds.clientId,
@@ -227,7 +221,7 @@ class Food99AuthService {
       },
       baseUrl: food99Config.getBaseUrl(),
       tokenCache: cacheEntries,
-      pollingEnabled,
+      pollingEnabled: false,
       timestamp: new Date().toISOString(),
     };
   }

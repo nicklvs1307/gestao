@@ -41,13 +41,25 @@ class IntegrationOrderService {
       updatePayload.total = updateData.total;
     }
 
+    if (updateData.status) {
+      updatePayload.status = updateData.status;
+      if (updateData.status === 'READY') updatePayload.readyAt = new Date();
+      if (updateData.status === 'COMPLETED') updatePayload.completedAt = new Date();
+      if (updateData.status === 'CANCELED') updatePayload.canceledAt = new Date();
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: updatePayload,
       include: { items: true, deliveryOrder: true },
     });
 
-    await require('./OrderService').emitOrderUpdate(order.id, 'ORDER_UPDATED');
+    const socketLib = require('../lib/socket');
+    socketLib.emitToRestaurant(order.restaurantId, 'order_updated', {
+      orderId: order.id,
+      status: updateData.status || order.status,
+      source: platform.toUpperCase(),
+    });
 
     return updatedOrder;
   }

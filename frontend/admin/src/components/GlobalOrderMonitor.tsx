@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAdminOrders, updateOrderStatus, getSettings, getTableRequests, resolveTableRequest, markOrderAsPrinted } from '../services/api';
-import { confirmIfoodOrder, rejectIfoodOrder, getIfoodCancellationReasons, confirmUairangoOrder, rejectUairangoOrder, getUairangoCancellationReasons, requestUairangoCancellation } from '../services/api/integrations';
+import { confirmIfoodOrder, rejectIfoodOrder, getIfoodCancellationReasons, confirmUairangoOrder, rejectUairangoOrder, getUairangoCancellationReasons, requestUairangoCancellation, confirmFood99Order, rejectFood99Order } from '../services/api/integrations';
 import { printOrder, checkAgentStatus, getPrinterConfigFromStorage } from '../services/printer';
 import type { Order } from '../types';
 import NewOrderAlert from './NewOrderAlert';
 import TableRequestAlert from './TableRequestAlert';
+import Food99ApplyAlert from './Food99ApplyAlert';
 import { useSocket } from '../hooks/useSocket';
 import { Bell, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -35,6 +36,12 @@ const GlobalOrderMonitor: React.FC = () => {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [isLoadingReasons, setIsLoadingReasons] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [food99ApplyOpen, setFood99ApplyOpen] = useState(false);
+  const [food99ApplyType, setFood99ApplyType] = useState<'cancel' | 'refund'>('cancel');
+  const [food99ApplyOrderId, setFood99ApplyOrderId] = useState<number>(0);
+  const [food99ApplyId, setFood99ApplyId] = useState<number>(0);
+  const [food99ApplyReason, setFood99ApplyReason] = useState<string>('');
   
   const lastOrderIdsRef = useRef<Set<string>>(new Set());
   const printedIdsRef = useRef<Set<string>>(new Set());
@@ -180,12 +187,40 @@ const GlobalOrderMonitor: React.FC = () => {
       }
     };
 
+    const handleCancelApplyRequest = (eventData: any) => {
+      const { orderId, applyId, reason } = eventData;
+      if (orderId && applyId) {
+        playNotificationSound();
+        setFood99ApplyType('cancel');
+        setFood99ApplyOrderId(orderId);
+        setFood99ApplyId(applyId);
+        setFood99ApplyReason(reason || 'Não informado');
+        setFood99ApplyOpen(true);
+      }
+    };
+
+    const handleRefundApplyRequest = (eventData: any) => {
+      const { orderId, applyId, reason } = eventData;
+      if (orderId && applyId) {
+        playNotificationSound();
+        setFood99ApplyType('refund');
+        setFood99ApplyOrderId(orderId);
+        setFood99ApplyId(applyId);
+        setFood99ApplyReason(reason || 'Não informado');
+        setFood99ApplyOpen(true);
+      }
+    };
+
     on('order_update', handleOrderUpdate);
     on('new_order', handleNewOrder);
+    on('cancel_apply_request', handleCancelApplyRequest);
+    on('refund_apply_request', handleRefundApplyRequest);
 
     return () => {
       off('order_update', handleOrderUpdate);
       off('new_order', handleNewOrder);
+      off('cancel_apply_request', handleCancelApplyRequest);
+      off('refund_apply_request', handleRefundApplyRequest);
     };
   }, [isKdsPage, hasUser, isAutoAccept, on, off, playNotificationSound]);
 
@@ -436,6 +471,12 @@ const GlobalOrderMonitor: React.FC = () => {
                     toast.error(result.error || 'Erro ao aceitar pedido no UaiRango');
                     return;
                   }
+                } else if (order.food99OrderId) {
+                  const result = await confirmFood99Order(id);
+                  if (!result.success) {
+                    toast.error(result.error || 'Erro ao aceitar pedido no 99Food');
+                    return;
+                  }
                 }
                 await updateOrderStatus(id, 'PREPARING');
                 if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
@@ -518,6 +559,15 @@ const GlobalOrderMonitor: React.FC = () => {
                   } finally {
                     setIsLoadingReasons(false);
                   }
+                  return;
+                } else if (order.food99OrderId) {
+                  const result = await rejectFood99Order(id, 'Pedido recusado pelo restaurante');
+                  if (!result.success) {
+                    toast.error(result.error || 'Erro ao recusar pedido no 99Food');
+                    return;
+                  }
+                  toast.success('Pedido cancelado no 99Food!');
+                  if (pendingOrders.length <= 1) setIsOrderModalOpen(false);
                   return;
                 }
                 await updateOrderStatus(id, 'CANCELED');
@@ -605,6 +655,18 @@ const GlobalOrderMonitor: React.FC = () => {
           </div>
         </Dialog>
       )}
+
+      <Food99ApplyAlert
+        isOpen={food99ApplyOpen}
+        type={food99ApplyType}
+        orderId={food99ApplyOrderId}
+        applyId={food99ApplyId}
+        reason={food99ApplyReason}
+        onClose={() => setFood99ApplyOpen(false)}
+        onResolved={() => {
+          toast.success('Solicitação processada com sucesso!');
+        }}
+      />
     </>
   );
 };

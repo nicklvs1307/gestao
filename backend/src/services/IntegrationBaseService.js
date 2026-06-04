@@ -66,21 +66,28 @@ class IntegrationBaseService {
       });
 
       if (result && !result.isReplayed) {
-        // Verificar se já foi confirmado antes (evitar confirmação duplicada)
-        if (result.order && !result.order.ifoodConfirmed) {
-          try {
-            const confirmed = await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
-            if (confirmed) {
-              await prisma.order.update({
-                where: { id: result.order.id },
-                data: { ifoodConfirmed: true }
-              });
+        if (this.platform === 'ifood') {
+          if (result.order && !result.order.ifoodConfirmed) {
+            try {
+              const confirmed = await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
+              if (confirmed) {
+                await prisma.order.update({
+                  where: { id: result.order.id },
+                  data: { ifoodConfirmed: true }
+                });
+              }
+            } catch (confirmError) {
+              logger.error(`[IFOOD] Falha ao confirmar pedido ${platformOrderId} na plataforma:`, confirmError.message);
             }
+          } else {
+            logger.info(`[IFOOD] Pedido ${platformOrderId} já confirmado, ignorando confirmação duplicada`);
+          }
+        } else {
+          try {
+            await this.confirmOrderOnPlatform(restaurantId, platformOrderId);
           } catch (confirmError) {
             logger.error(`[${this.platform.toUpperCase()}] Falha ao confirmar pedido ${platformOrderId} na plataforma:`, confirmError.message);
           }
-        } else {
-          logger.info(`[${this.platform.toUpperCase()}] Pedido ${platformOrderId} já confirmado, ignorando confirmação duplicada`);
         }
       }
 
