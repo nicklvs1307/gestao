@@ -11,7 +11,7 @@ const PLATFORM = 'food99';
 class Food99WebhookService {
 
   _getSignHeaders() {
-    return ['x-didi-signature', 'x-food99-signature', 'x-signature'];
+    return ['didi-header-sign', 'x-didi-signature', 'x-food99-signature', 'x-signature'];
   }
 
   _extractSignature(headers) {
@@ -45,6 +45,66 @@ class Food99WebhookService {
     return candidates.includes(signature.toLowerCase());
   }
 
+  /**
+   * Normaliza o payload do webhook 99Food.
+   * 
+   * Payload real (orderNew):
+   * {
+   *   "app_id": 5764607675764049800,
+   *   "app_shop_id": "5764607675764049800",
+   *   "type": "orderNew",
+   *   "timestamp": 1780594949,
+   *   "data": {
+   *     "order_id": 5764607573746648888,
+   *     "order_info": { "order_id": ..., "status": 100, "pay_type": 1, ... }
+   *   }
+   * }
+   * 
+   * Payload para status/apply (provável):
+   * {
+   *   "app_id": ..., "app_shop_id": "...",
+   *   "type": "status" | "cancel_apply" | "refund_apply",
+   *   "data": { "order_id": ..., "status": ..., "apply_id": ..., ... }
+   * }
+   */
+  _unwrapPayload(body) {
+    if (!body) return { eventType: null, orderId: null, appShopId: null, orderData: null };
+
+    const eventType = body.type || body.event;
+
+    // order_id pode estar em data.order_id ou no top level
+    const orderId = body.data?.order_id || body.order_id;
+
+    // app_shop_id pode estar no top level ou dentro de data.order_info.shop
+    const appShopId = body.app_shop_id
+      || body.data?.order_info?.shop?.app_shop_id
+      || body.data?.shop?.app_shop_id
+      || body.shop?.app_shop_id;
+
+    // Dados do pedido: data.order_info (orderNew) ou data (status updates)
+    const orderData = body.data?.order_info || body.data || body;
+
+    // Status e shop_accept_status
+    const status = orderData.status;
+    const shopAcceptStatus = orderData.shop_accept_status || body.shop_accept_status;
+
+    // Para cancel/refund apply
+    const applyId = orderData.apply_id || body.apply_id;
+    const reason = orderData.reason || body.reason;
+
+    return {
+      eventType,
+      orderId,
+      appShopId,
+      status,
+      shopAcceptStatus,
+      orderData,
+      applyId,
+      reason,
+      rawBody: body,
+    };
+  }
+
   async _isEventProcessed(platform, platformOrderId, eventType) {
     if (!platformOrderId) return false;
 
@@ -72,28 +132,28 @@ class Food99WebhookService {
     );
   }
 
-  async _findSettingForWebhook(body) {
+  async _findSettingForWebhook(appShopId) {
     const settings = await prisma.integrationSettings.findMany({
       where: { food99IntegrationActive: true, food99AppShopId: { not: null } },
     });
 
     if (settings.length === 0) return null;
 
-    const appShopId = body?.shop?.app_shop_id || body?.app_shop_id || body?.appShopId;
     if (appShopId) {
       const found = settings.find(s => s.food99AppShopId === appShopId);
       if (found) return found;
     }
 
+    // Fallback: se há apenas uma loja 99Food ativa, usar ela
     if (settings.length === 1) return settings[0];
 
     return null;
   }
 
-  async _handleApplyRequest(body, kind) {
-    const orderId = body?.order_id;
-    const applyId = body?.apply_id;
-    const reason = body?.reason;
+  async _handleApplyRequest(unwrapped, kind) {
+    const orderId = unwrapped.orderId;
+    const applyId = unwrapped.applyId;
+    const reason = unwrapped.reason;
 
     if (!orderId || !applyId) {
       logger.warn(`[FOOD99 WEBHOOK] ${kind}_apply sem order_id ou apply_id`);
@@ -102,7 +162,7 @@ class Food99WebhookService {
 
     logger.info(`[FOOD99 WEBHOOK] ${kind}_apply recebido: order=${orderId}, apply=${applyId}, reason=${reason}`);
 
-    const setting = await this._findSettingForWebhook(body);
+    const setting = await this._findSettingForWebhook(unwrapped.appShopId);
     if (!setting) {
       logger.warn(`[FOOD99 WEBHOOK] Nenhuma loja 99Food ativa para ${kind}_apply`);
       return;
@@ -135,14 +195,16 @@ class Food99WebhookService {
     const headersLog = {
       'content-type': req.headers['content-type'],
       'user-agent': req.headers['user-agent'],
+      'didi-header-sign': req.headers['didi-header-sign'] ? 'presente' : 'ausente',
       'x-didi-signature': req.headers['x-didi-signature'] ? 'presente' : 'ausente',
       'x-food99-signature': req.headers['x-food99-signature'] ? 'presente' : 'ausente',
       'x-signature': req.headers['x-signature'] ? 'presente' : 'ausente',
       'x-forwarded-for': req.headers['x-forwarded-for'] || req.ip,
     };
-    const bodyPreview = JSON.stringify(body)?.slice(0, 500);
+    const bodyPreview = JSON.stringify(body)?.slice(0, 800);
 
-    logger.info(`[FOOD99 WEBHOOK] Recebido: order_id=${body?.order_id}, event=${body?.event}, status=${body?.status}, shop_accept_status=${body?.shop_accept_status}`);
+    const unwrapped = this._unwrapPayload(body);
+    logger.info(`[FOOD99 WEBHOOK] Recebido: type=${unwrapped.eventType}, order_id=${unwrapped.orderId}, status=${unwrapped.status}, shop_accept_status=${unwrapped.shopAcceptStatus}, app_shop_id=${unwrapped.appShopId}`);
     logger.info(`[FOOD99 WEBHOOK] Headers: ${JSON.stringify(headersLog)}`);
     logger.debug(`[FOOD99 WEBHOOK] Body raw: ${bodyPreview}`);
 
@@ -161,20 +223,20 @@ class Food99WebhookService {
     res.status(200).json({ received: true });
 
     try {
-      if (body?.event === 'cancel_apply') {
-        logger.info(`[FOOD99 WEBHOOK] Processando cancel_apply para order=${body.order_id}`);
-        await this._handleApplyRequest(body, 'cancel');
+      if (unwrapped.eventType === 'cancel_apply') {
+        logger.info(`[FOOD99 WEBHOOK] Processando cancel_apply para order=${unwrapped.orderId}`);
+        await this._handleApplyRequest(unwrapped, 'cancel');
         this._logProcessingTime(startedAt, 'cancel_apply');
         return;
       }
-      if (body?.event === 'refund_apply') {
-        logger.info(`[FOOD99 WEBHOOK] Processando refund_apply para order=${body.order_id}`);
-        await this._handleApplyRequest(body, 'refund');
+      if (unwrapped.eventType === 'refund_apply') {
+        logger.info(`[FOOD99 WEBHOOK] Processando refund_apply para order=${unwrapped.orderId}`);
+        await this._handleApplyRequest(unwrapped, 'refund');
         this._logProcessingTime(startedAt, 'refund_apply');
         return;
       }
-      await this._processWebhook(body);
-      this._logProcessingTime(startedAt, body?.event || 'unknown');
+      await this._processWebhook(unwrapped);
+      this._logProcessingTime(startedAt, unwrapped.eventType || 'unknown');
     } catch (error) {
       logger.error('[FOOD99 WEBHOOK] Erro ao processar webhook:', error.message, error.stack);
     }
@@ -189,35 +251,42 @@ class Food99WebhookService {
     }
   }
 
-  async _processWebhook(body) {
-    if (!body || !body.order_id) {
-      logger.warn(`[FOOD99 WEBHOOK] Payload sem order_id, ignorando. Body keys: ${Object.keys(body || {}).join(',')}`);
+  async _processWebhook(unwrapped) {
+    const platformOrderId = unwrapped.orderId;
+    if (!platformOrderId) {
+      logger.warn(`[FOOD99 WEBHOOK] Payload sem order_id, ignorando. EventType=${unwrapped.eventType}`);
       return;
     }
 
-    const { order_id: platformOrderId, status, shop_accept_status: shopAcceptStatus } = body;
+    const status = unwrapped.status;
+    const shopAcceptStatus = unwrapped.shopAcceptStatus;
 
-    const targetSetting = await this._findSettingForWebhook(body);
+    const targetSetting = await this._findSettingForWebhook(unwrapped.appShopId);
     if (!targetSetting) {
-      logger.warn(`[FOOD99 WEBHOOK] Loja não encontrada para app_shop_id=${body.shop?.app_shop_id || body.app_shop_id || 'não informado'}. Body: ${JSON.stringify({ order_id: platformOrderId, status, shop_accept_status: shopAcceptStatus, shop: body.shop })}`);
+      logger.warn(`[FOOD99 WEBHOOK] Loja não encontrada para app_shop_id=${unwrapped.appShopId}. Order=${platformOrderId}, status=${status}`);
       return;
     }
 
     const restaurantId = targetSetting.restaurantId;
 
-    const eventType = `STATUS_${shopAcceptStatus || status}`;
+    // Determinar o tipo de evento
+    // Para orderNew: status=100 (novo pedido)
+    // Para updates: usar status numérico ou shop_accept_status
+    const rawStatusForMapping = shopAcceptStatus || status;
+    const eventType = `STATUS_${rawStatusForMapping}`;
+
     const alreadyProcessed = await this._isEventProcessed(PLATFORM, String(platformOrderId), eventType);
     if (alreadyProcessed) {
       logger.info(`[FOOD99 WEBHOOK] Evento ${eventType} para ${platformOrderId} já processado`);
       return;
     }
 
-    const kiStatus = IntegrationTypeService.mapStatus(PLATFORM, String(shopAcceptStatus || status));
-    logger.info(`[FOOD99 WEBHOOK] Processando order=${platformOrderId} status=${status} shop_accept_status=${shopAcceptStatus} -> ki=${kiStatus} (restaurantId=${restaurantId})`);
+    const kiStatus = IntegrationTypeService.mapStatus(PLATFORM, String(rawStatusForMapping));
+    logger.info(`[FOOD99 WEBHOOK] Processando order=${platformOrderId} type=${unwrapped.eventType} status=${status} shop_accept_status=${shopAcceptStatus} -> ki=${kiStatus} (restaurantId=${restaurantId})`);
 
     switch (kiStatus) {
       case 'PENDING':
-        await this._handleNewOrder(restaurantId, platformOrderId, body);
+        await this._handleNewOrder(restaurantId, platformOrderId, unwrapped);
         await this._markEventProcessed(PLATFORM, String(platformOrderId), eventType, restaurantId, null);
         break;
 
@@ -246,9 +315,13 @@ class Food99WebhookService {
     }
   }
 
-  async _handleNewOrder(restaurantId, platformOrderId, rawData) {
+  async _handleNewOrder(restaurantId, platformOrderId, unwrapped) {
     try {
-      const order = await Food99OrderAdapter.processNewOrder(restaurantId, rawData);
+      // orderData contém os dados do pedido (data.order_info ou data)
+      // Food99OrderAdapter.processNewOrder espera o body com os campos do pedido
+      // Precisamos passar o orderData que tem order_items, price, pay_type, etc.
+      const orderData = unwrapped.orderData || unwrapped.rawBody;
+      const order = await Food99OrderAdapter.processNewOrder(restaurantId, orderData);
       if (order && !order.isReplayed) {
         logger.info(`[FOOD99 WEBHOOK] Pedido ${platformOrderId} criado com sucesso`);
         socketLib.emitToRestaurant(restaurantId, 'new_order', {

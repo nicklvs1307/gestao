@@ -153,6 +153,16 @@ class Food99MenuService {
     });
 
     if (!result.ok) {
+      // errno 10001 = task not found (task finalizado ou inexistente)
+      if (result.data?.errno === 10001 || result.error?.includes('not found')) {
+        return {
+          success: true,
+          taskId,
+          status: 'failed',
+          rawStatus: 2,
+          message: 'Task não encontrada (pode ter expirado)',
+        };
+      }
       throw new Error(result.error || 'Falha ao consultar status');
     }
 

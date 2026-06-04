@@ -74,6 +74,9 @@ const PLATFORM_STATUS_MAP = {
     'cancelado': 'CANCELED',
   },
   food99: {
+    '100': 'PENDING',
+    'STATUS_100': 'PENDING',
+    'orderNew': 'PENDING',
     '1': 'PENDING',
     'STATUS_1': 'PENDING',
     '2': 'PREPARING',
@@ -90,6 +93,7 @@ const PLATFORM_STATUS_MAP = {
     'STATUS_7': 'CANCELED',
     '8': 'COMPLETED',
     'STATUS_8': 'COMPLETED',
+    'orderCancel': 'CANCELED',
   },
 };
 
