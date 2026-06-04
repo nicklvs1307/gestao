@@ -228,6 +228,7 @@ class Food99AuthService {
 
   async disconnect() {
     this._tokenCache = null;
+    this._shopDetailCache = null;
     logger.info('[FOOD99 AUTH] Cache limpo');
     return { success: true };
   }
@@ -304,6 +305,18 @@ class Food99AuthService {
   }
 
   async getShopDetail(authToken) {
+    const cacheKey = `shop_detail_${authToken}`;
+    const now = Date.now();
+    const MIN_INTERVAL_MS = 65000; // 99Food rate limit: 1 call per 60s
+
+    if (this._shopDetailCache && this._shopDetailCache[cacheKey]) {
+      const cached = this._shopDetailCache[cacheKey];
+      if (now - cached.timestamp < MIN_INTERVAL_MS) {
+        logger.debug(`[FOOD99 AUTH] getShopDetail cache HIT (age ${Math.round((now - cached.timestamp) / 1000)}s)`);
+        return cached.data;
+      }
+    }
+
     const result = await requestWithRetry({
       method: 'get',
       url: '/v1/shop/shop/detail',
@@ -311,6 +324,10 @@ class Food99AuthService {
       logContext: 'Erro ao obter detalhes da loja',
     });
     if (!result.ok) throw new Error(result.error);
+
+    if (!this._shopDetailCache) this._shopDetailCache = {};
+    this._shopDetailCache[cacheKey] = { data: result.data, timestamp: now };
+
     return result.data;
   }
 

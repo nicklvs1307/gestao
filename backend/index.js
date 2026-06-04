@@ -113,7 +113,14 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-restaurant-id']
 }));
 
-app.use(express.json({ limit: '5mb' }));
+app.use(express.json({
+  limit: '5mb',
+  verify: (req, _res, buf) => {
+    if (req.url && req.url.startsWith('/webhooks/99food')) {
+      req.rawBody = buf.toString('utf8');
+    }
+  },
+}));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // 4. SEGURANÇA: Rate Limiting Global (SPA Friendly)
@@ -182,10 +189,11 @@ app.get('/webhooks/uairango/test', (req, res) => res.status(200).json({ status: 
 
 // Webhook 99Food
 const Food99WebhookService = require('./src/services/Food99WebhookService');
-app.get('/webhooks/food99', (req, res) => res.status(200).json({ status: 'ok' }));
-app.post('/webhooks/food99', (req, res) => Food99WebhookService.handleWebhook(req, res));
-app.get('/webhooks/food99/test', (req, res) => res.status(200).json({ status: 'ok' }));
-app.post('/webhooks/food99/test', (req, res) => res.status(200).json({ status: 'ok' }));
+const food99WebhookRateLimit = require('./src/middlewares/food99WebhookRateLimit');
+app.get('/webhooks/99food', (req, res) => res.status(200).json({ status: 'ok' }));
+app.post('/webhooks/99food', food99WebhookRateLimit, (req, res) => Food99WebhookService.handleWebhook(req, res));
+app.get('/webhooks/99food/test', (req, res) => res.status(200).json({ status: 'ok' }));
+app.post('/webhooks/99food/test', (req, res) => res.status(200).json({ status: 'ok' }));
 
 // ==================================================================
 // ROTAS

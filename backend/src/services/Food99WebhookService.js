@@ -24,22 +24,13 @@ class Food99WebhookService {
     return null;
   }
 
-  _verifySignature(body, signature, secret, algo = 'md5') {
-    if (!signature || !secret) return false;
-
-    let payload;
-    if (body && typeof body === 'object' && !Array.isArray(body)) {
-      const sortedKeys = Object.keys(body).sort();
-      payload = sortedKeys.map(key => `${key}=${body[key]}`).join('&');
-    } else if (typeof body === 'string') {
-      payload = body;
-    } else {
-      payload = JSON.stringify(body);
-    }
+  _verifySignature(rawBody, signature, secret) {
+    if (!signature || !secret || !rawBody) return false;
 
     const candidates = [
-      crypto.createHash(algo).update(`${payload}${secret}`).digest('hex'),
-      crypto.createHash(algo).update(`${secret}${payload}`).digest('hex'),
+      crypto.createHash('md5').update(rawBody).digest('hex'),
+      crypto.createHash('md5').update(`${rawBody}${secret}`).digest('hex'),
+      crypto.createHash('md5').update(`${secret}${rawBody}`).digest('hex'),
     ];
 
     return candidates.includes(signature.toLowerCase());
@@ -73,7 +64,9 @@ class Food99WebhookService {
     const eventType = body.type || body.event;
 
     // order_id pode estar em data.order_id ou no top level
-    const orderId = body.data?.order_id || body.order_id;
+    // Sempre converter para string para evitar perda de precisão de números grandes (>MAX_SAFE_INTEGER)
+    const rawOrderId = body.data?.order_id || body.order_id;
+    const orderId = rawOrderId != null ? String(rawOrderId) : null;
 
     // app_shop_id pode estar no top level ou dentro de data.order_info.shop
     const appShopId = body.app_shop_id
@@ -210,7 +203,8 @@ class Food99WebhookService {
 
     const sig = this._extractSignature(req.headers);
     if (sig && process.env.FOOD99_CLIENT_SECRET) {
-      const isValid = this._verifySignature(body, sig.value, process.env.FOOD99_CLIENT_SECRET);
+      const rawBody = req.rawBody || JSON.stringify(body);
+      const isValid = this._verifySignature(rawBody, sig.value, process.env.FOOD99_CLIENT_SECRET);
       if (!isValid) {
         logger.warn(`[FOOD99 WEBHOOK] Assinatura inválida (header=${sig.header}, value=${sig.value?.slice(0, 16)}...), rejeitando request`);
         return res.status(403).json({ error: 'Assinatura inválida' });

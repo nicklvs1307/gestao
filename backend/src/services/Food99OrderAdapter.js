@@ -23,7 +23,8 @@ class Food99OrderAdapter extends IntegrationBaseService {
   }
 
   getPlatformOrderId(rawData) {
-    return rawData.order_id || rawData.orderId;
+    const id = rawData.order_id || rawData.orderId;
+    return id != null ? String(id) : null;
   }
 
   /**
