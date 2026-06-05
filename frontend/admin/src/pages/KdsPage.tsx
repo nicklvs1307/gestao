@@ -192,7 +192,7 @@ const KdsPage: React.FC = () => {
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-black uppercase leading-tight text-white group-hover:text-primary transition-colors">
-                                                            {item.product?.name || item.itemName || 'Produto'}
+                                                            {item.product?.name || 'Produto'}
                                                         </p>
                                                         
                                                         {/* Opções e Tamanhos */}

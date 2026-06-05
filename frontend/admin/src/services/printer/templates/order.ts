@@ -153,7 +153,7 @@ function buildItems(items: OrderItem[], isProduction: boolean, width: number = P
   buf += line('-', width);
 
   (items || []).forEach((item, itemIndex) => {
-    const productName = item.product?.name || (item as any).itemName || 'Produto';
+    const productName = item.product?.name || 'Produto';
     const qty = item.quantity || 1;
     const isLastItem = itemIndex === (items || []).length - 1;
 

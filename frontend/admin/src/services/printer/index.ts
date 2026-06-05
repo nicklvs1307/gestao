@@ -321,9 +321,9 @@ export const printCashierClosure = async (
     
     totalOrders++;
     (o.items || []).forEach((item: unknown) => {
-      const i = item as { quantity?: number; product?: { name?: string }; itemName?: string; priceAtTime?: number; addonsJson?: unknown };
+      const i = item as { quantity?: number; product?: { name?: string }; priceAtTime?: number; addonsJson?: unknown };
       totalItems += (i.quantity || 0);
-      const productName = i.product?.name || i.itemName || 'Produto';
+      const productName = i.product?.name || 'Produto';
       const key = productName.toUpperCase();
 
       if (!itemMap[key]) {
@@ -466,8 +466,8 @@ export const printCashierClosureFromHistory = async (
     
     totalOrders++;
     (o.items || []).forEach((item: unknown) => {
-      const i = item as { quantity?: number; product?: { name?: string }; itemName?: string; priceAtTime?: number; addonsJson?: unknown };
-      const productName = i.product?.name || i.itemName || 'Produto';
+      const i = item as { quantity?: number; product?: { name?: string }; priceAtTime?: number; addonsJson?: unknown };
+      const productName = i.product?.name || 'Produto';
       const key = productName.toUpperCase();
 
       if (!itemMap[key]) {
@@ -545,8 +545,8 @@ export const downloadCashierClosurePDFFromHistory = async (
     }
     
     (o.items || []).forEach((item: unknown) => {
-      const i = item as { quantity?: number; product?: { name?: string }; itemName?: string; priceAtTime?: number; addonsJson?: unknown };
-      const productName = i.product?.name || i.itemName || 'Produto';
+      const i = item as { quantity?: number; product?: { name?: string }; priceAtTime?: number; addonsJson?: unknown };
+      const productName = i.product?.name || 'Produto';
       const key = productName.toUpperCase();
 
       if (!itemMap[key]) {

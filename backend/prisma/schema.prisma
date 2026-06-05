@@ -1213,9 +1213,6 @@ model OrderItem {
   orderId      String
   order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  // Nome do item (salvo para itens de integração sem produto vinculado)
-  itemName     String?
-
   // Relação com o Produto (opcional para itens de integração sem código PDV)
   productId    String?
   product      Product?   @relation(fields: [productId], references: [id])

@@ -344,7 +344,7 @@ const WaiterPos: React.FC = () => {
                             {selectedTable.items?.map(item => (
                                 <div key={item.id} className="p-4 bg-slate-900 border-2 border-white/5 rounded-2xl flex justify-between items-center opacity-80">
                                     <div className="flex-1">
-                                        <h4 className="font-black text-slate-300 text-xs uppercase italic leading-tight mb-1">{item.product?.name || item.itemName || 'Produto'}</h4>
+                                        <h4 className="font-black text-slate-300 text-xs uppercase italic leading-tight mb-1">{item.product?.name || 'Produto'}</h4>
                                         <p className="text-[9px] font-bold text-slate-500 uppercase">Qtd: {item.quantity} • R$ {(item.priceAtTime * item.quantity).toFixed(2)}</p>
                                     </div>
                                     <CheckCircle size={16} className="text-emerald-500 opacity-40" />
