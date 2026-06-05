@@ -70,6 +70,7 @@ const WhatsAppManagement = lazy(() => import('./pages/WhatsAppManagement'));
 const WhatsAppChat = lazy(() => import('./pages/WhatsAppChat'));
 
 const TechnicalSheetManagement = lazy(() => import('./pages/TechnicalSheetManagement'));
+const PrintingLayoutsPage = lazy(() => import('./pages/PrintingLayoutsPage'));
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Painel',
@@ -107,6 +108,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/checklists': 'Checklists',
   '/whatsapp': 'WhatsApp & IA',
   '/whatsapp/chat': 'Central de Atendimento',
+  '/printing-layouts': 'Modelos de Impressão',
 };
 
 const PageLoader = () => (
@@ -216,6 +218,8 @@ function AdminRoutes() {
           <Route path="/checklists/:id/edit" element={<ProtectedRoute permission="orders:manage"><ChecklistFormPage /></ProtectedRoute>} />
           <Route path="/whatsapp/chat" element={<ProtectedRoute permission="orders:view"><WhatsAppChat /></ProtectedRoute>} />
           <Route path="/whatsapp/*" element={<ProtectedRoute permission="settings:manage"><WhatsAppManagement /></ProtectedRoute>} />
+
+          <Route path="/printing-layouts" element={<ProtectedRoute permission="settings:view"><PrintingLayoutsPage /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

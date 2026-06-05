@@ -180,6 +180,9 @@ model PrintLayoutConfig {
   restaurantId    String
   restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
+  // Tipo de comanda: "delivery", "pickup", "table"
+  type            String   @default("table") // delivery | pickup | table
+
   // Configurações globais de tipografia
   fontFamily      String   @default("monospace") // monospace, sans-serif, serif
   fontSize        String   @default("medium") // small, medium, large
@@ -199,7 +202,7 @@ model PrintLayoutConfig {
   // Relações
   blocks          PrintLayoutBlock[]
 
-  @@unique([restaurantId])
+  @@unique([restaurantId, type])
   @@map("print_layout_configs")
 }
 
@@ -1617,6 +1620,7 @@ model ChecklistReportSettings {
   
   sendIndividualReport  Boolean  @default(true)   // Enviar relatório individual automaticamente ao completar
   individualReportFormat String  @default("TEXT") // Formato do relatório individual: "PDF", "TEXT", "LINK", "BOTH"
+  reportDays        String?  // JSON array de dias: ["MONDAY","WEDNESDAY","FRIDAY"] - null = todos os dias
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

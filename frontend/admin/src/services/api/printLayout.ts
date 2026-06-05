@@ -6,14 +6,24 @@ import type {
   PrintLayoutBlockUpdate,
   PrintLayoutBlockType,
   PrintLayoutMigrationData,
+  PrintLayoutType,
 } from '../../types/printLayout';
 
 /**
  * GET /api/admin/print-layout
- * Busca a configuração de layout ativa do restaurante
+ * Busca a configuração de layout ativa do restaurante por tipo
  */
-export const getPrintLayout = async (): Promise<{ exists: boolean; config: PrintLayoutConfig | null }> => {
-  const response = await apiClient.get('/admin/print-layout');
+export const getPrintLayout = async (type: PrintLayoutType = 'table'): Promise<{ exists: boolean; config: PrintLayoutConfig | null }> => {
+  const response = await apiClient.get('/admin/print-layout', { params: { type } });
+  return response.data;
+};
+
+/**
+ * GET /api/admin/print-layout/all
+ * Busca todos os layouts do restaurante (delivery, pickup, table)
+ */
+export const getAllPrintLayouts = async (): Promise<{ configs: PrintLayoutConfig[] }> => {
+  const response = await apiClient.get('/admin/print-layout/all');
   return response.data;
 };
 
@@ -22,9 +32,21 @@ export const getPrintLayout = async (): Promise<{ exists: boolean; config: Print
  * Cria a configuração padrão de layout para o restaurante
  */
 export const createDefaultPrintLayout = async (
+  type: PrintLayoutType = 'table',
   globalSettings?: Partial<PrintLayoutGlobalSettings>
 ): Promise<PrintLayoutConfig> => {
-  const response = await apiClient.post('/admin/print-layout', { globalSettings });
+  const response = await apiClient.post('/admin/print-layout', { type, globalSettings });
+  return response.data;
+};
+
+/**
+ * POST /api/admin/print-layout/create-all
+ * Cria todos os layouts padrão (delivery, pickup, table) de uma vez
+ */
+export const createAllDefaultPrintLayouts = async (
+  globalSettings?: Partial<PrintLayoutGlobalSettings>
+): Promise<{ configs: PrintLayoutConfig[] }> => {
+  const response = await apiClient.post('/admin/print-layout/create-all', { globalSettings });
   return response.data;
 };
 
@@ -44,9 +66,10 @@ export const migratePrintLayout = async (
  * Atualiza as configurações globais do layout
  */
 export const updatePrintLayoutGlobalSettings = async (
-  data: Partial<PrintLayoutGlobalSettings>
+  data: Partial<PrintLayoutGlobalSettings>,
+  type: PrintLayoutType = 'table'
 ): Promise<PrintLayoutConfig> => {
-  const response = await apiClient.put('/admin/print-layout', data);
+  const response = await apiClient.put('/admin/print-layout', data, { params: { type } });
   return response.data;
 };
 
@@ -55,9 +78,10 @@ export const updatePrintLayoutGlobalSettings = async (
  * Atualiza todos os blocos de uma vez (batch update)
  */
 export const updatePrintLayoutBlocks = async (
-  blocks: PrintLayoutBlockUpdate[]
+  blocks: PrintLayoutBlockUpdate[],
+  type: PrintLayoutType = 'table'
 ): Promise<PrintLayoutBlock[]> => {
-  const response = await apiClient.put('/admin/print-layout/blocks', { blocks });
+  const response = await apiClient.put('/admin/print-layout/blocks', { blocks }, { params: { type } });
   return response.data;
 };
 
@@ -65,15 +89,18 @@ export const updatePrintLayoutBlocks = async (
  * POST /api/admin/print-layout/blocks
  * Adiciona um bloco customizado
  */
-export const addPrintLayoutCustomBlock = async (data: {
-  label: string;
-  customContent?: string;
-  fontSize?: string;
-  fontWeight?: string;
-  fontStyle?: string;
-  textAlign?: string;
-}): Promise<PrintLayoutBlock> => {
-  const response = await apiClient.post('/admin/print-layout/blocks', data);
+export const addPrintLayoutCustomBlock = async (
+  data: {
+    label: string;
+    customContent?: string;
+    fontSize?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+    textAlign?: string;
+  },
+  type: PrintLayoutType = 'table'
+): Promise<PrintLayoutBlock> => {
+  const response = await apiClient.post('/admin/print-layout/blocks', data, { params: { type } });
   return response.data;
 };
 
@@ -81,8 +108,20 @@ export const addPrintLayoutCustomBlock = async (data: {
  * DELETE /api/admin/print-layout/blocks/:blockId
  * Remove um bloco customizado
  */
-export const removePrintLayoutBlock = async (blockId: string): Promise<{ success: boolean }> => {
-  const response = await apiClient.delete(`/admin/print-layout/blocks/${blockId}`);
+export const removePrintLayoutBlock = async (
+  blockId: string,
+  type: PrintLayoutType = 'table'
+): Promise<{ success: boolean }> => {
+  const response = await apiClient.delete(`/admin/print-layout/blocks/${blockId}`, { params: { type } });
+  return response.data;
+};
+
+/**
+ * DELETE /api/admin/print-layout
+ * Deleta a configuração de layout por tipo
+ */
+export const deletePrintLayout = async (type: PrintLayoutType = 'table'): Promise<{ success: boolean }> => {
+  const response = await apiClient.delete('/admin/print-layout', { params: { type } });
   return response.data;
 };
 
@@ -92,5 +131,14 @@ export const removePrintLayoutBlock = async (blockId: string): Promise<{ success
  */
 export const getPrintLayoutBlockTypes = async (): Promise<PrintLayoutBlockType[]> => {
   const response = await apiClient.get('/admin/print-layout/block-types');
+  return response.data;
+};
+
+/**
+ * GET /api/admin/print-layout/types
+ * Lista os tipos de layout disponíveis
+ */
+export const getPrintLayoutTypes = async (): Promise<{ types: PrintLayoutType[]; labels: Record<PrintLayoutType, string> }> => {
+  const response = await apiClient.get('/admin/print-layout/types');
   return response.data;
 };

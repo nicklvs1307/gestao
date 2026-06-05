@@ -155,7 +155,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
       { label: "Entregadores", path: "/drivers", icon: Truck, permission: 'driver_settlement:manage', module: 'delivery' },
       { label: "Garçons", path: "/auth/waiters", icon: Users2, permission: 'waiter_settlement:manage' },
       { label: "Mesas", path: "/tables", icon: LayoutDashboard, permission: 'table:manage' },
-      { label: "Modelos de Impressão", path: "/settings/printing", icon: FileText, permission: 'integrations:manage', module: 'integrations' },
+      { label: "Modelos de Impressão", path: "/printing-layouts", icon: FileText, permission: 'settings:view' },
       { label: "Motivos de Cancelamento", path: "/settings/cancellation-reasons", icon: X, permission: 'settings:manage' },
       { label: "Status da Venda", path: "/settings/sale-status", icon: Star, permission: 'settings:manage' },
       { label: "Turnos", path: "/settings/shifts", icon: Clock, permission: 'settings:manage' },

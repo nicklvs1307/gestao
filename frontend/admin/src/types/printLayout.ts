@@ -1,8 +1,26 @@
 // Types for the modular print layout system
 
+// Tipos de layout válidos
+export type PrintLayoutType = 'delivery' | 'pickup' | 'table';
+
+// Labels dos tipos de layout
+export const PRINT_LAYOUT_TYPE_LABELS: Record<PrintLayoutType, string> = {
+  delivery: 'Delivery',
+  pickup: 'Retirada',
+  table: 'Mesa'
+};
+
+// Ícones dos tipos de layout
+export const PRINT_LAYOUT_TYPE_ICONS: Record<PrintLayoutType, string> = {
+  delivery: '🚗',
+  pickup: '🛍️',
+  table: '🪑'
+};
+
 export interface PrintLayoutConfig {
   id: string;
   restaurantId: string;
+  type: PrintLayoutType;
   fontFamily: string;
   fontSize: 'small' | 'medium' | 'large';
   lineHeight: number;
@@ -61,6 +79,7 @@ export interface PrintLayoutBlockType {
 }
 
 export interface PrintLayoutMigrationData {
+  type?: PrintLayoutType;
   globalSettings: Partial<PrintLayoutGlobalSettings>;
   blocks: {
     blockType: string;
