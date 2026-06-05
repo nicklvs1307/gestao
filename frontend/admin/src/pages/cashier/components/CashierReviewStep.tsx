@@ -1,10 +1,9 @@
 import React, { memo, useCallback, useState } from 'react';
-import { ArrowUpRight, CheckCircle, ChevronDown, ChevronRight, DollarSign, Receipt, ShieldCheck, Wallet, ShoppingBag } from 'lucide-react';
+import { ArrowUpRight, CheckCircle, ChevronDown, ChevronRight, Receipt, ShieldCheck, Wallet, ShoppingBag } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import type { PaymentMethod, BreakdownMethod, BreakdownTransaction } from '../hooks/useCashier';
-import { formatSP } from '@/lib/timezone';
 
 interface CashierReviewStepProps {
   paymentMethods: PaymentMethod[];
@@ -22,7 +21,7 @@ interface CashierReviewStepProps {
   breakdownByMethod?: Record<string, BreakdownMethod>;
 }
 
-const formatCurrency = (value: number) => 
+const formatCurrency = (value: number) =>
   `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
@@ -64,32 +63,24 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
     onFinalize();
   }, [onFinalize]);
 
-  const normalize = (str: string): string => {
-    if (!str) return '';
-    return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-  };
-
   const getBreakdownForMethod = (methodId: string): BreakdownMethod | undefined => {
     if (!breakdownByMethod) return undefined;
-
-    // ONLINE_PAID: frontend id 'online_paid' ou 'pago online' mapeia para 'pago online' (backend key)
     const isOnlinePaid = methodId === 'online_paid' || methodId === 'pago online';
     const targetKey = isOnlinePaid ? 'pago online' : methodId;
-
     return breakdownByMethod[targetKey] || undefined;
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <Card className="p-0 border-slate-200 shadow-xl bg-white overflow-hidden">
-        <header className="px-6 py-5 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <ShieldCheck size={22} className="text-emerald-400" />
+    <div className="max-w-4xl mx-auto space-y-4">
+      <Card className="p-0 border-slate-200 shadow-lg bg-white overflow-hidden">
+        <header className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck size={18} className="text-emerald-400" />
             <div>
-              <h3 className="text-sm font-black uppercase tracking-widest">
+              <h3 className="text-xs font-bold uppercase tracking-wider">
                 Relatorio de Auditoria
               </h3>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+              <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
                 Revisao final antes do encerramento
               </p>
             </div>
@@ -98,19 +89,18 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
             variant="ghost"
             size="sm"
             onClick={handleBack}
-            className="text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-widest h-10"
+            className="text-white hover:bg-white/10 text-[10px] font-bold uppercase tracking-wider h-8"
           >
             Voltar
           </Button>
         </header>
 
-        <div className="p-4 md:p-5 space-y-4 md:space-y-5">
-          {/* 1. Balanço por Modalidade */}
-          <div className="space-y-4">
-            <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 px-1">
-              <Receipt size={14} /> Balanco por Modalidade
+        <div className="p-3 md:p-4 space-y-4">
+          <div className="space-y-3">
+            <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider flex items-center gap-1.5 px-1">
+              <Receipt size={12} /> Balanco por Modalidade
             </h4>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {paymentMethods.map(m => {
                 const informed = parseFloat(closingValues[m.id] || '0');
                 const expected = getExpectedValue(m.id);
@@ -125,56 +115,48 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                   <div key={m.id}>
                     <div
                       className={cn(
-                        "flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-slate-200 transition-all",
+                        "flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-all",
                         isExpanded && hasTransactions && "rounded-b-none"
                       )}
                     >
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 bg-white border-2 border-slate-200 rounded-xl flex items-center justify-center text-slate-400">
-                          <m.icon size={18} />
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 bg-white border border-slate-200 rounded-md flex items-center justify-center text-slate-400 shrink-0">
+                          <m.icon size={13} />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-slate-700 uppercase italic tracking-tight">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wide truncate">
                               {m.label}
                             </span>
                             {hasTransactions && (
                               <button
                                 onClick={() => toggleMethod(m.id)}
                                 className={cn(
-                                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase transition-all",
-                                  isExpanded 
-                                    ? "bg-slate-700 text-white" 
+                                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase transition-all shrink-0",
+                                  isExpanded
+                                    ? "bg-slate-700 text-white"
                                     : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                                 )}
                               >
-                                {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                                {breakdown?.transactions?.length || 0} transação{(breakdown?.transactions?.length || 0) !== 1 ? 'ões' : ''}
+                                {isExpanded ? <ChevronDown size={8} /> : <ChevronRight size={8} />}
+                                {breakdown?.transactions?.length || 0}
                               </button>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <span className="block text-[8px] text-slate-400 uppercase font-black">
-                            Informado
-                          </span>
-                          <span className="text-xs font-black text-slate-900 italic tracking-tighter">
-                            {formatCurrency(informed)}
-                          </span>
+                          <span className="block text-[8px] text-slate-400 uppercase font-bold">Info</span>
+                          <span className="text-[10px] font-bold text-slate-900 tabular-nums">{formatCurrency(informed)}</span>
                         </div>
                         <div className="text-right hidden sm:block">
-                          <span className="block text-[8px] text-slate-400 uppercase font-black">
-                            Sistema
-                          </span>
-                          <span className="text-xs font-bold text-slate-500 italic tracking-tighter">
-                            {formatCurrency(expected)}
-                          </span>
+                          <span className="block text-[8px] text-slate-400 uppercase font-bold">Sist</span>
+                          <span className="text-[10px] font-semibold text-slate-500 tabular-nums">{formatCurrency(expected)}</span>
                         </div>
                         <div
                           className={cn(
-                            'px-3 py-2 rounded-xl text-[10px] font-black w-24 text-center shadow-sm',
+                            'px-2 py-1 rounded text-[9px] font-bold w-20 text-center',
                             diff < -0.01
                               ? 'bg-rose-500 text-white'
                               : diff > 0.01
@@ -188,18 +170,17 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Breakdown detalhado */}
+
                     {isExpanded && hasTransactions && (
-                      <div className="bg-white border-2 border-t-0 border-slate-100 rounded-b-2xl p-3 space-y-2 max-h-48 overflow-y-auto">
+                      <div className="bg-white border border-t-0 border-slate-200 rounded-b-lg p-2 space-y-1 max-h-36 overflow-y-auto">
                         {breakdown.transactions.map((t: BreakdownTransaction, idx: number) => (
-                          <div 
+                          <div
                             key={t.id || idx}
-                            className="flex items-center justify-between p-2 bg-slate-50 rounded-lg"
+                            className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded"
                           >
-                            <div className="flex items-center gap-2">
-                              <ShoppingBag size={12} className="text-slate-400" />
-                              <span className="text-[9px] font-black text-slate-700">
+                            <div className="flex items-center gap-1.5">
+                              <ShoppingBag size={10} className="text-slate-400" />
+                              <span className="text-[9px] font-bold text-slate-700">
                                 #{t.orderNumber || t.orderId?.slice(-4) || 'N/A'}
                               </span>
                               {t.orderTotal && (
@@ -208,7 +189,7 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] font-bold text-slate-800">
+                            <span className="text-[10px] font-bold text-slate-800 tabular-nums">
                               {formatCurrency(t.amount)}
                             </span>
                           </div>
@@ -221,33 +202,32 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
             </div>
           </div>
 
-          {/* 2. Destino do Dinheiro */}
-          <div className="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-5">
-              <h4 className="text-[11px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
-                <Wallet size={14} /> Numerario em Especie
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                <Wallet size={12} /> Numerario em Especie
               </h4>
 
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <div>
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Dinheiro Total em Maos
                   </label>
-                  <div className="text-xl font-black text-slate-900 mt-1 tracking-tighter">
+                  <div className="text-lg font-bold text-slate-900 mt-0.5 tabular-nums">
                     {formatCurrency(cashInHand)}
                   </div>
                 </div>
                 <div>
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-0.5">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Fundo de Troco (Prox. Turno)
                   </label>
-                  <div className="relative mt-2">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-300 text-sm">
+                  <div className="relative mt-1">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-[11px]">
                       R$
                     </span>
                     <input
                       type="number"
-                      className="w-full h-11 pl-8 pr-3 bg-white border-2 border-slate-200 rounded-xl font-black text-slate-900 focus:border-slate-900 focus:outline-none transition-all"
+                      className="w-full h-8 pl-6 pr-2 bg-white border border-slate-200 rounded-lg font-bold text-[11px] text-slate-900 focus:border-slate-900 focus:outline-none transition-all tabular-nums"
                       value={cashLeftover}
                       onChange={(e) => onCashLeftoverChange(e.target.value)}
                     />
@@ -256,29 +236,28 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
               </div>
             </div>
 
-            <div className="flex flex-col justify-center bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 rounded-2xl text-white shadow-xl shadow-emerald-500/20">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
+            <div className="flex flex-col justify-center bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 rounded-lg text-white shadow-lg shadow-emerald-500/20">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">
                   Deposito em Cofre
                 </span>
-                <ArrowUpRight size={20} className="opacity-80" />
+                <ArrowUpRight size={16} className="opacity-80" />
               </div>
-              <div className="text-3xl font-black tracking-tighter">
+              <div className="text-2xl font-bold tracking-tight tabular-nums">
                 {formatCurrency(safeDeposit)}
               </div>
-              <p className="text-[9px] font-bold uppercase opacity-80 mt-3 tracking-widest">
+              <p className="text-[8px] font-semibold uppercase opacity-80 mt-2 tracking-wider">
                 Lancamento automatico de saida para cofre da loja.
               </p>
             </div>
           </div>
 
-          {/* 3. Observações */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider px-1">
               Notas de Auditoria
             </label>
             <textarea
-              className="w-full h-24 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-[11px] font-bold focus:border-slate-900 outline-none transition-all resize-none placeholder:text-slate-300"
+              className="w-full h-16 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[11px] font-medium focus:border-slate-900 outline-none transition-all resize-none placeholder:text-slate-300"
               placeholder="Justificativa para quebras de caixa ou observacoes operacionais..."
               value={notes}
               onChange={(e) => onNotesChange(e.target.value)}
@@ -287,15 +266,14 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
 
           <Button
             fullWidth
-            size="lg"
             onClick={handleFinalize}
             disabled={isLoading}
             className={cn(
-              'h-14 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-slate-300 border-b-4 border-slate-700 active:border-b-0 active:mt-1 transition-all',
+              'h-10 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase tracking-wider text-[10px] shadow-md transition-all',
               isLoading && 'opacity-70 cursor-wait'
             )}
           >
-            <CheckCircle size={20} className="mr-2 text-emerald-400" />
+            <CheckCircle size={16} className="mr-1.5 text-emerald-400" />
             {isLoading ? 'FINALIZANDO...' : 'FINALIZAR TURNO E IMPRIMIR RELATÓRIO'}
           </Button>
         </div>

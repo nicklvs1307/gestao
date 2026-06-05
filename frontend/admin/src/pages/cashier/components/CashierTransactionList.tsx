@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { formatSP } from '@/lib/timezone';
-import { Filter, Search, ShoppingBag, Truck, X, Receipt, CreditCard, AlertCircle, Wallet, Smartphone, Banknote } from 'lucide-react';
+import { Filter, Search, ShoppingBag, Truck, X, Receipt, CreditCard, Wallet, Smartphone, Banknote } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import type { PaymentMethod } from '../hooks/useCashier';
 import { resolvePaymentLabel } from '@/utils/paymentUtils';
@@ -66,55 +66,53 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
     onUpdatePayment(orderId, method);
   }, [onUpdatePayment]);
 
-  const formatCurrency = (value: number) => 
+  const formatCurrency = (value: number) =>
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   return (
     <Card
-      className="p-0 border-slate-200 shadow-xl overflow-hidden bg-white flex flex-col"
+      className="p-0 border-slate-200 shadow-lg overflow-hidden bg-white flex flex-col"
       noPadding
     >
-      <div className="px-5 py-4 border-b border-slate-100 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-11 h-11 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg">
-            <MethodIcon size={20} />
+      <div className="px-4 py-3 border-b border-slate-100 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center shrink-0">
+            <MethodIcon size={16} />
           </div>
           <div>
-            <h3 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">
-              Detalhamento: {currentMethod?.label}
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-tight">
+              {currentMethod?.label}
             </h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                {filteredOrders.length} movimentação(ões)
-              </span>
-            </div>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              {filteredOrders.length} movimentação(ões)
+            </span>
           </div>
         </div>
-        
-        <div className="relative w-full md:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+
+        <div className="relative w-full sm:w-56">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Buscar lancamento..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="h-10 w-full bg-slate-50 border-2 border-slate-200 rounded-xl pl-9 pr-8 text-[10px] font-bold uppercase tracking-widest focus:border-slate-900 focus:outline-none transition-all"
+            className="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-7 text-[10px] font-semibold uppercase tracking-wider focus:border-slate-900 focus:outline-none transition-all"
           />
           {searchTerm && (
             <button
               onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 transition-colors"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 transition-colors"
             >
-              <X size={14} />
+              <X size={12} />
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto max-h-[350px] p-3 space-y-2 bg-slate-50/30">
+      <div className="flex-1 overflow-y-auto max-h-[400px] bg-white">
         {filteredOrders.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3">
-            {filteredOrders.map((order: any, index: number) => {
+          <div className="divide-y divide-slate-100">
+            {filteredOrders.map((order: any) => {
               const OrderIcon = getOrderIcon(order.orderType);
               const orderLabel = getOrderLabel(order);
               const orderNumber = order.dailyOrderNumber || order.id.slice(-3);
@@ -124,64 +122,57 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
               const methodAmount = order._methodAmount || 0;
               const hasPayment = payments.length > 0;
               const isMultiplePayments = payments.length > 1;
-              
+
               return (
                 <div
                   key={order.id}
                   onClick={() => onOrderClick(order)}
-                  className="bg-white px-4 py-3 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 hover:border-orange-200 hover:shadow-md transition-all group cursor-pointer"
+                  className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer group"
                 >
-                  <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 text-xs font-black text-slate-500 uppercase group-hover:bg-slate-900 group-hover:text-white transition-all">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-[10px] font-bold text-slate-400 tabular-nums shrink-0 w-8 text-center">
                       #{orderNumber}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-slate-800 uppercase italic tracking-tight flex items-center gap-2">
-                        <OrderIcon size={12} className="text-orange-500" />
+                    </span>
+                    <OrderIcon size={13} className="text-orange-500 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-semibold text-slate-800 uppercase truncate block">
                         {orderLabel}
-                      </h4>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
                         {formatSP(order.createdAt, 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}
-                      </p>
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+                  <div className="flex items-center gap-3 shrink-0">
                     {isMultiplePayments ? (
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
                         {payments.map((payment: any) => {
                           const methodLabel = getMethodLabel(payment.method, paymentMethods);
                           return (
-                            <span key={payment.id} className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 rounded-lg text-[9px] font-black uppercase">
-                              <CreditCard size={8} />
+                            <span key={payment.id} className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-semibold uppercase">
                               {methodLabel}: {formatCurrency(payment.amount)}
                             </span>
                           );
                         })}
                       </div>
                     ) : hasPayment ? (
-                      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase ${isPartial ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        <CreditCard size={10} />
+                      <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase ${isPartial ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         {isPartial ? 'PARCIAL' : 'PAGO'}
-                      </div>
+                      </span>
                     ) : null}
-                    <div className="text-right">
-                      <p className="text-base font-black text-slate-900 italic tracking-tighter">
-                        {formatCurrency(methodAmount)}
-                      </p>
-                      {isPartial && (
-                        <p className="text-[9px] font-bold text-amber-600 uppercase">Parcial</p>
-                      )}
-                    </div>
+                    <span className="text-xs font-bold text-slate-900 tabular-nums">
+                      {formatCurrency(methodAmount)}
+                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-48 opacity-30">
-            <Filter size={48} strokeWidth={1.5} className="text-slate-400 mb-3" />
-            <p className="text-xs font-black uppercase tracking-widest text-slate-500 text-center px-10 leading-tight">
+          <div className="flex flex-col items-center justify-center h-40 opacity-30">
+            <Filter size={36} strokeWidth={1.5} className="text-slate-400 mb-2" />
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 text-center px-10">
               {searchTerm ? 'Nenhum resultado encontrado' : 'Nenhuma transacao registrada nesta modalidade'}
             </p>
           </div>

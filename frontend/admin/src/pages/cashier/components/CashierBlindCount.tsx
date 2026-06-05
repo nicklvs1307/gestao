@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react';
-import { ArrowRight, ShieldCheck, Wallet, CreditCard, Smartphone, Receipt } from 'lucide-react';
+import { ShieldCheck, Wallet, CreditCard, Smartphone, Receipt } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -41,25 +41,25 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
     onAuditAndFinalize();
   }, [onAuditAndFinalize]);
 
-  const formatCurrency = (value: number) => 
+  const formatCurrency = (value: number) =>
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   return (
-    <Card className="p-0 border-slate-200 shadow-xl overflow-hidden bg-white" noPadding>
-      <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-900 to-slate-800 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <ShieldCheck size={18} className="text-orange-400" />
-          <h3 className="text-sm font-black text-white uppercase italic tracking-tight">
+    <Card className="p-0 border-slate-200 shadow-lg overflow-hidden bg-white" noPadding>
+      <div className="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-900 to-slate-800 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <ShieldCheck size={16} className="text-orange-400" />
+          <h3 className="text-xs font-bold text-white uppercase tracking-tight">
             Conferencia de Valores
           </h3>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 rounded-lg">
-          <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-          <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Modo Auditoria</span>
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-700 rounded-md">
+          <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+          <span className="text-[9px] font-semibold text-slate-300 uppercase tracking-wider">Auditoria</span>
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100 max-h-[320px] overflow-y-auto">
+      <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
         {paymentMethods.map(m => {
           const isSelected = selectedMethod === m.id;
           const MethodIcon = getMethodIcon(m.id);
@@ -69,88 +69,78 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
               key={m.id}
               onClick={() => handleMethodSelect(m.id)}
               className={cn(
-                'p-4 transition-all cursor-pointer group hover:bg-slate-50 relative border-l-4',
-                isSelected ? 'bg-orange-50/50 border-orange-500' : 'border-transparent'
+                'flex items-center gap-3 px-3 py-2.5 transition-all cursor-pointer group hover:bg-slate-50 border-l-3',
+                isSelected ? 'bg-orange-50/60 border-l-orange-500' : 'border-l-transparent'
               )}
             >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      'w-10 h-10 rounded-xl flex items-center justify-center transition-all',
-                      isSelected
-                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                        : 'bg-slate-100 text-slate-400 group-hover:bg-white border border-slate-200'
-                    )}
-                  >
-                    <MethodIcon size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-slate-800 uppercase italic tracking-tight">
-                      {m.label}
-                    </p>
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                      Informe o total encontrado
-                    </p>
-                  </div>
-                </div>
+              <div
+                className={cn(
+                  'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all',
+                  isSelected
+                    ? 'bg-orange-500 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
+                )}
+              >
+                <MethodIcon size={14} />
               </div>
 
-              <div className="flex gap-2 items-center">
-                <div className="flex-1 relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">
-                    R$
-                  </span>
-                  <input
-                    type="number"
-                    value={closingValues[m.id] || ''}
-                    onChange={(e) => handleValueChange(m.id, e.target.value)}
-                    className={cn(
-                      'w-full h-11 bg-white border-2 rounded-xl pl-8 pr-3 text-sm font-black focus:outline-none transition-all tabular-nums',
-                      isSelected 
-                        ? 'border-orange-200 focus:border-orange-500' 
-                        : 'border-slate-200 focus:border-slate-900'
-                    )}
-                    placeholder="0,00"
-                  />
-                </div>
+              <span className={cn(
+                'text-[11px] font-semibold uppercase tracking-wide shrink-0 w-24',
+                isSelected ? 'text-slate-800' : 'text-slate-500'
+              )}>
+                {m.label}
+              </span>
 
-                <div
+              <div className="flex-1 relative max-w-[160px]">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400">
+                  R$
+                </span>
+                <input
+                  type="number"
+                  value={closingValues[m.id] || ''}
+                  onChange={(e) => handleValueChange(m.id, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
                   className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center transition-all',
-                    isSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-300'
+                    'w-full h-8 bg-white border rounded-lg pl-7 pr-2 text-xs font-bold focus:outline-none transition-all tabular-nums',
+                    isSelected
+                      ? 'border-orange-300 focus:border-orange-500'
+                      : 'border-slate-200 focus:border-slate-900'
                   )}
-                >
-                  <ArrowRight size={16} />
-                </div>
+                  placeholder="0,00"
+                />
               </div>
+
+              {closingValues[m.id] && (
+                <span className="text-[10px] font-bold text-emerald-600 tabular-nums shrink-0">
+                  OK
+                </span>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="p-5 bg-gradient-to-r from-slate-900 to-slate-800 space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Total Informado
+      <div className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            Total
           </span>
-          <span className="text-2xl font-black text-white italic tracking-tighter">
+          <span className="text-lg font-bold text-white tabular-nums">
             {formatCurrency(totalInformed)}
           </span>
         </div>
 
         <Button
-          fullWidth
           onClick={handleAudit}
           disabled={hasBlocks}
           className={cn(
-            'h-12 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg',
+            'h-9 px-4 rounded-lg font-bold uppercase tracking-wider text-[10px] transition-all',
             hasBlocks
               ? 'bg-slate-700 cursor-not-allowed opacity-50'
-              : 'bg-orange-500 hover:bg-orange-400 text-white shadow-orange-500/30'
+              : 'bg-orange-500 hover:bg-orange-400 text-white shadow-sm'
           )}
         >
-          AUDITAR E FINALIZAR <ArrowRight size={16} className="ml-2" />
+          AUDITAR E FINALIZAR
         </Button>
       </div>
     </Card>

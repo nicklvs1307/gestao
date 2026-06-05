@@ -98,7 +98,7 @@ const CashierManagement: React.FC = memo(() => {
   }
 
   return (
-    <div className="space-y-3 md:space-y-4 pb-4">
+    <div className="space-y-3 pb-4">
       {/* Header Premium */}
       <CashierHeader
         isOpen={isOpen}
@@ -129,8 +129,8 @@ const CashierManagement: React.FC = memo(() => {
           onSubmit={handleOpen}
         />
       ) : step === 'COUNT' ? (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-          <div className="xl:col-span-4 space-y-4">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+          <div className="xl:col-span-4">
             <CashierBlindCount
               paymentMethods={paymentMethods}
               selectedMethod={selectedMethod}
@@ -142,7 +142,7 @@ const CashierManagement: React.FC = memo(() => {
               onAuditAndFinalize={() => setStep('REVIEW')}
             />
           </div>
-          <div className="xl:col-span-8 space-y-4">
+          <div className="xl:col-span-8">
             <CashierTransactionList
               paymentMethods={paymentMethods}
               selectedMethod={selectedMethod}

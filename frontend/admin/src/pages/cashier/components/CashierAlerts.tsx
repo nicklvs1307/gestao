@@ -35,19 +35,19 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
   }, [onShowOpenTables]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       {session.activeOrdersCount > 0 && (
-        <div className="flex items-center justify-between p-4 bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-2xl hover:shadow-lg transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
-              <AlertCircle size={20} />
+        <div className="flex items-center justify-between p-3 bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-xl hover:shadow-md transition-all">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center shrink-0">
+              <AlertCircle size={16} />
             </div>
             <div>
-              <p className="text-xs font-black text-amber-900 uppercase italic leading-none">
+              <p className="text-[10px] font-bold text-amber-900 uppercase tracking-wide leading-none">
                 Pedidos Ativos
               </p>
-              <p className="text-[9px] text-amber-600 font-bold uppercase mt-1">
-                {session.activeOrdersCount} pendentes. Finalize-os para fechar.
+              <p className="text-[9px] text-amber-600 font-semibold uppercase mt-0.5">
+                {session.activeOrdersCount} pendentes
               </p>
             </div>
           </div>
@@ -55,25 +55,25 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
             variant="ghost"
             size="sm"
             onClick={handleShowActiveOrders}
-            className="h-9 text-[10px] font-black text-amber-600 hover:bg-amber-100 uppercase tracking-widest rounded-xl"
+            className="h-7 text-[9px] font-bold text-amber-600 hover:bg-amber-100 uppercase tracking-wider rounded-lg"
           >
-            Ver <ArrowRight size={12} className="ml-1" />
+            Ver <ArrowRight size={10} className="ml-0.5" />
           </Button>
         </div>
       )}
 
       {session.openTablesCount > 0 && (
-        <div className="flex items-center justify-between p-4 bg-gradient-to-br from-indigo-50 to-white border-2 border-indigo-200 rounded-2xl hover:shadow-lg transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-              <HelpCircle size={20} />
+        <div className="flex items-center justify-between p-3 bg-gradient-to-br from-indigo-50 to-white border border-indigo-200 rounded-xl hover:shadow-md transition-all">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+              <HelpCircle size={16} />
             </div>
             <div>
-              <p className="text-xs font-black text-indigo-900 uppercase italic leading-none">
+              <p className="text-[10px] font-bold text-indigo-900 uppercase tracking-wide leading-none">
                 Mesas Abertas
               </p>
-              <p className="text-[9px] text-indigo-600 font-bold uppercase mt-1">
-                {session.openTablesCount} mesas ocupadas.
+              <p className="text-[9px] text-indigo-600 font-semibold uppercase mt-0.5">
+                {session.openTablesCount} mesas ocupadas
               </p>
             </div>
           </div>
@@ -81,25 +81,25 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
             variant="ghost"
             size="sm"
             onClick={handleShowOpenTables}
-            className="h-9 text-[10px] font-black text-indigo-600 hover:bg-indigo-100 uppercase tracking-widest rounded-xl"
+            className="h-7 text-[9px] font-bold text-indigo-600 hover:bg-indigo-100 uppercase tracking-wider rounded-lg"
           >
-            Ver <ArrowRight size={12} className="ml-1" />
+            Ver <ArrowRight size={10} className="ml-0.5" />
           </Button>
         </div>
       )}
 
       {session.pendingDriverSettlementsCount > 0 && (
-        <div className="flex items-center justify-between p-4 bg-gradient-to-br from-rose-50 to-white border-2 border-rose-200 rounded-2xl hover:shadow-lg transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center shrink-0">
-              <Truck size={20} />
+        <div className="flex items-center justify-between p-3 bg-gradient-to-br from-rose-50 to-white border border-rose-200 rounded-xl hover:shadow-md transition-all">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center shrink-0">
+              <Truck size={16} />
             </div>
             <div>
-              <p className="text-xs font-black text-rose-900 uppercase italic leading-none">
+              <p className="text-[10px] font-bold text-rose-900 uppercase tracking-wide leading-none">
                 Acertos Pendentes
               </p>
-              <p className="text-[9px] text-rose-600 font-bold uppercase mt-1">
-                {session.pendingDriverSettlementsCount} motoboy(s) aguardando acerto.
+              <p className="text-[9px] text-rose-600 font-semibold uppercase mt-0.5">
+                {session.pendingDriverSettlementsCount} motoboy(s)
               </p>
             </div>
           </div>
@@ -107,9 +107,9 @@ const CashierAlerts: React.FC<CashierAlertsProps> = memo(({ session, onShowSettl
             variant="ghost"
             size="sm"
             onClick={handleShowSettlements}
-            className="h-9 text-[10px] font-black text-rose-600 hover:bg-rose-100 uppercase tracking-widest rounded-xl"
+            className="h-7 text-[9px] font-bold text-rose-600 hover:bg-rose-100 uppercase tracking-wider rounded-lg"
           >
-            Ver <ArrowRight size={12} className="ml-1" />
+            Ver <ArrowRight size={10} className="ml-0.5" />
           </Button>
         </div>
       )}

@@ -1,0 +1,200 @@
+[
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T18:13:11.421Z",
+    "responseTime": "0.015",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "1f391542-e595-419a-bf0e-8d83a40f5814",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/order/v1.0/orders/6845347f-bfdf-4835-aae3-a08975bcbc19/startPreparation",
+    "response": "202",
+    "timestamp": "2026-06-03T18:13:09.775Z",
+    "responseTime": "0.022",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "fad4b26e-3a01-43f6-ba55-b368f4a79e28",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/order/v1.0/orders/6845347f-bfdf-4835-aae3-a08975bcbc19/confirm",
+    "response": "202",
+    "timestamp": "2026-06-03T18:13:09.456Z",
+    "responseTime": "0.019",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "a7da6b82-7893-4d19-ae8e-dfdc6c5f07e9",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T18:12:23.257Z",
+    "responseTime": "0.010",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "345048d0-540a-4d08-86e9-21f1d88503cc",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "GET",
+    "urlPath": "/order/v1.0/orders/6845347f-bfdf-4835-aae3-a08975bcbc19",
+    "response": "200",
+    "timestamp": "2026-06-03T18:12:22.355Z",
+    "responseTime": "0.021",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "66634a6b-ccc5-4a7a-bfa4-e43a62e4461c",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T18:05:54.908Z",
+    "responseTime": "0.010",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "ce3cebaa-1045-4b4d-9388-95a61921f165",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/order/v1.0/orders/138afef6-12a9-401e-aa9b-c506e9f021b7/startPreparation",
+    "response": "202",
+    "timestamp": "2026-06-03T18:05:53.161Z",
+    "responseTime": "0.019",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "cbde97a5-07a0-4dee-9d1e-85312494a086",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/order/v1.0/orders/138afef6-12a9-401e-aa9b-c506e9f021b7/confirm",
+    "response": "202",
+    "timestamp": "2026-06-03T18:05:52.936Z",
+    "responseTime": "0.041",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "de6601aa-b354-48af-b69c-b1b6059cecce",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T18:05:41.275Z",
+    "responseTime": "0.016",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "a6d2bf07-21ba-44d3-9680-3fc14ecd8d60",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "GET",
+    "urlPath": "/order/v1.0/orders/138afef6-12a9-401e-aa9b-c506e9f021b7",
+    "response": "200",
+    "timestamp": "2026-06-03T18:05:40.296Z",
+    "responseTime": "0.018",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "7127f471-856e-48c7-95f7-95ff9d2354ab",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T18:01:22.707Z",
+    "responseTime": "0.012",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "0401c91c-1db5-4cfc-8362-c0caab0b5a89",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T17:59:33.638Z",
+    "responseTime": "0.009",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "27ee6d46-5e53-4382-9b1b-310027c93dcf",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T17:57:33.693Z",
+    "responseTime": "0.009",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "fdaa3872-07fb-4fe7-a4b6-8b26c8ad3589",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T17:53:42.931Z",
+    "responseTime": "0.009",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "d4afd322-16ff-4709-c34a-2c80321b6054",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/order/v1.0/orders/5079ca7c-cca0-4e67-9488-0a16ead82348/startPreparation",
+    "response": "202",
+    "timestamp": "2026-06-03T17:53:41.430Z",
+    "responseTime": "0.021",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "e48a53ec-78f5-48c9-abeb-1a0e72983d8f",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/order/v1.0/orders/5079ca7c-cca0-4e67-9488-0a16ead82348/confirm",
+    "response": "202",
+    "timestamp": "2026-06-03T17:53:41.046Z",
+    "responseTime": "0.020",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "ab3ac427-3f8c-4f1d-b191-502df77f7320",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "POST",
+    "urlPath": "/events/v1.0/events/acknowledgment",
+    "response": "202",
+    "timestamp": "2026-06-03T17:53:27.845Z",
+    "responseTime": "0.013",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "178b4d55-178b-4d7d-b913-538368cb78f7",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  },
+  {
+    "verb": "GET",
+    "urlPath": "/order/v1.0/orders/5079ca7c-cca0-4e67-9488-0a16ead82348",
+    "response": "200",
+    "timestamp": "2026-06-03T17:53:26.987Z",
+    "responseTime": "0.021",
+    "applicationSlug": "lucas-vinicius-da-silva-niquele-teste-c",
+    "ifoodRequestId": "3a54d36b-9138-4db8-aea6-d86a89e8941f",
+    "useragent": "axios/1.12.2",
+    "clientId": "cc5acfa7-c01a-41f2-a949-e9f9560f2cfd"
+  }
+]
