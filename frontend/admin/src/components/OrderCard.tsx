@@ -297,7 +297,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
             <div className="px-1 space-y-1">
                 {Array.isArray(order.items) && order.items.slice(0, 2).map((item, idx) => (
                     <div key={idx} className="flex justify-between text-xs text-slate-500">
-                        <span className="truncate pr-2"><b className="text-orange-500">{item.quantity}x</b> {item.product?.name}</span>
+                        <span className="truncate pr-2"><b className="text-orange-500">{item.quantity}x</b> {item.product?.name || item.productName || 'Produto'}</span>
                         <span className="shrink-0 text-slate-400">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
                     </div>
                 ))}

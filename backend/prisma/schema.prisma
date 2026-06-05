@@ -1216,6 +1216,7 @@ model OrderItem {
   // Relação com o Produto (opcional para itens de integração sem código PDV)
   productId    String?
   product      Product?   @relation(fields: [productId], references: [id])
+  productName  String?    // Nome do item quando sem produto vinculado (integrações)
 
   // Relações com os adicionais e tamanho escolhidos (armazenados como JSON)
   // Convertidos para tipo Json para melhor performance e consistência

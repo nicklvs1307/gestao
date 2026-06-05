@@ -222,7 +222,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
               {order.items?.map((item) => (
                 <div key={item.id} className="flex justify-between items-center text-xs">
                   <span className="text-slate-700 font-medium">
-                    {item.quantity}x {item.product?.name || 'Item'}
+                    {item.quantity}x {item.product?.name || item.productName || 'Item'}
                   </span>
                   <span className="text-slate-900 font-black">
                     {formatCurrency(item.unitPrice * item.quantity)}

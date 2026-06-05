@@ -216,11 +216,11 @@ const TableCheckout: React.FC = () => {
                 totalAmount: targetTab.totalAmount,
                 total: targetTab.totalAmount,
                 createdAt: order.createdAt,
-                items: itemsToPrint.map(item => ({
-                    ...item,
-                    product: item.product || { name: item.product?.name || 'Produto', categories: [] },
-                    priceAtTime: item.priceAtTime || 0,
-                })),
+                    items: itemsToPrint.map(item => ({
+                        ...item,
+                        product: item.product || { name: item.productName || 'Produto', categories: [] },
+                        priceAtTime: item.priceAtTime || 0,
+                    })),
                 payments: order.payments || [],
                 restaurantId: order.restaurantId,
                 dailyOrderNumber: targetTab.orderId.slice(-4).toUpperCase(),
@@ -255,7 +255,7 @@ const TableCheckout: React.FC = () => {
                     createdAt: order.createdAt,
                     items: itemsToPrint.map(item => ({
                         ...item,
-                        product: item.product || { name: item.product?.name || 'Produto', categories: [] },
+                        product: item.product || { name: item.productName || 'Produto', categories: [] },
                         priceAtTime: item.priceAtTime || 0,
                     })),
                     payments: order.payments || [],
@@ -283,7 +283,7 @@ const TableCheckout: React.FC = () => {
             } else {
                 setPayingItems(prev => [...prev, {
                     itemId: item.id, quantity: 1, price: item.priceAtTime,
-                    name: item.product?.name || 'Produto', tabId: activeTabId,
+                    name: item.product?.name || item.productName || 'Produto', tabId: activeTabId,
                 }]);
             }
         }
@@ -294,7 +294,7 @@ const TableCheckout: React.FC = () => {
             const filtered = prev.filter(i => i.itemId !== item.id);
             return [...filtered, {
                 itemId: item.id, quantity: item.quantity, price: item.priceAtTime,
-                name: item.product?.name || 'Produto', tabId: activeTabId,
+                name: item.product?.name || item.productName || 'Produto', tabId: activeTabId,
             }];
         });
     }, [activeTabId]);
@@ -406,7 +406,7 @@ const TableCheckout: React.FC = () => {
                     createdAt: order.createdAt,
                     items: itemsToPrint.map(item => ({
                         ...item,
-                        product: item.product || { name: item.product?.name || 'Produto', categories: [] },
+                        product: item.product || { name: item.productName || 'Produto', categories: [] },
                         priceAtTime: item.priceAtTime || 0,
                     })),
                     payments: order.payments || [],
@@ -573,7 +573,7 @@ const TableCheckout: React.FC = () => {
                                     )}>
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex-1 pr-2">
-                                                <p className="text-[11px] font-bold text-slate-900 uppercase leading-tight truncate">{item.product?.name || 'Produto'}</p>
+                                                <p className="text-[11px] font-bold text-slate-900 uppercase leading-tight truncate">{item.product?.name || item.productName || 'Produto'}</p>
                                                 <p className="text-[9px] font-medium text-slate-400 mt-1">{item.quantity} UN x R$ {item.priceAtTime.toFixed(2)}</p>
                                             </div>
                                             <span className="text-[11px] font-black text-slate-900">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>

@@ -639,6 +639,7 @@ if (isPickup && !hasValidPhone) {
         }
       } else {
         itemData.productId = null;
+        itemData.productName = item.name || null;
         logger.warn(`[ORDER-INTEGRATION] Item sem produto vinculado: ${item.name || 'Sem nome'}`);
       }
 

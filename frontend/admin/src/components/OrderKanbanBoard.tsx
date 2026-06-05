@@ -143,7 +143,7 @@ const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({
             <div className="text-xs text-slate-500 space-y-0.5">
               {Array.isArray(activeOrder.items) && activeOrder.items.slice(0, 2).map((item, idx) => (
                 <div key={idx} className="flex justify-between">
-                  <span className="truncate"><b className="text-orange-500">{item.quantity}x</b> {item.product?.name}</span>
+                  <span className="truncate"><b className="text-orange-500">{item.quantity}x</b> {item.product?.name || item.productName || 'Produto'}</span>
                 </div>
               ))}
             </div>

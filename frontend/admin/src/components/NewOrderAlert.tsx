@@ -224,7 +224,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
                                           </div>
                                           <div className="col-span-8">
                                               <p className="text-sm font-semibold text-slate-800 leading-snug">
-                                                  {item.product?.name || 'Produto'}
+                                                  {item.product?.name || item.productName || 'Produto'}
                                               </p>
                                               {item.observations && (
                                                   <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1">
