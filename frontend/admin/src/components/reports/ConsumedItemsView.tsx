@@ -70,7 +70,7 @@ const ConsumedItemsView: React.FC = () => {
                                 {item.order?.tableNumber ? `Mesa ${item.order.tableNumber}` : 'Delivery'}
                             </span>
                         </td>
-                        <td className="px-4 py-3 font-black text-xs text-slate-900 uppercase italic tracking-tight max-w-[200px] truncate">{item.product?.name}</td>
+                        <td className="px-4 py-3 font-black text-xs text-slate-900 uppercase italic tracking-tight max-w-[200px] truncate">{item.product?.name || item.productName || 'Produto'}</td>
                         <td className="px-4 py-3 text-center font-black text-slate-700">{item.quantity}</td>
                         <td className="px-4 py-3 text-right font-bold text-slate-500">R$ {item.priceAtTime.toFixed(2)}</td>
                         <td className="px-4 py-3 text-right font-black text-emerald-600 italic tracking-tighter">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</td>

@@ -107,6 +107,7 @@ export interface OrderItem {
   orderId: string;
   productId: string;
   product: Product;
+  productName?: string;
   sizeJson?: string;
   addonsJson?: string;
   flavorsJson?: string; // Adicionado para suportar sabores de pizza
