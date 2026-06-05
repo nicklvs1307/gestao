@@ -240,9 +240,13 @@ export const usePosActions = (
 
     const handleOpenCashier = useCallback(async (amount: string) => {
         if (!amount) return toast.error("Informe o fundo de caixa");
-        await openCashier(parseFloat(amount));
-        pos.setActiveModal('none');
-        refreshData();
+        try {
+            await openCashier(parseFloat(amount));
+            pos.setActiveModal('none');
+            refreshData();
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Erro ao abrir caixa. Verifique se ja nao existe um caixa aberto.");
+        }
     }, [pos, refreshData]);
 
     const handleOpenCheckout = useCallback(() => {

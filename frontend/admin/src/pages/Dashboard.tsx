@@ -100,7 +100,7 @@ const Dashboard: React.FC = () => {
         api.get('/categories/flat').catch(() => ({ data: [] })),
       ]);
       
-      const safeOrders = Array.isArray(ordersData) ? ordersData : [];
+      const safeOrders = ordersData?.orders || [];
       const safeHistory = Array.isArray(historyData) ? historyData : [];
       const safePayments = Array.isArray(paymentsData) ? paymentsData : [];
       const safeCategories = Array.isArray(categoriesData?.data) ? categoriesData.data : [];

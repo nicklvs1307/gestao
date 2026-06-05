@@ -73,15 +73,12 @@ export function useOrderMonitor(isKdsPage: boolean): UseOrderMonitorReturn {
 
           if (isAdminOrStaff) {
             const ordersData = await getAdminOrders();
-            if (Array.isArray(ordersData)) {
-              setAllOrders(ordersData);
-              lastOrderIdsRef.current = new Set(ordersData.map((o: Order) => o.id));
-              ordersData.forEach((o: Order) => {
-                if (o.isPrinted) printedIdsRef.current.add(o.id);
-              });
-            } else {
-              setAllOrders([]);
-            }
+            const ordersList = ordersData?.orders || [];
+            setAllOrders(ordersList);
+            lastOrderIdsRef.current = new Set(ordersList.map((o: Order) => o.id));
+            ordersList.forEach((o: Order) => {
+              if (o.isPrinted) printedIdsRef.current.add(o.id);
+            });
           }
         }
       } catch (error) {

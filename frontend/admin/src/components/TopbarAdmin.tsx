@@ -70,7 +70,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
               getTableRequests(),
               apiClient.get('/cashier/status', { signal })
           ]);
-          const pending = orders.filter((o: any) => o.status === 'PENDING');
+          const pending = (orders?.orders || []).filter((o: any) => o.status === 'PENDING');
           setNotifCount(pending.length + requests.length);
           setCashierStatus(cashierRes.data);
       } catch (e: any) {
