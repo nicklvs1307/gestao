@@ -379,30 +379,6 @@ class PrintLayoutService {
     }
   }
 
-      // Só permite remover blocos customizados
-      const block = await prisma.printLayoutBlock.findFirst({
-        where: {
-          id: blockId,
-          layoutId: config.id,
-          blockType: { startsWith: 'custom_' }
-        }
-      });
-
-      if (!block) {
-        throw new Error('Bloco não encontrado ou não é customizado');
-      }
-
-      await prisma.printLayoutBlock.delete({
-        where: { id: blockId }
-      });
-
-      return { success: true };
-    } catch (error) {
-      logger.error('Erro ao remover bloco:', error);
-      throw error;
-    }
-  }
-
   /**
    * Retorna os tipos de bloco disponíveis para adicionar
    */
