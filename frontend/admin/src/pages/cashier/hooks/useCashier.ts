@@ -7,6 +7,8 @@ import {
   addCashierTransaction,
   getCashierHistory,
   getPendingSettlements,
+  getActiveOrders,
+  getOpenTables,
   updateOrderPaymentMethod,
 } from '../../../services/api';
 import { toast } from 'sonner';
@@ -139,6 +141,14 @@ export function useCashier() {
   // Pending settlements
   const [pendingSettlementsList, setPendingSettlementsList] = useState<any[]>([]);
   const [showPendingSettlementsModal, setShowPendingSettlementsModal] = useState(false);
+
+  // Active orders modal
+  const [activeOrdersList, setActiveOrdersList] = useState<any[]>([]);
+  const [showActiveOrdersModal, setShowActiveOrdersModal] = useState(false);
+
+  // Open tables modal
+  const [openTablesList, setOpenTablesList] = useState<any[]>([]);
+  const [showOpenTablesModal, setShowOpenTablesModal] = useState(false);
 
   // Closing history modal
   const [showClosingHistoryModal, setShowClosingHistoryModal] = useState(false);
@@ -510,6 +520,26 @@ export function useCashier() {
     }
   }, []);
 
+  const handleShowActiveOrders = useCallback(async () => {
+    try {
+      const data = await getActiveOrders();
+      setActiveOrdersList(data);
+      setShowActiveOrdersModal(true);
+    } catch {
+      toast.error('Erro ao carregar pedidos ativos.');
+    }
+  }, []);
+
+  const handleShowOpenTables = useCallback(async () => {
+    try {
+      const data = await getOpenTables();
+      setOpenTablesList(data);
+      setShowOpenTablesModal(true);
+    } catch {
+      toast.error('Erro ao carregar mesas abertas.');
+    }
+  }, []);
+
   const handleShowClosingHistory = useCallback(() => {
     setShowClosingHistoryModal(true);
   }, []);
@@ -536,6 +566,8 @@ export function useCashier() {
   const openExpenseModal = useCallback(() => setTransactionModalType('EXPENSE'), []);
   const closeTransactionModal = useCallback(() => setTransactionModalType('none'), []);
   const closeSettlementsModal = useCallback(() => setShowPendingSettlementsModal(false), []);
+  const closeActiveOrdersModal = useCallback(() => setShowActiveOrdersModal(false), []);
+  const closeOpenTablesModal = useCallback(() => setShowOpenTablesModal(false), []);
 
   const handleOrderClick = useCallback((order: any) => {
     setSelectedOrder(order);
@@ -595,6 +627,14 @@ export function useCashier() {
     pendingSettlementsList,
     showPendingSettlementsModal,
 
+    // Active orders
+    activeOrdersList,
+    showActiveOrdersModal,
+
+    // Open tables
+    openTablesList,
+    showOpenTablesModal,
+
     // Closing history
     showClosingHistoryModal,
     closingHistorySessions,
@@ -621,6 +661,8 @@ export function useCashier() {
     handleClose,
     handleTransaction,
     handleShowPendingSettlements,
+    handleShowActiveOrders,
+    handleShowOpenTables,
     handleShowClosingHistory,
     handleCloseClosingHistory,
     handleUpdatePayment,
@@ -629,6 +671,8 @@ export function useCashier() {
     openExpenseModal,
     closeTransactionModal,
     closeSettlementsModal,
+    closeActiveOrdersModal,
+    closeOpenTablesModal,
     closeOrderDetailModal,
     executeClose,
     closeConfirmDialog,

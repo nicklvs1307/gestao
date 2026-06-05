@@ -10,6 +10,8 @@ router.get('/:sessionId/closing', needsAuth, CashierController.getClosing);
 router.get('/:sessionId/orders', needsAuth, CashierController.getSessionOrdersById);
 router.get('/orders', needsAuth, CashierController.getSessionOrders);
 router.get('/pending-settlements', needsAuth, CashierController.getPendingSettlements);
+router.get('/active-orders', needsAuth, CashierController.getActiveOrders);
+router.get('/open-tables', needsAuth, CashierController.getOpenTables);
 
 // Validação agora é feita dentro do controller para maior robustez
 router.post('/open', needsAuth, CashierController.open);

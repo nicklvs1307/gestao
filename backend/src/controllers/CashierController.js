@@ -464,6 +464,18 @@ class CashierController {
     });
   };
 
+  // GET /api/cashier/active-orders
+  getActiveOrders = asyncHandler(async (req, res) => {
+    const orders = await CashierService.getActiveOrders(req.restaurantId);
+    res.json(orders);
+  });
+
+  // GET /api/cashier/open-tables
+  getOpenTables = asyncHandler(async (req, res) => {
+    const tables = await CashierService.getOpenTables(req.restaurantId);
+    res.json(tables);
+  });
+
   // GET /api/cashier/pending-settlements
   getPendingSettlements = asyncHandler(async (req, res) => {
     const settlements = await CashierService.getPendingSettlements(req.restaurantId);

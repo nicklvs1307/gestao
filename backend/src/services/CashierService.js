@@ -96,6 +96,44 @@ class CashierService {
   }
 
   /**
+   * Lista pedidos ativos que impedem o fechamento do caixa
+   */
+  async getActiveOrders(restaurantId) {
+    return await prisma.order.findMany({
+      where: {
+        restaurantId,
+        status: { in: ['BUILDING', 'PENDING', 'PREPARING', 'READY', 'SHIPPED'] }
+      },
+      include: {
+        items: { include: { product: { select: { name: true } } } },
+        deliveryOrder: { select: { name: true, address: true, driver: { select: { name: true } } } },
+        payments: true,
+        user: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  /**
+   * Lista mesas abertas que impedem o fechamento do caixa
+   */
+  async getOpenTables(restaurantId) {
+    return await prisma.order.findMany({
+      where: {
+        restaurantId,
+        orderType: 'TABLE',
+        status: { notIn: ['COMPLETED', 'CANCELED'] }
+      },
+      include: {
+        items: { include: { product: { select: { name: true } } } },
+        payments: true,
+        user: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  /**
    * Lista pedidos que impedem o fechamento do caixa (Entregues mas sem acerto)
    */
   async getPendingSettlements(restaurantId) {

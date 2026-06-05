@@ -10,6 +10,8 @@ import CashierReviewStep from './components/CashierReviewStep';
 import CashierOrderDetailModal from './components/CashierOrderDetailModal';
 import TransactionModal from './components/TransactionModal';
 import PendingSettlementsModal from './components/PendingSettlementsModal';
+import ActiveOrdersModal from './components/ActiveOrdersModal';
+import OpenTablesModal from './components/OpenTablesModal';
 import ClosingHistoryModal from './components/ClosingHistoryModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
@@ -41,6 +43,10 @@ const CashierManagement: React.FC = memo(() => {
     setTransDesc,
     pendingSettlementsList,
     showPendingSettlementsModal,
+    activeOrdersList,
+    showActiveOrdersModal,
+    openTablesList,
+    showOpenTablesModal,
     showClosingHistoryModal,
     closingHistorySessions,
     showConfirmClose,
@@ -59,6 +65,8 @@ const CashierManagement: React.FC = memo(() => {
     closeConfirmDialog,
     handleTransaction,
     handleShowPendingSettlements,
+    handleShowActiveOrders,
+    handleShowOpenTables,
     handleShowClosingHistory,
     handleCloseClosingHistory,
     handleUpdatePayment,
@@ -67,6 +75,8 @@ const CashierManagement: React.FC = memo(() => {
     openExpenseModal,
     closeTransactionModal,
     closeSettlementsModal,
+    closeActiveOrdersModal,
+    closeOpenTablesModal,
     closeOrderDetailModal,
     handleOrderClick,
     selectedOrder,
@@ -106,6 +116,8 @@ const CashierManagement: React.FC = memo(() => {
         <CashierAlerts
           session={session}
           onShowSettlements={handleShowPendingSettlements}
+          onShowActiveOrders={handleShowActiveOrders}
+          onShowOpenTables={handleShowOpenTables}
         />
       )}
 
@@ -175,6 +187,18 @@ const CashierManagement: React.FC = memo(() => {
         isOpen={showPendingSettlementsModal}
         settlements={pendingSettlementsList}
         onClose={closeSettlementsModal}
+      />
+
+      <ActiveOrdersModal
+        isOpen={showActiveOrdersModal}
+        orders={activeOrdersList}
+        onClose={closeActiveOrdersModal}
+      />
+
+      <OpenTablesModal
+        isOpen={showOpenTablesModal}
+        tables={openTablesList}
+        onClose={closeOpenTablesModal}
       />
 
       <ClosingHistoryModal

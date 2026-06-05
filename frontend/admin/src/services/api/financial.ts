@@ -89,3 +89,13 @@ export const getPendingSettlements = async () => {
     const response = await apiClient.get('/cashier/pending-settlements');
     return response.data;
 };
+
+export const getActiveOrders = async () => {
+    const response = await apiClient.get('/cashier/active-orders');
+    return response.data;
+};
+
+export const getOpenTables = async () => {
+    const response = await apiClient.get('/cashier/open-tables');
+    return response.data;
+};
