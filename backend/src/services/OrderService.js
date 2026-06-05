@@ -627,6 +627,7 @@ if (isPickup && !hasValidPhone) {
         quantity: parseInt(item.quantity) || 1,
         priceAtTime: parseFloat(item.price) || 0,
         observations: item.observations || null,
+        itemName: item.name || null,
         addonsJson: addonsData.length > 0 ? JSON.stringify(addonsData) : null,
         sizeJson: item.sizeJson || null,
         flavorsJson: item.flavorsJson || null,

@@ -820,7 +820,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                     <div key={item.id} className="grid grid-cols-12 items-start p-2 rounded-xl hover:bg-slate-50 transition-colors group relative">
                         <div className="col-span-2 font-black text-slate-900 italic">{item.quantity}</div>
                         <div className="col-span-7">
-                            <p className="text-[11px] font-black text-slate-800 uppercase italic leading-none">{item.product.name}</p>
+                            <p className="text-[11px] font-black text-slate-800 uppercase italic leading-none">{item.product?.name || item.itemName || 'Produto'}</p>
                             {item.sizeJson && <p className="text-[10px] text-blue-600 font-bold mt-1 bg-blue-50 px-1.5 py-0.5 rounded-md inline-block mr-1">TAM: {JSON.parse(item.sizeJson).name}</p>}
                             {item.flavorsJson && JSON.parse(item.flavorsJson).map((f: { name: string }, i: number) => (
                                 <p key={`flavor-${i}`} className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded-md inline-block mr-1">SABOR: {f.name}</p>
