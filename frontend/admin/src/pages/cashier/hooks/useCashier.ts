@@ -242,7 +242,7 @@ export function useCashier() {
     'pix': ['pix', 'pix', 'PIX'],
     'credit_card': ['credit_card', 'cartao-credito', 'cartao de credito', 'cartao crédito', 'credito', 'CREDIT_CARD', 'credit'],
     'debit_card': ['debit_card', 'cartao-debito', 'cartao de debito', 'cartao débito', 'debito', 'DEBIT_CARD', 'debit'],
-    'online_paid': ['online_paid', 'online', 'pago online', 'paid', 'paid_online', 'ONLINE_PAID', 'pago online'],
+    'online_paid': ['online_paid', 'online', 'pago online', 'paid', 'paid_online', 'ONLINE_PAID', 'pago online', 'on-line paid', 'pagoonline', 'ifood'],
     'other': ['other', 'outros', 'outro', 'OTHER']
   };
 

@@ -111,7 +111,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
 
       <div className="flex-1 overflow-y-auto max-h-[400px] bg-white">
         {filteredOrders.length > 0 ? (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-200">
             {filteredOrders.map((order: any) => {
               const OrderIcon = getOrderIcon(order.orderType);
               const orderLabel = getOrderLabel(order);
