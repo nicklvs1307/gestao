@@ -75,13 +75,16 @@ const OrderManagement: React.FC = () => {
     }, 300);
   }, []);
 
-  const fetchOrders = useCallback(async (page: number = currentPage, search?: string) => {
+  const fetchOrdersRef = useRef<{ debouncedSearch: string }>({ debouncedSearch });
+  fetchOrdersRef.current = { debouncedSearch };
+
+  const fetchOrders = useCallback(async (page: number, search?: string) => {
     try {
       setIsLoading(true);
       const params = {
         page,
         limit: ITEMS_PER_PAGE,
-        search: search || debouncedSearch || undefined,
+        search: search ?? fetchOrdersRef.current.debouncedSearch || undefined,
       };
       const result = await getAdminOrders(params);
       
@@ -89,7 +92,6 @@ const OrderManagement: React.FC = () => {
         setAllOrders(result.orders);
         setPagination(result.pagination);
       } else {
-        // Fallback for old API format
         const orders = Array.isArray(result) ? result : [];
         setAllOrders(orders);
         setPagination({
@@ -105,12 +107,12 @@ const OrderManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, debouncedSearch]);
+  }, []);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     fetchOrders(page);
-    setSelectedOrderIds([]); // Clear selection on page change
+    setSelectedOrderIds([]);
   }, [fetchOrders]);
 
   const handleOpenOrder = useCallback(async (order: Order) => {
@@ -416,7 +418,7 @@ const OrderManagement: React.FC = () => {
                 <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><List size={14} /></button>
             </div>
 
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={() => fetchOrders(currentPage)}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={() => { setCurrentPage(1); fetchOrders(1); }}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
         </div>
       </div>
 
