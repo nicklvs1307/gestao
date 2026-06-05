@@ -48,7 +48,7 @@ class Food99OrderAdapter extends IntegrationBaseService {
       return {
         name: item.name || `Item ${item.app_item_id}`,
         externalId: item.app_item_id,
-        integrationCode: item.integrationCode || item.codigo || null,
+        integrationCode: item.app_item_id || null,
         price: (item.total_price || item.sku_price || 0) / 100,
         quantity: item.amount || 1,
         observations: item.remark || null,

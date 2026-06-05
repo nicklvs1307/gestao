@@ -315,6 +315,7 @@ class Food99WebhookService {
       // Food99OrderAdapter.processNewOrder espera o body com os campos do pedido
       // Precisamos passar o orderData que tem order_items, price, pay_type, etc.
       const orderData = unwrapped.orderData || unwrapped.rawBody;
+      logger.info(`[FOOD99 WEBHOOK] orderData completo: ${JSON.stringify(orderData).slice(0, 3000)}`);
       const order = await Food99OrderAdapter.processNewOrder(restaurantId, orderData);
       if (order && !order.isReplayed) {
         logger.info(`[FOOD99 WEBHOOK] Pedido ${platformOrderId} criado com sucesso`);
