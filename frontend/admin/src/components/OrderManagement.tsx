@@ -84,7 +84,7 @@ const OrderManagement: React.FC = () => {
       const params = {
         page,
         limit: ITEMS_PER_PAGE,
-        search: search ?? fetchOrdersRef.current.debouncedSearch || undefined,
+        search: search ?? (fetchOrdersRef.current.debouncedSearch || undefined),
       };
       const result = await getAdminOrders(params);
       
