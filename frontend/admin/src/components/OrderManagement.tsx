@@ -5,6 +5,7 @@ import OrderListView from './OrderListView';
 import OrderEditor from './OrderEditor';
 import DriverSelectionModal from './DriverSelectionModal';
 import { getAdminOrders, updateOrderStatus, getOrder, assignDriver } from '../services/api';
+import type { PaginationInfo } from '../services/api/orders';
 import type { Order } from '@/types/index.ts';
 import { Kanban, List, Search, Loader2, X, RefreshCw, ShoppingBag, Package, Timer, CheckCircle, Smartphone, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -18,6 +19,7 @@ type OrderSegment = 'ALL' | 'TABLE' | 'DELIVERY' | 'PICKUP';
 import { useSocket } from '../hooks/useSocket';
 
 const ACTIVE_STATUSES = ['PENDING', 'PREPARING', 'READY', 'SHIPPED', 'DELIVERED'];
+const ITEMS_PER_PAGE = 15;
 
 const STATUS_FLOW: Record<string, string> = {
   'PENDING': 'PREPARING',
@@ -47,6 +49,15 @@ const OrderManagement: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    total: 0,
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    totalPages: 1,
+  });
+
   const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
   const [pendingDriverOrderIds, setPendingDriverOrderIds] = useState<string[]>([]);
   const [newStatusPendingDriver, setNewStatusPendingDriver] = useState<string | null>(null);
@@ -60,23 +71,47 @@ const OrderManagement: React.FC = () => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearch(value);
+      setCurrentPage(1); // Reset page on search
     }, 300);
   }, []);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (page: number = currentPage, search?: string) => {
     try {
       setIsLoading(true);
-      const data = await getAdminOrders();
-      const deliveryOrders = data.filter((o: Order) => o.orderType === 'DELIVERY' || o.orderType === 'PICKUP');
-      const sortedOrders = deliveryOrders.sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setAllOrders(sortedOrders);
+      const params = {
+        page,
+        limit: ITEMS_PER_PAGE,
+        search: search || debouncedSearch || undefined,
+      };
+      const result = await getAdminOrders(params);
+      
+      if (result && result.orders) {
+        setAllOrders(result.orders);
+        setPagination(result.pagination);
+      } else {
+        // Fallback for old API format
+        const orders = Array.isArray(result) ? result : [];
+        setAllOrders(orders);
+        setPagination({
+          total: orders.length,
+          page: 1,
+          limit: ITEMS_PER_PAGE,
+          totalPages: 1,
+        });
+      }
     } catch (err) {
       console.error(err);
       toast.error("Erro ao sincronizar pedidos.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentPage, debouncedSearch]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    fetchOrders(page);
+    setSelectedOrderIds([]); // Clear selection on page change
+  }, [fetchOrders]);
 
   const handleOpenOrder = useCallback(async (order: Order) => {
     try {
@@ -92,7 +127,7 @@ const OrderManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(1);
 
     const handleOrderUpdate = (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
@@ -182,7 +217,7 @@ const OrderManagement: React.FC = () => {
       toast.success(`Pedido #${orderId.slice(-4).toUpperCase()} atualizado!`);
     } catch (error) { 
       toast.error("Erro ao atualizar status");
-      fetchOrders();
+      fetchOrders(currentPage);
     } finally {
       const timeout = statusChangeTimeoutsRef.current.get(orderId);
       if (timeout) {
@@ -190,7 +225,7 @@ const OrderManagement: React.FC = () => {
         statusChangeTimeoutsRef.current.delete(orderId);
       }
     }
-  }, [allOrders, fetchOrders]);
+  }, [allOrders, fetchOrders, currentPage]);
 
   const handleDriverSelect = useCallback(async (driverId: string) => {
     if (pendingDriverOrderIds.length === 0) return;
@@ -244,9 +279,9 @@ const OrderManagement: React.FC = () => {
         toast.success(`${idsToProcess.length} pedidos atualizados!`);
       }
     } catch (error) {
-      fetchOrders();
+      fetchOrders(currentPage);
     }
-  }, [selectedOrderIds, handleStatusChange, fetchOrders]);
+  }, [selectedOrderIds, handleStatusChange, fetchOrders, currentPage]);
 
   const handleBulkAdvance = useCallback(async () => {
     if (selectedOrderIds.length === 0) return;
@@ -293,26 +328,21 @@ const OrderManagement: React.FC = () => {
       toast.success('Pedido cancelado!');
     } catch (error) {
       toast.error('Erro ao cancelar pedido');
-      fetchOrders();
+      fetchOrders(currentPage);
     }
-  }, [fetchOrders]);
+  }, [fetchOrders, currentPage]);
 
-  // Memoized filtered orders
+  // Memoized filtered orders for kanban view (client-side filtering for kanban)
   const filteredOrders = useMemo(() => {
     return allOrders.filter(o => {
       const isStatusMatch = ACTIVE_STATUSES.includes(o.status);
       const isSegmentMatch = activeSegment === 'ALL' || o.orderType === activeSegment || 
-        (activeSegment === 'DELIVERY' && o.orderType === 'PICKUP'); // Mostra pickup junto com delivery
-      const isSearchMatch = !debouncedSearch || 
-        o.id.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
-        (o.customerName && o.customerName.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
-        (o.deliveryOrder?.name && o.deliveryOrder.name.toLowerCase().includes(debouncedSearch.toLowerCase()));
-      
-      return isStatusMatch && isSegmentMatch && isSearchMatch;
+        (activeSegment === 'DELIVERY' && o.orderType === 'PICKUP');
+      return isStatusMatch && isSegmentMatch;
     });
-  }, [allOrders, activeSegment, debouncedSearch]);
+  }, [allOrders, activeSegment]);
 
-  // Memoized counts
+  // Memoized counts for kanban
   const counts = useMemo(() => ({
     DELIVERY: allOrders.filter(o => (o.orderType === 'DELIVERY' || o.orderType === 'PICKUP') && ACTIVE_STATUSES.includes(o.status)).length,
   }), [allOrders]);
@@ -341,7 +371,7 @@ const OrderManagement: React.FC = () => {
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                 {searchTerm && (
-                    <button onClick={() => { setSearchTerm(''); setDebouncedSearch(''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <button onClick={() => { setSearchTerm(''); setDebouncedSearch(''); setCurrentPage(1); fetchOrders(1, ''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                         <X size={12} />
                     </button>
                 )}
@@ -386,7 +416,7 @@ const OrderManagement: React.FC = () => {
                 <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><List size={14} /></button>
             </div>
 
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={fetchOrders}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={() => fetchOrders(currentPage)}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
         </div>
       </div>
 
@@ -408,6 +438,12 @@ const OrderManagement: React.FC = () => {
             onCancelOrder={handleCancelOrder}
             selectedOrderIds={selectedOrderIds}
             toggleSelectOrder={toggleSelectOrder}
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalOrders={pagination.total}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={handlePageChange}
+            isLoading={isLoading}
           />
         )}
       </div>
@@ -416,7 +452,7 @@ const OrderManagement: React.FC = () => {
         <OrderEditor 
           order={selectedOrder} 
           onClose={() => setSelectedOrder(null)} 
-          onRefresh={fetchOrders}
+          onRefresh={() => fetchOrders(currentPage)}
         />
       )}
 

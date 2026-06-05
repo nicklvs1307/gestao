@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Order } from '@/types/index.ts';
 import { formatSP } from '@/lib/timezone';
-import { Eye, UtensilsCrossed, Clock, Truck, ShoppingBag, User, Bike, XCircle } from 'lucide-react';
+import { Eye, UtensilsCrossed, Clock, Truck, ShoppingBag, User, Bike, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface OrderListViewProps {
@@ -10,6 +10,12 @@ interface OrderListViewProps {
   onCancelOrder?: (orderId: string) => void;
   selectedOrderIds?: string[];
   toggleSelectOrder?: (id: string) => void;
+  currentPage?: number;
+  totalPages?: number;
+  totalOrders?: number;
+  itemsPerPage?: number;
+  onPageChange?: (page: number) => void;
+  isLoading?: boolean;
 }
 
 const STATUS_MAP: Record<string, string> = {
@@ -32,7 +38,49 @@ const STATUS_COLORS: Record<string, string> = {
     CANCELED: 'bg-red-500/10 text-red-600 border-red-200',
 }
 
-const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, onCancelOrder, selectedOrderIds = [], toggleSelectOrder }) => {
+const OrderListView: React.FC<OrderListViewProps> = ({ 
+  orders, 
+  onOpenDetails, 
+  onCancelOrder, 
+  selectedOrderIds = [], 
+  toggleSelectOrder,
+  currentPage = 1,
+  totalPages = 1,
+  totalOrders = 0,
+  itemsPerPage = 15,
+  onPageChange,
+  isLoading = false,
+}) => {
+  const startItem = totalOrders > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const endItem = Math.min(currentPage * itemsPerPage, totalOrders);
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
   return (
     <div className="h-full overflow-hidden flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm">
       <div className="flex-1 overflow-auto custom-scrollbar">
@@ -187,6 +235,77 @@ const OrderListView: React.FC<OrderListViewProps> = ({ orders, onOpenDetails, on
             </tbody>
         </table>
       </div>
+
+      {/* Pagination Footer */}
+      {totalOrders > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Mostrando {startItem}-{endItem} de {totalOrders}
+            </span>
+            {isLoading && (
+              <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            )}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onPageChange?.(currentPage - 1)}
+                disabled={currentPage === 1 || isLoading}
+                className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center transition-all",
+                  currentPage === 1 || isLoading
+                    ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600"
+                )}
+              >
+                <ChevronLeft size={14} />
+              </button>
+
+              {getPageNumbers().map((page, index) => {
+                if (page === '...') {
+                  return (
+                    <span key={`ellipsis-${index}`} className="px-1 text-slate-400">
+                      ...
+                    </span>
+                  );
+                }
+                const pageNum = page as number;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => onPageChange?.(pageNum)}
+                    disabled={isLoading}
+                    className={cn(
+                      "h-8 min-w-[32px] px-2 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all",
+                      currentPage === pageNum
+                        ? "bg-orange-500 text-white shadow-sm"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600",
+                      isLoading && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => onPageChange?.(currentPage + 1)}
+                disabled={currentPage === totalPages || isLoading}
+                className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center transition-all",
+                  currentPage === totalPages || isLoading
+                    ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600"
+                )}
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

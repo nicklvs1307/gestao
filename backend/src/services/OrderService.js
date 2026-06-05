@@ -138,7 +138,7 @@ class OrderService {
    * Busca pedidos com seleção otimizada para listagem (Dashboard/Monitor).
    */
   async getOrders(restaurantId, filters = {}) {
-    const { status, type, startDate, endDate, page = 1, limit = 100 } = filters;
+    const { status, type, startDate, endDate, search, page = 1, limit = 15 } = filters;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
@@ -152,15 +152,35 @@ class OrderService {
           lte: new Date(endDate),
         },
       }),
+      ...(search && {
+        OR: [
+          { id: { contains: search, mode: 'insensitive' } },
+          { customerName: { contains: search, mode: 'insensitive' } },
+          { deliveryOrder: { name: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
     };
 
-    return await prisma.order.findMany({
-      where,
-      select: summaryOrderSelect,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take,
-    });
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        select: summaryOrderSelect,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    return {
+      orders,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit)),
+      },
+    };
   }
 
   /**

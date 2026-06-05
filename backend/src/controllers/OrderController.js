@@ -9,13 +9,15 @@ class OrderController {
   // GET /api/admin/orders
   getOrders = asyncHandler(async (req, res) => {
     const restaurantId = req.restaurantId;
-    const { status, type, startDate, endDate, limit } = req.query;
+    const { status, type, startDate, endDate, page, limit, search } = req.query;
 
-    const orders = await OrderService.getOrders(restaurantId, { 
-      status, type, startDate, endDate, limit: limit ? parseInt(limit) : 100 
+    const result = await OrderService.getOrders(restaurantId, { 
+      status, type, startDate, endDate, search,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 15,
     });
     
-    res.json(Array.isArray(orders) ? orders : []);
+    res.json(result);
   });
 
   streamOrderEvents = (req, res) => {

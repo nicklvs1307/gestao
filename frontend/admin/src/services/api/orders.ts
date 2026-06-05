@@ -1,7 +1,27 @@
 import apiClient from './client';
 
-export const getAdminOrders = async () => {
-  const response = await apiClient.get('/admin/orders');
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  type?: string;
+  search?: string;
+}
+
+export interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedOrdersResponse {
+  orders: any[];
+  pagination: PaginationInfo;
+}
+
+export const getAdminOrders = async (params?: PaginationParams): Promise<PaginatedOrdersResponse> => {
+  const response = await apiClient.get('/admin/orders', { params });
   return response.data;
 };
 
