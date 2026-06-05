@@ -107,6 +107,7 @@ export interface ReportSettings {
   customMessage?: string;
   sendIndividualReport?: boolean;
   individualReportFormat?: 'PDF' | 'TEXT' | 'BOTH' | 'LINK';
+  reportDays?: WeekDay[];
 }
 
 export interface ReportLog {

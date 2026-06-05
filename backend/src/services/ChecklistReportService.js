@@ -370,6 +370,10 @@ class ChecklistReportService {
   async runAllScheduledReports() {
     const now = this.getSaoPauloDate();
     const currentTime = format(now, "HH:mm");
+    
+    // Mapear dia da semana para o formato do banco (MONDAY, TUESDAY, etc.)
+    const weekDays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const today = weekDays[now.getDay()];
 
     const activeSettings = await prisma.checklistReportSettings.findMany({
       where: {
@@ -379,6 +383,19 @@ class ChecklistReportService {
     });
 
     for (const setting of activeSettings) {
+      // Verificar se hoje é dia de envio
+      if (setting.reportDays) {
+        try {
+          const allowedDays = JSON.parse(setting.reportDays);
+          if (Array.isArray(allowedDays) && allowedDays.length > 0 && !allowedDays.includes(today)) {
+            logger.info(`[ChecklistReport] Pulando relatório para restaurante ${setting.restaurantId} - hoje é ${today}, dias configurados: ${allowedDays.join(',')}`);
+            continue;
+          }
+        } catch (error) {
+          logger.error(`[ChecklistReport] Erro ao parsear reportDays para restaurante ${setting.restaurantId}:`, error);
+        }
+      }
+      
       await this.generateDailyReport(setting.restaurantId);
     }
   }

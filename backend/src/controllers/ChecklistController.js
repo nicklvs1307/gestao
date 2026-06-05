@@ -562,12 +562,14 @@ show = asyncHandler(async (req, res) => {
 
   updateReportSettings = asyncHandler(async (req, res) => {
     const { restaurantId } = req;
-    const { enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage } = req.body;
+    const { enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage, reportDays } = req.body;
+
+    const reportDaysString = Array.isArray(reportDays) ? JSON.stringify(reportDays) : reportDays;
 
     const settings = await prisma.checklistReportSettings.upsert({
       where: { restaurantId },
-      update: { enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage },
-      create: { restaurantId, enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage }
+      update: { enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage, reportDays: reportDaysString },
+      create: { restaurantId, enabled, recipientPhone, recipientPhones, sendTime, turnStartHour, reportFormat, customMessage, reportDays: reportDaysString }
     });
 
     res.json(settings);

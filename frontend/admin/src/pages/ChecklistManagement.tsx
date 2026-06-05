@@ -51,7 +51,8 @@ const ChecklistManagement: React.FC = () => {
         enabled: false,
         recipientPhone: '',
         sendTime: '22:00',
-        reportFormat: 'PDF'
+        reportFormat: 'PDF',
+        reportDays: []
     });
 
     const [isEditingChecklist, setIsEditingChecklist] = useState(false);
@@ -1003,6 +1004,48 @@ const ChecklistManagement: React.FC = () => {
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="block text-sm font-semibold text-foreground uppercase tracking-wide">
+                                    Dias de Envio
+                                </label>
+                                <p className="text-xs text-muted-foreground">Selecione os dias que os relatórios serão enviados</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        { id: 'MONDAY', label: 'Seg', full: 'Segunda' },
+                                        { id: 'TUESDAY', label: 'Ter', full: 'Terça' },
+                                        { id: 'WEDNESDAY', label: 'Qua', full: 'Quarta' },
+                                        { id: 'THURSDAY', label: 'Qui', full: 'Quinta' },
+                                        { id: 'FRIDAY', label: 'Sex', full: 'Sexta' },
+                                        { id: 'SATURDAY', label: 'Sáb', full: 'Sábado' },
+                                        { id: 'SUNDAY', label: 'Dom', full: 'Domingo' },
+                                    ].map(day => (
+                                        <button
+                                            key={day.id}
+                                            onClick={() => {
+                                                const current = reportSettings.reportDays || [];
+                                                const updated = current.includes(day.id)
+                                                    ? current.filter((d: string) => d !== day.id)
+                                                    : [...current, day.id];
+                                                setReportSettings({ ...reportSettings, reportDays: updated });
+                                            }}
+                                            className={cn(
+                                                "px-3 py-2 rounded-lg text-xs font-semibold transition-all",
+                                                (reportSettings.reportDays || []).includes(day.id)
+                                                    ? "bg-primary text-white"
+                                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                            )}
+                                        >
+                                            {day.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {(reportSettings.reportDays || []).length === 0 
+                                        ? "Nenhum dia selecionado = envia todos os dias" 
+                                        : `Enviando ${(reportSettings.reportDays || []).length} dia(s) por semana`}
+                                </p>
                             </div>
 
                             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
