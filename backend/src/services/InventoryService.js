@@ -147,6 +147,8 @@ class InventoryService {
   async _deductItemStock(item, tx) {
     const { product, quantity, addonsJson } = item;
 
+    if (!product) return;
+
     // 1. Baixa Insumos do Produto Principal
     if (product.ingredients && product.ingredients.length > 0) {
       for (const recipeItem of product.ingredients) {
