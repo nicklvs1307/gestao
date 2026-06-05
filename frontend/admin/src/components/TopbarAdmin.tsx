@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, Building2, Wallet, CheckCircle, Store, Monitor, ShoppingBag, Power, PowerOff, Link2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Menu, Bell, ChevronDown, LogOut, Settings, User, Plus, ArrowRight, Building2, CheckCircle, Store, Monitor, ShoppingBag, Power, PowerOff, Link2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { getAdminOrders, getTableRequests } from '../services/api';
 import apiClient from '../services/api/client';
 import { getElapsedMinutes, getElapsedHours } from '@/lib/timezone';
 import CashierActionModal from './CashierActionModal';
@@ -17,9 +17,9 @@ interface TopbarAdminProps {
 
 const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   const { user, logout } = useAuth();
+  const { notifCount, openOrderModal } = useNotifications();
   const navigate = useNavigate();
   const [isProfileOpen, setProfileOpen] = useState(false);
-  const [notifCount, setNotifCount] = useState(0);
   
   const [cashierStatus, setCashierStatus] = useState<any>(null);
   const [isCashierDropdownOpen, setCashierDropdownOpen] = useState(false);
@@ -29,27 +29,12 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   const [isStoreOpen, setIsStoreOpen] = useState(false);
   const [isStoreLoading, setIsStoreLoading] = useState(false);
 
-  // Ref para AbortController do polling
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const cancelPendingRequests = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-  }, []);
-
   const loadData = useCallback(async () => {
-      cancelPendingRequests();
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-      const signal = controller.signal;
-
       const selectedRestaurantId = localStorage.getItem('selectedRestaurantId');
 
       if (selectedRestaurantId || user?.restaurantId) {
           try {
-              const res = await apiClient.get('/settings', { signal });
+              const res = await apiClient.get('/settings');
               setCurrentRestaurant({
                   name: res.data.name,
                   logoUrl: res.data.logoUrl,
@@ -57,7 +42,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
               });
               setIsStoreOpen(res.data.settings?.isOpen ?? false);
           } catch (e: any) {
-              if (e.name !== 'AbortError') console.warn("Erro ao buscar dados da loja", e);
+              console.warn("Erro ao buscar dados da loja", e);
           }
       }
 
@@ -65,18 +50,12 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
       if (!user?.restaurantId && !selectedRestaurantId) return;
 
       try {
-          const [orders, requests, cashierRes] = await Promise.all([
-              getAdminOrders(),
-              getTableRequests(),
-              apiClient.get('/cashier/status', { signal })
-          ]);
-          const pending = (orders?.orders || []).filter((o: any) => o.status === 'PENDING');
-          setNotifCount(pending.length + requests.length);
+          const cashierRes = await apiClient.get('/cashier/status');
           setCashierStatus(cashierRes.data);
       } catch (e: any) {
-          if (e.name !== 'AbortError') console.warn(e);
+          console.warn(e);
       }
-  }, [user?.restaurantId, cancelPendingRequests]);
+  }, [user?.restaurantId]);
 
   const toggleStoreStatus = async () => {
     try {
@@ -130,11 +109,8 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
   useEffect(() => {
       loadData();
       const interval = setInterval(loadData, 30000);
-      return () => {
-          clearInterval(interval);
-          cancelPendingRequests();
-      };
-  }, [loadData, cancelPendingRequests]);
+      return () => clearInterval(interval);
+  }, [loadData]);
 
   const displayLogo = currentRestaurant?.logoUrl || user?.logoUrl;
   const displayName = currentRestaurant?.name || 'Sua Unidade';
@@ -252,9 +228,10 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                     <Button 
                         variant="ghost" 
                         size="icon" 
+                        onClick={notifCount > 0 ? openOrderModal : undefined}
                         className={cn(
-                            "rounded-xl bg-background border-border relative", 
-                            notifCount > 0 && "text-primary border-primary/10 bg-primary/5"
+                            "rounded-xl bg-background border-border relative transition-all", 
+                            notifCount > 0 && "text-primary border-primary/10 bg-primary/5 cursor-pointer hover:bg-primary/10"
                         )}
                     >
                         <Bell size={20} />

@@ -6,6 +6,7 @@ import GlobalOrderMonitor from './GlobalOrderMonitor';
 import IfoodWidget from './IfoodWidget';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
+import { NotificationProvider } from '../context/NotificationContext';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -26,7 +27,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     if (isWaiter) {
         return (
             <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans">
-                <GlobalOrderMonitor />
+                <NotificationProvider>
+                    <GlobalOrderMonitor />
+                </NotificationProvider>
                 <main className="flex-1 overflow-hidden">
                     {children}
                 </main>
@@ -44,28 +47,30 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
 
     return (
         <div className="flex flex-col h-screen bg-slate-50 text-foreground overflow-hidden font-sans">
-            <GlobalOrderMonitor />
-            
-            <NavigationLauncher 
-                isOpen={isMenuOpen} 
-                onClose={() => setMenuOpen(false)} 
-            />
+            <NotificationProvider>
+                <GlobalOrderMonitor />
+                
+                <NavigationLauncher 
+                    isOpen={isMenuOpen} 
+                    onClose={() => setMenuOpen(false)} 
+                />
 
-            <TopbarAdmin 
-                title={title} 
-                onMenuClick={() => setMenuOpen(true)}
-            />
+                <TopbarAdmin 
+                    title={title} 
+                    onMenuClick={() => setMenuOpen(true)}
+                />
 
-            <main className={cn(
-                "flex-1 overflow-y-auto scroll-smooth transition-all duration-500 ease-in-out custom-scrollbar p-4 md:p-6",
-                isMenuOpen ? "opacity-50 scale-[0.98] blur-[2px]" : "opacity-100 scale-100 blur-0"
-            )}>
-                <div className="w-full h-full animate-in fade-in duration-500">
-                    {children}
-                </div>
-            </main>
+                <main className={cn(
+                    "flex-1 overflow-y-auto scroll-smooth transition-all duration-500 ease-in-out custom-scrollbar p-4 md:p-6",
+                    isMenuOpen ? "opacity-50 scale-[0.98] blur-[2px]" : "opacity-100 scale-100 blur-0"
+                )}>
+                    <div className="w-full h-full animate-in fade-in duration-500">
+                        {children}
+                    </div>
+                </main>
 
-            {showIfoodWidget && <IfoodWidget />}
+                {showIfoodWidget && <IfoodWidget />}
+            </NotificationProvider>
         </div>
     );
 };
