@@ -223,32 +223,32 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
             </div>
           </div>
 
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-                <Wallet size={13} /> Numerario em Especie
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                <Wallet size={12} /> Numerario em Especie
               </h4>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Dinheiro Total em Maos
                   </label>
-                  <div className="text-xl font-bold text-slate-900 mt-0.5 tabular-nums">
+                  <div className="text-lg font-bold text-slate-900 mt-0.5 tabular-nums">
                     {formatCurrency(cashInHand)}
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Fundo de Troco (Prox. Turno)
                   </label>
                   <div className="relative mt-1">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-xs">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-[11px]">
                       R$
                     </span>
                     <input
                       type="number"
-                      className="w-full h-9 pl-7 pr-2.5 bg-white border border-slate-200 rounded-lg font-bold text-xs text-slate-900 focus:border-slate-900 focus:outline-none transition-all tabular-nums"
+                      className="w-full h-8 pl-6 pr-2 bg-white border border-slate-200 rounded-lg font-bold text-[11px] text-slate-900 focus:border-slate-900 focus:outline-none transition-all tabular-nums"
                       value={cashLeftover}
                       onChange={(e) => onCashLeftoverChange(e.target.value)}
                     />
@@ -257,17 +257,17 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
               </div>
             </div>
 
-            <div className="flex flex-col justify-center bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 rounded-lg text-white shadow-lg shadow-emerald-500/20">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+            <div className="flex flex-col justify-center bg-gradient-to-br from-emerald-500 to-emerald-600 p-3 rounded-lg text-white shadow-lg shadow-emerald-500/20">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">
                   Deposito em Cofre
                 </span>
-                <ArrowUpRight size={18} className="opacity-80" />
+                <ArrowUpRight size={14} className="opacity-80" />
               </div>
-              <div className="text-3xl font-bold tracking-tight tabular-nums">
+              <div className="text-xl font-bold tracking-tight tabular-nums">
                 {formatCurrency(safeDeposit)}
               </div>
-              <p className="text-[9px] font-semibold uppercase opacity-80 mt-2.5 tracking-wider">
+              <p className="text-[8px] font-semibold uppercase opacity-80 mt-1.5 tracking-wider">
                 Lancamento automatico de saida para cofre da loja.
               </p>
             </div>
