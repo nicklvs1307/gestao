@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       const [summaryData, ordersData, historyData, paymentsData, categoriesData] = await Promise.all([
         getReportsSummary(),
-        getAdminOrders(),
+        getAdminOrders({ limit: 9999 }),
         getSalesHistory(),
         getPaymentMethodsReport(),
         api.get('/categories/flat').catch(() => ({ data: [] })),

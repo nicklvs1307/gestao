@@ -37,7 +37,7 @@ export const usePosData = () => {
     const loadOrders = useCallback(async () => {
         if (!isMountedRef.current) return;
         try {
-            const ordersData = await getAdminOrders();
+            const ordersData = await getAdminOrders({ limit: 9999 });
             if (isMountedRef.current) {
                 const ordersList = ordersData?.orders || [];
                 setDeliveryOrders(ordersList.filter((o: { orderType: string }) => o.orderType === 'DELIVERY' || o.orderType === 'PICKUP'));
@@ -74,7 +74,7 @@ export const usePosData = () => {
                 getSettings(),
                 getCashierStatus(),
                 restaurantId ? getPaymentMethods(restaurantId) : Promise.resolve([]),
-                getAdminOrders()
+                getAdminOrders({ limit: 9999 })
             ]);
 
             if (!isMountedRef.current) return;

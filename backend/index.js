@@ -242,6 +242,7 @@ app.use('/api/global-sizes', require('./src/routes/globalSizeRoutes'));
 app.use('/api/addons', require('./src/routes/addonRoutes'));
 app.use('/api/ingredients', require('./src/routes/ingredientRoutes'));
 app.use('/api/production', require('./src/routes/productionRoutes'));
+app.use('/api/fichas-tecnicas', require('./src/routes/fichaTecnicaRoutes'));
 
 // === ROTAS DE OPERAÇÃO (CHECKLIST) ===
 app.use('/api/checklists', require('./src/routes/checklistRoutes'));

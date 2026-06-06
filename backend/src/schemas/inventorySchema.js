@@ -42,9 +42,24 @@ const SaveRecipeSchema = z.object({
   items: z.array(RecipeItemSchema).min(1),
 });
 
+// === FICHA TÉCNICA ===
+const FichaTecnicaIngredientSchema = z.object({
+  ingredientId: z.string().min(1, "Ingrediente é obrigatório"),
+  quantity: z.number().positive("Quantidade deve ser positiva"),
+});
+
+const FichaTecnicaSchema = z.object({
+  name: z.string().min(1, "Nome da ficha técnica é obrigatório"),
+  description: z.string().optional().nullable(),
+  yieldAmount: z.number().positive("Rendimento deve ser positivo").default(1),
+  ingredients: z.array(FichaTecnicaIngredientSchema).min(1, "Adicione pelo menos 1 ingrediente"),
+});
+
 module.exports = {
   IngredientSchema,
   CreateStockEntrySchema,
   ProductionSchema,
-  SaveRecipeSchema
+  SaveRecipeSchema,
+  FichaTecnicaSchema,
+  FichaTecnicaIngredientSchema
 };

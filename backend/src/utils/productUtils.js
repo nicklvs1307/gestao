@@ -73,6 +73,22 @@ const PUBLIC_PRODUCT_SELECT = {
       addonId: true,
       categoryId: true
     }
+  },
+  fichaTecnica: {
+    select: {
+      id: true,
+      name: true,
+      costPrice: true,
+      yieldAmount: true,
+      ingredients: {
+        select: {
+          quantity: true,
+          ingredient: {
+            select: { id: true, name: true, averageCost: true, unit: true }
+          }
+        }
+      }
+    }
   }
 };
 

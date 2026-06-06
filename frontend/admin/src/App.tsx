@@ -49,6 +49,7 @@ const StockLayout = lazy(() => import('./pages/stock/StockLayout'));
 const StockDashboard = lazy(() => import('./pages/stock/StockDashboard'));
 const StockIngredients = lazy(() => import('./pages/stock/StockIngredients'));
 const StockPurchases = lazy(() => import('./pages/stock/StockPurchases'));
+const StockFichasTecnicas = lazy(() => import('./pages/stock/StockFichasTecnicas'));
 
 const FiscalManagement = lazy(() => import('./components/FiscalManagement'));
 const CustomerManagement = lazy(() => import('./components/CustomerManagement'));
@@ -210,6 +211,7 @@ function AdminRoutes() {
             <Route path="dashboard" element={<StockDashboard />} />
             <Route path="ingredients" element={<StockIngredients />} />
             <Route path="purchases" element={<StockPurchases />} />
+            <Route path="fichas" element={<StockFichasTecnicas />} />
           </Route>
           <Route path="/production/technical-sheets" element={<ProtectedRoute permission="products:manage"><TechnicalSheetManagement /></ProtectedRoute>} />
           <Route path="/fiscal" element={<ProtectedRoute permission="settings:manage"><FiscalManagement /></ProtectedRoute>} />

@@ -78,12 +78,12 @@ const OrderManagement: React.FC = () => {
   const fetchOrdersRef = useRef<{ debouncedSearch: string }>({ debouncedSearch });
   fetchOrdersRef.current = { debouncedSearch };
 
-  const fetchOrders = useCallback(async (page: number, search?: string) => {
+  const fetchOrders = useCallback(async (page: number, search?: string, limit?: number) => {
     try {
       setIsLoading(true);
       const params = {
         page,
-        limit: ITEMS_PER_PAGE,
+        limit: limit || ITEMS_PER_PAGE,
         search: search ?? (fetchOrdersRef.current.debouncedSearch || undefined),
       };
       const result = await getAdminOrders(params);
@@ -129,7 +129,7 @@ const OrderManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchOrders(1);
+    fetchOrders(1, undefined, 9999);
 
     const handleOrderUpdate = (eventData: any) => {
       const updatedOrder = eventData.payload as Order;
@@ -414,11 +414,11 @@ const OrderManagement: React.FC = () => {
             </div>
 
             <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200">
-                <button onClick={() => setViewMode('kanban')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><Kanban size={14} /></button>
-                <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><List size={14} /></button>
+                <button onClick={() => { setViewMode('kanban'); fetchOrders(1, undefined, 9999); }} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><Kanban size={14} /></button>
+                <button onClick={() => { setViewMode('list'); fetchOrders(1); }} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><List size={14} /></button>
             </div>
 
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={() => { setCurrentPage(1); fetchOrders(1); }}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={() => { setCurrentPage(1); fetchOrders(1, undefined, viewMode === 'kanban' ? 9999 : undefined); }}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
         </div>
       </div>
 

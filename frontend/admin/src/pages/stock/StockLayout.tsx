@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
     Package, Archive, Layers, ShoppingCart, Hammer, 
     ClipboardList, Plus, AlertTriangle, TrendingDown, 
-    Database, Search, Bell, X, Loader2
+    Database, Search, Bell, X, Loader2, ChefHat
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { api } from '../../services/api';
@@ -36,6 +36,7 @@ const StockLayout: React.FC = () => {
         { id: 'dashboard', label: 'Painel Geral', path: '/stock/dashboard', icon: Layers, desc: 'Visão macro do estoque' },
         { id: 'ingredients', label: 'Insumos & Matéria-Prima', path: '/stock/ingredients', icon: Package, desc: 'Gestão de catálogo' },
         { id: 'purchases', label: 'Entradas de Notas', path: '/stock/purchases', icon: ShoppingCart, desc: 'Compras e fornecedores' },
+        { id: 'fichas', label: 'Fichas Técnicas', path: '/stock/fichas', icon: ChefHat, desc: 'Receitas e composição' },
         { id: 'production', label: 'Produção Interna', path: '/stock/production', icon: Hammer, desc: 'Fichas técnicas e processos' },
         { id: 'audit', label: 'Balanço & Inventário', path: '/stock/audit', icon: ClipboardList, desc: 'Controle de perdas e acertos' },
     ];

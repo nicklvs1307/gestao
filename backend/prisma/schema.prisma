@@ -7,50 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 // Tabela de Usuários para o painel admin
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String  @id @default(cuid())
+  email        String  @unique
   name         String?
   passwordHash String
-  phone        String?  // Contato do entregador
-  isActive     Boolean  @default(true) // Status de disponibilidade
-  
-  isSuperAdmin Boolean  @default(false) // Acesso total ao sistema (SuperAdmin)
+  phone        String? // Contato do entregador
+  isActive     Boolean @default(true) // Status de disponibilidade
+
+  isSuperAdmin Boolean @default(false) // Acesso total ao sistema (SuperAdmin)
 
   // Configurações Financeiras do Entregador
-  paymentType  String?  @default("DELIVERY") // "DAILY", "SHIFT", "DELIVERY"
-  baseRate     Float?   @default(0) // Valor da diária ou turno
-  bonusPerDelivery Float? @default(0) // Valor extra por entrega
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  paymentType      String? @default("DELIVERY") // "DAILY", "SHIFT", "DELIVERY"
+  baseRate         Float?  @default(0) // Valor da diária ou turno
+  bonusPerDelivery Float?  @default(0) // Valor extra por entrega
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   restaurantId String?
   restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
-  
-  franchiseId  String?
-  franchise    Franchise?  @relation(fields: [franchiseId], references: [id])
-  
-  roleId       String?
-  roleRef      Role?       @relation(fields: [roleId], references: [id])
-  
-  permissions  Permission[] @relation("UserPermissions")
+
+  franchiseId String?
+  franchise   Franchise? @relation(fields: [franchiseId], references: [id])
+
+  roleId  String?
+  roleRef Role?   @relation(fields: [roleId], references: [id])
+
+  permissions Permission[] @relation("UserPermissions")
 
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
 
-  cashierSessions CashierSession[] // Relação inversa para sessões de caixa
-  deliveries   DeliveryOrder[] // Relação inversa para entregas realizadas
-  createdOrders Order[]        @relation("CreatedOrders") // Relação inversa para pedidos criados
+  cashierSessions      CashierSession[] // Relação inversa para sessões de caixa
+  deliveries           DeliveryOrder[] // Relação inversa para entregas realizadas
+  createdOrders        Order[]                @relation("CreatedOrders") // Relação inversa para pedidos criados
   receivedTransactions FinancialTransaction[] @relation("TransactionRecipient") // Recebimentos (Salários/Acertos)
-  stockLosses  StockLoss[]     // Perdas registradas por este usuário
+  stockLosses          StockLoss[] // Perdas registradas por este usuário
 
   // === RELAÇÕES DO MÓDULO DE CHECKLIST ===
-  sectors      Sector[]        @relation("UserSectors")
-  executions   ChecklistExecution[]
+  sectors    Sector[]             @relation("UserSectors")
+  executions ChecklistExecution[]
 
   @@index([restaurantId])
   @@index([franchiseId])
@@ -58,12 +56,12 @@ model User {
 }
 
 model Franchise {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  logoUrl     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   restaurants Restaurant[]
   users       User[]
@@ -71,57 +69,57 @@ model Franchise {
 }
 
 model Role {
-  id          String       @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  isSystem    Boolean      @default(false) // Se true, é uma role protegida do sistema
-  
+  isSystem    Boolean @default(false) // Se true, é uma role protegida do sistema
+
   franchiseId String?
-  franchise   Franchise?   @relation(fields: [franchiseId], references: [id])
-  
+  franchise   Franchise? @relation(fields: [franchiseId], references: [id])
+
   permissions Permission[]
   users       User[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([name, franchiseId])
   @@index([franchiseId])
 }
 
 model Permission {
-  id          String   @id @default(cuid())
-  name        String   @unique // ex: "product:create", "reports:view", "franchise:manage"
+  id          String  @id @default(cuid())
+  name        String  @unique // ex: "product:create", "reports:view", "franchise:manage"
   description String?
   roles       Role[]
-  users       User[]   @relation("UserPermissions")
+  users       User[]  @relation("UserPermissions")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Restaurant {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  logoUrl   String?  // URL da logo
-  description String? // Descrição do restaurante (para preview/Og tags)
-  address   String?  // Endereço
-  phone     String?  // Telefone
-  serviceTaxPercentage Float? @default(0) // Taxa de serviço
-  openingHours String? // Horário de funcionamento
-  city         String?  // Cidade
-  state        String?  // Estado (UF)
-  latitude     Float?
-  longitude    Float?
-  
+  id                   String  @id @default(cuid())
+  name                 String  @unique
+  slug                 String  @unique
+  logoUrl              String? // URL da logo
+  description          String? // Descrição do restaurante (para preview/Og tags)
+  address              String? // Endereço
+  phone                String? // Telefone
+  serviceTaxPercentage Float?  @default(0) // Taxa de serviço
+  openingHours         String? // Horário de funcionamento
+  city                 String? // Cidade
+  state                String? // Estado (UF)
+  latitude             Float?
+  longitude            Float?
+
   // === Gestão de Assinatura ===
-  plan      String   @default("FREE") // FREE, SILVER, GOLD, DIAMOND ou nome de plano customizado
-  status    String   @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL
-  expiresAt DateTime? // Data de expiração da assinatura
+  plan           String            @default("FREE") // FREE, SILVER, GOLD, DIAMOND ou nome de plano customizado
+  status         String            @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL
+  expiresAt      DateTime? // Data de expiração da assinatura
   enabledModules Json? // Módulos habilitados para este restaurante (array de strings)
-  planId    String?  // Referência a um plano customizado (opcional)
-  planRef   SubscriptionPlan? @relation(fields: [planId], references: [id])
+  planId         String? // Referência a um plano customizado (opcional)
+  planRef        SubscriptionPlan? @relation(fields: [planId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -129,215 +127,218 @@ model Restaurant {
   franchiseId String?
   franchise   Franchise? @relation(fields: [franchiseId], references: [id])
 
-  users     User[]
-  products  Product[]
-// ... rest of the model ...
-  categories Category[]
-  tables    Table[]
-  promotions Promotion[]
-  orders    Order[]
-  customers Customer[] // Adicionado relação inversa
-  cashierSessions CashierSession[] // Relação inversa para sessões de caixa
-  tableRequests TableRequest[] // Adicionado relação inversa para chamados de mesa
-  settings  RestaurantSettings?
-  integrationSettings IntegrationSettings? // Relação com as configurações de integração
-  whatsappInstance WhatsAppInstance?
-  whatsappSettings WhatsAppSettings?
+  users                 User[]
+  products              Product[]
+  // ... rest of the model ...
+  categories            Category[]
+  tables                Table[]
+  promotions            Promotion[]
+  orders                Order[]
+  customers             Customer[] // Adicionado relação inversa
+  cashierSessions       CashierSession[] // Relação inversa para sessões de caixa
+  tableRequests         TableRequest[] // Adicionado relação inversa para chamados de mesa
+  settings              RestaurantSettings?
+  integrationSettings   IntegrationSettings? // Relação com as configurações de integração
+  whatsappInstance      WhatsAppInstance?
+  whatsappSettings      WhatsAppSettings?
   whatsappConversations WhatsAppConversation[]
-  storeKnowledge StoreKnowledge[]
-  
+  storeKnowledge        StoreKnowledge[]
+
   // Relações Novos Módulos
-  ingredients         Ingredient[] // Adicionado para Ficha Técnica
-  ingredientGroups    IngredientGroup[]
-  stockEntries        StockEntry[] // Entradas de mercadoria
-  stockLosses         StockLoss[]  // Perdas de estoque
-  fiscalConfig        RestaurantFiscalConfig?
-  invoices            Invoice[]
-  suppliers           Supplier[]
-  financialCategories TransactionCategory[]
+  ingredients           Ingredient[] // Adicionado para Ficha Técnica
+  ingredientGroups      IngredientGroup[]
+  stockEntries          StockEntry[] // Entradas de mercadoria
+  stockLosses           StockLoss[] // Perdas de estoque
+  fiscalConfig          RestaurantFiscalConfig?
+  invoices              Invoice[]
+  suppliers             Supplier[]
+  financialCategories   TransactionCategory[]
   financialTransactions FinancialTransaction[]
-  bankAccounts        BankAccount[]
-  deliveryAreas       DeliveryArea[]
-  paymentMethods      PaymentMethod[]
-  productions         ProductionLog[]
-  addonGroups         AddonGroup[]
-  globalSizes         GlobalSize[]
+  bankAccounts          BankAccount[]
+  deliveryAreas         DeliveryArea[]
+  paymentMethods        PaymentMethod[]
+  productions           ProductionLog[]
+  addonGroups           AddonGroup[]
+  globalSizes           GlobalSize[]
 
   // === RELAÇÕES DO MÓDULO DE CHECKLIST ===
-  sectors             Sector[]
-  checklists          Checklist[]
-  checklistExecutions ChecklistExecution[]
+  sectors                 Sector[]
+  checklists              Checklist[]
+  checklistExecutions     ChecklistExecution[]
   checklistReportSettings ChecklistReportSettings?
 
   // === CONFIGURAÇÃO DE LAYOUT DE IMPRESSÃO ===
-  printLayoutConfigs  PrintLayoutConfig[]
+  printLayoutConfigs PrintLayoutConfig[]
+
+  // === FICHAS TÉCNICAS ===
+  fichasTecnicas FichaTecnica[]
 }
 
 // === MÓDULO DE LAYOUT DE IMPRESSÃO ===
 
 model PrintLayoutConfig {
-  id              String   @id @default(cuid())
-  restaurantId    String
-  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   // Tipo de comanda: "delivery", "pickup", "table"
-  type            String   @default("table") // delivery | pickup | table
+  type String @default("table") // delivery | pickup | table
 
   // Configurações globais de tipografia
-  fontFamily      String   @default("monospace") // monospace, sans-serif, serif
-  fontSize        String   @default("medium") // small, medium, large
-  lineHeight      Float    @default(1.2)
+  fontFamily String @default("monospace") // monospace, sans-serif, serif
+  fontSize   String @default("medium") // small, medium, large
+  lineHeight Float  @default(1.2)
 
   // Configurações globais de layout
-  paperWidth      Int      @default(80) // mm (58, 80, etc.)
-  sectionSpacing  Int      @default(8) // px entre blocos
-  itemSpacing     Int      @default(2) // px entre itens
-  paperFeed       Int      @default(3) // linhas antes de cortar
-  useInit         Boolean  @default(true) // Enviar comando ESC @ INIT antes de cada impressão
+  paperWidth     Int     @default(80) // mm (58, 80, etc.)
+  sectionSpacing Int     @default(8) // px entre blocos
+  itemSpacing    Int     @default(2) // px entre itens
+  paperFeed      Int     @default(3) // linhas antes de cortar
+  useInit        Boolean @default(true) // Enviar comando ESC @ INIT antes de cada impressão
 
   // Metadados
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relações
-  blocks          PrintLayoutBlock[]
+  blocks PrintLayoutBlock[]
 
   @@unique([restaurantId, type])
   @@map("print_layout_configs")
 }
 
 model PrintLayoutBlock {
-  id              String   @id @default(cuid())
-  layoutId        String
-  layout          PrintLayoutConfig @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  id       String            @id @default(cuid())
+  layoutId String
+  layout   PrintLayoutConfig @relation(fields: [layoutId], references: [id], onDelete: Cascade)
 
   // Identificação do bloco
-  blockType       String   // logo, address, orderDate, header, orderNumber, customerInfo, tableInfo, items, observations, totals, payment, change, footer, qrcode, custom
-  label           String   // Nome amigável (ex: "Logo do Restaurante")
+  blockType String // logo, address, orderDate, header, orderNumber, customerInfo, tableInfo, items, observations, totals, payment, change, footer, qrcode, custom
+  label     String // Nome amigável (ex: "Logo do Restaurante")
 
   // Configurações do bloco
-  isVisible       Boolean  @default(true)
-  order           Int      // Ordem de exibição (0, 1, 2...)
+  isVisible Boolean @default(true)
+  order     Int // Ordem de exibição (0, 1, 2...)
 
   // Personalização individual (override do global)
-  fontSize        String?  // small, medium, large
-  fontWeight      String?  // normal, bold
-  fontStyle       String?  // normal, italic
-  textAlign       String?  // left, center, right
+  fontSize   String? // small, medium, large
+  fontWeight String? // normal, bold
+  fontStyle  String? // normal, italic
+  textAlign  String? // left, center, right
 
   // Conteúdo customizado (para blocos tipo "custom", "header" ou "footer")
-  customContent   String?  @db.Text
+  customContent String? @db.Text
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([layoutId, blockType])
   @@map("print_layout_blocks")
 }
 
 model PaymentMethod {
-  id           String   @id @default(cuid())
-  name         String   // Ex: "Dinheiro", "Cartão de Crédito", "Pix", "Vale Refeição"
-  type         String   // "CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "VOUCHER", "OTHER"
-isActive     Boolean  @default(true)
+  id                    String  @id @default(cuid())
+  name                  String // Ex: "Dinheiro", "Cartão de Crédito", "Pix", "Vale Refeição"
+  type                  String // "CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "VOUCHER", "OTHER"
+  isActive              Boolean @default(true)
   saiposIntegrationCode String? // Código de integração da Saipos (legado)
   integrationCode       String? // Código unificado de integração (PDV)
-   
+
   // Configurações de Visibilidade
   allowDelivery Boolean @default(true)
   allowPos      Boolean @default(true)
   allowTable    Boolean @default(true)
 
   // Configurações Financeiras (Taxas e Prazos)
-  feePercentage Float   @default(0) // Taxa da operadora (%)
-  daysToReceive Int     @default(0) // Dias para recebimento (0 = na hora, 1 = dia seguinte, 30 = crédito)
-  
+  feePercentage Float @default(0) // Taxa da operadora (%)
+  daysToReceive Int   @default(0) // Dias para recebimento (0 = na hora, 1 = dia seguinte, 30 = crédito)
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
 }
 
 model DeliveryArea {
-  id           String     @id @default(cuid())
-  name         String     // Ex: "Centro", "Bairro X", "Raio 5km"
-  type         String     @default("RADIUS") // "RADIUS" ou "POLYGON"
-  fee          Float      @default(0)
-  radius       Float?     // Em metros (para tipo RADIUS)
-  geometry     Json?      // Coordenadas do polígono ou centro do raio
-  isActive     Boolean    @default(true)
-  
+  id       String  @id @default(cuid())
+  name     String // Ex: "Centro", "Bairro X", "Raio 5km"
+  type     String  @default("RADIUS") // "RADIUS" ou "POLYGON"
+  fee      Float   @default(0)
+  radius   Float? // Em metros (para tipo RADIUS)
+  geometry Json? // Coordenadas do polígono ou centro do raio
+  isActive Boolean @default(true)
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
 }
 
 model RestaurantSettings {
-  id           String   @id @default(cuid())
-  restaurantId String   @unique
+  id           String     @id @default(cuid())
+  restaurantId String     @unique
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
+
   // Exemplo de configurações
-  welcomeMessage String? @default("Bem-vindo ao nosso cardápio digital!")
-  primaryColor   String?  @default("#d4af37")
-  secondaryColor String?  @default("#a52a2a")
-  backgroundColor String? @default("#2c1810")
-  backgroundType String? @default("color") // "color" or "image"
-  backgroundImageUrl String? 
-  allowTakeaway  Boolean  @default(false)
-  menuUrl      String?  @default("http://localhost:5174")
-  isOpen       Boolean  @default(false) // Toggle manual de loja aberta/fechada
-  
+  welcomeMessage     String? @default("Bem-vindo ao nosso cardápio digital!")
+  primaryColor       String? @default("#d4af37")
+  secondaryColor     String? @default("#a52a2a")
+  backgroundColor    String? @default("#2c1810")
+  backgroundType     String? @default("color") // "color" or "image"
+  backgroundImageUrl String?
+  allowTakeaway      Boolean @default(false)
+  menuUrl            String? @default("http://localhost:5174")
+  isOpen             Boolean @default(false) // Toggle manual de loja aberta/fechada
+
   // Configurações de Delivery
-  deliveryFee  Float?   @default(0)
-  deliveryTime String?  @default("30-40 min")
-  minOrderValue Float?  @default(0)
+  deliveryFee      Float?  @default(0)
+  deliveryTime     String? @default("30-40 min")
+  minOrderValue    Float?  @default(0)
   autoAcceptOrders Boolean @default(false)
   autoPrintEnabled Boolean @default(true)
-  
+
   // Abertura Automática Delivery
-  autoOpenDelivery Boolean @default(false)
+  autoOpenDelivery    Boolean @default(false)
   deliveryOpeningTime String?
   deliveryClosingTime String?
 
   // === Configurações de Marketing/Fidelidade ===
-  loyaltyEnabled      Boolean @default(false)
-  pointsPerReal       Int     @default(1) // Ex: 1 real = 1 ponto
-  cashbackPercentage  Float   @default(0) // Ex: 5% de cashback
-  videoBanners        String[] @default([]) // Array de URLs dos vídeos para o carrossel
+  loyaltyEnabled     Boolean  @default(false)
+  pointsPerReal      Int      @default(1) // Ex: 1 real = 1 ponto
+  cashbackPercentage Float    @default(0) // Ex: 5% de cashback
+  videoBanners       String[] @default([]) // Array de URLs dos vídeos para o carrossel
 
   // === Horário de Funcionamento por Dia ===
   // Formato JSON: [{ dayOfWeek: 0-6 (Dom-Sáb), openingTime: "HH:mm", closingTime: "HH:mm", isClosed: false }]
   operatingHours Json?
 
   // === Configurações de Pixels e Analytics ===
-  metaPixelId         String?  // Meta/Facebook Pixel ID
-  googleAnalyticsId   String?  // Google Analytics 4 ID (G-XXXXXXXXXX)
-  internalPixelId    String?  // Pixel interno personalizado
+  metaPixelId       String? // Meta/Facebook Pixel ID
+  googleAnalyticsId String? // Google Analytics 4 ID (G-XXXXXXXXXX)
+  internalPixelId   String? // Pixel interno personalizado
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // === MÓDULO FISCAL & DADOS DA EMPRESA ===
 model RestaurantFiscalConfig {
-  id           String   @id @default(cuid())
-  restaurantId String   @unique
+  id           String     @id @default(cuid())
+  restaurantId String     @unique
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   // Dados da Empresa
-  companyName  String?  // Razão Social
-  cnpj         String?  // Apenas números
-  ie           String?  // Inscrição Estadual
-  im           String?  // Inscrição Municipal
-  taxRegime    String?  @default("1") // 1=Simples Nacional, 3=Regime Normal
+  companyName String? // Razão Social
+  cnpj        String? // Apenas números
+  ie          String? // Inscrição Estadual
+  im          String? // Inscrição Municipal
+  taxRegime   String? @default("1") // 1=Simples Nacional, 3=Regime Normal
 
   // Endereço Fiscal (Obrigatório para NF)
   zipCode      String?
@@ -346,65 +347,65 @@ model RestaurantFiscalConfig {
   complement   String?
   neighborhood String?
   city         String?
-  state        String?  // UF (SP, RJ...)
-  ibgeCode     String?  // Código IBGE da cidade
+  state        String? // UF (SP, RJ...)
+  ibgeCode     String? // Código IBGE da cidade
 
   // Configuração da API Fiscal (Ex: Focus NFe, Webmania)
-  provider     String?  @default("focus") // Qual API está usando
-  environment  String   @default("homologation") // "production" ou "homologation"
-  token        String?  // Token de acesso da API
-  cscId        String?  // ID do CSC (Token do Consumidor - NFC-e)
-  cscToken     String?  // Código do CSC
-  
-  emissionMode String   @default("MANUAL") // MANUAL ou AUTOMATIC
+  provider    String? @default("focus") // Qual API está usando
+  environment String  @default("homologation") // "production" ou "homologation"
+  token       String? // Token de acesso da API
+  cscId       String? // ID do CSC (Token do Consumidor - NFC-e)
+  cscToken    String? // Código do CSC
+
+  emissionMode String @default("MANUAL") // MANUAL ou AUTOMATIC
 
   // Certificado Digital (Armazenado como base64 ou caminho seguro, se necessário pela API)
-  certificate  String?  
+  certificate  String?
   certPassword String?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Invoice {
-  id            String   @id @default(cuid())
-  restaurantId  String
-  orderId       String?  @unique
-  
+  id           String  @id @default(cuid())
+  restaurantId String
+  orderId      String? @unique
+
   // Dados da Nota
-  type          String   @default("NFCe") // NFCe, NFe, SAT
-  status        String   @default("PENDING") // PENDING, PROCESSING, AUTHORIZED, REJECTED, CANCELED
-  number        Int?
-  series        Int?
-  accessKey     String?  // Chave de Acesso (44 dígitos)
-  protocol      String?  // Protocolo de Autorização
-  xml           String?  // Conteúdo do XML assinado
-  xmlUrl        String?  // URL para baixar o XML
-  pdfUrl        String?  // URL para o DANFE/Cupom
-  errorMessage  String?  // Retorno de erro da SEFAZ
-  attemptLog    Json?    // Histórico de tentativas [{attempt, timestamp, error, status}]
-  ccorrectionCount Int @default(0) // Número de cartas de correção enviadas
-  lastCorrection  String? // Última correção aplicada
+  type             String  @default("NFCe") // NFCe, NFe, SAT
+  status           String  @default("PENDING") // PENDING, PROCESSING, AUTHORIZED, REJECTED, CANCELED
+  number           Int?
+  series           Int?
+  accessKey        String? // Chave de Acesso (44 dígitos)
+  protocol         String? // Protocolo de Autorização
+  xml              String? // Conteúdo do XML assinado
+  xmlUrl           String? // URL para baixar o XML
+  pdfUrl           String? // URL para o DANFE/Cupom
+  errorMessage     String? // Retorno de erro da SEFAZ
+  attemptLog       Json? // Histórico de tentativas [{attempt, timestamp, error, status}]
+  ccorrectionCount Int     @default(0) // Número de cartas de correção enviadas
+  lastCorrection   String? // Última correção aplicada
 
-  issuedAt      DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  issuedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
-  order         Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  order      Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId])
 }
 
 // === Fila de Retry para Emissão Fiscal ===
 model FiscalRetryQueue {
-  id            String   @id @default(cuid())
-  orderId       String
-  attempts      Int      @default(0)
-  lastError     String?  // Último erro encountered
-  status        String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
-  scheduledFor  DateTime @default(now()) // Quando tentar novamente
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  orderId      String
+  attempts     Int      @default(0)
+  lastError    String? // Último erro encountered
+  status       String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  scheduledFor DateTime @default(now()) // Quando tentar novamente
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([orderId])
   @@index([status])
@@ -412,14 +413,14 @@ model FiscalRetryQueue {
 
 // === Log de Auditoria Fiscal ===
 model FiscalAuditLog {
-  id            String   @id @default(cuid())
-  restaurantId  String
-  action        String   // AUTORIZACAO, CANCELAMENTO, INUTILIZACAO, CARTA_CORRECAO
-  requestXml    String?  // XML enviado (truncado 2000 chars)
-  responseXml   String?  // Resposta SEFAZ (truncada 2000 chars)
-  statusCode    String?  // HTTP status code
-  durationMs    Int?     // Tempo de resposta em ms
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  restaurantId String
+  action       String // AUTORIZACAO, CANCELAMENTO, INUTILIZACAO, CARTA_CORRECAO
+  requestXml   String? // XML enviado (truncado 2000 chars)
+  responseXml  String? // Resposta SEFAZ (truncada 2000 chars)
+  statusCode   String? // HTTP status code
+  durationMs   Int? // Tempo de resposta em ms
+  createdAt    DateTime @default(now())
 
   @@index([restaurantId])
   @@index([action])
@@ -428,39 +429,39 @@ model FiscalAuditLog {
 // === MÓDULO FINANCEIRO ===
 
 model Supplier {
-  id           String   @id @default(cuid())
-  name         String
-  cnpj         String?
-  email        String?
-  phone        String?
-  contactName  String?
-  
-  address      String?
-  city         String?
-  state        String?
+  id          String  @id @default(cuid())
+  name        String
+  cnpj        String?
+  email       String?
+  phone       String?
+  contactName String?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  address String?
+  city    String?
+  state   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
-  transactions FinancialTransaction[]
-  stockEntries StockEntry[]
+
+  transactions    FinancialTransaction[]
+  stockEntries    StockEntry[]
   ingredientLinks IngredientSupplier[]
 
   @@index([restaurantId])
 }
 
 model TransactionCategory {
-  id           String   @id @default(cuid())
-  name         String   // Ex: "Matéria Prima", "Aluguel", "Vendas App"
-  type         String   // "INCOME" (Receita) ou "EXPENSE" (Despesa)
-  isSystem     Boolean  @default(false) // Se true, não pode ser deletado (ex: "Vendas")
+  id       String  @id @default(cuid())
+  name     String // Ex: "Matéria Prima", "Aluguel", "Vendas App"
+  type     String // "INCOME" (Receita) ou "EXPENSE" (Despesa)
+  isSystem Boolean @default(false) // Se true, não pode ser deletado (ex: "Vendas")
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
+
   transactions FinancialTransaction[]
   ingredients  Ingredient[]
 
@@ -468,15 +469,15 @@ model TransactionCategory {
 }
 
 model FinancialTransaction {
-  id           String   @id @default(cuid())
-  description  String
-  amount       Float
-  type         String   // "INCOME" (Entrada) ou "EXPENSE" (Saída)
-  status       String   @default("PENDING") // PENDING (A Pagar/Receber), PAID (Pago/Recebido), CANCELED
+  id          String @id @default(cuid())
+  description String
+  amount      Float
+  type        String // "INCOME" (Entrada) ou "EXPENSE" (Saída)
+  status      String @default("PENDING") // PENDING (A Pagar/Receber), PAID (Pago/Recebido), CANCELED
 
   // Datas
-  dueDate      DateTime // Data de Vencimento
-  paymentDate  DateTime? // Data que foi efetivamente pago
+  dueDate     DateTime // Data de Vencimento
+  paymentDate DateTime? // Data que foi efetivamente pago
 
   // Forma de Pagamento
   paymentMethod String? // Boleto, Pix, Cartão, Dinheiro
@@ -485,41 +486,41 @@ model FinancialTransaction {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  categoryId   String?
-  category     TransactionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
+  category   TransactionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  supplierId   String?
-  supplier     Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
   recipientUserId String? // Para pagamentos a funcionários (Drivers, Garçons)
   recipientUser   User?   @relation("TransactionRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
 
-  orderId      String?
-  order        Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull) // Se vier de uma venda
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull) // Se vier de uma venda
 
-  cashierId    String?   // Se foi pago com dinheiro do caixa
-  cashier      CashierSession? @relation(fields: [cashierId], references: [id], onDelete: SetNull)
+  cashierId String? // Se foi pago com dinheiro do caixa
+  cashier   CashierSession? @relation(fields: [cashierId], references: [id], onDelete: SetNull)
 
-  bankAccountId String?  // Novo: Vínculo com conta bancária
+  bankAccountId String? // Novo: Vínculo com conta bancária
   bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
 
-  stockEntry   StockEntry?
+  stockEntry StockEntry?
 
   // === Novos Campos: Recorrência ===
-  isRecurring         Boolean   @default(false)
-  recurrenceFrequency String?   // "WEEKLY", "MONTHLY", "YEARLY"
+  isRecurring         Boolean                @default(false)
+  recurrenceFrequency String? // "WEEKLY", "MONTHLY", "YEARLY"
   recurrenceEndDate   DateTime?
-  parentTransactionId String?   // Auto-relacionamento para identificar a transação "molde"
-  parentTransaction   FinancialTransaction? @relation("Recurrence", fields: [parentTransactionId], references: [id])
+  parentTransactionId String? // Auto-relacionamento para identificar a transação "molde"
+  parentTransaction   FinancialTransaction?  @relation("Recurrence", fields: [parentTransactionId], references: [id])
   childTransactions   FinancialTransaction[] @relation("Recurrence")
 
   // === Novos Campos: Transferências ===
-  relatedTransactionId String?  // Para vincular Saída de uma conta -> Entrada em outra
-  relatedTransaction   FinancialTransaction? @relation("RelatedTransfer", fields: [relatedTransactionId], references: [id])
+  relatedTransactionId String? // Para vincular Saída de uma conta -> Entrada em outra
+  relatedTransaction   FinancialTransaction?  @relation("RelatedTransfer", fields: [relatedTransactionId], references: [id])
   relatedTo            FinancialTransaction[] @relation("RelatedTransfer")
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
   @@index([dueDate])
@@ -529,50 +530,49 @@ model FinancialTransaction {
 }
 
 model BankAccount {
-  id           String   @id @default(cuid())
-  name         String   // Ex: "Cofre Loja", "Banco Itaú"
-  type         String   @default("CASH") // CASH, BANK, SAVINGS
-  balance      Float    @default(0)
-  
+  id      String @id @default(cuid())
+  name    String // Ex: "Cofre Loja", "Banco Itaú"
+  type    String @default("CASH") // CASH, BANK, SAVINGS
+  balance Float  @default(0)
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
+
   transactions FinancialTransaction[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
 }
 
-
 // Novo: Controle de Caixa (PDV)
 model CashierSession {
-  id            String    @id @default(cuid())
-  openedAt      DateTime  @default(now())
-  closedAt      DateTime?
-  initialAmount Float     // Fundo de caixa inicial
-  finalAmount   Float?    // Valor conferido (informado pelo operador)
-  status        String    @default("OPEN") // OPEN, CLOSED
-  notes         String?
-  closingDetails Json?    // Resumo dos totais por método (JSON)
-  
+  id             String    @id @default(cuid())
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+  initialAmount  Float // Fundo de caixa inicial
+  finalAmount    Float? // Valor conferido (informado pelo operador)
+  status         String    @default("OPEN") // OPEN, CLOSED
+  notes          String?
+  closingDetails Json? // Resumo dos totais por método (JSON)
+
   // === NOVOS CAMPOS ERP (AUDITORIA & FECHAMENTO) ===
-  expectedAmount  Float?   // Snapshot: Valor que o sistema calculou no momento do fechamento
-  difference      Float?   // Calculado: finalAmount - expectedAmount
-  cashLeftover    Float?   // Fundo de Troco: Valor deixado para o próximo turno
-  safeEntryAmount Float?   // Sangria Automática: Valor enviado para o Cofre/Banco
-  closingProofUrl String?  // Foto do comprovante da maquininha (URL)
-  moneyCountJson  Json?    // Detalhe da contagem (Ex: { "50": 5, "20": 10 })
-  
+  expectedAmount  Float? // Snapshot: Valor que o sistema calculou no momento do fechamento
+  difference      Float? // Calculado: finalAmount - expectedAmount
+  cashLeftover    Float? // Fundo de Troco: Valor deixado para o próximo turno
+  safeEntryAmount Float? // Sangria Automática: Valor enviado para o Cofre/Banco
+  closingProofUrl String? // Foto do comprovante da maquininha (URL)
+  moneyCountJson  Json? // Detalhe da contagem (Ex: { "50": 5, "20": 10 })
+
   // Quem abriu o caixa
-  userId        String
-  user          User      @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  restaurantId  String
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  transactions  FinancialTransaction[] // Movimentações vinculadas a este caixa
+  transactions FinancialTransaction[] // Movimentações vinculadas a este caixa
 
   @@index([restaurantId])
   @@index([userId])
@@ -582,73 +582,73 @@ model CashierSession {
 model IntegrationSettings {
   id                      String    @id @default(cuid())
   saiposSecret            String?
-  saiposPartnerId         String?   // Novo campo para o ID do Parceiro
+  saiposPartnerId         String? // Novo campo para o ID do Parceiro
   saiposCodStore          String?
   saiposIntegrationActive Boolean   @default(false)
   saiposEnv               String    @default("homologation") // "production" ou "homologation"
-  saiposToken             String?   // Token de autenticação da Saipos
+  saiposToken             String? // Token de autenticação da Saipos
   saiposTokenExpiresAt    DateTime? // Data de expiração do token
 
-// === CAMPOS UAIRANGO ===
-   uairangoToken           String?   // Token de Desenvolvedor (Legacy)
-   uairangoEstablishmentId String?   // ID do estabelecimento no UaiRango (Merchant ID)
-   uairangoActive          Boolean   @default(false)
-   uairangoImportedAt      DateTime? // Última importação realizada
-   uairangoEnv             String    @default("production") // "production" ou "development"
-   uairangoAutoAcceptOrders Boolean  @default(false) // Se true, aceita pedidos automaticamente
-    // Campos para Nova API UaiRango Connect (OAuth 2.0)
-    uairangoAccessToken     String?   // Access Token OAuth atual
-    uairangoTokenExpiresAt DateTime? // Expiração do access token (6h)
-    uairangoRefreshToken    String?   // Refresh Token (168h)
-    uairangoAuthStatus      String    @default("PENDING") // PENDING, AUTHORIZED, EXPIRED, REVOKED
-    uairangoAuthorizedAt    DateTime? // Timestamp da autorização bem-sucedida
-    uairangoAuthCodeVerifier String?  // PKCE Verifier (temporário durante OAuth)
-    uairangoUserCode        String?   // User Code retornado na autorização (código que usuário digita no portal)
+  // === CAMPOS UAIRANGO ===
+  uairangoToken            String? // Token de Desenvolvedor (Legacy)
+  uairangoEstablishmentId  String? // ID do estabelecimento no UaiRango (Merchant ID)
+  uairangoActive           Boolean   @default(false)
+  uairangoImportedAt       DateTime? // Última importação realizada
+  uairangoEnv              String    @default("production") // "production" ou "development"
+  uairangoAutoAcceptOrders Boolean   @default(false) // Se true, aceita pedidos automaticamente
+  // Campos para Nova API UaiRango Connect (OAuth 2.0)
+  uairangoAccessToken      String? // Access Token OAuth atual
+  uairangoTokenExpiresAt   DateTime? // Expiração do access token (6h)
+  uairangoRefreshToken     String? // Refresh Token (168h)
+  uairangoAuthStatus       String    @default("PENDING") // PENDING, AUTHORIZED, EXPIRED, REVOKED
+  uairangoAuthorizedAt     DateTime? // Timestamp da autorização bem-sucedida
+  uairangoAuthCodeVerifier String? // PKCE Verifier (temporário durante OAuth)
+  uairangoUserCode         String? // User Code retornado na autorização (código que usuário digita no portal)
 
   // === CAMPOS IFOOD ===
-  ifoodMerchantId           String?   // ID do Merchant no iFood (usado no modelo centralizado)
-  ifoodAccessToken          String?   // Token OAuth (access token ativo) — não usado no centralizado
-  ifoodRefreshToken         String?   // Refresh Token (para renew automático) — não usado no centralizado
+  ifoodMerchantId           String? // ID do Merchant no iFood (usado no modelo centralizado)
+  ifoodAccessToken          String? // Token OAuth (access token ativo) — não usado no centralizado
+  ifoodRefreshToken         String? // Refresh Token (para renew automático) — não usado no centralizado
   ifoodAccessTokenExpiresAt DateTime? // Data de expiração do access token — não usado no centralizado
-  ifoodAuthCodeVerifier     String?   // Verifier temporário durante fluxo OAuth (não sobrecarrega accessToken) — não usado no centralizado
-  ifoodRestaurantId         String?   // ID do restaurante no iFood (legacy, mantido para compatibilidade)
+  ifoodAuthCodeVerifier     String? // Verifier temporário durante fluxo OAuth (não sobrecarrega accessToken) — não usado no centralizado
+  ifoodRestaurantId         String? // ID do restaurante no iFood (legacy, mantido para compatibilidade)
   ifoodIntegrationActive    Boolean   @default(false)
   ifoodAutoAcceptOrders     Boolean   @default(false) // Se true, aceita pedidos automaticamente (envia CFM ao iFood na criação)
   ifoodEnv                  String    @default("production")
   // ifoodClientId e ifoodClientSecret removidos — agora são variáveis de ambiente centralizadas (Docker secrets)
 
   // === CAMPOS 99FOOD ===
-  food99MerchantId           String?   // Merchant ID no portal 99Food
-  food99AppShopId            String?   // App Shop ID (identificador da loja no sistema externo)
-  food99IntegrationActive    Boolean   @default(false)
-  food99Env                  String    @default("production") // "production" ou "homologation"
-  food99AutoAcceptOrders     Boolean   @default(false) // Se true, confirma pedidos automaticamente ao receber via webhook
-  food99ConfirmMethod        Int       @default(2) // 1=BAPP (app da 99Food), 2=OPENAPI (seu sistema confirma)
-  food99AutoUploadImages     Boolean   @default(true) // Se true, faz upload de imageUrl do produto para 99Food no sync
-  food99ReceiveCancelApply   Int       @default(1) // 0=ignorar cancel_apply (CS da 99Food trata), 1=receber e notificar
-  food99ReceiveRefundApply   Int       @default(1) // 0=ignorar refund_apply, 1=receber e notificar
+  food99MerchantId         String? // Merchant ID no portal 99Food
+  food99AppShopId          String? // App Shop ID (identificador da loja no sistema externo)
+  food99IntegrationActive  Boolean @default(false)
+  food99Env                String  @default("production") // "production" ou "homologation"
+  food99AutoAcceptOrders   Boolean @default(false) // Se true, confirma pedidos automaticamente ao receber via webhook
+  food99ConfirmMethod      Int     @default(2) // 1=BAPP (app da 99Food), 2=OPENAPI (seu sistema confirma)
+  food99AutoUploadImages   Boolean @default(true) // Se true, faz upload de imageUrl do produto para 99Food no sync
+  food99ReceiveCancelApply Int     @default(1) // 0=ignorar cancel_apply (CS da 99Food trata), 1=receber e notificar
+  food99ReceiveRefundApply Int     @default(1) // 0=ignorar refund_apply, 1=receber e notificar
 
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  restaurantId            String    @unique
-  restaurant              Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String     @unique
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 }
 
 // === INTEGRAÇÕES DE DELIVERY - PROCESSAMENTO IDEMPOTENTE ===
 model IntegrationEvent {
-  id              String    @id // UUID do evento
-  platform        String    // 'ifood', 'uairango', 'rappi', etc.
-  platformOrderId String    // ID do pedido na plataforma
-  eventType      String    // 'ORDER_PLACED', 'ORDER_CANCELED', etc.
-  restaurantId   String
-  
-  orderId        String?   // ID local do pedido (se criado)
-  status        String    @default("PENDING") // 'PENDING', 'PROCESSED', 'FAILED'
-  errorMessage  String?   // Mensagem de erro se falhou
-  processedAt   DateTime?
+  id              String @id // UUID do evento
+  platform        String // 'ifood', 'uairango', 'rappi', etc.
+  platformOrderId String // ID do pedido na plataforma
+  eventType       String // 'ORDER_PLACED', 'ORDER_CANCELED', etc.
+  restaurantId    String
+
+  orderId      String? // ID local do pedido (se criado)
+  status       String    @default("PENDING") // 'PENDING', 'PROCESSED', 'FAILED'
+  errorMessage String? // Mensagem de erro se falhou
+  processedAt  DateTime?
   createdAt    DateTime  @default(now())
-  
+
   @@unique([platform, platformOrderId, eventType])
   @@index([platform])
   @@index([restaurantId])
@@ -659,49 +659,49 @@ model IntegrationEvent {
 // === MÓDULO WHATSAPP & IA ===
 
 model WhatsAppInstance {
-  id            String   @id @default(cuid())
-  name          String   @unique // Nome da instância na Evolution API
-  token         String?  // Token da instância (gerado pela Evolution)
-  status        String   @default("DISCONNECTED") // CONNECTED, DISCONNECTED, CONNECTING
-  qrcode        String?  // Base64 do QR Code atual
-  
-  restaurantId  String   @unique
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  id     String  @id @default(cuid())
+  name   String  @unique // Nome da instância na Evolution API
+  token  String? // Token da instância (gerado pela Evolution)
+  status String  @default("DISCONNECTED") // CONNECTED, DISCONNECTED, CONNECTING
+  qrcode String? // Base64 do QR Code atual
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  restaurantId String     @unique
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model WhatsAppSettings {
-  id               String   @id @default(cuid())
-  restaurantId     String   @unique
-  restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
+  id           String     @id @default(cuid())
+  restaurantId String     @unique
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   // Configurações do Agente de IA
-  agentEnabled     Boolean  @default(false)
-  agentName        String   @default("Atendente Virtual")
-  agentPersona     String?  @db.Text // Prompt de persona do sistema
-  
-  // Configurações de Mensagens
-  welcomeMessage   String?  @db.Text
-  offlineMessage   String?  @db.Text
-  autoAcceptOrders Boolean  @default(false)
-  
-  // Webhook da Evolution (caso queira gerenciar por restaurante)
-  webhookUrl       String?
-  webhookEnabled   Boolean  @default(true)
+  agentEnabled Boolean @default(false)
+  agentName    String  @default("Atendente Virtual")
+  agentPersona String? @db.Text // Prompt de persona do sistema
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  // Configurações de Mensagens
+  welcomeMessage   String? @db.Text
+  offlineMessage   String? @db.Text
+  autoAcceptOrders Boolean @default(false)
+
+  // Webhook da Evolution (caso queira gerenciar por restaurante)
+  webhookUrl     String?
+  webhookEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model WhatsAppChatMessage {
-  id           String   @id @default(cuid())
-  externalId   String?  // ID da mensagem na Evolution/WhatsApp
-  role         String   // "user", "assistant", "system"
-  content      String   @db.Text
-  timestamp    DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  externalId String? // ID da mensagem na Evolution/WhatsApp
+  role       String // "user", "assistant", "system"
+  content    String   @db.Text
+  timestamp  DateTime @default(now())
+
   customerPhone String
   restaurantId  String
 
@@ -710,71 +710,72 @@ model WhatsAppChatMessage {
 }
 
 model WhatsAppConversation {
-  id              String   @id @default(cuid())
-  customerPhone   String
-  customerName    String?
+  id                String   @id @default(cuid())
+  customerPhone     String
+  customerName      String?
   profilePictureUrl String?
-  lastMessage     String?  @db.Text
-  lastMessageAt   DateTime @default(now())
-  unreadCount     Int      @default(0)
-  isAgentEnabled  Boolean  @default(true) // Controle individual por conversa
-  labels          String[] @default([]) // Etiquetas (ex: "VIP", "Novo", "Problema")
-  
-  restaurantId    String
-  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+  lastMessage       String?  @db.Text
+  lastMessageAt     DateTime @default(now())
+  unreadCount       Int      @default(0)
+  isAgentEnabled    Boolean  @default(true) // Controle individual por conversa
+  labels            String[] @default([]) // Etiquetas (ex: "VIP", "Novo", "Problema")
 
-  customerId      String?
-  customer        Customer?  @relation(fields: [customerId], references: [id])
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  createdAt       DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([customerPhone, restaurantId])
   @@index([restaurantId])
 }
 
 model StoreKnowledge {
-  id           String   @id @default(cuid())
-  question     String   @db.Text
-  answer       String   @db.Text
-  category     String?  // Ex: "delivery", "policy", "faq"
-  isActive     Boolean  @default(true)
-  
+  id       String  @id @default(cuid())
+  question String  @db.Text
+  answer   String  @db.Text
+  category String? // Ex: "delivery", "policy", "faq"
+  isActive Boolean @default(true)
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
 }
+
 model Category {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-cuisineType String?  @default("Geral") // Ex: Pizza, Bebidas, Sobremesas
-  order       Int      @default(0)
-  saiposIntegrationCode String?  // Código de integração da Saipos (legado)
-  integrationCode       String?  // Código unificado de integração (PDV)
-   
+  id                    String  @id @default(cuid())
+  name                  String
+  description           String?
+  cuisineType           String? @default("Geral") // Ex: Pizza, Bebidas, Sobremesas
+  order                 Int     @default(0)
+  saiposIntegrationCode String? // Código de integração da Saipos (legado)
+  integrationCode       String? // Código unificado de integração (PDV)
+
   // Visibilidade por Canal
-  isActive      Boolean  @default(true)
-  allowDelivery Boolean  @default(true)
-  allowPos      Boolean  @default(true)  // Salão / PDV
-  allowOnline   Boolean  @default(true)  // Cardápio Digital / App
-  
+  isActive      Boolean @default(true)
+  allowDelivery Boolean @default(true)
+  allowPos      Boolean @default(true) // Salão / PDV
+  allowOnline   Boolean @default(true) // Cardápio Digital / App
+
   // Disponibilidade
   availableDays String? @default("1,2,3,4,5,6,7") // Dias da semana separados por vírgula
   startTime     String? // Formato HH:mm
   endTime       String? // Formato HH:mm
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  products    Product[] 
+  products    Product[]
   addonGroups AddonGroup[] // Vínculo com categorias para herança automática (Estilo Uai Rango)
   promotions  Promotion[] // Relação inversa para promoções
 
@@ -790,15 +791,15 @@ cuisineType String?  @default("Geral") // Ex: Pizza, Bebidas, Sobremesas
 
 // Novo: Padronização de Tamanhos (P, M, G, 2L, Lata) para evitar erros de digitação
 model GlobalSize {
-  id           String   @id @default(cuid())
-  name         String   // Ex: "Grande", "Lata 350ml"
-  description  String?
-  
+  id          String  @id @default(cuid())
+  name        String // Ex: "Grande", "Lata 350ml"
+  description String?
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  sizes        Size[]   // Vínculo com os preços nos produtos
-  products     Product[] @relation("ProductToGlobalSize") // Novo: Vinculo direto com SKU único
+  sizes    Size[] // Vínculo com os preços nos produtos
+  products Product[] @relation("ProductToGlobalSize") // Novo: Vinculo direto com SKU único
 
   @@unique([name, restaurantId])
   @@index([restaurantId])
@@ -806,62 +807,67 @@ model GlobalSize {
 
 // Renomeado de Item para Product
 model Product {
-  id            String   @id @default(cuid())
-  name          String
-  description   String?
-  price         Float    @default(0)
-  costPrice     Float    @default(0)     // Novo: Essencial para calcular margem de lucro (ERP)
-  imageUrl      String?
-  isFeatured    Boolean  @default(false) // Destaque
-  isAvailable   Boolean  @default(true)  // Disponibilidade
-  stock         Int      @default(0)     // Estoque
-  tags          String[] @default([])   // Tags / Etiquetas
-  order         Int      @default(0)     // Ordem de exibição
-  productionArea String?  @default("Cozinha") // Movido da Categoria para o Produto
-  saiposIntegrationCode String?  // Código de integração da Saipos (legado)
-  integrationCode       String?  // Código unificado de integração (PDV) - para iFood, UaiRango, 99Food, etc
-  
+  id                    String   @id @default(cuid())
+  name                  String
+  description           String?
+  price                 Float    @default(0)
+  costPrice             Float    @default(0) // Novo: Essencial para calcular margem de lucro (ERP)
+  imageUrl              String?
+  isFeatured            Boolean  @default(false) // Destaque
+  isAvailable           Boolean  @default(true) // Disponibilidade
+  stock                 Int      @default(0) // Estoque
+  tags                  String[] @default([]) // Tags / Etiquetas
+  order                 Int      @default(0) // Ordem de exibição
+  productionArea        String?  @default("Cozinha") // Movido da Categoria para o Produto
+  saiposIntegrationCode String? // Código de integração da Saipos (legado)
+  integrationCode       String? // Código unificado de integração (PDV) - para iFood, UaiRango, 99Food, etc
+
   // === Campos de Visibilidade e Estrutura (Estilo Saipos/iFood) ===
-  showInMenu    Boolean  @default(true)  // Se deve aparecer na vitrine principal (Geral)
-  isFlavor      Boolean  @default(false) // Se é um sabor que será usado dentro de outro produto
-  
+  showInMenu Boolean @default(true) // Se deve aparecer na vitrine principal (Geral)
+  isFlavor   Boolean @default(false) // Se é um sabor que será usado dentro de outro produto
+
   // Visibilidade por Canal
-  allowDelivery Boolean  @default(true)
-  allowPos      Boolean  @default(true)  // Salão / PDV
-  allowOnline   Boolean  @default(true)  // Cardápio Digital / App
-  
+  allowDelivery Boolean @default(true)
+  allowPos      Boolean @default(true) // Salão / PDV
+  allowOnline   Boolean @default(true) // Cardápio Digital / App
+
   // === Campo Legado Removido - Relação agora é M:N via categories[] ===
   // Antigo: categoryId era uma relação 1:N. Agora usa-se categories Category[] M:N
 
   // === Campos Fiscais ===
-  ncm           String?  // Nomenclatura Comum do Mercosul (8 dígitos)
-  cfop          String?  // Código Fiscal de Operações e Prestações (Ex: 5102)
-  cest          String?  // Código Especificador da Substituição Tributária
-  measureUnit   String   @default("UN") // UN, KG, LT, DZ
-  origin        Int      @default(0)    // 0=Nacional, 1=Importada, etc.
-  taxPercentage Float?   @default(0)    // Carga tributária aproximada (Lei da Transparência)
+  ncm           String? // Nomenclatura Comum do Mercosul (8 dígitos)
+  cfop          String? // Código Fiscal de Operações e Prestações (Ex: 5102)
+  cest          String? // Código Especificador da Substituição Tributária
+  measureUnit   String  @default("UN") // UN, KG, LT, DZ
+  origin        Int     @default(0) // 0=Nacional, 1=Importada, etc.
+  taxPercentage Float?  @default(0) // Carga tributária aproximada (Lei da Transparência)
 
-  pizzaConfig   Json?            // Configuração específica para pizzas (preço, sabores, fatias)
-  addonGroupsOrder Json?         // Salva a ordem dos IDs dos grupos de adicionais [ID1, ID2, ...]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  pizzaConfig      Json? // Configuração específica para pizzas (preço, sabores, fatias)
+  addonGroupsOrder Json? // Salva a ordem dos IDs dos grupos de adicionais [ID1, ID2, ...]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   // Relacionamento com GlobalSize como Atributo do SKU
-  globalSizeId  String?
-  globalSize    GlobalSize? @relation("ProductToGlobalSize", fields: [globalSizeId], references: [id])
+  globalSizeId String?
+  globalSize   GlobalSize? @relation("ProductToGlobalSize", fields: [globalSizeId], references: [id])
 
   // Relação com as Categorias (Muitos-para-Muitos)
-  categories    Category[] 
+  categories Category[]
 
   // Relações
-  orderItems    OrderItem[]
-  sizes         Size[]
-  addonGroups   AddonGroup[]
-  promotions    Promotion[] // Relação inversa para promoções
-  ingredients   ProductIngredient[] // Vínculo com a Ficha Técnica
+  orderItems  OrderItem[]
+  sizes       Size[]
+  addonGroups AddonGroup[]
+  promotions  Promotion[] // Relação inversa para promoções
+  // DEPRECATED: usar FichaTecnica via fichaTecnicaId
+  ingredients ProductIngredient[] // @deprecated Usar FichaTecnica
+
+  // Ficha Técnica vinculada (nova estrutura)
+  fichaTecnicaId String?
+  fichaTecnica   FichaTecnica? @relation(fields: [fichaTecnicaId], references: [id], onDelete: SetNull)
 
   @@unique([name, restaurantId])
   @@index([restaurantId])
@@ -871,12 +877,12 @@ model Product {
 
 // Novo: Tabela de Tamanhos (P, M, G de uma pizza)
 model Size {
-  id        String  @id @default(cuid())
-  name      String  // Mantido para compatibilidade, mas o ideal é vir do GlobalSize
-  price     Float
-  order              Int     @default(0)
-  saiposIntegrationCode String?  // Código de integração da Saipos (legado)
-  integrationCode    String?  // Código unificado de integração (PDV)
+  id                    String  @id @default(cuid())
+  name                  String // Mantido para compatibilidade, mas o ideal é vir do GlobalSize
+  price                 Float
+  order                 Int     @default(0)
+  saiposIntegrationCode String? // Código de integração da Saipos (legado)
+  integrationCode       String? // Código unificado de integração (PDV)
 
   // Relação com o Tamanho Global para evitar erros
   globalSizeId String?
@@ -892,56 +898,61 @@ model Size {
 
 // Novo: Tabela para agrupar adicionais (Ex: "Bordas", "Adicionais")
 model AddonGroup {
-  id        String  @id @default(cuid())
-  name      String  // Ex: "Molhos", "Acompanhamentos"
-  type      String  @default("multiple") // "single" ou "multiple"
-  isRequired Boolean @default(false) 
+  id            String  @id @default(cuid())
+  name          String // Ex: "Molhos", "Acompanhamentos"
+  type          String  @default("multiple") // "single" ou "multiple"
+  isRequired    Boolean @default(false)
   isFlavorGroup Boolean @default(false) // Define se o grupo contém Sabores (Pizzas)
   priceRule     String? @default("higher") // "higher" or "average"
-  
+
   // Novos campos para limites do GRUPO (Combo)
-  minQuantity Int     @default(0) // Mínimo total de itens que devem ser selecionados no grupo
-  maxQuantity Int     @default(1) // Máximo total de itens permitidos no grupo (Ex: 10 para combo de esfihas)
-  
-  order              Int     @default(0)
-  saiposIntegrationCode String?  // Código de integração da Saipos (legado)
-  integrationCode    String?  // Código unificado de integração (PDV)
+  minQuantity Int @default(0) // Mínimo total de itens que devem ser selecionados no grupo
+  maxQuantity Int @default(1) // Máximo total de itens permitidos no grupo (Ex: 10 para combo de esfihas)
+
+  order                 Int     @default(0)
+  saiposIntegrationCode String? // Código de integração da Saipos (legado)
+  integrationCode       String? // Código unificado de integração (PDV)
 
   // Relacionamento Global (M:N)
-  products  Product[]
+  products   Product[]
   categories Category[] // Vínculo com categorias para herança automática (Estilo Uai Rango)
 
   restaurantId String?
   restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
 
   // Relações
-  addons    Addon[]
+  addons Addon[]
 
   @@index([restaurantId])
 }
+
 // Novo: Tabela de Adicionais (Ex: "Cheddar", "Bacon")
 model Addon {
-  id           String  @id @default(cuid())
-  name         String
-  description  String?
-  imageUrl     String?
-  price        Float
-  costPrice    Float   @default(0) // Novo: Custo do adicional (ERP)
-  
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  price       Float
+  costPrice   Float   @default(0) // Novo: Custo do adicional (ERP)
+
   // Promoção Específica de Componente (DEPRECATED - Use Promotion model instead)
   // @deprecated Use Promotion model instead. This inline system will be removed in a future version.
-  promoPrice      Float?    // Preço promocional do adicional
-  promoStartDate  DateTime? // Início da oferta
-  promoEndDate    DateTime? // Fim da oferta
+  promoPrice     Float? // Preço promocional do adicional
+  promoStartDate DateTime? // Início da oferta
+  promoEndDate   DateTime? // Fim da oferta
 
-  maxQuantity  Int     @default(1) // Novo: Quantidade máxima permitida para este adicional
-  order     Int     @default(0)
-  saiposIntegrationCode String?  // Código de integração da Saipos (legado)
-  integrationCode       String?  // Código unificado de integração (PDV)
+  maxQuantity           Int     @default(1) // Novo: Quantidade máxima permitida para este adicional
+  order                 Int     @default(0)
+  saiposIntegrationCode String? // Código de integração da Saipos (legado)
+  integrationCode       String? // Código unificado de integração (PDV)
 
-  // Ficha Técnica do Adicional
-  ingredients  AddonIngredient[]
-  promotions   Promotion[] // Novo: Promoções do sistema de marketing
+  // DEPRECATED: usar FichaTecnica via fichaTecnicaId
+  ingredients AddonIngredient[] // @deprecated Usar FichaTecnica
+  promotions  Promotion[] // Novo: Promoções do sistema de marketing
+
+  // Ficha Técnica vinculada (nova estrutura)
+  fichaTecnicaId String?
+  fichaTecnica   FichaTecnica? @relation(fields: [fichaTecnicaId], references: [id], onDelete: SetNull)
 
   // Relação com o Grupo de Adicionais
   addonGroupId String
@@ -951,12 +962,12 @@ model Addon {
 }
 
 model AddonIngredient {
-  id           String     @id @default(cuid())
-  quantity     Float      // Quantidade usada (ex: 0.050 para 50g)
-  
-  addonId      String
-  addon        Addon      @relation(fields: [addonId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(cuid())
+  quantity Float // Quantidade usada (ex: 0.050 para 50g)
+
+  addonId String
+  addon   Addon  @relation(fields: [addonId], references: [id], onDelete: Cascade)
+
   ingredientId String
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
@@ -965,87 +976,87 @@ model AddonIngredient {
 }
 
 model Order {
-  id           String      @id @default(cuid())
-  dailyOrderNumber Int?    // Novo: Número do pedido no dia (1, 2, 3...)
-  tableNumber  Int?        // Opcional para acomodar pedidos de delivery
-  status       OrderStatus @default(BUILDING)
-  total        Float
-  discount     Float       @default(0) // Novo: Persistência de desconto
-  extraCharge  Float       @default(0) // Acréscimo/taxa do restaurante (não inclui delivery)
-  subtotal     Float       @default(0) // Soma dos itens sem taxas (novo)
-  deliveryFee  Float       @default(0) // Taxa de entrega (novo - centralizado no Order)
-  platformFee  Float       @default(0) // Taxas da plataforma (iFood, etc) (novo)
-  orderType    OrderType   @default(TABLE) // Novo campo para diferenciar o tipo de pedido
-  isPrinted    Boolean     @default(false) // Controle definitivo de impressão
-  
-  // Timestamps para Relatórios de Performance
-  pendingAt    DateTime?
-  preparingAt  DateTime?
-  readyAt      DateTime?
-  shippedAt    DateTime?
-  deliveredAt  DateTime?
-  completedAt  DateTime?
-  canceledAt   DateTime?
+  id               String      @id @default(cuid())
+  dailyOrderNumber Int? // Novo: Número do pedido no dia (1, 2, 3...)
+  tableNumber      Int? // Opcional para acomodar pedidos de delivery
+  status           OrderStatus @default(BUILDING)
+  total            Float
+  discount         Float       @default(0) // Novo: Persistência de desconto
+  extraCharge      Float       @default(0) // Acréscimo/taxa do restaurante (não inclui delivery)
+  subtotal         Float       @default(0) // Soma dos itens sem taxas (novo)
+  deliveryFee      Float       @default(0) // Taxa de entrega (novo - centralizado no Order)
+  platformFee      Float       @default(0) // Taxas da plataforma (iFood, etc) (novo)
+  orderType        OrderType   @default(TABLE) // Novo campo para diferenciar o tipo de pedido
+  isPrinted        Boolean     @default(false) // Controle definitivo de impressão
 
-  createdAt    DateTime    @default(now())
-  updatedAt   DateTime   @updatedAt
-  saiposOrderId String?
-  ifoodOrderId String?
+  // Timestamps para Relatórios de Performance
+  pendingAt   DateTime?
+  preparingAt DateTime?
+  readyAt     DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  completedAt DateTime?
+  canceledAt  DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  saiposOrderId   String?
+  ifoodOrderId    String?
   uairangoOrderId String?
-  food99OrderId String?
+  food99OrderId   String?
 
   // === CAMPOS UAIRANGO (Phone Masking - 0800) ===
-  localizer           String?   // ID de conexão para chamadas via 0800
+  localizer           String? // ID de conexão para chamadas via 0800
   localizerExpiration DateTime? // Data de expiração do vínculo do localizer
 
   // === CAMPOS IFOOD (Homologação) ===
-  displayId           String?    // Código de coleta do iFood (ex: #A1B2)
-  pickupCode          String?    // Código de conferência para o motoboy (iFood)
-  scheduledDateTime   DateTime? // Data/hora do agendamento
-  customerDocument    String?    // CPF ou CNPJ do cliente
-  benefits            Json?     // Cupons/benefícios aplicados (JSON)
-  
+  displayId         String? // Código de coleta do iFood (ex: #A1B2)
+  pickupCode        String? // Código de conferência para o motoboy (iFood)
+  scheduledDateTime DateTime? // Data/hora do agendamento
+  customerDocument  String? // CPF ou CNPJ do cliente
+  benefits          Json? // Cupons/benefícios aplicados (JSON)
+
   // === CAMPOS DE CUPOM DE DESCONTO ===
-  couponCode          String?   // Código do cupom utilizado (ex: "PIZZA10")
-  promotionId         String?   // FK para a promoção/cupom aplicado
-  promotion           Promotion? @relation(fields: [promotionId], references: [id])
-  
+  couponCode  String? // Código do cupom utilizado (ex: "PIZZA10")
+  promotionId String? // FK para a promoção/cupom aplicado
+  promotion   Promotion? @relation(fields: [promotionId], references: [id])
+
   // === CAMPOS DE CANCELAMENTO (Política iFood) ===
-  cancellationRequested   Boolean   @default(false) // Cliente solicitou cancelamento
-  cancellationReason      String?   // Motivo do cancelamento (do cliente ou sistema)
-  cancellationDeadline    DateTime? // Prazo para responder (5 minutos)
-  cancellationSource      String?   // Origem: 'CUSTOMER', 'IFOOD', 'MERCHANT'
+  cancellationRequested Boolean   @default(false) // Cliente solicitou cancelamento
+  cancellationReason    String? // Motivo do cancelamento (do cliente ou sistema)
+  cancellationDeadline  DateTime? // Prazo para responder (5 minutos)
+  cancellationSource    String? // Origem: 'CUSTOMER', 'IFOOD', 'MERCHANT'
 
   // === CAMPOS DE CONFIRMAÇÃO IFOOD ===
-  ifoodConfirmed          Boolean   @default(false) // Controle de confirmação duplicada
+  ifoodConfirmed Boolean @default(false) // Controle de confirmação duplicada
 
   // === CAMPOS DE DISPUTA (Handshake - pós-entrega) ===
-  disputeId          String?    // ID da disputa no iFood
-  disputeExpiresAt   DateTime?  // Prazo para responder a disputa
-  disputeReason      String?    // Motivo da disputa
-  disputeEvidence   Json?      // Evidências (fotos, etc)
+  disputeId        String? // ID da disputa no iFood
+  disputeExpiresAt DateTime? // Prazo para responder a disputa
+  disputeReason    String? // Motivo da disputa
+  disputeEvidence  Json? // Evidências (fotos, etc)
 
   // ======== RESTAURANT RELATION ========
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   // Quem criou o pedido (Garçom/Admin)
-  userId       String?
-  user         User?       @relation("CreatedOrders", fields: [userId], references: [id])
-  
-  customerName String?     // Nome do cliente na mesa (Comanda individual)
-  notes        String?     // Observações do cliente (para pedidos PICKUP e mesa)
+  userId String?
+  user   User?   @relation("CreatedOrders", fields: [userId], references: [id])
+
+  customerName String? // Nome do cliente na mesa (Comanda individual)
+  notes        String? // Observações do cliente (para pedidos PICKUP e mesa)
 
   // Relações
-  items        OrderItem[]
-  payments     Payment[]   // Relação com pagamentos
+  items         OrderItem[]
+  payments      Payment[] // Relação com pagamentos
   deliveryOrder DeliveryOrder? // Relação inversa para DeliveryOrder
-  
-  invoice      Invoice?    // Nota Fiscal
+
+  invoice              Invoice? // Nota Fiscal
   financialTransaction FinancialTransaction[] // Lançamento financeiro (Ex: Conta a Receber gerada)
 
-  isSettled    Boolean     @default(false) // Novo: Controle de acerto financeiro (Motoboy/Garçom)
-  settledAt    DateTime?
+  isSettled Boolean   @default(false) // Novo: Controle de acerto financeiro (Motoboy/Garçom)
+  settledAt DateTime?
 
   @@index([restaurantId])
   @@index([status])
@@ -1056,13 +1067,13 @@ model Order {
 }
 
 model Payment {
-  id            String   @id @default(cuid())
-  amount        Float
-  method        String   // 'cash', 'credit_card', 'debit_card', 'pix', 'meal_voucher'
-  createdAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  amount    Float
+  method    String // 'cash', 'credit_card', 'debit_card', 'pix', 'meal_voucher'
+  createdAt DateTime @default(now())
 
-  orderId       String
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
 }
@@ -1085,36 +1096,36 @@ enum OrderStatus {
 }
 
 model DeliveryOrder {
-  id                      String              @id @default(cuid())
-  name                    String?             // Nome no ato do pedido
-  phone                   String?             // Telefone no ato do pedido
-  address                 String?             // Endereço no ato do pedido
-  complement              String?             // Complemento do endereço
-  reference               String?             // Ponto de referência
-  neighborhood            String?             // Bairro
-  city                    String?             // Cidade
-  state                   String?             // Estado (UF)
-  zipCode                 String?             // CEP
-  deliveryType            String?             // 'delivery' ou 'pickup'
-  paymentMethod           String?             
-  changeFor               Float?              
-  deliveryFee             Float
-  notes                   String?             // Observações do pedido
-  estimatedDeliveryTime   String?
-  status                  DeliveryOrderStatus @default(PENDING)
-  latitude                Float?
-  longitude               Float?
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
+  id                    String              @id @default(cuid())
+  name                  String? // Nome no ato do pedido
+  phone                 String? // Telefone no ato do pedido
+  address               String? // Endereço no ato do pedido
+  complement            String? // Complemento do endereço
+  reference             String? // Ponto de referência
+  neighborhood          String? // Bairro
+  city                  String? // Cidade
+  state                 String? // Estado (UF)
+  zipCode               String? // CEP
+  deliveryType          String? // 'delivery' ou 'pickup'
+  paymentMethod         String?
+  changeFor             Float?
+  deliveryFee           Float
+  notes                 String? // Observações do pedido
+  estimatedDeliveryTime String?
+  status                DeliveryOrderStatus @default(PENDING)
+  latitude              Float?
+  longitude             Float?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
-  orderId                 String              @unique
-  order                   Order               @relation(fields: [orderId], references: [id])
-  
-  customerId              String?
-  customer                Customer?           @relation(fields: [customerId], references: [id])
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
 
-  driverId                String?
-  driver                  User?               @relation(fields: [driverId], references: [id])
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  driverId String?
+  driver   User?   @relation(fields: [driverId], references: [id])
 
   @@index([orderId])
   @@index([driverId])
@@ -1123,46 +1134,46 @@ model DeliveryOrder {
 }
 
 model Customer {
-  id            String   @id @default(cuid())
-  name          String
-  phone         String   // Telefone será a chave de busca principal
-  address       String?
-  
+  id      String  @id @default(cuid())
+  name    String
+  phone   String // Telefone será a chave de busca principal
+  address String?
+
   // === Campos de Fidelidade ===
-  loyaltyPoints    Int     @default(0)
-  cashbackBalance  Float   @default(0)
-  
+  loyaltyPoints   Int   @default(0)
+  cashbackBalance Float @default(0)
+
   // Campos estruturados opcionais (bom para profissionalizar)
-  zipCode       String?
-  street        String?
-  number        String?
-  complement    String?
-  neighborhood  String?
-  city          String?
-  state         String?
-  reference     String?
-  latitude      Float?
-  longitude     Float?
+  zipCode      String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  reference    String?
+  latitude     Float?
+  longitude    Float?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  restaurantId  String
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  deliveryOrders DeliveryOrder[]
+  deliveryOrders        DeliveryOrder[]
   whatsappConversations WhatsAppConversation[]
+
+  customerAddresses CustomerAddress[]
 
   @@unique([phone, restaurantId])
   @@index([restaurantId])
-
-  customerAddresses CustomerAddress[]
 }
 
 model CustomerAddress {
   id           String   @id @default(cuid())
   customerId   String
-  label        String?  // rótulo opcional (ex: "Casa", "Trabalho")
+  label        String? // rótulo opcional (ex: "Casa", "Trabalho")
   street       String
   number       String
   complement   String?
@@ -1174,18 +1185,18 @@ model CustomerAddress {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([customerId])
 }
 
 model TableRequest {
-  id           String   @id @default(cuid())
-  tableNumber  Int
-  type         String   // 'WAITER' (Garçom) ou 'BILL' (Conta)
-  status       String   @default("PENDING") // PENDING, DONE
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  tableNumber Int
+  type        String // 'WAITER' (Garçom) ou 'BILL' (Conta)
+  status      String   @default("PENDING") // PENDING, DONE
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
@@ -1202,36 +1213,36 @@ enum DeliveryOrderStatus {
 }
 
 model OrderItem {
-  id           String    @id @default(cuid())
+  id           String  @id @default(cuid())
   quantity     Int
   observations String?
   priceAtTime  Float
-  isPaid       Boolean   @default(false) // Controle Financeiro (Pago/Não Pago)
-  isReady      Boolean   @default(false) // Controle de Produção (Pronto/Não Pronto)
+  isPaid       Boolean @default(false) // Controle Financeiro (Pago/Não Pago)
+  isReady      Boolean @default(false) // Controle de Produção (Pronto/Não Pronto)
 
   // Relação com o Pedido
-  orderId      String
-  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   // Relação com o Produto (opcional para itens de integração sem código PDV)
-  productId    String?
-  product      Product?   @relation(fields: [productId], references: [id])
-  productName  String?    // Nome do item quando sem produto vinculado (integrações)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  productName String? // Nome do item quando sem produto vinculado (integrações)
 
   // Relações com os adicionais e tamanho escolhidos (armazenados como JSON)
   // Convertidos para tipo Json para melhor performance e consistência
-  sizeJson     Json?     // Ex: { "name": "Média", "price": 25.90, "saiposIntegrationCode": "..." }
-  addonsJson   Json?     // Ex: [{ "name": "Bacon", "price": 5.00, "saiposIntegrationCode": "..." }]
-  flavorsJson  Json?     // Ex: [{ "id": "...", "name": "Calabresa", "price": 40.00 }]
+  sizeJson    Json? // Ex: { "name": "Média", "price": 25.90, "saiposIntegrationCode": "..." }
+  addonsJson  Json? // Ex: [{ "name": "Bacon", "price": 5.00, "saiposIntegrationCode": "..." }]
+  flavorsJson Json? // Ex: [{ "id": "...", "name": "Calabresa", "price": 40.00 }]
 
   @@index([orderId])
   @@index([productId])
 }
 
 model Table {
-  id        String @id @default(cuid())
-  number    Int
-  status    String @default("free") // free, occupied, awaiting_payment
+  id     String @id @default(cuid())
+  number Int
+  status String @default("free") // free, occupied, awaiting_payment
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
@@ -1241,38 +1252,38 @@ model Table {
 }
 
 model Promotion {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?
+  id                    String  @id @default(cuid())
+  name                  String
+  description           String?
   saiposIntegrationCode String? // Código de integração da Saipos/iFood
 
   // === Novos campos para Cupons ===
-  code          String?   // Ex: "PIZZA10", "BEMVINDO"
-  minOrderValue Float?    @default(0)
-  usageLimit    Int?      // Limite total de usos do cupom
-  usedCount     Int       @default(0)
+  code          String? // Ex: "PIZZA10", "BEMVINDO"
+  minOrderValue Float?  @default(0)
+  usageLimit    Int? // Limite total de usos do cupom
+  usedCount     Int     @default(0)
 
-  discountType  String    // Ex: "percentage", "fixed_amount"
+  discountType  String // Ex: "percentage", "fixed_amount"
   discountValue Float
   startDate     DateTime
   endDate       DateTime
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  productId     String? 
-  product       Product?   @relation(fields: [productId], references: [id])
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
 
-  addonId       String?
-  addon         Addon?     @relation(fields: [addonId], references: [id])
+  addonId String?
+  addon   Addon?  @relation(fields: [addonId], references: [id])
 
-  categoryId    String?
-  category      Category?  @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
 
-  orders        Order[]    // Pedidos que usaram este cupom
+  orders Order[] // Pedidos que usaram este cupom
 
   @@index([restaurantId])
   @@index([productId])
@@ -1280,84 +1291,85 @@ model Promotion {
   @@index([categoryId])
 }
 
-
 // === MODELOS PARA FICHA TÉCNICA (ESTOQUE AVANÇADO - NÍVEL ERP) ===
 
 model IngredientGroup {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   name         String
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
-  parentId     String?
-  parent       IngredientGroup? @relation("SubGroups", fields: [parentId], references: [id])
-  subGroups    IngredientGroup[] @relation("SubGroups")
-  
-  ingredients  Ingredient[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  parentId  String?
+  parent    IngredientGroup?  @relation("SubGroups", fields: [parentId], references: [id])
+  subGroups IngredientGroup[] @relation("SubGroups")
+
+  ingredients Ingredient[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([name, restaurantId, parentId])
   @@index([restaurantId])
 }
 
 model Ingredient {
-  id           String   @id @default(cuid())
+  id           String @id @default(cuid())
   name         String
-  unit         String   @default("un") // Unidade de consumo (Ex: KG, GR, UN)
-  stock        Float    @default(0)
-  minStock     Float?   @default(0)
-  lastUnitCost Float?   @default(0)
-  averageCost  Float?   @default(0) // Custo médio ponderado (calculado nas entradas)
-  
+  unit         String @default("un") // Unidade de consumo (Ex: KG, GR, UN)
+  stock        Float  @default(0)
+  minStock     Float? @default(0)
+  lastUnitCost Float? @default(0)
+  averageCost  Float? @default(0) // Custo médio ponderado (calculado nas entradas)
+
   // Flags de Controle Profissional
-  controlStock Boolean  @default(true) // "Controla estoque"
-  controlCmv   Boolean  @default(true) // "Compõe CMV"
-  isProduced   Boolean  @default(false) // "Beneficiado" (Item produzido a partir de outros)
-  
+  controlStock Boolean @default(true) // "Controla estoque"
+  controlCmv   Boolean @default(true) // "Compõe CMV"
+  isProduced   Boolean @default(false) // "Beneficiado" (Item produzido a partir de outros)
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  groupId      String?
-  group        IngredientGroup? @relation(fields: [groupId], references: [id])
-  
+  groupId String?
+  group   IngredientGroup? @relation(fields: [groupId], references: [id])
+
   financialCategoryId String?
   financialCategory   TransactionCategory? @relation(fields: [financialCategoryId], references: [id])
 
-  suppliers    IngredientSupplier[]
-  productLinks ProductIngredient[]
-  addonIngredients AddonIngredient[]
-  stockEntries StockEntryItem[]
-  stockLosses  StockLoss[]
-  
-  // Receita para itens beneficiados
-  recipe       IngredientRecipe[] @relation("ProducedIngredient")
-  usedIn       IngredientRecipe[] @relation("ComponentIngredient")
-  
-  productions  ProductionLog[]
+  suppliers        IngredientSupplier[]
+  // DEPRECATED: usar FichaTecnicaIngredient
+  productLinks     ProductIngredient[] // @deprecated Usar FichaTecnica
+  addonIngredients AddonIngredient[] // @deprecated Usar FichaTecnica
+  fichasTecnicas   FichaTecnicaIngredient[]
+  stockEntries     StockEntryItem[]
+  stockLosses      StockLoss[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Receita para itens beneficiados
+  recipe IngredientRecipe[] @relation("ProducedIngredient")
+  usedIn IngredientRecipe[] @relation("ComponentIngredient")
+
+  productions ProductionLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
   @@index([groupId])
 }
 
 model IngredientSupplier {
-  id             String     @id @default(cuid())
-  ingredientId   String
-  ingredient     Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  
-  supplierId     String
-  supplier       Supplier   @relation(fields: [supplierId], references: [id])
-  
-  // Fator de Conversão (Ex: Compra Caixa com 10kg, consome em KG -> Fator 10)
-  conversionFactor Float    @default(1) 
-  purchaseUnit    String?   // Unidade de compra (Ex: CX, FD)
+  id           String     @id @default(cuid())
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  // Fator de Conversão (Ex: Compra Caixa com 10kg, consome em KG -> Fator 10)
+  conversionFactor Float   @default(1)
+  purchaseUnit     String? // Unidade de compra (Ex: CX, FD)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([ingredientId, supplierId])
   @@index([ingredientId])
@@ -1365,31 +1377,64 @@ model IngredientSupplier {
 }
 
 model IngredientRecipe {
-  id                     String @id @default(cuid())
-  producedIngredientId   String
-  producedIngredient     Ingredient @relation("ProducedIngredient", fields: [producedIngredientId], references: [id])
-  
-  componentIngredientId  String
-  componentIngredient    Ingredient @relation("ComponentIngredient", fields: [componentIngredientId], references: [id])
-  
-  quantity               Float // Quantidade necessária do componente
-  
+  id                   String     @id @default(cuid())
+  producedIngredientId String
+  producedIngredient   Ingredient @relation("ProducedIngredient", fields: [producedIngredientId], references: [id])
+
+  componentIngredientId String
+  componentIngredient   Ingredient @relation("ComponentIngredient", fields: [componentIngredientId], references: [id])
+
+  quantity Float // Quantidade necessária do componente
+
   // Campo para suportar "Rendimento" da ficha técnica
-  yieldAmount            Float? @default(1) 
+  yieldAmount Float? @default(1)
 
   @@index([producedIngredientId])
   @@index([componentIngredientId])
 }
 
+// === FICHA TÉCNICA (nova estrutura) ===
+model FichaTecnica {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  yieldAmount  Float      @default(1)
+  costPrice    Float      @default(0)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  ingredients FichaTecnicaIngredient[]
+  products    Product[]
+  addons      Addon[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([restaurantId])
+}
+
+model FichaTecnicaIngredient {
+  id             String       @id @default(cuid())
+  quantity       Float
+  fichaTecnicaId String
+  fichaTecnica   FichaTecnica @relation(fields: [fichaTecnicaId], references: [id], onDelete: Cascade)
+  ingredientId   String
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
+
+  @@unique([fichaTecnicaId, ingredientId])
+  @@index([fichaTecnicaId])
+  @@index([ingredientId])
+}
+
 model ProductionLog {
-  id            String @id @default(cuid())
-  ingredientId  String
-  ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
-  quantity      Float
-  producedAt    DateTime @default(now())
-  
-  restaurantId  String
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  id           String     @id @default(cuid())
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  quantity     Float
+  producedAt   DateTime   @default(now())
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@index([restaurantId])
   @@index([ingredientId])
@@ -1397,37 +1442,37 @@ model ProductionLog {
 
 model StockEntry {
   id            String   @id @default(cuid())
-  invoiceNumber String?  // Número da Nota Fiscal
+  invoiceNumber String? // Número da Nota Fiscal
   status        String   @default("PENDING") // PENDING, CONFIRMED, CANCELED
   totalAmount   Float    @default(0)
   receivedAt    DateTime @default(now())
 
-  restaurantId  String
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  supplierId    String?
-  supplier      Supplier?  @relation(fields: [supplierId], references: [id])
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
 
-  items         StockEntryItem[]
-  
+  items StockEntryItem[]
+
   // Vínculo opcional com financeiro
-  transactionId String?    @unique
+  transactionId String?               @unique
   transaction   FinancialTransaction? @relation(fields: [transactionId], references: [id])
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
 }
 
 model StockEntryItem {
-  id           String     @id @default(cuid())
-  quantity     Float
-  unitCost     Float?
-  
+  id       String @id @default(cuid())
+  quantity Float
+  unitCost Float?
+
   // Controle de Validade e Lote
-  batch        String?    // Número do Lote
-  expirationDate DateTime? 
+  batch          String? // Número do Lote
+  expirationDate DateTime?
 
   stockEntryId String
   stockEntry   StockEntry @relation(fields: [stockEntryId], references: [id], onDelete: Cascade)
@@ -1441,14 +1486,14 @@ model StockEntryItem {
 
 // Novo: Registro de Perdas e Desperdícios
 model StockLoss {
-  id           String   @id @default(cuid())
-  quantity     Float
-  reason       String   // EXPIRED, BROKEN, PRODUCTION_ERROR, THEFT, OTHER
-  notes        String?
-  lossDate     DateTime @default(now())
-  
+  id       String   @id @default(cuid())
+  quantity Float
+  reason   String // EXPIRED, BROKEN, PRODUCTION_ERROR, THEFT, OTHER
+  notes    String?
+  lossDate DateTime @default(now())
+
   // Custo estimado da perda no momento (para relatório de prejuízo)
-  unitCostSnapshot Float? 
+  unitCostSnapshot Float?
 
   ingredientId String
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
@@ -1456,23 +1501,23 @@ model StockLoss {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  userId       String?  // Quem registrou a perda
-  user         User?    @relation(fields: [userId], references: [id])
+  userId String? // Quem registrou a perda
+  user   User?   @relation(fields: [userId], references: [id])
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
   @@index([ingredientId])
 }
 
 model ProductIngredient {
-  id           String     @id @default(cuid())
-  quantity     Float      // Quantidade usada na receita (ex: 0.200 para 200g)
-  
-  productId    String
-  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(cuid())
+  quantity Float // Quantidade usada na receita (ex: 0.200 para 200g)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   ingredientId String
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
@@ -1483,44 +1528,44 @@ model ProductIngredient {
 // === NOVO MÓDULO: OPERAÇÃO (CHECKLIST & ROTINAS) ===
 
 model Sector {
-  id           String   @id @default(cuid())
-  name         String   // Ex: "Cozinha", "Salão", "Bar", "Estoque"
-  description  String?
-  
+  id          String  @id @default(cuid())
+  name        String // Ex: "Cozinha", "Salão", "Bar", "Estoque"
+  description String?
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  checklists   Checklist[]
-  users        User[]      @relation("UserSectors") // Usuários vinculados ao setor
+  checklists Checklist[]
+  users      User[]      @relation("UserSectors") // Usuários vinculados ao setor
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([name, restaurantId])
   @@index([restaurantId])
 }
 
 model Checklist {
-  id           String   @id @default(cuid())
-  title        String   // Ex: "Abertura de Cozinha", "Fechamento de Caixa"
+  id           String  @id @default(cuid())
+  title        String // Ex: "Abertura de Cozinha", "Fechamento de Caixa"
   description  String?
-  frequency    String   @default("DAILY") // "DAILY", "WEEKLY", "MONTHLY"
-  deadlineTime String?  // Horário limite (ex: "18:30")
-  days         String?  // JSON array: '["MONDAY", "WEDNESDAY"]' - dias específicos (se null, todos os dias)
-  
-  isActive     Boolean  @default(true)
+  frequency    String  @default("DAILY") // "DAILY", "WEEKLY", "MONTHLY"
+  deadlineTime String? // Horário limite (ex: "18:30")
+  days         String? // JSON array: '["MONDAY", "WEDNESDAY"]' - dias específicos (se null, todos os dias)
 
-  sectorId     String
-  sector       Sector   @relation(fields: [sectorId], references: [id])
+  isActive Boolean @default(true)
+
+  sectorId String
+  sector   Sector @relation(fields: [sectorId], references: [id])
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  tasks        ChecklistTask[]
-  executions   ChecklistExecution[]
+  tasks      ChecklistTask[]
+  executions ChecklistExecution[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
   @@index([sectorId])
@@ -1528,54 +1573,54 @@ model Checklist {
 }
 
 model ChecklistTask {
-  id           String   @id @default(cuid())
-  content      String   // A tarefa em si
-  isRequired   Boolean  @default(true)
-  order        Int      @default(0)
-  type         String   @default("CHECKBOX") // "CHECKBOX", "PHOTO", "TEXT", "NUMBER"
-  isActive     Boolean  @default(true)
+  id         String  @id @default(cuid())
+  content    String // A tarefa em si
+  isRequired Boolean @default(true)
+  order      Int     @default(0)
+  type       String  @default("CHECKBOX") // "CHECKBOX", "PHOTO", "TEXT", "NUMBER"
+  isActive   Boolean @default(true)
 
   // Procedimento de apoio
-  procedureType    String?  @default("NONE") // "NONE", "TEXT", "IMAGE", "VIDEO"
-  procedureContent String?  @db.Text
+  procedureType    String? @default("NONE") // "NONE", "TEXT", "IMAGE", "VIDEO"
+  procedureContent String? @db.Text
 
   // Dias específicos para esta task (se null, aparece em todos os dias)
-  days         String?  // JSON array: '["MONDAY", "WEDNESDAY"]'
+  days String? // JSON array: '["MONDAY", "WEDNESDAY"]'
 
-  checklistId  String
-  checklist    Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
 
-  responses    ChecklistResponse[]
+  responses ChecklistResponse[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([checklistId])
 }
 
 model ChecklistExecution {
-  id           String   @id @default(cuid())
-  
-  checklistId  String
-  checklist    Checklist @relation(fields: [checklistId], references: [id])
+  id String @id @default(cuid())
 
-  userId       String?   // Quem executou (opcional para QR Code)
-  user         User?     @relation(fields: [userId], references: [id])
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id])
+
+  userId String? // Quem executou (opcional para QR Code)
+  user   User?   @relation(fields: [userId], references: [id])
 
   externalUserName String? // Nome de quem preencheu via QR Code
 
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  status       String   @default("COMPLETED") // "COMPLETED", "INCOMPLETE"
-  notes        String?
-  
-  responses    ChecklistResponse[]
+  status String  @default("COMPLETED") // "COMPLETED", "INCOMPLETE"
+  notes  String?
 
-  startedAt    DateTime @default(now())
-  completedAt  DateTime @default(now())
-  durationSeconds Int?   // Tempo legado para preencher
-  isLate        Boolean  @default(false)  // Indica se enviado após o deadline
+  responses ChecklistResponse[]
+
+  startedAt       DateTime @default(now())
+  completedAt     DateTime @default(now())
+  durationSeconds Int? // Tempo legado para preencher
+  isLate          Boolean  @default(false) // Indica se enviado após o deadline
 
   @@index([checklistId])
   @@index([userId])
@@ -1588,65 +1633,65 @@ model ChecklistExecution {
 }
 
 model ChecklistResponse {
-  id           String   @id @default(cuid())
-  
-  executionId  String
-  execution    ChecklistExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
 
-  taskId       String
-  task         ChecklistTask @relation(fields: [taskId], references: [id], onDelete: Cascade) // Relacionamento formal
-  
-  value        String   // Resposta: "true", "caminho/foto.jpg", "texto livre", "25.5"
-  isOk         Boolean  @default(true) // Se a tarefa foi cumprida conforme esperado
-  notes        String?  // Observação específica deste item
+  executionId String
+  execution   ChecklistExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime @default(now())
+  taskId String
+  task   ChecklistTask @relation(fields: [taskId], references: [id], onDelete: Cascade) // Relacionamento formal
+
+  value String // Resposta: "true", "caminho/foto.jpg", "texto livre", "25.5"
+  isOk  Boolean @default(true) // Se a tarefa foi cumprida conforme esperado
+  notes String? // Observação específica deste item
+
+  createdAt DateTime @default(now())
 
   @@index([executionId])
   @@index([taskId])
 }
 
 model ChecklistReportSettings {
-  id               String   @id @default(cuid())
-  restaurantId     String   @unique
-  restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
+  id           String     @id @default(cuid())
+  restaurantId String     @unique
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  enabled          Boolean  @default(false)
-  recipientPhone   String?  // Numero principal que recebe o relatorio via WhatsApp
-  recipientPhones  String?  // Numeros adicionais separados por virgula (JSON array)
-  sendTime         String   @default("07:00") // Horário de envio do relatório (HH:mm)
-  turnStartHour   String   @default("06:00") // Início do turno/horário de abertura (HH:mm) - usada para definir range do relatório
-  reportFormat     String   @default("PDF")   // "PDF", "TEXT", "BOTH"
-  customMessage    String?  // Mensagem personalizada para o relatório (template)
-  
-  sendIndividualReport  Boolean  @default(true)   // Enviar relatório individual automaticamente ao completar
+  enabled         Boolean @default(false)
+  recipientPhone  String? // Numero principal que recebe o relatorio via WhatsApp
+  recipientPhones String? // Numeros adicionais separados por virgula (JSON array)
+  sendTime        String  @default("07:00") // Horário de envio do relatório (HH:mm)
+  turnStartHour   String  @default("06:00") // Início do turno/horário de abertura (HH:mm) - usada para definir range do relatório
+  reportFormat    String  @default("PDF") // "PDF", "TEXT", "BOTH"
+  customMessage   String? // Mensagem personalizada para o relatório (template)
+
+  sendIndividualReport   Boolean @default(true) // Enviar relatório individual automaticamente ao completar
   individualReportFormat String  @default("TEXT") // Formato do relatório individual: "PDF", "TEXT", "LINK", "BOTH"
-  reportDays        String?  // JSON array de dias: ["MONDAY","WEDNESDAY","FRIDAY"] - null = todos os dias
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  reportDays             String? // JSON array de dias: ["MONDAY","WEDNESDAY","FRIDAY"] - null = todos os dias
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Histórico de envios
-  sentReports      ChecklistReportLog[]
+  sentReports ChecklistReportLog[]
 }
 
 // Log de envio de relatórios
 model ChecklistReportLog {
-  id               String   @id @default(cuid())
-  restaurantId     String
-  settings         ChecklistReportSettings @relation(fields: [restaurantId], references: [restaurantId])
-  
-  type             String   // "DAILY", "INDIVIDUAL", "INDIVIDUAL_ATRASO", "DEADLINE_ALERT", "DEADLINE_OK"
-  checklistId      String?  // Para relatórios individuais
-  recipientPhone   String   // Numero que recebeu
-  status           String   // "SUCCESS", "FAILED", "RETRY"
-  errorMessage     String?  // Erro se falhou
-  retryCount       Int      @default(0)
-  sentAt           DateTime @default(now())
-  
+  id           String                  @id @default(cuid())
+  restaurantId String
+  settings     ChecklistReportSettings @relation(fields: [restaurantId], references: [restaurantId])
+
+  type           String // "DAILY", "INDIVIDUAL", "INDIVIDUAL_ATRASO", "DEADLINE_ALERT", "DEADLINE_OK"
+  checklistId    String? // Para relatórios individuais
+  recipientPhone String // Numero que recebeu
+  status         String // "SUCCESS", "FAILED", "RETRY"
+  errorMessage   String? // Erro se falhou
+  retryCount     Int      @default(0)
+  sentAt         DateTime @default(now())
+
   // Resumo do que foi enviado
-  summary          String?  // Texto resumido do relatório enviado
-  
+  summary String? // Texto resumido do relatório enviado
+
   @@index([restaurantId])
   @@index([sentAt])
   @@index([type])
@@ -1656,15 +1701,15 @@ model SubscriptionPlan {
   id          String   @id @default(cuid())
   name        String   @unique // Ex: "Básico", "Profissional", "Enterprise"
   slug        String   @unique // Ex: "basico", "profissional"
-  price       Float?   // Preço mensal
-  description String?  // Descrição do plano
-  modules     Json     // Módulos incluídos (array de strings)
+  price       Float? // Preço mensal
+  description String? // Descrição do plano
+  modules     Json // Módulos incluídos (array de strings)
   isActive    Boolean  @default(true)
   isDefault   Boolean  @default(false) // Plano padrão para novos restaurantes
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   restaurants Restaurant[]
-  
+
   @@index([isActive])
 }

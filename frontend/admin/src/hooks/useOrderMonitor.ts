@@ -72,7 +72,7 @@ export function useOrderMonitor(isKdsPage: boolean): UseOrderMonitorReturn {
           const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
 
           if (isAdminOrStaff) {
-            const ordersData = await getAdminOrders();
+            const ordersData = await getAdminOrders({ limit: 9999 });
             const ordersList = ordersData?.orders || [];
             setAllOrders(ordersList);
             lastOrderIdsRef.current = new Set(ordersList.map((o: Order) => o.id));
