@@ -12,6 +12,7 @@ router.delete('/:id', needsAuth, IngredientController.delete);
 // Rotas de Grupos
 router.get('/groups', needsAuth, IngredientController.getGroups);
 router.post('/groups', needsAuth, IngredientController.createGroup);
+router.put('/groups/:id', needsAuth, IngredientController.updateGroup);
 router.delete('/groups/:id', needsAuth, IngredientController.deleteGroup);
 
 // Rotas de Receitas (Insumos Beneficiados)

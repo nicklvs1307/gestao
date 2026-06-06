@@ -83,6 +83,17 @@ class IngredientController {
     res.status(204).send();
   });
 
+  // PUT /api/ingredients/groups/:id
+  updateGroup = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { name, parentId } = req.body;
+    const updated = await prisma.ingredientGroup.update({
+      where: { id },
+      data: { name, parentId }
+    });
+    res.json(updated);
+  });
+
   // === RECEITAS DE INSUMOS BENEFICIADOS ===
 
   // GET /api/ingredients/:id/recipe

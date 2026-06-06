@@ -50,6 +50,12 @@ const StockDashboard = lazy(() => import('./pages/stock/StockDashboard'));
 const StockIngredients = lazy(() => import('./pages/stock/StockIngredients'));
 const StockPurchases = lazy(() => import('./pages/stock/StockPurchases'));
 const StockFichasTecnicas = lazy(() => import('./pages/stock/StockFichasTecnicas'));
+const StockCmv = lazy(() => import('./pages/stock/StockCmv'));
+const StockHistory = lazy(() => import('./pages/stock/StockHistory'));
+const StockMoves = lazy(() => import('./pages/stock/StockMoves'));
+const StockShoppingList = lazy(() => import('./pages/stock/StockShoppingList'));
+const StockPurchaseOrders = lazy(() => import('./pages/stock/StockPurchaseOrders'));
+const StockIngredientGroups = lazy(() => import('./pages/stock/StockIngredientGroups'));
 
 const FiscalManagement = lazy(() => import('./components/FiscalManagement'));
 const CustomerManagement = lazy(() => import('./components/CustomerManagement'));
@@ -99,9 +105,16 @@ const PAGE_TITLES: Record<string, string> = {
   '/kds': 'Cozinha',
   '/financial': 'Financeiro',
   '/stock': 'Estoque',
-  '/stock/dashboard': 'Dashboard',
-  '/stock/ingredients': 'Ingredientes',
-  '/stock/purchases': 'Compras',
+  '/stock/dashboard': 'Painel Geral',
+  '/stock/cmv': 'Análise e Simulação de CMV',
+  '/stock/fichas': 'Fichas Técnicas',
+  '/stock/ingredient-groups': 'Grupos de Ingrediente',
+  '/stock/history': 'Histórico de Posição de Estoque',
+  '/stock/ingredients': 'Ingredientes e Insumos',
+  '/stock/shopping-list': 'Lista de Compras',
+  '/stock/moves': 'Movimentações de Estoque',
+  '/stock/invoices': 'Notas de Entrada',
+  '/stock/purchase-orders': 'Ordens de Compra',
   '/fiscal': 'Fiscal',
   '/drivers': 'Entregadores',
   '/drivers/settlement': 'Fechamento',
@@ -209,11 +222,19 @@ function AdminRoutes() {
           <Route path="/stock" element={<ProtectedRoute permission="stock:view"><StockLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<StockDashboard />} />
-            <Route path="ingredients" element={<StockIngredients />} />
-            <Route path="purchases" element={<StockPurchases />} />
+            <Route path="cmv" element={<StockCmv />} />
             <Route path="fichas" element={<StockFichasTecnicas />} />
+            <Route path="ingredient-groups" element={<StockIngredientGroups />} />
+            <Route path="history" element={<StockHistory />} />
+            <Route path="ingredients" element={<StockIngredients />} />
+            <Route path="shopping-list" element={<StockShoppingList />} />
+            <Route path="moves" element={<StockMoves />} />
+            <Route path="invoices" element={<StockPurchases />} />
+            <Route path="purchase-orders" element={<StockPurchaseOrders />} />
           </Route>
           <Route path="/production/technical-sheets" element={<ProtectedRoute permission="products:manage"><TechnicalSheetManagement /></ProtectedRoute>} />
+          <Route path="/ingredients" element={<Navigate to="/stock/ingredients" replace />} />
+          <Route path="/ingredients/groups" element={<Navigate to="/stock/ingredient-groups" replace />} />
           <Route path="/fiscal" element={<ProtectedRoute permission="settings:manage"><FiscalManagement /></ProtectedRoute>} />
           <Route path="/checklists" element={<ProtectedRoute permission="orders:view"><ChecklistManagement /></ProtectedRoute>} />
           <Route path="/checklists/new" element={<ProtectedRoute permission="orders:manage"><ChecklistFormPage /></ProtectedRoute>} />

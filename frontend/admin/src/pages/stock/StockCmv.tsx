@@ -1,34 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { getProducts, getIngredients } from '../services/api';
+import { getProducts, getIngredients } from '../../services/api';
 import { 
     Calculator, AlertTriangle, Search, 
-    Percent, DollarSign, Package, Info, RefreshCw, Loader2, TrendingUp, TrendingDown, Target, CheckCircle
+    Percent, DollarSign, Package, Info, RefreshCw, Loader2, TrendingDown, Target, CheckCircle
 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
 
-const CmvAnalysis: React.FC = () => {
+const StockCmv: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [ingredients, setIngredients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    
-    // Estados de Simulação
     const [simulatedPrices, setSimulatedPrices] = useState<Record<string, number>>({});
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [simulatedCosts, setSimulatedCosts] = useState<Record<string, number>>({});
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const [prodsData, ingData] = await Promise.all([ getProducts(), getIngredients() ]);
+            const [prodsData, ingData] = await Promise.all([getProducts(), getIngredients()]);
             setProducts(prodsData);
             setIngredients(ingData);
         } catch (error) { toast.error("Erro ao carregar dados."); }
@@ -36,23 +29,19 @@ const CmvAnalysis: React.FC = () => {
     };
 
     const calculateProductCost = (product: any) => {
-        // Prioridade 1: Ficha técnica
         const ficha = product.fichaTecnica;
         if (ficha && ficha.ingredients?.length > 0) {
             return ficha.ingredients.reduce((acc: number, link: any) => {
                 const ingredient = ingredients.find(i => i.id === link.ingredientId);
                 if (!ingredient) return acc;
-                const cost = simulatedCosts[ingredient.id] ?? (ingredient.lastUnitCost || 0);
-                return acc + (cost * link.quantity);
+                return acc + ((ingredient.lastUnitCost || 0) * link.quantity);
             }, 0);
         }
-        // Fallback legado
         if (!product.ingredients || product.ingredients.length === 0) return 0;
         return product.ingredients.reduce((acc: number, link: any) => {
             const ingredient = ingredients.find(i => i.id === link.ingredientId);
             if (!ingredient) return acc;
-            const cost = simulatedCosts[ingredient.id] ?? (ingredient.lastUnitCost || 0);
-            return acc + (cost * link.quantity);
+            return acc + ((ingredient.lastUnitCost || 0) * link.quantity);
         }, 0);
     };
 
@@ -62,7 +51,7 @@ const CmvAnalysis: React.FC = () => {
         return { label: 'Crítico', color: 'text-rose-600 bg-rose-50 border-rose-100', icon: AlertTriangle };
     };
 
-    const filteredProducts = products.filter(p => 
+    const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -70,13 +59,12 @@ const CmvAnalysis: React.FC = () => {
     if (loading) return (
         <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Auditando Fichas Técnicas...</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Carregando...</span>
         </div>
     );
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-            {/* Header Premium */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Inteligência de Custos</h1>
@@ -95,11 +83,10 @@ const CmvAnalysis: React.FC = () => {
                 </div>
             </div>
 
-            {/* Busca e Filtro */}
             <div className="relative group max-w-2xl">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     className="w-full h-16 pl-14 pr-6 rounded-[2rem] bg-white border-2 border-slate-100 focus:border-orange-500 outline-none transition-all font-black text-slate-900 uppercase italic tracking-tight shadow-xl shadow-slate-200/50"
                     placeholder="Filtrar cardápio para análise..."
                     value={searchTerm}
@@ -118,8 +105,6 @@ const CmvAnalysis: React.FC = () => {
                     return (
                         <Card key={product.id} className="p-0 overflow-hidden border-2 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-2xl bg-white" noPadding>
                             <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-50">
-                                
-                                {/* Info Produto */}
                                 <div className="lg:w-1/3 p-8 space-y-6">
                                     <div className="flex items-center gap-5">
                                         <div className="w-20 h-20 rounded-[2rem] bg-slate-50 overflow-hidden border-2 border-slate-100 shadow-inner group">
@@ -130,18 +115,16 @@ const CmvAnalysis: React.FC = () => {
                                             <span className="text-[9px] font-black text-white bg-slate-900 px-2 py-0.5 rounded uppercase tracking-widest mt-2 inline-block">{product.category?.name || 'Geral'}</span>
                                         </div>
                                     </div>
-
                                     <div className="space-y-4 pt-4">
                                         <div className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Custo Insumos</span>
                                             <span className="font-black text-lg text-slate-900 italic tracking-tighter">R$ {realCost.toFixed(2).replace('.', ',')}</span>
                                         </div>
-                                        
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">Preço de Venda (Simular)</label>
                                             <div className="relative">
                                                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={16} />
-                                                <input 
+                                                <input
                                                     type="number" step="0.01"
                                                     className="w-full h-14 pl-10 pr-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-lg italic tracking-tighter focus:border-orange-500 outline-none transition-all text-slate-900"
                                                     value={simulatedPrices[product.id] ?? product.price}
@@ -152,7 +135,6 @@ const CmvAnalysis: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Performance e Status */}
                                 <div className="lg:w-1/3 p-8 flex flex-col justify-center items-center bg-slate-50/30 space-y-8">
                                     <div className="text-center">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Margem de Lucro</p>
@@ -160,11 +142,9 @@ const CmvAnalysis: React.FC = () => {
                                             R$ {profit.toFixed(2).replace('.', ',')}
                                         </h4>
                                     </div>
-
                                     <div className={cn("px-8 py-3 rounded-[1.5rem] border-2 font-black uppercase text-xs tracking-widest flex items-center gap-3 shadow-lg transition-all", status.color, "shadow-current/5")}>
                                         <Percent size={18} /> CMV: {cmv.toFixed(1)}% • {status.label}
                                     </div>
-
                                     {cmv > 35 && (
                                         <div className="flex items-center gap-2 text-rose-500 animate-pulse bg-rose-50 px-4 py-2 rounded-xl border border-rose-100">
                                             <AlertTriangle size={16} />
@@ -173,7 +153,6 @@ const CmvAnalysis: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Ficha Técnica Detalhada */}
                                 <div className="lg:w-1/3 p-8 space-y-6">
                                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] border-b border-slate-100 pb-4 flex items-center gap-3 italic">
                                         <TrendingDown size={16} className="text-orange-500" /> Detalhamento do Custo
@@ -182,9 +161,7 @@ const CmvAnalysis: React.FC = () => {
                                         {(product.fichaTecnica?.ingredients?.length > 0 || product.ingredients?.length > 0) ? (
                                             (product.fichaTecnica?.ingredients || product.ingredients || []).map((link: any) => {
                                                 const ingredient = ingredients.find(i => i.id === link.ingredientId);
-                                                const cost = simulatedCosts[ingredient?.id] ?? (ingredient?.lastUnitCost || 0);
-                                                const total = cost * link.quantity;
-                                                
+                                                const total = (ingredient?.lastUnitCost || 0) * link.quantity;
                                                 return (
                                                     <div key={link.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 hover:border-orange-200 transition-all group/item shadow-sm">
                                                         <div className="flex flex-col">
@@ -212,4 +189,4 @@ const CmvAnalysis: React.FC = () => {
     );
 };
 
-export default CmvAnalysis;
+export default StockCmv;

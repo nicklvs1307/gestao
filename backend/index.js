@@ -252,6 +252,7 @@ app.use('/api/cashier', cashierRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/fiscal', fiscalRoutes);
 app.use('/api/stock', stockRoutes);
+app.use('/api/stock/purchase-orders', require('./src/routes/purchaseOrderRoutes'));
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin/print-layout', printLayoutRoutes);
