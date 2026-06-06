@@ -49,7 +49,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   return (
     <ModalPortal isOpen={isOpen}>
-      <div className="fixed inset-0 z-[var(--z-toast)] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={onClose} />
         <div className={cn(
           'relative bg-card text-card-foreground rounded-2xl shadow-2xl border border-border w-full max-w-sm',

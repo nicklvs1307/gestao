@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { api } from '../../services/api';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface IngredientGroup {
   id: string;
@@ -180,50 +181,61 @@ const StockIngredientGroups: React.FC = () => {
       </div>
 
       {/* Modal */}
+      <AnimatePresence>
       {isCreating && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900">
-                  {editingGroup ? 'Editar Grupo' : 'Novo Grupo'}
-                </h2>
-                <button onClick={() => { setIsCreating(false); setEditingGroup(null); }} className="p-2 hover:bg-slate-100 rounded-lg">
-                  <X size={20} className="text-slate-500" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nome *</label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ex: Carnes, Laticínios, Verduras..."
-                    autoFocus
-                  />
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => { setIsCreating(false); setEditingGroup(null); }} />
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col"
+          >
+            <header className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                  <Layers size={24} />
                 </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                    {editingGroup ? 'Editar Grupo' : 'Novo Grupo'}
+                  </h3>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Classificação de Insumos</p>
+                </div>
+              </div>
+              <button onClick={() => { setIsCreating(false); setEditingGroup(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
+                <X size={20} />
+              </button>
+            </header>
 
-                {formData.parentId && (
-                  <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
-                    Subgrupo de: {groups.find(g => g.id === formData.parentId)?.name}
-                  </div>
-                )}
+            <div className="p-8 space-y-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome do Grupo *</label>
+                <input 
+                  className="ui-input w-full h-12 text-sm font-bold uppercase" placeholder="Ex: Carnes, Laticínios, Verduras..."
+                  value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} autoFocus
+                />
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
-                <Button variant="outline" onClick={() => { setIsCreating(false); setEditingGroup(null); }}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving && <Loader2 className="animate-spin mr-2" size={16} />}
-                  {editingGroup ? 'Salvar' : 'Criar'}
-                </Button>
-              </div>
+              {formData.parentId && (
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center gap-2">
+                  <ChevronRight size={14} className="text-slate-400" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Subgrupo de: <strong className="text-slate-700">{groups.find(g => g.id === formData.parentId)?.name}</strong>
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
+
+            <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+              <Button variant="ghost" className="rounded-2xl h-12 uppercase text-[10px] font-black tracking-widest" onClick={() => { setIsCreating(false); setEditingGroup(null); }}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={saving} className="rounded-2xl h-12 px-8 shadow-lg uppercase text-[10px] font-black tracking-widest italic bg-slate-900 text-white hover:bg-black">
+                {saving && <Loader2 className="animate-spin mr-2" size={16} />}
+                {editingGroup ? 'Salvar' : 'Criar'}
+              </Button>
+            </div>
+          </motion.div>
         </div>
       )}
+      </AnimatePresence>
     </div>
   );
 };

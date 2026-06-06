@@ -19,6 +19,7 @@ import {
   duplicate
 } from '../../services/api/fichaTecnicaService';
 import { api } from '../../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Ingredient {
   id: string;
@@ -320,135 +321,105 @@ const StockFichasTecnicas: React.FC = () => {
       </div>
 
       {/* Editor Modal */}
+      <AnimatePresence>
       {isCreating && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900">
-                  {editingFicha ? 'Editar Ficha Técnica' : 'Nova Ficha Técnica'}
-                </h2>
-                <button
-                  onClick={() => { setIsCreating(false); setEditingFicha(null); }}
-                  className="p-2 hover:bg-slate-100 rounded-lg"
-                >
-                  <X size={20} className="text-slate-500" />
-                </button>
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => { setIsCreating(false); setEditingFicha(null); }} />
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="relative w-full max-w-3xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]"
+          >
+            <header className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                  <ChefHat size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                    {editingFicha ? 'Editar Ficha Técnica' : 'Nova Ficha Técnica'}
+                  </h3>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Composição do Prato</p>
+                </div>
+              </div>
+              <button onClick={() => { setIsCreating(false); setEditingFicha(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
+                <X size={20} />
+              </button>
+            </header>
+
+            <div className="p-8 space-y-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome *</label>
+                  <input className="ui-input w-full h-12 text-sm font-bold uppercase" placeholder="Ex: Hambúrguer Clássico" value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Descrição</label>
+                  <input className="ui-input w-full h-12 text-sm font-bold" placeholder="Descrição opcional" value={formData.description || ''} onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))} />
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nome *</label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ex: Hambúrguer Clássico"
-                  />
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Rendimento (porções)</label>
+                <input type="number" min="1" className="ui-input w-full h-12 text-sm font-bold" value={formData.yieldAmount} onChange={e => setFormData(prev => ({ ...prev, yieldAmount: Number(e.target.value) || 1 }))} />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 flex items-center gap-2">
+                    <Package size={14} className="text-slate-500" /> Ingredientes *
+                  </label>
+                  <button type="button" onClick={addIngredient} className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 tracking-widest flex items-center gap-1.5">
+                    <Plus size={14} /> Adicionar
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Descrição</label>
-                  <Input
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Descrição opcional"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Rendimento (porções)</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={formData.yieldAmount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, yieldAmount: Number(e.target.value) || 1 }))}
-                  />
-                </div>
-
-                {/* Ingredientes */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700">Ingredientes *</label>
-                    <Button onClick={addIngredient} size="sm" variant="outline">
-                      <Plus size={14} className="mr-1" />
-                      Adicionar
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2">
+                <div className="border border-slate-200 rounded-[2rem] overflow-hidden bg-slate-50/30">
+                  <div className="divide-y divide-slate-100">
                     {formData.ingredients.map((item, index) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <select
-                          value={item.ingredientId}
-                          onChange={(e) => updateIngredient(index, 'ingredientId', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
+                      <div key={index} className="flex gap-3 items-center p-3 px-4">
+                        <select value={item.ingredientId} onChange={e => updateIngredient(index, 'ingredientId', e.target.value)} className="flex-1 ui-input h-10 text-[10px] font-bold uppercase bg-white border-slate-200">
                           <option value="">Selecione...</option>
-                          {availableIngredients.map(ing => (
-                            <option key={ing.id} value={ing.id}>
-                              {ing.name} (R$ {ing.averageCost.toFixed(2)}/{ing.unit})
-                            </option>
-                          ))}
+                          {availableIngredients.map(ing => <option key={ing.id} value={ing.id}>{ing.name} (R$ {ing.averageCost.toFixed(2)}/{ing.unit})</option>)}
                         </select>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.quantity}
-                          onChange={(e) => updateIngredient(index, 'quantity', Number(e.target.value) || 0)}
-                          className="w-24"
-                          placeholder="Qtd"
-                        />
-                        <button
-                          onClick={() => removeIngredient(index)}
-                          className="p-2 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 size={14} className="text-red-500" />
+                        <input type="number" min="0" step="0.01" value={item.quantity} onChange={e => updateIngredient(index, 'quantity', Number(e.target.value) || 0)} className="ui-input w-20 h-10 text-xs font-bold text-center bg-white border-slate-200" placeholder="Qtd" />
+                        <button type="button" onClick={() => removeIngredient(index)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors flex items-center justify-center">
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     ))}
-
-                    {formData.ingredients.length === 0 && (
-                      <p className="text-sm text-slate-500 text-center py-4">
-                        Nenhum ingrediente adicionado
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                {/* Resumo de custo */}
-                {formData.ingredients.length > 0 && (
-                  <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Custo Total:</span>
-                      <span className="font-bold text-blue-600">R$ {calcTotalCost().toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Custo por Porção:</span>
-                      <span className="font-bold">R$ {calcCostPerUnit().toFixed(2)}</span>
-                    </div>
-                  </div>
+                {formData.ingredients.length === 0 && (
+                  <p className="text-sm text-slate-400 text-center py-6 italic">Nenhum ingrediente adicionado</p>
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => { setIsCreating(false); setEditingFicha(null); }}
-                >
-                  Cancelar
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? (
-                    <Loader2 className="animate-spin mr-2" size={16} />
-                  ) : null}
-                  {editingFicha ? 'Salvar' : 'Criar'}
-                </Button>
-              </div>
+              {formData.ingredients.length > 0 && (
+                <div className="bg-slate-50 rounded-2xl p-4 space-y-2 border border-slate-100">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Custo Total</span>
+                    <span className="text-xl font-black italic tracking-tighter text-slate-900">R$ {calcTotalCost().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Custo por Porção</span>
+                    <span className="text-lg font-black italic tracking-tighter text-slate-900">R$ {calcCostPerUnit().toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+
+            <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+              <Button variant="ghost" className="rounded-2xl h-12 uppercase text-[10px] font-black tracking-widest" onClick={() => { setIsCreating(false); setEditingFicha(null); }}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={saving} className="rounded-2xl h-12 px-8 shadow-lg uppercase text-[10px] font-black tracking-widest italic bg-slate-900 text-white hover:bg-black">
+                {saving && <Loader2 className="animate-spin mr-2" size={16} />}
+                {editingFicha ? 'Salvar' : 'Criar'}
+              </Button>
+            </div>
+          </motion.div>
         </div>
       )}
+      </AnimatePresence>
     </div>
   );
 };

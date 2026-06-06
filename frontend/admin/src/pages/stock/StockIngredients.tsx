@@ -11,6 +11,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface IngredientFormData {
     name: string;
@@ -255,121 +256,94 @@ const StockIngredients: React.FC = () => {
             </Card>
 
             {/* MODAL CRIAR/EDITAR */}
+            <AnimatePresence>
             {showForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold text-slate-900">
-                                    {editingId ? 'Editar Insumo' : 'Novo Insumo'}
-                                </h2>
-                                <button onClick={() => { setShowForm(false); setEditingId(null); }} className="p-2 hover:bg-slate-100 rounded-lg">
-                                    <X size={20} className="text-slate-500" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => { setShowForm(false); setEditingId(null); }} />
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]"
+                    >
+                        <header className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                                    <Tag size={24} />
+                                </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Nome *</label>
-                                    <Input
-                                        value={formData.name}
-                                        onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                        placeholder="Ex: Farinha de Trigo"
-                                        autoFocus
-                                    />
+                                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+                                        {editingId ? 'Editar Insumo' : 'Novo Insumo'}
+                                    </h3>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cadastro de Matéria-Prima</p>
                                 </div>
+                            </div>
+                            <button onClick={() => { setShowForm(false); setEditingId(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
+                                <X size={20} />
+                            </button>
+                        </header>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Unidade</label>
-                                        <select
-                                            value={formData.unit}
-                                            onChange={e => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-                                        >
-                                            {UNITS.map(u => <option key={u} value={u}>{u.toUpperCase()}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Grupo</label>
-                                        <select
-                                            value={formData.groupId}
-                                            onChange={e => setFormData(prev => ({ ...prev, groupId: e.target.value }))}
-                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-                                        >
-                                            <option value="">Sem grupo</option>
-                                            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                                        </select>
-                                    </div>
+                        <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome do Insumo *</label>
+                                <input 
+                                    className="ui-input w-full h-12 text-sm font-bold uppercase" placeholder="Ex: Farinha de Trigo"
+                                    value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} autoFocus
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade</label>
+                                    <select value={formData.unit} onChange={e => setFormData(prev => ({ ...prev, unit: e.target.value }))} className="ui-input w-full h-12 text-[11px] font-bold uppercase bg-white border-slate-200">
+                                        {UNITS.map(u => <option key={u} value={u}>{u.toUpperCase()}</option>)}
+                                    </select>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Estoque Atual</label>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            value={formData.stock}
-                                            onChange={e => setFormData(prev => ({ ...prev, stock: Number(e.target.value) || 0 }))}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Estoque Mínimo</label>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            value={formData.minStock}
-                                            onChange={e => setFormData(prev => ({ ...prev, minStock: Number(e.target.value) || 0 }))}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-4 pt-2">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.controlStock}
-                                            onChange={e => setFormData(prev => ({ ...prev, controlStock: e.target.checked }))}
-                                            className="w-4 h-4 rounded border-slate-300 text-blue-600"
-                                        />
-                                        <span className="text-sm text-slate-700">Controla estoque</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.controlCmv}
-                                            onChange={e => setFormData(prev => ({ ...prev, controlCmv: e.target.checked }))}
-                                            className="w-4 h-4 rounded border-slate-300 text-blue-600"
-                                        />
-                                        <span className="text-sm text-slate-700">Compõe CMV</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.isProduced}
-                                            onChange={e => setFormData(prev => ({ ...prev, isProduced: e.target.checked }))}
-                                            className="w-4 h-4 rounded border-slate-300 text-blue-600"
-                                        />
-                                        <span className="text-sm text-slate-700">É produzido</span>
-                                    </label>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Grupo</label>
+                                    <select value={formData.groupId} onChange={e => setFormData(prev => ({ ...prev, groupId: e.target.value }))} className="ui-input w-full h-12 text-[11px] font-bold uppercase bg-white border-slate-200">
+                                        <option value="">Sem grupo</option>
+                                        {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                                    </select>
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 mt-6">
-                                <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); }}>
-                                    Cancelar
-                                </Button>
-                                <Button onClick={handleSave} disabled={saving}>
-                                    {saving && <Loader2 className="animate-spin mr-2" size={16} />}
-                                    {editingId ? 'Salvar' : 'Criar'}
-                                </Button>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Estoque Atual</label>
+                                    <input type="number" min="0" step="0.01" className="ui-input w-full h-12 text-sm font-bold" value={formData.stock} onChange={e => setFormData(prev => ({ ...prev, stock: Number(e.target.value) || 0 }))} />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Estoque Mínimo</label>
+                                    <input type="number" min="0" step="0.01" className="ui-input w-full h-12 text-sm font-bold" value={formData.minStock} onChange={e => setFormData(prev => ({ ...prev, minStock: Number(e.target.value) || 0 }))} />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-6 pt-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formData.controlStock} onChange={e => setFormData(prev => ({ ...prev, controlStock: e.target.checked }))} className="w-4 h-4 rounded border-slate-300 text-blue-600" />
+                                    <span className="text-sm font-bold text-slate-700">Controla estoque</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formData.controlCmv} onChange={e => setFormData(prev => ({ ...prev, controlCmv: e.target.checked }))} className="w-4 h-4 rounded border-slate-300 text-blue-600" />
+                                    <span className="text-sm font-bold text-slate-700">Compõe CMV</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formData.isProduced} onChange={e => setFormData(prev => ({ ...prev, isProduced: e.target.checked }))} className="w-4 h-4 rounded border-slate-300 text-blue-600" />
+                                    <span className="text-sm font-bold text-slate-700">É produzido</span>
+                                </label>
                             </div>
                         </div>
-                    </div>
+
+                        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                            <Button variant="ghost" className="rounded-2xl h-12 uppercase text-[10px] font-black tracking-widest" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancelar</Button>
+                            <Button onClick={handleSave} disabled={saving} className="rounded-2xl h-12 px-8 shadow-lg uppercase text-[10px] font-black tracking-widest italic bg-slate-900 text-white hover:bg-black">
+                                {saving && <Loader2 className="animate-spin mr-2" size={16} />}
+                                {editingId ? 'Salvar Alterações' : 'Criar Insumo'}
+                            </Button>
+                        </div>
+                    </motion.div>
                 </div>
             )}
+            </AnimatePresence>
 
             <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
         </div>
