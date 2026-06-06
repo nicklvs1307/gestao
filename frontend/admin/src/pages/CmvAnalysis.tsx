@@ -36,6 +36,17 @@ const CmvAnalysis: React.FC = () => {
     };
 
     const calculateProductCost = (product: any) => {
+        // Prioridade 1: Ficha técnica
+        const ficha = product.fichaTecnica;
+        if (ficha && ficha.ingredients?.length > 0) {
+            return ficha.ingredients.reduce((acc: number, link: any) => {
+                const ingredient = ingredients.find(i => i.id === link.ingredientId);
+                if (!ingredient) return acc;
+                const cost = simulatedCosts[ingredient.id] ?? (ingredient.lastUnitCost || 0);
+                return acc + (cost * link.quantity);
+            }, 0);
+        }
+        // Fallback legado
         if (!product.ingredients || product.ingredients.length === 0) return 0;
         return product.ingredients.reduce((acc: number, link: any) => {
             const ingredient = ingredients.find(i => i.id === link.ingredientId);
@@ -168,21 +179,23 @@ const CmvAnalysis: React.FC = () => {
                                         <TrendingDown size={16} className="text-orange-500" /> Detalhamento do Custo
                                     </h4>
                                     <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                                        {product.ingredients?.length > 0 ? product.ingredients.map((link: any) => {
-                                            const ingredient = ingredients.find(i => i.id === link.ingredientId);
-                                            const cost = simulatedCosts[ingredient?.id] ?? (ingredient?.lastUnitCost || 0);
-                                            const total = cost * link.quantity;
-                                            
-                                            return (
-                                                <div key={link.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 hover:border-orange-200 transition-all group/item shadow-sm">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-black text-[10px] text-slate-700 uppercase italic leading-none group-hover/item:text-orange-600 transition-colors">{ingredient?.name}</span>
-                                                        <span className="text-[9px] text-slate-400 font-bold uppercase mt-1">{link.quantity} {ingredient?.unit}</span>
+                                        {(product.fichaTecnica?.ingredients?.length > 0 || product.ingredients?.length > 0) ? (
+                                            (product.fichaTecnica?.ingredients || product.ingredients || []).map((link: any) => {
+                                                const ingredient = ingredients.find(i => i.id === link.ingredientId);
+                                                const cost = simulatedCosts[ingredient?.id] ?? (ingredient?.lastUnitCost || 0);
+                                                const total = cost * link.quantity;
+                                                
+                                                return (
+                                                    <div key={link.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 hover:border-orange-200 transition-all group/item shadow-sm">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-black text-[10px] text-slate-700 uppercase italic leading-none group-hover/item:text-orange-600 transition-colors">{ingredient?.name}</span>
+                                                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-1">{link.quantity} {ingredient?.unit}</span>
+                                                        </div>
+                                                        <span className="font-black text-xs text-slate-900 italic tracking-tighter">R$ {total.toFixed(2)}</span>
                                                     </div>
-                                                    <span className="font-black text-xs text-slate-900 italic tracking-tighter">R$ {total.toFixed(2)}</span>
-                                                </div>
-                                            );
-                                        }) : (
+                                                );
+                                            })
+                                        ) : (
                                             <div className="py-12 text-center opacity-20">
                                                 <Info size={32} className="mx-auto mb-3" />
                                                 <p className="text-[10px] font-black uppercase tracking-widest">Sem Ficha Técnica</p>

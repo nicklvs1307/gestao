@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup, Addon } from '../services/api/addonService';
+import * as fichaTecnicaService from '../services/api/fichaTecnicaService';
 import { uploadProductImage } from '../services/api/products';
 import { 
     ArrowLeft, Plus, Trash2, Save, X, GripVertical, 
@@ -36,24 +37,32 @@ import { Input } from '../components/ui/Input';
 import { getImageUrl } from '../utils/image';
 import { getIngredients } from '../services/api/stock';
 
-const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, availableIngredients, navigate }: {
+const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, availableIngredients, navigate, fichasDisponiveis, onLinkAddonFicha, onUnlinkAddonFicha }: {
     addon: Addon;
     index: number;
     updateAddon: (index: number, field: keyof Addon, value: any) => void;
     removeAddonRow: (index: number) => void;
     availableIngredients: any[];
     navigate: any;
+    fichasDisponiveis: any[];
+    onLinkAddonFicha: (fichaId: string, addonId: string) => void;
+    onUnlinkAddonFicha: (addonId: string) => void;
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const calculatedCost = React.useMemo(() => {
+    // Prioridade 1: Ficha técnica vinculada
+    if (addon.fichaTecnica?.costPrice != null) {
+      return addon.fichaTecnica.costPrice;
+    }
+    // Fallback legado
     return (addon.ingredients || []).reduce((acc: number, item: any) => {
         const ing = availableIngredients.find(i => i.id === item.ingredientId);
         return acc + (Number(item.quantity) * (ing?.averageCost || ing?.lastUnitCost || 0));
     }, 0);
-  }, [addon.ingredients, availableIngredients]);
+  }, [addon.fichaTecnica, addon.ingredients, availableIngredients]);
 
   useEffect(() => {
     if (calculatedCost !== addon.costPrice && calculatedCost > 0) {
@@ -210,23 +219,26 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
               >
                 <div className="grid grid-cols-12 gap-6 items-end">
                   <div className="col-span-3">
-                    <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block mb-1">Custo Real (Baseado em Ficha)</label>
-                    <div className="relative group/cost">
-                      <Input 
-                          type="number" 
-                          value={addon.costPrice || 0} 
-                          className="h-8 text-[11px] px-2 border-rose-100 bg-white text-rose-600 font-bold"
-                          readOnly
-                          noMargin
-                      />
-                      <button 
-                          type="button"
-                          onClick={() => navigate('/production/technical-sheets')}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-300 hover:text-rose-600 transition-all"
+                    <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block mb-1">Ficha Técnica Vinculada</label>
+                    {addon.fichaTecnica ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-8 text-[10px] px-2 border border-green-200 bg-green-50 rounded-lg flex items-center text-green-700 font-bold overflow-hidden">
+                          <span className="truncate">{addon.fichaTecnica.name} — R$ {addon.fichaTecnica.costPrice?.toFixed(2) || '0.00'}</span>
+                        </div>
+                        <button type="button" onClick={() => onUnlinkAddonFicha(addon.id)} className="h-8 px-2 text-[9px] text-red-500 hover:text-red-700 shrink-0">DESVINCULAR</button>
+                      </div>
+                    ) : (
+                      <select
+                        className="h-8 text-[10px] border border-border rounded-lg px-2 w-full bg-white"
+                        onChange={(e) => { if (e.target.value) onLinkAddonFicha(e.target.value, addon.id); }}
+                        value=""
                       >
-                          <ChefHat size={12} />
-                      </button>
-                    </div>
+                        <option value="">Selecionar ficha...</option>
+                        {fichasDisponiveis.map((f: any) => (
+                          <option key={f.id} value={f.id}>{f.name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   <div className="col-span-4 grid grid-cols-2 gap-2">
@@ -292,6 +304,7 @@ const AddonFormPage: React.FC = () => {
     });
 
     const [availableIngredients, setAvailableIngredients] = useState<any[]>([]);
+    const [fichasDisponiveis, setFichasDisponiveis] = useState<any[]>([]);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -301,8 +314,12 @@ const AddonFormPage: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const ings = await getIngredients();
+                const [ings, fichas] = await Promise.all([
+                    getIngredients(),
+                    fichaTecnicaService.getAll()
+                ]);
                 setAvailableIngredients(ings);
+                setFichasDisponiveis(fichas);
 
                 if (id && id !== 'new') {
                     setIsLoading(true);
@@ -327,6 +344,35 @@ const AddonFormPage: React.FC = () => {
         };
         loadData();
     }, [id, navigate]);
+
+    const handleLinkAddonFicha = async (fichaId: string, addonId: string) => {
+        try {
+            await fichaTecnicaService.linkAddon(fichaId, addonId);
+            // Recarregar dados do grupo
+            if (id && id !== 'new') {
+                const group = await addonService.getById(id);
+                if (group) setFormData({ ...group, priceRule: group.priceRule || 'higher' });
+            }
+            toast.success("Ficha vinculada ao adicional!");
+        } catch (error) {
+            toast.error("Erro ao vincular ficha.");
+        }
+    };
+
+    const handleUnlinkAddonFicha = async (addonId: string) => {
+        const addon = formData.addons.find(a => a.id === addonId);
+        if (!addon?.fichaTecnicaId) return;
+        try {
+            await fichaTecnicaService.unlinkAddon(addon.fichaTecnicaId, addonId);
+            if (id && id !== 'new') {
+                const group = await addonService.getById(id);
+                if (group) setFormData({ ...group, priceRule: group.priceRule || 'higher' });
+            }
+            toast.success("Ficha desvinculada!");
+        } catch (error) {
+            toast.error("Erro ao desvincular ficha.");
+        }
+    };
 
     const handleSave = async () => {
         if (!formData.name) return toast.error('O nome do grupo é obrigatório.');
@@ -619,6 +665,9 @@ const AddonFormPage: React.FC = () => {
                                         removeAddonRow={removeAddonRow}
                                         availableIngredients={availableIngredients}
                                         navigate={navigate}
+                                        fichasDisponiveis={fichasDisponiveis}
+                                        onLinkAddonFicha={handleLinkAddonFicha}
+                                        onUnlinkAddonFicha={handleUnlinkAddonFicha}
                                     />
                                 ))}
                                 {formData.addons.length === 0 && (

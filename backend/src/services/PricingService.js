@@ -9,6 +9,13 @@ class PricingService {
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: {
+        fichaTecnica: {
+          include: {
+            ingredients: {
+              include: { ingredient: true }
+            }
+          }
+        },
         ingredients: {
           include: { ingredient: true }
         }
@@ -17,13 +24,23 @@ class PricingService {
 
     if (!product) return 0;
 
-    // Soma o custo de cada ingrediente (Quantidade * Custo Médio)
-    const cost = product.ingredients.reduce((acc, pi) => {
-      const ingredientCost = pi.ingredient.averageCost || 0;
-      return acc + (pi.quantity * ingredientCost);
-    }, 0);
+    // Prioridade 1: Ficha Técnica vinculada
+    if (product.fichaTecnica && product.fichaTecnica.ingredients.length > 0) {
+      return product.fichaTecnica.ingredients.reduce((acc, fi) => {
+        const ingredientCost = fi.ingredient?.averageCost || 0;
+        return acc + (fi.quantity * ingredientCost);
+      }, 0);
+    }
 
-    return cost;
+    // Fallback legado: ProductIngredient
+    if (product.ingredients && product.ingredients.length > 0) {
+      return product.ingredients.reduce((acc, pi) => {
+        const ingredientCost = pi.ingredient?.averageCost || 0;
+        return acc + (pi.quantity * ingredientCost);
+      }, 0);
+    }
+
+    return 0;
   }
 
   /**
@@ -33,6 +50,13 @@ class PricingService {
     const addon = await prisma.addon.findUnique({
       where: { id: addonId },
       include: {
+        fichaTecnica: {
+          include: {
+            ingredients: {
+              include: { ingredient: true }
+            }
+          }
+        },
         ingredients: {
           include: { ingredient: true }
         }
@@ -41,12 +65,23 @@ class PricingService {
 
     if (!addon) return 0;
 
-    const cost = addon.ingredients.reduce((acc, ai) => {
-      const ingredientCost = ai.ingredient.averageCost || 0;
-      return acc + (ai.quantity * ingredientCost);
-    }, 0);
+    // Prioridade 1: Ficha Técnica
+    if (addon.fichaTecnica && addon.fichaTecnica.ingredients.length > 0) {
+      return addon.fichaTecnica.ingredients.reduce((acc, fi) => {
+        const ingredientCost = fi.ingredient?.averageCost || 0;
+        return acc + (fi.quantity * ingredientCost);
+      }, 0);
+    }
 
-    return cost;
+    // Fallback legado: AddonIngredient
+    if (addon.ingredients && addon.ingredients.length > 0) {
+      return addon.ingredients.reduce((acc, ai) => {
+        const ingredientCost = ai.ingredient?.averageCost || 0;
+        return acc + (ai.quantity * ingredientCost);
+      }, 0);
+    }
+
+    return 0;
   }
 
   /**

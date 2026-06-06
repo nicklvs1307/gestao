@@ -8,6 +8,11 @@ const getAddonGroups = async (req, res) => {
             include: { 
                 addons: {
                     include: {
+                        fichaTecnica: {
+                            include: {
+                                ingredients: { include: { ingredient: true } }
+                            }
+                        },
                         ingredients: {
                             include: { ingredient: true }
                         }
@@ -34,6 +39,11 @@ const getAddonGroupById = async (req, res) => {
             include: { 
                 addons: {
                     include: {
+                        fichaTecnica: {
+                            include: {
+                                ingredients: { include: { ingredient: true } }
+                            }
+                        },
                         ingredients: {
                             include: { ingredient: true }
                         }
@@ -86,16 +96,16 @@ const createAddonGroup = async (req, res) => {
                         maxQuantity: addon.maxQuantity || 1,
                         order: addon.order || 0,
                         saiposIntegrationCode: addon.saiposIntegrationCode,
-                        ingredients: {
-                            create: addon.ingredients?.map(ing => ({
-                                ingredientId: ing.ingredientId,
-                                quantity: ing.quantity
-                            })) || []
-                        }
                     })) || []
                 }
             },
-            include: { addons: { include: { ingredients: true } } }
+            include: {
+                addons: {
+                    include: {
+                        fichaTecnica: { include: { ingredients: { include: { ingredient: true } } } }
+                    }
+                }
+            }
         });
         res.status(201).json(newGroup);
     } catch (error) {
@@ -144,16 +154,16 @@ const duplicateAddonGroup = async (req, res) => {
                         maxQuantity: addon.maxQuantity,
                         order: addon.order,
                         saiposIntegrationCode: addon.saiposIntegrationCode,
-                        ingredients: {
-                            create: addon.ingredients.map(ing => ({
-                                ingredientId: ing.ingredientId,
-                                quantity: ing.quantity
-                            }))
-                        }
                     }))
                 }
             },
-            include: { addons: true }
+            include: {
+                addons: {
+                    include: {
+                        fichaTecnica: { include: { ingredients: { include: { ingredient: true } } } }
+                    }
+                }
+            }
         });
 
         res.status(201).json(duplicatedGroup);
@@ -211,32 +221,12 @@ const updateAddonGroup = async (req, res) => {
                             where: { id: addon.id },
                             data: addonData
                         });
-                        
-                        // Upsert ingredients (ficha técnica)
-                        await tx.addonIngredient.deleteMany({
-                            where: { addonId: addon.id }
-                        });
-                        if (addon.ingredients && addon.ingredients.length > 0) {
-                            await tx.addonIngredient.createMany({
-                                data: addon.ingredients.map(ing => ({
-                                    addonId: addon.id,
-                                    ingredientId: ing.ingredientId,
-                                    quantity: parseFloat(ing.quantity) || 0
-                                }))
-                            });
-                        }
                     } else {
                         // CREATE novo addon
                         await tx.addon.create({
                             data: {
                                 ...addonData,
                                 addonGroup: { connect: { id } },
-                                ingredients: addon.ingredients ? {
-                                    create: addon.ingredients.map(ing => ({
-                                        ingredientId: ing.ingredientId,
-                                        quantity: parseFloat(ing.quantity) || 0
-                                    }))
-                                } : {}
                             }
                         });
                     }
@@ -257,7 +247,13 @@ const updateAddonGroup = async (req, res) => {
                     order: order || 0,
                     saiposIntegrationCode: saiposIntegrationCode || null
                 },
-                include: { addons: { include: { ingredients: true } } }
+                include: {
+                    addons: {
+                        include: {
+                            fichaTecnica: { include: { ingredients: { include: { ingredient: true } } } }
+                        }
+                    }
+                }
             });
         });
         
@@ -317,27 +313,15 @@ const updateAddon = async (req, res) => {
             }
         });
         
-        // Upsert ingredients (ficha técnica) se enviado
-        if (ingredients !== undefined) {
-            await prisma.addonIngredient.deleteMany({ where: { addonId: id } });
-            if (ingredients && ingredients.length > 0) {
-                await prisma.addonIngredient.createMany({
-                    data: ingredients.map(ing => ({
-                        addonId: id,
-                        ingredientId: ing.ingredientId,
-                        quantity: parseFloat(ing.quantity) || 0
-                    }))
-                });
-            }
-        }
-        
-        // Retornar addon atualizado com ingredients
-        const addonWithIngredients = await prisma.addon.findUnique({
+        // Retornar addon atualizado com ficha técnica
+        const addonUpdated = await prisma.addon.findUnique({
             where: { id },
-            include: { ingredients: { include: { ingredient: true } } }
+            include: {
+                fichaTecnica: { include: { ingredients: { include: { ingredient: true } } } }
+            }
         });
         
-        res.json(addonWithIngredients);
+        res.json(addonUpdated);
     } catch (error) {
         logger.error(error);
         res.status(500).json({ error: 'Erro ao atualizar adicional individual.' });

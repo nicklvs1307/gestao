@@ -40,6 +40,16 @@ const ReportController = {
                             quantity: true,
                             product: {
                                 select: {
+                                    fichaTecnica: {
+                                        select: {
+                                            ingredients: {
+                                                select: {
+                                                    quantity: true,
+                                                    ingredient: { select: { lastUnitCost: true, averageCost: true } }
+                                                }
+                                            }
+                                        }
+                                    },
                                     ingredients: {
                                         select: {
                                             quantity: true,
@@ -57,9 +67,10 @@ const ReportController = {
             orders.forEach(order => {
                 order.items.forEach(item => {
                     let itemCost = 0;
-                    if (item.product?.ingredients?.length > 0) {
-                        itemCost = item.product.ingredients.reduce((sum, link) => {
-                            // Prioriza Custo Médio (mais preciso para DRE)
+                    // Prioridade 1: Ficha Técnica | Fallback: ProductIngredient
+                    const ingredients = item.product?.fichaTecnica?.ingredients || item.product?.ingredients || [];
+                    if (ingredients.length > 0) {
+                        itemCost = ingredients.reduce((sum, link) => {
                             const cost = link.ingredient.averageCost || link.ingredient.lastUnitCost || 0;
                             return sum + (cost * link.quantity);
                         }, 0);

@@ -120,7 +120,6 @@ export const NAV_CATEGORIES: NavCategory[] = [
     items: [
       { label: "Análise e Simulação de CMV", path: "/stock/cmv", icon: Calculator, permission: 'reports:abc' },
       { label: "Fichas Técnicas", path: "/stock/fichas", icon: ChefHat, permission: 'products:manage' },
-      { label: "Ficha Técnica (Legado)", path: "/production/technical-sheets", icon: ChefHat, permission: 'products:manage' },
       { label: "Grupos de Ingrediente", path: "/ingredients/groups", icon: Layers, permission: 'stock:manage' },
       { label: "Histórico de Posição de Estoque", path: "/stock/history", icon: History, permission: 'stock:view' },
       { label: "Ingredientes e Insumos", path: "/ingredients", icon: Package, permission: 'stock:manage' },

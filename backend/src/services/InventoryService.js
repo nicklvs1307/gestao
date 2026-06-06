@@ -8,7 +8,22 @@ class InventoryService {
   async processOrderStockDeduction(orderId, tx) {
     const orderWithItems = await tx.order.findUnique({
         where: { id: orderId },
-        include: { items: { include: { product: { include: { ingredients: true } } } } }
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  fichaTecnica: {
+                    include: {
+                      ingredients: true
+                    }
+                  },
+                  ingredients: true
+                }
+              }
+            }
+          }
+        }
     });
 
     if (!orderWithItems) throw new Error("Pedido não encontrado para baixa de estoque.");
@@ -150,7 +165,17 @@ class InventoryService {
     if (!product) return;
 
     // 1. Baixa Insumos do Produto Principal
-    if (product.ingredients && product.ingredients.length > 0) {
+    const ficha = product.fichaTecnica;
+    if (ficha && ficha.ingredients && ficha.ingredients.length > 0) {
+      // Novo: via Ficha Técnica
+      for (const fi of ficha.ingredients) {
+        await tx.ingredient.update({
+          where: { id: fi.ingredientId },
+          data: { stock: { decrement: fi.quantity * quantity } }
+        });
+      }
+    } else if (product.ingredients && product.ingredients.length > 0) {
+      // Fallback legado: via ProductIngredient
       for (const recipeItem of product.ingredients) {
         await tx.ingredient.update({
           where: { id: recipeItem.ingredientId },
@@ -158,7 +183,7 @@ class InventoryService {
         });
       }
     } else {
-      // Se não tem ficha técnica, baixa o estoque do produto diretamente
+      // Se não tem ficha nem ingredientes, baixa o estoque do produto diretamente
       await tx.product.update({
         where: { id: product.id },
         data: { stock: { decrement: quantity } }
@@ -170,18 +195,36 @@ class InventoryService {
       try {
         const addons = JSON.parse(addonsJson);
         if (addons.length > 0) {
-          // Batch fetch all addons at once to avoid N+1 query
           const addonIds = addons.map(a => a.id);
-          const addonsWithIngredients = await tx.addon.findMany({
+          const addonsWithData = await tx.addon.findMany({
             where: { id: { in: addonIds } },
-            include: { ingredients: true }
+            include: {
+              fichaTecnica: {
+                include: {
+                  ingredients: true
+                }
+              },
+              ingredients: true
+            }
           });
-          const addonMap = new Map(addonsWithIngredients.map(a => [a.id, a]));
+          const addonMap = new Map(addonsWithData.map(a => [a.id, a]));
 
           for (const addon of addons) {
-            const addonWithIngredients = addonMap.get(addon.id);
-            if (addonWithIngredients && addonWithIngredients.ingredients.length > 0) {
-              for (const addonIng of addonWithIngredients.ingredients) {
+            const addonData = addonMap.get(addon.id);
+            if (!addonData) continue;
+
+            const addonFicha = addonData.fichaTecnica;
+            if (addonFicha && addonFicha.ingredients && addonFicha.ingredients.length > 0) {
+              // Novo: via Ficha Técnica do adicional
+              for (const fi of addonFicha.ingredients) {
+                await tx.ingredient.update({
+                  where: { id: fi.ingredientId },
+                  data: { stock: { decrement: fi.quantity * (addon.quantity || 1) * quantity } }
+                });
+              }
+            } else if (addonData.ingredients && addonData.ingredients.length > 0) {
+              // Fallback legado: via AddonIngredient
+              for (const addonIng of addonData.ingredients) {
                 await tx.ingredient.update({
                   where: { id: addonIng.ingredientId },
                   data: { stock: { decrement: (addonIng.quantity * (addon.quantity || 1)) * quantity } }

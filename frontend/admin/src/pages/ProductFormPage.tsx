@@ -10,6 +10,7 @@ import { globalSizeService } from '../services/api/globalSizes';
 import type { GlobalSize } from '../services/api/globalSizes';
 import { addonService } from '../services/api/addonService';
 import type { AddonGroup } from '../services/api/addonService';
+import * as fichaTecnicaService from '../services/api/fichaTecnicaService';
 import type { Category } from '@/types/index';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
@@ -54,6 +55,8 @@ function ProductFormPage() {
     const [globalSizes, setGlobalSizes] = useState<GlobalSize[]>([]);
     const [inheritedAddonGroups, setInheritedAddonGroups] = useState<AddonGroup[]>([]);
     const [productData, setProductData] = useState<any>(null);
+    const [linkedFicha, setLinkedFicha] = useState<any>(null);
+    const [fichasDisponiveis, setFichasDisponiveis] = useState<any[]>([]);
 
     const { register, control, handleSubmit, watch, reset, setValue, formState: { errors: formErrors } } = useForm<any>({
         defaultValues: { 
@@ -100,12 +103,17 @@ function ProductFormPage() {
 
     // Cálculo dinâmico de custo baseado na ficha técnica
     const calculatedCost = React.useMemo(() => {
+        // Prioridade 1: Ficha técnica vinculada
+        if (linkedFicha && linkedFicha.costPrice != null) {
+            return linkedFicha.costPrice;
+        }
+        // Fallback legado: inline ingredients
         return watchedIngredients.reduce((acc: number, item: any) => {
             const ing = availableIngredients.find(i => i.id === item.ingredientId);
             const unitCost = ing?.averageCost || ing?.lastUnitCost || 0;
             return acc + (Number(item.quantity) * unitCost);
         }, 0);
-    }, [watchedIngredients, availableIngredients]);
+    }, [linkedFicha, watchedIngredients, availableIngredients]);
 
     // Atualiza o costPrice no formulário sempre que o calculado mudar
     useEffect(() => {
@@ -116,10 +124,12 @@ function ProductFormPage() {
         const loadData = async () => {
             try {
                 setIsLoading(true);
-                const [cats, ings, library, gSizes] = await Promise.all([ 
-                    getCategories(true), getIngredients(), addonService.getAll(), globalSizeService.getAll()
+                const [cats, ings, library, gSizes, fichas] = await Promise.all([ 
+                    getCategories(true), getIngredients(), addonService.getAll(), globalSizeService.getAll(),
+                    fichaTecnicaService.getAll()
                 ]);
                 setCategories(cats); setAvailableIngredients(ings); setLibraryGroups(library); setGlobalSizes(gSizes);
+                setFichasDisponiveis(fichas);
                 
                 if (id && id !== 'new') {
                     const product = await getProductById(id);
@@ -138,6 +148,13 @@ function ProductFormPage() {
                         };
                         setProductData(formattedData);
                         reset(formattedData);
+                        // Carregar ficha técnica vinculada
+                        if (product.fichaTecnicaId) {
+                            try {
+                                const ficha = await fichaTecnicaService.getById(product.fichaTecnicaId);
+                                setLinkedFicha(ficha);
+                            } catch (e) { /* ficha não encontrada */ }
+                        }
                     } else navigate('/products');
                 }
             } catch (error) { toast.error("Erro ao carregar dados."); }
@@ -166,7 +183,8 @@ function ProductFormPage() {
                 globalSizeId: data.globalSizeId || null,
                 addonGroups: (data.addonGroups || []).map((g: any) => ({ id: g.id })), 
                 sizes: (data.sizes || []).map((s: any) => ({ ...s, price: Number(s.price) })), 
-                ingredients: (data.ingredients || []).filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })),
+                fichaTecnicaId: linkedFicha?.id || null,
+                ingredients: linkedFicha ? [] : (data.ingredients || []).filter((i: any) => i.ingredientId && i.quantity > 0).map((i: any) => ({ ingredientId: i.ingredientId, quantity: Number(i.quantity) })),
                 pizzaConfig: data.pizzaConfig?.active ? data.pizzaConfig : null
             };
             if (id && id !== 'new') await updateProduct(id, payload);
@@ -175,6 +193,30 @@ function ProductFormPage() {
             navigate('/products');
         } catch (e) { toast.error("Erro ao salvar produto."); }
         finally { setIsLoading(false); }
+    };
+
+    const handleLinkFicha = async (fichaId: string) => {
+        try {
+            if (id && id !== 'new') {
+                await fichaTecnicaService.linkProduct(fichaId, id);
+            }
+            const ficha = await fichaTecnicaService.getById(fichaId);
+            setLinkedFicha(ficha);
+            toast.success("Ficha técnica vinculada!");
+        } catch (error) {
+            toast.error("Erro ao vincular ficha técnica.");
+        }
+    };
+
+    const handleUnlinkFicha = async () => {
+        if (!linkedFicha || !id || id === 'new') return;
+        try {
+            await fichaTecnicaService.unlinkProduct(linkedFicha.id, id);
+            setLinkedFicha(null);
+            toast.success("Ficha técnica desvinculada!");
+        } catch (error) {
+            toast.error("Erro ao desvincular ficha técnica.");
+        }
     };
 
     if (isLoading && !productData && id && id !== 'new') return <div className="flex h-screen items-center justify-center opacity-30"><Loader2 className="animate-spin text-primary" size={40} /></div>;
@@ -432,7 +474,13 @@ function ProductFormPage() {
 
                         {activeTab === 'composição' && (
                             <motion.div key="composição" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                                <Card className="p-4 border-border bg-white"><CompositionList watch={watch} availableIngredients={availableIngredients} navigate={navigate} /></Card>
+                                <Card className="p-4 border-border bg-white"><CompositionList 
+                                    linkedFicha={linkedFicha} 
+                                    fichasDisponiveis={fichasDisponiveis} 
+                                    onLink={handleLinkFicha} 
+                                    onUnlink={handleUnlinkFicha} 
+                                    onNavigate={navigate} 
+                                /></Card>
                             </motion.div>
                         )}
 
@@ -656,8 +704,13 @@ function AddonGroupSelector({ availableGroups, selectedGroups, onUpdate, inherit
     );
 };
 
-function CompositionList({ watch, availableIngredients, navigate }: { watch: any, availableIngredients: any[], navigate: any }) {
-    const ingredients = watch('ingredients') || [];
+function CompositionList({ linkedFicha, fichasDisponiveis, onLink, onUnlink, onNavigate }: {
+    linkedFicha: any;
+    fichasDisponiveis: any[];
+    onLink: (fichaId: string) => void;
+    onUnlink: () => void;
+    onNavigate: (path: string) => void;
+}) {
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center bg-orange-50 p-4 rounded-2xl border border-orange-100">
@@ -666,38 +719,49 @@ function CompositionList({ watch, availableIngredients, navigate }: { watch: any
                         <LucideIcons.ChefHat size={20} />
                     </div>
                     <div>
-                        <h4 className="text-[10px] font-black uppercase text-foreground italic leading-none">Ficha Técnica Mestra</h4>
-                        <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Gestão centralizada de insumos e CMV</p>
+                        <h4 className="text-[10px] font-black uppercase text-foreground italic leading-none">Ficha Técnica</h4>
+                        <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Vincule uma ficha para cálculo automático de CMV</p>
                     </div>
                 </div>
                 <Button 
                     type="button"
-                    onClick={() => navigate('/production/technical-sheets')}
+                    onClick={() => onNavigate('/stock/fichas')}
                     className="h-8 rounded-lg bg-slate-900 text-white font-black italic uppercase text-[9px] px-4 gap-2"
                 >
-                    <LucideIcons.Settings size={14} /> EDITAR NA CENTRAL
+                    <LucideIcons.Settings size={14} /> GERENCIAR FICHAS
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {ingredients.map((item: any, index: number) => {
-                    const ing = availableIngredients.find(i => i.id === item.ingredientId);
-                    return (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-xl border border-border shadow-sm">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase italic text-foreground">{ing?.name || 'Insumo'}</span>
-                                <span className="text-[8px] font-bold text-muted-foreground uppercase italic">{ing?.unit}</span>
-                            </div>
-                            <span className="text-xs font-black text-primary italic">{item.quantity}</span>
+            {linkedFicha ? (
+                <div className="p-4 bg-white rounded-xl border border-green-200 shadow-sm">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <p className="text-[10px] font-black uppercase italic text-green-700">{linkedFicha.name}</p>
+                            <p className="text-[9px] text-green-600 mt-1">
+                                {linkedFicha.ingredients?.length || 0} ingredientes | Custo: R$ {linkedFicha.costPrice?.toFixed(2) || '0.00'}
+                            </p>
                         </div>
-                    );
-                })}
-                {ingredients.length === 0 && (
-                    <div className="col-span-full p-8 border-2 border-dashed border-border rounded-2xl text-center bg-background/30">
-                        <p className="text-[9px] font-black uppercase italic text-muted-foreground">Nenhum insumo vinculado na central.</p>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => onNavigate('/stock/fichas')} className="h-7 text-[9px]">EDITAR</Button>
+                            <Button type="button" variant="destructive" size="sm" onClick={onUnlink} className="h-7 text-[9px]">DESVINCULAR</Button>
+                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            ) : (
+                <div className="p-6 border-2 border-dashed border-border rounded-2xl text-center bg-background/30">
+                    <p className="text-[9px] font-black uppercase italic text-muted-foreground mb-3">Nenhuma ficha técnica vinculada</p>
+                    <select
+                        className="h-8 text-[10px] border border-border rounded-lg px-3 mb-2"
+                        onChange={(e) => { if (e.target.value) onLink(e.target.value); }}
+                        value=""
+                    >
+                        <option value="">Selecionar ficha técnica...</option>
+                        {fichasDisponiveis.map((f: any) => (
+                            <option key={f.id} value={f.id}>{f.name}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
         </div>
     );
 };

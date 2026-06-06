@@ -36,6 +36,11 @@ class ProductService {
       findOptions.select = PUBLIC_PRODUCT_SELECT;
     } else {
       findOptions.include = {
+        fichaTecnica: {
+          include: {
+            ingredients: { include: { ingredient: true } }
+          }
+        },
         ingredients: { include: { ingredient: true } },
         categories: { include: { addonGroups: { include: { addons: true } } } },
         sizes: true,
@@ -67,6 +72,11 @@ class ProductService {
       findOptions.select = PUBLIC_PRODUCT_SELECT;
     } else {
       findOptions.include = {
+        fichaTecnica: {
+          include: {
+            ingredients: { include: { ingredient: true } }
+          }
+        },
         ingredients: { include: { ingredient: true } },
         categories: { include: { addonGroups: { include: { addons: true } } } },
         sizes: true,
@@ -130,17 +140,12 @@ class ProductService {
         addonGroups: {
           connect: (addonGroups || []).map((group) => ({ id: group.id })),
         },
-        ingredients: {
-          create: (ingredients || []).map((ing) => ({
-            quantity: ing.quantity,
-            ingredient: { connect: { id: ing.ingredientId } }
-          })),
-        },
       },
       include: {
         categories: true,
         sizes: true,
         addonGroups: true,
+        fichaTecnica: { include: { ingredients: { include: { ingredient: true } } } },
       },
     });
 
@@ -149,15 +154,6 @@ class ProductService {
 
   async updateProduct(id, data, restaurantId) {
     const existingProduct = await this.getProductById(id, restaurantId);
-
-    // Validação de Preço Zero sem tamanhos ou grupos obrigatórios
-    const hasSizes = sizes && sizes.length > 0;
-    const hasPrice = productData.price && productData.price > 0;
-    const hasRequiredAddonGroups = addonGroups?.some(g => g.isRequired);
-    
-    if (!hasPrice && !hasSizes && !hasRequiredAddonGroups) {
-      console.warn(`[PRODUCT_SERVICE] Produto "${existingProduct.name}" atualizado com preço zero. Considere adicionar preços base ou tamanhos.`);
-    }
 
     const { 
       id: _id,
@@ -170,6 +166,15 @@ class ProductService {
       promotions,
       ...productData 
     } = data;
+
+    // Validação de Preço Zero sem tamanhos ou grupos obrigatórios
+    const hasSizes = sizes && sizes.length > 0;
+    const hasPrice = productData.price && productData.price > 0;
+    const hasRequiredAddonGroups = addonGroups?.some(g => g.isRequired);
+    
+    if (!hasPrice && !hasSizes && !hasRequiredAddonGroups) {
+      console.warn(`[PRODUCT_SERVICE] Produto "${existingProduct.name}" atualizado com preço zero. Considere adicionar preços base ou tamanhos.`);
+    }
 
     // Se addonGroups foi enviado, capturamos a ordem exata enviada pelo frontend
     let addonGroupsOrder = undefined;
@@ -232,21 +237,13 @@ class ProductService {
           ...(addonGroups && {
             addonGroups: { set: addonGroups.map((g) => ({ id: g.id })) },
           }),
-          ...(ingredients && {
-            ingredients: {
-              deleteMany: {},
-              create: ingredients.map((ing) => ({
-                quantity: parseFloat(ing.quantity) || 0,
-                ingredient: { connect: { id: ing.ingredientId } }
-              }))
-            }
-          })
         },
         include: {
           sizes: true,
           categories: true,
           addonGroups: true,
-          ingredients: { include: { ingredient: true } }
+          fichaTecnica: { include: { ingredients: { include: { ingredient: true } } } },
+          ingredients: { include: { ingredient: true } },
         }
       });
     });
@@ -275,6 +272,13 @@ class ProductService {
     const products = await prisma.product.findMany({
       where: { restaurantId },
       include: {
+        fichaTecnica: {
+          include: {
+            ingredients: {
+              include: { ingredient: true },
+            },
+          },
+        },
         ingredients: {
           include: {
             ingredient: true,
@@ -284,8 +288,10 @@ class ProductService {
     });
 
     return products.map((p) => {
-      const cost = p.ingredients.reduce(
-        (acc, i) => acc + (i.quantity * (i.ingredient.averageCost || 0)),
+      // Prioridade 1: Ficha Técnica | Fallback: ProductIngredient
+      const source = p.fichaTecnica?.ingredients || p.ingredients || [];
+      const cost = source.reduce(
+        (acc, link) => acc + (link.quantity * (link.ingredient?.averageCost || 0)),
         0
       );
       const margin = p.price > 0 ? ((p.price - cost) / p.price) * 100 : 0;

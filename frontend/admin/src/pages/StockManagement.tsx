@@ -53,7 +53,7 @@ const StockManagement: React.FC = () => {
                 api.get('/ingredients'),
                 api.get('/ingredients/groups'),
                 api.get('/financial/suppliers'),
-                api.get('/production/technical-sheets').catch(() => ({ data: [] })),
+                api.get('/production/recipes').catch(() => ({ data: [] })),
                 api.get('/stock/entries').catch(() => ({ data: [] }))
             ]);
             setIngredients(ingRes.data);
