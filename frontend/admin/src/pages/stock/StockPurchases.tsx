@@ -45,7 +45,7 @@ const StockPurchases: React.FC = () => {
                 api.get('/financial/suppliers'),
                 api.get('/ingredients')
             ]);
-            setPurchases(purRes.data);
+            setPurchases(purRes.data.data || purRes.data);
             setSuppliers(supRes.data);
             setIngredients(ingRes.data);
         } catch (error) {

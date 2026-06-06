@@ -35,11 +35,12 @@ const StockDashboard: React.FC = () => {
             const ings = ingRes.data;
             const value = ings.reduce((acc: number, i: any) => acc + (i.stock * (i.averageCost || 0)), 0);
             const critical = ings.filter((i: any) => i.stock <= (i.minStock || 0)).slice(0, 5);
+            const moves = Array.isArray(moveRes.data) ? moveRes.data : (moveRes.data?.moves || []);
             
             setStats({
                 totalValue: value,
                 criticalItems: critical,
-                recentMoves: moveRes.data.slice(0, 5),
+                recentMoves: moves.slice(0, 5),
                 activeIngredients: ings.length
             });
         } catch (error) {
