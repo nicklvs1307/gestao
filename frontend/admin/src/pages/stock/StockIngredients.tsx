@@ -4,12 +4,26 @@ import { api } from '../../services/api';
 import { 
     Plus, Search, Edit2, Trash2, Filter, AlertTriangle, 
     Package, Info, ChevronRight, Scale, Layers, Loader2,
-    Disc, Tag, ArrowRightLeft, History
+    Disc, Tag, ArrowRightLeft, History, X
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { toast } from 'sonner';
+
+interface IngredientFormData {
+    name: string;
+    unit: string;
+    groupId: string;
+    stock: number;
+    minStock: number;
+    controlStock: boolean;
+    controlCmv: boolean;
+    isProduced: boolean;
+}
+
+const UNITS = ['un', 'kg', 'g', 'l', 'ml', 'cx', 'fd', 'pct', 'dz', 'sc'];
 
 const StockIngredients: React.FC = () => {
     const [ingredients, setIngredients] = useState<any[]>([]);
@@ -18,6 +32,20 @@ const StockIngredients: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterGroup, setFilterGroup] = useState('all');
     const [confirmData, setConfirmData] = useState<{open: boolean, title: string, message: string, onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
+    
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [formData, setFormData] = useState<IngredientFormData>({
+        name: '',
+        unit: 'un',
+        groupId: '',
+        stock: 0,
+        minStock: 0,
+        controlStock: true,
+        controlCmv: true,
+        isProduced: false
+    });
 
     useEffect(() => {
         loadData();
@@ -36,6 +64,60 @@ const StockIngredients: React.FC = () => {
             toast.error("Falha ao carregar insumos.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCreate = () => {
+        setEditingId(null);
+        setFormData({
+            name: '',
+            unit: 'un',
+            groupId: '',
+            stock: 0,
+            minStock: 0,
+            controlStock: true,
+            controlCmv: true,
+            isProduced: false
+        });
+        setShowForm(true);
+    };
+
+    const handleEdit = (ingredient: any) => {
+        setEditingId(ingredient.id);
+        setFormData({
+            name: ingredient.name || '',
+            unit: ingredient.unit || 'un',
+            groupId: ingredient.groupId || '',
+            stock: ingredient.stock || 0,
+            minStock: ingredient.minStock || 0,
+            controlStock: ingredient.controlStock ?? true,
+            controlCmv: ingredient.controlCmv ?? true,
+            isProduced: ingredient.isProduced ?? false
+        });
+        setShowForm(true);
+    };
+
+    const handleSave = async () => {
+        if (!formData.name.trim()) {
+            toast.error('Nome é obrigatório');
+            return;
+        }
+        try {
+            setSaving(true);
+            if (editingId) {
+                await api.put(`/ingredients/${editingId}`, formData);
+                toast.success('Insumo atualizado!');
+            } else {
+                await api.post('/ingredients', formData);
+                toast.success('Insumo criado!');
+            }
+            setShowForm(false);
+            setEditingId(null);
+            await loadData();
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || 'Erro ao salvar insumo');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -59,7 +141,7 @@ const StockIngredients: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in slide-in-from-right-2 duration-500">
-            {/* TOOLBAR PROFISSIONAL */}
+            {/* TOOLBAR */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
                 <div className="flex flex-1 gap-3 w-full">
                     <div className="relative flex-1 group">
@@ -80,12 +162,15 @@ const StockIngredients: React.FC = () => {
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
                 </div>
-                <Button className="h-12 px-8 rounded-2xl shadow-lg italic font-black text-[10px] uppercase tracking-widest bg-slate-900 text-white hover:bg-black transition-all">
+                <Button 
+                    onClick={handleCreate}
+                    className="h-12 px-8 rounded-2xl shadow-lg italic font-black text-[10px] uppercase tracking-widest bg-slate-900 text-white hover:bg-black transition-all"
+                >
                     <Plus size={16} className="mr-2" /> CADASTRAR INSUMO
                 </Button>
             </div>
 
-            {/* TABELA DE ALTA DENSIDADE */}
+            {/* TABELA */}
             <Card className="overflow-hidden border-slate-200/60 shadow-xl shadow-slate-200/40">
                 <div className="overflow-x-auto">
                     {loading ? (
@@ -153,7 +238,7 @@ const StockIngredients: React.FC = () => {
                                         </td>
                                         <td className="px-8 py-5 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" className="w-9 h-9 bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 rounded-xl">
+                                                <Button variant="ghost" size="icon" className="w-9 h-9 bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 rounded-xl" onClick={() => handleEdit(item)}>
                                                     <Edit2 size={14} />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="w-9 h-9 bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-600 rounded-xl" onClick={() => handleDelete(item.id)}>
@@ -168,6 +253,124 @@ const StockIngredients: React.FC = () => {
                     )}
                 </div>
             </Card>
+
+            {/* MODAL CRIAR/EDITAR */}
+            {showForm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-slate-900">
+                                    {editingId ? 'Editar Insumo' : 'Novo Insumo'}
+                                </h2>
+                                <button onClick={() => { setShowForm(false); setEditingId(null); }} className="p-2 hover:bg-slate-100 rounded-lg">
+                                    <X size={20} className="text-slate-500" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Nome *</label>
+                                    <Input
+                                        value={formData.name}
+                                        onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                        placeholder="Ex: Farinha de Trigo"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Unidade</label>
+                                        <select
+                                            value={formData.unit}
+                                            onChange={e => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                                        >
+                                            {UNITS.map(u => <option key={u} value={u}>{u.toUpperCase()}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Grupo</label>
+                                        <select
+                                            value={formData.groupId}
+                                            onChange={e => setFormData(prev => ({ ...prev, groupId: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                                        >
+                                            <option value="">Sem grupo</option>
+                                            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Estoque Atual</label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={formData.stock}
+                                            onChange={e => setFormData(prev => ({ ...prev, stock: Number(e.target.value) || 0 }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Estoque Mínimo</label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={formData.minStock}
+                                            onChange={e => setFormData(prev => ({ ...prev, minStock: Number(e.target.value) || 0 }))}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-4 pt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.controlStock}
+                                            onChange={e => setFormData(prev => ({ ...prev, controlStock: e.target.checked }))}
+                                            className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                                        />
+                                        <span className="text-sm text-slate-700">Controla estoque</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.controlCmv}
+                                            onChange={e => setFormData(prev => ({ ...prev, controlCmv: e.target.checked }))}
+                                            className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                                        />
+                                        <span className="text-sm text-slate-700">Compõe CMV</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isProduced}
+                                            onChange={e => setFormData(prev => ({ ...prev, isProduced: e.target.checked }))}
+                                            className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                                        />
+                                        <span className="text-sm text-slate-700">É produzido</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                                    Cancelar
+                                </Button>
+                                <Button onClick={handleSave} disabled={saving}>
+                                    {saving && <Loader2 className="animate-spin mr-2" size={16} />}
+                                    {editingId ? 'Salvar' : 'Criar'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData(prev => ({...prev, open: false}))} onConfirm={() => { confirmData.onConfirm(); setConfirmData(prev => ({...prev, open: false})); }} title={confirmData.title} message={confirmData.message} />
         </div>
     );
