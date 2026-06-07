@@ -25,6 +25,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { DeliveryHeader, CategoryNav, SearchModal, ProductSection } from '../components/delivery';
 import { RESTAURANT_KEY } from '../hooks/useRestaurant';
 import { usePixelTracking } from '../hooks/usePixelTracking';
+import ConsentBanner from '../components/ConsentBanner';
 
 interface DeliveryPageProps {
   restaurantSlug?: string;
@@ -63,10 +64,9 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const pixelConfig = {
     metaPixelId: restaurant?.settings?.metaPixelId,
     googleAnalyticsId: restaurant?.settings?.googleAnalyticsId,
-    internalPixelId: restaurant?.settings?.internalPixelId,
   };
 
-  const { trackPageView, trackViewContent, trackAddToCart, trackInitiateCheckout, trackPurchase } = usePixelTracking(pixelConfig);
+  const { trackPageView, trackViewContent, trackAddToCart, trackInitiateCheckout, trackPurchase, consentGranted, grantConsent, revokeConsent } = usePixelTracking(pixelConfig);
 
   useEffect(() => {
     if (restaurant?.id) {
@@ -131,7 +131,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
     trackAddToCart(product.name, product.id, product.price, quantity, product.categories?.[0]?.name);
   }, [addToCart, isStoreOpen, trackAddToCart]);
 
-  const handlePixPayment = useCallback(async (orderId: string, deliveryInfo: any) => {
+  const handlePixPayment = useCallback(async (orderId: string, deliveryInfo: any, orderTotal: number, orderItems: Array<{ productId: string; name: string; price: number; quantity: number; category?: string }>) => {
     setPixPaymentLoading(true);
     setPixModalOpen(true);
     setCurrentOrderId(orderId);
@@ -153,6 +153,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
         const status = await checkPixStatus(orderId);
         if (status.paid) {
           if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+          trackPurchase(orderId, orderTotal, orderItems);
           setPixModalOpen(false);
           clearCart();
           setSuccessModalOpen(true);
@@ -162,7 +163,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
         console.error("Erro ao verificar status do PIX", error);
       }
     }, 5000);
-  }, [clearCart]);
+  }, [clearCart, trackPurchase]);
 
   const handleCancelPixPayment = useCallback(() => {
     if (pollingIntervalRef.current) {
@@ -219,7 +220,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
 
       const newOrder = await createDeliveryOrder(restaurant.id, {
         items: localCartItems,
-        total: finalTotal, 
+        total: finalTotal,
         deliveryInfo: {
           ...deliveryInfo,
           deliveryFee: deliveryFee,
@@ -233,12 +234,10 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
       const updatedIds = [newOrder.id, ...ids.filter((id: string) => id !== newOrder.id)].slice(0, 5);
       localStorage.setItem('recent_orders', JSON.stringify(updatedIds));
 
-      // trackPurchase só dispara APÓS pedido confirmado com sucesso
-      trackPurchase(newOrder.id, finalTotal, itemsForTracking);
-
       if (deliveryInfo.paymentMethod === 'pix_online') {
-        handlePixPayment(newOrder.id, deliveryInfo);
+        handlePixPayment(newOrder.id, deliveryInfo, finalTotal, itemsForTracking);
       } else {
+        trackPurchase(newOrder.id, finalTotal, itemsForTracking);
         clearCart();
         navigate(`/order-status/${newOrder.id}`);
       }
@@ -452,6 +451,12 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
           activeTab={activeTab}
           onTabChange={handleTabChange}
           hasOrders={localStorage.getItem('recent_orders') !== null}
+        />
+
+        <ConsentBanner
+          isVisible={!consentGranted}
+          onAccept={grantConsent}
+          onDecline={revokeConsent}
         />
       </div>
     </RestaurantProvider>
