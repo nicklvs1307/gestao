@@ -471,7 +471,7 @@ const ReportController = {
             const productStats = items.reduce((acc, item) => {
                 const id = item.productId;
                 if (!acc[id]) {
-                    acc[id] = { id, name: item.product.name, totalRevenue: 0, totalQty: 0 };
+                    acc[id] = { id, name: item.product?.name || 'Produto removido', totalRevenue: 0, totalQty: 0 };
                 }
                 acc[id].totalRevenue += (item.priceAtTime * item.quantity);
                 acc[id].totalQty += item.quantity;
