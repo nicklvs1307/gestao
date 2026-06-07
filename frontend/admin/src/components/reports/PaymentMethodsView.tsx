@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, DollarSign, TrendingUp } from 'lucide-react';
+import { CreditCard, DollarSign, TrendingUp, Printer, Download } from 'lucide-react';
 import { api } from '../../services/api';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
 import { KpiCard, ReportPageHeader, ReportTable, LoadingSpinner, EmptyState } from './index';
+import { Button } from '../ui/Button';
 
 const methodColors: Record<string, string> = {
     'Dinheiro': 'text-emerald-600 bg-emerald-50 border-emerald-100',
@@ -11,6 +12,7 @@ const methodColors: Record<string, string> = {
     'debit_card': 'text-purple-600 bg-purple-50 border-purple-100',
     'PIX': 'text-orange-600 bg-orange-50 border-orange-100',
     'meal_voucher': 'text-rose-600 bg-rose-50 border-rose-100',
+    'default': 'text-slate-600 bg-slate-50 border-slate-100',
 };
 
 const PaymentMethodsView: React.FC = () => {
@@ -33,7 +35,7 @@ const PaymentMethodsView: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <ReportPageHeader
                 icon={CreditCard}
-                iconBg="from-blue-500 to-blue-600"
+                iconBg="from-orange-500 to-orange-600"
                 title="Vendas por Forma de Pagamento"
                 subtitle={`Mix de recebimento dos últimos ${period} dias`}
                 filters={
@@ -50,9 +52,15 @@ const PaymentMethodsView: React.FC = () => {
                         </select>
                     </div>
                 }
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Printer size={14} /></Button>
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Download size={14} /></Button>
+                    </div>
+                }
             />
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <KpiCard icon={DollarSign} iconColor="text-orange-400" label="Total Recebido" value={`R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} subtitle={`Em ${period} dias`} variant="dark" />
                 <KpiCard icon={CreditCard} iconColor="text-blue-500" label="Métodos Utilizados" value={data.length} subtitle="Diferentes" accentColor="text-blue-600" />
                 <KpiCard icon={TrendingUp} iconColor="text-emerald-500" label="Ticket Médio" value={`R$ ${data.length > 0 ? (total / data.length).toFixed(2) : '0,00'}`} subtitle="Por método" accentColor="text-emerald-600" />
@@ -101,7 +109,7 @@ const PaymentMethodsView: React.FC = () => {
                             <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                     <CreditCard size={14} className="text-slate-500" />
-                                    <span className="text-xs font-semibold text-slate-900 uppercase">{pm.method}</span>
+                                    <span className="text-xs font-semibold text-slate-900 uppercase tracking-wider">{pm.method}</span>
                                 </div>
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-emerald-600">R$ {pm.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>

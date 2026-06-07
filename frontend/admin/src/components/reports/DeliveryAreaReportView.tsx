@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Package, DollarSign, TrendingUp } from 'lucide-react';
+import { MapPin, Package, DollarSign, TrendingUp, Printer, Download } from 'lucide-react';
 import { api } from '../../services/api';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
 import { KpiCard, ReportPageHeader, ReportTable, LoadingSpinner, EmptyState } from './index';
 
 const DeliveryAreaReportView: React.FC = () => {
@@ -26,9 +27,15 @@ const DeliveryAreaReportView: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <ReportPageHeader
                 icon={MapPin}
-                iconBg="from-blue-500 to-blue-600"
+                iconBg="from-orange-500 to-orange-600"
                 title="Desempenho por Área"
                 subtitle="Onde estão seus clientes mais fiéis"
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Printer size={14} /></Button>
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Download size={14} /></Button>
+                    </div>
+                }
             />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -41,7 +48,7 @@ const DeliveryAreaReportView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.slice(0, 4).map((s, i) => (
                     <Card key={i} className={cn(
-                        "p-5 border-2 transition-all duration-300 hover:shadow-xl",
+                        "border-2 transition-all duration-300 hover:shadow-xl",
                         i === 0 ? "border-orange-100 bg-orange-50/30" :
                         i === 1 ? "border-blue-100 bg-blue-50/30" :
                         i === 2 ? "border-emerald-100 bg-emerald-50/30" :
@@ -49,7 +56,7 @@ const DeliveryAreaReportView: React.FC = () => {
                     )}>
                         <div className="flex items-center gap-2 mb-3">
                             <span className={cn(
-                                "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold",
+                                "w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-semibold",
                                 i === 0 ? "bg-orange-500 text-white" :
                                 i === 1 ? "bg-blue-500 text-white" :
                                 i === 2 ? "bg-emerald-500 text-white" :
@@ -57,7 +64,7 @@ const DeliveryAreaReportView: React.FC = () => {
                             )}>{i + 1}</span>
                             <span className="text-[11px] font-semibold uppercase text-slate-500">TOP {i + 1}</span>
                         </div>
-                        <h4 className="text-lg font-black text-slate-900 uppercase italic truncate leading-none mb-3">{s.name}</h4>
+                        <h4 className="text-2xl font-black italic tracking-tighter text-slate-900 uppercase truncate leading-none mb-3">{s.name}</h4>
                         <div className="flex items-baseline gap-2">
                             <span className="text-2xl font-black tracking-tighter text-slate-900">{s.count}</span>
                             <span className="text-[11px] font-semibold text-slate-500 uppercase">pedidos</span>
@@ -88,7 +95,7 @@ const DeliveryAreaReportView: React.FC = () => {
                         <tr key={idx} className="hover:bg-slate-50 transition-colors group">
                             <td className="px-4 py-3">
                                 <span className={cn(
-                                    "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold",
+                                    "w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-semibold",
                                     idx < 3 ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
                                 )}>{idx + 1}</span>
                             </td>

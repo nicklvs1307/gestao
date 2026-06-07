@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { History, Clock, TrendingUp, Truck, Package } from 'lucide-react';
+import { History, Clock, TrendingUp, Truck, Package, Printer, Download } from 'lucide-react';
 import { api } from '../../services/api';
 import { KpiCard, ReportPageHeader, ReportTable, DateFilter, getDefaultDateRange, LoadingSpinner, EmptyState } from './index';
+import { Button } from '../ui/Button';
 
 const StatusTimeView: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -26,7 +27,7 @@ const StatusTimeView: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <ReportPageHeader
                 icon={History}
-                iconBg="from-blue-500 to-blue-600"
+                iconBg="from-orange-500 to-orange-600"
                 title="Tempo por Status"
                 subtitle="Identifique gargalos na sua operação"
                 filters={
@@ -38,9 +39,15 @@ const StatusTimeView: React.FC = () => {
                         iconColor="text-blue-500"
                     />
                 }
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Printer size={14} /></Button>
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Download size={14} /></Button>
+                    </div>
+                }
             />
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <KpiCard icon={Clock} iconColor="text-orange-400" label="Ciclo Total" value={`${avgTotal} min`} subtitle="Média" variant="dark" />
                 <KpiCard icon={Clock} iconColor="text-blue-500" label="Espera" value={`${avgWait} min`} subtitle="Aguardando" accentColor="text-blue-600" />
                 <KpiCard icon={TrendingUp} iconColor="text-orange-500" label="Produção" value={`${avgPrepare} min`} subtitle="Preparando" accentColor="text-orange-600" />

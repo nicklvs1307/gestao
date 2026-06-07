@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Clock, Package } from 'lucide-react';
+import { TrendingUp, Clock, Package, Printer, Download } from 'lucide-react';
 import { api } from '../../services/api';
 import { cn } from '../../lib/utils';
 import { KpiCard, ReportPageHeader, ReportTable, DateFilter, getDefaultDateRange, LoadingSpinner, EmptyState } from './index';
+import { Button } from '../ui/Button';
 
 const ProductionTimeView: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -39,9 +40,15 @@ const ProductionTimeView: React.FC = () => {
                         onEndChange={(v) => setDateFilter(prev => ({ ...prev, end: v }))}
                     />
                 }
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Printer size={14} /></Button>
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg bg-white"><Download size={14} /></Button>
+                    </div>
+                }
             />
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <KpiCard icon={Clock} iconColor="text-orange-400" label="Média Geral" value={`${avgTime} min`} subtitle="Por pedido" variant="dark" />
                 <KpiCard icon={Clock} iconColor="text-emerald-500" label="Excelente" value={excellentCount} subtitle="≤ 20 min" accentColor="text-emerald-600" />
                 <KpiCard icon={Clock} iconColor="text-orange-500" label="Regular" value={regularCount} subtitle="21-40 min" accentColor="text-orange-600" />
