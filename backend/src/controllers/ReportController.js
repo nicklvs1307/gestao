@@ -682,12 +682,44 @@ const ReportController = {
                 },
                 include: {
                     product: { select: { name: true, categories: { select: { name: true } } } },
-                    order: { select: { dailyOrderNumber: true, tableNumber: true } }
+                    order: { select: { dailyOrderNumber: true, tableNumber: true, createdAt: true } }
                 },
                 orderBy: { createdAt: 'desc' }
             });
 
-            res.json(items);
+            const parsed = items.map(item => {
+                let addons = [];
+                let flavors = [];
+
+                if (item.addonsJson) {
+                    try {
+                        const raw = typeof item.addonsJson === 'string' ? JSON.parse(item.addonsJson) : item.addonsJson;
+                        if (Array.isArray(raw)) addons = raw;
+                    } catch (e) { /* ignora */ }
+                }
+
+                if (item.flavorsJson) {
+                    try {
+                        const raw = typeof item.flavorsJson === 'string' ? JSON.parse(item.flavorsJson) : item.flavorsJson;
+                        if (Array.isArray(raw)) flavors = raw;
+                    } catch (e) { /* ignora */ }
+                }
+
+                return {
+                    id: item.id,
+                    productId: item.productId,
+                    productName: item.product?.name || item.productName || 'Produto',
+                    categories: item.product?.categories?.map(c => c.name) || [],
+                    quantity: item.quantity,
+                    priceAtTime: item.priceAtTime,
+                    createdAt: item.createdAt,
+                    order: item.order,
+                    addons,
+                    flavors,
+                };
+            });
+
+            res.json(parsed);
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar itens consumidos.' });
         }
