@@ -93,7 +93,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
               )}>
                 {currentTab.label}
               </h3>
-              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">
+              <p className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">
                 {activeTab === 'table' ? 'Conta por mesa' : activeTab === 'counter' ? 'Venda direta' : 'Delivery / Retirada'}
               </p>
             </div>
@@ -132,7 +132,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                 <option value="">Selecionar mesa...</option>
                 {tables.map(t => <option key={t.id} value={t.number}>Mesa {t.number}</option>)}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
             </div>
             <input 
               placeholder="Nome do cliente (opcional)" 
@@ -215,7 +215,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
             {!customerName && (
               <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                <span className="text-[9px] font-medium text-slate-400">Pedido sem cliente vinculado</span>
+                <span className="text-[9px] font-medium text-slate-500">Pedido sem cliente vinculado</span>
               </div>
             )}
           </div>
@@ -225,13 +225,13 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
       {/* Itens do Carrinho */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar bg-slate-50/30">
         {cart.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-3">
+          <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
-              <ShoppingCart size={28} className="text-slate-300" />
+              <ShoppingCart size={28} className="text-slate-500" />
             </div>
             <div className="text-center">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Carrinho vazio</p>
-              <p className="text-[10px] text-slate-300 mt-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Carrinho vazio</p>
+              <p className="text-[10px] text-slate-500 mt-1">
                 {activeTab === 'table' ? 'Selecione uma mesa e adicione itens' : 'Adicione itens do catálogo'}
               </p>
             </div>
@@ -256,7 +256,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
                         className="p-0.5 hover:bg-slate-100 rounded transition-colors shrink-0"
                         aria-label={isExpanded ? 'Fechar detalhes' : 'Ver detalhes'}
                       >
-                        {isExpanded ? <ChevronUp size={12} className="text-orange-500" /> : <ChevronDown size={12} className="text-slate-400" />}
+                        {isExpanded ? <ChevronUp size={12} className="text-orange-500" /> : <ChevronDown size={12} className="text-slate-500" />}
                       </button>
                     )}
                   </div>
@@ -291,7 +291,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
               )}
 
               <div className="flex items-center justify-between mt-2">
-                <span className="text-[10px] font-medium text-slate-400">R$ {item.price.toFixed(2)}/un</span>
+                <span className="text-[10px] font-medium text-slate-500">R$ {item.price.toFixed(2)}/un</span>
                 <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
                   <button 
                     onClick={() => handleQuantityChange(item.cartItemId, -1)}
@@ -319,7 +319,7 @@ export const CartSidebar = React.memo<CartSidebarProps>(({ tables, tablesSummary
       <div className="p-3 bg-white border-t border-slate-100">
         <div className="flex justify-between items-center mb-3">
           <div className="flex flex-col">
-            <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider leading-none">Total</span>
+            <span className="text-[9px] font-bold uppercase text-slate-500 tracking-wider leading-none">Total</span>
             <span className="text-[10px] font-medium text-slate-500">{cart.length} item(ns)</span>
           </div>
           <div className="text-xl font-black text-slate-900 leading-none">

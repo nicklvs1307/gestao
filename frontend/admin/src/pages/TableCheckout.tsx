@@ -431,8 +431,8 @@ const TableCheckout: React.FC = () => {
         return (
             <div className="h-screen flex items-center justify-center bg-slate-100">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="animate-spin text-slate-400" size={40} />
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Carregando comandas...</p>
+                    <Loader2 className="animate-spin text-slate-500" size={40} />
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Carregando comandas...</p>
                 </div>
             </div>
         );
@@ -452,7 +452,7 @@ const TableCheckout: React.FC = () => {
                         <h1 className="text-xl font-black uppercase tracking-tighter">
                             Mesa {order.tableNumber < 10 ? `0${order.tableNumber}` : order.tableNumber}
                         </h1>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">
                             {tabs.length} {tabs.length === 1 ? 'comanda' : 'comandas'} · {formatSP(order.createdAt, "HH:mm")}
                         </p>
                     </div>
@@ -491,7 +491,7 @@ const TableCheckout: React.FC = () => {
             {tabs.length > 1 && (
                 <div className="bg-white border-b border-slate-200 px-6 py-2 shrink-0">
                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">Comandas:</span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mr-1 shrink-0">Comandas:</span>
                         {tabs.map(tab => {
                             const isActive = tab.orderId === activeTabId;
                             const unpaidCount = (tab.items || []).filter(i => !i.isPaid).length;
@@ -549,17 +549,17 @@ const TableCheckout: React.FC = () => {
 
                     <Card className="flex-1 overflow-hidden flex flex-col border-slate-200 shadow-sm" noPadding>
                         <div className="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center shrink-0">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                                 {activeTab ? `Itens de ${activeTab.customerName}` : 'Itens'}
                             </span>
-                            <span className="text-[9px] font-bold text-slate-400">
+                            <span className="text-[9px] font-bold text-slate-500">
                                 {activeUnpaidItems.length} itens
                             </span>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                             {activeUnpaidItems.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-3">
+                                <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3">
                                     <FileText size={32} />
                                     <p className="text-xs font-bold uppercase">Nenhum item pendente</p>
                                 </div>
@@ -574,7 +574,7 @@ const TableCheckout: React.FC = () => {
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex-1 pr-2">
                                                 <p className="text-[11px] font-bold text-slate-900 uppercase leading-tight truncate">{item.product?.name || item.productName || 'Produto'}</p>
-                                                <p className="text-[9px] font-medium text-slate-400 mt-1">{item.quantity} UN x R$ {item.priceAtTime.toFixed(2)}</p>
+                                                <p className="text-[9px] font-medium text-slate-500 mt-1">{item.quantity} UN x R$ {item.priceAtTime.toFixed(2)}</p>
                                             </div>
                                             <span className="text-[11px] font-black text-slate-900">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
                                         </div>
@@ -613,7 +613,7 @@ const TableCheckout: React.FC = () => {
                         </div>
 
                         {/* CONFIG DE TAXA E AJUSTES */}
-                        <div className="p-3 bg-slate-50 border-b border-slate-200 flex gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        <div className="p-3 bg-slate-50 border-b border-slate-200 flex gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                             <div className="flex items-center gap-2">
                                 <span>Taxa de Serviço ({serviceTaxRate}%):</span>
                                 <button onClick={() => setUseServiceTax(!useServiceTax)} className={cn("w-10 h-5 rounded-full relative transition-colors", useServiceTax ? "bg-emerald-500" : "bg-slate-300")}>
@@ -639,12 +639,12 @@ const TableCheckout: React.FC = () => {
                                             <div className="w-8 h-8 flex items-center justify-center bg-slate-900 text-white rounded-lg text-xs font-black">{item.quantity}</div>
                                             <div>
                                                 <p className="text-xs font-bold text-slate-800 uppercase">{item.name}</p>
-                                                <p className="text-[9px] font-medium text-slate-400 uppercase">Valor: R$ {item.price.toFixed(2)}</p>
+                                                <p className="text-[9px] font-medium text-slate-500 uppercase">Valor: R$ {item.price.toFixed(2)}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <span className="text-sm font-black text-slate-900">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                            <button onClick={() => setPayingItems(prev => prev.filter(i => i.itemId !== item.itemId))} className="text-slate-300 hover:text-rose-500 transition-colors">
+                                            <button onClick={() => setPayingItems(prev => prev.filter(i => i.itemId !== item.itemId))} className="text-slate-500 hover:text-rose-500 transition-colors">
                                                 <X size={18} />
                                             </button>
                                         </div>
@@ -656,7 +656,7 @@ const TableCheckout: React.FC = () => {
                         {/* PAGAMENTOS JÁ REALIZADOS NESTA TRANSAÇÃO */}
                         {currentPayments.length > 0 && (
                             <div className="p-4 bg-slate-50 border-t border-slate-200">
-                                <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Lançamentos:</h4>
+                                <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Lançamentos:</h4>
                                 <div className="flex flex-wrap gap-2">
                                     {currentPayments.map((p, idx) => (
                                         <div key={idx} className="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200 font-bold text-[10px] uppercase">
@@ -673,12 +673,12 @@ const TableCheckout: React.FC = () => {
                 {/* ── COLUNA 3: MÉTODOS E CONCLUSÃO ── */}
                 <section className="w-1/4 flex flex-col gap-3 min-w-[320px]">
                     <Card className="flex-1 flex flex-col border-slate-200 shadow-sm overflow-hidden" noPadding>
-                        <div className="p-4 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-400">Forma de Recebimento</div>
+                        <div className="p-4 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-500">Forma de Recebimento</div>
                         <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-2 custom-scrollbar">
                             {paymentMethods.map(m => (
                                 <button key={m.id} onClick={() => setSelectedMethodId(m.id)} className={cn(
                                     "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all",
-                                    selectedMethodId === m.id ? "border-blue-500 bg-blue-50 text-blue-600" : "border-slate-100 bg-white text-slate-400 hover:bg-slate-50"
+                                    selectedMethodId === m.id ? "border-blue-500 bg-blue-50 text-blue-600" : "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
                                 )}>
                                     {m.type === 'CASH' ? <Banknote size={20} /> : m.type === 'PIX' ? <QrCode size={20} /> : <CreditCard size={20} />}
                                     <span className="text-[9px] font-black uppercase text-center">{m.name}</span>
@@ -688,9 +688,9 @@ const TableCheckout: React.FC = () => {
 
                         <div className="p-5 border-t border-slate-200 bg-slate-50 space-y-4">
                             <div>
-                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Valor do Pagamento</label>
+                                <label className="text-[10px] font-black uppercase text-slate-500 ml-1">Valor do Pagamento</label>
                                 <div className="relative mt-1">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-300">R$</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-500">R$</span>
                                     <input ref={inputRef} type="text" value={inputValue} onChange={e => setInputValue(e.target.value)} className="w-full h-16 pl-12 pr-4 bg-white border-2 border-slate-200 rounded-2xl text-2xl font-black text-slate-900 focus:border-blue-500 outline-none transition-all shadow-inner" placeholder="0,00" />
                                 </div>
                             </div>
@@ -708,10 +708,10 @@ const TableCheckout: React.FC = () => {
                     <ChevronLeft size={16} className="mr-2" /> Voltar ao Salão
                 </Button>
                 <div className="flex gap-4">
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400">
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
                         <Layers size={14} /> Comandas: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{tabs.length}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400">
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
                         <Clock size={14} /> Pagamentos: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{order.payments?.length || 0}</span>
                     </div>
                 </div>

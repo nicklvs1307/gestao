@@ -61,13 +61,13 @@ const SalesPeriodView: React.FC = () => {
 
             {paymentTotals.length > 0 && (
                 <div className="p-5 border border-slate-200 bg-slate-50/50 rounded-2xl">
-                    <h4 className="font-black text-slate-900 uppercase italic text-xs tracking-widest mb-4 flex items-center gap-2">
+                    <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <CreditCard size={14} className="text-orange-500" /> Resumo por Forma de Pagamento
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         {paymentTotals.map(([method, value]: [string, any], idx: number) => (
                             <div key={idx} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">{method}</p>
+                                <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider mb-1">{method}</p>
                                 <p className="text-sm font-black italic tracking-tighter text-emerald-600">R$ {value.toFixed(2)}</p>
                             </div>
                         ))}
@@ -92,15 +92,15 @@ const SalesPeriodView: React.FC = () => {
                     <tr key={idx} className="hover:bg-slate-50 transition-colors group">
                         <td className="px-4 py-3">
                             <p className="font-black text-slate-900 italic">#{o.dailyOrderNumber || o.id?.slice(-4)}</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase">{new Date(o.createdAt).toLocaleString('pt-BR')}</p>
+                            <p className="text-[11px] text-slate-500 font-medium uppercase">{new Date(o.createdAt).toLocaleString('pt-BR')}</p>
                         </td>
                         <td className="px-4 py-3">
-                            <span className="text-[9px] font-bold uppercase px-2 py-1 rounded bg-slate-100 text-slate-600">{o.orderType || 'Delivery'}</span>
+                            <span className="text-[11px] font-semibold uppercase px-2 py-1 rounded bg-slate-100 text-slate-600">{o.orderType || 'Delivery'}</span>
                         </td>
                         <td className="px-4 py-3 font-bold text-slate-600">{o.tableNumber || '-'}</td>
                         <td className="px-4 py-3">
                             <span className={cn(
-                                "text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded border",
+                                "text-[11px] font-semibold uppercase tracking-wider px-2 py-1 rounded border",
                                 o.status === 'COMPLETED' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
                                 o.status === 'CANCELED' ? "bg-rose-50 text-rose-600 border-rose-100" :
                                 "bg-orange-50 text-orange-600 border-orange-100"

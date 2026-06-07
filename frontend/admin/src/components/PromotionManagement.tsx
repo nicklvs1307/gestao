@@ -50,7 +50,7 @@ const PromotionManagement: React.FC = () => {
         const start = parseISO(p.startDate);
         const end = parseISO(p.endDate);
 
-        if (!p.isActive) return { label: 'Inativa', color: 'bg-slate-100', textColor: 'text-slate-400' };
+        if (!p.isActive) return { label: 'Inativa', color: 'bg-slate-100', textColor: 'text-slate-500' };
         if (isBefore(now, start)) return { label: 'Agendada', color: 'bg-blue-50', textColor: 'text-blue-500' };
         if (isAfter(now, end)) return { label: 'Expirada', color: 'bg-rose-50', textColor: 'text-rose-400' };
         return { label: 'Ativa', color: 'bg-emerald-50', textColor: 'text-emerald-600' };
@@ -68,7 +68,7 @@ const PromotionManagement: React.FC = () => {
         if (p.productId) return <Package size={14} className="text-blue-400" />;
         if (p.addonId) return <Zap size={14} className="text-orange-400" />;
         if (p.categoryId) return <Layers size={14} className="text-emerald-400" />;
-        return <Tag size={14} className="text-slate-400" />;
+        return <Tag size={14} className="text-slate-500" />;
     };
 
     return (
@@ -77,7 +77,7 @@ const PromotionManagement: React.FC = () => {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Marketing & Ofertas</h1>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Gestão de Promoções e Cupons</p>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Gestão de Promoções e Cupons</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" className="bg-white rounded-xl" onClick={fetchPromotions}>
@@ -94,12 +94,12 @@ const PromotionManagement: React.FC = () => {
                 <table className="w-full text-sm">
                     <thead className="bg-slate-50/70 border-b border-slate-100">
                         <tr>
-                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Campanha</th>
-                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Desconto</th>
-                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Alvo</th>
-                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Vigência</th>
-                            <th className="px-6 py-3 text-right text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Ações</th>
+                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Campanha</th>
+                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</th>
+                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Desconto</th>
+                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Alvo</th>
+                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Vigência</th>
+                            <th className="px-6 py-3 text-right text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -112,7 +112,7 @@ const PromotionManagement: React.FC = () => {
                         ) : promotions.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="text-center py-20">
-                                    <div className="flex flex-col items-center justify-center text-slate-300 opacity-50">
+                                    <div className="flex flex-col items-center justify-center text-slate-500 opacity-50">
                                         <Sparkles size={48} strokeWidth={1} className="mb-4" />
                                         <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhuma campanha criada</p>
                                     </div>

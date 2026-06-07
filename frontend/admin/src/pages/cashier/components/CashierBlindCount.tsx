@@ -55,7 +55,7 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
         </div>
         <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-700 rounded-md">
           <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-          <span className="text-[9px] font-semibold text-slate-300 uppercase tracking-wider">Auditoria</span>
+          <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Auditoria</span>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
                   'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all',
                   isSelected
                     ? 'bg-orange-500 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
+                    : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
                 )}
               >
                 <MethodIcon size={14} />
@@ -92,7 +92,7 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
               </span>
 
               <div className="flex-1 relative max-w-[160px]">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-500">
                   R$
                 </span>
                 <input
@@ -122,7 +122,7 @@ const CashierBlindCount: React.FC<CashierBlindCountProps> = memo(({
 
       <div className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
             Total
           </span>
           <span className="text-lg font-bold text-white tabular-nums">

@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             !
           </div>
           <h2 className="text-lg font-black text-slate-900 uppercase italic">Algo deu errado</h2>
-          <p className="text-xs text-slate-400 font-bold uppercase max-w-md text-center">
+          <p className="text-xs text-slate-500 font-bold uppercase max-w-md text-center">
             {this.state.error?.message || 'Erro inesperado. Tente novamente.'}
           </p>
           <button

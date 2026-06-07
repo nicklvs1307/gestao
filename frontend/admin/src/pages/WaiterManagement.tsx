@@ -99,7 +99,7 @@ const WaiterManagement: React.FC = () => {
                     
                     <h3 className="font-black text-xl text-foreground uppercase italic tracking-tighter leading-none mb-2">{user.name || 'Sem Nome'}</h3>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-6">
-                        <Mail size={12} className="text-muted-foreground/60" />
+                        <Mail size={12} className="text-muted-foreground" />
                         {user.email}
                     </div>
 
@@ -131,7 +131,7 @@ const WaiterManagement: React.FC = () => {
             onClick={handleAddClick}
             className="p-8 border-2 border-dashed border-border bg-background/30 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 min-h-[280px]"
           >
-            <div className="w-14 h-14 rounded-3xl bg-white border border-border flex items-center justify-center text-muted-foreground/60 group-hover:text-primary group-hover:border-primary group-hover:scale-110 transition-all shadow-sm">
+            <div className="w-14 h-14 rounded-3xl bg-white border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:border-primary group-hover:scale-110 transition-all shadow-sm">
                 <Plus size={28} />
             </div>
             <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.3em] group-hover:text-primary transition-colors">Contratar Membro</p>
@@ -141,7 +141,7 @@ const WaiterManagement: React.FC = () => {
 
       {users.length === 0 && !isLoading && (
           <div className="py-24 flex flex-col items-center justify-center text-center opacity-20">
-              <ShieldCheck size={80} strokeWidth={1} className="text-muted-foreground/60 mb-4" />
+              <ShieldCheck size={80} strokeWidth={1} className="text-muted-foreground mb-4" />
               <h3 className="text-sm font-black text-muted-foreground uppercase tracking-[0.3em] italic">Nenhum garçom vinculado à sua unidade</h3>
           </div>
       )}

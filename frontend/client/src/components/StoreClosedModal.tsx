@@ -57,7 +57,7 @@ const StoreClosedModal: React.FC<StoreClosedModalProps> = ({ isOpen, onClose, re
           >
             <div className="absolute top-4 right-4">
                 <Button variant="ghost" size="icon" onClick={onClose} className="rounded-lg hover:bg-slate-100" aria-label="Fechar">
-                    <X size={18} className="text-slate-400" />
+                    <X size={18} className="text-slate-500" />
                 </Button>
             </div>
 
@@ -76,7 +76,7 @@ const StoreClosedModal: React.FC<StoreClosedModalProps> = ({ isOpen, onClose, re
                 Abriremos {nextOpening}
               </p>
             ) : (
-              <span className="text-slate-400 text-xs mt-2 block mb-5">Você ainda pode navegar pelo nosso cardápio e conhecer nossas delícias!</span>
+              <span className="text-slate-500 text-xs mt-2 block mb-5">Você ainda pode navegar pelo nosso cardápio e conhecer nossas delícias!</span>
             )}
 
             <div className="space-y-3">

@@ -111,7 +111,7 @@ const ChecklistReportView: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-white p-4 rounded-xl border border-slate-200">
                         <div className="flex items-center gap-2 mb-2">
-                            <BarChart3 size={16} className="text-slate-400" />
+                            <BarChart3 size={16} className="text-slate-500" />
                             <span className="text-xs text-muted-foreground font-medium">Conformidade</span>
                         </div>
                         <p className={cn(
@@ -149,7 +149,7 @@ const ChecklistReportView: React.FC = () => {
 
                     <div className="bg-white p-4 rounded-xl border border-slate-200">
                         <div className="flex items-center gap-2 mb-2">
-                            <Clock size={16} className="text-slate-400" />
+                            <Clock size={16} className="text-slate-500" />
                             <span className="text-xs text-muted-foreground font-medium">Duração</span>
                         </div>
                         <p className="text-2xl font-bold text-foreground">{duration}</p>

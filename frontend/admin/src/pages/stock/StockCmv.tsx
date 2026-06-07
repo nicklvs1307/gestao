@@ -68,14 +68,14 @@ const StockCmv: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Inteligência de Custos</h1>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
                         <Calculator size={14} className="text-orange-500" /> Análise de CMV e Lucratividade Real
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Card className="p-3 bg-white border-slate-100 flex items-center gap-4 shadow-sm">
                         <div className="p-2 bg-emerald-500 text-white rounded-lg shadow-lg shadow-emerald-100"><Target size={18}/></div>
-                        <div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Target CMV</p><p className="text-sm font-black text-emerald-600 italic leading-none">25% - 30%</p></div>
+                        <div><p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Target CMV</p><p className="text-sm font-black text-emerald-600 italic leading-none">25% - 30%</p></div>
                     </Card>
                     <Button variant="outline" size="icon" className="bg-white rounded-xl h-12 w-12" onClick={loadData}>
                         <RefreshCw size={18} />
@@ -84,7 +84,7 @@ const StockCmv: React.FC = () => {
             </div>
 
             <div className="relative group max-w-2xl">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-500 transition-colors" size={20} />
                 <input
                     type="text"
                     className="w-full h-16 pl-14 pr-6 rounded-[2rem] bg-white border-2 border-slate-100 focus:border-orange-500 outline-none transition-all font-black text-slate-900 uppercase italic tracking-tight shadow-xl shadow-slate-200/50"
@@ -117,11 +117,11 @@ const StockCmv: React.FC = () => {
                                     </div>
                                     <div className="space-y-4 pt-4">
                                         <div className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Custo Insumos</span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Custo Insumos</span>
                                             <span className="font-black text-lg text-slate-900 italic tracking-tighter">R$ {realCost.toFixed(2).replace('.', ',')}</span>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">Preço de Venda (Simular)</label>
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2 italic">Preço de Venda (Simular)</label>
                                             <div className="relative">
                                                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={16} />
                                                 <input
@@ -137,7 +137,7 @@ const StockCmv: React.FC = () => {
 
                                 <div className="lg:w-1/3 p-8 flex flex-col justify-center items-center bg-slate-50/30 space-y-8">
                                     <div className="text-center">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Margem de Lucro</p>
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3">Margem de Lucro</p>
                                         <h4 className={cn("text-5xl font-black italic tracking-tighter", profit > 0 ? "text-emerald-600" : "text-rose-600")}>
                                             R$ {profit.toFixed(2).replace('.', ',')}
                                         </h4>
@@ -166,7 +166,7 @@ const StockCmv: React.FC = () => {
                                                     <div key={link.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 hover:border-orange-200 transition-all group/item shadow-sm">
                                                         <div className="flex flex-col">
                                                             <span className="font-black text-[10px] text-slate-700 uppercase italic leading-none group-hover/item:text-orange-600 transition-colors">{ingredient?.name}</span>
-                                                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-1">{link.quantity} {ingredient?.unit}</span>
+                                                            <span className="text-[9px] text-slate-500 font-bold uppercase mt-1">{link.quantity} {ingredient?.unit}</span>
                                                         </div>
                                                         <span className="font-black text-xs text-slate-900 italic tracking-tighter">R$ {total.toFixed(2)}</span>
                                                     </div>

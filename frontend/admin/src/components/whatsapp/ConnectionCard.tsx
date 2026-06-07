@@ -67,7 +67,7 @@ const statusConfig = {
   },
   NOT_CREATED: {
     label: 'Não configurado',
-    color: 'gray',
+    color: '#64748b',
     icon: MessageSquare,
     bgGradient: 'from-gray-50 to-gray-100/30',
     borderColor: 'border-gray-200',

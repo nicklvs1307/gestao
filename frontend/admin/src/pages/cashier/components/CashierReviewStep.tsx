@@ -101,7 +101,7 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
               <h3 className="text-sm font-bold uppercase tracking-wider">
                 Relatorio de Auditoria
               </h3>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
                 Revisao final antes do encerramento
               </p>
             </div>
@@ -118,7 +118,7 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
 
         <div className="p-4 md:p-5 space-y-4">
           <div className="space-y-3">
-            <h4 className="text-[11px] font-bold uppercase text-slate-400 tracking-wider flex items-center gap-1.5 px-1">
+            <h4 className="text-[11px] font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5 px-1">
               <Receipt size={13} /> Balanco por Modalidade
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -141,7 +141,7 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 bg-white border border-slate-200 rounded-md flex items-center justify-center text-slate-400 shrink-0">
+                        <div className="w-8 h-8 bg-white border border-slate-200 rounded-md flex items-center justify-center text-slate-500 shrink-0">
                           <m.icon size={14} />
                         </div>
                         <div className="min-w-0">
@@ -168,11 +168,11 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
                         <div className="text-right">
-                          <span className="block text-[9px] text-slate-400 uppercase font-bold">Info</span>
+                          <span className="block text-[9px] text-slate-500 uppercase font-bold">Info</span>
                           <span className="text-[11px] font-bold text-slate-900 tabular-nums">{formatCurrency(informed)}</span>
                         </div>
                         <div className="text-right hidden sm:block">
-                          <span className="block text-[9px] text-slate-400 uppercase font-bold">Sist</span>
+                          <span className="block text-[9px] text-slate-500 uppercase font-bold">Sist</span>
                           <span className="text-[11px] font-semibold text-slate-500 tabular-nums">{formatCurrency(expected)}</span>
                         </div>
                         <div
@@ -200,12 +200,12 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                             className="flex items-center justify-between px-3 py-1.5 bg-slate-50 rounded"
                           >
                             <div className="flex items-center gap-2">
-                              <ShoppingBag size={11} className="text-slate-400" />
+                              <ShoppingBag size={11} className="text-slate-500" />
                               <span className="text-[10px] font-bold text-slate-700">
                                 #{t.orderNumber || t.orderId?.slice(-4) || 'N/A'}
                               </span>
                               {t.orderTotal && (
-                                <span className="text-[9px] text-slate-400">
+                                <span className="text-[9px] text-slate-500">
                                   (total: {formatCurrency(t.orderTotal)})
                                 </span>
                               )}
@@ -231,7 +231,7 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
 
               <div className="space-y-2">
                 <div>
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
                     Dinheiro Total em Maos
                   </label>
                   <div className="text-lg font-bold text-slate-900 mt-0.5 tabular-nums">
@@ -239,11 +239,11 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
                   </div>
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
                     Fundo de Troco (Prox. Turno)
                   </label>
                   <div className="relative mt-1">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-[11px]">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-[11px]">
                       R$
                     </span>
                     <input
@@ -274,11 +274,11 @@ const CashierReviewStep: React.FC<CashierReviewStepProps> = memo(({
           </div>
 
           <div className="space-y-2">
-            <label className="text-[11px] font-bold uppercase text-slate-400 tracking-wider px-1">
+            <label className="text-[11px] font-bold uppercase text-slate-500 tracking-wider px-1">
               Notas de Auditoria
             </label>
             <textarea
-              className="w-full h-20 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:border-slate-900 outline-none transition-all resize-none placeholder:text-slate-300"
+              className="w-full h-20 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-medium focus:border-slate-900 outline-none transition-all resize-none placeholder:text-slate-500"
               placeholder="Justificativa para quebras de caixa ou observacoes operacionais..."
               value={notes}
               onChange={(e) => onNotesChange(e.target.value)}

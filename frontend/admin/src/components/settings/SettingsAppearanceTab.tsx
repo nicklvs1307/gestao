@@ -36,7 +36,7 @@ const ColorPicker: React.FC<{
 }> = ({ label, value, onChange, colorName }) => (
   <div className="p-3 bg-white border border-slate-200 rounded-lg flex items-center justify-between hover:shadow-md transition-shadow">
     <div>
-      <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">{colorName}</p>
+      <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{colorName}</p>
       <p className="text-[10px] font-medium text-slate-700">{label}</p>
     </div>
     <div className="relative group">
@@ -107,8 +107,8 @@ export const SettingsAppearanceTab: React.FC<SettingsAppearanceTabProps> = ({
                   </>
                 ) : (
                   <div className="text-center">
-                    <ImageIcon size={28} className="text-slate-300 mx-auto mb-2" />
-                    <span className="text-[8px] font-bold text-slate-400 uppercase">Upload</span>
+                    <ImageIcon size={28} className="text-slate-500 mx-auto mb-2" />
+                    <span className="text-[8px] font-bold text-slate-500 uppercase">Upload</span>
                   </div>
                 )}
               </div>
@@ -143,8 +143,8 @@ export const SettingsAppearanceTab: React.FC<SettingsAppearanceTabProps> = ({
                   </>
                 ) : (
                   <div className="text-center p-4">
-                    <LayoutTemplate size={28} className="text-slate-300 mx-auto mb-2" />
-                    <span className="text-[8px] font-bold text-slate-400 uppercase">Upload</span>
+                    <LayoutTemplate size={28} className="text-slate-500 mx-auto mb-2" />
+                    <span className="text-[8px] font-bold text-slate-500 uppercase">Upload</span>
                   </div>
                 )}
               </div>
@@ -185,7 +185,7 @@ export const SettingsAppearanceTab: React.FC<SettingsAppearanceTabProps> = ({
                         setAppearance({...appearance, videoBanners: newBanners});
                       }}
                       placeholder="https://..."
-                      className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all placeholder:text-slate-300"
+                      className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all placeholder:text-slate-500"
                     />
                   </div>
                   <Button
@@ -272,7 +272,7 @@ export const SettingsAppearanceTab: React.FC<SettingsAppearanceTabProps> = ({
               </div>
               <Smartphone className="text-primary mx-auto mb-3" size={32} />
               <h4 className="text-white font-black italic uppercase text-sm tracking-tight">Experiência do Cliente</h4>
-              <p className="text-slate-400 text-[8px] font-medium uppercase tracking-wider max-w-sm mx-auto mt-1 leading-relaxed">
+              <p className="text-slate-500 text-[8px] font-medium uppercase tracking-wider max-w-sm mx-auto mt-1 leading-relaxed">
                 As cores alteram instantaneamente o layout do cardápio digital.
               </p>
               <div className="flex justify-center gap-2 mt-4">

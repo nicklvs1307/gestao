@@ -83,14 +83,14 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-tight">
               {currentMethod?.label}
             </h3>
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
               {filteredOrders.length} movimentação(ões)
             </span>
           </div>
         </div>
 
         <div className="relative w-full sm:w-56">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Buscar lancamento..."
@@ -101,7 +101,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
           {searchTerm && (
             <button
               onClick={handleClearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 transition-colors"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-rose-500 transition-colors"
             >
               <X size={12} />
             </button>
@@ -130,7 +130,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                   className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-[10px] font-bold text-slate-400 tabular-nums shrink-0 w-8 text-center">
+                    <span className="text-[10px] font-bold text-slate-500 tabular-nums shrink-0 w-8 text-center">
                       #{orderNumber}
                     </span>
                     <OrderIcon size={13} className="text-orange-500 shrink-0" />
@@ -138,7 +138,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
                       <span className="text-[11px] font-semibold text-slate-800 uppercase truncate block">
                         {orderLabel}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium">
+                      <span className="text-[10px] text-slate-500 font-medium">
                         {formatSP(order.createdAt, 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}
                       </span>
                     </div>
@@ -171,7 +171,7 @@ const CashierTransactionList: React.FC<CashierTransactionListProps> = memo(({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-40 opacity-30">
-            <Filter size={36} strokeWidth={1.5} className="text-slate-400 mb-2" />
+            <Filter size={36} strokeWidth={1.5} className="text-slate-500 mb-2" />
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 text-center px-10">
               {searchTerm ? 'Nenhum resultado encontrado' : 'Nenhuma transacao registrada nesta modalidade'}
             </p>

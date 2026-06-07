@@ -124,12 +124,12 @@ const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({
                     <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">
                         Permissões do Cargo
                     </h3>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
                         <ShieldCheck size={12} className="text-orange-500" /> Definindo acessos para: <span className="text-slate-900 underline">{roleName}</span>
                     </p>
                 </div>
             </div>
-            <button onClick={onClose} className="w-10 h-10 bg-white border border-slate-100 text-slate-400 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm">
+            <button onClick={onClose} className="w-10 h-10 bg-white border border-slate-100 text-slate-500 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm">
                 <X size={20} />
             </button>
         </div>
@@ -147,7 +147,7 @@ const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({
                         <div key={idx} className="space-y-4">
                             <div className="flex items-center gap-3 border-b border-slate-100 pb-2">
                                 <h4 className="font-black text-slate-900 text-sm uppercase italic tracking-tight">{category.title}</h4>
-                                <span className="bg-slate-100 text-slate-400 text-[8px] font-black px-2 py-0.5 rounded-full">{category.permissions.length}</span>
+                                <span className="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded-full">{category.permissions.length}</span>
                             </div>
                             
                             <div className="grid grid-cols-1 gap-2">
@@ -166,13 +166,13 @@ const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({
                                         >
                                             <div className={cn(
                                                 "transition-colors",
-                                                isSelected ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400"
+                                                isSelected ? "text-orange-500" : "text-slate-500 group-hover:text-slate-500"
                                             )}>
                                                 {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
                                             </div>
                                             <div className="flex-1">
                                                 <p className={cn("text-[10px] font-black uppercase tracking-tight", isSelected ? "text-white" : "text-slate-700")}>{p.description}</p>
-                                                <p className={cn("text-[7px] font-bold uppercase tracking-widest mt-0.5", isSelected ? "text-slate-500" : "text-slate-300")}>{p.name}</p>
+                                                <p className={cn("text-[7px] font-bold uppercase tracking-widest mt-0.5", isSelected ? "text-slate-500" : "text-slate-500")}>{p.name}</p>
                                             </div>
                                         </div>
                                     );
@@ -186,7 +186,7 @@ const RolePermissionsModal: React.FC<RolePermissionsModalProps> = ({
 
         {/* Rodapé Fixo */}
         <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-2 text-slate-500">
                 <Info size={16} />
                 <p className="text-[10px] font-bold uppercase tracking-tight">O SuperAdmin sempre terá acesso total, independente destas configurações.</p>
             </div>

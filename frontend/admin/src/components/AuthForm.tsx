@@ -33,7 +33,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister, onSubmit, error, succes
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-semibold text-slate-700 ml-1">Nome</label>
             <div className="relative">
-              <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <User className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
               <input
                 id="name"
                 type="text"
@@ -51,7 +51,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister, onSubmit, error, succes
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-semibold text-slate-700 ml-1">E-mail de Acesso</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
             <input
               id="email"
               type="email"
@@ -68,7 +68,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister, onSubmit, error, succes
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-semibold text-slate-700 ml-1">Senha</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
             <input
               id="password"
               type="password"

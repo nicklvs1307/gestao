@@ -87,7 +87,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
       {addonGroups.length > 0 && (
         <div className="relative sticky top-0 z-20 bg-slate-50 py-2">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} aria-hidden="true" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} aria-hidden="true" />
             <input
               type="text"
               placeholder="Pesquisar sabor ou adicional..."
@@ -117,7 +117,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
         return (
           <div key={group.id} className="space-y-4 scroll-mt-24" aria-labelledby={`group-${group.id}`}>
             <div className="flex items-center justify-between">
-              <h4 id={`group-${group.id}`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+              <h4 id={`group-${group.id}`} className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
                 <div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" />
                 {group.name}
               </h4>
@@ -214,7 +214,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                           )}
                         </div>
                         {addon.description && (
-                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tight truncate">
                             {addon.description}
                           </p>
                         )}
@@ -222,7 +222,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                           <div className="flex items-center gap-2 mt-1">
                             {isPromoActive(addon) ? (
                               <>
-                                <span className="text-[9px] font-bold text-slate-400 line-through decoration-rose-500/50 uppercase italic">
+                                <span className="text-[9px] font-bold text-slate-500 line-through decoration-rose-500/50 uppercase italic">
                                   + R$ {Number(addon.price).toFixed(2).replace('.', ',')}
                                 </span>
                                 <span className="text-[10px] font-black text-emerald-600 uppercase italic">
@@ -249,7 +249,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                       >
                         <button 
                           onClick={() => onAddonChange(addon, -1, group)} 
-                          className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                          className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors"
                           aria-label={`Remover ${addon.name}`}
                         >
                           <Minus size={12} strokeWidth={3} />

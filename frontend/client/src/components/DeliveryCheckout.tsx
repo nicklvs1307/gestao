@@ -234,7 +234,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
             /* --- TELA 1: FORMULÁRIO --- */
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                 <section className="space-y-4">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                         <User size={14} className="text-primary" /> Informações Pessoais
                     </h3>
                     <div className="space-y-1">
@@ -256,12 +256,12 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                 </section>
 
                 <section className="space-y-4">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                         <Package size={14} className="text-primary" /> Forma de Entrega
                     </h3>
                     <div className="flex gap-2 p-1 bg-white border border-slate-100 rounded-lg shadow-sm">
-                        <button onClick={() => setDeliveryType('delivery')} className={cn("flex-1 py-3 rounded-md font-bold text-xs uppercase transition-all duration-200", deliveryType === 'delivery' ? "bg-slate-900 text-white shadow-md" : "text-slate-400")}>Entrega</button>
-                        <button onClick={() => setDeliveryType('pickup')} className={cn("flex-1 py-3 rounded-md font-bold text-xs uppercase transition-all duration-200", deliveryType === 'pickup' ? "bg-slate-900 text-white shadow-md" : "text-slate-400")}>Retirada</button>
+                        <button onClick={() => setDeliveryType('delivery')} className={cn("flex-1 py-3 rounded-md font-bold text-xs uppercase transition-all duration-200", deliveryType === 'delivery' ? "bg-slate-900 text-white shadow-md" : "text-slate-500")}>Entrega</button>
+                        <button onClick={() => setDeliveryType('pickup')} className={cn("flex-1 py-3 rounded-md font-bold text-xs uppercase transition-all duration-200", deliveryType === 'pickup' ? "bg-slate-900 text-white shadow-md" : "text-slate-500")}>Retirada</button>
                     </div>
 
                     {deliveryType === 'delivery' && (
@@ -343,7 +343,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                     <div className="space-y-2 pt-2">
                         <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Observações do Pedido</label>
                         <textarea 
-                            className="w-full bg-white border-2 border-slate-200 rounded-xl p-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-primary outline-none transition-all resize-none shadow-sm"
+                            className="w-full bg-white border-2 border-slate-200 rounded-xl p-4 text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:border-primary outline-none transition-all resize-none shadow-sm"
                             placeholder="Ex: Tocar campainha ao chegar, portão azul, etc..."
                             rows={2}
                             value={notes}
@@ -353,7 +353,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                 </section>
 
                 <section className="space-y-4 pb-10">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                         <CreditCard size={14} className="text-primary" /> Forma de Pagamento
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -363,7 +363,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                                 onClick={() => setPaymentMethod(m.name)} 
                                 className={cn(
                                     "p-4 border-2 transition-all duration-200 flex flex-col items-center gap-2 text-center rounded-lg", 
-                                    paymentMethod === m.name ? "border-primary bg-orange-50 text-primary" : "border-slate-100 text-slate-400 opacity-60"
+                                    paymentMethod === m.name ? "border-primary bg-orange-50 text-primary" : "border-slate-100 text-slate-500 opacity-60"
                                 )}
                             >
                                 <span className="text-xl">
@@ -402,7 +402,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
 
                 {/* Resumo dos Itens */}
                 <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-2">Itens na Sacola</h4>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2">Itens na Sacola</h4>
                     <Card className="p-5 border-slate-100 rounded-lg">
                       <div className="space-y-3">
                           {localCartItems.map((item, i) => (
@@ -411,17 +411,17 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                                     <span className="font-bold text-slate-800 uppercase text-xs tracking-tight leading-tight">
                                       <b className="text-primary not-italic mr-1">{item.quantity}x</b> {item.product.name}
                                     </span>
-                                    {item.sizeJson && <span className="text-[10px] font-medium text-slate-400 uppercase">{JSON.parse(item.sizeJson).name}</span>}
+                                    {item.sizeJson && <span className="text-[10px] font-medium text-slate-500 uppercase">{JSON.parse(item.sizeJson).name}</span>}
                                   </div>
                                   <span className="font-bold text-slate-900 text-xs shrink-0">R$ {(item.priceAtTime * item.quantity).toFixed(2).replace('.', ',')}</span>
                               </div>
                           ))}
                           <div className="pt-3 border-t border-dashed border-slate-200 space-y-2">
-                              <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+                              <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                                   <span>Subtotal</span>
                                   <span>R$ {total.toFixed(2).replace('.', ',')}</span>
                               </div>
-                              <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+                              <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                                   <span>Taxa de Entrega</span>
                                   <span className={deliveryType === 'delivery' ? 'text-primary' : 'text-emerald-500'}>
                                     {deliveryType === 'delivery' ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}` : 'Grátis'}
@@ -449,7 +449,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                     <Card className="p-4 flex items-center gap-4 border-slate-50 rounded-lg">
                         <div className="bg-blue-50 text-blue-600 p-2.5 rounded-lg"><Truck size={18} /></div>
                         <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Onde Entregar</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">Onde Entregar</p>
                             <p className="text-xs font-bold text-slate-800 leading-tight uppercase truncate">
                               {deliveryType === 'delivery' ? 
                                 `${street}, ${number}` : 
@@ -463,7 +463,7 @@ const DeliveryCheckout: React.FC<DeliveryCheckoutProps> = ({ onSubmit, onClose, 
                     <Card className="p-4 flex items-center gap-4 border-slate-50 rounded-lg">
                         <div className="bg-orange-50 text-orange-600 p-2.5 rounded-lg"><CreditCard size={18} /></div>
                         <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Como pagar</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">Como pagar</p>
                             <p className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-tight">{paymentMethod}</p>
                         </div>
                     </Card>

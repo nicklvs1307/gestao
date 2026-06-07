@@ -66,19 +66,19 @@ const StatusTimeView: React.FC = () => {
                         <td className="px-4 py-3 font-black text-slate-900 italic">#{o.dailyOrderNumber}</td>
                         <td className="px-4 py-3 text-center">
                             <span className="text-lg font-black italic tracking-tighter text-slate-600">{o.waitToPrepareMinutes}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase ml-1">min</span>
+                            <span className="text-[11px] font-medium text-slate-500 uppercase ml-1">min</span>
                         </td>
                         <td className="px-4 py-3 text-center">
                             <span className="text-lg font-black italic tracking-tighter text-orange-600">{o.prepareToReadyMinutes}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase ml-1">min</span>
+                            <span className="text-[11px] font-medium text-slate-500 uppercase ml-1">min</span>
                         </td>
                         <td className="px-4 py-3 text-center">
                             <span className="text-lg font-black italic tracking-tighter text-emerald-600">{o.readyToCompleteMinutes}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase ml-1">min</span>
+                            <span className="text-[11px] font-medium text-slate-500 uppercase ml-1">min</span>
                         </td>
                         <td className="px-4 py-3 text-center">
                             <span className="text-lg font-black italic tracking-tighter text-blue-600">{o.totalCycleMinutes}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase ml-1">min</span>
+                            <span className="text-[11px] font-medium text-slate-500 uppercase ml-1">min</span>
                         </td>
                     </tr>
                 ))}

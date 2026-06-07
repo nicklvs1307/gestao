@@ -53,7 +53,7 @@ const StockLayout: React.FC = () => {
                         <Archive size={18} />
                     </div>
                     <div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Patrimônio</p>
+                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Patrimônio</p>
                         <p className="text-sm font-black text-slate-900 italic">R$ {(stats?.totalValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     </div>
                 </Card>
@@ -62,7 +62,7 @@ const StockLayout: React.FC = () => {
                         <AlertTriangle size={18} />
                     </div>
                     <div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Críticos</p>
+                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Críticos</p>
                         <p className="text-sm font-black text-rose-600 italic">{stats.itemsInShortage} em falta</p>
                     </div>
                 </Card>
@@ -71,7 +71,7 @@ const StockLayout: React.FC = () => {
                         <Package size={18} />
                     </div>
                     <div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Insumos</p>
+                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Insumos</p>
                         <p className="text-sm font-black text-blue-600 italic">{stats.activeIngredients} ativos</p>
                     </div>
                 </Card>
@@ -93,7 +93,7 @@ const StockLayout: React.FC = () => {
                                     : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
                             )}
                         >
-                            <item.icon size={14} className={cn(isActive ? "text-blue-500" : "text-slate-400")} />
+                            <item.icon size={14} className={cn(isActive ? "text-blue-500" : "text-slate-500")} />
                             <span className="hidden sm:inline">{item.label}</span>
                         </button>
                     );

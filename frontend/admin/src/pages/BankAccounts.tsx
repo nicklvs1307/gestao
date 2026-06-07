@@ -72,7 +72,7 @@ const BankAccounts: React.FC = () => {
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic flex items-center gap-3">
                         <Building2 size={32} className="text-primary" /> Contas Bancárias
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Gerencie seus saldos em bancos, caixas e carteiras digitais.</p>
+                    <p className="text-slate-500 dark:text-slate-500 font-medium">Gerencie seus saldos em bancos, caixas e carteiras digitais.</p>
                 </div>
                 
                 <button 
@@ -95,11 +95,11 @@ const BankAccounts: React.FC = () => {
                     </div>
                     <div className="flex gap-4">
                         <div className="bg-white/5 backdrop-blur-md p-4 rounded-3xl border border-white/10">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Total de Contas</p>
+                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Total de Contas</p>
                             <p className="text-xl font-black italic">{accounts.length}</p>
                         </div>
                         <div className="bg-white/5 backdrop-blur-md p-4 rounded-3xl border border-white/10">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Última Sincronização</p>
+                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Última Sincronização</p>
                             <p className="text-xl font-black italic">Agora</p>
                         </div>
                     </div>
@@ -122,26 +122,26 @@ const BankAccounts: React.FC = () => {
                                 {acc.type === 'CASH' ? <Wallet size={24} /> : <Building2 size={24} />}
                             </div>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => { setFormData(acc); setShowForm(true); }} className="p-2 text-slate-400 hover:text-primary transition-all"><Edit2 size={18} /></button>
-                                <button onClick={() => handleDelete(acc.id)} className="p-2 text-slate-400 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
+                                <button onClick={() => { setFormData(acc); setShowForm(true); }} className="p-2 text-slate-500 hover:text-primary transition-all"><Edit2 size={18} /></button>
+                                <button onClick={() => handleDelete(acc.id)} className="p-2 text-slate-500 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
                             </div>
                         </div>
                         
                         <div className="mt-6">
                             <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">{acc.name}</h4>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">
                                 {acc.type === 'CASH' ? 'Dinheiro / Caixa' : 'Conta Bancária'}
                             </p>
                         </div>
 
                         <div className="mt-8 flex items-end justify-between">
                             <div className="space-y-1">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Saldo Atual</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Saldo Atual</p>
                                 <p className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">
                                     R$ {acc.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </p>
                             </div>
-                            <div className="h-10 w-10 rounded-full border-2 border-slate-50 dark:border-slate-800 flex items-center justify-center text-slate-300 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all">
+                            <div className="h-10 w-10 rounded-full border-2 border-slate-50 dark:border-slate-800 flex items-center justify-center text-slate-500 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all">
                                 <ArrowRight size={18} />
                             </div>
                         </div>
@@ -156,11 +156,11 @@ const BankAccounts: React.FC = () => {
                     <form onSubmit={handleSubmit} className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex justify-between items-center">
                             <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">{formData.id ? 'Editar' : 'Nova'} Conta</h3>
-                            <button type="button" onClick={() => setShowForm(false)} className="p-2 text-slate-400 hover:text-slate-900 transition-all"><X size={24} /></button>
+                            <button type="button" onClick={() => setShowForm(false)} className="p-2 text-slate-500 hover:text-slate-900 transition-all"><X size={24} /></button>
                         </div>
                         <div className="p-8 space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Nome da Conta</label>
+                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Nome da Conta</label>
                                 <input 
                                     className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all"
                                     placeholder="Ex: Banco Itaú, Caixa Local, Nubank..."
@@ -170,7 +170,7 @@ const BankAccounts: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Tipo de Conta</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Tipo de Conta</label>
                                     <select 
                                         className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all"
                                         value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}
@@ -181,7 +181,7 @@ const BankAccounts: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Saldo Inicial R$</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Saldo Inicial R$</label>
                                     <input 
                                         type="number" step="0.01"
                                         className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all"
@@ -192,7 +192,7 @@ const BankAccounts: React.FC = () => {
                             </div>
                         </div>
                         <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex gap-3">
-                            <button type="button" onClick={() => setShowForm(false)} className="flex-1 h-14 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-400 italic">Cancelar</button>
+                            <button type="button" onClick={() => setShowForm(false)} className="flex-1 h-14 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-500 italic">Cancelar</button>
                             <button type="submit" className="flex-[2] h-14 bg-slate-900 dark:bg-primary text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 italic">
                                 <CheckCircle size={20} /> {formData.id ? 'Salvar Alterações' : 'Criar Conta'}
                             </button>

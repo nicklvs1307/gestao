@@ -53,7 +53,7 @@ const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onC
             <h2 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none">
               Selecionar <span className="text-orange-600">Entregador</span>
             </h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
               {orderIds.length === 1 
                 ? `Pedido #${orderIds[0].slice(-4).toUpperCase()}` 
                 : orderIds.length > 1 
@@ -61,18 +61,18 @@ const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onC
                   : 'Ação em massa'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
             <X size={18} />
           </button>
         </header>
 
         <div className="p-4 space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input 
               type="text" 
               placeholder="BUSCAR ENTREGADOR..." 
-              className="w-full h-10 pl-10 pr-4 bg-slate-100 border-none rounded-xl text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-400"
+              className="w-full h-10 pl-10 pr-4 bg-slate-100 border-none rounded-xl text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               autoFocus
@@ -86,7 +86,7 @@ const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onC
                 <span className="text-[8px] font-black uppercase tracking-widest">Carregando...</span>
               </div>
             ) : filteredDrivers.length === 0 ? (
-              <div className="text-center py-10 text-[10px] font-black text-slate-400 uppercase italic">
+              <div className="text-center py-10 text-[10px] font-black text-slate-500 uppercase italic">
                 Nenhum entregador encontrado
               </div>
             ) : (
@@ -97,7 +97,7 @@ const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({ isOpen, onC
                   className="w-full p-3 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between group hover:border-orange-500/30 hover:bg-orange-50 transition-all text-left"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-orange-500 group-hover:border-orange-200 transition-all shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 group-hover:text-orange-500 group-hover:border-orange-200 transition-all shadow-sm">
                       <Bike size={20} />
                     </div>
                     <div>

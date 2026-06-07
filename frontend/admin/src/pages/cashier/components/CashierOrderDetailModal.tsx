@@ -179,7 +179,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
               <h2 className="text-sm font-bold text-white uppercase tracking-tight">
                 Pedido #{order.dailyOrderNumber || order.id.slice(-3)}
               </h2>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
                 {orderLabel} • {formatSP(order.createdAt, 'dd/MM HH:mm')}
               </p>
             </div>
@@ -263,7 +263,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
                           <p className="text-[10px] font-bold text-slate-800 uppercase truncate">
                             {getMethodLabel(payment.method, paymentMethods)}
                           </p>
-                          <p className="text-[9px] text-slate-400">
+                          <p className="text-[9px] text-slate-500">
                             {formatSP(payment.createdAt, 'HH:mm')}
                           </p>
                         </div>
@@ -297,7 +297,7 @@ const CashierOrderDetailModal: React.FC<CashierOrderDetailModalProps> = memo(({
                 })}
               </div>
             ) : (
-              <p className="text-[10px] text-slate-400 text-center py-2">Nenhum pagamento registrado</p>
+              <p className="text-[10px] text-slate-500 text-center py-2">Nenhum pagamento registrado</p>
             )}
 
             <div className="mt-2 pt-2 border-t border-slate-200 space-y-1">

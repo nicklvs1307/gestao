@@ -109,7 +109,7 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
                 type="button"
                 {...attributes} 
                 {...listeners}
-                className="p-1 cursor-grab active:cursor-grabbing text-slate-300 hover:text-orange-500 transition-colors shrink-0"
+                className="p-1 cursor-grab active:cursor-grabbing text-slate-500 hover:text-orange-500 transition-colors shrink-0"
             >
                 <GripVertical size={14} />
             </button>
@@ -178,7 +178,7 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
                       addon.imageUrl ? (
                         <img src={getImageUrl(addon.imageUrl)} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <ImageIcon size={14} className="text-slate-400" />
+                        <ImageIcon size={14} className="text-slate-500" />
                       )
                     }
                   </button>
@@ -192,7 +192,7 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
                   variant="ghost" 
                   size="icon" 
                   onClick={() => setIsExpanded(!isExpanded)} 
-                  className={cn("h-7 w-7 text-slate-400 hover:text-orange-500 transition-all", isExpanded && "bg-orange-50 text-orange-500 rotate-90")}
+                  className={cn("h-7 w-7 text-slate-500 hover:text-orange-500 transition-all", isExpanded && "bg-orange-50 text-orange-500 rotate-90")}
                 >
                   <ChevronRight size={14} />
                 </Button>
@@ -200,7 +200,7 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
                   variant="ghost" 
                   size="icon" 
                   onClick={() => removeAddonRow(index)} 
-                  className="h-7 w-7 text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                  className="h-7 w-7 text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-all"
                 >
                   <Trash2 size={14} />
                 </Button>
@@ -219,13 +219,13 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
               >
                 <div className="grid grid-cols-12 gap-6 items-end">
                   <div className="col-span-3">
-                    <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block mb-1">Ficha Técnica Vinculada</label>
+                    <label className="text-[11px] font-semibold uppercase text-slate-500 ml-1 block mb-1">Ficha Técnica Vinculada</label>
                     {addon.fichaTecnica ? (
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-8 text-[10px] px-2 border border-green-200 bg-green-50 rounded-lg flex items-center text-green-700 font-bold overflow-hidden">
                           <span className="truncate">{addon.fichaTecnica.name} — R$ {addon.fichaTecnica.costPrice?.toFixed(2) || '0.00'}</span>
                         </div>
-                        <button type="button" onClick={() => onUnlinkAddonFicha(addon.id)} className="h-8 px-2 text-[9px] text-red-500 hover:text-red-700 shrink-0">DESVINCULAR</button>
+                        <button type="button" onClick={() => onUnlinkAddonFicha(addon.id)} className="h-8 px-2 text-[11px] text-red-500 hover:text-red-700 shrink-0">DESVINCULAR</button>
                       </div>
                     ) : (
                       <select
@@ -243,7 +243,7 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
 
                   <div className="col-span-4 grid grid-cols-2 gap-2">
                     <div className="flex flex-col">
-                      <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block mb-1">Início Promoção</label>
+                      <label className="text-[11px] font-semibold uppercase text-slate-500 ml-1 block mb-1">Início Promoção</label>
                       <Input 
                           type="date" 
                           value={addon.promoStartDate ? new Date(addon.promoStartDate).toISOString().split('T')[0] : ''} 
@@ -253,7 +253,7 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
                       />
                     </div>
                     <div className="flex flex-col">
-                      <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block mb-1">Fim Promoção</label>
+                      <label className="text-[11px] font-semibold uppercase text-slate-500 ml-1 block mb-1">Fim Promoção</label>
                       <Input 
                           type="date" 
                           value={addon.promoEndDate ? new Date(addon.promoEndDate).toISOString().split('T')[0] : ''} 
@@ -265,7 +265,7 @@ const SortableAddonRow = ({ addon, index, updateAddon, removeAddonRow, available
                   </div>
 
                   <div className="col-span-3">
-                    <label className="text-[9px] font-black uppercase text-slate-400 ml-1 block mb-1">Código Integração (ERP)</label>
+                    <label className="text-[11px] font-semibold uppercase text-slate-500 ml-1 block mb-1">Código Integração (ERP)</label>
                     <Input 
                         placeholder="Ex: SKU-001" 
                         value={addon.saiposIntegrationCode || ''} 
@@ -429,7 +429,7 @@ const AddonFormPage: React.FC = () => {
     if (isLoading) return (
         <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Carregando...</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">Carregando...</span>
         </div>
     );
 
@@ -451,13 +451,13 @@ const AddonFormPage: React.FC = () => {
                         <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
                             {id && id !== 'new' ? 'Editar Grupo' : 'Nova Biblioteca'} <span className="text-orange-500">Complementos</span>
                         </h1>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 italic">
+                        <p className="text-xs font-medium text-slate-500 mt-1 italic">
                             Personalização de Itens e Regras de Escolha
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 w-full lg:w-auto">
-                    <Button variant="ghost" onClick={() => navigate('/addons')} className="flex-1 lg:flex-none h-10 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button>
+                    <Button variant="ghost" onClick={() => navigate('/addons')} className="flex-1 lg:flex-none h-10 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-500">CANCELAR</Button>
                     <Button onClick={handleSave} isLoading={isSaving} className="flex-1 lg:flex-none h-10 rounded-xl px-8 shadow-lg font-black italic uppercase tracking-widest gap-2 text-xs">
                         <Save size={18} /> {id && id !== 'new' ? 'SALVAR ALTERAÇÕES' : 'CRIAR BIBLIOTECA'}
                     </Button>
@@ -469,35 +469,35 @@ const AddonFormPage: React.FC = () => {
                 <Card className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none">
                     <div className="flex items-center gap-2 mb-2">
                         <Hash size={14} className="text-orange-400" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Itens</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Itens</span>
                     </div>
                     <p className="text-lg font-black italic tracking-tighter">{totalAddons}</p>
                     <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[7px] font-bold text-orange-400 uppercase">Adicionais cadastrados</span>
+                        <span className="text-[11px] font-medium text-orange-400 uppercase">Adicionais cadastrados</span>
                     </div>
                 </Card>
 
                 <Card className="p-4 bg-white border border-slate-200">
                     <div className="flex items-center gap-2 mb-2">
                         <DollarSign size={14} className="text-blue-500" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Custo Médio</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Custo Médio</span>
                     </div>
                     <p className="text-lg font-black italic tracking-tighter text-blue-600">
                         R$ {avgCost.toFixed(2)}
                     </p>
                     <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[7px] font-bold text-slate-400 uppercase">Por item</span>
+                        <span className="text-[11px] font-medium text-slate-500 uppercase">Por item</span>
                     </div>
                 </Card>
 
                 <Card className="p-4 bg-white border border-slate-200">
                     <div className="flex items-center gap-2 mb-2">
                         <Camera size={14} className="text-emerald-500" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Itens com Foto</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Itens com Foto</span>
                     </div>
                     <p className="text-lg font-black italic tracking-tighter text-emerald-600">{itemsWithPhoto}</p>
                     <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[7px] font-bold text-slate-400 uppercase">
+                        <span className="text-[11px] font-medium text-slate-500 uppercase">
                             {totalAddons > 0 ? `${((itemsWithPhoto / totalAddons) * 100).toFixed(0)}% coberto` : 'Nenhum item'}
                         </span>
                     </div>
@@ -506,11 +506,11 @@ const AddonFormPage: React.FC = () => {
                 <Card className="p-4 bg-white border border-slate-200">
                     <div className="flex items-center gap-2 mb-2">
                         <Percent size={14} className="text-amber-500" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Itens em Promoção</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Itens em Promoção</span>
                     </div>
                     <p className="text-lg font-black italic tracking-tighter text-amber-600">{itemsWithPromo}</p>
                     <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[7px] font-bold text-slate-400 uppercase">Preço promocional ativo</span>
+                        <span className="text-[11px] font-medium text-slate-500 uppercase">Preço promocional ativo</span>
                     </div>
                 </Card>
             </div>
@@ -522,7 +522,7 @@ const AddonFormPage: React.FC = () => {
                         <div className="w-1 h-6 bg-orange-500 rounded-full" />
                         <div>
                             <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-xs">Configurações do Grupo</h3>
-                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Defina regras, tipo e parâmetros da biblioteca</p>
+                            <p className="text-[11px] font-medium text-slate-500 uppercase">Defina regras, tipo e parâmetros da biblioteca</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-6 gap-4 items-end">
@@ -549,14 +549,14 @@ const AddonFormPage: React.FC = () => {
                         </div>
                         
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1 block leading-none">Tipo / Obrigatório</label>
+                            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider ml-1 block leading-none">Tipo / Obrigatório</label>
                             <div className="flex gap-1 h-9 bg-slate-50 border border-slate-200 rounded-xl p-1">
                                 <button 
                                     type="button" 
                                     onClick={() => setFormData({...formData, type: formData.type === 'single' ? 'multiple' : 'single'})} 
                                     className={cn(
-                                        "flex-1 rounded-lg text-[9px] font-black uppercase transition-all", 
-                                        formData.type === 'single' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400 hover:bg-white"
+                                        "flex-1 rounded-lg text-[11px] font-semibold uppercase transition-all", 
+                                        formData.type === 'single' ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:bg-white"
                                     )}
                                 >
                                     {formData.type === 'single' ? 'Única' : 'Múltipla'}
@@ -565,8 +565,8 @@ const AddonFormPage: React.FC = () => {
                                     type="button" 
                                     onClick={() => setFormData({...formData, isRequired: !formData.isRequired})} 
                                     className={cn(
-                                        "flex-1 rounded-lg text-[9px] font-black uppercase transition-all border", 
-                                        formData.isRequired ? "bg-rose-500 border-rose-500 text-white shadow-sm" : "bg-white border-slate-100 text-slate-300"
+                                        "flex-1 rounded-lg text-[11px] font-semibold uppercase transition-all border", 
+                                        formData.isRequired ? "bg-rose-500 border-rose-500 text-white shadow-sm" : "bg-white border-slate-100 text-slate-500"
                                     )}
                                 >
                                     {formData.isRequired ? 'Obrigatório' : 'Opcional'}
@@ -603,13 +603,13 @@ const AddonFormPage: React.FC = () => {
                                 onClick={() => setFormData({...formData, isFlavorGroup: !formData.isFlavorGroup})}
                                 className={cn(
                                     "w-full h-9 rounded-xl border flex items-center justify-center gap-2 transition-all px-3",
-                                    formData.isFlavorGroup ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-slate-50 border-slate-200 text-slate-400 hover:bg-white"
+                                    formData.isFlavorGroup ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-white"
                                 )}
                             >
                                 <div className={cn("w-3 h-3 rounded-full border flex items-center justify-center", formData.isFlavorGroup ? "bg-white border-white" : "bg-white border-slate-300")}>
                                     {formData.isFlavorGroup && <CheckCircle size={8} className="text-amber-500" />}
                                 </div>
-                                <span className="text-[9px] font-black uppercase italic">Grupo de Sabores</span>
+                                <span className="text-[11px] font-semibold uppercase">Grupo de Sabores</span>
                             </button>
                         </div>
                     </div>
@@ -623,7 +623,7 @@ const AddonFormPage: React.FC = () => {
                             <h3 className="text-xs font-black uppercase italic text-slate-900 tracking-widest flex items-center gap-2">
                                 <List size={14} className="text-orange-500" /> Itens da Biblioteca
                             </h3>
-                            <span className="text-[9px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-full shadow-sm">{formData.addons.length}</span>
+                            <span className="text-[11px] font-semibold bg-slate-900 text-white px-2 py-0.5 rounded-full shadow-sm">{formData.addons.length}</span>
                         </div>
                         <Button onClick={addAddonRow} className="rounded-xl bg-orange-500 text-white shadow-lg shadow-orange-500/20 gap-2 font-black italic h-9 text-[10px] px-6 transition-all hover:scale-105 active:scale-95">
                             <Plus size={16} /> ADICIONAR NOVO ITEM
@@ -643,7 +643,7 @@ const AddonFormPage: React.FC = () => {
                             }
                         }}
                     >
-                        <div className="bg-slate-900 rounded-t-xl p-1.5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest italic text-slate-300">
+                        <div className="bg-slate-900 rounded-t-xl p-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-300">
                             <div className="w-6 shrink-0"></div>
                             <div className="flex-1 grid grid-cols-12 gap-2">
                                 <div className="col-span-3 pl-2">Nome do Item</div>
@@ -689,15 +689,15 @@ const AddonFormPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sistema Online</span>
+                        <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Sistema Online</span>
                     </div>
                     <div className="w-px h-4 bg-slate-200" />
-                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="text-[11px] font-medium text-slate-500 uppercase">
                         {totalAddons} itens · {itemsWithPhoto} com foto · {itemsWithPromo} em promoção
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="text-[11px] font-medium text-slate-500 uppercase">
                         Editor de Complementos v2.0
                     </span>
                 </div>

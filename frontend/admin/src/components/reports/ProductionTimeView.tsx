@@ -65,15 +65,15 @@ const ProductionTimeView: React.FC = () => {
                 rows={data.slice(0, 50).map((o: any, idx: number) => (
                     <tr key={idx} className="hover:bg-slate-50 transition-colors group">
                         <td className="px-4 py-3 font-black text-slate-900 italic">#{o.dailyOrderNumber}</td>
-                        <td className="px-4 py-3 text-[10px] font-bold text-slate-500">{o.preparingAt ? new Date(o.preparingAt).toLocaleTimeString('pt-BR') : '-'}</td>
-                        <td className="px-4 py-3 text-[10px] font-bold text-slate-500">{o.readyAt ? new Date(o.readyAt).toLocaleTimeString('pt-BR') : (o.completedAt ? new Date(o.completedAt).toLocaleTimeString('pt-BR') : '-')}</td>
+                        <td className="px-4 py-3 text-xs font-medium text-slate-500">{o.preparingAt ? new Date(o.preparingAt).toLocaleTimeString('pt-BR') : '-'}</td>
+                        <td className="px-4 py-3 text-xs font-medium text-slate-500">{o.readyAt ? new Date(o.readyAt).toLocaleTimeString('pt-BR') : (o.completedAt ? new Date(o.completedAt).toLocaleTimeString('pt-BR') : '-')}</td>
                         <td className="px-4 py-3 text-center">
                             <span className="text-lg font-black italic tracking-tighter text-slate-700">{o.durationMinutes}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase ml-1">min</span>
+                            <span className="text-[11px] font-medium text-slate-500 uppercase ml-1">min</span>
                         </td>
                         <td className="px-4 py-3 text-center">
                             <span className={cn(
-                                "text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border",
+                                "text-[11px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-lg border",
                                 o.durationMinutes <= 20 ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
                                 o.durationMinutes <= 40 ? "bg-orange-50 text-orange-600 border-orange-100" :
                                 "bg-rose-50 text-rose-600 border-rose-100"

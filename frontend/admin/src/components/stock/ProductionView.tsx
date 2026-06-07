@@ -36,7 +36,7 @@ const ProductionView: React.FC<ProductionViewProps> = ({ ingredients, recipes, o
       <Card className="lg:col-span-4 flex flex-col overflow-hidden border-slate-100 shadow-sm">
         <div className="p-3 border-b border-slate-50 bg-slate-50/50">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={12} />
             <input 
               className="w-full h-8 pl-8 pr-4 rounded-lg bg-white border border-slate-200 text-[10px] font-bold outline-none focus:border-orange-500" 
               placeholder="Buscar receita..." 
@@ -62,13 +62,13 @@ const ProductionView: React.FC<ProductionViewProps> = ({ ingredients, recipes, o
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-[11px] font-black text-slate-900 uppercase italic tracking-tight leading-none">{item.name}</p>
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Rendimento: {item.yieldAmount || 1} {item.unit}</p>
+                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Rendimento: {item.yieldAmount || 1} {item.unit}</p>
                   </div>
-                  <ChevronRight size={14} className="text-slate-300 group-hover:text-orange-500 transition-colors" />
+                  <ChevronRight size={14} className="text-slate-500 group-hover:text-orange-500 transition-colors" />
                 </div>
                 <div className="mt-2 flex items-center gap-3">
                   <div className="flex flex-col">
-                    <span className="text-[7px] font-black text-slate-400 uppercase">Custo Unit.</span>
+                    <span className="text-[7px] font-black text-slate-500 uppercase">Custo Unit.</span>
                     <span className="text-[10px] font-black text-slate-700 italic">R$ {(cost / (item.yieldAmount || 1)).toFixed(2)}</span>
                   </div>
                   {!recipe && <span className="text-[7px] font-black bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded uppercase">Sem Receita</span>}
@@ -89,7 +89,7 @@ const ProductionView: React.FC<ProductionViewProps> = ({ ingredients, recipes, o
                 <div className="p-2 bg-slate-900 text-white rounded-lg"><Hammer size={16}/></div>
                 <div>
                   <h2 className="text-sm font-black text-slate-900 uppercase italic leading-none">{selectedRecipe.name}</h2>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 text-emerald-600">Ficha Técnica Ativa</p>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 text-emerald-600">Ficha Técnica Ativa</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -105,7 +105,7 @@ const ProductionView: React.FC<ProductionViewProps> = ({ ingredients, recipes, o
             {/* Conteúdo Denso */}
             <div className="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto">
               <div className="space-y-6">
-                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-50 pb-2">Composição da Receita</h3>
+                <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-slate-50 pb-2">Composição da Receita</h3>
                 <div className="space-y-3">
                   {/* Mock de Itens da Receita para Visualização */}
                   {(recipes.find(r => r.ingredientId === selectedRecipe.id)?.items || []).map((ri: any, idx: number) => (
@@ -114,7 +114,7 @@ const ProductionView: React.FC<ProductionViewProps> = ({ ingredients, recipes, o
                         <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
                         <div>
                           <p className="text-[10px] font-black text-slate-800 uppercase italic leading-none">{ri.ingredient?.name || 'Insumo'}</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase mt-1">{ri.quantity} {ri.ingredient?.unit}</p>
+                          <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">{ri.quantity} {ri.ingredient?.unit}</p>
                         </div>
                       </div>
                       <p className="text-[10px] font-black text-slate-900 italic">R$ {(ri.quantity * (ri.ingredient?.averageCost || 0)).toFixed(2)}</p>
@@ -124,14 +124,14 @@ const ProductionView: React.FC<ProductionViewProps> = ({ ingredients, recipes, o
               </div>
 
               <div className="space-y-6">
-                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-50 pb-2">Análise de CMV e Lucratividade</h3>
+                <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-slate-50 pb-2">Análise de CMV e Lucratividade</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <Card className="p-4 border-slate-100 bg-slate-50/50">
-                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1 leading-none">Custo Total Lote</p>
+                    <p className="text-[8px] font-black text-slate-500 uppercase mb-1 leading-none">Custo Total Lote</p>
                     <p className="text-xl font-black italic text-slate-900 leading-none">R$ {calculateTotalCost(recipes.find(r => r.ingredientId === selectedRecipe.id)?.items || []).toFixed(2)}</p>
                   </Card>
                   <Card className="p-4 border-slate-100 bg-slate-50/50">
-                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1 leading-none">Custo por {selectedRecipe.unit}</p>
+                    <p className="text-[8px] font-black text-slate-500 uppercase mb-1 leading-none">Custo por {selectedRecipe.unit}</p>
                     <p className="text-xl font-black italic text-orange-600 leading-none">R$ {(calculateTotalCost(recipes.find(r => r.ingredientId === selectedRecipe.id)?.items || []) / (selectedRecipe.yieldAmount || 1)).toFixed(2)}</p>
                   </Card>
                 </div>
@@ -158,7 +158,7 @@ const ProductionView: React.FC<ProductionViewProps> = ({ ingredients, recipes, o
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center opacity-20 space-y-4">
-            <Hammer size={48} className="text-slate-400" />
+            <Hammer size={48} className="text-slate-500" />
             <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">Selecione uma ficha técnica para gerenciar</p>
           </div>
         )}

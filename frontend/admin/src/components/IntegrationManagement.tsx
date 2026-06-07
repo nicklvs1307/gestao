@@ -49,7 +49,7 @@ const IntegrationManagement: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Integrações</h1>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
             <Share2 size={14} className="text-orange-500" /> Canais de Venda e Conexões Externas
           </p>
         </div>
@@ -82,7 +82,7 @@ const IntegrationManagement: React.FC = () => {
                             ) : (
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
-                                    saiposStatus ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
+                                    saiposStatus ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-100 text-slate-500 border-slate-200"
                                 )}                                >
                                     {saiposStatus ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
@@ -90,7 +90,7 @@ const IntegrationManagement: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="p-2 rounded-lg bg-slate-50 text-slate-300 group-hover:text-orange-500 transition-colors">
+                <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:text-orange-500 transition-colors">
                     <Plug size={20} />
                 </div>
             </div>
@@ -131,7 +131,7 @@ const IntegrationManagement: React.FC = () => {
                             ) : (
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
-                                    uairangoStatus ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
+                                    uairangoStatus ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20" : "bg-slate-100 text-slate-500 border-slate-200"
                                 )}                                >
                                     {uairangoStatus ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
@@ -139,7 +139,7 @@ const IntegrationManagement: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="p-2 rounded-lg bg-slate-50 text-slate-300 group-hover:text-orange-500 transition-colors">
+                <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:text-orange-500 transition-colors">
                     <Plug size={20} />
                 </div>
             </div>
@@ -180,7 +180,7 @@ const IntegrationManagement: React.FC = () => {
                             ) : (
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
-                                    ifoodStatus ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
+                                    ifoodStatus ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20" : "bg-slate-100 text-slate-500 border-slate-200"
                                 )}                                >
                                     {ifoodStatus ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
@@ -188,7 +188,7 @@ const IntegrationManagement: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="p-2 rounded-lg bg-slate-50 text-slate-300 group-hover:text-orange-500 transition-colors">
+                <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:text-orange-500 transition-colors">
                     <Plug size={20} />
                 </div>
             </div>
@@ -229,7 +229,7 @@ const IntegrationManagement: React.FC = () => {
                             ) : (
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
-                                    food99Status ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-100 text-slate-400 border-slate-200"
+                                    food99Status ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-100 text-slate-500 border-slate-200"
                                 )}                                >
                                     {food99Status ? 'ATIVO' : 'DESATIVADO'}
                                 </span>
@@ -237,7 +237,7 @@ const IntegrationManagement: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="p-2 rounded-lg bg-slate-50 text-slate-300 group-hover:text-amber-600 transition-colors">
+                <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:text-amber-600 transition-colors">
                     <Plug size={20} />
                 </div>
             </div>
@@ -264,18 +264,18 @@ const IntegrationManagement: React.FC = () => {
                         <img src={voltakiLogo} alt="Voltaki" className="w-full h-full object-contain" />
                     </div>
                     <div>
-                        <h3 className="font-black text-xl text-slate-400 uppercase italic tracking-tighter leading-none">Voltaki</h3>
+                        <h3 className="font-black text-xl text-slate-500 uppercase italic tracking-tighter leading-none">Voltaki</h3>
                         <span className="mt-2 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-amber-500 text-white border border-amber-500 shadow-lg shadow-amber-500/20 inline-block">EM BREVE</span>
                     </div>
                 </div>
             </div>
 
-            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
                 Potencialize suas vendas com CRM inteligente e automação de fidelização por WhatsApp.
             </p>
 
             <div className="pt-6 border-t border-slate-100 flex items-center justify-between grayscale">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Aguardando Lançamento</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Aguardando Lançamento</span>
                 <div className="w-2 h-2 rounded-full bg-slate-200" />
             </div>
           </div>

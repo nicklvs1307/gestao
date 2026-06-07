@@ -103,7 +103,7 @@ const CategoryFormPage: React.FC = () => {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-200 shadow-sm"
+            className="p-2 hover:bg-white rounded-xl text-slate-500 hover:text-slate-900 transition-all border border-transparent hover:border-slate-200 shadow-sm"
           >
             <ArrowLeft size={20} />
           </button>
@@ -111,7 +111,7 @@ const CategoryFormPage: React.FC = () => {
             <h1 className="text-xl font-black tracking-tighter uppercase italic leading-none">
               {isEdit ? 'Editar Categoria' : 'Nova Categoria'}
             </h1>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
               <Tag size={10} className="text-orange-500" /> Configuração de Agrupamento
             </p>
           </div>
@@ -141,7 +141,7 @@ const CategoryFormPage: React.FC = () => {
           <Card className="p-6 border-slate-200 shadow-sm rounded-2xl space-y-5">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
-              <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 italic">Identificação Básica</h2>
+              <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-500 italic">Identificação Básica</h2>
             </div>
 
             <div className="space-y-4">
@@ -172,7 +172,7 @@ const CategoryFormPage: React.FC = () => {
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1 italic">Tag de Cozinha</label>
                   <div className="relative">
-                    <Utensils className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                    <Utensils className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                     <input 
                       {...register('cuisineType')}
                       className="w-full h-11 pl-11 pr-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-orange-500 transition-all font-bold text-[10px] uppercase italic tracking-tight outline-none"
@@ -189,7 +189,7 @@ const CategoryFormPage: React.FC = () => {
                       "w-full h-11 rounded-xl border flex items-center justify-between px-4 transition-all font-black text-[10px] uppercase italic tracking-widest",
                       watchFields.isActive 
                         ? "bg-emerald-50 border-emerald-100 text-emerald-600" 
-                        : "bg-slate-100 border-slate-200 text-slate-400"
+                        : "bg-slate-100 border-slate-200 text-slate-500"
                     )}
                   >
                     <span className="flex items-center gap-2">
@@ -231,7 +231,7 @@ const CategoryFormPage: React.FC = () => {
           <Card className="p-6 border-slate-200 shadow-sm rounded-2xl space-y-5">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
-              <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 italic">Canais Ativos</h2>
+              <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-500 italic">Canais Ativos</h2>
             </div>
 
             <div className="space-y-3">
@@ -262,15 +262,15 @@ const CategoryFormPage: React.FC = () => {
           <Card className="p-6 border-slate-200 shadow-sm rounded-2xl space-y-4">
              <div className="flex items-center gap-2 mb-2">
                 <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
-                <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 italic">Estatísticas</h2>
+                <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-500 italic">Estatísticas</h2>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Produtos</span>
+                    <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Produtos</span>
                     <span className="text-xl font-black italic tracking-tighter">--</span>
                 </div>
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Vendas (Mês)</span>
+                    <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Vendas (Mês)</span>
                     <span className="text-xl font-black italic tracking-tighter text-emerald-600">R$ 0</span>
                 </div>
             </div>
@@ -291,9 +291,9 @@ interface ChannelToggleProps {
 
 const ChannelToggle: React.FC<ChannelToggleProps> = ({ label, icon, isActive, onClick, color }) => {
   const colorClasses = {
-    blue: isActive ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-slate-50 border-slate-100 text-slate-300",
-    emerald: isActive ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-slate-50 border-slate-100 text-slate-300",
-    purple: isActive ? "bg-purple-50 border-purple-100 text-purple-600" : "bg-slate-50 border-slate-100 text-slate-300"
+    blue: isActive ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-slate-50 border-slate-100 text-slate-500",
+    emerald: isActive ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-slate-50 border-slate-100 text-slate-500",
+    purple: isActive ? "bg-purple-50 border-purple-100 text-purple-600" : "bg-slate-50 border-slate-100 text-slate-500"
   };
 
   const dotClasses = {

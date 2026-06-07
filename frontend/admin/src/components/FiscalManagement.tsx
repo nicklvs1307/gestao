@@ -313,7 +313,7 @@ const FiscalManagement: React.FC = () => {
                         <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
                             Módulo <span className="text-primary">Fiscal</span>
                         </h1>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
                             Gestão de NFC-e e SEFAZ
                         </p>
                     </div>
@@ -386,21 +386,21 @@ const FiscalManagement: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Modo de Emissão</label>
+                                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Modo de Emissão</label>
                                         <select className="ui-input w-full h-12" value={config.emissionMode || 'MANUAL'} onChange={e => setConfig({...config, emissionMode: e.target.value})}>
                                             <option value="MANUAL">Manual (Botão no Pedido)</option>
                                             <option value="AUTOMATIC">Automática (Ao Finalizar)</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Provedor API</label>
+                                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Provedor API</label>
                                         <select className="ui-input w-full h-12" value={config.provider || 'focus'} onChange={e => setConfig({...config, provider: e.target.value})}>
                                             <option value="focus">Focus NFe</option>
                                             <option value="webmania">Webmania</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Ambiente SEFAZ</label>
+                                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Ambiente SEFAZ</label>
                                         <select className="ui-input w-full h-12" value={config.environment || 'homologation'} onChange={e => setConfig({...config, environment: e.target.value})}>
                                             <option value="homologation">Homologação (Testes)</option>
                                             <option value="production">Produção (Real)</option>
@@ -408,14 +408,14 @@ const FiscalManagement: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-6 pt-6 border-t border-slate-50">
-                                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Configurações NFC-e (QR-Code)</h4>
+                                    <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Configurações NFC-e (QR-Code)</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <Input label="ID do Token (CSC)" value={config.cscId || ''} onChange={e => setConfig({...config, cscId: e.target.value})} placeholder="Ex: 000001" />
                                         <Input label="Código do Token (CSC)" value={config.cscToken || ''} onChange={e => setConfig({...config, cscToken: e.target.value})} placeholder="Ex: AAAA-BBBB-CCCC-DDDD" />
                                     </div>
                                 </div>
                                 <div className="space-y-6 pt-6 border-t border-slate-50">
-                                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Endereço Fiscal</h4>
+                                    <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Endereço Fiscal</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                         <div className="md:col-span-2"><Input label="Logradouro" value={config.street || ''} onChange={e => setConfig({...config, street: e.target.value})} /></div>
                                         <Input label="Nº" value={config.number || ''} onChange={e => setConfig({...config, number: e.target.value})} />
@@ -478,10 +478,10 @@ const FiscalManagement: React.FC = () => {
                             )}
                             <div className="space-y-6 pt-2">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Arquivo (.pfx / .p12)</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Arquivo (.pfx / .p12)</label>
                                     <div className="relative border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-orange-500 transition-all group cursor-pointer bg-slate-50/50">
                                         <input type="file" accept=".pfx,.p12" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={e => setCertFile(e.target.files?.[0] || null)} />
-                                        <Upload className="mx-auto text-slate-300 mb-3 group-hover:text-orange-500 group-hover:scale-110 transition-all" size={32} />
+                                        <Upload className="mx-auto text-slate-500 mb-3 group-hover:text-orange-500 group-hover:scale-110 transition-all" size={32} />
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{certFile ? certFile.name : 'SELECIONAR ARQUIVO'}</p>
                                     </div>
                                 </div>
@@ -498,13 +498,13 @@ const FiscalManagement: React.FC = () => {
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Mês</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Mês</label>
                                     <select className="ui-input w-full" value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))}>
                                         {Array.from({length: 12}).map((_, i) => <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('pt-BR', {month: 'long'})}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Ano</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Ano</label>
                                     <select className="ui-input w-full" value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))}>
                                         {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
                                     </select>
@@ -564,7 +564,7 @@ const FiscalManagement: React.FC = () => {
                                 <div className="w-1 h-6 bg-primary rounded-full" />
                                 <div>
                                     <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Livro de Notas Fiscais</h3>
-                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{filteredInvoices.length} nota(s)</p>
+                                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{filteredInvoices.length} nota(s)</p>
                                 </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -581,7 +581,7 @@ const FiscalManagement: React.FC = () => {
                                                     : status === 'PENDING' ? "bg-amber-100 text-amber-700"
                                                     : status === 'CANCELED' ? "bg-slate-400 text-white"
                                                     : "bg-slate-800 text-white"
-                                                    : "text-slate-400 hover:text-slate-600"
+                                                    : "text-slate-500 hover:text-slate-600"
                                             )}
                                         >
                                             {status === 'ALL' ? 'Todos' : status === 'AUTHORIZED' ? 'Ok' : status === 'REJECTED' ? 'Erro' : status === 'CANCELED' ? 'Cancel' : 'Pendente'}
@@ -589,7 +589,7 @@ const FiscalManagement: React.FC = () => {
                                     ))}
                                 </div>
                                 <div className="relative w-48">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                                     <input
                                         type="text"
                                         placeholder="Buscar nota..."
@@ -604,7 +604,7 @@ const FiscalManagement: React.FC = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/50">
+                                    <tr className="text-[9px] font-black uppercase text-slate-500 tracking-widest border-b border-slate-100 bg-slate-50/50">
                                         <th className="px-4 py-3">Data / Hora</th>
                                         <th className="px-4 py-3">Número NFC-e</th>
                                         <th className="px-4 py-3">Status</th>
@@ -618,7 +618,7 @@ const FiscalManagement: React.FC = () => {
                                     {loading ? (
                                         <tr>
                                             <td colSpan={7} className="px-4 py-16 text-center">
-                                                <div className="flex flex-col items-center gap-3 text-slate-400">
+                                                <div className="flex flex-col items-center gap-3 text-slate-500">
                                                     <Loader2 className="animate-spin text-primary" size={32} />
                                                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando notas...</span>
                                                 </div>
@@ -627,7 +627,7 @@ const FiscalManagement: React.FC = () => {
                                     ) : filteredInvoices.length === 0 ? (
                                         <tr>
                                             <td colSpan={7} className="px-4 py-16 text-center">
-                                                <div className="flex flex-col items-center text-slate-400">
+                                                <div className="flex flex-col items-center text-slate-500">
                                                     <FileText size={40} className="mb-3 opacity-20" />
                                                     <p className="text-[10px] font-black uppercase tracking-[0.2em]">Nenhuma nota fiscal encontrada</p>
                                                 </div>
@@ -653,7 +653,7 @@ const FiscalManagement: React.FC = () => {
                                                             <span className="text-[10px] font-black text-slate-600 uppercase italic">
                                                                 {inv.issuedAt ? formatSP(inv.issuedAt, 'dd/MM/yyyy') : '-'}
                                                             </span>
-                                                            <span className="text-[7px] font-bold text-slate-400 uppercase">
+                                                            <span className="text-[7px] font-bold text-slate-500 uppercase">
                                                                 {inv.issuedAt ? formatSP(inv.issuedAt, 'HH:mm:ss') : '-'}
                                                             </span>
                                                         </div>
@@ -678,7 +678,7 @@ const FiscalManagement: React.FC = () => {
                                                             {inv.ccorrectionCount}x
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[8px] text-slate-300">-</span>
+                                                        <span className="text-[8px] text-slate-500">-</span>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -687,17 +687,17 @@ const FiscalManagement: React.FC = () => {
                                                             {inv.attemptLog.length} tentativa(s)
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[8px] text-slate-300">-</span>
+                                                        <span className="text-[8px] text-slate-500">-</span>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 font-mono text-[8px] text-slate-400 group-hover:text-slate-600 transition-colors max-w-[200px] truncate">
+                                                <td className="px-4 py-3 font-mono text-[8px] text-slate-500 group-hover:text-slate-600 transition-colors max-w-[200px] truncate">
                                                     {inv.accessKey || '---'}
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <div className="flex justify-end gap-1.5">
                                                         {inv.pdfUrl && (
                                                             <button
-                                                                className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center"
+                                                                className="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center"
                                                                 onClick={() => window.open(inv.pdfUrl, '_blank')}
                                                                 title="Baixar PDF"
                                                             >
@@ -706,7 +706,7 @@ const FiscalManagement: React.FC = () => {
                                                         )}
                                                         {inv.xmlUrl && (
                                                             <button
-                                                                className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-all flex items-center justify-center"
+                                                                className="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:text-orange-600 hover:bg-orange-50 transition-all flex items-center justify-center"
                                                                 onClick={() => window.open(inv.xmlUrl, '_blank')}
                                                                 title="Baixar XML"
                                                             >
@@ -716,14 +716,14 @@ const FiscalManagement: React.FC = () => {
                                                         {inv.status === 'AUTHORIZED' && (
                                                             <>
                                                                 <button
-                                                                    className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition-all flex items-center justify-center"
+                                                                    className="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:text-blue-700 hover:bg-blue-50 transition-all flex items-center justify-center"
                                                                     onClick={() => setCartaCorrecaoData({ open: true, invoice: inv, corrections: '', loading: false })}
                                                                     title="Carta de Correção"
                                                                 >
                                                                     <FileDigit size={12} />
                                                                 </button>
                                                                 <button
-                                                                    className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all flex items-center justify-center"
+                                                                    className="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all flex items-center justify-center"
                                                                     onClick={() => setCancelData({ open: true, invoice: inv, reason: '', loading: false })}
                                                                     title="Cancelar NFC-e"
                                                                 >
@@ -783,7 +783,7 @@ const FiscalManagement: React.FC = () => {
                                 <div className="w-1 h-6 bg-amber-500 rounded-full" />
                                 <div>
                                     <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Fila de Retry Fiscal</h3>
-                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Notas aguardando reprocessamento automático</p>
+                                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Notas aguardando reprocessamento automático</p>
                                 </div>
                             </div>
                             <Button onClick={loadQueueStatus} isLoading={queueLoading} variant="secondary" className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest italic">
@@ -794,7 +794,7 @@ const FiscalManagement: React.FC = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/50">
+                                    <tr className="text-[9px] font-black uppercase text-slate-500 tracking-widest border-b border-slate-100 bg-slate-50/50">
                                         <th className="px-4 py-3">Pedido</th>
                                         <th className="px-4 py-3">Tentativas</th>
                                         <th className="px-4 py-3">Último Erro</th>
@@ -813,7 +813,7 @@ const FiscalManagement: React.FC = () => {
                                     ) : invoices.length === 0 ? (
                                         <tr>
                                             <td colSpan={6} className="px-4 py-16 text-center">
-                                                <div className="flex flex-col items-center text-slate-400">
+                                                <div className="flex flex-col items-center text-slate-500">
                                                     <RotateCcw size={40} className="mb-3 opacity-20" />
                                                     <p className="text-[10px] font-black uppercase tracking-[0.2em]">Fila vazia</p>
                                                 </div>
@@ -886,7 +886,7 @@ const FiscalManagement: React.FC = () => {
                                         <p className="text-[8px] font-bold text-rose-500 uppercase tracking-widest mt-1">Nota #{cancelData.invoice?.number}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setCancelData({ open: false, invoice: null, reason: '', loading: false })} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200">
+                                <button onClick={() => setCancelData({ open: false, invoice: null, reason: '', loading: false })} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200">
                                     <X size={20} />
                                 </button>
                             </header>
@@ -897,7 +897,7 @@ const FiscalManagement: React.FC = () => {
                                     </p>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Motivo do Cancelamento</label>
+                                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Motivo do Cancelamento</label>
                                     <textarea
                                         className="ui-input w-full h-24 text-sm font-bold resize-none"
                                         placeholder="Ex: Erro na digitação dos dados do cliente..."
@@ -905,7 +905,7 @@ const FiscalManagement: React.FC = () => {
                                         onChange={(e) => setCancelData({ ...cancelData, reason: e.target.value })}
                                         maxLength={255}
                                     />
-                                    <p className="text-[7px] text-slate-400 text-right">{cancelData.reason.length}/255</p>
+                                    <p className="text-[7px] text-slate-500 text-right">{cancelData.reason.length}/255</p>
                                 </div>
                                 <Button
                                     fullWidth
@@ -941,7 +941,7 @@ const FiscalManagement: React.FC = () => {
                                         <p className="text-[8px] font-bold text-orange-500 uppercase tracking-widest mt-1">Range de números NFC-e</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setInutilizeData({ open: false, nNFInicio: '', nNFFim: '', reason: '', loading: false })} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200">
+                                <button onClick={() => setInutilizeData({ open: false, nNFInicio: '', nNFFim: '', reason: '', loading: false })} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200">
                                     <X size={20} />
                                 </button>
                             </header>
@@ -956,7 +956,7 @@ const FiscalManagement: React.FC = () => {
                                     <Input label="Nº Final" type="number" value={inutilizeData.nNFFim} onChange={e => setInutilizeData({...inutilizeData, nNFFim: e.target.value})} placeholder="10" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Motivo</label>
+                                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Motivo</label>
                                     <textarea
                                         className="ui-input w-full h-20 text-sm font-bold resize-none"
                                         placeholder="Ex: Sequência gerada por erro no sistema..."
@@ -999,7 +999,7 @@ const FiscalManagement: React.FC = () => {
                                         <p className="text-[8px] font-bold text-blue-600 uppercase tracking-widest mt-1">NFC-e #{cartaCorrecaoData.invoice?.number}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setCartaCorrecaoData({ open: false, invoice: null, corrections: '', loading: false })} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200">
+                                <button onClick={() => setCartaCorrecaoData({ open: false, invoice: null, corrections: '', loading: false })} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200">
                                     <X size={20} />
                                 </button>
                             </header>
@@ -1010,7 +1010,7 @@ const FiscalManagement: React.FC = () => {
                                     </p>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Correções</label>
+                                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Correções</label>
                                     <textarea
                                         className="ui-input w-full h-32 text-sm font-bold resize-none"
                                         placeholder="Descreva as correções a serem aplicadas..."
@@ -1018,7 +1018,7 @@ const FiscalManagement: React.FC = () => {
                                         onChange={(e) => setCartaCorrecaoData({ ...cartaCorrecaoData, corrections: e.target.value })}
                                         maxLength={1000}
                                     />
-                                    <p className="text-[7px] text-slate-400 text-right">{cartaCorrecaoData.corrections.length}/1000</p>
+                                    <p className="text-[7px] text-slate-500 text-right">{cartaCorrecaoData.corrections.length}/1000</p>
                                 </div>
                                 <Button
                                     fullWidth
@@ -1051,12 +1051,12 @@ const FiscalManagement: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">Relatório Mensal</h3>
-                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                                             {new Date(monthlyReport.period.year, monthlyReport.period.month - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
                                         </p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowReport(false)} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200">
+                                <button onClick={() => setShowReport(false)} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200">
                                     <X size={20} />
                                 </button>
                             </header>
@@ -1082,7 +1082,7 @@ const FiscalManagement: React.FC = () => {
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
                                         <thead>
-                                            <tr className="text-[9px] font-black uppercase text-slate-400 border-b border-slate-100">
+                                            <tr className="text-[9px] font-black uppercase text-slate-500 border-b border-slate-100">
                                                 <th className="px-3 py-2">Nº</th>
                                                 <th className="px-3 py-2">Status</th>
                                                 <th className="px-3 py-2">Data</th>
@@ -1104,7 +1104,7 @@ const FiscalManagement: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-2 text-slate-500">{inv.issuedAt ? formatSP(inv.issuedAt, 'dd/MM/yyyy HH:mm') : '-'}</td>
-                                                    <td className="px-3 py-2 font-mono text-slate-400 truncate max-w-[150px]">{inv.accessKey || '---'}</td>
+                                                    <td className="px-3 py-2 font-mono text-slate-500 truncate max-w-[150px]">{inv.accessKey || '---'}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

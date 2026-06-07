@@ -26,7 +26,7 @@ export const ReportPageHeader: React.FC<ReportPageHeaderProps> = ({
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">{title}</h1>
           {subtitle && (
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">{subtitle}</p>
+            <p className="text-xs font-medium text-slate-500 mt-1">{subtitle}</p>
           )}
         </div>
       </div>

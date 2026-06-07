@@ -124,7 +124,7 @@ const StockIngredientGroups: React.FC = () => {
 
       <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
           <Input
             placeholder="Buscar grupo..."
             value={searchTerm}
@@ -173,7 +173,7 @@ const StockIngredientGroups: React.FC = () => {
 
         {filteredGroups.length === 0 && (
           <div className="col-span-full text-center py-12 text-slate-500">
-            <Layers size={48} className="mx-auto mb-4 text-slate-300" />
+            <Layers size={48} className="mx-auto mb-4 text-slate-500" />
             <p className="font-medium">Nenhum grupo encontrado</p>
             <p className="text-sm mt-1">Clique em "Novo Grupo" para começar</p>
           </div>
@@ -198,17 +198,17 @@ const StockIngredientGroups: React.FC = () => {
                   <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                     {editingGroup ? 'Editar Grupo' : 'Novo Grupo'}
                   </h3>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Classificação de Insumos</p>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Classificação de Insumos</p>
                 </div>
               </div>
-              <button onClick={() => { setIsCreating(false); setEditingGroup(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
+              <button onClick={() => { setIsCreating(false); setEditingGroup(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
                 <X size={20} />
               </button>
             </header>
 
             <div className="p-8 space-y-6">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome do Grupo *</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Nome do Grupo *</label>
                 <input 
                   className="ui-input w-full h-12 text-sm font-bold uppercase" placeholder="Ex: Carnes, Laticínios, Verduras..."
                   value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} autoFocus
@@ -217,7 +217,7 @@ const StockIngredientGroups: React.FC = () => {
 
               {formData.parentId && (
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center gap-2">
-                  <ChevronRight size={14} className="text-slate-400" />
+                  <ChevronRight size={14} className="text-slate-500" />
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                     Subgrupo de: <strong className="text-slate-700">{groups.find(g => g.id === formData.parentId)?.name}</strong>
                   </span>

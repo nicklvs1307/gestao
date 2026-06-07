@@ -40,7 +40,7 @@ export const CashierOpenModal: React.FC<CashierOpenModalProps> = React.memo(({ o
             </div>
             <div>
               <h3 className="text-sm font-black uppercase tracking-tight leading-none">Abertura de Caixa</h3>
-              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Fundo de caixa inicial</p>
+              <p className="text-[9px] font-medium text-slate-500 uppercase tracking-wider mt-0.5">Fundo de caixa inicial</p>
             </div>
           </div>
           <button onClick={handleClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Fechar">

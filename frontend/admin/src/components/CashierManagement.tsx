@@ -237,7 +237,7 @@ const CashierManagement: React.FC = () => {
 
     if (loading && !cashierData) return (
         <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
             <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Sincronizando...</span>
         </div>
     );
@@ -257,11 +257,11 @@ const CashierManagement: React.FC = () => {
                         <h2 className="text-base font-bold text-slate-900 leading-none tracking-tight">Gestão de Caixa</h2>
                         {isOpen && (
                             <div className="flex items-center gap-3 mt-1">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
-                                    <Clock size={12} className="text-slate-300"/> Aberto às {session?.openedAt ? formatSP(session.openedAt, 'HH:mm') : '--:--'}
+                                <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                                    <Clock size={12} className="text-slate-500"/> Aberto às {session?.openedAt ? formatSP(session.openedAt, 'HH:mm') : '--:--'}
                                 </span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
-                                    <User size={12} className="text-slate-300"/> {authUser?.name || 'Operador'}
+                                <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                                    <User size={12} className="text-slate-500"/> {authUser?.name || 'Operador'}
                                 </span>
                             </div>
                         )}
@@ -286,7 +286,7 @@ const CashierManagement: React.FC = () => {
                         <div className={cn("w-1.5 h-1.5 rounded-full", isOpen ? "bg-emerald-500 animate-pulse" : "bg-rose-500")} />
                         {isOpen ? 'CAIXA OPERACIONAL' : 'CAIXA FECHADO'}
                     </div>
-                    <button onClick={fetchData} className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors ml-2"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/></button>
+                    <button onClick={fetchData} className="p-1.5 text-slate-500 hover:text-slate-600 transition-colors ml-2"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/></button>
                 </div>
             </div>
 
@@ -343,9 +343,9 @@ const CashierManagement: React.FC = () => {
                         </div>
                         <form onSubmit={handleOpen} className="space-y-6">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest ml-1">Fundo de Reserva (R$)</label>
+                                <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Fundo de Reserva (R$)</label>
                                 <div className="relative">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">R$</div>
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">R$</div>
                                     <input type="number" step="0.01" value={initialAmount} onChange={e => setInitialAmount(e.target.value)} required placeholder="0,00" className="w-full h-12 bg-slate-50 border border-slate-200 rounded-lg pl-12 pr-4 text-xl font-bold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-sm" />
                                 </div>
                             </div>
@@ -385,19 +385,19 @@ const CashierManagement: React.FC = () => {
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={cn("p-1.5 rounded-lg transition-all", isSelected ? "bg-slate-900 text-white shadow-md" : "bg-slate-100 text-slate-400 group-hover:bg-white border border-slate-200")}>
+                                                    <div className={cn("p-1.5 rounded-lg transition-all", isSelected ? "bg-slate-900 text-white shadow-md" : "bg-slate-100 text-slate-500 group-hover:bg-white border border-slate-200")}>
                                                         <m.icon size={14} />
                                                     </div>
                                                     <div>
                                                         <p className="text-[10px] font-bold text-slate-800 uppercase tracking-tight leading-none">{m.label}</p>
-                                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Informe o total</p>
+                                                        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Informe o total</p>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex gap-2 items-center">
                                                 <div className="flex-1 relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-300">R$</span>
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-500">R$</span>
                                                     <input 
                                                         type="number"
                                                         value={closingValues[m.id]}
@@ -409,7 +409,7 @@ const CashierManagement: React.FC = () => {
                                                     />
                                                 </div>
                                                 
-                                                <div className={cn("w-6 h-6 rounded-md flex items-center justify-center transition-all", isSelected ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-300")}>
+                                                <div className={cn("w-6 h-6 rounded-md flex items-center justify-center transition-all", isSelected ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500")}>
                                                     <ChevronRight size={12} />
                                                 </div>
                                             </div>
@@ -420,7 +420,7 @@ const CashierManagement: React.FC = () => {
 
                             <div className="p-4 bg-slate-900 space-y-3 shrink-0">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Informado</span>
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Total Informado</span>
                                     <span className="text-lg font-black text-white tracking-tighter">R$ {(Object.values(closingValues).reduce((a, b) => a + (parseFloat(b) || 0), 0) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 
@@ -449,11 +449,11 @@ const CashierManagement: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xs font-bold text-slate-900 uppercase tracking-tight">Detalhamento: {paymentMethods.find(m => m.id === selectedMethod)?.label}</h3>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Movimentações da sessão</p>
+                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Movimentações da sessão</p>
                                     </div>
                                 </div>
                                 <div className="relative w-full md:w-56">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={12} />
                                     <input type="text" placeholder="Filtrar lançamento..." className="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-4 text-[10px] font-bold uppercase outline-none focus:border-slate-900 transition-all" />
                                 </div>
                             </div>
@@ -480,7 +480,7 @@ const CashierManagement: React.FC = () => {
                                             .map((order: any) => (
                                                 <div key={order.id} className="bg-white px-3 py-2 rounded-lg border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3 hover:border-slate-300 transition-all group">
                                                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                                                        <div className="h-8 w-8 bg-slate-50 rounded flex items-center justify-center shrink-0 border border-slate-100 text-[10px] font-black text-slate-400 uppercase group-hover:bg-slate-900 group-hover:text-white transition-all">
+                                                        <div className="h-8 w-8 bg-slate-50 rounded flex items-center justify-center shrink-0 border border-slate-100 text-[10px] font-black text-slate-500 uppercase group-hover:bg-slate-900 group-hover:text-white transition-all">
                                                             #{order.dailyOrderNumber || order.id.slice(-3)}
                                                         </div>
                                                         <div>
@@ -488,7 +488,7 @@ const CashierManagement: React.FC = () => {
                                                                 {order.orderType === 'DELIVERY' ? <Truck size={10} className="text-blue-500"/> : <ShoppingBag size={10} className="text-indigo-500"/>}
                                                                 {order.tableNumber ? `MESA ${order.tableNumber}` : order.deliveryOrder?.name || 'BALCÃO'}
                                                             </h4>
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{formatSP(order.createdAt, 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}</p>
+                                                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{formatSP(order.createdAt, 'HH:mm')} • {order.user?.name?.split(' ')[0] || 'ADMIN'}</p>
                                                         </div>
                                                     </div>
 
@@ -512,7 +512,7 @@ const CashierManagement: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-48 opacity-20">
-                                        <Filter size={32} strokeWidth={1.5} className="mb-2 text-slate-400" />
+                                        <Filter size={32} strokeWidth={1.5} className="mb-2 text-slate-500" />
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center px-10 leading-tight">Nenhuma transação registrada nesta modalidade</p>
                                     </div>
                                 )}
@@ -535,7 +535,7 @@ const CashierManagement: React.FC = () => {
                         <div className="p-5 space-y-6">
                             {/* 1. Diferenças */}
                             <div className="space-y-3">
-                                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 px-1">
+                                <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 px-1">
                                     <Receipt size={14} /> Balanço por Modalidade
                                 </h4>
                                 <div className="grid grid-cols-1 gap-1.5">
@@ -549,16 +549,16 @@ const CashierManagement: React.FC = () => {
                                         return (
                                             <div key={m.id} className="flex justify-between items-center p-2.5 bg-slate-50 rounded border border-slate-100 hover:border-slate-200 transition-all">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="p-1.5 bg-white border border-slate-200 rounded text-slate-400"><m.icon size={14}/></div>
+                                                    <div className="p-1.5 bg-white border border-slate-200 rounded text-slate-500"><m.icon size={14}/></div>
                                                     <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">{m.label}</span>
                                                 </div>
                                                 <div className="flex items-center gap-6">
                                                     <div className="text-right">
-                                                        <span className="block text-[8px] text-slate-400 uppercase font-black">Informado</span>
+                                                        <span className="block text-[8px] text-slate-500 uppercase font-black">Informado</span>
                                                         <span className="text-[11px] font-black text-slate-900">R$ {informed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                                     </div>
                                                     <div className="text-right hidden sm:block">
-                                                        <span className="block text-[8px] text-slate-400 uppercase font-black">Sistema</span>
+                                                        <span className="block text-[8px] text-slate-500 uppercase font-black">Sistema</span>
                                                         <span className="text-[11px] font-bold text-slate-500">R$ {expected.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                                     </div>
                                                     <div className={cn("px-2 py-1 rounded text-[10px] font-black w-20 text-center shadow-sm", diff < -0.01 ? "bg-rose-500 text-white" : diff > 0.01 ? "bg-blue-500 text-white" : "bg-emerald-500 text-white")}>
@@ -581,13 +581,13 @@ const CashierManagement: React.FC = () => {
                                     
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Dinheiro Total em Mãos</label>
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Dinheiro Total em Mãos</label>
                                             <div className="text-xl font-black text-slate-900 mt-0.5 tracking-tighter">R$ {cashInHand.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                                         </div>
                                         <div className="relative">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-0.5">Fundo de Troco (Próx. Turno)</label>
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-0.5">Fundo de Troco (Próx. Turno)</label>
                                             <div className="relative mt-1">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xs">R$</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-black text-xs">R$</span>
                                                 <input 
                                                     type="number" 
                                                     className="w-full h-10 pl-8 pr-3 bg-white border border-slate-200 rounded-lg font-black text-slate-900 focus:border-slate-900 outline-none shadow-sm transition-all"
@@ -611,9 +611,9 @@ const CashierManagement: React.FC = () => {
 
                             {/* 3. Observações */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Notas de Auditoria</label>
+                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">Notas de Auditoria</label>
                                 <textarea 
-                                    className="w-full h-20 bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11px] font-bold focus:border-slate-900 outline-none resize-none transition-all placeholder:text-slate-300"
+                                    className="w-full h-20 bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11px] font-bold focus:border-slate-900 outline-none resize-none transition-all placeholder:text-slate-500"
                                     placeholder="Justificativa para quebras de caixa ou observações operacionais..."
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
@@ -641,13 +641,13 @@ const CashierManagement: React.FC = () => {
                                         {showTransactionModal === 'INCOME' ? 'Reforço de Caixa' : 'Sangria de Caixa'}
                                     </h3>
                                 </div>
-                                <button onClick={() => setShowTransactionModal('none')} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-all"><X size={20}/></button>
+                                <button onClick={() => setShowTransactionModal('none')} className="p-1.5 text-slate-500 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-all"><X size={20}/></button>
                             </header>
                             <form onSubmit={handleTransaction} className="p-6 space-y-5">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Valor da Operação (R$)</label>
                                     <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-lg">R$</div>
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-lg">R$</div>
                                         <input type="number" step="0.01" required autoFocus value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0,00" className="w-full h-11 bg-slate-50 border border-slate-200 rounded-lg pl-12 pr-4 text-xl font-bold focus:border-blue-500 outline-none transition-all" />
                                     </div>
                                 </div>
@@ -676,22 +676,22 @@ const CashierManagement: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-base font-black text-slate-900 uppercase tracking-tighter italic">Acertos Pendentes</h3>
-                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Pedidos entregues sem fechamento financeiro</p>
+                                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Pedidos entregues sem fechamento financeiro</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowPendingSettlementsModal(false)} className="p-2 text-slate-400 hover:text-slate-900 rounded-xl hover:bg-white transition-all"><X size={22}/></button>
+                                <button onClick={() => setShowPendingSettlementsModal(false)} className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-white transition-all"><X size={22}/></button>
                             </header>
                             
                             <div className="p-6 max-h-[60vh] overflow-y-auto bg-slate-50/30 space-y-3">
                                 {pendingSettlementsList.length > 0 ? pendingSettlementsList.map((item) => (
                                     <div key={item.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-rose-200 transition-all">
                                         <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center font-black text-slate-400 text-xs border border-slate-100">
+                                            <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center font-black text-slate-500 text-xs border border-slate-100">
                                                 #{item.order.dailyOrderNumber || item.order.id.slice(-3)}
                                             </div>
                                             <div>
                                                 <h4 className="text-xs font-black text-slate-900 uppercase italic leading-none">{item.driver?.name || 'ENTREGADOR NÃO ATRIBUÍDO'}</h4>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{formatSP(item.order.createdAt, 'HH:mm')} • {formatSP(item.order.createdAt, 'dd/MM')}</p>
+                                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1.5">{formatSP(item.order.createdAt, 'HH:mm')} • {formatSP(item.order.createdAt, 'dd/MM')}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -709,10 +709,10 @@ const CashierManagement: React.FC = () => {
 
                             <footer className="p-6 bg-white border-t border-slate-100 flex flex-col gap-4">
                                 <div className="p-4 bg-slate-900 rounded-2xl text-white flex justify-between items-center shadow-xl">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Pendente</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Pendente</span>
                                     <span className="text-xl font-black italic">R$ {pendingSettlementsList.reduce((acc, i) => acc + i.order.total, 0).toFixed(2)}</span>
                                 </div>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase text-center tracking-widest leading-relaxed italic">
+                                <p className="text-[9px] text-slate-500 font-bold uppercase text-center tracking-widest leading-relaxed italic">
                                     Para fechar o caixa, você deve realizar o acerto financeiro <br/> desses pedidos no menu <span className="text-rose-500">"Gestão de Acertos"</span>.
                                 </p>
                                 <Button fullWidth onClick={() => setShowPendingSettlementsModal(false)} className="h-12 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-black uppercase text-[10px] tracking-widest">

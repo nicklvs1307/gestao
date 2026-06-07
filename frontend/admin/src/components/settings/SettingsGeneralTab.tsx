@@ -35,7 +35,7 @@ const InputField: React.FC<{
       value={value}
       onChange={(e) => onChange(type === 'number' ? e.target.value : e.target.value)}
       placeholder={placeholder}
-      className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all placeholder:text-slate-300"
+      className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all placeholder:text-slate-500"
     />
   </div>
 );
@@ -199,7 +199,7 @@ export const SettingsGeneralTab: React.FC<SettingsGeneralTabProps> = ({
                     <Power size={14} className={cn(operation.isOpen ? "text-emerald-600" : "text-rose-600")} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Loja Aberta</p>
+                    <p className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Loja Aberta</p>
                     <p className={cn("text-xs font-black italic", operation.isOpen ? "text-emerald-600" : "text-rose-600")}>
                       {operation.isOpen ? 'ONLINE' : 'OFFLINE'}
                     </p>
@@ -215,10 +215,10 @@ export const SettingsGeneralTab: React.FC<SettingsGeneralTabProps> = ({
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-100">
-                    <PackageCheck size={14} className={operation.autoAccept ? "text-slate-900" : "text-slate-400"} />
+                    <PackageCheck size={14} className={operation.autoAccept ? "text-slate-900" : "text-slate-500"} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Aceite Automático</p>
+                    <p className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Aceite Automático</p>
                     <p className="text-xs font-black italic text-slate-700">
                       {operation.autoAccept ? 'ATIVADO' : 'MANUAL'}
                     </p>
@@ -233,11 +233,11 @@ export const SettingsGeneralTab: React.FC<SettingsGeneralTabProps> = ({
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                 <div className="flex items-center gap-3">
                   <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", operation.autoOpenDelivery ? "bg-emerald-100" : "bg-slate-100")}>
-                    <Wallet size={14} className={operation.autoOpenDelivery ? "text-emerald-600" : "text-slate-400"} />
+                    <Wallet size={14} className={operation.autoOpenDelivery ? "text-emerald-600" : "text-slate-500"} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Agendamento</p>
-                    <p className={cn("text-xs font-black italic", operation.autoOpenDelivery ? "text-emerald-600" : "text-slate-400")}>
+                    <p className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Agendamento</p>
+                    <p className={cn("text-xs font-black italic", operation.autoOpenDelivery ? "text-emerald-600" : "text-slate-500")}>
                       {operation.autoOpenDelivery ? 'ATIVADO' : 'DESATIVADO'}
                     </p>
                   </div>
@@ -272,7 +272,7 @@ export const SettingsGeneralTab: React.FC<SettingsGeneralTabProps> = ({
                   <div className="flex items-center justify-between mb-2">
                     <span className={cn(
                       "text-[9px] font-black uppercase tracking-widest",
-                      schedule.isClosed ? "text-slate-400" : "text-emerald-600"
+                      schedule.isClosed ? "text-slate-500" : "text-emerald-600"
                     )}>
                       {dayLabels[schedule.dayOfWeek]}
                     </span>
@@ -303,7 +303,7 @@ export const SettingsGeneralTab: React.FC<SettingsGeneralTabProps> = ({
                       }}
                       className="w-full h-8 px-2 bg-white border border-slate-200 rounded-md text-[10px] font-medium text-center disabled:opacity-30"
                     />
-                    <span className="text-[7px] text-slate-300 block text-center">às</span>
+                    <span className="text-[7px] text-slate-500 block text-center">às</span>
                     <input
                       type="time"
                       disabled={schedule.isClosed}
@@ -454,12 +454,12 @@ export const SettingsGeneralTab: React.FC<SettingsGeneralTabProps> = ({
                       value={general.slug}
                       onChange={(e) => onSlugChange(e.target.value)}
                       placeholder="nome-da-loja"
-                      className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all placeholder:text-slate-300"
+                      className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all placeholder:text-slate-500"
                     />
                   </div>
                   <div className="flex items-center gap-2 min-w-[120px]">
                     {isCheckingSlug && (
-                      <Loader2 size={14} className="text-slate-400 animate-spin" />
+                      <Loader2 size={14} className="text-slate-500 animate-spin" />
                     )}
                     {!isCheckingSlug && isSlugAvailable === true && (
                       <div className="flex items-center gap-1 text-emerald-600">
@@ -476,7 +476,7 @@ export const SettingsGeneralTab: React.FC<SettingsGeneralTabProps> = ({
                   </div>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500">
                 URL do cardápio: <span className="text-primary font-medium">ki.com.br/{general.slug || '...'}</span>
               </p>
             </div>

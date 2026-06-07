@@ -63,14 +63,14 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
                   <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight">
                     Acertos Pendentes
                   </h3>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                     Pedidos entregues sem fechamento financeiro
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+                className="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
               >
                 <X size={20} />
               </button>
@@ -96,7 +96,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
                           {item.driver?.name || 'ENTREGADOR NAO ATRIBUIDO'}
                         </h4>
                         <div className="flex items-center gap-3 mt-2">
-                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-500 uppercase tracking-widest">
                             <Clock size={10} />
                             {formatSP(item.order.createdAt, 'HH:mm')} • {formatSP(item.order.createdAt, 'dd/MM')}
                           </span>
@@ -127,7 +127,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
           <footer className="p-5 bg-white border-t border-slate-100 flex flex-col gap-4">
             <div className="p-5 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl text-white flex justify-between items-center shadow-xl">
               <div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   Total Pendente
                 </span>
               </div>
@@ -136,7 +136,7 @@ const PendingSettlementsModal: React.FC<PendingSettlementsModalProps> = memo(({
               </span>
             </div>
             
-            <p className="text-xs text-slate-400 font-bold uppercase text-center tracking-widest leading-relaxed">
+            <p className="text-xs text-slate-500 font-bold uppercase text-center tracking-widest leading-relaxed">
               Para fechar o caixa, voce deve realizar o acerto financeiro desses pedidos no menu <span className="text-rose-500 font-black">"Gestao de Acertos"</span>.
             </p>
             

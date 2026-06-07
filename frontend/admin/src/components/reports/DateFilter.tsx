@@ -25,16 +25,16 @@ export const DateFilter: React.FC<DateFilterProps> = ({
           type="date"
           value={startDate}
           onChange={(e) => onStartChange(e.target.value)}
-          className="bg-transparent border-none font-black text-[11px] uppercase outline-none text-slate-600 cursor-pointer"
+          className="bg-transparent border-none text-xs font-semibold outline-none text-slate-600 cursor-pointer"
         />
       </div>
-      <span className="text-slate-300">→</span>
+      <span className="text-slate-500">→</span>
       <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
         <input
           type="date"
           value={endDate}
           onChange={(e) => onEndChange(e.target.value)}
-          className="bg-transparent border-none font-black text-[11px] uppercase outline-none text-slate-600 cursor-pointer"
+          className="bg-transparent border-none text-xs font-semibold outline-none text-slate-600 cursor-pointer"
         />
       </div>
     </div>

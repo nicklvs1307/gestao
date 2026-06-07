@@ -9,6 +9,7 @@ interface DialogProps {
   title: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  maxWidth?: string;
   footer?: React.ReactNode;
 }
 
@@ -18,16 +19,17 @@ export const Dialog: React.FC<DialogProps> = ({
   title,
   children,
   size = 'md',
+  maxWidth,
   footer,
 }) => {
   if (!isOpen) return null;
 
   const sizes = {
-    sm: 'max-w-sm',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-    full: 'max-w-[90vw] h-[85vh]',
+    sm: 'max-w-sm',      // 384px — Confirms
+    md: 'max-w-md',      // 448px — Compact forms
+    lg: 'max-w-lg',      // 512px — Complex forms
+    xl: 'max-w-2xl',     // 672px — Tables/data
+    full: 'max-w-[85vw] h-[85vh]',  // Full-view
   };
 
   return (
@@ -35,8 +37,8 @@ export const Dialog: React.FC<DialogProps> = ({
       <div className={cn('fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4')}>
         <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={onClose} />
         <div className={cn(
-          'relative bg-card text-card-foreground rounded-2xl shadow-2xl border border-border w-full',
-          sizes[size],
+          'relative bg-card text-card-foreground rounded-xl shadow-2xl border border-border w-full',
+          maxWidth || sizes[size],
           'animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]'
         )}>
           <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">

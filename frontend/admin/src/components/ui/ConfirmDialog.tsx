@@ -52,7 +52,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={onClose} />
         <div className={cn(
-          'relative bg-card text-card-foreground rounded-2xl shadow-2xl border border-border w-full max-w-sm',
+          'relative bg-card text-card-foreground rounded-xl shadow-2xl border border-border w-full max-w-sm',
           'animate-in fade-in zoom-in-95 duration-200'
         )}>
           <div className="p-6 text-center space-y-4">

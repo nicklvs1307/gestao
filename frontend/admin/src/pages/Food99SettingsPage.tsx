@@ -240,7 +240,7 @@ const Food99SettingsPage: React.FC = () => {
                 {isActive && connectionStatus?.connected ? 'Conectado' : 'Desativado'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Integração Centralizada</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Integração Centralizada</p>
           </div>
         </div>
       </div>
@@ -254,12 +254,12 @@ const Food99SettingsPage: React.FC = () => {
                   {isActive && connectionStatus?.connected ? (
                     <Wifi size={18} className="text-amber-600" />
                   ) : (
-                    <WifiOff size={18} className="text-slate-400" />
+                    <WifiOff size={18} className="text-slate-500" />
                   )}
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Configurações do Restaurante</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Merchant ID, App Shop ID e ambiente</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Merchant ID, App Shop ID e ambiente</p>
                 </div>
               </div>
             </div>
@@ -302,7 +302,7 @@ const Food99SettingsPage: React.FC = () => {
                   placeholder="ID da sua loja no sistema 99Food"
                   className="h-12 bg-slate-50 border-slate-200 focus:bg-white"
                 />
-                <p className="text-[10px] text-slate-400">Identificador único da sua loja fornecido pela 99Food</p>
+                <p className="text-[10px] text-slate-500">Identificador único da sua loja fornecido pela 99Food</p>
               </div>
 
               <div className="space-y-2">
@@ -366,7 +366,7 @@ const Food99SettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Autorização e Vinculação</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Conecte sua loja ao sistema</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Conecte sua loja ao sistema</p>
                 </div>
               </div>
             </div>
@@ -408,7 +408,7 @@ const Food99SettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Cardápio</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Sincronização de produtos e categorias</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Sincronização de produtos e categorias</p>
                 </div>
               </div>
             </div>
@@ -444,7 +444,7 @@ const Food99SettingsPage: React.FC = () => {
                 <AlertCircle size={18} className="text-amber-600" />
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Sobre a Integração</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Modelo centralizado</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Modelo centralizado</p>
                 </div>
               </div>
             </div>
@@ -505,7 +505,7 @@ const Food99SettingsPage: React.FC = () => {
               ) : (
                 <div className="p-4 rounded-xl border bg-slate-50 border-slate-200">
                   <div className="flex items-center gap-3">
-                    <AlertCircle size={24} className="text-slate-400" />
+                    <AlertCircle size={24} className="text-slate-500" />
                     <p className="text-sm text-slate-500">Integração desativada</p>
                   </div>
                 </div>

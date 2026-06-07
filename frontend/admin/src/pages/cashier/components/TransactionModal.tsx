@@ -63,14 +63,14 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
                   <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight">
                     {isIncome ? 'Reforco de Caixa' : 'Sangria de Caixa'}
                   </h3>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                     {isIncome ? 'Entrada de numerario' : 'Retirada de numerario'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
+                className="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all"
               >
                 <X size={20} />
               </button>
@@ -78,11 +78,11 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">
                   Valor da Operacao (R$)
                 </label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-500 text-lg">
                     R$
                   </div>
                   <input
@@ -99,7 +99,7 @@ const TransactionModal: React.FC<TransactionModalProps> = memo(({
               </div>
               
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">
                   Observacao / Motivo
                 </label>
                 <input

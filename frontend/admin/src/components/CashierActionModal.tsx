@@ -57,23 +57,23 @@ const CashierActionModal: React.FC<CashierActionModalProps> = ({ isOpen, onClose
                             <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight leading-none">
                                 {type === 'INCOME' ? 'Reforço de Caixa' : 'Sangria de Caixa'}
                             </h3>
-                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-1">Lançamento Avulso</p>
+                            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mt-1">Lançamento Avulso</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 hover:bg-slate-200 text-slate-400 rounded-full transition-all outline-none"><X size={20} /></button>
+                    <button onClick={onClose} className="p-1.5 hover:bg-slate-200 text-slate-500 rounded-full transition-all outline-none"><X size={20} /></button>
                 </header>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Valor da Operação (R$)</label>
                         <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-lg">R$</div>
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-lg">R$</div>
                             <input 
                                 type="number" 
                                 step="0.01"
                                 required
                                 autoFocus
-                                className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-lg font-bold text-xl text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-200"
+                                className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-lg font-bold text-xl text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-500"
                                 placeholder="0,00"
                                 value={amount} 
                                 onChange={e => setAmount(e.target.value)} 
@@ -85,7 +85,7 @@ const CashierActionModal: React.FC<CashierActionModalProps> = ({ isOpen, onClose
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Descrição / Motivo</label>
                         <textarea 
                             required
-                            className="w-full h-20 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-400 resize-none"
+                            className="w-full h-20 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-500 resize-none"
                             placeholder="Ex: Troco inicial, Pagamento de frete..."
                             value={description}
                             onChange={e => setDescription(e.target.value)}

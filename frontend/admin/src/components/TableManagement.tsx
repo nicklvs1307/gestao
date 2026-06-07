@@ -118,7 +118,7 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Gestão de Mesas</h1>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
             <Armchair size={14} className="text-orange-500" /> Controle de Salão e QR Codes
           </p>
         </div>
@@ -135,7 +135,7 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
       {/* Grid de Mesas - Cards Modernos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {tables.length === 0 ? (
-            <Card className="col-span-full p-20 flex flex-col items-center justify-center text-slate-300 opacity-30 border-dashed border-2">
+            <Card className="col-span-full p-20 flex flex-col items-center justify-center text-slate-500 opacity-30 border-dashed border-2">
                 <Armchair size={64} strokeWidth={1} className="mb-4" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhuma mesa ativa</p>
             </Card>
@@ -194,7 +194,7 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
 
                             {/* Menu Link Quick Actions */}
                             <div className="space-y-3 pt-4 border-t border-slate-50">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cardápio Digital</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cardápio Digital</p>
                                 <div className="flex gap-2">
                                     <Button 
                                         variant="outline" 
@@ -206,7 +206,7 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-10 w-10 rounded-xl bg-slate-100 text-slate-400"
+                                        className="h-10 w-10 rounded-xl bg-slate-100 text-slate-500"
                                         onClick={() => copyToClipboard(menuLink)}
                                     >
                                         <Copy size={14} />
@@ -266,8 +266,8 @@ const TableManagement: React.FC<TableManagementProps> = ({ onAddTableClick, onEd
                     </div>
                 </div>
                 <div className="text-center space-y-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Aponte a câmera para testar</p>
-                    <p className="text-[9px] text-slate-300 font-mono break-all max-w-[200px]">{qrCodeLink}</p>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Aponte a câmera para testar</p>
+                    <p className="text-[9px] text-slate-500 font-mono break-all max-w-[200px]">{qrCodeLink}</p>
                 </div>
                 <Button 
                     fullWidth 

@@ -184,14 +184,14 @@ const SalesMap: React.FC = () => {
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-foreground tracking-tighter italic uppercase leading-none">Mapa de Calor de Vendas</h2>
-                        <p className="text-muted-foreground text-[9px] font-bold uppercase tracking-widest mt-1">Visão geográfica da demanda de delivery</p>
+                        <p className="text-muted-foreground text-xs font-medium mt-1">Visão geográfica da demanda de delivery</p>
                     </div>
                 </div>
                 
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2 px-3 py-2 bg-background rounded-xl border border-border text-foreground/60">
                         <Calendar size={14} className="text-primary" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Últimos 90 Dias</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider">Últimos 90 Dias</span>
                     </div>
                     <Button onClick={fetchData} size="sm" className="rounded-xl h-10 px-5 italic text-[10px]">ATUALIZAR</Button>
                 </div>
@@ -202,7 +202,7 @@ const SalesMap: React.FC = () => {
                 {loading && (
                     <div className="absolute inset-0 z-[1000] bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
                         <Loader2 className="animate-spin text-primary" size={40} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60">Processando coordenadas...</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-foreground/60">Processando coordenadas...</span>
                     </div>
                 )}
                 
@@ -220,15 +220,15 @@ const SalesMap: React.FC = () => {
 
                 {/* Legenda e Stats */}
                 <div className="absolute bottom-6 left-6 z-[500] bg-white p-4 rounded-3xl shadow-2xl border border-border max-w-xs">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
                         <Target size={14} className="text-primary" /> Densidade de Pedidos
                     </h4>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex-1 h-2 bg-gradient-to-r from-blue-500 via-lime-500 to-red-500 rounded-full" />
-                            <span className="text-[8px] font-black text-muted-foreground uppercase">Frio / Quente</span>
+                            <span className="text-[11px] font-semibold text-muted-foreground uppercase">Frio / Quente</span>
                         </div>
-                        <p className="text-[9px] font-bold text-muted-foreground leading-tight uppercase italic">
+                        <p className="text-[11px] font-medium text-muted-foreground leading-tight uppercase">
                             O mapa exibe <b className="text-foreground">{heatmapData.length}</b> entregas realizadas com sucesso no período selecionado.
                         </p>
                     </div>
@@ -238,19 +238,19 @@ const SalesMap: React.FC = () => {
             {/* Grid de Resumo Geográfico */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="p-6 border-border bg-white group hover:border-orange-500/20 transition-all">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Zona de Maior Impacto</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Zona de Maior Impacto</p>
                     <h3 className="text-xl font-black italic tracking-tighter text-foreground uppercase">Centro Expandido</h3>
-                    <div className="mt-2 text-emerald-500 text-[10px] font-black italic">42% do volume total</div>
+                    <div className="mt-2 text-emerald-500 text-[11px] font-semibold">42% do volume total</div>
                 </Card>
                 <Card className="p-6 border-border bg-white group hover:border-blue-500/20 transition-all">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Raio Médio de Entrega</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Raio Médio de Entrega</p>
                     <h3 className="text-xl font-black italic tracking-tighter text-foreground uppercase">3.2 KM</h3>
-                    <div className="mt-2 text-muted-foreground text-[10px] font-black italic">Tempo médio: 24 min</div>
+                    <div className="mt-2 text-muted-foreground text-[11px] font-semibold">Tempo médio: 24 min</div>
                 </Card>
                 <Card className="p-6 border-border bg-white group hover:border-emerald-500/20 transition-all">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Taxa de Conversão por Área</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Taxa de Conversão por Área</p>
                     <h3 className="text-xl font-black italic tracking-tighter text-foreground uppercase">Alta Fidelidade</h3>
-                    <div className="mt-2 text-primary text-[10px] font-black italic">8.2 pedidos / cliente</div>
+                    <div className="mt-2 text-primary text-[11px] font-semibold">8.2 pedidos / cliente</div>
                 </Card>
             </div>
         </div>

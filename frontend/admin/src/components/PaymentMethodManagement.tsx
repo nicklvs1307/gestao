@@ -84,7 +84,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
               </div>
               Financeiro / Checkout
           </h1>
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 ml-1">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2 ml-1">
              Gestão de Meios de Recebimento e Taxas Adm
           </p>
         </div>
@@ -100,7 +100,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {methods.length === 0 ? (
-            <Card className="col-span-full p-20 flex flex-col items-center justify-center text-slate-300 opacity-20 border-dashed border-2 rounded-[2.5rem]">
+            <Card className="col-span-full p-20 flex flex-col items-center justify-center text-slate-500 opacity-20 border-dashed border-2 rounded-[2.5rem]">
                 <CreditCard size={64} strokeWidth={1} className="mb-4" />
                 <p className="font-black text-[10px] uppercase tracking-[0.3em] italic">Nenhuma forma configurada</p>
             </Card>
@@ -117,7 +117,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
                                     </div>
                                     <div>
                                         <h3 className="font-black text-sm text-slate-900 uppercase italic tracking-tighter leading-none">{method.name}</h3>
-                                        <span className="text-[7px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 px-1 py-0.5 rounded border border-slate-200 mt-1 inline-block italic leading-none">{method.type}</span>
+                                        <span className="text-[7px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 px-1 py-0.5 rounded border border-slate-200 mt-1 inline-block italic leading-none">{method.type}</span>
                                     </div>
                                 </div>
                                 <div className="flex gap-1">
@@ -139,7 +139,7 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
                                     <div className={cn("w-8 h-4 rounded-full relative transition-all duration-300", method.isActive ? "bg-emerald-500 shadow-md shadow-emerald-100" : "bg-slate-200")}>
                                         <div className={cn("absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm", method.isActive ? "left-4.5" : "left-0.5")} />
                                     </div>
-                                    <span className={cn("text-[8px] font-black uppercase tracking-widest", method.isActive ? "text-emerald-600" : "text-slate-400")}>{method.isActive ? 'OPERANTE' : 'PAUSADO'}</span>
+                                    <span className={cn("text-[8px] font-black uppercase tracking-widest", method.isActive ? "text-emerald-600" : "text-slate-500")}>{method.isActive ? 'OPERANTE' : 'PAUSADO'}</span>
                                 </div>
                                 {method.isActive && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                             </div>
@@ -154,10 +154,10 @@ const PaymentMethodManagement: React.FC<PaymentMethodManagementProps> = ({ onAdd
             onClick={onAddClick}
             className="p-5 border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:border-slate-900 hover:bg-slate-900 hover:text-white transition-all duration-500 min-h-[140px] rounded-[2rem]"
         >
-            <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-slate-900 group-hover:border-white transition-all">
+            <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 group-hover:text-slate-900 group-hover:border-white transition-all">
                 <Plus size={20} />
             </div>
-            <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] group-hover:text-white transition-colors">Nova Opção</p>
+            <p className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] group-hover:text-white transition-colors">Nova Opção</p>
         </Card>
       </div>
       <ConfirmDialog isOpen={confirmData.open} onClose={() => setConfirmData({...confirmData, open: false})} onConfirm={() => {confirmData.onConfirm(); setConfirmData({...confirmData, open: false});}} title={confirmData.title} message={confirmData.message} />

@@ -92,10 +92,10 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                     <h3 className="text-base font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                         {methodToEdit ? 'Editar Cobrança' : 'Nova Forma de Receber'}
                     </h3>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 leading-none">Configuração ERP / Financeiro</p>
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1 leading-none">Configuração ERP / Financeiro</p>
                 </div>
             </div>
-            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><X size={22}/></button>
+            <button onClick={onClose} className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><X size={22}/></button>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
@@ -104,7 +104,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                 {/* Nome e Tipo - Grid Denso */}
                 <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Rótulo no Checkout (Nome Público)</label>
+                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Rótulo no Checkout (Nome Público)</label>
                         <input 
                             required 
                             className="ui-input w-full h-11 italic font-bold" 
@@ -115,7 +115,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                     </div>
                     
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Tipo de Processamento</label>
+                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Tipo de Processamento</label>
                         <div className="grid grid-cols-2 gap-2">
                             {types.map(t => (
                                 <button 
@@ -124,10 +124,10 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                                     onClick={() => setType(t.value as any)}
                                     className={cn(
                                         "flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all",
-                                        type === t.value ? "bg-slate-900 border-slate-900 text-white shadow-lg" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300"
+                                        type === t.value ? "bg-slate-900 border-slate-900 text-white shadow-lg" : "bg-white border-slate-100 text-slate-500 hover:border-slate-300"
                                     )}
                                 >
-                                    <t.icon size={14} className={type === t.value ? "text-orange-400" : "text-slate-300"} />
+                                    <t.icon size={14} className={type === t.value ? "text-orange-400" : "text-slate-500"} />
                                     <span className="text-[10px] font-black uppercase tracking-tighter">{t.label}</span>
                                 </button>
                             ))}
@@ -137,7 +137,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
 
                 {/* Canais de Aceite - Horizontal Compacto */}
                 <div className="space-y-3 pt-4 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block italic text-center">Disponibilidade nos Canais de Venda</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 block italic text-center">Disponibilidade nos Canais de Venda</label>
                     <div className="flex gap-2">
                         {[
                             { id: 'delivery', label: 'Logística / Delivery', icon: Truck, state: allowDelivery, set: setAllowDelivery, color: 'blue' },
@@ -146,7 +146,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                         ].map(item => (
                             <button key={item.id} type="button" onClick={() => item.set(!item.state)} className={cn(
                                 "flex-1 flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1",
-                                item.state ? `bg-${item.color}-50 border-${item.color}-500 text-${item.color}-700 shadow-md` : "bg-white border-slate-100 text-slate-300 opacity-40 grayscale"
+                                item.state ? `bg-${item.color}-50 border-${item.color}-500 text-${item.color}-700 shadow-md` : "bg-white border-slate-100 text-slate-500 opacity-40 grayscale"
                             )}>
                                 <item.icon size={16} />
                                 <span className="text-[8px] font-black uppercase tracking-widest text-center leading-tight">{item.label}</span>
@@ -164,7 +164,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
-                                <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Taxa Adm (%)</label>
+                                <label className="text-[8px] font-black text-slate-500 uppercase ml-1">Taxa Adm (%)</label>
                                 <div className="relative">
                                     <Percent size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                                     <input 
@@ -177,7 +177,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Prazo (Dias)</label>
+                                <label className="text-[8px] font-black text-slate-500 uppercase ml-1">Prazo (Dias)</label>
                                 <div className="relative">
                                     <Calendar size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                                     <input 
@@ -201,12 +201,12 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
                     onClick={() => setIsActive(!isActive)}
                 >
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-all", isActive ? "bg-emerald-500 text-white shadow-lg" : "bg-slate-100 text-slate-300")}>
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-all", isActive ? "bg-emerald-500 text-white shadow-lg" : "bg-slate-100 text-slate-500")}>
                             {isActive ? <CheckCircle size={16} /> : <XCircle size={16} />}
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-slate-900 uppercase italic leading-none">Habilitado para Uso</p>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{isActive ? 'Ativo no sistema' : 'Inativo / Pausado'}</span>
+                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{isActive ? 'Ativo no sistema' : 'Inativo / Pausado'}</span>
                         </div>
                     </div>
                     <div className={cn("w-10 h-5 rounded-full relative transition-all", isActive ? "bg-emerald-500" : "bg-slate-200")}>
@@ -218,7 +218,7 @@ const PaymentMethodFormModal: React.FC<PaymentMethodFormModalProps> = ({ isOpen,
 
         {/* Footer Minimalista */}
         <div className="p-6 bg-white border-t border-slate-100 flex gap-3 shrink-0">
-            <Button variant="ghost" onClick={onClose} className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400 hover:bg-slate-50">CANCELAR</Button>
+            <Button variant="ghost" onClick={onClose} className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-500 hover:bg-slate-50">CANCELAR</Button>
             <Button 
                 type="submit" 
                 form="payment-form" 

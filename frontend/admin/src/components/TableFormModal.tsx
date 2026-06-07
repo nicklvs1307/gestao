@@ -68,7 +68,7 @@ const TableFormModal: React.FC<TableFormModalProps> = ({ isOpen, onClose, onSave
             </div>
             <h3 className="font-bold text-slate-900">{isEditing ? 'Editar Mesa' : 'Nova Mesa'}</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-all"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-all"><X size={20} /></button>
         </div>
 
         <form onSubmit={handleSubmit} id="table-form" className="p-6 space-y-5">

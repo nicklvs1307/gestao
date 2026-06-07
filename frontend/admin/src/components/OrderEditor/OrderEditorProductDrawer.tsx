@@ -44,7 +44,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
           <h3 className="text-[12px] font-black text-slate-900 uppercase italic tracking-tighter leading-none">
             {product.name}
           </h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded text-slate-400 transition-colors">
+          <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded text-slate-500 transition-colors">
             <X size={16} />
           </button>
         </header>
@@ -52,7 +52,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
           {product.sizes?.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 italic">
                 <div className="w-1 h-3 bg-orange-500" /> Tamanho
               </h4>
               <div className="grid grid-cols-2 gap-2">
@@ -64,7 +64,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
                       "h-10 border-2 rounded-lg text-[10px] font-black uppercase italic transition-all",
                       selectedSizeId === size.id
                         ? "border-orange-500 bg-orange-50 text-orange-600"
-                        : "border-slate-100 bg-white text-slate-400 hover:border-slate-200"
+                        : "border-slate-100 bg-white text-slate-500 hover:border-slate-200"
                     )}
                   >
                     {size.name}
@@ -76,7 +76,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
 
           {product.addonGroups?.map(group => (
             <div key={group.id} className="space-y-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 italic">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 italic">
                 <div className="w-1 h-3 bg-blue-500" /> {group.name}
               </h4>
               <div className="grid grid-cols-2 gap-2">
@@ -103,7 +103,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
           ))}
 
           <div className="space-y-3">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Observações</h4>
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Observações</h4>
             <textarea
               className="w-full h-24 bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] font-bold outline-none focus:border-orange-500 resize-none"
               placeholder="Instruções específicas..."
@@ -125,7 +125,7 @@ export const OrderEditorProductDrawer: React.FC<OrderEditorProductDrawerProps> =
           </div>
           <div className="flex items-center gap-4 text-right">
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-slate-400 uppercase italic leading-none">Subtotal</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase italic leading-none">Subtotal</span>
               <span className="text-xl font-black text-slate-900 italic tracking-tighter leading-none">R$ {calculatedPrice.toFixed(2).replace('.', ',')}</span>
             </div>
             <button

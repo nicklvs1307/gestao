@@ -177,7 +177,7 @@ const DeliveryAreaManagement: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Logística de Entrega</h1>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
                         <MapPin size={14} className="text-orange-500" /> Raio de Atendimento e Taxas de Frete
                     </p>
                 </div>
@@ -201,7 +201,7 @@ const DeliveryAreaManagement: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Nova Região</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Marque no mapa ao lado</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Marque no mapa ao lado</p>
                             </div>
                         </div>
 
@@ -223,7 +223,7 @@ const DeliveryAreaManagement: React.FC = () => {
                                     onChange={e => setFee(Number(e.target.value))}
                                 />
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Tipo de Área</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 italic">Tipo de Área</label>
                                     <div className="h-12 flex items-center justify-center gap-3 px-4 bg-slate-50 rounded-2xl border-2 border-slate-100 text-slate-900 font-black text-[10px] uppercase tracking-tighter">
                                         {type === 'RADIUS' ? <CircleIcon size={16} className="text-orange-500"/> : <Hexagon size={16} className="text-blue-500"/>}
                                         {type === 'RADIUS' ? 'Raio Circular' : 'Polígono Livre'}
@@ -255,7 +255,7 @@ const DeliveryAreaManagement: React.FC = () => {
 
                     {/* Regiões Ativas */}
                     <div className="space-y-4">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3 ml-2">
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3 ml-2">
                             <Layers size={14} className="text-orange-500" /> Regiões Ativas ({areas.length})
                         </h4>
                         
@@ -275,7 +275,7 @@ const DeliveryAreaManagement: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] font-black text-emerald-600 italic tracking-tighter">FRETE: R$ {area.fee.toFixed(2)}</span>
                                                     <div className="w-1 h-1 bg-slate-200 rounded-full" />
-                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">{area.type === 'RADIUS' ? `${(area.radius/1000).toFixed(1)}km` : 'Polígono'}</span>
+                                                    <span className="text-[9px] font-bold text-slate-500 uppercase">{area.type === 'RADIUS' ? `${(area.radius/1000).toFixed(1)}km` : 'Polígono'}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -283,7 +283,7 @@ const DeliveryAreaManagement: React.FC = () => {
                                             variant="ghost" 
                                             size="icon"
                                             onClick={() => handleDelete(area.id)}
-                                            className="h-10 w-10 bg-slate-50 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                            className="h-10 w-10 bg-slate-50 text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
                                         >
                                             <Trash2 size={18} />
                                         </Button>
@@ -308,7 +308,7 @@ const DeliveryAreaManagement: React.FC = () => {
                         {/* Indicadores no Mapa */}
                         <div className="absolute bottom-10 left-10 z-[1000] space-y-3">
                             <div className="bg-white/90 backdrop-blur-xl p-5 rounded-[2rem] border border-slate-200 shadow-2xl space-y-3">
-                                <h5 className="text-[9px] font-black uppercase text-slate-400 tracking-widest italic border-b border-slate-100 pb-2 mb-3">Legenda Técnica</h5>
+                                <h5 className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic border-b border-slate-100 pb-2 mb-3">Legenda Técnica</h5>
                                 <div className="flex items-center gap-3">
                                     <div className="w-3 h-3 rounded-full bg-orange-500" />
                                     <span className="text-[10px] font-bold text-slate-700 uppercase italic">Raios de Entrega</span>

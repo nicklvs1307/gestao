@@ -104,10 +104,10 @@ const FlavorCard: React.FC<FlavorCardProps> = ({
           
           <div className="flex justify-between items-end mt-2">
             <div className="flex flex-col">
-              <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-1">Por apenas</span>
+              <span className="text-[7px] font-black text-slate-500 uppercase italic leading-none mb-1">Por apenas</span>
               <div className="flex flex-col items-start gap-0">
                 {isPromoActive && (
-                  <span className="text-[9px] font-bold text-slate-400 line-through decoration-rose-500/50 leading-none mb-0.5">
+                  <span className="text-[9px] font-bold text-slate-500 line-through decoration-rose-500/50 leading-none mb-0.5">
                     R$ {Number(price || 0).toFixed(2).replace('.', ',')}
                   </span>
                 )}
@@ -137,7 +137,7 @@ const FlavorCard: React.FC<FlavorCardProps> = ({
               >
                 <button 
                   onClick={(e) => { e.stopPropagation(); onDecrement(); }} 
-                  className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500"
+                  className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-red-500"
                   aria-label="Diminuir quantidade"
                 >
                   <Minus size={12} strokeWidth={3} />

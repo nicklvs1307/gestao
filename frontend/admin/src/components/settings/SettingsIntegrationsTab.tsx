@@ -128,7 +128,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-slate-400" size={24} />
+        <Loader2 className="animate-spin text-slate-500" size={24} />
       </div>
     );
   }
@@ -147,7 +147,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
                 activeIntegration === integration.id
                   ? `bg-white shadow-md text-slate-900`
-                  : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                  : "text-slate-500 hover:text-slate-600 hover:bg-white/50"
               )}
             >
               <Icon size={12} />
@@ -169,7 +169,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-black uppercase">iFood</h3>
-              <p className="text-[9px] text-slate-400 uppercase tracking-wider">
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider">
                 Integração de Pedidos
               </p>
             </div>
@@ -196,14 +196,14 @@ export const SettingsIntegrationsTab: React.FC = () => {
               <p className={`text-[8px] font-black uppercase tracking-widest ${ifoodSettings.ifoodCredentialsConfigured ? 'text-emerald-600' : 'text-red-600'}`}>
                 {ifoodSettings.ifoodCredentialsConfigured ? 'Credenciais da plataforma configuradas' : 'Credenciais não configuradas'}
               </p>
-              <p className="text-[8px] text-slate-400 mt-1">
+              <p className="text-[8px] text-slate-500 mt-1">
                 Client ID e Secret são gerenciados pelo administrador do sistema
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Restaurant ID</label>
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Restaurant ID</label>
                 <input
                   type="text"
                   value={ifoodSettings.ifoodRestaurantId || ''}
@@ -214,7 +214,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Ambiente</label>
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Ambiente</label>
                 <select
                   value={ifoodSettings.ifoodEnv || 'homologation'}
                   onChange={(e) => setIfoodSettings(prev => ({ ...prev, ifoodEnv: e.target.value }))}
@@ -232,7 +232,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
                   Recebimento de Pedidos
                 </p>
                 <p className="text-xs text-emerald-700 font-bold">Webhook Ativo</p>
-                <p className="text-[8px] text-slate-400 mt-2">
+                <p className="text-[8px] text-slate-500 mt-2">
                   Pedidos recebidos automaticamente via webhook do iFood
                 </p>
               </div>
@@ -259,7 +259,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-black uppercase">Saipos</h3>
-              <p className="text-[9px] text-slate-400 uppercase tracking-wider">
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider">
                 Integração de Pedidos
               </p>
             </div>
@@ -281,7 +281,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Partner ID</label>
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Partner ID</label>
                 <input
                   type="text"
                   value={saiposSettings.saiposPartnerId || ''}
@@ -291,7 +291,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Secret</label>
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Secret</label>
                 <input
                   type="password"
                   value={saiposSettings.saiposSecret || ''}
@@ -303,7 +303,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Código Loja</label>
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Código Loja</label>
                 <input
                   type="text"
                   value={saiposSettings.saiposCodStore || ''}
@@ -313,7 +313,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Ambiente</label>
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Ambiente</label>
                 <select
                   value={saiposSettings.saiposEnv || 'homologation'}
                   onChange={(e) => setSaiposSettings(prev => ({ ...prev, saiposEnv: e.target.value }))}
@@ -346,7 +346,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-black uppercase">UaiRango</h3>
-              <p className="text-[9px] text-slate-400 uppercase tracking-wider">
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider">
                 Importação de Cardápio
               </p>
             </div>
@@ -367,7 +367,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Token de Desenvolvedor</label>
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Token de Desenvolvedor</label>
               <input
                 type="password"
                 value={uairangoSettings.uairangoToken || ''}
@@ -378,7 +378,7 @@ export const SettingsIntegrationsTab: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ID do Establecimento</label>
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">ID do Establecimento</label>
               <input
                 type="text"
                 value={uairangoSettings.uairangoEstablishmentId || ''}

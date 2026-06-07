@@ -58,7 +58,7 @@ const ReorderSection: React.FC<ReorderSectionProps> = ({ onProductClick, onReord
           >
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pedido #{order.dailyOrderNumber || order.id.slice(-4)}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pedido #{order.dailyOrderNumber || order.id.slice(-4)}</span>
                 <span className="text-[10px] font-bold text-emerald-500">Concluído</span>
               </div>
               
@@ -74,14 +74,14 @@ const ReorderSection: React.FC<ReorderSectionProps> = ({ onProductClick, onReord
                   </div>
                 ))}
                 {order.items.length > 2 && (
-                  <p className="text-[10px] text-slate-400 font-medium ml-10">+ {order.items.length - 2} itens</p>
+                  <p className="text-[10px] text-slate-500 font-medium ml-10">+ {order.items.length - 2} itens</p>
                 )}
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Total</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Total</span>
                   <span className="text-base font-bold text-slate-900 tracking-tight">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                </div>
                <button 

@@ -201,7 +201,7 @@ const FinancialEntries: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
               Fluxo de <span className="text-primary">Caixa</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Lançamentos, Extrato e Movimentações
             </p>
           </div>
@@ -270,7 +270,7 @@ const FinancialEntries: React.FC = () => {
             <div className="w-1 h-6 bg-primary rounded-full" />
             <div>
               <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Livro de Movimentações</h3>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{filteredTransactions.length} registro(s)</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{filteredTransactions.length} registro(s)</p>
             </div>
           </div>
           
@@ -286,7 +286,7 @@ const FinancialEntries: React.FC = () => {
                       ? type === 'INCOME' ? "bg-emerald-100 text-emerald-700" 
                       : type === 'EXPENSE' ? "bg-rose-100 text-rose-700"
                       : "bg-slate-800 text-white"
-                      : "text-slate-400 hover:text-slate-600"
+                      : "text-slate-500 hover:text-slate-600"
                   )}
                 >
                   {type === 'ALL' ? 'Todos' : type === 'INCOME' ? 'Entrada' : 'Saída'}
@@ -295,7 +295,7 @@ const FinancialEntries: React.FC = () => {
             </div>
             
             <div className="relative w-48">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input 
                 type="text" 
                 placeholder="Buscar lançamento..." 
@@ -309,14 +309,14 @@ const FinancialEntries: React.FC = () => {
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-400">
+            <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-500">
               <Loader2 className="animate-spin text-primary" size={32} />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando dados...</span>
             </div>
           ) : (
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 bg-slate-50/50">
+                <tr className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-slate-100 bg-slate-50/50">
                   <th className="px-4 py-3">Data</th>
                   <th className="px-4 py-3">Descrição</th>
                   <th className="px-4 py-3">Categoria</th>
@@ -329,7 +329,7 @@ const FinancialEntries: React.FC = () => {
                 {filteredTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-16 text-center">
-                      <div className="flex flex-col items-center text-slate-400">
+                      <div className="flex flex-col items-center text-slate-500">
                         <FileText size={40} className="mb-3 opacity-20" />
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Nenhum lançamento encontrado</p>
                       </div>
@@ -373,7 +373,7 @@ const FinancialEntries: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest italic">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest italic">
                         {t.paymentMethod || 'Carteira'}
                       </span>
                     </td>
@@ -387,13 +387,13 @@ const FinancialEntries: React.FC = () => {
                       <div className="flex justify-end gap-1.5">
                         <button 
                           onClick={() => { setFormData(t); setShowForm(true); }}
-                          className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:text-primary hover:bg-orange-50 transition-all flex items-center justify-center"
+                          className="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:text-primary hover:bg-orange-50 transition-all flex items-center justify-center"
                         >
                           <Filter size={12} />
                         </button>
                         <button 
                           onClick={() => handleDelete(t.id)}
-                          className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center"
+                          className="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -421,9 +421,9 @@ const FinancialEntries: React.FC = () => {
                   <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                     {formData.id ? 'Editar Registro' : 'Novo Lançamento'}
                   </h3>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Livro Diário de Fluxo de Caixa</p>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Livro Diário de Fluxo de Caixa</p>
                 </div>
-                <button onClick={() => setShowForm(false)} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200">
+                <button onClick={() => setShowForm(false)} className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200">
                   <X size={20} />
                 </button>
               </header>
@@ -433,17 +433,17 @@ const FinancialEntries: React.FC = () => {
                   <button 
                     type="button" 
                     onClick={() => setFormData({...formData, type: 'EXPENSE'})}
-                    className={cn("flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all", formData.type === 'EXPENSE' ? "bg-rose-500 text-white shadow-lg" : "text-slate-400")}
+                    className={cn("flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all", formData.type === 'EXPENSE' ? "bg-rose-500 text-white shadow-lg" : "text-slate-500")}
                   >Saída (Despesa)</button>
                   <button 
                     type="button" 
                     onClick={() => setFormData({...formData, type: 'INCOME'})}
-                    className={cn("flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all", formData.type === 'INCOME' ? "bg-emerald-500 text-white shadow-lg" : "text-slate-400")}
+                    className={cn("flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all", formData.type === 'INCOME' ? "bg-emerald-500 text-white shadow-lg" : "text-slate-500")}
                   >Entrada (Receita)</button>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Descrição do Lançamento</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Descrição do Lançamento</label>
                   <input 
                     type="text" 
                     className="ui-input w-full h-11 text-sm font-bold"
@@ -456,7 +456,7 @@ const FinancialEntries: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor (R$)</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Valor (R$)</label>
                     <div className="relative">
                       <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={16} />
                       <input 
@@ -469,7 +469,7 @@ const FinancialEntries: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Data de Competência</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Data de Competência</label>
                     <input 
                       type="date" 
                       className="ui-input w-full h-11 text-sm font-bold"
@@ -482,7 +482,7 @@ const FinancialEntries: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Conta Bancária</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Conta Bancária</label>
                     <select 
                       className="ui-input w-full h-11 text-[10px] font-bold uppercase"
                       value={formData.bankAccountId || ''}
@@ -495,7 +495,7 @@ const FinancialEntries: React.FC = () => {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Categoria</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Categoria</label>
                     <select 
                       className="ui-input w-full h-11 text-[10px] font-bold uppercase"
                       value={formData.categoryId || ''}
@@ -583,27 +583,27 @@ const FinancialEntries: React.FC = () => {
                 <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tighter flex items-center gap-2">
                   <ArrowRightLeft size={18} className="text-blue-600" /> Transferência
                 </h3>
-                <button onClick={() => setShowTransferForm(false)} className="p-2 hover:bg-white rounded-full text-slate-400 transition-all">
+                <button onClick={() => setShowTransferForm(false)} className="p-2 hover:bg-white rounded-full text-slate-500 transition-all">
                   <X size={18}/>
                 </button>
               </header>
               <div className="p-6 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Origem</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Origem</label>
                   <select className="ui-input w-full h-11 text-[10px] font-bold uppercase" value={transferData.fromAccountId || ''} onChange={e => setTransferData({...transferData, fromAccountId: e.target.value})} required>
                     <option value="">Selecione...</option>
                     {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.bankName}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Destino</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Destino</label>
                   <select className="ui-input w-full h-11 text-[10px] font-bold uppercase" value={transferData.toAccountId || ''} onChange={e => setTransferData({...transferData, toAccountId: e.target.value})} required>
                     <option value="">Selecione...</option>
                     {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.bankName}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor (R$)</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Valor (R$)</label>
                   <input 
                     type="number" 
                     step="0.01" 

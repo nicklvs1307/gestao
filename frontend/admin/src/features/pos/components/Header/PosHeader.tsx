@@ -53,7 +53,7 @@ export const PosHeader = React.memo<PosHeaderProps>(({
         </div>
         <div>
           <h1 className="text-sm font-black uppercase text-slate-900 tracking-tight leading-none">PDV</h1>
-          <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">Ponto de Venda</p>
+          <p className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Ponto de Venda</p>
         </div>
       </div>
       

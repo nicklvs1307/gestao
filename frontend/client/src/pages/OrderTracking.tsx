@@ -73,7 +73,7 @@ const OrderTracking: React.FC = () => {
         >
             <Loader2 className="text-primary" size={32} />
         </motion.div>
-        <p className="font-bold text-sm text-slate-400 text-center">Sincronizando com a cozinha...</p>
+        <p className="font-bold text-sm text-slate-500 text-center">Sincronizando com a cozinha...</p>
     </div>
   );
 
@@ -120,13 +120,13 @@ const OrderTracking: React.FC = () => {
       <header className="p-4 bg-white/90 backdrop-blur-md border-b border-slate-100 flex items-center gap-4 sticky top-0 z-[var(--z-header)] shadow-sm">
           <button 
             onClick={() => navigate(-1)} 
-            className="p-2.5 bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all duration-200 active:scale-95"
+            className="p-2.5 bg-slate-50 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all duration-200 active:scale-95"
             aria-label="Voltar"
           >
               <ChevronLeft size={20} />
           </button>
           <div className="flex-1">
-              <h1 className="text-xs font-bold uppercase tracking-wider text-slate-400 leading-none mb-1">Status do Pedido</h1>
+              <h1 className="text-xs font-bold uppercase tracking-wider text-slate-500 leading-none mb-1">Status do Pedido</h1>
               <p className="text-lg font-bold text-slate-900 tracking-tight">#{order.id.slice(-6).toUpperCase()}</p>
           </div>
           <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
@@ -172,7 +172,7 @@ const OrderTracking: React.FC = () => {
                     exit={{ opacity: 0, y: -10 }}
                   >
                     <h2 className="text-2xl font-bold text-slate-900 uppercase tracking-tight mb-2">{currentStatus.label}</h2>
-                    <p className="text-slate-400 font-medium text-sm px-6 leading-relaxed">
+                    <p className="text-slate-500 font-medium text-sm px-6 leading-relaxed">
                         {getStatusMessage()}
                     </p>
                   </motion.div>
@@ -181,7 +181,7 @@ const OrderTracking: React.FC = () => {
 
           {/* LINHA DO TEMPO */}
           <section className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-6 flex items-center gap-2">
                   Progresso <span className="w-1 h-1 bg-slate-300 rounded-full" /> {Math.round(((currentIndex + 1) / statusList.length) * 100)}%
               </h3>
               <div className="flex justify-between relative px-2">
@@ -209,7 +209,7 @@ const OrderTracking: React.FC = () => {
                               </motion.div>
                               <span className={cn(
                                   "text-[9px] font-bold uppercase tracking-wider text-center whitespace-nowrap",
-                                  isCurrent ? "text-slate-900" : "text-slate-300"
+                                  isCurrent ? "text-slate-900" : "text-slate-500"
                               )}>
                                   {s.label}
                               </span>
@@ -231,7 +231,7 @@ const OrderTracking: React.FC = () => {
               
               <div className="flex justify-between items-center mb-6 relative z-10">
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Recibo Digital</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Recibo Digital</h3>
                     <p className="text-xs font-medium text-slate-400">{formatSP(order.createdAt, "dd 'de' MMMM, HH:mm")}</p>
                   </div>
                   <div className="p-2.5 bg-white/5 rounded-lg border border-white/10">
@@ -282,7 +282,7 @@ const OrderTracking: React.FC = () => {
                   })}
                   
                   {order.deliveryOrder && (
-                      <div className="flex justify-between items-center pt-3 border-t border-white/5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <div className="flex justify-between items-center pt-3 border-t border-white/5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                           <span>Taxa de Entrega</span>
                           <span className="text-slate-300">R$ {order.deliveryOrder.deliveryFee.toFixed(2)}</span>
                       </div>
@@ -291,14 +291,14 @@ const OrderTracking: React.FC = () => {
 
               <div className="pt-5 border-t border-dashed border-white/10 flex justify-between items-end relative z-10">
                   <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Valor Total</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Valor Total</p>
                       <p className="text-3xl font-bold tracking-tight text-white">
                         <span className="text-primary mr-1">R$</span>
                         {parseFloat(order.total).toFixed(2)}
                       </p>
                   </div>
                   <div className="text-right">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Pagamento</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pagamento</p>
                       <span className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                         {order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method || 'Dinheiro'}
                       </span>
@@ -318,7 +318,7 @@ const OrderTracking: React.FC = () => {
                       <MapPin size={20} />
                   </div>
                   <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Destino da Entrega</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Destino da Entrega</p>
                       <p className="text-sm font-medium text-slate-700 leading-tight line-clamp-2">{order.deliveryOrder?.address}</p>
                   </div>
                   <button className="text-xs font-bold uppercase tracking-wider text-primary hover:underline" aria-label="Ver no mapa">Mapa</button>
@@ -327,7 +327,7 @@ const OrderTracking: React.FC = () => {
 
           {/* AJUDA / SUPORTE */}
           <section className="text-center pt-2">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Alguma dúvida sobre seu pedido?</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Alguma dúvida sobre seu pedido?</p>
               <button 
                 onClick={() => {
                     const phone = order?.restaurant?.phone;

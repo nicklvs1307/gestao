@@ -20,7 +20,7 @@ export const Card: React.FC<CardProps> = ({
     <div 
       onClick={onClick}
       className={cn(
-        'bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden',
+        'bg-card text-card-foreground rounded-lg border border-border shadow-sm overflow-hidden',
         hoverEffect && 'transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer',
         !noPadding && 'p-5',
         className

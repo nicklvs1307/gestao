@@ -34,19 +34,19 @@ export const SearchModal = ({
       >
         <div className="p-5 flex items-center gap-4 border-b border-slate-100">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
             <input 
               autoFocus
               type="text" 
               placeholder={t('tableMenu.searchPlaceholder')} 
-              className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-slate-400 text-slate-900 font-bold"
+              className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-slate-500 text-slate-900 font-bold"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <button 
             onClick={onClose}
-            className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400"
+            className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-500"
           >
             <X size={20} />
           </button>
@@ -55,7 +55,7 @@ export const SearchModal = ({
         <div className="flex-1 overflow-y-auto p-5 pb-10">
           {searchTerm && (
             <div className="mb-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('tableMenu.searchResults', { term: searchTerm })}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('tableMenu.searchResults', { term: searchTerm })}</p>
             </div>
           )}
 
@@ -73,7 +73,7 @@ export const SearchModal = ({
             {searchTerm && filteredProducts.length === 0 && (
               <div className="col-span-full py-20 text-center">
                 <Utensils className="mx-auto text-slate-200 mb-4" size={48} />
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('tableMenu.noItemsFound')}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('tableMenu.noItemsFound')}</p>
               </div>
             )}
           </div>

@@ -120,7 +120,7 @@ const FinancialSuppliers: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
               Gestão de <span className="text-primary">Fornecedores</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Cadastro, Homologação e Parceiros Comerciais
             </p>
           </div>
@@ -141,7 +141,7 @@ const FinancialSuppliers: React.FC = () => {
             <User size={18} />
           </div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Parceiros</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Total Parceiros</p>
             <h4 className="text-lg font-black text-slate-900 italic">{suppliers.length}</h4>
           </div>
         </Card>
@@ -151,7 +151,7 @@ const FinancialSuppliers: React.FC = () => {
             <Building2 size={18} />
           </div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Com CNPJ</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Com CNPJ</p>
             <h4 className="text-lg font-black text-slate-900 italic">{withCnpj}</h4>
           </div>
         </Card>
@@ -161,7 +161,7 @@ const FinancialSuppliers: React.FC = () => {
             <FileText size={18} />
           </div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Sem CNPJ</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Sem CNPJ</p>
             <h4 className="text-lg font-black text-slate-900 italic">{withoutCnpj}</h4>
           </div>
         </Card>
@@ -184,11 +184,11 @@ const FinancialSuppliers: React.FC = () => {
             <div className="w-1 h-6 bg-blue-500 rounded-full" />
             <div>
               <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Base de Fornecedores Homologados</h3>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{filtered.length} registro(s) encontrado(s)</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{filtered.length} registro(s) encontrado(s)</p>
             </div>
           </div>
           <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
             <input 
               type="text" 
               placeholder="Nome, CNPJ ou telefone..." 
@@ -201,14 +201,14 @@ const FinancialSuppliers: React.FC = () => {
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-400">
+            <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-500">
               <Loader2 className="animate-spin text-blue-500" size={32} />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Carregando base...</span>
             </div>
           ) : (
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 bg-slate-50/50">
+                <tr className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-slate-100 bg-slate-50/50">
                   <th className="px-4 py-3">Empresa / Razão Social</th>
                   <th className="px-4 py-3">CNPJ</th>
                   <th className="px-4 py-3 text-center">Contato</th>
@@ -219,7 +219,7 @@ const FinancialSuppliers: React.FC = () => {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-16 text-center">
-                      <div className="flex flex-col items-center text-slate-400">
+                      <div className="flex flex-col items-center text-slate-500">
                         <Building2 size={40} className="mb-3 opacity-20" />
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Nenhum fornecedor encontrado</p>
                       </div>
@@ -229,14 +229,14 @@ const FinancialSuppliers: React.FC = () => {
                   <tr key={s.id} className="group hover:bg-slate-50/80 transition-all duration-300">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-blue-500 group-hover:border-blue-100 transition-all shadow-sm">
+                        <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-500 group-hover:text-blue-500 group-hover:border-blue-100 transition-all shadow-sm">
                           <Building2 size={18} />
                         </div>
                         <div className="flex flex-col">
                           <span className="font-black text-xs text-slate-900 uppercase italic tracking-tighter group-hover:text-blue-600 transition-colors">
                             {s.name}
                           </span>
-                          <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Fornecedor Ativo</span>
+                          <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Fornecedor Ativo</span>
                         </div>
                       </div>
                     </td>
@@ -246,7 +246,7 @@ const FinancialSuppliers: React.FC = () => {
                           {s.cnpj}
                         </span>
                       ) : (
-                        <span className="text-[9px] font-black text-slate-300 uppercase italic">Não informado</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase italic">Não informado</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -256,7 +256,7 @@ const FinancialSuppliers: React.FC = () => {
                             <Phone size={10} className="text-blue-500" /> {s.phone}
                           </div>
                         ) : (
-                          <span className="text-[8px] font-black text-slate-300 uppercase italic">Sem telefone</span>
+                          <span className="text-[8px] font-black text-slate-500 uppercase italic">Sem telefone</span>
                         )}
                       </div>
                     </td>
@@ -310,11 +310,11 @@ const FinancialSuppliers: React.FC = () => {
                   <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                     {formData.id ? 'Editar Parceiro' : 'Novo Fornecedor'}
                   </h3>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Homologação de Fornecedores</p>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Homologação de Fornecedores</p>
                 </div>
                 <button 
                   onClick={() => setShowForm(false)} 
-                  className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90"
+                  className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90"
                 >
                   <X size={20} />
                 </button>
@@ -322,7 +322,7 @@ const FinancialSuppliers: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Razão Social / Nome Fantasia</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Razão Social / Nome Fantasia</label>
                   <Input 
                     value={formData.name || ''} 
                     onChange={e => setFormData({...formData, name: e.target.value})} 
@@ -334,7 +334,7 @@ const FinancialSuppliers: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">CNPJ</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">CNPJ</label>
                     <Input 
                       value={formData.cnpj || ''} 
                       onChange={e => setFormData({...formData, cnpj: e.target.value})} 
@@ -343,7 +343,7 @@ const FinancialSuppliers: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Telefone</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Telefone</label>
                     <Input 
                       value={formData.phone || ''} 
                       onChange={e => setFormData({...formData, phone: e.target.value})} 
@@ -354,7 +354,7 @@ const FinancialSuppliers: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">E-mail (opcional)</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">E-mail (opcional)</label>
                   <Input 
                     value={formData.email || ''} 
                     onChange={e => setFormData({...formData, email: e.target.value})} 

@@ -136,7 +136,7 @@ const OrderKanbanBoard: React.FC<OrderKanbanBoardProps> = ({
               <span className="text-sm font-bold text-slate-900">
                 #{activeOrder.dailyOrderNumber || '0'}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">
                 - {activeOrder.deliveryOrder?.name || activeOrder.customerName || 'Consumidor'}
               </span>
             </div>

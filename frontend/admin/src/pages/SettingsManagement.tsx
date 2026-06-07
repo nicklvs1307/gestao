@@ -74,9 +74,9 @@ const SettingsManagement: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
         <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center animate-pulse">
-          <Settings size={28} className="text-slate-300" />
+          <Settings size={28} className="text-slate-500" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">SINCRONIZANDO DADOS...</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-4">SINCRONIZANDO DADOS...</p>
       </div>
     );
   }
@@ -93,7 +93,7 @@ const SettingsManagement: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
               Configurações <span className="text-primary">Sistema</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Gestão de Identidade e Operação
             </p>
           </div>
@@ -118,7 +118,7 @@ const SettingsManagement: React.FC = () => {
                     "flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-300",
                     activeTab === tab.id 
                       ? "bg-white text-slate-900 shadow-md" 
-                      : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                      : "text-slate-500 hover:text-slate-600 hover:bg-white/50"
                   )}
                 >
                   <Icon size={12} />

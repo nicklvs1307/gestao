@@ -23,7 +23,7 @@ const VoltakiSettingsPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-xl font-black uppercase">Voltaki</h1>
-            <p className="text-[9px] text-slate-400 uppercase tracking-wider">CRM e Fidelização</p>
+            <p className="text-[9px] text-slate-500 uppercase tracking-wider">CRM e Fidelização</p>
           </div>
         </div>
       </div>
@@ -48,7 +48,7 @@ const VoltakiSettingsPage: React.FC = () => {
         </p>
 
         <div className="space-y-3 text-left bg-slate-50 p-4 rounded-xl">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Funcionalidades</h3>
+          <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Funcionalidades</h3>
           
           <div className="flex items-center gap-3 text-sm">
             <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">

@@ -278,7 +278,7 @@ const UserPermissionPage: React.FC = () => {
               <h1 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">
                 {isNewUser ? 'Novo Colaborador' : 'Configurar Acesso'}
               </h1>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                 Dados e permissões do sistema
               </p>
             </div>
@@ -364,7 +364,7 @@ const UserPermissionPage: React.FC = () => {
                 <div className="w-1 h-6 bg-emerald-500 rounded-full" />
                 <h2 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Cargo Base (Opcional)</h2>
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Selecione um cargo para preencher permissões automaticamente</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Selecione um cargo para preencher permissões automaticamente</p>
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {availableRoles.map(r => (
@@ -380,7 +380,7 @@ const UserPermissionPage: React.FC = () => {
                   >
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center",
-                      roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500"
+                      roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-orange-50 group-hover:text-orange-500"
                     )}>
                       <Award size={18} />
                     </div>
@@ -402,7 +402,7 @@ const UserPermissionPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-900 uppercase italic">Permissões</h3>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase">Concedidas vs Total</p>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase">Concedidas vs Total</p>
                 </div>
               </div>
               
@@ -439,7 +439,7 @@ const UserPermissionPage: React.FC = () => {
           <div className="w-64 shrink-0 space-y-4">
             <Card className="p-4 border-slate-200">
               <div className="relative mb-4">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input 
                   type="text" 
                   placeholder="Buscar..." 
@@ -473,7 +473,7 @@ const UserPermissionPage: React.FC = () => {
                           : "hover:bg-white border-2 border-transparent"
                       )}
                     >
-                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", isActive ? cat.color : "bg-slate-100 text-slate-400")}>
+                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", isActive ? cat.color : "bg-slate-100 text-slate-500")}>
                         <Icon size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -484,7 +484,7 @@ const UserPermissionPage: React.FC = () => {
                           <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div className="h-full bg-orange-500 rounded-full" style={{ width: `${progress}%` }} />
                           </div>
-                          <span className="text-[7px] text-slate-400">{cat.selectedCount}/{cat.totalPerms}</span>
+                          <span className="text-[7px] text-slate-500">{cat.selectedCount}/{cat.totalPerms}</span>
                         </div>
                       </div>
                     </button>
@@ -499,7 +499,7 @@ const UserPermissionPage: React.FC = () => {
             {isLoadingData ? (
               <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
                 <Loader2 className="animate-spin text-orange-500" size={32} />
-                <span className="text-[10px] font-black uppercase text-slate-400">Carregando...</span>
+                <span className="text-[10px] font-black uppercase text-slate-500">Carregando...</span>
               </div>
             ) : currentCategory ? (
               <div className="space-y-6">
@@ -516,7 +516,7 @@ const UserPermissionPage: React.FC = () => {
                           style={{ width: `${currentCategory.totalPerms > 0 ? (currentCategory.selectedCount / currentCategory.totalPerms) * 100 : 0}%` }}
                         />
                       </div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">{currentCategory.selectedCount} de {currentCategory.totalPerms}</span>
+                      <span className="text-[9px] font-bold text-slate-500 uppercase">{currentCategory.selectedCount} de {currentCategory.totalPerms}</span>
                     </div>
                   </div>
                 </div>
@@ -536,10 +536,10 @@ const UserPermissionPage: React.FC = () => {
                           <div>
                             <h5 className="text-sm font-black text-slate-900 uppercase italic">{page.name}</h5>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className={cn("text-[8px] font-black px-2 py-0.5 rounded-full uppercase", allSelected ? "bg-emerald-100 text-emerald-600" : someSelected ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400")}>
+                              <span className={cn("text-[8px] font-black px-2 py-0.5 rounded-full uppercase", allSelected ? "bg-emerald-100 text-emerald-600" : someSelected ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500")}>
                                 {allSelected ? 'Completo' : someSelected ? 'Parcial' : 'Vazio'}
                               </span>
-                              <span className="text-[7px] text-slate-400">{page.selectedCount}/{page.permissions.length}</span>
+                              <span className="text-[7px] text-slate-500">{page.selectedCount}/{page.permissions.length}</span>
                             </div>
                           </div>
                         </div>
@@ -568,12 +568,12 @@ const UserPermissionPage: React.FC = () => {
                               onClick={() => togglePermission(p.id)}
                               className={cn("flex items-start gap-3 p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02]", isSelected ? "bg-gradient-to-br from-orange-50 to-white border-orange-200" : "bg-white border-slate-100")}
                             >
-                              <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-300")}>
+                              <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-500")}>
                                 {isSelected ? <CheckSquare size={14} /> : <Square size={14} />}
                               </div>
                               <div>
                                 <span className={cn("text-[9px] font-bold uppercase block", isSelected ? "text-orange-900" : "text-slate-700")}>{p.description || p.name}</span>
-                                <span className="text-[7px] text-slate-400 block mt-1">{p.name}</span>
+                                <span className="text-[7px] text-slate-500 block mt-1">{p.name}</span>
                               </div>
                             </motion.button>
                           );
@@ -585,8 +585,8 @@ const UserPermissionPage: React.FC = () => {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center min-h-[300px] opacity-40">
-                <FolderOpen size={48} className="text-slate-300 mb-3" />
-                <p className="text-[10px] font-black uppercase text-slate-400">Nenhuma permissão</p>
+                <FolderOpen size={48} className="text-slate-500 mb-3" />
+                <p className="text-[10px] font-black uppercase text-slate-500">Nenhuma permissão</p>
               </div>
             )}
           </div>

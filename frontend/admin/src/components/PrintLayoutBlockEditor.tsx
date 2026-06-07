@@ -119,7 +119,7 @@ function SortableBlockItem({ block, onToggleVisibility, onOpenSettings, onRemove
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors touch-none"
+        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-500 transition-colors touch-none"
       >
         <GripVertical size={16} />
       </button>
@@ -127,7 +127,7 @@ function SortableBlockItem({ block, onToggleVisibility, onOpenSettings, onRemove
       {/* Icon */}
       <div className={cn(
         'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-        block.isVisible ? 'bg-orange-50 text-orange-500' : 'bg-slate-100 text-slate-400'
+        block.isVisible ? 'bg-orange-50 text-orange-500' : 'bg-slate-100 text-slate-500'
       )}>
         <Icon size={14} />
       </div>
@@ -136,12 +136,12 @@ function SortableBlockItem({ block, onToggleVisibility, onOpenSettings, onRemove
       <div className="flex-1 min-w-0">
         <p className={cn(
           'text-[10px] font-black uppercase tracking-wider truncate',
-          block.isVisible ? 'text-slate-800' : 'text-slate-400'
+          block.isVisible ? 'text-slate-800' : 'text-slate-500'
         )}>
           {block.label}
         </p>
         {isCustom && (
-          <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Customizado</p>
+          <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Customizado</p>
         )}
       </div>
 
@@ -162,7 +162,7 @@ function SortableBlockItem({ block, onToggleVisibility, onOpenSettings, onRemove
             'w-7 h-7 rounded-lg flex items-center justify-center transition-all',
             block.isVisible
               ? 'bg-green-50 text-green-500 hover:bg-green-100'
-              : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
           )}
           title={block.isVisible ? 'Ocultar bloco' : 'Mostrar bloco'}
         >
@@ -172,7 +172,7 @@ function SortableBlockItem({ block, onToggleVisibility, onOpenSettings, onRemove
         {/* Settings */}
         <button
           onClick={() => onOpenSettings(block)}
-          className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+          className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-all"
           title="Configurações do bloco"
         >
           <Settings2 size={12} />
@@ -237,7 +237,7 @@ function BlockSettingsPopover({ block, onClose, onSave }: BlockSettingsPopoverPr
             <Settings2 size={14} className="text-orange-500" />
             Configurar: {block.label}
           </h3>
-          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+          <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">
             Personalize as configurações deste bloco
           </p>
         </div>
@@ -246,7 +246,7 @@ function BlockSettingsPopover({ block, onClose, onSave }: BlockSettingsPopoverPr
         <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* Font Size Override */}
           <div className="space-y-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
               Tamanho da Fonte (override)
             </label>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
@@ -269,7 +269,7 @@ function BlockSettingsPopover({ block, onClose, onSave }: BlockSettingsPopoverPr
 
           {/* Font Weight */}
           <div className="space-y-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
               Peso da Fonte
             </label>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
@@ -292,7 +292,7 @@ function BlockSettingsPopover({ block, onClose, onSave }: BlockSettingsPopoverPr
 
           {/* Font Style */}
           <div className="space-y-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
               Estilo da Fonte
             </label>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
@@ -315,7 +315,7 @@ function BlockSettingsPopover({ block, onClose, onSave }: BlockSettingsPopoverPr
 
           {/* Text Align */}
           <div className="space-y-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
               Alinhamento
             </label>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
@@ -339,7 +339,7 @@ function BlockSettingsPopover({ block, onClose, onSave }: BlockSettingsPopoverPr
           {/* Custom Content (for header, footer, custom blocks) */}
           {hasContent && (
             <div className="space-y-1">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest text-orange-600">
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-orange-600">
                 Conteúdo do Bloco
               </label>
               <textarea
@@ -396,19 +396,19 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
             <p className="text-[10px] font-black uppercase tracking-wider text-slate-800">
               Configurações Globais
             </p>
-            <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">
+            <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">
               Fonte, espaçamento e papel
             </p>
           </div>
         </div>
-        {isExpanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+        {isExpanded ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
       </button>
 
       {isExpanded && (
         <div className="p-4 pt-0 space-y-4">
           {/* Font Family */}
           <div className="space-y-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
               Família da Fonte
             </label>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
@@ -432,7 +432,7 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
 
           {/* Font Size */}
           <div className="space-y-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
               Tamanho da Fonte
             </label>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
@@ -456,7 +456,7 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
           {/* Line Height */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex justify-between mb-2">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
                 Altura da Linha
               </label>
               <span className="text-[10px] font-black text-orange-600 italic">{settings.lineHeight.toFixed(1)}</span>
@@ -474,7 +474,7 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
 
           {/* Paper Width */}
           <div className="space-y-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
               Largura do Papel
             </label>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
@@ -499,8 +499,8 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Hash size={12} className="text-slate-400" />
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                <Hash size={12} className="text-slate-500" />
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
                   Espaço entre Seções
                 </label>
               </div>
@@ -520,7 +520,7 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
           {/* Item Spacing */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex justify-between mb-2">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
                 Espaço entre Itens
               </label>
               <span className="text-[10px] font-black text-orange-600 italic">{settings.itemSpacing}px</span>
@@ -540,8 +540,8 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Scissors size={12} className="text-slate-400" />
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                <Scissors size={12} className="text-slate-500" />
+                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
                   Linhas antes do Corte
                 </label>
               </div>
@@ -562,8 +562,8 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Printer size={12} className="text-slate-400" />
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                <Printer size={12} className="text-slate-500" />
+                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
                   Comando INIT
                 </span>
               </div>
@@ -582,7 +582,7 @@ function GlobalSettingsPanel({ settings, onChange, isExpanded, onToggle }: Globa
                 />
               </button>
             </div>
-            <p className="text-[7px] font-bold text-slate-400 leading-relaxed">
+            <p className="text-[7px] font-bold text-slate-500 leading-relaxed">
               {settings.useInit
                 ? 'Ativado: Reseta a impressora antes de cada impressão.'
                 : 'Desativado: Recomendado para evitar desperdício de papel.'}
@@ -615,7 +615,7 @@ function AddBlockButton({ onAdd }: AddBlockButtonProps) {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-orange-300 hover:text-orange-500 transition-all"
+        className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-500 hover:border-orange-300 hover:text-orange-500 transition-all"
       >
         <Plus size={14} />
         <span className="text-[9px] font-black uppercase tracking-widest">
@@ -625,7 +625,7 @@ function AddBlockButton({ onAdd }: AddBlockButtonProps) {
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 p-4 bg-white rounded-xl shadow-xl border border-slate-200 z-10">
-          <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2 block">
             Nome do Bloco
           </label>
           <input
@@ -798,7 +798,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
           <h3 className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-2 mb-4">
             <LayoutPanelTop size={14} className="text-orange-500" />
             Blocos da Comanda
-            <span className="text-[8px] font-bold text-slate-400 normal-case tracking-normal">
+            <span className="text-[8px] font-bold text-slate-500 normal-case tracking-normal">
               (arraste para reordenar)
             </span>
           </h3>
@@ -847,7 +847,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
             <LayoutPanelTop size={14} className="text-orange-500" />
             Simulador de Cupom ({globalSettings.paperWidth}mm)
           </h3>
-          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+          <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">
             Prévia aproximada do layout impresso
           </p>
         </div>
@@ -917,7 +917,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
                         <span>MESA 05</span>
                         <span>#1234</span>
                       </div>
-                      <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                      <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">
                         Atendente: Lucas N.
                       </p>
                     </div>
@@ -1002,7 +1002,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
                   {block.blockType === 'qrcode' && (
                     <div className="flex justify-center">
                       <div className="w-20 h-20 bg-slate-100 rounded flex items-center justify-center">
-                        <QrCode size={32} className="text-slate-400" />
+                        <QrCode size={32} className="text-slate-500" />
                       </div>
                     </div>
                   )}
@@ -1019,7 +1019,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
 
           {/* Footer branding */}
           <div className="pt-6 mt-4 border-t border-dashed border-slate-200">
-            <div className="text-[8px] font-bold text-slate-300 uppercase tracking-[0.3em] text-center">
+            <div className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.3em] text-center">
               KICARDAPIO@
             </div>
           </div>
@@ -1027,7 +1027,7 @@ const PrintLayoutBlockEditor: React.FC<PrintLayoutBlockEditorProps> = ({
           <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-slate-50 to-transparent" />
         </div>
 
-        <p className="text-[8px] font-bold text-slate-300 uppercase italic mt-4">
+        <p className="text-[8px] font-bold text-slate-500 uppercase italic mt-4">
           * Layout meramente ilustrativo
         </p>
       </div>

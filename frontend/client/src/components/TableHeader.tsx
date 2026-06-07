@@ -53,14 +53,14 @@ export const TableHeader = ({
         <div className="flex gap-1.5">
           <button 
             onClick={onSearchOpen}
-            className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-400 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-500 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label={t('tableMenu.searchPlaceholder')}
           >
             <Search size={20} />
           </button>
           <button 
             onClick={onOpenAccountModal}
-            className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-400 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border border-slate-50 text-slate-500 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label={t('tableMenu.requestAccount')}
           >
             <ReceiptText size={20} />

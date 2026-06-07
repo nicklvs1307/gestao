@@ -59,9 +59,9 @@ const PrintingLayoutsPage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
         <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center animate-pulse">
-          <Settings size={28} className="text-slate-300" />
+          <Settings size={28} className="text-slate-500" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-4">
           CARREGANDO MODELOS...
         </p>
       </div>
@@ -86,7 +86,7 @@ const PrintingLayoutsPage: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
               Modelos de <span className="text-primary">Impressão</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Configure comandas para Delivery, Retirada e Mesa
             </p>
           </div>
@@ -143,12 +143,12 @@ const PrintingLayoutsPage: React.FC = () => {
             <Card className="p-8 bg-white border border-slate-200 shadow-sm rounded-2xl">
               <div className="flex flex-col items-center justify-center py-12 px-6">
                 <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-6">
-                  <Printer size={36} className="text-slate-300" />
+                  <Printer size={36} className="text-slate-500" />
                 </div>
                 <h3 className="text-[13px] font-black uppercase text-slate-700 mb-2 text-center">
                   Modelo Não Configurado
                 </h3>
-                <p className="text-[10px] text-slate-400 text-center mb-8 max-w-md leading-relaxed">
+                <p className="text-[10px] text-slate-500 text-center mb-8 max-w-md leading-relaxed">
                   Configure o layout personalizado da comanda de{' '}
                   <span className="font-bold text-slate-600">
                     {selectedType === 'delivery' ? 'Delivery' : selectedType === 'pickup' ? 'Retirada' : 'Mesa'}
@@ -183,7 +183,7 @@ const PrintingLayoutsPage: React.FC = () => {
                   <h3 className="text-[10px] font-black uppercase italic text-white tracking-tighter">
                     Editor de Layout
                   </h3>
-                  <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">
+                  <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">
                     {selectedType === 'delivery' ? 'DELIVERY' : selectedType === 'pickup' ? 'RETIRADA' : 'MESA'} - Arraste os blocos para reordenar
                   </p>
                 </div>

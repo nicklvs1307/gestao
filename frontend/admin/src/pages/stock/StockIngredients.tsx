@@ -146,7 +146,7 @@ const StockIngredients: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
                 <div className="flex flex-1 gap-3 w-full">
                     <div className="relative flex-1 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={16} />
                         <input 
                             className="ui-input w-full pl-12 h-12 text-[11px] font-black uppercase tracking-widest" 
                             placeholder="Buscar no catálogo de insumos..." 
@@ -175,14 +175,14 @@ const StockIngredients: React.FC = () => {
             <Card className="overflow-hidden border-slate-200/60 shadow-xl shadow-slate-200/40">
                 <div className="overflow-x-auto">
                     {loading ? (
-                        <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-400">
+                        <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-500">
                             <Loader2 className="animate-spin text-blue-500" size={32} />
                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando Almoxarifado...</span>
                         </div>
                     ) : (
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 bg-slate-50/20">
+                                <tr className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-slate-100 bg-slate-50/20">
                                     <th className="px-8 py-5">Identificação / SKU</th>
                                     <th className="px-8 py-5 text-center">Classificação</th>
                                     <th className="px-8 py-5 text-right">Saldo em Estoque</th>
@@ -192,19 +192,19 @@ const StockIngredients: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {filtered.length === 0 ? (
-                                    <tr><td colSpan={5} className="p-20 text-center text-slate-400 font-bold italic">Nenhum insumo encontrado.</td></tr>
+                                    <tr><td colSpan={5} className="p-20 text-center text-slate-500 font-bold italic">Nenhum insumo encontrado.</td></tr>
                                 ) : filtered.map(item => (
                                     <tr key={item.id} className="group hover:bg-slate-50/80 transition-all duration-300">
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-300 group-hover:text-blue-500 group-hover:border-blue-100 transition-all shadow-sm">
+                                                <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-500 group-hover:text-blue-500 group-hover:border-blue-100 transition-all shadow-sm">
                                                     <Tag size={18} />
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="font-black text-xs text-slate-900 uppercase italic tracking-tighter group-hover:text-blue-600 transition-colors">
                                                         {item.name}
                                                     </span>
-                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">SKU: {item.id.slice(-8).toUpperCase()}</span>
+                                                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">SKU: {item.id.slice(-8).toUpperCase()}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -234,7 +234,7 @@ const StockIngredients: React.FC = () => {
                                                 <span className="text-[11px] font-black text-slate-900 italic tracking-tighter">
                                                     R$ {(item.averageCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                                 </span>
-                                                <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Custo Médio Unitário</span>
+                                                <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Custo Médio Unitário</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-5 text-right">
@@ -273,17 +273,17 @@ const StockIngredients: React.FC = () => {
                                     <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                                         {editingId ? 'Editar Insumo' : 'Novo Insumo'}
                                     </h3>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cadastro de Matéria-Prima</p>
+                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Cadastro de Matéria-Prima</p>
                                 </div>
                             </div>
-                            <button onClick={() => { setShowForm(false); setEditingId(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
+                            <button onClick={() => { setShowForm(false); setEditingId(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
                                 <X size={20} />
                             </button>
                         </header>
 
                         <div className="p-8 space-y-6 overflow-y-auto flex-1">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome do Insumo *</label>
+                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Nome do Insumo *</label>
                                 <input 
                                     className="ui-input w-full h-12 text-sm font-bold uppercase" placeholder="Ex: Farinha de Trigo"
                                     value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} autoFocus
@@ -292,13 +292,13 @@ const StockIngredients: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Unidade</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Unidade</label>
                                     <select value={formData.unit} onChange={e => setFormData(prev => ({ ...prev, unit: e.target.value }))} className="ui-input w-full h-12 text-[11px] font-bold uppercase bg-white border-slate-200">
                                         {UNITS.map(u => <option key={u} value={u}>{u.toUpperCase()}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Grupo</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Grupo</label>
                                     <select value={formData.groupId} onChange={e => setFormData(prev => ({ ...prev, groupId: e.target.value }))} className="ui-input w-full h-12 text-[11px] font-bold uppercase bg-white border-slate-200">
                                         <option value="">Sem grupo</option>
                                         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -308,11 +308,11 @@ const StockIngredients: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Estoque Atual</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Estoque Atual</label>
                                     <input type="number" min="0" step="0.01" className="ui-input w-full h-12 text-sm font-bold" value={formData.stock} onChange={e => setFormData(prev => ({ ...prev, stock: Number(e.target.value) || 0 }))} />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Estoque Mínimo</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Estoque Mínimo</label>
                                     <input type="number" min="0" step="0.01" className="ui-input w-full h-12 text-sm font-bold" value={formData.minStock} onChange={e => setFormData(prev => ({ ...prev, minStock: Number(e.target.value) || 0 }))} />
                                 </div>
                             </div>

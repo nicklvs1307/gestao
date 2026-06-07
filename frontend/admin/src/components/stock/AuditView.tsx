@@ -55,12 +55,12 @@ const AuditView: React.FC<AuditViewProps> = ({ ingredients, onRefresh }) => {
             <div className="p-2 bg-slate-900 text-white rounded-xl shadow-lg"><ClipboardList size={18}/></div>
             <div>
               <h2 className="text-sm font-black text-slate-900 uppercase italic leading-none">Balanço de Inventário</h2>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ajuste o estoque físico para correções de CMV</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ajuste o estoque físico para correções de CMV</p>
             </div>
           </div>
           <div className="flex gap-2 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={12} />
               <input className="w-full h-9 pl-8 pr-4 rounded-xl bg-white border border-slate-200 text-[10px] font-bold outline-none" placeholder="Localizar item..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
             <Button onClick={handleAudit} disabled={isSaving} className="h-9 px-6 bg-slate-900 text-white italic font-black text-[10px] uppercase tracking-widest">
@@ -76,10 +76,10 @@ const AuditView: React.FC<AuditViewProps> = ({ ingredients, onRefresh }) => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Insumo</th>
-                <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Estoque Sistema</th>
-                <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center w-32">Físico (Real)</th>
-                <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right w-32">Divergência</th>
+                <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Insumo</th>
+                <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Estoque Sistema</th>
+                <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center w-32">Físico (Real)</th>
+                <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right w-32">Divergência</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -92,7 +92,7 @@ const AuditView: React.FC<AuditViewProps> = ({ ingredients, onRefresh }) => {
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-4 py-2.5">
                       <p className="text-[10px] font-black text-slate-900 uppercase italic tracking-tight">{item.name}</p>
-                      <p className="text-[7px] font-bold text-slate-400 uppercase">{item.unit}</p>
+                      <p className="text-[7px] font-bold text-slate-500 uppercase">{item.unit}</p>
                     </td>
                     <td className="px-4 py-2.5 text-right font-bold text-[11px] text-slate-500">
                       {systemStock} {item.unit}

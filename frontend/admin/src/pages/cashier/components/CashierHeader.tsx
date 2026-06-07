@@ -53,15 +53,15 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
           <div className="flex items-center gap-3 mt-1.5">
             {isOpen && session?.openedAt && (
               <div className="flex items-center gap-1">
-                <Clock size={10} className="text-slate-400" />
-                <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                <Clock size={10} className="text-slate-500" />
+                <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
                   Aberto às {formatSP(session.openedAt, 'HH:mm')}
                 </span>
               </div>
             )}
             <div className="flex items-center gap-1">
-              <User size={10} className="text-slate-400" />
-              <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+              <User size={10} className="text-slate-500" />
+              <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
                 {authUser?.name || 'Operador'}
               </span>
             </div>
@@ -105,7 +105,7 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
           variant="ghost"
           size="sm"
           onClick={handleRefresh}
-          className="h-8 w-8 p-0 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg"
+          className="h-8 w-8 p-0 text-slate-500 hover:text-orange-500 hover:bg-orange-50 rounded-lg"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
         </Button>
@@ -114,7 +114,7 @@ const CashierHeader: React.FC<CashierHeaderProps> = memo(({
           variant="ghost"
           size="sm"
           onClick={onShowHistory}
-          className="h-8 px-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+          className="h-8 px-2 text-slate-500 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
           title="Histórico de caixas"
         >
           <History size={14} />

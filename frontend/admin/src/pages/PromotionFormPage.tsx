@@ -135,7 +135,7 @@ const PromotionFormPage: React.FC = () => {
     if (loading) return (
         <div className="flex flex-col items-center justify-center h-screen bg-slate-50/50">
             <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Sincronizando dados...</p>
+            <p className="text-slate-500 font-black uppercase text-[10px] tracking-widest">Sincronizando dados...</p>
         </div>
     );
 
@@ -166,16 +166,16 @@ const PromotionFormPage: React.FC = () => {
                                 </h1>
                                 <span className={cn(
                                     "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border",
-                                    formData.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-400 border-slate-200"
+                                    formData.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-500 border-slate-200"
                                 )}>
                                     {formData.isActive ? 'Ativa' : 'Inativa'}
                                 </span>
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gestão Industrial de Ofertas</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Gestão Industrial de Ofertas</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" onClick={() => navigate('/promotions')} className="font-black text-[10px] uppercase tracking-widest text-slate-400">Descartar</Button>
+                        <Button variant="ghost" onClick={() => navigate('/promotions')} className="font-black text-[10px] uppercase tracking-widest text-slate-500">Descartar</Button>
                         <Button onClick={handleSubmit} disabled={isSubmitting} isLoading={isSubmitting} className="h-12 px-8 rounded-xl shadow-xl shadow-orange-100 uppercase tracking-widest italic font-black flex items-center gap-2">
                             <Save size={18} /> {isEditing ? 'Atualizar Oferta' : 'Lançar Promoção'}
                         </Button>
@@ -207,10 +207,10 @@ const PromotionFormPage: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modalidade de Cálculo</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Modalidade de Cálculo</label>
                                 <div className="flex p-1.5 bg-slate-50 border border-slate-100 rounded-2xl gap-1.5">
-                                    <button type="button" onClick={() => setFormData({...formData, discountType: 'percentage'})} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all", formData.discountType === 'percentage' ? "bg-white text-slate-900 shadow-sm border border-slate-100" : "text-slate-400 hover:bg-white/50")}>Porcentagem (%)</button>
-                                    <button type="button" onClick={() => setFormData({...formData, discountType: 'fixed_amount'})} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all", formData.discountType === 'fixed_amount' ? "bg-white text-slate-900 shadow-sm border border-slate-100" : "text-slate-400 hover:bg-white/50")}>Valor Fixo (R$)</button>
+                                    <button type="button" onClick={() => setFormData({...formData, discountType: 'percentage'})} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all", formData.discountType === 'percentage' ? "bg-white text-slate-900 shadow-sm border border-slate-100" : "text-slate-500 hover:bg-white/50")}>Porcentagem (%)</button>
+                                    <button type="button" onClick={() => setFormData({...formData, discountType: 'fixed_amount'})} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all", formData.discountType === 'fixed_amount' ? "bg-white text-slate-900 shadow-sm border border-slate-100" : "text-slate-500 hover:bg-white/50")}>Valor Fixo (R$)</button>
                                 </div>
                             </div>
                             <Input label={`Valor do Desconto (${formData.discountType === 'percentage' ? '%' : 'R$'})`} type="number" required placeholder="0.00" value={formData.discountValue} onChange={e => setFormData({...formData, discountValue: e.target.value})} />
@@ -273,7 +273,7 @@ const PromotionFormPage: React.FC = () => {
                                 { id: 'CATEGORY', label: 'Categoria', icon: Layers },
                                 { id: 'GLOBAL', label: 'Geral', icon: Tag }
                             ].map(type => (
-                                <button key={type.id} type="button" onClick={() => setTargetType(type.id as any)} className={cn("flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all", targetType === type.id ? "border-slate-900 bg-slate-900 text-white shadow-lg" : "border-slate-100 bg-white text-slate-400 hover:border-slate-200")}>
+                                <button key={type.id} type="button" onClick={() => setTargetType(type.id as any)} className={cn("flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all", targetType === type.id ? "border-slate-900 bg-slate-900 text-white shadow-lg" : "border-slate-100 bg-white text-slate-500 hover:border-slate-200")}>
                                     <type.icon size={20} />
                                     <span className="text-[9px] font-black uppercase tracking-widest">{type.label}</span>
                                 </button>
@@ -284,7 +284,7 @@ const PromotionFormPage: React.FC = () => {
                         {targetType === 'PRODUCT' && (
                             <div className="space-y-4">
                                 <div className="relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                                     <input className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900/10" placeholder="Pesquisar produto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                                 </div>
                                 <div className="max-h-48 overflow-y-auto space-y-2 custom-scrollbar pr-2">
@@ -301,7 +301,7 @@ const PromotionFormPage: React.FC = () => {
                         {targetType === 'ADDON' && (
                             <div className="space-y-4">
                                 <div className="relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                                     <input className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900/10" placeholder="Pesquisar adicional ou sabor..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                                 </div>
                                 <div className="max-h-48 overflow-y-auto space-y-2 custom-scrollbar pr-2">
@@ -309,7 +309,7 @@ const PromotionFormPage: React.FC = () => {
                                         <button key={a.id} type="button" onClick={() => setFormData({...formData, addonId: a.id})} className={cn("w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all", formData.addonId === a.id ? "border-emerald-500 bg-emerald-50 text-emerald-900" : "border-slate-50 bg-white text-slate-600 hover:bg-slate-50")}>
                                             <div className="text-left">
                                                 <span className="text-xs font-bold uppercase italic block">{a.name}</span>
-                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{a.groupName}</span>
+                                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{a.groupName}</span>
                                             </div>
                                             {formData.addonId === a.id && <CheckCircle size={16} />}
                                         </button>
@@ -331,9 +331,9 @@ const PromotionFormPage: React.FC = () => {
 
                         {targetType === 'GLOBAL' && (
                             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-center space-y-2">
-                                <Tag size={32} className="mx-auto text-slate-300" />
+                                <Tag size={32} className="mx-auto text-slate-500" />
                                 <p className="text-xs font-black text-slate-900 uppercase italic">Oferta Geral</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed px-4">Esta promoção será aplicada a todos os itens do cardápio automaticamente.</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase leading-relaxed px-4">Esta promoção será aplicada a todos os itens do cardápio automaticamente.</p>
                             </div>
                         )}
                     </Card>
@@ -341,12 +341,12 @@ const PromotionFormPage: React.FC = () => {
                     {/* CARD 6: STATUS FINAL */}
                     <Card className={cn("p-6 border-2 transition-all cursor-pointer flex items-center justify-between group", formData.isActive ? "border-emerald-500 bg-emerald-50" : "border-slate-100 bg-white")} onClick={() => setFormData({...formData, isActive: !formData.isActive})}>
                         <div className="flex items-center gap-4">
-                            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-lg", formData.isActive ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400")}>
+                            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-lg", formData.isActive ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500")}>
                                 <Eye size={24} />
                             </div>
                             <div>
                                 <span className="text-xs font-black uppercase italic text-slate-900 block leading-none">Status de Visibilidade</span>
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{formData.isActive ? 'Ativa no Cardápio Digital' : 'Pausada / Oculta'}</span>
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">{formData.isActive ? 'Ativa no Cardápio Digital' : 'Pausada / Oculta'}</span>
                             </div>
                         </div>
                         <div className={cn("w-10 h-6 rounded-full relative transition-all duration-300", formData.isActive ? "bg-emerald-500" : "bg-slate-200")}>

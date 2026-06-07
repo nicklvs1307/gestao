@@ -284,10 +284,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
             </div>
             <div className="flex justify-between items-end mt-2">
                 <div className="flex flex-col">
-                    <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-1">Por apenas</span>
+                    <span className="text-[7px] font-black text-slate-500 uppercase italic leading-none mb-1">Por apenas</span>
                     <div className="flex flex-col items-start gap-0">
                         {activePromo && (
-                            <span className="text-[9px] font-bold text-slate-400 line-through decoration-rose-500/50 leading-none mb-0.5">
+                            <span className="text-[9px] font-bold text-slate-500 line-through decoration-rose-500/50 leading-none mb-0.5">
                                 R$ {Number(price || 0).toFixed(2).replace('.', ',')}
                             </span>
                         )}
@@ -301,7 +301,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 </div>
                 {isSelected && showControls ? (
                   <div className="flex items-center bg-slate-50 rounded-lg p-1 border border-slate-100 shadow-inner" onClick={e => e.stopPropagation()}>
-                    <button onClick={(e) => { e.stopPropagation(); onDecrement(); }} className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors" aria-label="Diminuir"><Minus size={14} strokeWidth={3} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); onDecrement(); }} className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors" aria-label="Diminuir"><Minus size={14} strokeWidth={3} /></button>
                     <span className="w-6 text-center font-bold text-sm text-slate-900">{itemQty}</span>
                     <button onClick={(e) => { e.stopPropagation(); onIncrement(); }} className="w-9 h-9 flex items-center justify-center text-primary transition-colors" aria-label="Aumentar"><Plus size={14} strokeWidth={3} /></button>
                   </div>
@@ -321,7 +321,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
           <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 250 }} className="relative w-full max-w-6xl bg-slate-50 rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[98vh] md:h-auto md:max-h-[94vh]">
             <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4 z-50 rounded-lg bg-white/90 text-slate-900 shadow-lg backdrop-blur-sm"><X size={20} strokeWidth={3} /></Button>
             <div className="w-full md:w-5/12 h-40 md:h-auto relative shrink-0">
-              {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400"><ShoppingBag size={80} /></div>}
+              {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-500"><ShoppingBag size={80} /></div>}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent md:hidden" />
               <div className="absolute bottom-6 left-8 text-white md:hidden"><h3 className="text-3xl font-black italic uppercase tracking-tighter drop-shadow-2xl">{product.name}</h3></div>
             </div>
@@ -334,7 +334,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 </div>
                 {product.sizes?.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" /> 1. Escolha o Tamanho</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" /> 1. Escolha o Tamanho</h4>
                     <div className="grid grid-cols-1 gap-1.5">
                       {product.sizes.map((size: any) => (
                         <Card key={size.id} onClick={() => {
@@ -354,7 +354,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                 {addonGroups.length > 0 && (
                   <div className="relative sticky top-0 z-20 bg-slate-50 py-2">
                     <div className="relative">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} aria-hidden="true" />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} aria-hidden="true" />
                       <input 
                         type="text"
                         placeholder="Pesquisar sabor ou adicional..."
@@ -383,7 +383,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                   return (
                     <div key={group.id} ref={el => sectionRefs.current[group.id] = el} className="space-y-4 scroll-mt-24">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" /> {group.name}</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><div className="w-1.5 h-4 bg-primary rounded-full shadow-lg shadow-primary/30" /> {group.name}</h4>
                         <div className="flex gap-2">
                           {isFlavor ? <span className={cn("text-[8px] px-2 py-1 rounded-md font-black uppercase tracking-widest border transition-all", totalInGroup === limit ? "bg-primary text-white border-primary" : "bg-white text-primary border-primary/20")}>Sabores: {totalInGroup}/{limit}</span> : <>
                             {group.isRequired && <span className="text-[8px] bg-orange-500 text-white px-2 py-1 rounded-md font-black uppercase tracking-widest">Obrigatório</span>}
@@ -444,12 +444,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                                     <span className={cn("font-black text-xs uppercase italic tracking-tighter truncate", isSelected ? "text-primary" : "text-slate-700")}>{addon.name}</span>
                                     {isSelected && isFlavor && <span className="text-[8px] font-black bg-primary text-white px-1 rounded italic">{fractionText}</span>}
                                   </div>
-                                  {addon.description && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">{addon.description}</p>}
+                                  {addon.description && <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tight truncate">{addon.description}</p>}
                                   {addon.price > 0 ? (
                                     <div className="flex items-center gap-2 mt-1">
                                       {isPromoActive(addon) ? (
                                         <>
-                                          <span className="text-[9px] font-bold text-slate-400 line-through decoration-rose-500/50 uppercase italic">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>
+                                          <span className="text-[9px] font-bold text-slate-500 line-through decoration-rose-500/50 uppercase italic">+ R$ {Number(addon.price).toFixed(2).replace('.', ',')}</span>
                                           <span className="text-[10px] font-black text-emerald-600 uppercase italic">+ R$ {Number(addon.promoPrice).toFixed(2).replace('.', ',')}</span>
                                         </>
                                       ) : (
@@ -463,7 +463,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                               </div>
                               {isSelected && (
                                 <div className="flex items-center bg-white rounded-lg p-1 border border-slate-100 shadow-sm" onClick={e => e.stopPropagation()}>
-                                  <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors" aria-label="Diminuir"><Minus size={14} strokeWidth={3} /></button>
+                                  <button onClick={() => handleAddonQuantityChange(addon, -1, group)} className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors" aria-label="Diminuir"><Minus size={14} strokeWidth={3} /></button>
                                   <span className="w-6 text-center font-bold text-sm text-slate-900">{currentQty}</span>
                                   <button onClick={() => handleAddonQuantityChange(addon, 1, group)} disabled={addon.maxQuantity > 0 && currentQty >= (addon.maxQuantity || 1)} className={cn("w-9 h-9 flex items-center justify-center transition-colors", (addon.maxQuantity > 0 && currentQty >= (addon.maxQuantity || 1)) ? "text-slate-200" : "text-primary")} aria-label="Aumentar"><Plus size={14} strokeWidth={3} /></button>
                                 </div>
@@ -476,12 +476,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                   );
                 })}
                 <div ref={obsSectionRef} className="space-y-2 pb-2 scroll-mt-24">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <div className="w-1.5 h-4 bg-amber-400 rounded-full shadow-sm shadow-amber-400/30" /> 
                     Alguma observação?
                   </h4>
                   <textarea 
-                    className="w-full bg-white border-2 border-slate-100 rounded-lg p-4 text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:border-primary outline-none transition-all duration-200 resize-none shadow-sm" 
+                    className="w-full bg-white border-2 border-slate-100 rounded-lg p-4 text-sm font-medium text-slate-700 placeholder:text-slate-500 focus:border-primary outline-none transition-all duration-200 resize-none shadow-sm" 
                     placeholder="Ex: Tirar cebola, maionese à parte..." 
                     rows={3} 
                     value={observations} 
@@ -490,7 +490,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
                   />
                 </div>
               </div>
-              <div className="p-4 md:p-6 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] sticky bottom-0"><div className="flex items-center gap-3"><div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 shadow-inner"><button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all duration-200" aria-label="Diminuir quantidade"><Minus size={16} strokeWidth={3} /></button><span className="w-7 text-center font-bold text-lg text-slate-900">{quantity}</span><button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 transition-all duration-200" aria-label="Aumentar quantidade"><Plus size={16} strokeWidth={3} /></button></div><Button 
+              <div className="p-4 md:p-6 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] sticky bottom-0"><div className="flex items-center gap-3"><div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 shadow-inner"><button onClick={() => handleQuantityChange(-1)} className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-red-500 transition-all duration-200" aria-label="Diminuir quantidade"><Minus size={16} strokeWidth={3} /></button><span className="w-7 text-center font-bold text-lg text-slate-900">{quantity}</span><button onClick={() => handleQuantityChange(1)} className="w-10 h-10 flex items-center justify-center text-slate-900 transition-all duration-200" aria-label="Aumentar quantidade"><Plus size={16} strokeWidth={3} /></button></div><Button 
     onClick={handleAddToCartClick} 
     disabled={isAdded || !isStoreOpen} 
     className={cn(

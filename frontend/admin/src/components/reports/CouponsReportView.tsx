@@ -34,7 +34,7 @@ const CouponsReportView: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <KpiCard icon={Ticket} iconColor="text-orange-400" label="Total de Cupons" value={totalCoupons} subtitle="Cadastrados" variant="dark" />
                 <KpiCard icon={TrendingUp} iconColor="text-emerald-500" label="Cupons Ativos" value={activeCoupons} subtitle="Em circulação" accentColor="text-emerald-600" />
-                <KpiCard icon={AlertCircle} iconColor="text-slate-400" label="Cupons Inativos" value={inactiveCoupons} subtitle="Encerrados" accentColor="text-slate-600" />
+                <KpiCard icon={AlertCircle} iconColor="text-slate-500" label="Cupons Inativos" value={inactiveCoupons} subtitle="Encerrados" accentColor="text-slate-600" />
                 <KpiCard icon={Package} iconColor="text-blue-500" label="Taxa de Uso" value={`${totalCoupons > 0 ? ((activeCoupons / totalCoupons) * 100).toFixed(0) : 0}%`} subtitle="Ativos / Total" accentColor="text-blue-600" />
             </div>
 
@@ -52,8 +52,8 @@ const CouponsReportView: React.FC = () => {
                         <div className="p-5">
                             <div className="flex justify-between items-start mb-3">
                                 <span className={cn(
-                                    "text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border",
-                                    coupon.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                                    "text-[11px] font-semibold uppercase tracking-wider px-2 py-1 rounded-lg border",
+                                    coupon.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-500 border-slate-100"
                                 )}>
                                     {coupon.isActive ? 'Ativo' : 'Inativo'}
                                 </span>
@@ -66,16 +66,16 @@ const CouponsReportView: React.FC = () => {
                                 )}>
                                     {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `R$ ${coupon.discountValue.toFixed(2)}`}
                                 </span>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">OFF</span>
+                                <span className="text-[11px] font-medium text-slate-500 uppercase">OFF</span>
                             </div>
                             {coupon.product && (
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2 truncate">
+                                <p className="text-[11px] font-medium text-slate-500 uppercase mb-2 truncate">
                                     {coupon.product.name}
                                 </p>
                             )}
                             <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                                <span className="text-[8px] font-black text-slate-400 uppercase">Validade</span>
-                                <span className="text-[9px] font-bold text-slate-600">
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase">Validade</span>
+                                <span className="text-[11px] font-medium text-slate-600">
                                     {coupon.validUntil ? new Date(coupon.validUntil).toLocaleDateString('pt-BR') : 'Sem prazo'}
                                 </span>
                             </div>

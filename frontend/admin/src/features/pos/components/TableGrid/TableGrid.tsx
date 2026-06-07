@@ -17,7 +17,7 @@ export const TableGrid = React.memo<TableGridProps>(({ tablesSummary, onTableCli
     <div className="flex-1 p-5 overflow-y-auto custom-scrollbar bg-slate-50/50">
       <div className="mb-4">
         <h2 className="text-sm font-black uppercase text-slate-900 tracking-tight">Gestão de Mesas</h2>
-        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+        <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
           {tablesSummary.filter(t => t.status !== 'free').length} ocupadas · {tablesSummary.filter(t => t.status === 'free').length} livres
         </p>
       </div>
@@ -43,7 +43,7 @@ export const TableGrid = React.memo<TableGridProps>(({ tablesSummary, onTableCli
             {/* Número da mesa */}
             <span className={cn(
               "text-2xl font-black tracking-tight leading-none", 
-              t.status === 'free' ? "text-slate-300" : "text-rose-600"
+              t.status === 'free' ? "text-slate-500" : "text-rose-600"
             )}>
               {t.number < 10 ? `0${t.number}` : t.number}
             </span>
@@ -52,7 +52,7 @@ export const TableGrid = React.memo<TableGridProps>(({ tablesSummary, onTableCli
             <div className="mt-auto flex flex-col items-start gap-1">
               <span className={cn(
                 "text-[9px] font-bold uppercase tracking-wider", 
-                t.status === 'free' ? "text-slate-400" : "text-rose-500"
+                t.status === 'free' ? "text-slate-500" : "text-rose-500"
               )}>
                 {t.status === 'free' ? 'Livre' : 'Ocupada'}
               </span>

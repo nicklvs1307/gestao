@@ -136,7 +136,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
                   </div>
                   {selectedSession.user && (
                     <div className="flex items-center gap-1">
-                      <User size={12} className="text-slate-400" />
+                      <User size={12} className="text-slate-500" />
                       <span className="text-xs font-bold text-slate-500">{selectedSession.user.name}</span>
                     </div>
                   )}
@@ -144,22 +144,22 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
                 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase">Abertura</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase">Abertura</p>
                     <p className="font-black text-slate-700">{formatSP(selectedSession.openedAt, 'dd/MM/yyyy HH:mm')}</p>
                   </div>
                   {selectedSession.closedAt && (
                     <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">Fechamento</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase">Fechamento</p>
                       <p className="font-black text-slate-700">{formatSP(selectedSession.closedAt, 'dd/MM/yyyy HH:mm')}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase">Fundo Inicial</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase">Fundo Inicial</p>
                     <p className="font-black text-emerald-600">R$ {Number(selectedSession.initialAmount).toFixed(2)}</p>
                   </div>
                   {selectedSession.finalAmount !== null && (
                     <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">Informado</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase">Informado</p>
                       <p className="font-black text-slate-700">R$ {Number(selectedSession.finalAmount).toFixed(2)}</p>
                     </div>
                   )}
@@ -169,7 +169,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
               {/* Actions or Loading */}
               {loadingSession ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                  <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
                   <span className="ml-2 text-xs font-bold text-slate-500">Carregando dados...</span>
                 </div>
               ) : selectedSession.status === 'CLOSED' && closingData ? (
@@ -253,7 +253,7 @@ const ClosingHistoryModal: React.FC<ClosingHistoryModalProps> = memo(({ isOpen, 
                         R$ {Number(session.initialAmount).toFixed(2)}
                       </p>
                       {session.user && (
-                        <p className="text-[9px] text-slate-400 font-bold uppercase">
+                        <p className="text-[9px] text-slate-500 font-bold uppercase">
                           {session.user.name}
                         </p>
                       )}

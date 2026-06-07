@@ -179,14 +179,14 @@ const Dashboard: React.FC = () => {
       y: {
         grid: { color: '#f1f5f9', drawBorder: false },
         ticks: { 
-            color: '#94a3b8', 
+            color: '#64748b', 
             font: { size: 10, weight: 'bold' as const },
             callback: (val: any) => `R$ ${val}`
         }
       },
       x: {
         grid: { display: false },
-        ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' as const } }
+        ticks: { color: '#64748b', font: { size: 10, weight: 'bold' as const } }
       }
     }
   }), []);
@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
     return (
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-muted-foreground font-bold uppercase text-xs tracking-[0.2em]">Sincronizando dados...</p>
+            <p className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Sincronizando dados...</p>
         </div>
     );
   }
@@ -262,7 +262,7 @@ const Dashboard: React.FC = () => {
                             )}
                           >
                               {step.done ? <CheckCircle size={24} /> : <step.icon size={24} className="group-hover:text-primary" />}
-                              <p className="text-[10px] font-black uppercase tracking-widest">{step.label}</p>
+                              <p className="text-[11px] font-semibold uppercase tracking-wider">{step.label}</p>
                           </Card>
                       ))}
                   </div>
@@ -289,9 +289,9 @@ const Dashboard: React.FC = () => {
                     )}>
                         <item.icon size={22} />
                     </div>
-                    <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">{item.sub}</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{item.sub}</span>
                 </div>
-                <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">{item.label}</p>
+                <p className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider mb-1">{item.label}</p>
                 <h3 className="text-3xl font-black text-foreground tracking-tighter italic">{item.value}</h3>
             </Card>
         ))}
@@ -303,7 +303,7 @@ const Dashboard: React.FC = () => {
           <div className="flex justify-between items-center mb-8">
             <div>
                 <h3 className="font-black text-foreground text-lg italic uppercase tracking-tighter leading-none">Faturamento Semanal</h3>
-                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">Desempenho dos últimos 7 dias</p>
+                <p className="text-muted-foreground text-[11px] font-medium uppercase mt-1">Desempenho dos últimos 7 dias</p>
             </div>
             <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/reports')}>
                 Ver Detalhes <ChevronRight size={16} />
@@ -319,7 +319,7 @@ const Dashboard: React.FC = () => {
           <div className="p-6 border-b border-border flex justify-between items-center bg-background/50">
             <div>
                 <h3 className="font-black text-foreground text-base italic uppercase tracking-tighter leading-none">Últimos Pedidos</h3>
-                <p className="text-muted-foreground text-[9px] font-bold uppercase tracking-widest mt-1">Atividade recente</p>
+                <p className="text-muted-foreground text-xs font-medium mt-1">Atividade recente</p>
             </div>
             <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate('/orders')}>
                 <ArrowRight size={18} />
@@ -339,7 +339,7 @@ const Dashboard: React.FC = () => {
                             )} />
                             <div>
                                 <span className="block text-xs font-black uppercase italic tracking-tighter">#{order.id.slice(-4)}</span>
-                                <span className="text-[10px] text-muted-foreground font-bold uppercase">Mesa {order.tableNumber || 'Delivery'}</span>
+                                <span className="text-[11px] text-muted-foreground font-medium uppercase">Mesa {order.tableNumber || 'Delivery'}</span>
                             </div>
                         </div>
                       </td>
@@ -347,7 +347,7 @@ const Dashboard: React.FC = () => {
                         <span className="font-black text-sm italic text-foreground">R$ {order.total?.toFixed(2).replace('.', ',')}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                         <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center text-muted-foreground/60 group-hover:text-primary group-hover:border-primary/10 transition-all">
+                         <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:border-primary/10 transition-all">
                             <ChevronRight size={16} />
                          </div>
                       </td>
@@ -355,7 +355,7 @@ const Dashboard: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-muted-foreground/60 italic text-xs uppercase font-bold tracking-widest">Nenhum pedido recente</td>
+                    <td colSpan={3} className="px-6 py-12 text-center text-muted-foreground text-xs uppercase font-semibold tracking-wider">Nenhum pedido recente</td>
                   </tr>
                 )}
               </tbody>
@@ -363,7 +363,7 @@ const Dashboard: React.FC = () => {
           </div>
           {recentOrders.length > 0 && (
               <div className="p-4 bg-background/50 border-t border-border text-center">
-                  <button onClick={() => navigate('/orders')} className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
+                  <button onClick={() => navigate('/orders')} className="text-[11px] font-semibold text-primary uppercase tracking-wider hover:underline">
                       Ver histórico completo
                   </button>
               </div>

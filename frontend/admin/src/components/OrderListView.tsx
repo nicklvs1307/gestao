@@ -85,7 +85,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
     <div className="h-full overflow-hidden flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm">
       <div className="flex-1 overflow-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
-            <thead className="text-[9px] uppercase bg-slate-50 text-slate-400 border-b border-slate-100 sticky top-0 z-10 backdrop-blur-sm font-black tracking-widest">
+            <thead className="text-[9px] uppercase bg-slate-50 text-slate-500 border-b border-slate-100 sticky top-0 z-10 backdrop-blur-sm font-black tracking-widest">
             <tr>
                 <th className="px-4 py-3 w-10">
                     <div className="w-4 h-4 rounded border-2 border-slate-200 bg-white" />
@@ -102,7 +102,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
             <tbody className="divide-y divide-slate-50 text-slate-700">
             {orders.length === 0 ? (
                 <tr>
-                    <td colSpan={8} className="p-20 text-center text-slate-400">
+                    <td colSpan={8} className="p-20 text-center text-slate-500">
                         <UtensilsCrossed className="mx-auto h-12 w-12 opacity-10 mb-4" />
                         <p className="font-black text-[10px] uppercase tracking-[0.2em] italic">Nenhum pedido encontrado no monitor</p>
                     </td>
@@ -138,7 +138,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                                     #{order.dailyOrderNumber || '0'}
                                 </span>
                                 <div className="flex flex-col">
-                                    <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest leading-none">
+                                    <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest leading-none">
                                         ID: {order.id.slice(-6).toUpperCase()}
                                     </span>
                                 </div>
@@ -156,7 +156,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                                     )}>
                                         {isPickup ? <ShoppingBag size={8} /> : (isDelivery ? <Truck size={8} /> : <UtensilsCrossed size={8} />)}
                                     </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">
+                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">
                                         {isPickup ? 'Retirada' : (isDelivery ? 'Entrega' : 'Mesa')}
                                     </span>
                                 </div>
@@ -165,7 +165,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                         <td className="px-4 py-3">
                             <span className={cn(
                                 "inline-flex items-center rounded-lg px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border shadow-sm",
-                                STATUS_COLORS[order.status] || "bg-muted text-slate-400 border-border"
+                                STATUS_COLORS[order.status] || "bg-muted text-slate-500 border-border"
                             )}>
                             {STATUS_MAP[order.status] || order.status}
                             </span>
@@ -175,13 +175,13 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                                 <div className="flex items-center gap-1.5">
                                     <div className={cn(
                                         "p-1 rounded-lg border",
-                                        order.deliveryOrder?.driverId ? "bg-indigo-600 border-indigo-700 text-white" : "bg-slate-100 border-slate-200 text-slate-400"
+                                        order.deliveryOrder?.driverId ? "bg-indigo-600 border-indigo-700 text-white" : "bg-slate-100 border-slate-200 text-slate-500"
                                     )}>
                                         <Bike size={12} strokeWidth={3} />
                                     </div>
                                     <span className={cn(
                                         "text-[10px] font-black uppercase italic tracking-tighter",
-                                        order.deliveryOrder?.driverId ? "text-indigo-700" : "text-slate-400"
+                                        order.deliveryOrder?.driverId ? "text-indigo-700" : "text-slate-500"
                                     )}>
                                         {driverName}
                                     </span>
@@ -195,11 +195,11 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                         </td>
                         <td className="px-4 py-3">
                             <div className="flex flex-col gap-0.5">
-                                <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase italic">
+                                <div className="flex items-center gap-1 text-[9px] font-black text-slate-500 uppercase italic">
                                     <Clock size={10} className="text-orange-500" />
                                     {formatSP(order.createdAt, 'HH:mm')}
                                 </div>
-                                <span className="text-[7px] font-black text-slate-300 uppercase italic ml-3.5">
+                                <span className="text-[7px] font-black text-slate-500 uppercase italic ml-3.5">
                                     {formatSP(order.createdAt, 'dd/MM/yy')}
                                 </span>
                             </div>
@@ -207,14 +207,14 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                         <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
                                 <button 
-                                    className="h-8 w-8 rounded-xl bg-slate-100 text-slate-400 hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center shadow-sm" 
+                                    className="h-8 w-8 rounded-xl bg-slate-100 text-slate-500 hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center shadow-sm" 
                                     onClick={(e) => { e.stopPropagation(); onOpenDetails(order); }}
                                 >
                                     <Eye size={14} />
                                 </button>
                                 {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && onCancelOrder && (
                                     <button 
-                                        className="h-8 w-8 rounded-xl bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center shadow-sm" 
+                                        className="h-8 w-8 rounded-xl bg-slate-100 text-slate-500 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center shadow-sm" 
                                         onClick={(e) => { 
                                             e.stopPropagation(); 
                                             if (window.confirm(`Cancelar pedido #${order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}?`)) {
@@ -240,7 +240,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
       {totalOrders > 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               Mostrando {startItem}-{endItem} de {totalOrders}
             </span>
             {isLoading && (
@@ -256,7 +256,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                 className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center transition-all",
                   currentPage === 1 || isLoading
-                    ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                    ? "bg-slate-100 text-slate-500 cursor-not-allowed"
                     : "bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600"
                 )}
               >
@@ -266,7 +266,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
               {getPageNumbers().map((page, index) => {
                 if (page === '...') {
                   return (
-                    <span key={`ellipsis-${index}`} className="px-1 text-slate-400">
+                    <span key={`ellipsis-${index}`} className="px-1 text-slate-500">
                       ...
                     </span>
                   );
@@ -296,7 +296,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({
                 className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center transition-all",
                   currentPage === totalPages || isLoading
-                    ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                    ? "bg-slate-100 text-slate-500 cursor-not-allowed"
                     : "bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600"
                 )}
               >

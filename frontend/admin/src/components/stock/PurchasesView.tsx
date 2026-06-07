@@ -41,20 +41,20 @@ const PurchasesView: React.FC<PurchasesViewProps> = ({ purchases, onRefresh }) =
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-slate-900 text-white flex flex-col justify-between overflow-hidden relative">
           <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 blur-2xl" />
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total em Compras (Mês)</p>
+          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total em Compras (Mês)</p>
           <h2 className="text-2xl font-black italic tracking-tighter mt-2">R$ {totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
         </Card>
         <Card className="p-4 border-slate-100 flex items-center gap-4">
           <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl"><CheckCircle size={20}/></div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Confirmadas</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Confirmadas</p>
             <p className="text-lg font-black text-slate-900">{purchases.filter(p => p.status === 'CONFIRMED').length}</p>
           </div>
         </Card>
         <Card className="p-4 border-slate-100 flex items-center gap-4">
           <div className="p-2 bg-amber-100 text-amber-600 rounded-xl"><Clock size={20}/></div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Pendentes</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Pendentes</p>
             <p className="text-lg font-black text-slate-900">{purchases.filter(p => p.status === 'PENDING').length}</p>
           </div>
         </Card>
@@ -63,7 +63,7 @@ const PurchasesView: React.FC<PurchasesViewProps> = ({ purchases, onRefresh }) =
       {/* Toolbar */}
       <div className="flex justify-between items-center bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
         <div className="relative flex-1 max-w-md ml-2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <input 
             className="w-full h-9 pl-9 pr-4 rounded-xl bg-slate-50 border-none text-[11px] font-bold outline-none" 
             placeholder="Buscar por Nota ou Fornecedor..." 
@@ -81,12 +81,12 @@ const PurchasesView: React.FC<PurchasesViewProps> = ({ purchases, onRefresh }) =
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-100">
             <tr>
-              <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Data</th>
-              <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Documento</th>
-              <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Fornecedor</th>
-              <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Valor Total</th>
-              <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-              <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+              <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Data</th>
+              <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Documento</th>
+              <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Fornecedor</th>
+              <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Valor Total</th>
+              <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+              <th className="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -97,7 +97,7 @@ const PurchasesView: React.FC<PurchasesViewProps> = ({ purchases, onRefresh }) =
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <FileText size={12} className="text-slate-400" />
+                    <FileText size={12} className="text-slate-500" />
                     <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight">NF: {purchase.invoiceNumber || 'S/N'}</span>
                   </div>
                 </td>
@@ -128,7 +128,7 @@ const PurchasesView: React.FC<PurchasesViewProps> = ({ purchases, onRefresh }) =
                         <CheckCircle size={14} />
                       </button>
                     )}
-                    <button className="p-1.5 text-slate-400 hover:text-orange-500 rounded-lg">
+                    <button className="p-1.5 text-slate-500 hover:text-orange-500 rounded-lg">
                       <ChevronRight size={14} />
                     </button>
                   </div>

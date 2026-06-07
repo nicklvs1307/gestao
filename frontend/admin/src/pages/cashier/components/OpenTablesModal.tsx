@@ -76,14 +76,14 @@ const OpenTablesModal: React.FC<OpenTablesModalProps> = memo(({
                   <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight">
                     Mesas Abertas
                   </h3>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                     Mesas com pedidos em andamento
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-500 transition-all"
+                className="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-500 transition-all"
               >
                 <X size={20} />
               </button>
@@ -114,11 +114,11 @@ const OpenTablesModal: React.FC<OpenTablesModalProps> = memo(({
                           Mesa {tableNumber}
                         </h4>
                         <div className="flex items-center gap-3 mt-2">
-                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-500 uppercase tracking-widest">
                             <Clock size={10} />
                             {formatSP(table.createdAt, 'HH:mm')}
                           </span>
-                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
                             {table.items?.length || 0} item(s)
                           </span>
                         </div>
@@ -155,7 +155,7 @@ const OpenTablesModal: React.FC<OpenTablesModalProps> = memo(({
           <footer className="p-5 bg-white border-t border-slate-100 flex flex-col gap-4">
             <div className="p-5 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl text-white flex justify-between items-center shadow-xl">
               <div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   Total em Mesa
                 </span>
               </div>
@@ -164,7 +164,7 @@ const OpenTablesModal: React.FC<OpenTablesModalProps> = memo(({
               </span>
             </div>
             
-            <p className="text-xs text-slate-400 font-bold uppercase text-center tracking-widest leading-relaxed">
+            <p className="text-xs text-slate-500 font-bold uppercase text-center tracking-widest leading-relaxed">
               Feche ou cancele as mesas antes de encerrar o turno.
             </p>
             

@@ -177,7 +177,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
             Preview - {typeConfig[layoutType].label}
           </h3>
         </div>
-        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
           Simulador de Cupom ({globalSettings.paperWidth}mm)
         </p>
       </div>
@@ -261,7 +261,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
                       <span>{mockOrder.orderNumber}</span>
                     </div>
                     {mockOrder.waiter && (
-                      <p className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">
+                      <p className="text-[8px] text-slate-500 font-bold uppercase mt-0.5">
                         Garçom: {mockOrder.waiter}
                       </p>
                     )}
@@ -404,7 +404,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
                 {block.blockType === 'qrcode' && (
                   <ReceiptLine className="flex justify-center">
                     <div className="w-16 h-16 bg-slate-100 rounded flex items-center justify-center">
-                      <Receipt size={24} className="text-slate-400" />
+                      <Receipt size={24} className="text-slate-500" />
                     </div>
                   </ReceiptLine>
                 )}
@@ -422,7 +422,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
 
         {/* Footer branding */}
         <div className="pt-4 mt-2 border-t border-dashed border-slate-200 px-4">
-          <div className="text-[7px] font-bold text-slate-300 uppercase tracking-[0.3em] text-center">
+          <div className="text-[7px] font-bold text-slate-500 uppercase tracking-[0.3em] text-center">
             KICARDAPIO@
           </div>
         </div>
@@ -432,7 +432,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
       </div>
 
       {/* Legend */}
-      <p className="text-[8px] font-bold text-slate-300 uppercase italic mt-3">
+      <p className="text-[8px] font-bold text-slate-500 uppercase italic mt-3">
         * Layout meramente ilustrativo
       </p>
     </div>

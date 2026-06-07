@@ -101,7 +101,7 @@ const StockIngredients: React.FC = () => {
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic flex items-center gap-3">
                         <Scale size={32} className="text-primary" /> Ingredientes e Insumos
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Controle de estoque de matéria-prima e custo de produção.</p>
+                    <p className="text-slate-500 dark:text-slate-500 font-medium">Controle de estoque de matéria-prima e custo de produção.</p>
                 </div>
                 
                 <button 
@@ -116,7 +116,7 @@ const StockIngredients: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1 space-y-6">
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
-                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2">
+                        <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-4 flex items-center gap-2">
                             <Search size={14} /> Localizar Insumo
                         </h3>
                         <input 
@@ -153,7 +153,7 @@ const StockIngredients: React.FC = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                    <tr className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
                                         <th className="px-8 py-6">Insumo / Unidade</th>
                                         <th className="px-8 py-6">Saldo Atual</th>
                                         <th className="px-8 py-6">Custo Médio</th>
@@ -165,7 +165,7 @@ const StockIngredients: React.FC = () => {
                                         <tr key={ing.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-black text-[10px] uppercase">{ing.unit}</div>
+                                                     <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-black text-[10px] uppercase">{ing.unit}</div>
                                                     <span className="font-bold text-slate-700 dark:text-slate-200 uppercase text-sm">{ing.name}</span>
                                                 </div>
                                             </td>
@@ -184,12 +184,12 @@ const StockIngredients: React.FC = () => {
                                             </td>
                                             <td className="px-8 py-6">
                                                 <p className="font-black text-slate-900 dark:text-white text-sm italic">R$ {Number(ing.lastUnitCost || 0).toFixed(2)}</p>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Última compra</p>
+                                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Última compra</p>
                                             </td>
                                             <td className="px-8 py-6 text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <button onClick={() => handleEdit(ing)} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-2xl transition-all"><Edit2 size={18} /></button>
-                                                    <button onClick={() => handleDelete(ing.id)} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 rounded-2xl transition-all"><Trash2 size={18} /></button>
+                                                     <button onClick={() => handleEdit(ing)} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-2xl transition-all"><Edit2 size={18} /></button>
+                                                     <button onClick={() => handleDelete(ing.id)} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 rounded-2xl transition-all"><Trash2 size={18} /></button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -208,11 +208,11 @@ const StockIngredients: React.FC = () => {
                     <form onSubmit={handleSubmit} className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex justify-between items-center">
                             <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">{editingIngredient ? 'Editar' : 'Novo'} Insumo</h3>
-                            <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"><X size={24} /></button>
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all"><X size={24} /></button>
                         </div>
                         <div className="p-8 space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Nome do Insumo</label>
+                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Nome do Insumo</label>
                                 <input 
                                     required
                                     className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all"
@@ -223,7 +223,7 @@ const StockIngredients: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Unidade</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Unidade</label>
                                     <select 
                                         className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all appearance-none"
                                         value={formData.unit}
@@ -237,7 +237,7 @@ const StockIngredients: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Custo Unitário R$</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Custo Unitário R$</label>
                                     <input 
                                         type="number" step="0.01"
                                         className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all"
@@ -248,7 +248,7 @@ const StockIngredients: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Estoque Atual</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Estoque Atual</label>
                                     <input 
                                         type="number" step="0.001"
                                         className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all"
@@ -257,7 +257,7 @@ const StockIngredients: React.FC = () => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Estoque Mínimo</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Estoque Mínimo</label>
                                     <input 
                                         type="number" step="0.001"
                                         className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl h-14 px-5 text-sm font-bold focus:border-primary outline-none transition-all"
@@ -268,7 +268,7 @@ const StockIngredients: React.FC = () => {
                             </div>
                         </div>
                         <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex gap-3">
-                            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 h-14 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-400 italic">Cancelar</button>
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 h-14 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-500 italic">Cancelar</button>
                             <button type="submit" className="flex-[2] h-14 bg-slate-900 dark:bg-primary text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 italic">
                                 <Save size={20} /> Salvar Insumo
                             </button>

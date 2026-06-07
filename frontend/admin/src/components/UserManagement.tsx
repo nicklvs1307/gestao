@@ -87,7 +87,7 @@ const UserManagement: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Minha Equipe</h1>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
             <User size={14} className="text-orange-500" /> Gerenciamento de Membros e Permissões
           </p>
         </div>
@@ -134,7 +134,7 @@ const UserManagement: React.FC = () => {
 
                     <div className="space-y-1 mb-8">
                         <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-lg leading-tight">{user.name || 'Sem Nome'}</h3>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-wide">
                             <Mail size={12} />
                             {user.email}
                         </div>
@@ -153,7 +153,7 @@ const UserManagement: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(user.id)}
-                        className="h-10 w-10 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-300 hover:text-rose-500 transition-all"
+                        className="h-10 w-10 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-500 transition-all"
                     >
                         <Trash2 size={18} />
                     </Button>
@@ -167,10 +167,10 @@ const UserManagement: React.FC = () => {
             onClick={handleAddClick}
             className="p-6 border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-orange-500/50 hover:bg-orange-50/30 transition-all duration-300 min-h-[220px]"
           >
-            <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:text-orange-500 group-hover:border-orange-500 transition-all">
+            <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 group-hover:text-orange-500 group-hover:border-orange-500 transition-all">
                 <Plus size={24} />
             </div>
-            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] group-hover:text-orange-600 transition-colors">Adicionar Membro</p>
+            <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] group-hover:text-orange-600 transition-colors">Adicionar Membro</p>
           </Card>
         </div>
       )}

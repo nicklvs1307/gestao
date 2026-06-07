@@ -72,7 +72,7 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
            <button 
             {...attributes} 
             {...listeners}
-            className="p-1.5 cursor-grab active:cursor-grabbing text-slate-300 hover:text-orange-500 transition-colors bg-slate-50 rounded-lg group-hover:bg-white border border-transparent group-hover:border-slate-100 shadow-sm"
+            className="p-1.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-orange-500 transition-colors bg-slate-50 rounded-lg group-hover:bg-white border border-transparent group-hover:border-slate-100 shadow-sm"
            >
              <GripVertical size={16} />
            </button>
@@ -93,7 +93,7 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
                   <span className="text-[7px] bg-orange-500 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-widest leading-none">Main</span>
                 )}
                 {category.cuisineType && (
-                  <span className="text-[7px] text-slate-400 font-bold uppercase italic border-l border-slate-200 pl-2">{category.cuisineType}</span>
+                  <span className="text-[7px] text-slate-500 font-bold uppercase italic border-l border-slate-200 pl-2">{category.cuisineType}</span>
                 )}
               </div>
            </div>
@@ -107,7 +107,7 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
               <div key={d} className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Disponível" />
             ))}
           </div>
-          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Ativo</span>
+          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Ativo</span>
         </div>
       </td>
 
@@ -116,7 +116,7 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
           <Button 
               variant="ghost"
               size="icon"
-              className="h-8 w-8 bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-600 rounded-lg border border-slate-100" 
+              className="h-8 w-8 bg-slate-50 hover:bg-orange-50 text-slate-500 hover:text-orange-600 rounded-lg border border-slate-100" 
               onClick={() => onEdit(category)}
           >
             <Edit size={14} />
@@ -124,7 +124,7 @@ function SortableRow({ category, onEdit, onDelete }: SortableRowProps) {
           <Button 
               variant="ghost"
               size="icon"
-              className="h-8 w-8 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg border border-slate-100" 
+              className="h-8 w-8 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg border border-slate-100" 
               onClick={() => onDelete(category.id)}
           >
             <Trash2 size={14} />
@@ -232,7 +232,7 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Categorias</h1>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
             <Layers size={12} className="text-orange-500" /> Estrutura do Cardápio Digital
           </p>
         </div>
@@ -262,9 +262,9 @@ function CategoryManagement({ onAddCategoryClick, onEditCategoryClick, refetchTr
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead className="bg-slate-50/80 border-b border-slate-100">
                 <tr>
-                  <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Nome e Organização</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Status Operacional</th>
-                  <th className="px-4 py-3 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Ações</th>
+                  <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-500 tracking-widest">Nome e Organização</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black uppercase text-slate-500 tracking-widest">Status Operacional</th>
+                  <th className="px-4 py-3 text-right text-[9px] font-black uppercase text-slate-500 tracking-widest">Ações</th>
                 </tr>
               </thead>
               <SortableContext 

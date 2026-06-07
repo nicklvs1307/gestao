@@ -378,7 +378,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                   </span>
                 </div>
               )}
-              <button onClick={onClose} className="w-10 h-10 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+              <button onClick={onClose} className="w-10 h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
                   <X size={20} />
               </button>
             </div>
@@ -402,7 +402,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                   <div className="w-1 h-4 bg-orange-500 rounded-full" />
                                   <h4 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Dados de Acesso</h4>
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-3">Identifique o colaborador no sistema</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-3">Identifique o colaborador no sistema</p>
                             </div>
 
                             <div className="space-y-5 p-6 bg-slate-50/50 rounded-2xl border border-slate-100">
@@ -452,7 +452,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                       <div className="w-1 h-4 bg-emerald-500 rounded-full" />
                                       <h4 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Cargo Base (Opcional)</h4>
                                     </div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-3">Selecione um cargo para preencher permissões automaticamente</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-3">Selecione um cargo para preencher permissões automaticamente</p>
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-3">
@@ -469,7 +469,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                         >
                                             <div className={cn(
                                                 "w-10 h-10 rounded-xl flex items-center justify-center",
-                                                roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500"
+                                                roleId === r.id ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-orange-50 group-hover:text-orange-500"
                                             )}>
                                                 <Award size={18} />
                                             </div>
@@ -494,7 +494,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         <div className="w-64 border-r border-slate-100 bg-slate-50/50 p-4 shrink-0 flex flex-col gap-4">
                             {/* Search Bar */}
                             <div className="relative">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                                 <input 
                                     type="text" 
                                     placeholder="Buscar permissão..." 
@@ -510,13 +510,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                 <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex-1">
                                     {selectedPermissionIds.length} de {totalPermissionsCount}
                                 </span>
-                                <span className="text-[8px] font-bold text-slate-400 uppercase">selecionadas</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase">selecionadas</span>
                             </div>
 
                             {/* Categories List */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
                                 <div className="px-1 py-2">
-                                    <h5 className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Módulos</h5>
+                                    <h5 className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Módulos</h5>
                                 </div>
                                 
                                 {permissionsByCategory.map(cat => {
@@ -537,7 +537,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                         >
                                             <div className={cn(
                                                 "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                                                isActive ? cat.color : "bg-slate-100 text-slate-400"
+                                                isActive ? cat.color : "bg-slate-100 text-slate-500"
                                             )}>
                                                 <Icon size={18} />
                                             </div>
@@ -555,7 +555,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                                             style={{ width: `${progress}%` }}
                                                         />
                                                     </div>
-                                                    <span className="text-[7px] text-slate-400 shrink-0">
+                                                    <span className="text-[7px] text-slate-500 shrink-0">
                                                         {cat.selectedCount}/{cat.totalPerms}
                                                     </span>
                                                 </div>
@@ -571,7 +571,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                             {isLoadingData ? (
                                 <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
                                     <Loader2 className="animate-spin text-orange-500" size={32} />
-                                    <span className="text-[10px] font-black uppercase text-slate-400">Carregando permissões...</span>
+                                    <span className="text-[10px] font-black uppercase text-slate-500">Carregando permissões...</span>
                                 </div>
                             ) : currentCategory ? (
                                 <div className="space-y-6">
@@ -591,7 +591,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                                         style={{ width: `${currentCategory.totalPerms > 0 ? (currentCategory.selectedCount / currentCategory.totalPerms) * 100 : 0}%` }}
                                                     />
                                                 </div>
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                                                     {currentCategory.selectedCount} de {currentCategory.totalPerms} concedidas
                                                 </span>
                                             </div>
@@ -622,11 +622,11 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                                                         "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
                                                                         allSelected ? "bg-emerald-100 text-emerald-600" : 
                                                                         someSelected ? "bg-amber-100 text-amber-600" :
-                                                                        "bg-slate-100 text-slate-400"
+                                                                        "bg-slate-100 text-slate-500"
                                                                     )}>
                                                                         {allSelected ? 'Completo' : someSelected ? 'Parcial' : 'Vazio'}
                                                                     </span>
-                                                                    <span className="text-[7px] text-slate-400">
+                                                                    <span className="text-[7px] text-slate-500">
                                                                         {page.selectedCount}/{page.permissions.length} permissões
                                                                     </span>
                                                                 </div>
@@ -679,7 +679,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                                                 >
                                                                     <div className={cn(
                                                                         "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-all",
-                                                                        isSelected ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 text-slate-300 group-hover:bg-slate-200"
+                                                                        isSelected ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
                                                                     )}>
                                                                         {isSelected ? <CheckSquare size={14} /> : <Square size={14} />}
                                                                     </div>
@@ -690,7 +690,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                                                         )}>
                                                                             {p.description || p.name}
                                                                         </span>
-                                                                        <span className="text-[7px] text-slate-400 block truncate mt-1">{p.name}</span>
+                                                                        <span className="text-[7px] text-slate-500 block truncate mt-1">{p.name}</span>
                                                                     </div>
                                                                 </motion.button>
                                                             );
@@ -703,8 +703,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full opacity-40">
-                                    <FolderOpen size={48} className="text-slate-300 mb-3" />
-                                    <p className="text-[10px] font-black uppercase text-slate-400">Nenhuma permissão nesta categoria</p>
+                                    <FolderOpen size={48} className="text-slate-500 mb-3" />
+                                    <p className="text-[10px] font-black uppercase text-slate-500">Nenhuma permissão nesta categoria</p>
                                 </div>
                             )}
                         </div>
@@ -721,7 +721,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         type="button"
                         variant="ghost"
                         onClick={onClose}
-                        className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400 hover:text-slate-600"
+                        className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-slate-600"
                     >
                         Cancelar
                     </Button>
@@ -742,7 +742,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                         type="button"
                         variant="ghost"
                         onClick={() => setStep(1)}
-                        className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-400 hover:text-slate-600 gap-2"
+                        className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-slate-600 gap-2"
                     >
                         <ChevronLeft size={16} /> VOLTAR
                     </Button>

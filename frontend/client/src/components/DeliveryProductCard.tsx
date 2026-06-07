@@ -96,10 +96,10 @@ const DeliveryProductCard: React.FC<DeliveryProductCardProps> = ({ product, onAd
           <div className="flex justify-between items-end">
             <div className="flex flex-col">
                  {showFromLabel && (
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none mb-0.5">A partir de</span>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-0.5">A partir de</span>
                  )}
                  {hasDiscount && (
-                     <span className="text-xs text-slate-400 line-through font-medium leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
+                     <span className="text-xs text-slate-500 line-through font-medium leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
                  )}
                  <div className="flex items-baseline gap-1">
                     <span className="text-xs font-bold text-primary">R$</span>

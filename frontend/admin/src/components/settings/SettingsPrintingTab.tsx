@@ -116,8 +116,8 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
             
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
               <div className="flex items-center gap-2 mb-2">
-                <PrinterIcon size={12} className="text-slate-400" />
-                <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Impressoras</span>
+                <PrinterIcon size={12} className="text-slate-500" />
+                <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Impressoras</span>
               </div>
               <p className="text-[10px] font-black italic text-slate-700">
                 {availablePrinters.length} disponível{availablePrinters.length !== 1 ? 'is' : ''}
@@ -134,7 +134,7 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
             </div>
             <div>
               <h3 className="text-[10px] font-black uppercase italic text-white tracking-tighter">Automação</h3>
-              <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Impressão Auto</p>
+              <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Impressão Auto</p>
             </div>
           </div>
           <div className="p-4">
@@ -144,8 +144,8 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                   <PrinterIcon2 size={14} className={operation.autoPrint ? "text-white" : "text-slate-500"} />
                 </div>
                 <div>
-                  <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Imprimir Auto</p>
-                  <p className={cn("text-[10px] font-black italic", operation.autoPrint ? "text-slate-900" : "text-slate-400")}>
+                  <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Imprimir Auto</p>
+                  <p className={cn("text-[10px] font-black italic", operation.autoPrint ? "text-slate-900" : "text-slate-500")}>
                     {operation.autoPrint ? 'ATIVADO' : 'DESATIVADO'}
                   </p>
                 </div>
@@ -155,7 +155,7 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                 onChange={(v) => onOperationChange({...operation, autoPrint: v})}
               />
             </div>
-            <p className="text-[8px] font-bold text-slate-400 mt-3 leading-relaxed">
+            <p className="text-[8px] font-bold text-slate-500 mt-3 leading-relaxed">
               Ao aceitar pedidos no sistema, os cupons serão impressos automaticamente nas impressoras configuradas.
             </p>
           </div>
@@ -171,7 +171,7 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
           </div>
           <div>
             <h3 className="text-[10px] font-black uppercase italic text-white tracking-tighter">Configuração de Impressoras</h3>
-            <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Caixa, Cozinha e Bar</p>
+            <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Caixa, Cozinha e Bar</p>
           </div>
         </div>
         
@@ -188,7 +188,7 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                 </div>
                 <button 
                   onClick={() => onPrinterConfigChange({...printerConfig, cashierPrinters: [...printerConfig.cashierPrinters, '']})} 
-                  className="p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1.5 hover:bg-white rounded-md text-slate-500 hover:text-slate-600 transition-colors"
                 >
                   <Plus size={14}/>
                 </button>
@@ -232,7 +232,7 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                 </div>
                 <button 
                   onClick={() => onPrinterConfigChange({...printerConfig, kitchenPrinters: [...printerConfig.kitchenPrinters, { id: Date.now().toString(), name: 'Setor', printer: '' }]})} 
-                  className="p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1.5 hover:bg-white rounded-md text-slate-500 hover:text-slate-600 transition-colors"
                 >
                   <Plus size={14}/>
                 </button>
@@ -286,7 +286,7 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
                 </div>
                 <button 
                   onClick={() => onPrinterConfigChange({...printerConfig, barPrinters: [...printerConfig.barPrinters, { id: Date.now().toString(), name: 'Bar', printer: '' }]})} 
-                  className="p-1.5 hover:bg-white rounded-md text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1.5 hover:bg-white rounded-md text-slate-500 hover:text-slate-600 transition-colors"
                 >
                   <Plus size={14}/>
                 </button>
@@ -365,19 +365,19 @@ export const SettingsPrintingTab: React.FC<SettingsPrintingTabProps> = ({
               <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center animate-pulse mb-4">
                 <Settings size={20} className="text-orange-400" />
               </div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
                 Carregando configurações de layout...
               </p>
             </div>
           ) : !layoutExists ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-                <LayoutTemplate size={28} className="text-slate-300" />
+                <LayoutTemplate size={28} className="text-slate-500" />
               </div>
               <h3 className="text-[11px] font-black uppercase text-slate-700 mb-2">
                 Layout de Comanda Não Configurado
               </h3>
-              <p className="text-[9px] text-slate-400 text-center mb-6 max-w-md">
+              <p className="text-[9px] text-slate-500 text-center mb-6 max-w-md">
                 Configure o layout personalizado das suas comandas com blocos arrastáveis, 
                 tipografia customizada e muito mais.
               </p>

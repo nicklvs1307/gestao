@@ -75,7 +75,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
             </div>
             <div>
               <h3 className="text-sm font-black uppercase tracking-tight leading-none">Finalização</h3>
-              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">
+              <p className="text-[9px] font-medium text-slate-500 uppercase tracking-wider mt-0.5">
                 {currentTab.label}
               </p>
             </div>
@@ -115,7 +115,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
                   <span className="text-sm font-bold text-emerald-600">- R$ {parseFloat(posDiscountValue || '0').toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-end pt-2.5 border-t border-slate-200">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total</span>
                   <span className="text-2xl font-black text-slate-900 tracking-tight leading-none">
                     R$ {totalGeral.toFixed(2)}
                   </span>
@@ -147,7 +147,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
               <label className="text-[9px] font-bold uppercase text-slate-500 tracking-wider ml-1">Desconto</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[9px] text-slate-400">R$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[9px] text-slate-500">R$</span>
                   <input 
                     type="number" step="0.01" value={posDiscountValue} 
                     onChange={(e) => {
@@ -161,7 +161,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = React.memo(({ payment
                   />
                 </div>
                 <div className="relative w-16">
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-[9px] text-slate-400">%</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-[9px] text-slate-500">%</span>
                   <input 
                     type="number" step="0.01" value={posDiscountPercentage}
                     onChange={(e) => {

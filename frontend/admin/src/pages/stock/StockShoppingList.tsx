@@ -97,7 +97,7 @@ const StockShoppingList: React.FC = () => {
             <Package size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Itens para Comprar</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Itens para Comprar</p>
             <p className="text-xl font-black text-slate-900">{summary.totalItems}</p>
           </div>
         </Card>
@@ -106,7 +106,7 @@ const StockShoppingList: React.FC = () => {
             <DollarSign size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Custo Estimado</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Custo Estimado</p>
             <p className="text-xl font-black text-blue-600">R$ {summary.totalEstimatedCost.toFixed(2)}</p>
           </div>
         </Card>
@@ -115,9 +115,9 @@ const StockShoppingList: React.FC = () => {
       {/* Lista */}
       {items.length === 0 ? (
         <Card className="p-12 text-center">
-          <ShoppingCart size={48} className="mx-auto mb-4 text-slate-300" />
+          <ShoppingCart size={48} className="mx-auto mb-4 text-slate-500" />
           <p className="font-medium text-slate-600">Todos os insumos estão acima do estoque mínimo</p>
-          <p className="text-sm text-slate-400 mt-1">Nenhum item precisa ser comprado</p>
+          <p className="text-sm text-slate-500 mt-1">Nenhum item precisa ser comprado</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -127,7 +127,7 @@ const StockShoppingList: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-slate-900">{item.name}</h3>
                   {item.group && (
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase">
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full uppercase">
                       {item.group}
                     </span>
                   )}
@@ -138,12 +138,12 @@ const StockShoppingList: React.FC = () => {
                   <span>Sugerido: <strong className="text-blue-600">{item.suggestedQty.toFixed(2)} {item.unit}</strong></span>
                 </div>
                 {item.supplier && (
-                  <p className="text-xs text-slate-400 mt-1">Fornecedor: {item.supplier.name}</p>
+                  <p className="text-xs text-slate-500 mt-1">Fornecedor: {item.supplier.name}</p>
                 )}
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-blue-600">R$ {item.estimatedCost.toFixed(2)}</p>
-                <p className="text-[10px] text-slate-400">R$ {item.avgCostPerUnit.toFixed(2)}/{item.unit}</p>
+                <p className="text-[10px] text-slate-500">R$ {item.avgCostPerUnit.toFixed(2)}/{item.unit}</p>
               </div>
             </Card>
           ))}

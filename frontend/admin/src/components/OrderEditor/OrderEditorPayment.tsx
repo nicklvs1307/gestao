@@ -60,7 +60,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
           {/* Resumo Financeiro */}
           <Card className="p-5 rounded-2xl border-slate-200 shadow-sm bg-white overflow-hidden relative">
             <div className="absolute top-0 right-0 p-3 opacity-[0.04]"><DollarSign size={60} /></div>
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
               <div className="w-1 h-4 bg-orange-500 rounded-full" /> Resumo Financeiro
             </h3>
             <div className="space-y-3">
@@ -73,7 +73,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   <Truck size={12} className="text-orange-500" /> Entrega
                 </span>
                 <div className="flex items-center bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                  <span className="text-[9px] font-bold text-slate-400 mr-1">R$</span>
+                  <span className="text-[9px] font-bold text-slate-500 mr-1">R$</span>
                   <input 
                     type="number" 
                     className="w-16 bg-transparent border-none p-0 text-sm font-black text-slate-900 focus:ring-0 text-right" 
@@ -85,7 +85,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                 <span className="text-[10px] font-bold text-slate-500 uppercase">Acréscimo</span>
                 <div className="flex items-center bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                  <span className="text-[9px] font-bold text-slate-400 mr-1">R$</span>
+                  <span className="text-[9px] font-bold text-slate-500 mr-1">R$</span>
                   <input 
                     type="number" 
                     className="w-16 bg-transparent border-none p-0 text-sm font-black text-slate-900 focus:ring-0 text-right" 
@@ -97,7 +97,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
 <div className="flex justify-between items-center p-2.5 bg-rose-50/50 rounded-xl border border-rose-100">
                 <span className="text-[10px] font-bold text-rose-600 uppercase">Desconto</span>
                 <div className="flex items-center bg-white px-3 py-1.5 rounded-lg border border-rose-200 shadow-sm">
-                  <span className="text-[9px] font-bold text-slate-400 mr-1">R$</span>
+                  <span className="text-[9px] font-bold text-slate-500 mr-1">R$</span>
                   <input 
                     type="number" 
                     className="w-16 bg-transparent border-none p-0 text-sm font-black text-rose-600 focus:ring-0 text-right" 
@@ -119,7 +119,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               <div className="mt-4 pt-4 border-t-2 border-dashed border-slate-200">
                 <div className="flex justify-between items-end">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Geral</span>
                     <div className="text-2xl font-black text-slate-900 tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</div>
                   </div>
                   {remainingToPay > 0.01 && (
@@ -154,7 +154,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
           {/* Registro de Pagamentos */}
           <Card className="p-5 rounded-2xl border-slate-200 shadow-sm bg-white overflow-hidden relative">
             <div className="absolute top-0 right-0 p-3 opacity-[0.04]"><Clock size={60} /></div>
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
               <div className="w-1 h-4 bg-blue-500 rounded-full" /> Pagamentos Registrados
             </h3>
             <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
@@ -162,7 +162,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 <div key={pay.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group/pay hover:border-orange-200 transition-colors">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-slate-800 uppercase">{resolvePaymentLabel(pay.method, paymentMethods)}</span>
-                    <span className="text-[8px] font-bold text-slate-400 mt-0.5">{formatSP(pay.createdAt, 'HH:mm')}</span>
+                    <span className="text-[8px] font-bold text-slate-500 mt-0.5">{formatSP(pay.createdAt, 'HH:mm')}</span>
                   </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-black text-slate-900">R$ {pay.amount.toFixed(2).replace('.', ',')}</span>
@@ -183,7 +183,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 </div>
               ))}
               {!order.payments?.length && (
-                <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-[10px] font-bold text-slate-400 uppercase">
+                <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 uppercase">
                   Nenhum pagamento registrado
                 </div>
               )}
@@ -210,7 +210,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 className={cn(
                   "w-full mt-4 h-10 border-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase",
                   remainingToPay <= 0.01
-                    ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                    ? "border-slate-200 text-slate-500 cursor-not-allowed"
                     : "border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all"
                 )}
               >
@@ -238,7 +238,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 )}
               </div>
               <div className="relative">
-                <Bike size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Bike size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <select
                   className="w-full h-11 pl-9 pr-4 bg-white border border-slate-200 rounded-xl text-[11px] font-black text-slate-900 outline-none focus:ring-2 focus:ring-orange-500/20 appearance-none uppercase shadow-sm"
                   value={selectedDriverId}
@@ -253,18 +253,18 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
             {/* Info Grid */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Destinatário</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Destinatário</span>
                 <p className="text-[10px] font-black text-slate-900 uppercase truncate">{order.deliveryOrder?.name || 'Não informado'}</p>
               </div>
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Telefone</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Telefone</span>
                 <p className="text-[10px] font-black text-slate-900">{order.deliveryOrder?.phone || 'Não informado'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pagamento</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Pagamento</span>
                 <p className="text-[10px] font-black text-emerald-600 uppercase truncate">{resolvePaymentLabel(order.deliveryOrder?.paymentMethod, paymentMethods) || 'Não informado'}</p>
               </div>
               {order.deliveryOrder?.changeFor && order.deliveryOrder.changeFor > 0 ? (
@@ -274,8 +274,8 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                 </div>
               ) : (
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl opacity-60">
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Troco</span>
-                  <p className="text-[10px] font-black text-slate-400">Sem Troco</p>
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">Troco</span>
+                  <p className="text-[10px] font-black text-slate-500">Sem Troco</p>
                 </div>
               )}
             </div>
@@ -294,7 +294,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
 
             {/* Observações do Cliente */}
             <div className="mt-4">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                 <div className="w-1 h-4 bg-orange-500 rounded-full" /> Obs. do Cliente
               </h3>
               <div className="p-3 bg-orange-50/50 border border-orange-100 rounded-xl text-[10px] font-bold text-slate-600 h-20 overflow-y-auto custom-scrollbar leading-snug">
@@ -315,7 +315,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               </h3>
               <div className="space-y-3 mb-4">
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 block mb-1">Forma de Pagamento</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 block mb-1">Forma de Pagamento</label>
                   <select 
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black text-slate-900 outline-none focus:ring-2 focus:ring-orange-500/20 uppercase" 
                     value={newPayment.methodId} 
@@ -326,7 +326,7 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 block mb-1">Valor (R$)</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 block mb-1">Valor (R$)</label>
                   <input 
                     type="number" 
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:ring-2 focus:ring-orange-500/20" 
@@ -359,12 +359,12 @@ export const OrderEditorPayment: React.FC<OrderEditorPaymentProps> = ({
               <div className="w-1 h-4 bg-slate-400 rounded-full" /> Notas Internas
             </h3>
             <textarea 
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] font-bold text-slate-700 placeholder:text-slate-300 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-300 h-32 resize-none transition-all" 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] font-bold text-slate-700 placeholder:text-slate-500 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-300 h-32 resize-none transition-all" 
               placeholder="Registrar nota técnica ou observação interna..." 
               value={internalObs} 
               onChange={e => onInternalObsChange(e.target.value)} 
             />
-            <div className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+            <div className="mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
               <Info size={10} /> Visível apenas para a equipe administrativa
             </div>
           </Card>

@@ -367,13 +367,13 @@ const OrderManagement: React.FC = () => {
                 <input 
                     type="text" 
                     placeholder="BUSCAR PEDIDO..." 
-                    className="w-full h-9 pl-9 pr-4 bg-slate-100 border-none rounded-xl text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-400"
+                    className="w-full h-9 pl-9 pr-4 bg-slate-100 border-none rounded-xl text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-orange-500/20 transition-all placeholder:text-slate-500"
                     value={searchTerm}
                     onChange={handleSearchChange}
                 />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                 {searchTerm && (
-                    <button onClick={() => { setSearchTerm(''); setDebouncedSearch(''); setCurrentPage(1); fetchOrders(1, ''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <button onClick={() => { setSearchTerm(''); setDebouncedSearch(''); setCurrentPage(1); fetchOrders(1, ''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600">
                         <X size={12} />
                     </button>
                 )}
@@ -383,7 +383,7 @@ const OrderManagement: React.FC = () => {
                 <div className="flex items-center gap-1.5 animate-in slide-in-from-left-4 duration-300 bg-orange-50 p-1 rounded-xl border border-orange-100 shadow-sm">
                     <span className="text-xs font-bold text-orange-600 px-2 uppercase italic">{selectedOrderIds.length}</span>
                     
-                    <button onClick={handleBulkBack} className="h-8 w-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-orange-600 flex items-center justify-center transition-all" title="Recuar Status"><ChevronLeft size={14} /></button>
+                    <button onClick={handleBulkBack} className="h-8 w-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-orange-600 flex items-center justify-center transition-all" title="Recuar Status"><ChevronLeft size={14} /></button>
                     
                     <button onClick={handleBulkAdvance} className="h-8 px-3 rounded-lg bg-orange-500 text-white text-[10px] font-bold uppercase italic hover:bg-orange-600 transition-all flex items-center gap-1">AVANÇAR <ChevronRight size={10} /></button>
                     
@@ -391,7 +391,7 @@ const OrderManagement: React.FC = () => {
                     
                     <button onClick={() => handleBulkStatusChange('COMPLETED')} className="h-8 px-3 rounded-lg bg-slate-900 text-white text-[10px] font-bold uppercase italic transition-all">FINALIZAR</button>
                     
-                    <button onClick={() => setSelectedOrderIds([])} className="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-200 flex items-center justify-center transition-all"><X size={14} /></button>
+                    <button onClick={() => setSelectedOrderIds([])} className="h-8 w-8 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-all"><X size={14} /></button>
                 </div>
             )}
         </div>
@@ -414,11 +414,11 @@ const OrderManagement: React.FC = () => {
             </div>
 
             <div className="flex items-center p-0.5 bg-slate-100 rounded-xl border border-slate-200">
-                <button onClick={() => { setViewMode('kanban'); fetchOrders(1, undefined, 9999); }} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><Kanban size={14} /></button>
-                <button onClick={() => { setViewMode('list'); fetchOrders(1); }} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-400")}><List size={14} /></button>
+                <button onClick={() => { setViewMode('kanban'); fetchOrders(1, undefined, 9999); }} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'kanban' ? "bg-white text-orange-600 shadow-sm" : "text-slate-500")}><Kanban size={14} /></button>
+                <button onClick={() => { setViewMode('list'); fetchOrders(1); }} className={cn("p-1.5 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-orange-600 shadow-sm" : "text-slate-500")}><List size={14} /></button>
             </div>
 
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={() => { setCurrentPage(1); fetchOrders(1, undefined, viewMode === 'kanban' ? 9999 : undefined); }}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-400"}/></Button>
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl bg-white border-slate-200" onClick={() => { setCurrentPage(1); fetchOrders(1, undefined, viewMode === 'kanban' ? 9999 : undefined); }}><RefreshCw size={14} className={isLoading ? "animate-spin" : "text-slate-500"}/></Button>
         </div>
       </div>
 

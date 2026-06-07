@@ -63,7 +63,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, onAd
           </h3>
           <div className="flex flex-col items-end shrink-0">
              {showFromLabel && (
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">A partir de</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">A partir de</span>
              )}
              {activePromotion ? (
                 <>

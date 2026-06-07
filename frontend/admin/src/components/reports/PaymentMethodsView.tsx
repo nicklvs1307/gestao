@@ -41,7 +41,7 @@ const PaymentMethodsView: React.FC = () => {
                         <select
                             value={period}
                             onChange={(e) => setPeriod(Number(e.target.value))}
-                            className="bg-white border border-slate-200 rounded-lg px-3 py-2 font-black text-[11px] uppercase outline-none text-slate-600"
+                            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold uppercase outline-none text-slate-600"
                         >
                             <option value={7}>7 dias</option>
                             <option value={15}>15 dias</option>
@@ -100,12 +100,12 @@ const PaymentMethodsView: React.FC = () => {
                         <tr key={idx} className="hover:bg-slate-50 transition-colors group">
                             <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
-                                    <CreditCard size={14} className="text-slate-400" />
-                                    <span className="font-black text-xs text-slate-900 uppercase italic">{pm.method}</span>
+                                    <CreditCard size={14} className="text-slate-500" />
+                                    <span className="text-xs font-semibold text-slate-900 uppercase">{pm.method}</span>
                                 </div>
                             </td>
-                            <td className="px-4 py-3 text-right font-black text-emerald-600 italic tracking-tighter">R$ {pm.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                            <td className="px-4 py-3 text-right font-bold text-blue-600">{perc.toFixed(1)}%</td>
+                            <td className="px-4 py-3 text-right font-semibold text-emerald-600">R$ {pm.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td className="px-4 py-3 text-right font-medium text-blue-600">{perc.toFixed(1)}%</td>
                             <td className="px-4 py-3 text-right">
                                 <div className="w-24 bg-slate-100 h-2 rounded-full overflow-hidden ml-auto">
                                     <div className="bg-blue-500 h-full" style={{ width: `${perc}%` }} />

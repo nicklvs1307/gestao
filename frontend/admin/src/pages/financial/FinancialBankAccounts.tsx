@@ -112,7 +112,7 @@ const FinancialBankAccounts: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
               Contas <span className="text-primary">& Bancos</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Gestão de Patrimônio e Conciliação Bancária
             </p>
           </div>
@@ -133,7 +133,7 @@ const FinancialBankAccounts: React.FC = () => {
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
               <PiggyBank size={14} className="text-orange-400" />
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Liquidez Total Consolidada</span>
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Liquidez Total Consolidada</span>
             </div>
             <h2 className="text-3xl font-black italic tracking-tighter">
               {formatCurrency(totalBalance)}
@@ -154,26 +154,26 @@ const FinancialBankAccounts: React.FC = () => {
             <div className="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center">
               <Wallet size={18} />
             </div>
-            <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Média por Conta</span>
+            <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Média por Conta</span>
           </div>
           <p className="text-xl font-black text-slate-800 italic tracking-tighter">
             {formatCurrency(accounts.length > 0 ? totalBalance / accounts.length : 0)}
           </p>
-          <p className="text-[7px] font-bold text-slate-400 uppercase mt-1">Saldo médio por instituição</p>
+          <p className="text-[7px] font-bold text-slate-500 uppercase mt-1">Saldo médio por instituição</p>
         </Card>
       </div>
 
       {/* GRID DE CONTAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {loading ? (
-          <div className="col-span-full p-20 flex flex-col items-center justify-center gap-4 text-slate-300">
+          <div className="col-span-full p-20 flex flex-col items-center justify-center gap-4 text-slate-500">
             <Loader2 className="animate-spin" size={40} />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Mapeando Ativos...</span>
           </div>
         ) : accounts.length === 0 ? (
           <div className="col-span-full text-center py-16 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-            <Landmark size={48} className="text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-400 font-bold italic text-sm">Nenhuma conta bancária configurada.</p>
+            <Landmark size={48} className="text-slate-500 mx-auto mb-4" />
+            <p className="text-slate-500 font-bold italic text-sm">Nenhuma conta bancária configurada.</p>
             <Button 
               onClick={() => { setShowForm(true); setFormData({}); }}
               className="mt-4 h-10 px-6 rounded-xl text-[10px] font-black uppercase"
@@ -211,14 +211,14 @@ const FinancialBankAccounts: React.FC = () => {
                       {account.bankName}
                     </h4>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                      <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
                         AG {account.agency || '---'} • CC {account.accountNumber || '---'}
                       </span>
                     </div>
                   </div>
 
                   <div className="pt-3 border-t border-slate-100">
-                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Disponibilidade em Conta</p>
+                    <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Disponibilidade em Conta</p>
                     <div className="flex items-end justify-between">
                       <span className={cn(
                         "text-2xl font-black italic tracking-tighter leading-none",
@@ -244,10 +244,10 @@ const FinancialBankAccounts: React.FC = () => {
             onClick={() => { setShowForm(true); setFormData({}); }}
             className="p-5 border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 hover:text-orange-600 transition-all duration-300 min-h-[200px] rounded-2xl"
           >
-            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-300 group-hover:border-orange-400 group-hover:text-orange-500 transition-all">
+            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 group-hover:border-orange-400 group-hover:text-orange-500 transition-all">
               <Plus size={22} />
             </div>
-            <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] group-hover:text-orange-600 transition-colors">Nova Instituição</p>
+            <p className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] group-hover:text-orange-600 transition-colors">Nova Instituição</p>
           </div>
         )}
       </div>
@@ -274,11 +274,11 @@ const FinancialBankAccounts: React.FC = () => {
                   <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                     {formData.id ? 'Editar Conta' : 'Vincular Nova Conta'}
                   </h3>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão de Patrimônio Operacional</p>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Gestão de Patrimônio Operacional</p>
                 </div>
                 <button 
                   onClick={() => setShowForm(false)} 
-                  className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-sm border border-slate-200 transition-all hover:rotate-90"
+                  className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 shadow-sm border border-slate-200 transition-all hover:rotate-90"
                 >
                   <X size={20} />
                 </button>
@@ -286,7 +286,7 @@ const FinancialBankAccounts: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Instituição Bancária</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Instituição Bancária</label>
                   <Input 
                     value={formData.bankName || ''} 
                     onChange={e => setFormData({...formData, bankName: e.target.value})} 
@@ -298,7 +298,7 @@ const FinancialBankAccounts: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Agência</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Agência</label>
                     <Input 
                       value={formData.agency || ''} 
                       onChange={e => setFormData({...formData, agency: e.target.value})} 
@@ -307,7 +307,7 @@ const FinancialBankAccounts: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Conta Corrente</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Conta Corrente</label>
                     <Input 
                       value={formData.accountNumber || ''} 
                       onChange={e => setFormData({...formData, accountNumber: e.target.value})} 
@@ -318,7 +318,7 @@ const FinancialBankAccounts: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Saldo de Abertura (R$)</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Saldo de Abertura (R$)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={16} />
                     <input 

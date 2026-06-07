@@ -103,12 +103,12 @@ const IfoodSettingsPage: React.FC = () => {
               <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${
                 isConnected
                   ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-500/20' 
-                  : 'bg-slate-100 text-slate-400 border-slate-200'
+                  : 'bg-slate-100 text-slate-500 border-slate-200'
               }`}>
                 {isConnected ? 'Conectado' : 'Desativado'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Integração Centralizada</p>
+            <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Integração Centralizada</p>
           </div>
         </div>
       </div>
@@ -120,12 +120,12 @@ const IfoodSettingsPage: React.FC = () => {
               {isConnected ? (
                 <CheckCircle size={16} className="text-orange-600" />
               ) : (
-                <WifiOff size={16} className="text-slate-400" />
+                <WifiOff size={16} className="text-slate-500" />
               )}
             </div>
             <div>
               <h2 className="font-bold text-slate-900 text-sm">Configurações do Restaurante</h2>
-              <p className="text-[11px] text-slate-400">Merchant ID e ambiente de integração</p>
+              <p className="text-[11px] text-slate-500">Merchant ID e ambiente de integração</p>
             </div>
           </div>
         </div>
@@ -197,12 +197,12 @@ const IfoodSettingsPage: React.FC = () => {
             </button>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-700">Ativar integração</p>
-              <p className="text-[11px] text-slate-400">Receber pedidos do iFood</p>
+              <p className="text-[11px] text-slate-500">Receber pedidos do iFood</p>
             </div>
             {isActive ? (
               <CheckCircle size={16} className="text-orange-500 shrink-0" />
             ) : (
-              <WifiOff size={16} className="text-slate-300 shrink-0" />
+              <WifiOff size={16} className="text-slate-500 shrink-0" />
             )}
           </div>
 

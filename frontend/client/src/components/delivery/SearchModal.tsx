@@ -60,12 +60,12 @@ const SearchModal: React.FC<SearchModalProps> = ({
     >
       <div className="p-4 flex items-center gap-4 border-b border-slate-100">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} aria-hidden="true" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Buscar pratos ou sabores..."
-            className="w-full bg-slate-50 border-none rounded-lg py-3.5 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all duration-200 placeholder:text-slate-400 text-slate-900 font-medium"
+            className="w-full bg-slate-50 border-none rounded-lg py-3.5 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-all duration-200 placeholder:text-slate-500 text-slate-900 font-medium"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             aria-label="Buscar pratos ou sabores"
@@ -73,7 +73,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
         </div>
         <button
           onClick={handleClose}
-          className="w-11 h-11 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors duration-200"
+          className="w-11 h-11 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors duration-200"
           aria-label="Fechar busca"
         >
           <X size={18} />
@@ -83,7 +83,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
       <div className="flex-1 overflow-y-auto p-4 pb-10">
         {searchTerm && (
           <div className="mb-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Resultados para "{searchTerm}"
             </p>
           </div>

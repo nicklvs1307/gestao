@@ -83,7 +83,7 @@ function GlobalSizeManagement() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Biblioteca de Tamanhos</h2>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mt-2 italic">Padronização Global de Variações</p>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2 italic">Padronização Global de Variações</p>
         </div>
       </div>
 
@@ -122,8 +122,8 @@ function GlobalSizeManagement() {
             </div>
           ) : sizes.length === 0 ? (
             <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50">
-               <Maximize2 className="mx-auto text-slate-300 mb-4" size={64} strokeWidth={1} />
-               <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Nenhum tamanho padronizado encontrado</p>
+               <Maximize2 className="mx-auto text-slate-500 mb-4" size={64} strokeWidth={1} />
+               <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Nenhum tamanho padronizado encontrado</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -157,12 +157,12 @@ function GlobalSizeManagement() {
                     ) : (
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white transition-all shadow-inner">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-orange-500 group-hover:text-white transition-all shadow-inner">
                             <Maximize2 size={24} />
                           </div>
                           <div>
                             <h4 className="font-black text-slate-900 uppercase italic leading-none mb-1">{size.name}</h4>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{size.description || 'Sem descrição'}</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{size.description || 'Sem descrição'}</p>
                           </div>
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -204,7 +204,7 @@ function GlobalSizeManagement() {
               </div>
               <div className="space-y-2">
                   <h4 className="text-white font-black uppercase italic tracking-tighter text-lg">Por que usar tamanhos globais?</h4>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest leading-relaxed max-w-2xl">
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest leading-relaxed max-w-2xl">
                     Ao padronizar seus tamanhos, você garante que as regras de <span className="text-orange-400 italic">Preço de Pizza</span> e <span className="text-orange-400 italic">Meio a Meio</span> funcionem perfeitamente. Se você escrever "Grande" em um produto e "G" em outro, o sistema não conseguirá calcular o valor corretamente no carrinho.
                   </p>
               </div>

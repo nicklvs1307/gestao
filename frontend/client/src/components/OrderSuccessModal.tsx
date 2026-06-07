@@ -19,7 +19,7 @@ const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({ isOpen, onClose }
       <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         
         {/* Botão de Fechar */}
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-lg transition-all duration-200" aria-label="Fechar">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-500 hover:text-slate-900 rounded-lg transition-all duration-200" aria-label="Fechar">
             <X size={18} />
         </button>
 
@@ -44,7 +44,7 @@ const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({ isOpen, onClose }
             <div className="w-full bg-slate-50 rounded-lg p-4 flex items-center justify-between mb-6 border border-slate-100">
                 <div className="flex items-center gap-2">
                     <Clock size={16} className="text-primary" />
-                    <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">Previsão</span>
+                    <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">Previsão</span>
                 </div>
                 <span className="text-sm font-bold text-slate-900">15-25 min</span>
             </div>

@@ -9,7 +9,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ message = 'Carre
   return (
     <div className="p-20 text-center flex flex-col items-center gap-4 opacity-30">
       <Loader2 className="animate-spin text-orange-500" size={40} />
-      <p className="font-black text-slate-400 uppercase tracking-widest text-[10px]">{message}</p>
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{message}</p>
     </div>
   );
 };

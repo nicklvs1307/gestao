@@ -41,7 +41,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                         {/* Toggle Logo */}
                         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <ImageIcon size={16} className="text-slate-400" />
+                                <ImageIcon size={16} className="text-slate-500" />
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Exibir Logotipo</span>
                             </div>
                             <button 
@@ -55,7 +55,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                         {/* Toggle Endereço */}
                         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <AlignLeft size={16} className="text-slate-400" />
+                                <AlignLeft size={16} className="text-slate-500" />
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Exibir Endereço</span>
                             </div>
                             <button 
@@ -75,7 +75,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                     
                     <div className="space-y-3">
                         <div className="space-y-1">
-                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Tamanho da Fonte Geral</label>
+                            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Tamanho da Fonte Geral</label>
                             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
                                 {(['small', 'medium', 'large'] as const).map(size => (
                                     <button 
@@ -93,7 +93,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest text-orange-600 leading-none">Texto de Cabeçalho (Opcional)</label>
+                            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-orange-600 leading-none">Texto de Cabeçalho (Opcional)</label>
                             <textarea 
                                 className="w-full h-20 p-3 rounded-xl bg-slate-50 border border-slate-100 text-[11px] font-bold focus:border-orange-500 outline-none resize-none"
                                 placeholder="Ex: SEJA BEM VINDO AO NOSSO RESTAURANTE!"
@@ -103,7 +103,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest text-orange-600 leading-none">Texto de Rodapé / Agradecimento</label>
+                            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-orange-600 leading-none">Texto de Rodapé / Agradecimento</label>
                             <textarea 
                                 className="w-full h-20 p-3 rounded-xl bg-slate-50 border border-slate-100 text-[11px] font-bold focus:border-orange-500 outline-none resize-none"
                                 placeholder="Ex: OBRIGADO PELA PREFERÊNCIA! VOLTE SEMPRE."
@@ -120,7 +120,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                     </h3>
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                         <div className="flex justify-between mb-2">
-                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Espaçamento entre Itens</label>
+                            <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Espaçamento entre Itens</label>
                             <span className="text-[10px] font-black text-orange-600 italic">{layout.itemSpacing}px</span>
                         </div>
                         <input 
@@ -142,7 +142,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
-                                    <Printer size={16} className="text-slate-400" />
+                                    <Printer size={16} className="text-slate-500" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Comando INIT</span>
                                 </div>
                                 <button 
@@ -152,7 +152,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                                     <div className={cn("absolute w-3 h-3 bg-white rounded-full top-1 transition-all shadow-sm", layout.useInit ? "left-6" : "left-1")} />
                                 </button>
                             </div>
-                            <p className="text-[8px] font-bold text-slate-400 leading-relaxed">
+                            <p className="text-[8px] font-bold text-slate-500 leading-relaxed">
                                 {layout.useInit 
                                     ? 'Ativado: Reseta a impressora antes de cada impressão. Pode causar avanço excessivo em alguns modelos.'
                                     : 'Desativado: Recomendado para evitar desperdício de papel na maioria das impressoras.'
@@ -164,8 +164,8 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                         <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                    <Scissors size={14} className="text-slate-400" />
-                                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Linhas antes do Corte</label>
+                                    <Scissors size={14} className="text-slate-500" />
+                                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Linhas antes do Corte</label>
                                 </div>
                                 <span className="text-[10px] font-black text-orange-600 italic">{layout.paperFeed} linhas</span>
                             </div>
@@ -175,7 +175,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                                 value={layout.paperFeed}
                                 onChange={e => updateField('paperFeed', parseInt(e.target.value))}
                             />
-                            <p className="text-[8px] font-bold text-slate-400 mt-2 leading-relaxed">
+                            <p className="text-[8px] font-bold text-slate-500 mt-2 leading-relaxed">
                                 {layout.paperFeed === 0 
                                     ? 'Sem avanço. Corte imediato após o conteúdo.'
                                     : layout.paperFeed <= 3
@@ -194,7 +194,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                     <h3 className="text-[11px] font-black uppercase text-slate-900 italic flex items-center gap-2">
                         <LayoutPanelLeft size={14} className="text-orange-500" /> Simulador de Cupom (80mm)
                     </h3>
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Prévia aproximada do layout impresso</p>
+                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Prévia aproximada do layout impresso</p>
                 </div>
 
                 <div className="w-[320px] bg-white shadow-2xl rounded-sm p-6 border-t-[10px] border-slate-200 border-dashed relative overflow-hidden font-mono min-h-[500px]">
@@ -226,7 +226,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                                 <span>MESA 05</span>
                                 <span>#1234</span>
                             </div>
-                            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Atendente: Lucas N.</p>
+                            <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Atendente: Lucas N.</p>
                         </div>
 
                         {/* Lista de Itens Simulada */}
@@ -267,7 +267,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                             {layout.footerText && (
                                 <p className="text-[10px] font-black italic uppercase leading-tight">{layout.footerText}</p>
                             )}
-                            <div className="text-[8px] font-bold text-slate-300 uppercase tracking-[0.3em]">
+                            <div className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.3em]">
                                 KICARDAPIO@
                             </div>
                         </div>
@@ -276,7 +276,7 @@ const PrinterLayoutEditor: React.FC<Props> = ({ layout, onChange, restaurantName
                     <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-slate-50 to-transparent" />
                 </div>
                 
-                <p className="text-[8px] font-bold text-slate-300 uppercase italic mt-4">* Layout meramente ilustrativo</p>
+                <p className="text-[8px] font-bold text-slate-500 uppercase italic mt-4">* Layout meramente ilustrativo</p>
             </div>
         </div>
     );

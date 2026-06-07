@@ -89,7 +89,7 @@ const CashierManagement: React.FC = memo(() => {
   if (loading && !isOpen && !session) {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center opacity-30 gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
         <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
           Sincronizando...
         </span>

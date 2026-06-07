@@ -167,7 +167,7 @@ const UairangoSettingsPage: React.FC = () => {
                 {isActive ? 'Ativo' : 'Desativado'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Integração Centralizada</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Integração Centralizada</p>
           </div>
         </div>
       </div>
@@ -182,7 +182,7 @@ const UairangoSettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Configuração</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Integração via OAuth 2.0 (centralizado)</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Integração via OAuth 2.0 (centralizado)</p>
                 </div>
               </div>
             </div>
@@ -196,7 +196,7 @@ const UairangoSettingsPage: React.FC = () => {
                   placeholder="Cole o ID do estabelecimento (ex: f4af41ba-e01e-4500-b5cf-0bcb130589db)" 
                   className="h-12 bg-slate-50 border-slate-200 focus:bg-white font-mono text-sm"
                 />
-                <p className="text-[10px] text-slate-400">Encontre o Merchant ID no painel do UaiRango</p>
+                <p className="text-[10px] text-slate-500">Encontre o Merchant ID no painel do UaiRango</p>
               </div>
 
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -213,12 +213,12 @@ const UairangoSettingsPage: React.FC = () => {
                 </button>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-slate-700">Ativar Integração</p>
-                  <p className="text-[10px] text-slate-400">Sincronizar cardápio e receber pedidos</p>
+                  <p className="text-[10px] text-slate-500">Sincronizar cardápio e receber pedidos</p>
                 </div>
                 {isActive ? (
                   <CheckCircle size={20} className="text-emerald-500" />
                 ) : (
-                  <XCircle size={20} className="text-slate-400" />
+                  <XCircle size={20} className="text-slate-500" />
                 )}
               </div>
 
@@ -236,14 +236,14 @@ const UairangoSettingsPage: React.FC = () => {
                 </button>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-slate-700">Aceitar Pedidos Automaticamente</p>
-                  <p className="text-[10px] text-slate-400">Novos pedidos são aceitos sem intervenção</p>
+                  <p className="text-[10px] text-slate-500">Novos pedidos são aceitos sem intervenção</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex-1">
                   <p className="text-sm font-bold text-slate-700">Ambiente</p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-500">
                     {uairangoEnv === 'production' ? 'Produção (dados reais)' : 'Sandbox (teste)'}
                   </p>
                 </div>
@@ -280,7 +280,7 @@ const UairangoSettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Testar Conexão</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Verifique a comunicação com UaiRango</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Verifique a comunicação com UaiRango</p>
                 </div>
               </div>
             </div>
@@ -335,12 +335,12 @@ const UairangoSettingsPage: React.FC = () => {
                   </div>
                   <div>
                     <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Importar Cardápio</h2>
-                    <p className="text-[10px] text-slate-400 font-medium">Sincronizar produtos do UaiRango</p>
+                    <p className="text-[10px] text-slate-500 font-medium">Sincronizar produtos do UaiRango</p>
                   </div>
                 </div>
                 {lastImport && (
                   <div className="text-right">
-                    <p className="text-[10px] text-slate-400 uppercase">Última importação</p>
+                    <p className="text-[10px] text-slate-500 uppercase">Última importação</p>
                     <p className="text-xs font-black text-slate-600">{lastImport.toLocaleDateString('pt-BR')}</p>
                   </div>
                 )}
@@ -395,7 +395,7 @@ const UairangoSettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">Delivery</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                      isMerchantOnline ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                      isMerchantOnline ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
                     }`}>
                       {isMerchantOnline ? 'Online' : 'Offline'}
                     </span>
@@ -403,7 +403,7 @@ const UairangoSettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">Retirada</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                      isMerchantOnline ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                      isMerchantOnline ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
                     }`}>
                       {isMerchantOnline ? 'Online' : 'Offline'}
                     </span>
@@ -421,13 +421,13 @@ const UairangoSettingsPage: React.FC = () => {
                     )}
                   </Button>
                   {!connectionStatus?.connected && (
-                    <p className="text-[10px] text-slate-400 text-center mt-1">Teste a conexão primeiro</p>
+                    <p className="text-[10px] text-slate-500 text-center mt-1">Teste a conexão primeiro</p>
                   )}
                 </>
               ) : (
                 <div className="text-center py-6">
-                  <WifiOff size={24} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-xs text-slate-400">Teste a conexão primeiro</p>
+                  <WifiOff size={24} className="mx-auto text-slate-500 mb-2" />
+                  <p className="text-xs text-slate-500">Teste a conexão primeiro</p>
                 </div>
               )}
             </div>

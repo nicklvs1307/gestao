@@ -30,7 +30,7 @@ const FooterCart: React.FC<FooterCartProps> = ({ items, total, onClick }) => {
             </span>
           </div>
           <div>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-none mb-1">Minha Sacola</p>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-none mb-1">Minha Sacola</p>
             <p className="text-white font-black text-xl italic tracking-tight">
               R$ {total.toFixed(2).replace('.', ',')}
             </p>

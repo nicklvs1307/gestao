@@ -30,11 +30,11 @@ const CashierOpenScreen: React.FC<CashierOpenScreenProps> = memo(({
         </div>
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest ml-1">
+            <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">
               Fundo de Reserva (R$)
             </label>
             <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">
                 R$
               </div>
               <input

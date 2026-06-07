@@ -248,17 +248,17 @@ const SuperAdminDashboard: React.FC = () => {
                 return (
                     <Card className="p-0 overflow-hidden border-slate-200 shadow-xl bg-white animate-in fade-in duration-500">
                         <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                            <div><h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><DollarSign size={24} className="text-emerald-500" /> Gestão de Receita SaaS</h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Status de faturamento das unidades</p></div>
+                            <div><h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><DollarSign size={24} className="text-emerald-500" /> Gestão de Receita SaaS</h2><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Status de faturamento das unidades</p></div>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead className="bg-slate-50/50">
                                     <tr>
-                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Loja / Cliente</th>
-                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Plano Ativo</th>
-                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Status de Conta</th>
-                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Próx. Vencimento</th>
-                                        <th className="px-8 py-4 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Gerenciar</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-500 tracking-widest">Loja / Cliente</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-500 tracking-widest">Plano Ativo</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-500 tracking-widest">Status de Conta</th>
+                                        <th className="px-8 py-4 text-[9px] font-black uppercase text-slate-500 tracking-widest">Próx. Vencimento</th>
+                                        <th className="px-8 py-4 text-right text-[9px] font-black uppercase text-slate-500 tracking-widest">Gerenciar</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -268,7 +268,7 @@ const SuperAdminDashboard: React.FC = () => {
                                             <td className="px-8 py-5"><span className="text-[9px] font-black px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 shadow-sm">{r.plan}</span></td>
                                             <td className="px-8 py-5"><span className={cn("text-[9px] font-black px-2 py-1 rounded-lg border shadow-sm", r.status === 'ACTIVE' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-rose-50 text-rose-600 border-rose-100")}>{r.status}</span></td>
                                             <td className="px-8 py-5 text-[10px] font-bold text-slate-500 italic uppercase">{r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : 'VITALÍCIO'}</td>
-                                            <td className="px-8 py-5 text-right"><Button variant="ghost" size="icon" className="bg-slate-100 text-slate-400 hover:text-orange-600 rounded-xl" onClick={() => { setSelectedStore(r); setFormData({...formData, editPlan: r.plan, editStatus: r.status, editExpiresAt: r.expiresAt?.split('T')[0] || ''}); setIsSubscriptionModalOpen(true); }}><Settings size={16} /></Button></td>
+                                            <td className="px-8 py-5 text-right"><Button variant="ghost" size="icon" className="bg-slate-100 text-slate-500 hover:text-orange-600 rounded-xl" onClick={() => { setSelectedStore(r); setFormData({...formData, editPlan: r.plan, editStatus: r.status, editExpiresAt: r.expiresAt?.split('T')[0] || ''}); setIsSubscriptionModalOpen(true); }}><Settings size={16} /></Button></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -288,10 +288,10 @@ const SuperAdminDashboard: React.FC = () => {
                                 <Card key={f.id} className="p-8 border-slate-100 hover:border-orange-500/20 transition-all duration-300 hover:shadow-2xl group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-slate-100 opacity-20 -mr-12 -mt-12 rounded-full" />
                                     <h3 className="font-black text-xl text-slate-900 italic uppercase tracking-tighter mb-2 leading-none">{f.name}</h3>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">SLUG: {f.slug}</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">SLUG: {f.slug}</p>
                                     <div className="flex justify-between items-center pt-6 border-t border-slate-50">
-                                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-400 uppercase">Unidades</span><span className="text-sm font-black italic text-orange-600">{f._count.restaurants}</span></div>
-                                        <div className="flex flex-col text-right"><span className="text-[8px] font-black text-slate-400 uppercase">Usuários</span><span className="text-sm font-black italic text-slate-900">{f._count.users}</span></div>
+                                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase">Unidades</span><span className="text-sm font-black italic text-orange-600">{f._count.restaurants}</span></div>
+                                        <div className="flex flex-col text-right"><span className="text-[8px] font-black text-slate-500 uppercase">Usuários</span><span className="text-sm font-black italic text-slate-900">{f._count.users}</span></div>
                                     </div>
                                 </Card>
                             ))}
@@ -315,7 +315,7 @@ const SuperAdminDashboard: React.FC = () => {
                                                 <h3 className="font-black text-xl text-slate-900 italic uppercase tracking-tighter leading-none pr-4">{r.name}</h3>
                                                 <span className={cn("text-[8px] font-black px-2 py-0.5 rounded border shadow-sm tracking-widest", r.plan === 'DIAMOND' ? "bg-slate-900 text-white border-slate-900" : "bg-blue-50 text-blue-600 border-blue-100")}>{r.plan}</span>
                                             </div>
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-8">FRANQUIA: <b className="text-slate-600">{r.franchise?.name || 'INDEPENDENTE'}</b></p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-8">FRANQUIA: <b className="text-slate-600">{r.franchise?.name || 'INDEPENDENTE'}</b></p>
                                         </div>
                                         <Button 
                                             fullWidth 
@@ -350,7 +350,7 @@ const SuperAdminDashboard: React.FC = () => {
                                                 <h3 className="font-black text-sm text-slate-900 uppercase italic">{r.name}</h3>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-[8px] font-black px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">{r.plan}</span>
-                                                    <span className="text-[8px] font-black text-slate-400 uppercase">
+                                                    <span className="text-[8px] font-black text-slate-500 uppercase">
                                                         {r.franchise?.name || 'Independente'}
                                                     </span>
                                                 </div>
@@ -386,7 +386,7 @@ const SuperAdminDashboard: React.FC = () => {
                                             <Puzzle size={20} className="text-orange-500" />
                                             Módulos — {selectedModuleStore.name}
                                         </h3>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                                             Plano atual: {selectedModuleStore.plan} — Clique para ativar/desativar
                                         </p>
                                     </div>
@@ -420,7 +420,7 @@ const SuperAdminDashboard: React.FC = () => {
                                                             <Check size={14} />
                                                         </div>
                                                     ) : (
-                                                        <div className="w-7 h-7 bg-slate-200 text-slate-400 rounded-lg flex items-center justify-center">
+                                                        <div className="w-7 h-7 bg-slate-200 text-slate-500 rounded-lg flex items-center justify-center">
                                                             <X size={14} />
                                                         </div>
                                                     )}
@@ -430,10 +430,10 @@ const SuperAdminDashboard: React.FC = () => {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <h4 className={cn("text-[10px] font-black uppercase italic tracking-tight", mod.enabled ? "text-slate-900" : "text-slate-400")}>
+                                                <h4 className={cn("text-[10px] font-black uppercase italic tracking-tight", mod.enabled ? "text-slate-900" : "text-slate-500")}>
                                                     {mod.label}
                                                 </h4>
-                                                <p className="text-[8px] text-slate-400 mt-1 leading-tight">{mod.description}</p>
+                                                <p className="text-[8px] text-slate-500 mt-1 leading-tight">{mod.description}</p>
                                                 {mod.isPlanDefault && !mod.enabled && (
                                                     <div className="flex items-center gap-1 mt-2 text-[7px] text-rose-500 font-bold uppercase">
                                                         <Lock size={8} /> Plano inclui
@@ -465,7 +465,7 @@ const SuperAdminDashboard: React.FC = () => {
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
                                             <h3 className="font-black text-lg text-slate-900 uppercase italic">{plan.name}</h3>
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{plan.slug}</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{plan.slug}</p>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             {plan.isDefault && <span className="text-[7px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 uppercase">Padrão</span>}
@@ -479,7 +479,7 @@ const SuperAdminDashboard: React.FC = () => {
                                         <p className="text-[10px] text-slate-500 mb-4 leading-relaxed">{plan.description}</p>
                                     )}
                                     <div className="border-t border-slate-50 pt-4">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Módulos ({plan.modules?.length || 0})</p>
+                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Módulos ({plan.modules?.length || 0})</p>
                                         <div className="flex flex-wrap gap-1">
                                             {Array.isArray(plan.modules) && plan.modules.map((m: string) => (
                                                 <span key={m} className="text-[7px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded uppercase">{m}</span>
@@ -498,9 +498,9 @@ const SuperAdminDashboard: React.FC = () => {
                             ))}
                             {plans.length === 0 && (
                                 <Card className="p-10 text-center col-span-full">
-                                    <CreditCard size={48} className="mx-auto text-slate-300 mb-4" />
-                                    <h3 className="text-sm font-black text-slate-400 uppercase italic">Nenhum plano criado</h3>
-                                    <p className="text-xs text-slate-400 mt-2">Crie planos customizados com módulos específicos.</p>
+                                    <CreditCard size={48} className="mx-auto text-slate-500 mb-4" />
+                                    <h3 className="text-sm font-black text-slate-500 uppercase italic">Nenhum plano criado</h3>
+                                    <p className="text-xs text-slate-500 mt-2">Crie planos customizados com módulos específicos.</p>
                                 </Card>
                             )}
                         </div>
@@ -513,9 +513,9 @@ const SuperAdminDashboard: React.FC = () => {
                             <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3"><Shield size={24} className="text-purple-500" /> Gestão de Segurança</h2>
                         </div>
                         <Card className="p-10 text-center">
-                            <Shield size={48} className="mx-auto text-slate-300 mb-4" />
-                            <h3 className="text-lg font-black text-slate-400 uppercase italic">Em desenvolvimento</h3>
-                            <p className="text-xs text-slate-400 mt-2">Logs de auditoria e gestão de acesso avançado.</p>
+                            <Shield size={48} className="mx-auto text-slate-500 mb-4" />
+                            <h3 className="text-lg font-black text-slate-500 uppercase italic">Em desenvolvimento</h3>
+                            <p className="text-xs text-slate-500 mt-2">Logs de auditoria e gestão de acesso avançado.</p>
                         </Card>
                     </div>
                 );
@@ -534,7 +534,7 @@ const SuperAdminDashboard: React.FC = () => {
                                     <div className={cn("w-16 h-16 rounded-3xl flex items-center justify-center mb-6 shadow-lg transition-transform group-hover:scale-110", `bg-${stat.color}-500 text-white shadow-${stat.color}-100`)}>
                                         <stat.icon size={32} />
                                     </div>
-                                    <h2 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-2 leading-none">{stat.label}</h2>
+                                    <h2 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-2 leading-none">{stat.label}</h2>
                                     <p className="text-4xl font-black italic text-slate-900 tracking-tighter leading-none">{stat.count}</p>
                                     <div className="mt-6 pt-6 border-t border-slate-50 w-full flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><span className="text-[8px] font-black uppercase text-orange-500 tracking-widest italic">Ver Detalhes</span><ChevronRight size={10} className="text-orange-500"/></div>
                                 </Card>
@@ -547,7 +547,7 @@ const SuperAdminDashboard: React.FC = () => {
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] -translate-y-1/2 translate-x-1/2" />
                                 <div className="relative z-10 space-y-8">
                                     <div className="flex items-center justify-between">
-                                        <div><h3 className="text-2xl font-black italic uppercase tracking-tighter">Crescimento da Rede</h3><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Volume de novas unidades por período</p></div>
+                                        <div><h3 className="text-2xl font-black italic uppercase tracking-tighter">Crescimento da Rede</h3><p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Volume de novas unidades por período</p></div>
                                         <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-orange-500"><Target size={32}/></div>
                                     </div>
                                     <div className="h-[250px] w-full flex items-center justify-center border-2 border-dashed border-white/5 rounded-[2rem] bg-black/20 opacity-30"><p className="text-[10px] font-black uppercase tracking-[0.3em]">Gráfico de Escalabilidade (Em Breve)</p></div>
@@ -563,8 +563,8 @@ const SuperAdminDashboard: React.FC = () => {
                                         { label: 'Configurações de Planos', icon: Settings }
                                     ].map((item, i) => (
                                         <button key={i} className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-orange-500/20 group transition-all text-left">
-                                            <div className="flex items-center gap-3"><item.icon size={18} className="text-slate-400 group-hover:text-orange-500 transition-colors"/><span className="text-[10px] font-black uppercase text-slate-600 group-hover:text-slate-900">{item.label}</span></div>
-                                            <ChevronRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                            <div className="flex items-center gap-3"><item.icon size={18} className="text-slate-500 group-hover:text-orange-500 transition-colors"/><span className="text-[10px] font-black uppercase text-slate-600 group-hover:text-slate-900">{item.label}</span></div>
+                                            <ChevronRight size={14} className="text-slate-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                                         </button>
                                     ))}
                                 </div>
@@ -583,7 +583,7 @@ const SuperAdminDashboard: React.FC = () => {
                     <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
                         {activeTab === 'super-admin' ? 'Controle Mestre' : activeTab === 'franchises' ? 'Rede de Franquias' : activeTab === 'restaurants' ? 'Portfólio de Lojas' : activeTab === 'subscriptions' ? 'Gestão Financeira SaaS' : activeTab === 'plans' ? 'Planos de Assinatura' : activeTab === 'modules' ? 'Módulos por Loja' : 'Painel'}
                     </h1>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.3em] mt-3 flex items-center gap-2"><ShieldCheck size={16} className="text-orange-500" /> Administrador Global do Sistema</p>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-3 flex items-center gap-2"><ShieldCheck size={16} className="text-orange-500" /> Administrador Global do Sistema</p>
                 </div>
                 
                 <div className="flex bg-slate-200/50 p-1.5 rounded-[1.5rem] gap-1 shadow-inner overflow-x-auto no-scrollbar max-w-full">
@@ -611,7 +611,7 @@ const SuperAdminDashboard: React.FC = () => {
                     <div className="ui-modal-overlay z-[var(--z-modal)]">
                         <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-4"><div className="bg-orange-500 text-white p-3 rounded-2xl shadow-xl shadow-orange-100"><Briefcase size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Nova Franquia</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Estrutura de Rede</p></div></div>
+                                <div className="flex items-center gap-4"><div className="bg-orange-500 text-white p-3 rounded-2xl shadow-xl shadow-orange-100"><Briefcase size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Nova Franquia</h3><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1.5">Estrutura de Rede</p></div></div>
                                 <Button variant="ghost" size="icon" onClick={() => setIsFranchiseModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
                             </header>
                             <form onSubmit={handleCreateFranchise} className="p-10 space-y-6 bg-slate-50/30">
@@ -628,12 +628,12 @@ const SuperAdminDashboard: React.FC = () => {
                     <div className="ui-modal-overlay z-[var(--z-modal)]">
                         <div className="ui-modal-content w-full max-w-md overflow-hidden flex flex-col">
                             <header className="px-10 py-8 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><DollarSign size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Plano</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{selectedStore?.name}</p></div></div>
+                                <div className="flex items-center gap-4"><div className="bg-emerald-500 text-white p-3 rounded-2xl shadow-xl shadow-emerald-100"><DollarSign size={24} /></div><div><h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Gestão de Plano</h3><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1.5">{selectedStore?.name}</p></div></div>
                                 <Button variant="ghost" size="icon" onClick={() => setIsSubscriptionModalOpen(false)} className="rounded-full bg-slate-50"><X size={24}/></Button>
                             </header>
                             <form onSubmit={handleUpdateSubscription} className="p-10 space-y-6 bg-slate-50/30">
-                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Plano Ativo</label><select className="ui-input w-full h-12" value={formData.editPlan} onChange={e => setFormData({...formData, editPlan: e.target.value})}><option value="FREE">FREE</option><option value="SILVER">SILVER</option><option value="GOLD">GOLD</option><option value="DIAMOND">DIAMOND</option></select></div>
-                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Status do Contrato</label><select className="ui-input w-full h-12" value={formData.editStatus} onChange={e => setFormData({...formData, editStatus: e.target.value})}><option value="ACTIVE">ATIVO</option><option value="SUSPENDED">SUSPENSO</option><option value="TRIAL">TESTE (TRIAL)</option></select></div>
+                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Plano Ativo</label><select className="ui-input w-full h-12" value={formData.editPlan} onChange={e => setFormData({...formData, editPlan: e.target.value})}><option value="FREE">FREE</option><option value="SILVER">SILVER</option><option value="GOLD">GOLD</option><option value="DIAMOND">DIAMOND</option></select></div>
+                                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Status do Contrato</label><select className="ui-input w-full h-12" value={formData.editStatus} onChange={e => setFormData({...formData, editStatus: e.target.value})}><option value="ACTIVE">ATIVO</option><option value="SUSPENDED">SUSPENSO</option><option value="TRIAL">TESTE (TRIAL)</option></select></div>
                                 <Input label="Nova Validade" type="date" value={formData.editExpiresAt} onChange={e => setFormData({...formData, editExpiresAt: e.target.value})}/>
                                 <div className="pt-6"><Button fullWidth size="lg" className="h-14 rounded-2xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 bg-emerald-600 hover:bg-emerald-500">SALVAR ALTERAÇÕES</Button></div>
 </form>

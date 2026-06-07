@@ -503,7 +503,7 @@ const ChecklistFill: React.FC = () => {
                                                                 onClick={() => toggleProcedure(task.id)}
                                                                 className={cn(
                                                                     "p-2 rounded-lg transition-all",
-                                                                    resp.showProcedure ? "bg-primary text-white" : "bg-slate-100 text-slate-400"
+                                                                    resp.showProcedure ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
                                                                 )}
                                                             >
                                                                 <HelpCircle size={16} />
@@ -536,7 +536,7 @@ const ChecklistFill: React.FC = () => {
                                                                 "flex-1 sm:w-28 h-12 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold text-sm",
                                                                 resp.isOk === true
                                                                     ? "bg-emerald-500 text-white shadow-md"
-                                                                    : "bg-white text-slate-400 border-2 border-slate-200"
+                                                                    : "bg-white text-slate-500 border-2 border-slate-200"
                                                             )}
                                                         >
                                                             <Check size={18} strokeWidth={3} /> Sim
@@ -547,7 +547,7 @@ const ChecklistFill: React.FC = () => {
                                                                 "flex-1 sm:w-28 h-12 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold text-sm",
                                                                 resp.isOk === false
                                                                     ? "bg-rose-500 text-white shadow-md"
-                                                                    : "bg-white text-slate-400 border-2 border-slate-200"
+                                                                    : "bg-white text-slate-500 border-2 border-slate-200"
                                                             )}
                                                         >
                                                             <X size={18} strokeWidth={3} /> Não
@@ -558,7 +558,7 @@ const ChecklistFill: React.FC = () => {
                                                         onClick={() => toggleExpand(task.id)}
                                                         className={cn(
                                                             "w-full sm:w-44 h-12 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold text-sm shadow-sm",
-                                                            resp.value ? "bg-primary text-white" : "bg-white text-slate-400 border-2 border-slate-200"
+                                                            resp.value ? "bg-primary text-white" : "bg-white text-slate-500 border-2 border-slate-200"
                                                         )}
                                                     >
                                                         {task.type === 'PHOTO' ? <><Camera size={18} /> Adicionar Foto</> :
@@ -592,10 +592,10 @@ const ChecklistFill: React.FC = () => {
                                                 >
                                                     <div className="p-5 space-y-4">
                                                         <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wide">
-                                                            <HelpCircle size={14} /> Guia de Procedimento
-                                                        </div>
-                                                        {task.procedureType === 'TEXT' && (
-                                                            <p className="text-sm text-slate-300 bg-white/5 p-4 rounded-lg border border-white/10">
+                                                             <HelpCircle size={14} /> Guia de Procedimento
+                                                         </div>
+                                                         {task.procedureType === 'TEXT' && (
+                                                             <p className="text-sm text-slate-300 bg-white/5 p-4 rounded-lg border border-white/10">
                                                                 {task.procedureContent}
                                                             </p>
                                                         )}
@@ -692,7 +692,7 @@ const ChecklistFill: React.FC = () => {
                                                                 <button
                                                                     onClick={() => fileInputRefs.current[task.id]?.click()}
                                                                     disabled={uploadingTask && uploadingTask.startsWith(task.id)}
-                                                                    className="w-full h-36 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50"
+                                                                    className="w-full h-36 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-500 hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50"
                                                                 >
                                                                     {uploadingTask && uploadingTask.startsWith(task.id) ? (
                                                                         <div className="flex flex-col items-center gap-2">
@@ -715,7 +715,7 @@ const ChecklistFill: React.FC = () => {
                                                                             <Camera size={32} />
                                                                             <div className="text-center">
                                                                                 <span className="text-xs font-semibold block">Adicionar Mídia</span>
-                                                                                <span className="text-xs text-slate-400">
+                                                                                <span className="text-xs text-slate-500">
                                                                                     {Array.isArray(resp.value) ? resp.value.length : 0} de 3 • máx 10MB
                                                                                 </span>
                                                                             </div>

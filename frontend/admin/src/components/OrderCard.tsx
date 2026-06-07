@@ -217,7 +217,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                   <span className="block text-sm font-bold text-slate-900 leading-tight truncate">
                     #{order.dailyOrderNumber || '0'} <span className="text-xs font-medium text-slate-500">- {deliveryData?.name || order.customerName || 'Consumidor'}</span>
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                     ID: {order.id.slice(-6).toUpperCase()}
                   </span>
                 </div>
@@ -278,7 +278,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                 </span>
               </div>
               {deliveryData?.phone && (
-                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
                   <Phone size={10} /> {deliveryData.phone}
                 </div>
               )}
@@ -298,19 +298,19 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
                 {Array.isArray(order.items) && order.items.slice(0, 2).map((item, idx) => (
                     <div key={idx} className="flex justify-between text-xs text-slate-500">
                         <span className="truncate pr-2"><b className="text-orange-500">{item.quantity}x</b> {item.product?.name || item.productName || 'Produto'}</span>
-                        <span className="shrink-0 text-slate-400">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
+                        <span className="shrink-0 text-slate-500">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
                     </div>
                 ))}
                 {Array.isArray(order.items) && order.items.length > 2 && (
-                    <p className="text-[10px] font-bold text-slate-300 uppercase">+ {order.items.length - 2} itens...</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase">+ {order.items.length - 2} itens...</p>
                 )}
             </div>
 
             {/* Financeiro */}
             <div className="flex justify-between items-center py-1 px-1 border-t border-slate-50">
                 <div className="flex items-center gap-1.5">
-                  <CreditCard size={11} className="text-slate-300" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[100px]">
+                  <CreditCard size={11} className="text-slate-500" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate max-w-[100px]">
                     {resolvePaymentLabel(deliveryData?.paymentMethod) || 'PENDENTE'}
                   </span>
                 </div>
@@ -409,7 +409,7 @@ const OrderCard: React.FC<OrderCardProps> = memo(({ order, onOpenDetails, isSele
             <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-slate-900">Validar Retirada</h3>
-                <button onClick={handleClosePickupModal} className="text-slate-400 hover:text-slate-600">
+                <button onClick={handleClosePickupModal} className="text-slate-500 hover:text-slate-600">
                   <XCircle size={20} />
                 </button>
               </div>

@@ -647,7 +647,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 <h1 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none">
                     Pedido <span className="text-orange-600">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</span>
                 </h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">ID: {order.id}</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">ID: {order.id}</p>
             </div>
             <div className={cn("px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ml-2", currentStatus.bg, currentStatus.color, currentStatus.border)}>
                 {currentStatus.label} - {formatSP(order.createdAt, "dd/MMM 'às' HH:mm")}
@@ -718,7 +718,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             "flex items-center gap-2 h-9 px-5 rounded-xl text-[10px] font-black uppercase italic tracking-widest transition-all",
             activeTab === 'items'
               ? "bg-orange-600 text-white shadow-md"
-              : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+              : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600"
           )}
         >
           <List size={14} /> Itens do Pedido
@@ -729,7 +729,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             "flex items-center gap-2 h-9 px-5 rounded-xl text-[10px] font-black uppercase italic tracking-widest transition-all",
             activeTab === 'payment'
               ? "bg-orange-600 text-white shadow-md"
-              : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+              : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600"
           )}
         >
           <CreditCard size={14} /> Pagamento
@@ -740,7 +740,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             "flex items-center gap-2 h-9 px-5 rounded-xl text-[10px] font-black uppercase italic tracking-widest transition-all",
             activeTab === 'details'
               ? "bg-orange-600 text-white shadow-md"
-              : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+              : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600"
           )}
         >
           <Info size={14} /> Detalhes
@@ -782,7 +782,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                 </h2>
                                 {isDelivery && order.deliveryOrder?.address && (
                                     <p className="text-[10px] font-bold text-slate-500 uppercase italic leading-tight line-clamp-2">
-                                        <MapPin size={10} className="inline mr-1 text-slate-400" /> {order.deliveryOrder.address}
+                                        <MapPin size={10} className="inline mr-1 text-slate-500" /> {order.deliveryOrder.address}
                                         {order.deliveryOrder.complement && <span className="text-amber-600"> ({order.deliveryOrder.complement})</span>}
                                         {order.deliveryOrder.reference && <span className="text-blue-600"> - Ref: {order.deliveryOrder.reference}</span>}
                                     </p>
@@ -797,7 +797,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         )}
                     </div>
                     {!isEditingCustomer && (
-                        <button onClick={() => setIsEditingCustomer(true)} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm ml-3" title="Editar Cliente"><FileText size={14} /></button>
+                        <button onClick={() => setIsEditingCustomer(true)} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm ml-3" title="Editar Cliente"><FileText size={14} /></button>
                     )}
                 </div>
             </div>
@@ -811,7 +811,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         <p className="text-xs font-bold text-amber-800 leading-snug">{order.notes || order.deliveryOrder?.notes}</p>
                     </div>
                 )}
-                <div className="grid grid-cols-12 px-2 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                <div className="grid grid-cols-12 px-2 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-50">
                     <div className="col-span-2">Qtd</div>
                     <div className="col-span-7">Item</div>
                     <div className="col-span-3 text-right">Valor</div>
@@ -840,7 +840,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
             <div className="p-5 bg-slate-900 text-white space-y-3">
             <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-slate-400 uppercase italic">Valor Total</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase italic">Valor Total</span>
                 <span className="text-2xl font-black text-white italic tracking-tighter">R$ {totalGeral.toFixed(2).replace('.', ',')}</span>
             </div>
             </div>
@@ -851,13 +851,13 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <div className="p-4 bg-white border-b border-slate-200 space-y-4">
                         <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input type="text" placeholder="Pesquise produtos pelo código, descrição ou detalhes" className="w-full h-12 pl-12 pr-4 bg-slate-100 border-none rounded-2xl text-sm font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 transition-all" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <input type="text" placeholder="Pesquise produtos pelo código, descrição ou detalhes" className="w-full h-12 pl-12 pr-4 bg-slate-100 border-none rounded-2xl text-sm font-bold placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 transition-all" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                         </div>
                         <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                            <button onClick={() => setSelectedCategory(null)} className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase italic whitespace-nowrap transition-all border-2", !selectedCategory ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-white border-slate-200 text-slate-400")}>TODOS</button>
+                            <button onClick={() => setSelectedCategory(null)} className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase italic whitespace-nowrap transition-all border-2", !selectedCategory ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-white border-slate-200 text-slate-500")}>TODOS</button>
                             {categories.map(cat => (
-                                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase italic whitespace-nowrap transition-all border-2", selectedCategory === cat.id ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-white border-slate-200 text-slate-400")}>{cat.name}</button>
+                                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase italic whitespace-nowrap transition-all border-2", selectedCategory === cat.id ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-white border-slate-200 text-slate-500")}>{cat.name}</button>
                             ))}
                         </div>
                     </div>
@@ -865,7 +865,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                         {filteredProducts.map(prod => (
                             <button key={prod.id} onClick={() => handleProductClick(prod)} className="bg-white p-4 rounded-3xl border-2 border-transparent hover:border-blue-500 transition-all text-left shadow-sm group">
                                 <h4 className="text-sm font-black text-slate-900 uppercase italic mb-1 group-hover:text-blue-600">{prod.name}</h4>
-                                <p className="text-[10px] font-black text-slate-400 italic">R$ {prod.price.toFixed(2)}</p>
+                                <p className="text-[10px] font-black text-slate-500 italic">R$ {prod.price.toFixed(2)}</p>
                                 <div className="mt-4 flex justify-end">
                                     <div className="p-2 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all"><Plus size={16} /></div>
                                 </div>
@@ -975,44 +975,44 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                             <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><List size={14} /> Dados do Pedido</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nº Pedido</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Nº Pedido</span>
                                     <span className="text-lg font-black text-slate-900">#{order.dailyOrderNumber || order.id.slice(-4).toUpperCase()}</span>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Tipo</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Tipo</span>
                                     <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-md uppercase inline-block mt-1", order.orderType === 'PICKUP' ? "bg-purple-100 text-purple-700" : order.orderType === 'DELIVERY' ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700")}>
                                         {order.orderType === 'PICKUP' ? 'Retirada' : order.orderType === 'DELIVERY' ? 'Delivery' : 'Mesa'}
                                     </span>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Criado em</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Criado em</span>
                                     <span className="text-xs font-bold text-slate-700 mt-1">{formatSP(order.createdAt, 'dd/MM/yyyy HH:mm:ss')}</span>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Status</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Status</span>
                                     <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-md uppercase inline-block mt-1", currentStatus.bg, currentStatus.color, currentStatus.border)}>{currentStatus.label}</span>
                                 </div>
                                 {order.pendingAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Pendente desde</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Pendente desde</span>
                                         <span className="text-xs font-bold text-amber-600 mt-1">{formatSP(order.pendingAt, 'HH:mm:ss')}</span>
                                     </div>
                                 )}
                                 {order.preparingAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Preparo iniciou</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Preparo iniciou</span>
                                         <span className="text-xs font-bold text-blue-600 mt-1">{formatSP(order.preparingAt, 'HH:mm:ss')}</span>
                                     </div>
                                 )}
                                 {order.readyAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Pronto em</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Pronto em</span>
                                         <span className="text-xs font-bold text-emerald-600 mt-1">{formatSP(order.readyAt, 'HH:mm:ss')}</span>
                                     </div>
                                 )}
                                 {order.completedAt && (
                                     <div className="bg-slate-50 rounded-xl p-3">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Finalizado em</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Finalizado em</span>
                                         <span className="text-xs font-bold text-slate-600 mt-1">{formatSP(order.completedAt, 'dd/MM HH:mm')}</span>
                                     </div>
                                 )}
@@ -1024,24 +1024,24 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                             <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={14} /> Cliente</h3>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome</span>
                                     <span className="text-sm font-bold text-slate-900">{order.deliveryOrder?.name || order.customerName || 'Consumidor'}</span>
                                 </div>
                                 {order.customerDocument && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF/CNPJ</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">CPF/CNPJ</span>
                                         <span className="text-xs font-bold text-slate-600 font-mono">{order.customerDocument}</span>
                                     </div>
                                 )}
                                 {order.deliveryOrder?.phone && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telefone</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Telefone</span>
                                         <span className="text-xs font-bold text-blue-600 flex items-center gap-1"><Phone size={12} /> {order.deliveryOrder.phone}</span>
                                     </div>
                                 )}
                                 {order.deliveryOrder?.address && (
                                     <div className="pt-2 border-t border-slate-100">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Endereço</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Endereço</span>
                                         <p className="text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded-xl leading-relaxed">
                                             {order.deliveryOrder.address}
                                             {order.deliveryOrder.complement && <><br/><span className="text-amber-600">Comp: {order.deliveryOrder.complement}</span></>}
@@ -1051,13 +1051,13 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                 )}
                                 {order.deliveryOrder?.neighborhood && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bairro</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Bairro</span>
                                         <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.neighborhood}</span>
                                     </div>
                                 )}
                                 {order.deliveryOrder?.city && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cidade</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cidade</span>
                                         <span className="text-xs font-bold text-slate-700">{order.deliveryOrder.city}/{order.deliveryOrder.state}</span>
                                     </div>
                                 )}
@@ -1075,25 +1075,25 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                                 <div className="space-y-3">
                                     {order.ifoodOrderId && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">iFood ID</span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">iFood ID</span>
                                             <span className="text-xs font-bold text-slate-600 font-mono">{order.ifoodOrderId}</span>
                                         </div>
                                     )}
                                     {order.uairangoOrderId && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">UaiRango ID</span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">UaiRango ID</span>
                                             <span className="text-xs font-bold text-slate-600 font-mono">{order.uairangoOrderId}</span>
                                         </div>
                                     )}
                                     {order.displayId && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Código Coleta</span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Código Coleta</span>
                                             <span className="text-sm font-bold text-orange-600 flex items-center gap-1"><Ticket size={14} /> {order.displayId}</span>
                                         </div>
                                     )}
                                     {order.customerDocument && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Documento</span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Documento</span>
                                             <span className="text-xs font-bold text-slate-600">{order.customerDocument}</span>
                                         </div>
                                     )}
@@ -1114,28 +1114,28 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
 
                         {/* FINANCEIRO */}
                         <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-lg">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Wallet size={14} /> Financeiro</h3>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Wallet size={14} /> Financeiro</h3>
                             <div className="space-y-2.5">
-                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase">
                                     <span>Subtotal</span><span className="text-white">R$ {subtotal.toFixed(2)}</span>
                                 </div>
                                 {deliveryFee > 0 && (
-                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                    <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase">
                                         <span>Taxa Entrega</span><span className="text-blue-400">+ R$ {deliveryFee.toFixed(2)}</span>
                                     </div>
                                 )}
                                 {(order.platformFee || 0) > 0 && (
-                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                    <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase">
                                         <span>Taxa Plataforma</span><span className="text-amber-400">+ R$ {(order.platformFee || 0).toFixed(2)}</span>
                                     </div>
                                 )}
                                 {discount > 0 && (
-                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                    <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase">
                                         <span>Desconto</span><span className="text-rose-400">- R$ {discount.toFixed(2)}</span>
                                     </div>
                                 )}
                                 {surcharge > 0 && (
-                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                                    <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase">
                                         <span>Acréscimo</span><span className="text-amber-400">+ R$ {surcharge.toFixed(2)}</span>
                                     </div>
                                 )}
@@ -1185,7 +1185,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-black text-slate-900 uppercase italic">Cancelar Pedido</h2>
               <button onClick={() => setShowCancelModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <XCircle size={20} className="text-slate-400" />
+                <XCircle size={20} className="text-slate-500" />
               </button>
             </div>
             
@@ -1263,12 +1263,12 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-black text-slate-900 uppercase italic">Oferecer Alternativa</h2>
               <button onClick={() => setShowAlternativeModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <XCircle size={20} className="text-slate-400" />
+                <XCircle size={20} className="text-slate-500" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tipo de Alternativa</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Tipo de Alternativa</label>
                 <select
                   value={alternativeType}
                   onChange={e => setAlternativeType(e.target.value)}
@@ -1283,7 +1283,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
               </div>
               {(alternativeType === 'REFUND_PARTIAL' || alternativeType === 'CREDIT') && (
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Valor (R$)</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Valor (R$)</label>
                   <input
                     type="number"
                     value={alternativeValue}
@@ -1334,7 +1334,7 @@ const OrderEditor: React.FC<OrderEditorProps> = ({ onClose, order, onRefresh }) 
                     isActive
                       ? cn(status.bg, status.color, status.border, "scale-105 shadow-md")
                       : isDisabled
-                        ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                        ? "bg-slate-50 text-slate-500 border-slate-100 cursor-not-allowed"
                         : "bg-white border-slate-200 text-slate-500 hover:border-slate-900 hover:text-slate-900 active:scale-95"
                   )}
                 >

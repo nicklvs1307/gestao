@@ -106,7 +106,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
       {/* Column Total */}
       {orders.length > 0 && (
         <div className="px-3 pb-2">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
             R$ {columnTotal.toFixed(2).replace('.', ',')}
           </span>
         </div>
@@ -117,9 +117,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
           {orders.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center opacity-20 py-20">
                   <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-300 mb-4 flex items-center justify-center">
-                    <span className="text-lg font-bold text-slate-300">0</span>
+                    <span className="text-lg font-bold text-slate-500">0</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nenhum Pedido</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nenhum Pedido</span>
               </div>
           ) : (
             orders.map(order => (

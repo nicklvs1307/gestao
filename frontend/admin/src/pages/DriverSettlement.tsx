@@ -183,7 +183,7 @@ const DriverSettlement: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
               Gestão de Acertos <span className="text-primary">Logística</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Controle de Turnos e Liquidação de Entregadores
             </p>
           </div>
@@ -200,7 +200,7 @@ const DriverSettlement: React.FC = () => {
             />
           </div>
           
-          <span className="text-[10px] font-bold text-slate-400">ATÉ</span>
+          <span className="text-[10px] font-bold text-slate-500">ATÉ</span>
           
           <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
             <Calendar size={14} className="text-primary" />
@@ -215,14 +215,14 @@ const DriverSettlement: React.FC = () => {
           <div className="h-6 w-px bg-slate-200" />
 
           <div className="flex items-center gap-2">
-            <Clock size={14} className="text-slate-400" />
+            <Clock size={14} className="text-slate-500" />
             <input 
               type="time" 
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               className="bg-white border border-slate-200 rounded-lg px-2 py-2 font-black text-[11px] outline-none text-slate-600 w-20"
             />
-            <ArrowRightLeft size={12} className="text-slate-300" />
+            <ArrowRightLeft size={12} className="text-slate-500" />
             <input 
               type="time" 
               value={endTime}
@@ -243,7 +243,7 @@ const DriverSettlement: React.FC = () => {
         <Card className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign size={14} className="text-orange-400" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Repasse Total</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Repasse Total</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter">{formatCurrency(totals.toPay)}</p>
           <div className="flex items-center gap-1 mt-1">
@@ -254,57 +254,57 @@ const DriverSettlement: React.FC = () => {
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={14} className="text-emerald-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Receita Líquida</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Receita Líquida</span>
           </div>
           <p className={cn("text-lg font-black italic tracking-tighter", totals.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
             {formatCurrency(totals.net)}
           </p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Margem: {profitMargin.toFixed(1)}%</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Margem: {profitMargin.toFixed(1)}%</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <Wallet size={14} className="text-blue-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Dinheiro (Mão)</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Dinheiro (Mão)</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-blue-600">{formatCurrency(totals.cash)}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Coletado na Rua</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Coletado na Rua</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard size={14} className="text-purple-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cartão Débito</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Cartão Débito</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-purple-600">{formatCurrency(totals.cardDebit)}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Débito</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Débito</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard size={14} className="text-indigo-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cartão Crédito</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Cartão Crédito</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-indigo-600">{formatCurrency(totals.cardCredit)}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Crédito</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Crédito</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <Building2 size={14} className="text-emerald-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">PIX</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">PIX</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-emerald-600">{formatCurrency(totals.pix)}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Transferência</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Transferência</span>
           </div>
         </Card>
 
@@ -322,11 +322,11 @@ const DriverSettlement: React.FC = () => {
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <Package size={14} className="text-slate-600" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Ticket Médio</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Ticket Médio</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-slate-800">{formatCurrency(avgTicket)}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Por entrega</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Por entrega</span>
           </div>
         </Card>
       </div>
@@ -338,12 +338,12 @@ const DriverSettlement: React.FC = () => {
             <div className="w-1 h-8 bg-primary rounded-full" />
             <div>
               <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Relação de Acertos</h3>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{filteredData.length} entregadores encontrados</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{filteredData.length} entregadores encontrados</p>
             </div>
           </div>
           
           <div className="relative w-full md:w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input 
               type="text" 
               placeholder="Buscar entregador..." 
@@ -401,7 +401,7 @@ const DriverSettlement: React.FC = () => {
                       />
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-[9px] font-black text-slate-300">{String(idx + 1).padStart(2, '0')}</span>
+                      <span className="text-[9px] font-black text-slate-500">{String(idx + 1).padStart(2, '0')}</span>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
@@ -412,7 +412,7 @@ const DriverSettlement: React.FC = () => {
                           <span className="font-black text-xs text-slate-900 uppercase italic tracking-tighter block">
                             {settlement.driverName}
                           </span>
-                          <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">ID: {settlement.driverId.slice(0, 8)}</span>
+                          <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">ID: {settlement.driverId.slice(0, 8)}</span>
                         </div>
                       </div>
                     </td>
@@ -454,7 +454,7 @@ const DriverSettlement: React.FC = () => {
                         <span className={cn("font-black text-xs italic tracking-tighter", settlement.storeNet >= 0 ? "text-emerald-600" : "text-rose-600")}>
                           {formatCurrency(settlement.storeNet)}
                         </span>
-                        <span className="text-[6px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span className="text-[6px] font-bold text-slate-500 uppercase tracking-widest">
                           {settlement.totalOrders > 0 ? `R$ ${(settlement.storeNet / settlement.totalOrders).toFixed(2)}/ent` : '-'}
                         </span>
                         <span className="text-[5px] font-bold text-orange-400 uppercase tracking-widest mt-1">
@@ -482,7 +482,7 @@ const DriverSettlement: React.FC = () => {
                     <div className="flex flex-col items-center opacity-20">
                       <Truck size={48} className="mb-3" />
                       <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhum acerto pendente</p>
-                      <p className="text-[8px] font-bold text-slate-400 uppercase mt-1">Para o período selecionado</p>
+                      <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Para o período selecionado</p>
                     </div>
                   </td>
                 </tr>
@@ -513,15 +513,15 @@ const DriverSettlement: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sistema Online</span>
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Sistema Online</span>
           </div>
           <div className="w-px h-4 bg-slate-200" />
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
             Última atualização: {formatSP(new Date(), "'às' HH:mm:ss")}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
             Sincronizado com Fluxo de Caixa
           </span>
         </div>

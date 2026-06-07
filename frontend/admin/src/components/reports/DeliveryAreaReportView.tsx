@@ -49,22 +49,22 @@ const DeliveryAreaReportView: React.FC = () => {
                     )}>
                         <div className="flex items-center gap-2 mb-3">
                             <span className={cn(
-                                "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black",
+                                "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold",
                                 i === 0 ? "bg-orange-500 text-white" :
                                 i === 1 ? "bg-blue-500 text-white" :
                                 i === 2 ? "bg-emerald-500 text-white" :
                                 "bg-purple-500 text-white"
                             )}>{i + 1}</span>
-                            <span className="text-[9px] font-black uppercase text-slate-400">TOP {i + 1}</span>
+                            <span className="text-[11px] font-semibold uppercase text-slate-500">TOP {i + 1}</span>
                         </div>
                         <h4 className="text-lg font-black text-slate-900 uppercase italic truncate leading-none mb-3">{s.name}</h4>
                         <div className="flex items-baseline gap-2">
                             <span className="text-2xl font-black tracking-tighter text-slate-900">{s.count}</span>
-                            <span className="text-[9px] font-black text-slate-400 uppercase">pedidos</span>
+                            <span className="text-[11px] font-semibold text-slate-500 uppercase">pedidos</span>
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
-                            <span className="text-[8px] font-bold text-slate-400">Taxas: R$ {s.totalFees.toFixed(2)}</span>
-                            <span className="text-[8px] font-black text-blue-600">{((s.count / totalOrders) * 100).toFixed(1)}%</span>
+                            <span className="text-[11px] font-medium text-slate-500">Taxas: R$ {s.totalFees.toFixed(2)}</span>
+                            <span className="text-[11px] font-semibold text-blue-600">{((s.count / totalOrders) * 100).toFixed(1)}%</span>
                         </div>
                     </Card>
                 ))}
@@ -88,13 +88,13 @@ const DeliveryAreaReportView: React.FC = () => {
                         <tr key={idx} className="hover:bg-slate-50 transition-colors group">
                             <td className="px-4 py-3">
                                 <span className={cn(
-                                    "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black",
-                                    idx < 3 ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-400"
+                                    "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold",
+                                    idx < 3 ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
                                 )}>{idx + 1}</span>
                             </td>
-                            <td className="px-4 py-3 font-black text-xs text-slate-900 uppercase italic tracking-tight">{s.name}</td>
-                            <td className="px-4 py-3 text-center font-bold text-slate-600">{s.count} pedidos</td>
-                            <td className="px-4 py-3 text-right font-black text-emerald-600 italic tracking-tighter">R$ {s.totalFees.toFixed(2)}</td>
+                            <td className="px-4 py-3 text-xs font-semibold text-slate-900 uppercase tracking-wider">{s.name}</td>
+                            <td className="px-4 py-3 text-center font-medium text-slate-600">{s.count} pedidos</td>
+                            <td className="px-4 py-3 text-right font-semibold text-emerald-600">R$ {s.totalFees.toFixed(2)}</td>
                             <td className="px-4 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
                                     <span className="text-sm font-black text-blue-500 italic">{relevancy.toFixed(1)}%</span>

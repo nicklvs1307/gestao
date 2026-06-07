@@ -50,7 +50,7 @@ export const SettingsLinksTab: React.FC<SettingsLinksTabProps> = ({
               <h3 className="text-xl font-black uppercase italic tracking-tighter leading-none">
                 Domínio <span className="text-orange-500">&</span> Acesso
               </h3>
-              <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.2em] mt-1">
+              <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em] mt-1">
                 Configuração de Endereço Web Personalizado
               </p>
             </div>
@@ -60,7 +60,7 @@ export const SettingsLinksTab: React.FC<SettingsLinksTabProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Link2 size={12} className="text-slate-500" />
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em]">Identificador Slug</label>
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em]">Identificador Slug</label>
             </div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -76,7 +76,7 @@ export const SettingsLinksTab: React.FC<SettingsLinksTabProps> = ({
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
                   {isCheckingSlug ? (
-                    <Loader2 size={18} className="animate-spin text-slate-400" />
+                    <Loader2 size={18} className="animate-spin text-slate-500" />
                   ) : isSlugAvailable === true ? (
                     <CheckCircle size={20} className="text-emerald-500" />
                   ) : isSlugAvailable === false ? (
@@ -99,7 +99,7 @@ export const SettingsLinksTab: React.FC<SettingsLinksTabProps> = ({
           {/* Public URL Card */}
           <div className="bg-white rounded-2xl p-5 flex items-center justify-between group shadow-xl border border-slate-100">
             <div className="truncate flex-1 mr-4">
-              <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none flex items-center gap-1">
+              <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-none flex items-center gap-1">
                 <QrCode size={10} /> URL Pública do Cardápio
               </p>
               <span className="text-sm font-black text-slate-800 italic tracking-tighter truncate block">
@@ -148,7 +148,7 @@ export const SettingsLinksTab: React.FC<SettingsLinksTabProps> = ({
 
           {/* Info Box */}
           <div className="p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
-            <p className="text-[8px] font-bold text-slate-300 leading-relaxed">
+            <p className="text-[8px] font-bold text-slate-500 leading-relaxed">
               <strong className="text-orange-400">Dica:</strong> Escolha um slug curto e memorável que represente seu estabelecimento. 
               Esta URL será compartilhada com seus clientes no WhatsApp e redes sociais.
             </p>

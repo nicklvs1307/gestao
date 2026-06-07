@@ -153,7 +153,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
                                 </h3>
                                 <p className="text-xs text-slate-500 font-medium flex items-center gap-2 mt-1.5">
                                     <Clock size={14}/> {formatSP(order.createdAt, "HH:mm")}
-                                    <span className="text-slate-300">•</span>
+                                    <span className="text-slate-500">•</span>
                                     <span className="text-slate-600 font-semibold">
                                       {resolvePaymentLabel(order.deliveryOrder?.paymentMethod || order.payments?.[0]?.method) || 'Pendente'}
                                     </span>
@@ -263,7 +263,7 @@ const NewOrderAlert: React.FC<NewOrderAlertProps> = ({ orders, isProcessing = fa
                         className={cn(
                           "flex-1 flex items-center justify-center gap-3 font-bold uppercase text-sm tracking-wide rounded-xl py-4 transition-all border-2 active:scale-[0.98]",
                           isProcessing
-                            ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                            ? "bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed"
                             : "bg-white text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:shadow-lg"
                         )}
                       >

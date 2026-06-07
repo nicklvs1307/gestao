@@ -46,7 +46,7 @@ const StaffPerformance: React.FC = () => {
                     <div className="p-4 bg-slate-900 text-white rounded-3xl shadow-xl shadow-slate-200"><Award size={32} /></div>
                     <div>
                         <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Ranking da Equipe</h2>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
                             <Target size={12} className="text-orange-500" /> Produtividade e Conversão por Colaborador
                         </p>
                     </div>
@@ -56,7 +56,7 @@ const StaffPerformance: React.FC = () => {
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100">
                         <Calendar size={16} className="text-orange-500" />
                         <input type="date" className="bg-transparent border-none font-black text-[10px] uppercase outline-none text-slate-600" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                        <ChevronRight size={14} className="text-slate-300" />
+                        <ChevronRight size={14} className="text-slate-500" />
                         <input type="date" className="bg-transparent border-none font-black text-[10px] uppercase outline-none text-slate-600" value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                     <Button onClick={fetchData} size="sm" className="rounded-xl h-11 px-6 italic">FILTRAR</Button>
@@ -91,17 +91,17 @@ const StaffPerformance: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-black text-xl text-slate-900 uppercase italic tracking-tighter leading-none mb-1">{staff.name}</h3>
-                                        <span className={cn("text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border", isTop1 ? "bg-orange-500 text-white border-orange-500" : "bg-slate-100 text-slate-400 border-slate-200")}>{index + 1}º NO RANKING</span>
+                                        <span className={cn("text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border", isTop1 ? "bg-orange-500 text-white border-orange-500" : "bg-slate-100 text-slate-500 border-slate-200")}>{index + 1}º NO RANKING</span>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                                        <div className="flex items-center gap-2 mb-2"><DollarSign size={12} className="text-emerald-500"/><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Venda Total</p></div>
+                                        <div className="flex items-center gap-2 mb-2"><DollarSign size={12} className="text-emerald-500"/><p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Venda Total</p></div>
                                         <p className="text-lg font-black text-slate-900 italic tracking-tighter">R$ {staff.totalRevenue.toFixed(2).replace('.', ',')}</p>
                                     </div>
                                     <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                                        <div className="flex items-center gap-2 mb-2"><ShoppingBag size={12} className="text-blue-500"/><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Pedidos</p></div>
+                                        <div className="flex items-center gap-2 mb-2"><ShoppingBag size={12} className="text-blue-500"/><p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Pedidos</p></div>
                                         <p className="text-lg font-black text-slate-900 italic tracking-tighter">{staff.ordersCount} un</p>
                                     </div>
                                 </div>
@@ -109,7 +109,7 @@ const StaffPerformance: React.FC = () => {
                                 <div className="bg-slate-900 rounded-[1.5rem] p-5 flex items-center justify-between shadow-2xl relative overflow-hidden group/ticket">
                                     <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 blur-2xl rounded-full" />
                                     <div className="relative z-10">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Ticket Médio</p>
+                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Ticket Médio</p>
                                         <p className="text-2xl font-black text-emerald-400 italic tracking-tighter leading-none">R$ {staff.averageTicket.toFixed(2).replace('.', ',')}</p>
                                     </div>
                                     <div className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-emerald-400 relative z-10"><TrendingUp size={20}/></div>
@@ -117,7 +117,7 @@ const StaffPerformance: React.FC = () => {
 
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-end">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Eficácia em Relação ao Top 1</span>
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Eficácia em Relação ao Top 1</span>
                                         <span className={cn("text-xs font-black italic", isTop1 ? "text-orange-500" : "text-slate-900")}>{performanceRatio.toFixed(0)}%</span>
                                     </div>
                                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-100">
@@ -134,8 +134,8 @@ const StaffPerformance: React.FC = () => {
 
                 {staffData.length === 0 && (
                     <div className="col-span-full py-24 flex flex-col items-center justify-center text-center opacity-20">
-                        <Trophy size={80} strokeWidth={1} className="text-slate-300 mb-4" />
-                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] italic">Nenhum dado de produtividade no período</h3>
+                        <Trophy size={80} strokeWidth={1} className="text-slate-500 mb-4" />
+                        <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] italic">Nenhum dado de produtividade no período</h3>
                     </div>
                 )}
             </div>

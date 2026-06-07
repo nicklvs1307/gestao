@@ -116,7 +116,7 @@ const FinancialCategories: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
               Plano de <span className="text-primary">Contas</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Categorização e Estrutura DRE
             </p>
           </div>
@@ -137,7 +137,7 @@ const FinancialCategories: React.FC = () => {
             <Disc size={20} />
           </div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Categorias</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Total Categorias</p>
             <h4 className="text-xl font-black text-slate-900 italic leading-tight">{categories.length}</h4>
           </div>
         </Card>
@@ -147,7 +147,7 @@ const FinancialCategories: React.FC = () => {
             <TrendingUp size={20} />
           </div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Receitas</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Receitas</p>
             <h4 className="text-xl font-black text-emerald-600 italic">{incomeCount}</h4>
           </div>
         </Card>
@@ -157,7 +157,7 @@ const FinancialCategories: React.FC = () => {
             <TrendingDown size={20} />
           </div>
           <div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Despesas</p>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Despesas</p>
             <h4 className="text-xl font-black text-rose-600 italic">{expenseCount}</h4>
           </div>
         </Card>
@@ -180,11 +180,11 @@ const FinancialCategories: React.FC = () => {
             <div className="w-1 h-6 bg-primary rounded-full" />
             <div>
               <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Estrutura do Plano de Contas</h3>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{filtered.length} registro(s) encontrado(s)</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{filtered.length} registro(s) encontrado(s)</p>
             </div>
           </div>
           <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
             <input 
               type="text" 
               placeholder="Pesquisar categoria..." 
@@ -197,14 +197,14 @@ const FinancialCategories: React.FC = () => {
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-400">
+            <div className="p-20 flex flex-col items-center justify-center gap-4 text-slate-500">
               <Loader2 className="animate-spin text-primary" size={32} />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizando dados...</span>
             </div>
           ) : (
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 bg-slate-50/50">
+                <tr className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-slate-100 bg-slate-50/50">
                   <th className="px-6 py-4">Categoria / Conta</th>
                   <th className="px-6 py-4 text-center">Natureza DRE</th>
                   <th className="px-6 py-4 text-center">Status</th>
@@ -214,11 +214,11 @@ const FinancialCategories: React.FC = () => {
               <tbody className="divide-y divide-slate-50">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-16 text-center text-slate-400">
+                    <td colSpan={4} className="px-6 py-16 text-center text-slate-500">
                       <div className="flex flex-col items-center">
                         <Disc size={40} className="mb-3 opacity-20" />
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Nenhuma categoria encontrada</p>
-                        <p className="text-[8px] font-bold text-slate-400 mt-1">Para o filtro atual</p>
+                        <p className="text-[8px] font-bold text-slate-500 mt-1">Para o filtro atual</p>
                       </div>
                     </td>
                   </tr>
@@ -238,7 +238,7 @@ const FinancialCategories: React.FC = () => {
                           <span className="font-black text-xs text-slate-900 uppercase italic tracking-tighter group-hover:text-primary transition-colors">
                             {category.name}
                           </span>
-                          <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Plano de Contas Ativo</span>
+                          <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Plano de Contas Ativo</span>
                         </div>
                       </div>
                     </td>
@@ -309,11 +309,11 @@ const FinancialCategories: React.FC = () => {
                   <h3 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                     {formData.id ? 'Editar Conta' : 'Nova Categoria'}
                   </h3>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Configuração do Plano de Contas</p>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Configuração do Plano de Contas</p>
                 </div>
                 <button 
                   onClick={() => setShowForm(false)} 
-                  className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90"
+                  className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90"
                 >
                   <X size={20} />
                 </button>
@@ -321,7 +321,7 @@ const FinancialCategories: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome da Categoria</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Nome da Categoria</label>
                   <Input 
                     value={formData.name || ''} 
                     onChange={e => setFormData({...formData, name: e.target.value})} 
@@ -332,7 +332,7 @@ const FinancialCategories: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Natureza Financeira (DRE)</label>
+                  <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Natureza Financeira (DRE)</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -341,7 +341,7 @@ const FinancialCategories: React.FC = () => {
                         "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
                         formData.type === 'INCOME' 
                           ? "border-emerald-500 bg-emerald-50 text-emerald-700" 
-                          : "border-slate-200 bg-white text-slate-400 hover:border-slate-300"
+                          : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
                       )}
                     >
                       <TrendingUp size={22} />
@@ -354,7 +354,7 @@ const FinancialCategories: React.FC = () => {
                         "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
                         formData.type === 'EXPENSE' 
                           ? "border-rose-500 bg-rose-50 text-rose-700" 
-                          : "border-slate-200 bg-white text-slate-400 hover:border-slate-300"
+                          : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
                       )}
                     >
                       <TrendingDown size={22} />

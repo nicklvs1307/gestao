@@ -76,19 +76,19 @@ const StockMoves: React.FC = () => {
       {/* Resumo */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="p-3 text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase">Entradas</p>
+          <p className="text-[10px] font-black text-slate-500 uppercase">Entradas</p>
           <p className="text-lg font-black text-emerald-600">R$ {summary.totalEntries.toFixed(2)}</p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase">Perdas</p>
+          <p className="text-[10px] font-black text-slate-500 uppercase">Perdas</p>
           <p className="text-lg font-black text-red-600">R$ {summary.totalLosses.toFixed(2)}</p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase">Produções</p>
+          <p className="text-[10px] font-black text-slate-500 uppercase">Produções</p>
           <p className="text-lg font-black text-blue-600">{summary.totalProductions}</p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase">Variação</p>
+          <p className="text-[10px] font-black text-slate-500 uppercase">Variação</p>
           <p className={cn("text-lg font-black", summary.netVariation >= 0 ? 'text-emerald-600' : 'text-red-600')}>
             R$ {summary.netVariation.toFixed(2)}
           </p>

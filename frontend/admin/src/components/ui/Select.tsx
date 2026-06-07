@@ -34,7 +34,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
           ref={ref}
           id={inputId}
           className={cn(
-            'flex h-11 w-full appearance-none rounded-xl border border-input bg-card px-4 pr-10 text-sm',
+            'flex h-11 w-full appearance-none rounded-lg border border-input bg-card px-4 pr-10 text-sm',
             'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10',
             'disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium text-foreground',
             error && 'border-destructive focus:ring-destructive/10',

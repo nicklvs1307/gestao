@@ -63,17 +63,17 @@ const ConsumedItemsView: React.FC = () => {
                 ]}
                 rows={items.slice(0, 50).map((item: any, idx: number) => (
                     <tr key={idx} className="hover:bg-slate-50 transition-colors group">
-                        <td className="px-4 py-3 text-[10px] font-bold text-slate-500">{new Date(item.order?.createdAt || item.createdAt).toLocaleString('pt-BR')}</td>
+                        <td className="px-4 py-3 text-xs font-medium text-slate-500">{new Date(item.order?.createdAt || item.createdAt).toLocaleString('pt-BR')}</td>
                         <td className="px-4 py-3 font-black text-slate-900 italic">#{item.order?.dailyOrderNumber || idx + 1}</td>
                         <td className="px-4 py-3">
-                            <span className="text-[9px] font-bold uppercase px-2 py-1 rounded bg-slate-100 text-slate-600">
+                            <span className="text-[11px] font-semibold uppercase px-2 py-1 rounded bg-slate-100 text-slate-600">
                                 {item.order?.tableNumber ? `Mesa ${item.order.tableNumber}` : 'Delivery'}
                             </span>
                         </td>
-                        <td className="px-4 py-3 font-black text-xs text-slate-900 uppercase italic tracking-tight max-w-[200px] truncate">{item.product?.name || item.productName || 'Produto'}</td>
-                        <td className="px-4 py-3 text-center font-black text-slate-700">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right font-bold text-slate-500">R$ {item.priceAtTime.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right font-black text-emerald-600 italic tracking-tighter">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-xs font-semibold text-slate-900 uppercase tracking-wider max-w-[200px] truncate">{item.product?.name || item.productName || 'Produto'}</td>
+                        <td className="px-4 py-3 text-center font-semibold text-slate-700">{item.quantity}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-500">R$ {item.priceAtTime.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-emerald-600">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</td>
                     </tr>
                 ))}
                 emptyState={!items.length ? <EmptyState icon={Utensils} title="Nenhum item consumido" description="Não há registros no período selecionado" /> : undefined}

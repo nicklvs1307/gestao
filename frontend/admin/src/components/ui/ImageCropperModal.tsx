@@ -129,15 +129,15 @@ export function ImageCropperModal({
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-black uppercase italic tracking-widest text-slate-900 leading-none">Ajustar Imagem</h3>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Enquadre a melhor parte da foto</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Enquadre a melhor parte da foto</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl h-9 w-9">
+              <Button variant="ghost" size="icon" onClick={onClose} className="rounded-lg h-9 w-9">
                 <X size={18} />
               </Button>
             </div>
@@ -177,7 +177,7 @@ export function ImageCropperModal({
             {/* Controles */}
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4">
-                <ZoomOut size={16} className="text-slate-400" />
+                <ZoomOut size={16} className="text-slate-500" />
                 <input 
                   type="range"
                   min="0.5"
@@ -187,15 +187,15 @@ export function ImageCropperModal({
                   onChange={(e) => setZoom(parseFloat(e.target.value))}
                   className="flex-1 accent-orange-500 h-1.5 bg-slate-100 rounded-full appearance-none cursor-pointer"
                 />
-                <ZoomIn size={16} className="text-slate-400" />
+                <ZoomIn size={16} className="text-slate-500" />
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-xl h-11 font-black uppercase text-[10px] tracking-widest" onClick={onClose}>
+                <Button variant="outline" className="flex-1 rounded-lg h-11 font-black uppercase text-[10px] tracking-widest" onClick={onClose}>
                   CANCELAR
                 </Button>
                 <Button 
-                  className="flex-[2] rounded-xl h-11 font-black italic uppercase text-[10px] tracking-widest gap-2"
+                  className="flex-[2] rounded-lg h-11 font-black italic uppercase text-[10px] tracking-widest gap-2"
                   onClick={getCroppedImage}
                   isLoading={isProcessing}
                 >

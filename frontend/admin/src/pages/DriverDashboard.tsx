@@ -312,7 +312,7 @@ const DriverDashboard: React.FC = () => {
               <div className="h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
                 <WifiOff size={32} className="text-muted-foreground" />
                 <p className="text-xs font-bold text-muted-foreground">Geolocalização indisponível</p>
-                <p className="text-[10px] text-muted-foreground/60">Ative o GPS para ver a rota</p>
+                <p className="text-[10px] text-muted-foreground">Ative o GPS para ver a rota</p>
               </div>
             ) : customerCoords ? (
               <div className="w-full h-full relative">

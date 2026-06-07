@@ -79,7 +79,7 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
               </div>
               <div>
                   <h3 className="text-lg font-black italic uppercase tracking-tighter text-slate-900 leading-none">Ofertas de Hoje</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Tempo limitado</p>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Tempo limitado</p>
               </div>
           </div>
       </div>
@@ -137,7 +137,7 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ onProductClick, resta
 
                   <div className="flex items-end justify-between">
                       <div className="flex flex-col">
-                          <span className="text-[10px] line-through text-slate-300 font-bold leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
+                          <span className="text-[10px] line-through text-slate-500 font-bold leading-none">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
                           <span className="text-xl font-black italic text-emerald-600 tracking-tighter">R$ {discountedPrice.toFixed(2).replace('.', ',')}</span>
                       </div>
                       <div className="bg-slate-900 text-white p-2 rounded-xl shadow-lg group-hover:bg-primary transition-colors">

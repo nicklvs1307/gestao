@@ -119,7 +119,7 @@ const getRestaurantPreview = async (req, res) => {
         .description { color: #666; font-size: 16px; margin-bottom: 20px; }
         .button { display: inline-block; background: #d4af37; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 18px; }
         .button:hover { background: #b8962e; }
-        .info { margin-top: 20px; font-size: 14px; color: #999; }
+        .info { margin-top: 20px; font-size: 14px; color: #666; }
     </style>
 </head>
 <body>

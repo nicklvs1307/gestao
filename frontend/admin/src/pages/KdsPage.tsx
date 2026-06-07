@@ -122,7 +122,7 @@ const KdsPage: React.FC = () => {
                                 onClick={() => changeArea(a.id)}
                                 className={cn(
                                     "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2",
-                                    area === a.id ? "bg-primary text-white" : "text-muted-foreground hover:text-slate-300"
+                                    area === a.id ? "bg-primary text-white" : "text-muted-foreground hover:text-slate-500"
                                 )}
                             >
                                 <a.icon size={12} />

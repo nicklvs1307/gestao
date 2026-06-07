@@ -44,12 +44,12 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
         <tr className={cn("hover:bg-slate-50/50 transition-colors group", isExpanded && "bg-slate-50/80")}>
             <td className="px-6 py-4">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => setIsExpanded(!isExpanded)} className={cn("p-1.5 rounded-xl transition-all hover:bg-slate-100 text-slate-400", isExpanded && "rotate-90 text-orange-500 bg-orange-50")}>
+                    <button onClick={() => setIsExpanded(!isExpanded)} className={cn("p-1.5 rounded-xl transition-all hover:bg-slate-100 text-slate-500", isExpanded && "rotate-90 text-orange-500 bg-orange-50")}>
                         <ChevronRight size={18} />
                     </button>
                     <div className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-110",
-                        group.isFlavorGroup ? "bg-amber-50 border-amber-100 text-amber-500" : "bg-slate-50 border-slate-100 text-slate-400"
+                        group.isFlavorGroup ? "bg-amber-50 border-amber-100 text-amber-500" : "bg-slate-50 border-slate-100 text-slate-500"
                     )}>
                         {group.isFlavorGroup ? <Layers size={20} /> : <List size={20} />}
                     </div>
@@ -61,7 +61,7 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
                             {group.isFlavorGroup && (
                                 <span className="text-[7px] font-black bg-amber-500 text-white px-1 rounded italic uppercase tracking-widest">SABORES</span>
                             )}
-                            <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest italic truncate">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest italic truncate">
                                 ID: {group.id?.slice(-8).toUpperCase()}
                             </span>
                         </div>
@@ -78,9 +78,9 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
             <td className="px-4 py-4 text-center">
                 <div className="flex flex-col items-center">
                     <span className="font-black text-xs italic tracking-tighter text-slate-700">
-                        {group.minQuantity} <span className="text-[8px] text-slate-300 mx-1">A</span> {group.maxQuantity}
+                        {group.minQuantity} <span className="text-[8px] text-slate-500 mx-1">A</span> {group.maxQuantity}
                     </span>
-                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Escolhas Permitidas</span>
+                    <span className="text-[7px] font-black text-slate-500 uppercase tracking-tighter">Escolhas Permitidas</span>
                 </div>
             </td>
             <td className="px-4 py-4">
@@ -92,7 +92,7 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
                             </span>
                         ))}
                         {group.addons.length > 3 && (
-                            <span className="text-[8px] font-black text-slate-400 px-1 py-0.5 uppercase italic">+{group.addons.length - 3} itens</span>
+                            <span className="text-[8px] font-black text-slate-500 px-1 py-0.5 uppercase italic">+{group.addons.length - 3} itens</span>
                         )}
                     </div>
                     <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
@@ -101,15 +101,15 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
                 </div>
             </td>
             <td className="px-4 py-4 text-center">
-                <span className="text-[9px] font-black bg-slate-50 border border-slate-200 text-slate-400 px-2 py-1 rounded italic uppercase">
+                <span className="text-[9px] font-black bg-slate-50 border border-slate-200 text-slate-500 px-2 py-1 rounded italic uppercase">
                     {group.saiposIntegrationCode || '---'}
                 </span>
             </td>
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => onDuplicate(group.id!)} title="Duplicar"><Copy size={16}/></Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/addons/${group.id}`)} title="Editar"><Edit2 size={16}/></Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => onDelete(group.id!)} title="Excluir"><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => onDuplicate(group.id!)} title="Duplicar"><Copy size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-500 hover:text-orange-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => navigate(`/addons/${group.id}`)} title="Editar"><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 bg-slate-50 text-slate-500 hover:text-rose-600 rounded-xl border border-slate-200 shadow-sm" onClick={() => onDelete(group.id!)} title="Excluir"><Trash2 size={16}/></Button>
                 </div>
             </td>
         </tr>
@@ -120,7 +120,7 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
                         {group.addons.map(addon => (
                             <div key={addon.id} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2 hover:border-orange-200 transition-all group/addon">
                                 <div className="flex-1">
-                                    <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest block mb-1">Nome do Item</span>
+                                    <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest block mb-1">Nome do Item</span>
                                     <input 
                                         className="w-full bg-transparent border-none text-[11px] font-black uppercase italic text-slate-700 focus:ring-0 p-0 h-auto"
                                         value={addonEdits[addon.id!]?.name ?? addon.name}
@@ -130,7 +130,7 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
                                 </div>
                                 <div className="flex items-center justify-between pt-2 border-t border-slate-50">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="text-[9px] font-black text-slate-300">R$</span>
+                                        <span className="text-[9px] font-black text-slate-500">R$</span>
                                         <input 
                                             type="number" step="0.01"
                                             className="w-20 bg-slate-50 border-none rounded-lg text-xs font-black text-slate-900 focus:bg-white focus:ring-1 focus:ring-orange-500/20 px-2 py-1"
@@ -140,7 +140,7 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
                                         />
                                     </div>
                                     <div className="flex gap-1">
-                                        <span className={cn("px-1.5 py-0.5 rounded text-[7px] font-black uppercase italic border", addon.saiposIntegrationCode ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-400 border-slate-200")}>
+                                        <span className={cn("px-1.5 py-0.5 rounded text-[7px] font-black uppercase italic border", addon.saiposIntegrationCode ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-500 border-slate-200")}>
                                             {addon.saiposIntegrationCode ? 'SYNC' : 'LOCAL'}
                                         </span>
                                     </div>
@@ -149,7 +149,7 @@ const AddonGroupRow: React.FC<AddonGroupRowProps> = ({ group, onDuplicate, onDel
                         ))}
                         {group.addons.length === 0 && (
                             <div className="col-span-full py-8 text-center border-2 border-dashed border-slate-200 rounded-3xl">
-                                <p className="text-[10px] font-black uppercase text-slate-300 italic">Nenhum item cadastrado neste grupo</p>
+                                <p className="text-[10px] font-black uppercase text-slate-500 italic">Nenhum item cadastrado neste grupo</p>
                             </div>
                         )}
                     </div>
@@ -235,14 +235,14 @@ const AddonManagement: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none flex items-center gap-2">
               Biblioteca de <span className="text-orange-500">Complementos</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Gestão Centralizada de Adicionais, Sabores e Regras de Escolha
             </p>
           </div>
         </div>
         
         <div className="flex gap-2 w-full lg:w-auto">
-            <Button variant="outline" className="bg-white rounded-xl h-11 px-4 border-slate-200 text-slate-400 hover:text-orange-500 transition-all" onClick={fetchData}>
+            <Button variant="outline" className="bg-white rounded-xl h-11 px-4 border-slate-200 text-slate-500 hover:text-orange-500 transition-all" onClick={fetchData}>
                 <RefreshCw size={16} className={cn(loading && "animate-spin")} />
             </Button>
             <Button onClick={() => navigate('/addons/new')} className="flex-1 lg:flex-none rounded-xl px-6 italic font-black h-11 shadow-lg shadow-orange-900/10 text-xs gap-2 uppercase">
@@ -256,7 +256,7 @@ const AddonManagement: React.FC = () => {
         <Card className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none">
           <div className="flex items-center gap-2 mb-2">
             <ListTree size={14} className="text-orange-400" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Grupos</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Total Grupos</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter">{groups.length}</p>
           <div className="flex items-center gap-1 mt-1">
@@ -267,44 +267,44 @@ const AddonManagement: React.FC = () => {
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <Hash size={14} className="text-blue-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Itens</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Total Itens</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-blue-600">{totalItems}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Addons/Sabores</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Addons/Sabores</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 size={14} className="text-emerald-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Sincronizados ERP</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Sincronizados ERP</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-emerald-600">{syncedGroups}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Integração ativa</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Integração ativa</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <Layers size={14} className="text-amber-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Grupos de Sabores</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Grupos de Sabores</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-amber-600">{flavorGroups}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Variações de sabor</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Variações de sabor</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle size={14} className="text-rose-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Pendentes</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Pendentes</span>
           </div>
           <p className="text-lg font-black italic tracking-tighter text-rose-600">{pendingGroups}</p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">Sem código ERP</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">Sem código ERP</span>
           </div>
         </Card>
       </div>
@@ -312,7 +312,7 @@ const AddonManagement: React.FC = () => {
       {/* SEARCH BAR */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-500 transition-colors" size={16} />
             <input 
                 type="text" 
                 placeholder="Pesquisar por nome ou código de integração..." 
@@ -330,7 +330,7 @@ const AddonManagement: React.FC = () => {
             <div className="w-1 h-8 bg-orange-500 rounded-full" />
             <div>
               <h3 className="font-black text-slate-900 uppercase italic tracking-tighter text-sm">Relação de Grupos</h3>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{filteredGroups.length} grupos encontrados</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{filteredGroups.length} grupos encontrados</p>
             </div>
           </div>
         </div>
@@ -371,15 +371,15 @@ const AddonManagement: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sistema Online</span>
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Sistema Online</span>
           </div>
           <div className="w-px h-4 bg-slate-200" />
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
             {groups.length} grupos · {totalItems} itens · {syncedGroups} sincronizados
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
             Biblioteca de Complementos v2.0
           </span>
         </div>

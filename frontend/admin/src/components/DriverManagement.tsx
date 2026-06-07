@@ -129,13 +129,13 @@ const DriverManagement: React.FC = () => {
                 <div className="flex items-center gap-4 mb-4">
                     <div className={cn(
                         "w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner",
-                        driver.isActive ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-400"
+                        driver.isActive ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500"
                     )}>
                         <Truck size={28} />
                     </div>
                     <div>
                         <h3 className="font-black text-slate-900 leading-none">{driver.name}</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">
                             {driver.paymentType === 'DAILY' ? 'Diária' : driver.paymentType === 'SHIFT' ? 'Turno' : 'Por Entrega'}
                         </p>
                     </div>
@@ -143,7 +143,7 @@ const DriverManagement: React.FC = () => {
 
                 <div className="space-y-2 mb-6 bg-slate-50 p-4 rounded-2xl">
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                        <Phone size={14} className="text-slate-400" /> {driver.phone || 'Sem telefone'}
+                        <Phone size={14} className="text-slate-500" /> {driver.phone || 'Sem telefone'}
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
                         <DollarSign size={14} className="text-emerald-500" /> 
@@ -169,7 +169,7 @@ const DriverManagement: React.FC = () => {
           ))}
           {drivers.length === 0 && (
               <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum entregador cadastrado</p>
+                  <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Nenhum entregador cadastrado</p>
               </div>
           )}
         </div>
@@ -182,22 +182,22 @@ const DriverManagement: React.FC = () => {
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
                 <h3 className="text-xl font-black text-slate-900">{editingDriver ? 'Editar Entregador' : 'Novo Entregador'}</h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900"><X size={24} /></button>
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-slate-900"><X size={24} /></button>
             </div>
             <form onSubmit={handleSave} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Nome Completo</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Nome Completo</label>
                         <input required type="text" className="w-full bg-slate-50 border-slate-200 border-2 rounded-2xl h-12 px-4 focus:border-primary outline-none font-bold text-slate-700 transition-all" value={name} onChange={e => setName(e.target.value)} />
                     </div>
                     
                     <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Telefone / WhatsApp</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Telefone / WhatsApp</label>
                         <input type="text" className="w-full bg-slate-50 border-slate-200 border-2 rounded-2xl h-12 px-4 focus:border-primary outline-none font-bold text-slate-700 transition-all" value={phone} onChange={e => setPhone(e.target.value)} />
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Status</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Status</label>
                         <select className="w-full bg-slate-50 border-slate-200 border-2 rounded-2xl h-12 px-4 focus:border-primary outline-none font-bold text-slate-700 transition-all" value={isActive ? 'true' : 'false'} onChange={e => setIsActive(e.target.value === 'true')}>
                             <option value="true">Ativo / Disponível</option>
                             <option value="false">Inativo / Fora</option>
@@ -209,21 +209,21 @@ const DriverManagement: React.FC = () => {
                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Remuneração e Acerto</h4>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block">Tipo de Base</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase mb-1.5 block">Tipo de Base</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {['DAILY', 'SHIFT', 'DELIVERY'].map(type => (
-                                    <button key={type} type="button" onClick={() => setPaymentType(type)} className={cn("py-2 rounded-xl text-[10px] font-black uppercase transition-all border-2", paymentType === type ? "bg-primary border-primary text-white" : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white")}>
+                                     <button key={type} type="button" onClick={() => setPaymentType(type)} className={cn("py-2 rounded-xl text-[10px] font-black uppercase transition-all border-2", paymentType === type ? "bg-primary border-primary text-white" : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white")}>
                                         {type === 'DAILY' ? 'Diária' : type === 'SHIFT' ? 'Turno' : 'Só Entregas'}
                                     </button>
                                 ))}
                             </div>
                         </div>
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block italic">Valor Base (R$)</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase mb-1.5 block italic">Valor Base (R$)</label>
                             <input type="number" step="0.01" className="w-full bg-slate-800 border-slate-700 border-2 rounded-xl h-12 px-4 focus:border-primary outline-none font-bold text-white transition-all" value={baseRate} onChange={e => setBaseRate(Number(e.target.value))} />
                         </div>
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block italic">Bônus/Entrega (R$)</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase mb-1.5 block italic">Bônus/Entrega (R$)</label>
                             <input type="number" step="0.01" className="w-full bg-slate-800 border-slate-700 border-2 rounded-xl h-12 px-4 focus:border-primary outline-none font-bold text-white transition-all" value={bonusPerDelivery} onChange={e => setBonusPerDelivery(Number(e.target.value))} />
                         </div>
                     </div>
@@ -231,11 +231,11 @@ const DriverManagement: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Email / Login</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Email / Login</label>
                         <input required type="email" className="w-full bg-slate-50 border-slate-200 border-2 rounded-2xl h-12 px-4 focus:border-primary outline-none font-bold text-slate-700 transition-all" value={email} onChange={e => setEmail(e.target.value)} />
                     </div>
                     <div className="col-span-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Senha</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Senha</label>
                         <input required={!editingDriver} type="password" placeholder={editingDriver ? "••••••" : ""} className="w-full bg-slate-50 border-slate-200 border-2 rounded-2xl h-12 px-4 focus:border-primary outline-none font-bold text-slate-700 transition-all" value={password} onChange={e => setPassword(e.target.value)} />
                     </div>
                 </div>

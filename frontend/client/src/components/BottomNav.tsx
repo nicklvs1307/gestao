@@ -33,12 +33,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, hasOrders
             >
               <motion.div
                 animate={isActive ? { scale: 1.1, y: -1 } : { scale: 1, y: 0 }}
-                className={`${isActive ? 'text-primary' : 'text-slate-400'} transition-colors duration-200`}
+                className={`${isActive ? 'text-primary' : 'text-slate-500'} transition-colors duration-200`}
               >
                 <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
               </motion.div>
               
-              <span className={`text-[10px] font-bold tracking-tight ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
+              <span className={`text-[10px] font-bold tracking-tight ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>
                 {tab.label}
               </span>
 

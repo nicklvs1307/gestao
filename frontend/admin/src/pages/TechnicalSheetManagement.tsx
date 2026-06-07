@@ -64,14 +64,14 @@ const CompositionModal = ({
                 <div className="px-8 py-6 bg-slate-900 text-white flex justify-between items-center">
                     <div>
                         <h2 className="text-lg font-black uppercase italic tracking-tighter leading-none">Editar Ficha Técnica</h2>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">{target.name}</p>
+                        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">{target.name}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
                 </div>
 
                 <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-[10px] font-black uppercase text-slate-400 italic">Composição / Insumos</h3>
+                        <h3 className="text-[10px] font-black uppercase text-slate-500 italic">Composição / Insumos</h3>
                         <Button variant="outline" size="sm" onClick={addIngredient} className="h-8 rounded-xl border-orange-500 text-orange-600 font-black italic text-[9px]"><Plus size={14} className="mr-1" /> VINCULAR INSUMO</Button>
                     </div>
 
@@ -98,14 +98,14 @@ const CompositionModal = ({
                                         onChange={(e) => updateIngredient(index, 'quantity', parseFloat(e.target.value) || 0)}
                                         className="w-full h-10 font-black text-orange-600 text-[10px] pr-8 italic border border-slate-200 rounded-xl px-3 bg-white outline-none focus:border-orange-500 transition-colors" 
                                     />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[7px] font-black text-slate-300 uppercase">Qtd</span>
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[7px] font-black text-slate-500 uppercase">Qtd</span>
                                 </div>
                                 <Button variant="ghost" size="icon" onClick={() => removeIngredient(index)} className="h-10 w-10 text-rose-400 hover:bg-rose-50 hover:text-rose-600 rounded-xl"><Trash2 size={16} /></Button>
                             </div>
                         ))}
                         {localIngredients.length === 0 && (
                             <div className="p-12 border-2 border-dashed border-slate-100 rounded-[2rem] text-center bg-slate-50/30">
-                                <p className="text-[9px] font-black uppercase italic text-slate-400">Este item ainda não possui composição definida.</p>
+                                <p className="text-[9px] font-black uppercase italic text-slate-500">Este item ainda não possui composição definida.</p>
                             </div>
                         )}
                     </div>
@@ -123,7 +123,7 @@ const CompositionModal = ({
                 </div>
 
                 <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
-                    <Button variant="ghost" onClick={onClose} className="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">CANCELAR</Button>
+                    <Button variant="ghost" onClick={onClose} className="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-500">CANCELAR</Button>
                     <Button onClick={() => onSave(localIngredients)} className="flex-1 h-12 rounded-2xl bg-slate-900 text-white shadow-xl font-black italic uppercase tracking-widest text-[10px]">SALVAR FICHA</Button>
                 </div>
             </motion.div>
@@ -221,13 +221,13 @@ const TechnicalSheetManagement = () => {
                     </div>
                     <div>
                         <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Mestra de Produção</h1>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1 italic">Gestão Centralizada de Fichas Técnicas e CMV</p>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1 italic">Gestão Centralizada de Fichas Técnicas e CMV</p>
                     </div>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
                     <div className="relative flex-1 lg:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                         <input 
                             type="text" 
                             placeholder="Buscar item..." 
@@ -248,7 +248,7 @@ const TechnicalSheetManagement = () => {
                                 onClick={() => setFilterType(f.id as any)}
                                 className={cn(
                                     "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all",
-                                    filterType === f.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    filterType === f.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-600"
                                 )}
                             >
                                 <f.icon size={12} />
@@ -298,11 +298,11 @@ const TechnicalSheetManagement = () => {
                                             <h3 className="text-[11px] font-black uppercase italic text-slate-900 leading-tight group-hover:text-orange-600 transition-colors">
                                                 {item.name}
                                             </h3>
-                                            {item.groupName && <span className="text-[8px] font-bold text-slate-400 uppercase italic">Grupo: {item.groupName}</span>}
+                                            {item.groupName && <span className="text-[8px] font-bold text-slate-500 uppercase italic">Grupo: {item.groupName}</span>}
                                         </div>
                                         <div className={cn(
                                             "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-                                            hasSheet ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-300"
+                                            hasSheet ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
                                         )}>
                                             <ChefHat size={16} />
                                         </div>
@@ -310,11 +310,11 @@ const TechnicalSheetManagement = () => {
 
                                     <div className="grid grid-cols-2 gap-3 mt-auto">
                                         <div className="bg-slate-50 p-2 rounded-xl">
-                                            <span className="block text-[7px] font-black text-slate-400 uppercase italic">Custo Real</span>
+                                            <span className="block text-[7px] font-black text-slate-500 uppercase italic">Custo Real</span>
                                             <span className="text-[10px] font-black text-rose-500">R$ {cost.toFixed(2)}</span>
                                         </div>
                                         <div className="bg-slate-50 p-2 rounded-xl">
-                                            <span className="block text-[7px] font-black text-slate-400 uppercase italic">Margem</span>
+                                            <span className="block text-[7px] font-black text-slate-500 uppercase italic">Margem</span>
                                             <span className={cn(
                                                 "text-[10px] font-black",
                                                 margin > 60 ? "text-emerald-500" : margin > 40 ? "text-amber-500" : "text-rose-500"
@@ -332,10 +332,10 @@ const TechnicalSheetManagement = () => {
                                     )}
 
                                     <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase italic">
+                                        <span className="text-[8px] font-bold text-slate-500 uppercase italic">
                                             {hasSheet ? `${item.ingredients.length} Insumos` : 'Clique para criar'}
                                         </span>
-                                        <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
+                                        <ChevronRight size={14} className="text-slate-500 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
                                     </div>
                                 </Card>
                             </motion.div>

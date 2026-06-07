@@ -315,7 +315,7 @@ const FinancialManagement: React.FC = () => {
                                                 <div className="flex flex-col gap-0.5">
                                                     <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">{t.category?.name || 'Geral'}</span>
                                                     <div className="flex items-center gap-1">
-                                                        <CreditCard size={8} className="text-slate-300" />
+                                                        <CreditCard size={8} className="text-slate-500" />
                                                         <span className="text-[9px] font-bold text-muted-foreground uppercase">{t.paymentMethod || 'Dinheiro'}</span>
                                                     </div>
                                                 </div>
@@ -328,7 +328,7 @@ const FinancialManagement: React.FC = () => {
                                                     {t.type === 'INCOME' && t.orderId && !t.order?.invoice && (
                                                         <Button variant="ghost" size="icon" className="w-8 h-8 bg-slate-900 text-white hover:bg-black rounded-lg" onClick={() => handleEmitInvoice(t.orderId)}><Receipt size={14} /></Button>
                                                     )}
-                                                    <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-rose-50" onClick={() => handleDelete(t.id)}><Trash2 size={16} className="text-slate-300 group-hover:text-rose-500"/></Button>
+                                                    <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-rose-50" onClick={() => handleDelete(t.id)}><Trash2 size={16} className="text-slate-500 group-hover:text-rose-500"/></Button>
                                                 </div>
                                             </td>
                                         </tr>

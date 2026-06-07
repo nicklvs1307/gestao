@@ -109,56 +109,56 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
 
   return (
     <div className="ui-modal-overlay z-[var(--z-modal)]">
-      <div className="ui-modal-content w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden rounded-2xl shadow-2xl">
-        <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+      <div className="ui-modal-content w-full max-w-xl max-h-[95vh] flex flex-col overflow-hidden rounded-2xl shadow-2xl">
+        <header className="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div className="flex items-center gap-3">
                 <div className="bg-emerald-500 text-white p-2 rounded-xl"><Layers size={18} /></div>
                 <div>
-                    <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight leading-none">{isEditing ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Configuração de Estrutura</p>
+                    <h3 className="text-base font-bold text-slate-900 uppercase italic tracking-tight leading-none">{isEditing ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Configuração de Estrutura</p>
                 </div>
             </div>
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-all"><X size={20} /></button>
+            <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-all"><X size={20} /></button>
         </header>
 
-        <form onSubmit={handleSubmit} id="category-form" className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/50">
+        <form onSubmit={handleSubmit} id="category-form" className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-slate-50/50">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Culinária</label>
+                        <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Culinária</label>
                         <div className="relative">
                             <select value={formData.cuisineType} onChange={e => setFormData({ ...formData, cuisineType: e.target.value })} className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-xs text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none">
                                 {cuisineTypes.map(type => <option key={type} value={type}>{type}</option>)}
                             </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
                         </div>
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Código Integração</label>
+                        <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Código Integração</label>
                         <input type="text" value={formData.saiposIntegrationCode || ''} onChange={e => setFormData({ ...formData, saiposIntegrationCode: e.target.value })} className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-xs outline-none focus:border-emerald-500" placeholder="SKU / ID" />
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Nome da Categoria</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Nome da Categoria</label>
                     <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-xs outline-none focus:border-emerald-500" placeholder="Ex: Pizzas Tradicionais" />
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Descrição Comercial</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Descrição Comercial</label>
                     <textarea value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={2} className="w-full bg-white border border-slate-200 rounded-xl p-3 font-medium text-xs outline-none focus:border-emerald-500 resize-none" placeholder="..." />
                 </div>
             </div>
 
             <div className="space-y-4">
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-3 block flex items-center gap-2 italic"><Calendar size={12} /> Dias de Exibição</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-3 block flex items-center gap-2 italic"><Calendar size={12} /> Dias de Exibição</label>
                     <div className="flex flex-wrap gap-1.5">
                         {daysOfWeek.map(day => {
                             const isActive = formData.availableDays.split(',').includes(day.id);
                             return (
-                                <button key={day.id} type="button" onClick={() => toggleDay(day.id)} className={cn("px-2 py-1 rounded-md text-[8px] font-black uppercase transition-all border", isActive ? "bg-emerald-500 border-emerald-500 text-white" : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-300")}>{day.label}</button>
+                                <button key={day.id} type="button" onClick={() => toggleDay(day.id)} className={cn("px-2 py-1 rounded-md text-[8px] font-black uppercase transition-all border", isActive ? "bg-emerald-500 border-emerald-500 text-white" : "bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-300")}>{day.label}</button>
                             );
                         })}
                     </div>
@@ -166,17 +166,17 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
 
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1 italic">Início</label>
+                        <label className="text-[9px] font-black uppercase text-slate-500 ml-1 italic">Início</label>
                         <input type="time" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} className="w-full h-9 bg-white border border-slate-200 rounded-lg px-2 font-bold text-xs" />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1 italic">Fim</label>
+                        <label className="text-[9px] font-black uppercase text-slate-500 ml-1 italic">Fim</label>
                         <input type="time" value={formData.endTime} onChange={e => setFormData({ ...formData, endTime: e.target.value })} className="w-full h-9 bg-white border border-slate-200 rounded-lg px-2 font-bold text-xs" />
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic flex items-center gap-2"><Layers size={12} className="text-blue-500" /> Categoria Pai</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1 italic flex items-center gap-2"><Layers size={12} className="text-blue-500" /> Categoria Pai</label>
                     <select value={formData.parentId || 'null'} onChange={e => setFormData({ ...formData, parentId: e.target.value === 'null' ? null : e.target.value })} className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-xs text-slate-700 outline-none appearance-none">
                         <option value="null">Principal (Sem Pai)</option>
                         {allCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
@@ -186,9 +186,9 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
 
             <div className="md:col-span-2 space-y-3 pt-4 border-t border-slate-100">
                 <div className="flex justify-between items-center px-1">
-                    <h4 className="text-[10px] font-black uppercase text-slate-400 italic flex items-center gap-2"><List size={12} className="text-orange-500" /> Opcionais Herdados (Todos os produtos desta categoria)</h4>
+                    <h4 className="text-[10px] font-black uppercase text-slate-500 italic flex items-center gap-2"><List size={12} className="text-orange-500" /> Opcionais Herdados (Todos os produtos desta categoria)</h4>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto custom-scrollbar p-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
                     {availableAddonGroups.map(group => {
                         const isSelected = formData.addonGroups.includes(group.id!);
                         return (
@@ -211,7 +211,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
         </form>
 
         <footer className="px-6 py-4 bg-white border-t border-slate-100 flex gap-3 shrink-0">
-          <button type="button" className="flex-1 h-11 bg-slate-50 text-slate-400 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-100 transition-all" onClick={onClose}>DESCARTAR</button>
+          <button type="button" className="flex-1 h-11 bg-slate-50 text-slate-500 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-100 transition-all" onClick={onClose}>DESCARTAR</button>
           <button type="submit" className="flex-[2] h-11 bg-emerald-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-600 transition-all flex items-center justify-center gap-2" form="category-form" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> SALVAR ESTRUTURA</>}
           </button>

@@ -185,7 +185,7 @@ const StockPurchaseOrders: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-slate-400">#{order.orderNumber}</span>
+                    <span className="font-mono text-xs text-slate-500">#{order.orderNumber}</span>
                     <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", status.bg, status.color)}>
                       {status.label}
                     </span>
@@ -199,7 +199,7 @@ const StockPurchaseOrders: React.FC = () => {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     {order.items?.length || 0} itens · R$ {(order.totalAmount || 0).toFixed(2)}
                   </p>
                 </div>
@@ -227,7 +227,7 @@ const StockPurchaseOrders: React.FC = () => {
 
         {orders.length === 0 && (
           <Card className="p-12 text-center">
-            <ClipboardList size={48} className="mx-auto mb-4 text-slate-300" />
+            <ClipboardList size={48} className="mx-auto mb-4 text-slate-500" />
             <p className="font-medium text-slate-600">Nenhuma ordem de compra encontrada</p>
           </Card>
         )}
@@ -249,10 +249,10 @@ const StockPurchaseOrders: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Nova Ordem de Compra</h3>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Pedido ao Fornecedor</p>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Pedido ao Fornecedor</p>
                 </div>
               </div>
-              <button onClick={() => setShowForm(false)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
+              <button onClick={() => setShowForm(false)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
                 <X size={20} />
               </button>
             </header>
@@ -260,26 +260,26 @@ const StockPurchaseOrders: React.FC = () => {
             <div className="p-8 space-y-6 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Fornecedor</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Fornecedor</label>
                   <select value={formData.supplierId} onChange={e => setFormData(prev => ({ ...prev, supplierId: e.target.value }))} className="ui-input w-full h-12 text-[11px] font-bold uppercase bg-white border-slate-200">
                     <option value="">Selecione...</option>
                     {suppliers.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Data Esperada</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Data Esperada</label>
                   <input type="date" className="ui-input w-full h-12 text-sm font-bold" value={formData.expectedDate} onChange={e => setFormData(prev => ({ ...prev, expectedDate: e.target.value }))} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Observações</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Observações</label>
                 <input className="ui-input w-full h-12 text-sm font-bold" value={formData.notes} onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))} placeholder="Observações opcionais" />
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 flex items-center gap-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 flex items-center gap-2">
                     <Package size={14} className="text-slate-500" /> Itens do Pedido
                   </label>
                   <button type="button" onClick={addItem} className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 tracking-widest flex items-center gap-1.5">
@@ -297,10 +297,10 @@ const StockPurchaseOrders: React.FC = () => {
                         </select>
                         <input type="number" min="1" value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} className="ui-input w-20 h-10 text-xs font-bold text-center bg-white border-slate-200" placeholder="Qtd" />
                         <div className="relative w-24">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">R$</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500">R$</span>
                           <input type="number" min="0" step="0.01" value={item.unitCost} onChange={e => updateItem(index, 'unitCost', Number(e.target.value))} className="ui-input w-full h-10 pl-8 text-xs font-bold bg-white border-slate-200" placeholder="0,00" />
                         </div>
-                        <button type="button" onClick={() => removeItem(index)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors flex items-center justify-center">
+                        <button type="button" onClick={() => removeItem(index)} className="w-8 h-8 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-colors flex items-center justify-center">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -310,7 +310,7 @@ const StockPurchaseOrders: React.FC = () => {
               </div>
 
               <div className="bg-slate-50 rounded-2xl p-4 flex justify-between items-center border border-slate-100">
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total do Pedido</span>
+                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Total do Pedido</span>
                 <span className="text-xl font-black italic tracking-tighter text-slate-900">R$ {calcTotal().toFixed(2)}</span>
               </div>
             </div>

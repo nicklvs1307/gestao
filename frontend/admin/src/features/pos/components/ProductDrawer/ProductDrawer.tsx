@@ -107,7 +107,7 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
             <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">{product.name}</h3>
             
             <div className="ml-8 relative flex-1 max-w-xs group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-500 transition-colors" size={16} />
               <input 
                 ref={searchInputRef}
                 type="text" 
@@ -198,7 +198,7 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
                                 setSelectedAddonIds(newIds);
                               }
                             }}
-                            className="w-6 h-6 flex items-center justify-center rounded bg-slate-50 text-slate-400 hover:text-rose-500"
+                            className="w-6 h-6 flex items-center justify-center rounded bg-slate-50 text-slate-500 hover:text-rose-500"
                           >
                             <Minus size={12} strokeWidth={3} />
                           </button>
@@ -212,7 +212,7 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
                               }
                               setSelectedAddonIds([...safeAddonIds, addon.id]);
                             }}
-                            className="w-6 h-6 flex items-center justify-center rounded bg-slate-50 text-slate-400 hover:text-emerald-500"
+                            className="w-6 h-6 flex items-center justify-center rounded bg-slate-50 text-slate-500 hover:text-emerald-500"
                           >
                             <Plus size={12} strokeWidth={3} />
                           </button>
@@ -226,7 +226,7 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
           ))}
 
           <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Observações Adicionais</h4>
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Observações Adicionais</h4>
             <textarea 
               className="w-full h-32 rounded-[2rem] bg-white border-2 border-slate-100 p-6 font-bold text-sm outline-none focus:border-orange-500 transition-all shadow-inner resize-none" 
               placeholder="Ex: Tirar cebola, maionese à parte..." 
@@ -240,21 +240,21 @@ export const ProductDrawer = React.memo(function ProductDrawer() {
           <div className="flex items-center bg-slate-100 border-2 border-slate-200 rounded-2xl p-1 shadow-inner">
             <button 
               onClick={() => setTempQty(Math.max(1, tempQty - 1))} 
-              className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 hover:text-rose-500 active:scale-90 transition-all"
+              className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-rose-500 active:scale-90 transition-all"
             >
               <Minus size={20} strokeWidth={3} />
             </button>
             <span className="w-16 text-center text-2xl font-black italic text-slate-900">{tempQty}</span>
             <button 
               onClick={() => setTempQty(tempQty + 1)} 
-              className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 hover:text-emerald-500 active:scale-90 transition-all"
+              className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-emerald-500 active:scale-90 transition-all"
             >
               <Plus size={20} strokeWidth={3} />
             </button>
           </div>
           <div className="flex items-center gap-8">
             <div className="text-right flex flex-col">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Valor Unitário</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Valor Unitário</span>
               <p className="text-4xl font-black text-slate-900 italic tracking-tighter leading-none">
                 R$ {currentPrice.toFixed(2).replace('.', ',')}
               </p>

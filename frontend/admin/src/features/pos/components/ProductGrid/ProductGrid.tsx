@@ -36,7 +36,7 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
       {/* Search + Categorias */}
       <div className="p-4 bg-white border-b border-slate-100 flex flex-col gap-3 shrink-0">
         <div className="relative group w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={18} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-500 transition-colors" size={18} />
           <input 
             ref={searchInputRef} 
             type="text" 
@@ -89,7 +89,7 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
                 {p.imageUrl ? (
                   <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity scale-105 group-hover:scale-110" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                  <div className="w-full h-full flex items-center justify-center text-slate-500">
                     <ShoppingCart size={24} />
                   </div>
                 )}
@@ -105,10 +105,10 @@ export const ProductGrid = React.memo<ProductGridProps>(({ products, categories,
           ))}
         </div>
         {filteredProducts.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <ShoppingCart size={40} className="mb-4 text-slate-200" />
-            <p className="text-sm font-bold uppercase tracking-wider text-slate-400">Nenhum produto encontrado</p>
-            <p className="text-xs text-slate-300 mt-1">Tente buscar por outro termo ou categoria</p>
+            <p className="text-sm font-bold uppercase tracking-wider text-slate-500">Nenhum produto encontrado</p>
+            <p className="text-xs text-slate-500 mt-1">Tente buscar por outro termo ou categoria</p>
           </div>
         )}
       </div>

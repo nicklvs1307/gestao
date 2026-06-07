@@ -44,7 +44,7 @@ export const PrintLayoutTypeSelector: React.FC<PrintLayoutTypeSelectorProps> = (
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 mb-1">
-        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
           Tipo de Comanda
         </span>
       </div>
@@ -84,7 +84,7 @@ export const PrintLayoutTypeSelector: React.FC<PrintLayoutTypeSelectorProps> = (
                 </p>
                 <p className={cn(
                   'text-[7px] font-bold uppercase tracking-widest mt-0.5',
-                  isSelected ? 'text-white/70' : 'text-slate-400'
+                  isSelected ? 'text-white/70' : 'text-slate-500'
                 )}>
                   {exists ? 'Configurado' : 'Não configurado'}
                 </p>

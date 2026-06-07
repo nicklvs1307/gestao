@@ -138,7 +138,7 @@ const CustomerManagement: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Clientes</h1>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
                         <Users size={14} className="text-orange-500" /> Base de Dados e Fidelização
                     </p>
                 </div>
@@ -149,7 +149,7 @@ const CustomerManagement: React.FC = () => {
                         <span className="text-xs font-black uppercase">Importar</span>
                     </Button>
                     <div className="relative group flex-1 md:w-72">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={18} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-500 transition-colors" size={18} />
                         <input 
                             type="text" 
                             placeholder="Nome ou telefone..." 
@@ -169,7 +169,7 @@ const CustomerManagement: React.FC = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 bg-slate-50/30">
+                            <tr className="text-[9px] font-black uppercase text-slate-500 tracking-widest border-b border-slate-100 bg-slate-50/30">
                                 <th className="px-8 py-4">Informações do Cliente</th>
                                 <th className="px-8 py-4">Contato Direto</th>
                                 <th className="px-8 py-4">Localização Principal</th>
@@ -194,7 +194,7 @@ const CustomerManagement: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-black text-xs text-slate-900 uppercase italic tracking-tight leading-none mb-1">{c.name}</p>
-                                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">REF: {c.id.slice(-6).toUpperCase()}</p>
+                                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">REF: {c.id.slice(-6).toUpperCase()}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -205,12 +205,12 @@ const CustomerManagement: React.FC = () => {
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="flex items-start gap-2">
-                                                <MapPin size={14} className="text-slate-300 mt-0.5 shrink-0" />
+                                                <MapPin size={14} className="text-slate-500 mt-0.5 shrink-0" />
                                                 <div className="flex flex-col">
                                                     <p className="text-[11px] font-bold text-slate-700 uppercase italic leading-tight truncate max-w-[200px]">
                                                         {c.street ? `${c.street}, ${c.number}` : 'S/ Endereço Cadastrado'}
                                                     </p>
-                                                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                                                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">
                                                         {c.city || 'Cidade'} • {c.state || 'UF'}
                                                     </p>
                                                 </div>
@@ -234,7 +234,7 @@ const CustomerManagement: React.FC = () => {
                                                     variant="ghost" 
                                                     size="icon"
                                                     onClick={() => handleEditClick(c)}
-                                                    className="h-10 w-10 bg-slate-100 hover:bg-orange-50 text-slate-400 hover:text-orange-600 rounded-xl"
+                                                    className="h-10 w-10 bg-slate-100 hover:bg-orange-50 text-slate-500 hover:text-orange-600 rounded-xl"
                                                 >
                                                     <Edit2 size={16} />
                                                 </Button>
@@ -242,7 +242,7 @@ const CustomerManagement: React.FC = () => {
                                                     variant="ghost" 
                                                     size="icon"
                                                     onClick={() => handleDeleteClick(c.id)}
-                                                    className="h-10 w-10 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl"
+                                                    className="h-10 w-10 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl"
                                                 >
                                                     <Trash2 size={16} />
                                                 </Button>
@@ -254,7 +254,7 @@ const CustomerManagement: React.FC = () => {
                                 <tr>
                                     <td colSpan={5} className="p-24 text-center">
                                         <Users size={64} strokeWidth={1} className="mx-auto text-slate-200 mb-4 opacity-30" />
-                                        <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-300 italic">Nenhum cliente na base</p>
+                                        <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500 italic">Nenhum cliente na base</p>
                                     </td>
                                 </tr>
                             )}
@@ -265,7 +265,7 @@ const CustomerManagement: React.FC = () => {
                 {/* Paginação Premium */}
                 {totalPages > 1 && (
                     <div className="px-8 py-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
                             Mostrando página {page} de {totalPages}
                         </span>
                         <div className="flex gap-2">
@@ -303,7 +303,7 @@ const CustomerManagement: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Editar Cliente</h3>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Atualização Cadastral</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1.5">Atualização Cadastral</p>
                                     </div>
                                 </div>
                                 <Button variant="ghost" size="icon" onClick={() => setEditModalOpen(false)} className="rounded-full bg-slate-50"><X size={24} /></Button>
@@ -326,7 +326,7 @@ const CustomerManagement: React.FC = () => {
                                 </Card>
 
                                 <div className="space-y-6 pt-4 border-t border-slate-100">
-                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><MapPin size={14} /> Endereço Principal</h4>
+                                    <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2"><MapPin size={14} /> Endereço Principal</h4>
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="col-span-2"><Input label="Cidade" value={customerToEdit.city || ''} onChange={(e) => setCustomerToEdit({ ...customerToEdit, city: e.target.value })} /></div>
                                         <Input label="UF" value={customerToEdit.state || ''} onChange={(e) => setCustomerToEdit({ ...customerToEdit, state: e.target.value })} />
@@ -339,7 +339,7 @@ const CustomerManagement: React.FC = () => {
                             </form>
 
                             <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
-                                <Button variant="ghost" onClick={() => setEditModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
+                                <Button variant="ghost" onClick={() => setEditModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-500">Cancelar</Button>
                                 <Button type="submit" form="customer-form" className="flex-[2] h-14 rounded-2xl shadow-xl shadow-slate-200 uppercase tracking-widest italic font-black">SALVAR ALTERAÇÕES</Button>
                             </footer>
                         </div>
@@ -357,7 +357,7 @@ const CustomerManagement: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Importar Clientes</h3>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">Via Planilha Excel</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1.5">Via Planilha Excel</p>
                                     </div>
                                 </div>
                                 <Button variant="ghost" size="icon" onClick={() => setImportModalOpen(false)} className="rounded-full bg-slate-50"><X size={24} /></Button>
@@ -385,13 +385,13 @@ const CustomerManagement: React.FC = () => {
                                             <div className="flex flex-col items-center gap-2">
                                                 <Upload size={32} className="text-emerald-500" />
                                                 <p className="text-sm font-black text-slate-700 uppercase">{importFile.name}</p>
-                                                <p className="text-xs text-slate-400">Clique para trocar</p>
+                                                <p className="text-xs text-slate-500">Clique para trocar</p>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-2">
-                                                <Upload size={32} className="text-slate-300" />
+                                                <Upload size={32} className="text-slate-500" />
                                                 <p className="text-sm font-bold text-slate-500">Clique ou arraste o arquivo</p>
-                                                <p className="text-xs text-slate-400">.xlsx ou .xls</p>
+                                                <p className="text-xs text-slate-500">.xlsx ou .xls</p>
                                             </div>
                                         )}
                                     </div>
@@ -399,7 +399,7 @@ const CustomerManagement: React.FC = () => {
                             </div>
 
                             <footer className="px-10 py-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
-                                <Button variant="ghost" onClick={() => setImportModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400">Cancelar</Button>
+                                <Button variant="ghost" onClick={() => setImportModalOpen(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-500">Cancelar</Button>
                                 <Button 
                                     onClick={handleImport} 
                                     disabled={!importFile || importing}

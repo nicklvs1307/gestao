@@ -452,7 +452,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">PDV Inteligente • Cardápio Tablets</p>
                         </div>
                     </div>
-                    <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 transition-all"><X size={20} /></button>
+                    <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-500 transition-all"><X size={20} /></button>
                 </div>
 
                 <div className="flex flex-col lg:flex-row h-full overflow-hidden">
@@ -461,7 +461,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                     <div className={cn("flex-1 flex flex-col border-r border-slate-100", isCreatingCustomer && "hidden lg:flex")}>
                         <div className="p-3 bg-slate-50/50 border-b border-slate-100 flex gap-2">
                             <div className="relative flex-1 group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={16} />
                                 <input 
                                     autoFocus
                                     type="text" 
@@ -470,7 +470,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                 />
-                                {searchTerm && <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"><X size={14}/></button>}
+                                {searchTerm && <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-500"><X size={14}/></button>}
                             </div>
                             {!isDeliveryMode && (
                                 <Button onClick={() => handleNoCustomer()} className="h-10 bg-slate-900 hover:bg-black text-white px-4 rounded-xl shadow-lg flex items-center gap-2 text-[10px] font-black uppercase italic">
@@ -497,7 +497,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <h3 className="font-bold text-slate-800 text-xs uppercase truncate leading-none">{customer.name}</h3>
-                                                        <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5 bg-slate-100 rounded-md">{customer.phone}</span>
+                                                        <span className="text-[10px] text-slate-500 font-medium px-1.5 py-0.5 bg-slate-100 rounded-md">{customer.phone}</span>
                                                     </div>
                                                     
                                                     {/* Endereços em Linha ou Minimalistas */}
@@ -508,7 +508,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                                     onClick={() => handleSelectAddress(customer, addr)}
                                                                     className="flex-1 flex items-start gap-2 p-1.5 rounded-lg border border-slate-100 bg-white hover:border-blue-200 hover:bg-blue-50 transition-all group/addr"
                                                                 >
-                                                                    <MapPin size={12} className="text-slate-300 group-hover/addr:text-blue-400 mt-0.5 shrink-0" />
+                                                                    <MapPin size={12} className="text-slate-500 group-hover/addr:text-blue-400 mt-0.5 shrink-0" />
                                                                     <div className="flex-1 min-w-0 text-left">
                                                                         <span className="text-[10px] font-bold text-slate-500 uppercase truncate block">{addr.label}</span>
                                                                         {addr.data?.complement && (
@@ -524,7 +524,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                                     size="sm" 
                                                                     variant="ghost"
                                                                     onClick={() => handleEditAddress(customer, addr, i)}
-                                                                    className="h-7 w-7 p-0 rounded-lg text-slate-300 hover:text-amber-500 hover:bg-amber-50 shrink-0"
+                                                                    className="h-7 w-7 p-0 rounded-lg text-slate-500 hover:text-amber-500 hover:bg-amber-50 shrink-0"
                                                                 >
                                                                     <Edit2 size={12} />
                                                                 </Button>
@@ -532,7 +532,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                                     size="sm" 
                                                                     variant="ghost"
                                                                     onClick={() => handleDeleteAddress(customer.id, i)}
-                                                                    className="h-7 w-7 p-0 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 shrink-0"
+                                                                    className="h-7 w-7 p-0 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-50 shrink-0"
                                                                 >
                                                                     <Trash2 size={12} />
                                                                 </Button>
@@ -546,7 +546,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                         size="sm" 
                                                         variant="ghost"
                                                         onClick={() => toggleAddingAddress(customer.id)}
-                                                        className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50"
+                                                        className="h-8 w-8 p-0 rounded-lg text-slate-500 hover:text-blue-500 hover:bg-blue-50"
                                                     >
                                                         <Plus size={16} />
                                                     </Button>
@@ -554,7 +554,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                                         size="sm" 
                                                         variant="ghost"
                                                         onClick={() => handleCounterSale(customer)}
-                                                        className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-emerald-500 hover:bg-emerald-50"
+                                                        className="h-8 w-8 p-0 rounded-lg text-slate-500 hover:text-emerald-500 hover:bg-emerald-50"
                                                     >
                                                         <Store size={16} />
                                                     </Button>
@@ -594,8 +594,8 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                                 </div>
                             ) : searchTerm.length >= 3 ? (
                                 <div className="py-12 px-6 text-center">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3"><Info className="text-slate-300" size={20} /></div>
-                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest italic">Nenhum registro encontrado</p>
+                                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3"><Info className="text-slate-500" size={20} /></div>
+                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest italic">Nenhum registro encontrado</p>
                                     <Button onClick={toggleCreatingCustomer} className="mt-4 h-9 bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase italic shadow-lg shadow-blue-500/20">Cadastrar "{searchTerm}"</Button>
                                 </div>
                             ) : (
@@ -617,21 +617,21 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({ 
                             <h3 className="text-xs font-black text-slate-900 uppercase italic flex items-center gap-2">
                                 <UserPlus size={14} className="text-blue-500" /> Novo Cliente
                             </h3>
-                            {isCreatingCustomer && <button onClick={toggleCreatingCustomer} className="lg:hidden text-slate-400"><X size={18}/></button>}
+                            {isCreatingCustomer && <button onClick={toggleCreatingCustomer} className="lg:hidden text-slate-500"><X size={18}/></button>}
                         </div>
                         
                         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1">
                             <div className="space-y-1">
-                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Nome Completo</label>
                                 <input className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold focus:border-blue-500 outline-none" value={newCustomer.name} onChange={handleCustomerNameChange} />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp / Fone</label>
+                                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">WhatsApp / Fone</label>
                                 <input className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold" value={newCustomer.phone} onChange={handleCustomerPhoneChange} />
                             </div>
 
                             <div className="pt-4 border-t border-slate-200">
-                                <h4 className="text-[9px] font-black text-slate-400 uppercase mb-3 flex items-center gap-2 italic">Endereço de Entrega</h4>
+                                <h4 className="text-[9px] font-black text-slate-500 uppercase mb-3 flex items-center gap-2 italic">Endereço de Entrega</h4>
                                 <AddressForm address={newAddress} onChange={handleAddressChange} compact />
                             </div>
                         </div>

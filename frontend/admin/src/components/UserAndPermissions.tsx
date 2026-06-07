@@ -84,7 +84,7 @@ const UserAndPermissions: React.FC = () => {
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
               Equipe <span className="text-primary">& Acessos</span>
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
               Gestão Individual de Permissões
             </p>
           </div>
@@ -98,7 +98,7 @@ const UserAndPermissions: React.FC = () => {
       {/* Search & Filter Bar */}
       <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div className="relative flex-1 w-full md:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input 
             type="text" 
             placeholder="Buscar colaborador..." 
@@ -107,14 +107,14 @@ const UserAndPermissions: React.FC = () => {
             className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-rose-500">
               <X size={14} />
             </button>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter size={14} className="text-slate-400" />
+          <Filter size={14} className="text-slate-500" />
           <select 
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -135,7 +135,7 @@ const UserAndPermissions: React.FC = () => {
           </span>
         </div>
 
-        <Button variant="ghost" size="sm" onClick={fetchData} className="text-slate-400 hover:text-orange-500">
+        <Button variant="ghost" size="sm" onClick={fetchData} className="text-slate-500 hover:text-orange-500">
           <RefreshCw size={14} className={cn(isLoading && "animate-spin")} />
         </Button>
       </div>
@@ -145,7 +145,7 @@ const UserAndPermissions: React.FC = () => {
         <Card className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none">
           <div className="flex items-center gap-2 mb-2">
             <Users size={14} className="text-orange-400" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Equipe</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Total Equipe</span>
           </div>
           <p className="text-2xl font-black italic tracking-tighter">{users.length}</p>
           <div className="flex items-center gap-1 mt-1">
@@ -156,39 +156,39 @@ const UserAndPermissions: React.FC = () => {
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <Award size={14} className="text-blue-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Com Cargo</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Com Cargo</span>
           </div>
           <p className="text-2xl font-black italic tracking-tighter text-blue-600">
             {users.filter(u => u.roleId).length}
           </p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">com role definida</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">com role definida</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert size={14} className="text-purple-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Personalizados</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Personalizados</span>
           </div>
           <p className="text-2xl font-black italic tracking-tighter text-purple-600">
             {users.filter(u => !u.roleId).length}
           </p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">permissão manual</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">permissão manual</span>
           </div>
         </Card>
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
             <UserPlus size={14} className="text-emerald-500" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Permissões</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Permissões</span>
           </div>
           <p className="text-2xl font-black italic tracking-tighter text-emerald-600">
             {users.reduce((acc, u) => acc + (u.allPermissions?.length || 0), 0)}
           </p>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[7px] font-bold text-slate-400 uppercase">total concedidas</span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase">total concedidas</span>
           </div>
         </Card>
       </div>
@@ -216,7 +216,7 @@ const UserAndPermissions: React.FC = () => {
                       </div>
 
                       <div className="flex justify-between items-start mb-4 relative z-10">
-                          <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white transition-all shadow-sm">
+                          <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 group-hover:bg-orange-500 group-hover:text-white transition-all shadow-sm">
                               <User size={24} />
                           </div>
                           <div className="flex flex-col items-end">
@@ -231,7 +231,7 @@ const UserAndPermissions: React.FC = () => {
                       
                       <div className="relative z-10">
                         <h4 className="font-black text-slate-900 uppercase italic tracking-tighter text-lg mb-1">{u.name}</h4>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase truncate mb-6">{u.email}</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase truncate mb-6">{u.email}</p>
                       </div>
                       
                       <div className="flex gap-2 pt-4 border-t border-slate-50 relative z-10">
@@ -248,7 +248,7 @@ const UserAndPermissions: React.FC = () => {
 
               <button 
                 onClick={() => navigate('/users/new')}
-                className="p-6 border-2 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center gap-4 text-slate-300 hover:border-orange-500/20 hover:text-orange-500 transition-all bg-slate-50/30 group"
+                className="p-6 border-2 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center gap-4 text-slate-500 hover:border-orange-500/20 hover:text-orange-500 transition-all bg-slate-50/30 group"
               >
                 <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-current flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Plus size={24} />
@@ -259,9 +259,9 @@ const UserAndPermissions: React.FC = () => {
       ) : (
           <Card className="p-16 text-center border-2 border-dashed border-slate-200 bg-slate-50/30">
             <div className="flex flex-col items-center opacity-40">
-              <Users size={64} strokeWidth={1} className="text-slate-400/40 mb-4" />
-              <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] italic">Nenhum colaborador</h3>
-              <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">
+              <Users size={64} strokeWidth={1} className="text-slate-500/40 mb-4" />
+              <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] italic">Nenhum colaborador</h3>
+              <p className="text-[9px] font-bold text-slate-500 uppercase mt-2">
                 {searchQuery || roleFilter !== 'all' ? 'Tente ajustar os filtros' : 'Adicione um novo membro à equipe'}
               </p>
             </div>

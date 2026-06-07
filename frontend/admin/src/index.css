@@ -71,7 +71,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 24.6 95% 45%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     --z-dropdown: 50;
     --z-overlay: 100;
@@ -213,7 +213,7 @@
 .ui-modal-content {
   position: relative;
   background-card: hsl(var(--card));
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   border: 1px solid hsl(var(--border));
   max-height: calc(100vh - 2rem);

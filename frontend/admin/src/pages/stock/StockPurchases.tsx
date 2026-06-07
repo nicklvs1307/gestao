@@ -371,7 +371,7 @@ const StockPurchases: React.FC = () => {
                                                         <td className="px-6 py-3 text-right">
                                                             <button 
                                                                 type="button" onClick={() => handleRemoveItem(index)}
-                                                                className="w-8 h-8 rounded-lg text-muted-foreground/60 hover:text-rose-500 transition-colors"
+                                                                className="w-8 h-8 rounded-lg text-muted-foreground hover:text-rose-500 transition-colors"
                                                             >
                                                                 <Trash2 size={16} />
                                                             </button>

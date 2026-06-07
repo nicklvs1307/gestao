@@ -218,7 +218,7 @@ const StockFichasTecnicas: React.FC = () => {
       {/* Search */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
           <Input
             placeholder="Buscar ficha técnica..."
             value={searchTerm}
@@ -313,7 +313,7 @@ const StockFichasTecnicas: React.FC = () => {
 
         {fichas.length === 0 && (
           <div className="col-span-full text-center py-12 text-slate-500">
-            <ChefHat size={48} className="mx-auto mb-4 text-slate-300" />
+            <ChefHat size={48} className="mx-auto mb-4 text-slate-500" />
             <p className="font-medium">Nenhuma ficha técnica encontrada</p>
             <p className="text-sm mt-1">Clique em "Nova Ficha" para começar</p>
           </div>
@@ -338,10 +338,10 @@ const StockFichasTecnicas: React.FC = () => {
                   <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                     {editingFicha ? 'Editar Ficha Técnica' : 'Nova Ficha Técnica'}
                   </h3>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Composição do Prato</p>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Composição do Prato</p>
                 </div>
               </div>
-              <button onClick={() => { setIsCreating(false); setEditingFicha(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
+              <button onClick={() => { setIsCreating(false); setEditingFicha(null); }} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm border border-slate-200 transition-all hover:rotate-90">
                 <X size={20} />
               </button>
             </header>
@@ -349,23 +349,23 @@ const StockFichasTecnicas: React.FC = () => {
             <div className="p-8 space-y-6 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome *</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Nome *</label>
                   <input className="ui-input w-full h-12 text-sm font-bold uppercase" placeholder="Ex: Hambúrguer Clássico" value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Descrição</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Descrição</label>
                   <input className="ui-input w-full h-12 text-sm font-bold" placeholder="Descrição opcional" value={formData.description || ''} onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Rendimento (porções)</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Rendimento (porções)</label>
                 <input type="number" min="1" className="ui-input w-full h-12 text-sm font-bold" value={formData.yieldAmount} onChange={e => setFormData(prev => ({ ...prev, yieldAmount: Number(e.target.value) || 1 }))} />
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 flex items-center gap-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 flex items-center gap-2">
                     <Package size={14} className="text-slate-500" /> Ingredientes *
                   </label>
                   <button type="button" onClick={addIngredient} className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 tracking-widest flex items-center gap-1.5">
@@ -382,7 +382,7 @@ const StockFichasTecnicas: React.FC = () => {
                           {availableIngredients.map(ing => <option key={ing.id} value={ing.id}>{ing.name} (R$ {ing.averageCost.toFixed(2)}/{ing.unit})</option>)}
                         </select>
                         <input type="number" min="0" step="0.01" value={item.quantity} onChange={e => updateIngredient(index, 'quantity', Number(e.target.value) || 0)} className="ui-input w-20 h-10 text-xs font-bold text-center bg-white border-slate-200" placeholder="Qtd" />
-                        <button type="button" onClick={() => removeIngredient(index)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors flex items-center justify-center">
+                        <button type="button" onClick={() => removeIngredient(index)} className="w-8 h-8 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-colors flex items-center justify-center">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -391,18 +391,18 @@ const StockFichasTecnicas: React.FC = () => {
                 </div>
 
                 {formData.ingredients.length === 0 && (
-                  <p className="text-sm text-slate-400 text-center py-6 italic">Nenhum ingrediente adicionado</p>
+                  <p className="text-sm text-slate-500 text-center py-6 italic">Nenhum ingrediente adicionado</p>
                 )}
               </div>
 
               {formData.ingredients.length > 0 && (
                 <div className="bg-slate-50 rounded-2xl p-4 space-y-2 border border-slate-100">
                   <div className="flex justify-between text-sm">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Custo Total</span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Custo Total</span>
                     <span className="text-xl font-black italic tracking-tighter text-slate-900">R$ {calcTotalCost().toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Custo por Porção</span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Custo por Porção</span>
                     <span className="text-lg font-black italic tracking-tighter text-slate-900">R$ {calcCostPerUnit().toFixed(2)}</span>
                   </div>
                 </div>

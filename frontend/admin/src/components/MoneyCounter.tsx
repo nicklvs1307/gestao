@@ -77,12 +77,12 @@ const MoneyCounter: React.FC<MoneyCounterProps> = memo(({ isOpen, onClose, onCon
                             </div>
                             <div>
                                 <h3 className="text-base font-black text-slate-900 uppercase tracking-tighter italic">Conferência de Numerário</h3>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] leading-none mt-1">Contagem física de cédulas e moedas</p>
+                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] leading-none mt-1">Contagem física de cédulas e moedas</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={handleClearClick} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Limpar Tudo"><Trash2 size={18}/></button>
-                            <button onClick={handleCloseClick} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><X size={22}/></button>
+                            <button onClick={handleClearClick} className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Limpar Tudo"><Trash2 size={18}/></button>
+                            <button onClick={handleCloseClick} className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><X size={22}/></button>
                         </div>
                     </header>
 
@@ -167,7 +167,7 @@ const MoneyCounter: React.FC<MoneyCounterProps> = memo(({ isOpen, onClose, onCon
                         <div className="mt-6 p-4 bg-slate-900 rounded-xl text-white">
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Total de Unidades</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase">Total de Unidades</p>
                                     <p className="text-lg font-black">{Object.values(counts).reduce((a, b) => a + (b || 0), 0)}</p>
                                 </div>
                                 <div className="text-right">

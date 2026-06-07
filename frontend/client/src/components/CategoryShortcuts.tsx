@@ -29,7 +29,7 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ categories, activ
         onClick={() => onCategoryClick('todos')}
         className="flex flex-col items-center gap-2 min-w-[70px]"
       >
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-sm ${activeCategory === 'todos' ? 'bg-primary text-white shadow-primary/20 scale-110' : 'bg-white text-slate-400 border border-slate-100'}`}>
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-sm ${activeCategory === 'todos' ? 'bg-primary text-white shadow-primary/20 scale-110' : 'bg-white text-slate-500 border border-slate-100'}`}>
           <LucideIcons.LayoutGrid size={28} />
         </div>
         <span className={`text-[10px] font-black uppercase tracking-tighter ${activeCategory === 'todos' ? 'text-primary' : 'text-slate-500'}`}>Início</span>
@@ -46,7 +46,7 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ categories, activ
             onClick={() => onCategoryClick(cat.id)}
             className="flex flex-col items-center gap-2 min-w-[70px]"
           >
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-sm ${activeCategory === cat.id ? 'bg-primary text-white shadow-primary/20 scale-110' : 'bg-white text-slate-400 border border-slate-100'}`}>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-sm ${activeCategory === cat.id ? 'bg-primary text-white shadow-primary/20 scale-110' : 'bg-white text-slate-500 border border-slate-100'}`}>
               <Icon size={28} />
             </div>
             <span className={`text-[10px] font-black uppercase tracking-tighter line-clamp-1 text-center w-full ${activeCategory === cat.id ? 'text-primary' : 'text-slate-500'}`}>

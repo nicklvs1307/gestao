@@ -257,7 +257,7 @@ const TopbarAdmin: React.FC<TopbarAdminProps> = ({ title, onMenuClick }) => {
                             {displayLogo ? (
                                 <img src={displayLogo.startsWith('http') ? displayLogo : `/api${displayLogo}`} alt="Empresa" className="w-full h-full object-cover" />
                             ) : (
-                                <Building2 size={20} className="text-muted-foreground/40" />
+                                <Building2 size={20} className="text-muted-foreground" />
                             )}
                         </div>
                         <ChevronDown size={14} className={cn("text-muted-foreground transition-transform mr-1", isProfileOpen && "rotate-180")} />

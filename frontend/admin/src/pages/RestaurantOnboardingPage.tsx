@@ -96,7 +96,7 @@ const RestaurantOnboardingPage: React.FC = () => {
                                 <h1 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
                                     Onboarding Unidade
                                 </h1>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
                                     Provisionamento de Loja e Admin
                                 </p>
                             </div>
@@ -132,7 +132,7 @@ const RestaurantOnboardingPage: React.FC = () => {
                                     placeholder="unidade-centro"
                                 />
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">
                                         Plano do Contrato
                                     </label>
                                     <select 
@@ -153,7 +153,7 @@ const RestaurantOnboardingPage: React.FC = () => {
                                     onChange={e => setFormData({...formData, restaurantExpiresAt: e.target.value})}
                                 />
                                 <div className="md:col-span-2 space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">
                                         Franquia Vinculada (Opcional)
                                     </label>
                                     <select 
@@ -210,7 +210,7 @@ const RestaurantOnboardingPage: React.FC = () => {
                         <Button 
                             variant="ghost" 
                             onClick={() => navigate('/super-admin/restaurants')}
-                            className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400"
+                            className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-500"
                         >
                             CANCELAR
                         </Button>

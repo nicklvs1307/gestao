@@ -128,7 +128,7 @@ const PAGE_TITLES: Record<string, string> = {
 const PageLoader = () => (
   <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
     <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Carregando módulo...</p>
+    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Carregando módulo...</p>
   </div>
 );
 
@@ -265,7 +265,7 @@ function ChecklistFillWrapper() {
             <span>!</span>
           </div>
           <h2 className="text-lg font-black text-slate-900 uppercase italic mb-2">Algo deu errado</h2>
-          <p className="text-xs text-slate-400 font-bold uppercase max-w-md text-center mb-6">
+          <p className="text-xs text-slate-500 font-bold uppercase max-w-md text-center mb-6">
             Ocorreu um erro ao processar o checklist. Seu rascunho foi salvo automaticamente.
           </p>
           <button

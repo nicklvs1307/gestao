@@ -91,14 +91,14 @@ const ActiveOrdersModal: React.FC<ActiveOrdersModalProps> = memo(({
                   <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight">
                     Pedidos Ativos
                   </h3>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                     Pedidos em andamento que impedem o fechamento
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 transition-all"
+                className="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-amber-50 hover:text-amber-500 transition-all"
               >
                 <X size={20} />
               </button>
@@ -128,11 +128,11 @@ const ActiveOrdersModal: React.FC<ActiveOrdersModalProps> = memo(({
                           {orderLabel}
                         </h4>
                         <div className="flex items-center gap-3 mt-2">
-                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-500 uppercase tracking-widest">
                             <Clock size={10} />
                             {formatSP(order.createdAt, 'HH:mm')}
                           </span>
-                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span className="flex items-center gap-1 text-[8px] font-bold text-slate-500 uppercase tracking-widest">
                             <User size={10} />
                             {order.user?.name?.split(' ')[0] || 'ADMIN'}
                           </span>
@@ -163,7 +163,7 @@ const ActiveOrdersModal: React.FC<ActiveOrdersModalProps> = memo(({
           <footer className="p-5 bg-white border-t border-slate-100 flex flex-col gap-4">
             <div className="p-5 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl text-white flex justify-between items-center shadow-xl">
               <div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   Total Pendente
                 </span>
               </div>
@@ -172,7 +172,7 @@ const ActiveOrdersModal: React.FC<ActiveOrdersModalProps> = memo(({
               </span>
             </div>
             
-            <p className="text-xs text-slate-400 font-bold uppercase text-center tracking-widest leading-relaxed">
+            <p className="text-xs text-slate-500 font-bold uppercase text-center tracking-widest leading-relaxed">
               Finalize ou cancele esses pedidos antes de fechar o caixa.
             </p>
             

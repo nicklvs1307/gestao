@@ -62,7 +62,7 @@ const StockDashboard: React.FC = () => {
                         <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Ativo Circulante</span>
                     </div>
                     <div className="mt-4">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Valor em Almoxarifado</p>
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Valor em Almoxarifado</p>
                         <h3 className="text-2xl font-black text-slate-900 italic tracking-tighter leading-none">
                             R$ {stats.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </h3>
@@ -77,7 +77,7 @@ const StockDashboard: React.FC = () => {
                         <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Ruptura</span>
                     </div>
                     <div className="mt-4">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Itens em Alerta Crítico</p>
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Itens em Alerta Crítico</p>
                         <h3 className="text-2xl font-black text-rose-600 italic tracking-tighter leading-none">
                             {stats.criticalItems.length} SKUs
                         </h3>
@@ -92,7 +92,7 @@ const StockDashboard: React.FC = () => {
                         <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Giro</span>
                     </div>
                     <div className="mt-4">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Eficiência de Compra</p>
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Eficiência de Compra</p>
                         <h3 className="text-2xl font-black text-emerald-600 italic tracking-tighter leading-none">94%</h3>
                     </div>
                 </Card>
@@ -102,10 +102,10 @@ const StockDashboard: React.FC = () => {
                         <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center">
                             <Archive size={20} />
                         </div>
-                        <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Mix</span>
+                        <span className="text-[10px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Mix</span>
                     </div>
                     <div className="mt-4">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Mix de Insumos Ativos</p>
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Mix de Insumos Ativos</p>
                         <h3 className="text-2xl font-black text-slate-900 italic tracking-tighter leading-none">
                             {stats.activeIngredients} Itens
                         </h3>
@@ -128,19 +128,19 @@ const StockDashboard: React.FC = () => {
                         <table className="w-full text-left">
                             <tbody className="divide-y divide-slate-50">
                                 {stats.criticalItems.length === 0 ? (
-                                    <tr><td className="p-10 text-center text-slate-400 font-bold italic text-xs uppercase tracking-widest">Estoque saudável. Sem rupturas.</td></tr>
+                                    <tr><td className="p-10 text-center text-slate-500 font-bold italic text-xs uppercase tracking-widest">Estoque saudável. Sem rupturas.</td></tr>
                                 ) : stats.criticalItems.map((item: any) => (
                                     <tr key={item.id} className="hover:bg-rose-50/30 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
                                                 <span className="text-[11px] font-black text-slate-900 uppercase italic tracking-tighter">{item.name}</span>
-                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Estoque Atual: {item.stock} {item.unit}</span>
+                                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Estoque Atual: {item.stock} {item.unit}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex flex-col items-end">
                                                 <span className="text-[9px] font-black text-rose-600 uppercase tracking-widest bg-rose-100 px-2 py-0.5 rounded-full">Falta: {(item.minStock || 0) - item.stock} {item.unit}</span>
-                                                <span className="text-[8px] font-bold text-slate-400 uppercase mt-1 italic">Mínimo: {item.minStock}</span>
+                                                <span className="text-[8px] font-bold text-slate-500 uppercase mt-1 italic">Mínimo: {item.minStock}</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -166,7 +166,7 @@ const StockDashboard: React.FC = () => {
                         <table className="w-full text-left">
                             <tbody className="divide-y divide-slate-50">
                                 {stats.recentMoves.length === 0 ? (
-                                    <tr><td className="p-10 text-center text-slate-400 font-bold italic text-xs uppercase tracking-widest">Nenhuma movimentação registrada hoje.</td></tr>
+                                    <tr><td className="p-10 text-center text-slate-500 font-bold italic text-xs uppercase tracking-widest">Nenhuma movimentação registrada hoje.</td></tr>
                                 ) : stats.recentMoves.map((move: any) => (
                                     <tr key={move.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4">
@@ -179,7 +179,7 @@ const StockDashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="text-[10px] font-black text-slate-900 uppercase italic tracking-tighter">{move.ingredient?.name || 'Insumo'}</span>
-                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date(move.createdAt).toLocaleString()}</span>
+                                                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{new Date(move.createdAt).toLocaleString()}</span>
                                                 </div>
                                             </div>
                                         </td>

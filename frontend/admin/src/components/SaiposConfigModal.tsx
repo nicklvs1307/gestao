@@ -101,10 +101,10 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                 </div>
                 <div>
                     <h3 className="text-base font-black text-slate-900 italic uppercase tracking-tighter leading-none">Configurar Saipos</h3>
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sincronização de Pedidos</p>
+                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sincronização de Pedidos</p>
                 </div>
             </div>
-            <button onClick={onClose} className="w-8 h-8 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
+            <button onClick={onClose} className="w-8 h-8 bg-slate-50 text-slate-500 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
                 <X size={18} />
             </button>
         </div>
@@ -133,14 +133,14 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                     <Input label="Cód. Loja (Saipos)" value={codStore} onChange={e => setCodStore(e.target.value)} placeholder="Ex: store_99" required />
                     
                     <div className="space-y-1.5">
-                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1 italic">Ambiente</label>
+                        <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1 italic">Ambiente</label>
                         <div className="flex p-1 bg-white border border-slate-200 rounded-xl gap-1 h-11">
                             <button 
                                 type="button" 
                                 onClick={() => setEnv('homologation')}
                                 className={cn(
                                     "flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all flex items-center justify-center gap-1.5",
-                                    env === 'homologation' ? "bg-amber-500 text-white shadow-md" : "text-slate-400 hover:bg-slate-50"
+                                    env === 'homologation' ? "bg-amber-500 text-white shadow-md" : "text-slate-500 hover:bg-slate-50"
                                 )}
                             >
                                 <TestTube size={12} /> Teste
@@ -150,7 +150,7 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                                 onClick={() => setEnv('production')}
                                 className={cn(
                                     "flex-1 py-1 rounded-lg text-[8px] font-black uppercase transition-all flex items-center justify-center gap-1.5",
-                                    env === 'production' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:bg-slate-50"
+                                    env === 'production' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:bg-slate-50"
                                 )}
                             >
                                 <Globe size={12} /> Real
@@ -168,12 +168,12 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                     onClick={() => setIsActive(!isActive)}
                 >
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-sm", isActive ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400")}>
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-sm", isActive ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500")}>
                             <RefreshCw size={16} className={isActive ? "animate-spin-slow" : ""} />
                         </div>
                         <div>
                             <p className="text-xs font-black text-slate-900 uppercase italic leading-none mb-1">Status da Integração</p>
-                            <span className={cn("text-[8px] font-black uppercase tracking-widest", isActive ? "text-emerald-600" : "text-slate-400")}>{isActive ? 'TRANSMISSÃO ATIVA' : 'SINCRO PAUSADO'}</span>
+                            <span className={cn("text-[8px] font-black uppercase tracking-widest", isActive ? "text-emerald-600" : "text-slate-500")}>{isActive ? 'TRANSMISSÃO ATIVA' : 'SINCRO PAUSADO'}</span>
                         </div>
                     </div>
                     <div className={cn("w-10 h-5 rounded-full relative transition-all", isActive ? "bg-emerald-500" : "bg-slate-200")}>
@@ -200,14 +200,14 @@ const SaiposConfigModal: React.FC<SaiposConfigModalProps> = ({ onClose }) => {
                         <DownloadCloud size={20} />
                         FAZER UPLOAD DA PLANILHA
                     </Button>
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center mt-3 leading-tight">
+                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest text-center mt-3 leading-tight">
                         Selecione a planilha Excel de códigos Saipos para cadastrar itens automaticamente.
                     </p>
                 </div>
             </form>
 
             <footer className="px-6 py-4 bg-white border-t border-slate-100 flex gap-3 shrink-0">
-                <Button variant="ghost" onClick={onClose} className="flex-1 h-10 rounded-lg font-black uppercase text-[9px] tracking-widest text-slate-400" disabled={isSaving || isImporting}>DESCARTAR</Button>
+                <Button variant="ghost" onClick={onClose} className="flex-1 h-10 rounded-lg font-black uppercase text-[9px] tracking-widest text-slate-500" disabled={isSaving || isImporting}>DESCARTAR</Button>
                 <Button type="submit" form="saipos-form" isLoading={isSaving} className="flex-[2] h-10 rounded-lg shadow-md uppercase tracking-widest italic font-black text-[10px]" disabled={isImporting}>
                     SALVAR CREDENCIAIS
                 </Button>

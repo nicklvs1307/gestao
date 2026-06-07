@@ -79,7 +79,7 @@ const LoginPage: React.FC = () => {
                 <h3 className="text-6xl font-black italic tracking-tighter uppercase leading-[0.9] mb-8">
                     Gestão <span className="text-primary">Elite</span> para o seu Restaurante.
                 </h3>
-                <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md">
+                <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-md">
                     Controle pedidos, estoque, financeiro e delivery em uma plataforma única, robusta e ultra-veloz.
                 </p>
                 <div className="flex gap-10 mt-12">
@@ -109,7 +109,7 @@ const LoginPage: React.FC = () => {
                     <img src={logoImg} alt="Kicardapio" className="w-full h-full object-contain" />
                 </div>
                 <h1 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">Acessar Painel</h1>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-3">Bem-vindo à nova era da sua gestão</p>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.2em] mt-3">Bem-vindo à nova era da sua gestão</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -156,7 +156,7 @@ const LoginPage: React.FC = () => {
             </form>
 
             <div className="mt-16 text-center lg:text-left">
-                <p className="text-slate-300 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
                     &copy; 2026 Kicardapio System<br/>
                     Tecnologia de ponta para gastronomia.
                 </p>

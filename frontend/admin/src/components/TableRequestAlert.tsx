@@ -58,7 +58,7 @@ const TableRequestAlert: React.FC<TableRequestAlertProps> = ({ requests, onResol
                             <span className="bg-slate-900 text-white text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">
                                 MESA {req.tableNumber}
                             </span>
-                            <span className="text-slate-400 text-[8px] font-bold flex items-center gap-1">
+                            <span className="text-slate-500 text-[8px] font-bold flex items-center gap-1">
                                 <Clock size={10} /> {(() => {
                                     try {
                                         return formatSP(req.createdAt, "HH:mm");

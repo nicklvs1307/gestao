@@ -103,7 +103,7 @@ const FeaturedGrid: React.FC<FeaturedGridProps> = ({ products, onProductClick })
                   <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-tight line-clamp-1 leading-tight mb-0.5">
                     {product.name}
                   </h4>
-                  <p className="text-[10px] text-slate-400 font-medium line-clamp-1 leading-none">
+                  <p className="text-[10px] text-slate-500 font-medium line-clamp-1 leading-none">
                     {product.description}
                   </p>
                 </div>

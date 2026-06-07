@@ -77,10 +77,10 @@ const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose, order, onR
                 </div>
                 <div>
                     <h2 className="text-lg font-black text-slate-900 italic uppercase tracking-tighter">Extrato da Mesa</h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Mesa {order?.tableNumber || '?'}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Mesa {order?.tableNumber || '?'}</p>
                 </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-full transition-all">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-900 rounded-full transition-all">
                 <X size={24} />
             </button>
         </div>
@@ -94,7 +94,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose, order, onR
                 </div>
             ) : (
                 <>
-                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 mb-2">
+                    <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-2">
                         <CheckCircle2 size={12} className="text-emerald-500" /> Itens Servidos
                     </h3>
                     <div className="space-y-3">
@@ -139,12 +139,12 @@ const AccountModal: React.FC<AccountModalProps> = ({ isOpen, onClose, order, onR
         {/* Resumo e Ações */}
         <div className="bg-white border-t border-slate-200 p-6 space-y-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] shrink-0">
             <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-tighter">
                     <span>Subtotal</span>
                     <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
                 </div>
                 {serviceTaxPercentage > 0 && (
-                    <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                    <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-tighter">
                         <span>Taxa de Serviço ({serviceTaxPercentage}%)</span>
                         <span>R$ {serviceFee.toFixed(2).replace('.', ',')}</span>
                     </div>

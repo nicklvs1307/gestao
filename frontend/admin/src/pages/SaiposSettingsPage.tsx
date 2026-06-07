@@ -123,7 +123,7 @@ const SaiposSettingsPage: React.FC = () => {
                 {isActive ? 'Conectado' : 'Desativado'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Gestão de Restaurante</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Gestão de Restaurante</p>
           </div>
         </div>
       </div>
@@ -140,7 +140,7 @@ const SaiposSettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Credenciais da API</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Partner ID, Secret e Código da Loja</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Partner ID, Secret e Código da Loja</p>
                 </div>
               </div>
             </div>
@@ -222,12 +222,12 @@ const SaiposSettingsPage: React.FC = () => {
                 </button>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-slate-700">Ativar Integração Saipos</p>
-                  <p className="text-[10px] text-slate-400">Sincronizar pedidos e estoque</p>
+                  <p className="text-[10px] text-slate-500">Sincronizar pedidos e estoque</p>
                 </div>
                 {isActive ? (
                   <CheckCircle size={20} className="text-emerald-500" />
                 ) : (
-                  <XCircle size={20} className="text-slate-400" />
+                  <XCircle size={20} className="text-slate-500" />
                 )}
               </div>
 
@@ -253,7 +253,7 @@ const SaiposSettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-black text-slate-900 uppercase text-sm tracking-tight">Importar Cardápio</h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Upload de arquivo .xlsx</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Upload de arquivo .xlsx</p>
                 </div>
               </div>
             </div>
@@ -270,7 +270,7 @@ const SaiposSettingsPage: React.FC = () => {
               </div>
 
               <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition-colors">
-                <FileSpreadsheet size={40} className="mx-auto text-slate-300 mb-3" />
+                <FileSpreadsheet size={40} className="mx-auto text-slate-500 mb-3" />
                 <p className="text-sm text-slate-500 mb-4 font-medium">
                   {selectedFile ? selectedFile.name : 'Arraste o arquivo aqui ou clique para selecionar'}
                 </p>
@@ -358,7 +358,7 @@ const SaiposSettingsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Partner ID</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                  partnerId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                  partnerId ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   {partnerId ? 'Configurado' : 'Pendente'}
                 </span>
@@ -366,7 +366,7 @@ const SaiposSettingsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Secret</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                  secret ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                  secret ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   {secret ? 'Configurado' : 'Pendente'}
                 </span>
@@ -374,7 +374,7 @@ const SaiposSettingsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Loja</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                  codStore ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                  codStore ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   {codStore || 'Pendente'}
                 </span>
@@ -382,7 +382,7 @@ const SaiposSettingsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Integração</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                  isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                  isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   {isActive ? 'Ativa' : 'Inativa'}
                 </span>

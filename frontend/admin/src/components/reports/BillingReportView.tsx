@@ -142,13 +142,13 @@ const BillingReportView: React.FC = () => {
                 grid: { color: '#f1f5f9' },
                 ticks: { 
                     font: { size: 10, weight: 'bold' as const }, 
-                    color: '#94a3b8',
+                    color: '#64748b',
                     callback: (value: any) => `R$ ${value.toLocaleString('pt-BR')}`
                 }
             },
             x: { 
                 grid: { display: false }, 
-                ticks: { font: { size: 10, weight: 'bold' as const }, color: '#94a3b8' } 
+                ticks: { font: { size: 10, weight: 'bold' as const }, color: '#64748b' } 
             }
         }
     };
@@ -187,13 +187,13 @@ const BillingReportView: React.FC = () => {
             {/* Filtros de Tipo de Pedido */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex flex-wrap items-center gap-4">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tipos:</span>
+                    <span className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Tipos:</span>
                     {['DELIVERY', 'PICKUP', 'TABLE'].map(type => (
                         <button
                             key={type}
                             onClick={() => toggleOrderType(type)}
                             className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border transition-all",
+                                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase border transition-all",
                                 orderTypes.includes(type)
                                     ? "bg-orange-500 text-white border-orange-500"
                                     : "bg-white text-slate-500 border-slate-200 hover:border-orange-300"
@@ -208,13 +208,13 @@ const BillingReportView: React.FC = () => {
                     
                     <span className="text-slate-200">|</span>
                     
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Excluir dias:</span>
+                    <span className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Excluir dias:</span>
                     {dayNames.map(day => (
                         <button
                             key={day.value}
                             onClick={() => toggleExcludeDay(day.value)}
                             className={cn(
-                                "w-8 h-8 rounded-lg text-[9px] font-black uppercase border transition-all",
+                                "w-8 h-8 rounded-lg text-[11px] font-semibold uppercase border transition-all",
                                 excludeDays.includes(day.value)
                                     ? "bg-rose-500 text-white border-rose-500"
                                     : "bg-white text-slate-500 border-slate-200 hover:border-rose-300"
@@ -297,13 +297,13 @@ const BillingReportView: React.FC = () => {
             {data?.daily?.length > 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Evolução do Faturamento</h4>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Evolução do Faturamento</h4>
                         <div className="h-[250px]">
                             {chartData && <Line data={chartData.line} options={chartOptions} />}
                         </div>
                     </div>
                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Por Dia da Semana</h4>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Por Dia da Semana</h4>
                         <div className="h-[250px]">
                             {chartData && <Bar data={chartData.bar} options={chartOptions} />}
                         </div>
@@ -314,23 +314,23 @@ const BillingReportView: React.FC = () => {
             {/* Tabela de Dados */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Detalhamento Diário</h4>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Detalhamento Diário</h4>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-3 py-2 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">Data</th>
-                                <th className="px-3 py-2 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">Dia</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Pedidos</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Vendas</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Acumulado</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Ticket</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Itens</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Taxa Entrega</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Acréscimos</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Descontos</th>
-                                <th className="px-3 py-2 text-right text-[9px] font-black uppercase text-slate-400 tracking-widest">Cancelados</th>
+                                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Data</th>
+                                <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Dia</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Pedidos</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Vendas</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Acumulado</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Ticket</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Itens</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Taxa Entrega</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Acréscimos</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Descontos</th>
+                                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Cancelados</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -338,37 +338,37 @@ const BillingReportView: React.FC = () => {
                                 data.daily.map((day: any, idx: number) => (
                                     <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-3 py-3">
-                                            <span className="text-[11px] font-black text-slate-900">{day.date}</span>
+                                            <span className="text-xs font-medium text-slate-900">{day.date}</span>
                                         </td>
                                         <td className="px-3 py-3">
-                                            <span className="text-[10px] font-bold uppercase text-slate-500">{day.dayName}</span>
+                                            <span className="text-[11px] font-medium uppercase text-slate-500">{day.dayName}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[11px] font-black text-slate-900">{day.orders}</span>
+                                            <span className="text-xs font-medium text-slate-900">{day.orders}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[11px] font-black text-emerald-600">R$ {day.revenue.toFixed(2)}</span>
+                                            <span className="text-xs font-medium text-emerald-600">R$ {day.revenue.toFixed(2)}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[10px] font-bold text-slate-600">R$ {day.accumulated.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                            <span className="text-xs font-medium text-slate-600">R$ {day.accumulated.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[10px] font-bold text-slate-500">R$ {day.avgTicket.toFixed(2)}</span>
+                                            <span className="text-xs font-medium text-slate-500">R$ {day.avgTicket.toFixed(2)}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[10px] font-bold text-slate-500">{day.itemsCount}</span>
+                                            <span className="text-xs font-medium text-slate-500">{day.itemsCount}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[10px] font-bold text-amber-600">R$ {day.deliveryFee.toFixed(2)}</span>
+                                            <span className="text-xs font-medium text-amber-600">R$ {day.deliveryFee.toFixed(2)}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[10px] font-bold text-cyan-600">R$ {day.extraCharge.toFixed(2)}</span>
+                                            <span className="text-xs font-medium text-cyan-600">R$ {day.extraCharge.toFixed(2)}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className="text-[10px] font-bold text-rose-600">R$ {day.discount.toFixed(2)}</span>
+                                            <span className="text-xs font-medium text-rose-600">R$ {day.discount.toFixed(2)}</span>
                                         </td>
                                         <td className="px-3 py-3 text-right">
-                                            <span className={cn("text-[10px] font-bold", day.canceledOrders > 0 ? "text-red-600" : "text-slate-400")}>
+                                            <span className={cn("text-xs font-medium", day.canceledOrders > 0 ? "text-red-600" : "text-slate-500")}>
                                                 {day.canceledOrders} (R$ {day.canceledRevenue.toFixed(2)})
                                             </span>
                                         </td>
