@@ -468,29 +468,110 @@ const ReportController = {
                 include: { product: { select: { name: true } } }
             });
 
+            const INTEGRACOES_KEY = '__integracoes__';
+
             const productStats = items.reduce((acc, item) => {
-                const id = item.productId;
+                const id = item.productId || INTEGRACOES_KEY;
+                const name = item.productId
+                    ? (item.product?.name || 'Produto removido')
+                    : (item.productName || 'Vendas de Integração');
+
                 if (!acc[id]) {
-                    acc[id] = { id, name: item.product?.name || 'Produto removido', totalRevenue: 0, totalQty: 0 };
+                    acc[id] = {
+                        id: item.productId || null,
+                        name,
+                        totalRevenue: 0,
+                        totalQty: 0,
+                        addons: {},
+                        flavors: {},
+                    };
                 }
-                acc[id].totalRevenue += (item.priceAtTime * item.quantity);
+
+                const itemRevenue = item.priceAtTime * item.quantity;
+                acc[id].totalRevenue += itemRevenue;
                 acc[id].totalQty += item.quantity;
+
+                // Parse addons do JSON
+                if (item.addonsJson) {
+                    try {
+                        const addons = typeof item.addonsJson === 'string'
+                            ? JSON.parse(item.addonsJson)
+                            : item.addonsJson;
+                        if (Array.isArray(addons)) {
+                            for (const addon of addons) {
+                                const addonName = addon.name || addon.groupName || 'Adicional';
+                                if (!acc[id].addons[addonName]) {
+                                    acc[id].addons[addonName] = { name: addonName, totalRevenue: 0, totalQty: 0 };
+                                }
+                                const addonRevenue = (addon.price || 0) * (addon.quantity || 1) * item.quantity;
+                                acc[id].addons[addonName].totalRevenue += addonRevenue;
+                                acc[id].addons[addonName].totalQty += (addon.quantity || 1) * item.quantity;
+                            }
+                        }
+                    } catch (e) { /* ignora JSON inválido */ }
+                }
+
+                // Parse sabores do JSON
+                if (item.flavorsJson) {
+                    try {
+                        const flavors = typeof item.flavorsJson === 'string'
+                            ? JSON.parse(item.flavorsJson)
+                            : item.flavorsJson;
+                        if (Array.isArray(flavors)) {
+                            for (const flavor of flavors) {
+                                const flavorName = flavor.name || 'Sabor';
+                                if (!acc[id].flavors[flavorName]) {
+                                    acc[id].flavors[flavorName] = { name: flavorName, totalRevenue: 0, totalQty: 0 };
+                                }
+                                const flavorRevenue = (flavor.price || 0) * item.quantity;
+                                acc[id].flavors[flavorName].totalRevenue += flavorRevenue;
+                                acc[id].flavors[flavorName].totalQty += item.quantity;
+                            }
+                        }
+                    } catch (e) { /* ignora JSON inválido */ }
+                }
+
                 return acc;
             }, {});
 
+            const INTEGRACOES = productStats[INTEGRACOES_KEY];
+            delete productStats[INTEGRACOES_KEY];
+
             const sortedProducts = Object.values(productStats).sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+            // Adiciona integrações como último item (se houver)
+            if (INTEGRACOES && INTEGRACOES.totalRevenue > 0) {
+                sortedProducts.push(INTEGRACOES);
+            }
+
             const totalGeneralRevenue = sortedProducts.reduce((sum, p) => sum + p.totalRevenue, 0);
 
             let accumulatedRevenue = 0;
             const abcData = sortedProducts.map((p) => {
                 accumulatedRevenue += p.totalRevenue;
                 const accumulatedPercentage = (accumulatedRevenue / (totalGeneralRevenue || 1)) * 100;
-                
+
                 let classification = 'C';
                 if (accumulatedPercentage <= 70) classification = 'A';
                 else if (accumulatedPercentage <= 90) classification = 'B';
 
-                return { ...p, percentage: (p.totalRevenue / (totalGeneralRevenue || 1)) * 100, accumulatedPercentage, classification };
+                // Converte breakdowns de objetos para arrays ordenados
+                const addonsBreakdown = Object.values(p.addons)
+                    .sort((a, b) => b.totalRevenue - a.totalRevenue);
+                const flavorsBreakdown = Object.values(p.flavors)
+                    .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+                return {
+                    id: p.id,
+                    name: p.name,
+                    totalRevenue: p.totalRevenue,
+                    totalQty: p.totalQty,
+                    percentage: (p.totalRevenue / (totalGeneralRevenue || 1)) * 100,
+                    accumulatedPercentage,
+                    classification,
+                    addonsBreakdown,
+                    flavorsBreakdown,
+                };
             });
 
             res.json({
