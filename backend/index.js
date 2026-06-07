@@ -195,6 +195,11 @@ app.post('/webhooks/99food', food99WebhookRateLimit, (req, res) => Food99Webhook
 app.get('/webhooks/99food/test', (req, res) => res.status(200).json({ status: 'ok' }));
 app.post('/webhooks/99food/test', (req, res) => res.status(200).json({ status: 'ok' }));
 
+// Webhook Asaas (Pagamento PIX)
+const asaasWebhookRouter = require('./src/webhooks/asaasWebhook');
+app.get('/webhooks/asaas', (req, res) => res.status(200).json({ status: 'ok' }));
+app.use('/webhooks/asaas', asaasWebhookRouter);
+
 // ==================================================================
 // ROTAS
 // ==================================================================
@@ -219,6 +224,7 @@ const driverRoutes = require('./src/routes/driverRoutes');
 const deliveryAreaRoutes = require('./src/routes/deliveryAreaRoutes');
 const paymentMethodRoutes = require('./src/routes/paymentMethodRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
+const asaasPaymentRoutes = require('./src/routes/asaasPaymentRoutes');
 const superAdminRoutes = require('./src/routes/superAdminRoutes');
 const franchiseRoutes = require('./src/routes/franchiseRoutes');
 const whatsappRoutes = require('./src/routes/whatsappRoutes');
@@ -268,6 +274,7 @@ app.use('/api/driver', driverRoutes);
 app.use('/api/delivery-areas', deliveryAreaRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/payments', asaasPaymentRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 // iFood: webhook é a fonte primária de eventos
 
@@ -296,7 +303,7 @@ app.get('/api/client/integration-settings/:restaurantId', needsAuth, async (req,
   try {
     const integrationSettings = await require('./src/lib/prisma').integrationSettings.findUnique({
       where: { restaurantId: req.params.restaurantId },
-      select: { id: true, saiposIntegrationActive: true, uairangoActive: true }
+      select: { id: true, saiposIntegrationActive: true, uairangoActive: true, asaasPixEnabled: true }
     });
     res.json(integrationSettings || {});
   } catch (error) {

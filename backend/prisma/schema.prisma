@@ -630,6 +630,13 @@ model IntegrationSettings {
   food99ReceiveCancelApply Int     @default(1) // 0=ignorar cancel_apply (CS da 99Food trata), 1=receber e notificar
   food99ReceiveRefundApply Int     @default(1) // 0=ignorar refund_apply, 1=receber e notificar
 
+  // === CAMPOS ASAAS (Pagamento PIX Online) ===
+  asaasApiKey        String?  // API Key do restaurante no Asaas (nunca expor no frontend)
+  asaasEnvironment   String   @default("sandbox") // "sandbox" ou "production"
+  asaasActive        Boolean  @default(false) // Integração ativa
+  asaasWebhookToken  String?  // Token para validar webhooks do Asaas (opcional)
+  asaasPixEnabled    Boolean  @default(false) // Habilitar PIX no cardápio digital
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1069,15 +1076,22 @@ model Order {
 }
 
 model Payment {
-  id        String   @id @default(cuid())
-  amount    Float
-  method    String // 'cash', 'credit_card', 'debit_card', 'pix', 'meal_voucher'
-  createdAt DateTime @default(now())
+  id              String    @id @default(cuid())
+  amount          Float
+  method          String    // 'cash', 'credit_card', 'debit_card', 'pix', 'meal_voucher', 'pix_online'
+  asaasPaymentId  String?   // ID da cobrança no Asaas (ex: pay_xxx)
+  asaasStatus     String?   // Status no Asaas (PENDING, RECEIVED, CONFIRMED, etc)
+  paidAt          DateTime? // Data do pagamento confirmado
+  qrCodeBase64    String?   // Imagem do QR Code em base64
+  pixPayload      String?   // Código Copia e Cola do PIX
+  qrCodeExpiresAt DateTime? // Data de expiração do QR Code
+  createdAt       DateTime  @default(now())
 
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  @@index([asaasPaymentId])
 }
 
 enum OrderType {

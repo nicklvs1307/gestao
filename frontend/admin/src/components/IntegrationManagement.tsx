@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSaiposSettings, getUairangoSettings, getIfoodSettings, getFood99Settings } from '../services/api';
+import { getSaiposSettings, getUairangoSettings, getIfoodSettings, getFood99Settings, getAsaasSettings } from '../services/api';
 import { RefreshCw, Loader2, ChevronRight, Share2, Plug } from 'lucide-react';
 import { cn } from '../lib/utils';
 import saiposLogo from '../assets/saipos-logo.png';
@@ -8,6 +8,7 @@ import voltakiLogo from '../assets/voltaki-logo.png';
 import ifoodLogo from '../assets/ifood-logo.png';
 import uairangoLogo from '../assets/uairango-logo.png';
 import food99Logo from '../assets/99food-logo.png';
+import asaasLogo from '../assets/asaas-logo.png';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 
@@ -17,21 +18,24 @@ const IntegrationManagement: React.FC = () => {
   const [uairangoStatus, setUairangoStatus] = useState(false);
   const [ifoodStatus, setIfoodStatus] = useState(false);
   const [food99Status, setFood99Status] = useState(false);
+  const [asaasStatus, setAsaasStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchStatus = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [saiposSettings, uairangoSettings, ifoodSettings, food99Settings] = await Promise.all([
+      const [saiposSettings, uairangoSettings, ifoodSettings, food99Settings, asaasSettings] = await Promise.all([
         getSaiposSettings(),
         getUairangoSettings(),
         getIfoodSettings().catch(() => ({})),
-        getFood99Settings().catch(() => ({}))
+        getFood99Settings().catch(() => ({})),
+        getAsaasSettings().catch(() => ({}))
       ]);
       setSaiposStatus(saiposSettings.saiposIntegrationActive || false);
       setUairangoStatus(uairangoSettings.uairangoActive || false);
       setIfoodStatus(ifoodSettings?.ifoodIntegrationActive || false);
       setFood99Status(food99Settings?.food99IntegrationActive || false);
+      setAsaasStatus(asaasSettings?.asaasActive || false);
     } catch (error) {
       console.error('Erro ao buscar status das integrações:', error);
     } finally {
@@ -251,6 +255,55 @@ const IntegrationManagement: React.FC = () => {
                     Configurar Integração <ChevronRight size={12} />
                 </span>
                 <div className={cn("w-2 h-2 rounded-full", food99Status ? "bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "bg-slate-300")} />
+            </div>
+          </div>
+        </Card>
+
+        {/* Card Asaas (Pagamento PIX) */}
+        <Card
+          onClick={() => navigate('/integrations/asaas')}
+          className={cn(
+            "p-0 overflow-hidden border-2 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group",
+            asaasStatus ? "border-blue-100 hover:border-blue-500/30 bg-blue-50/10" : "border-slate-100 bg-white"
+          )}
+          noPadding
+        >
+          <div className="p-8 space-y-6">
+            <div className="flex justify-between items-start">
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white shadow-lg border border-slate-100 p-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <img src={asaasLogo} alt="Asaas" className="w-full h-full object-contain" />
+                    </div>
+                    <div>
+                        <h3 className="font-black text-xl text-slate-900 uppercase italic tracking-tighter leading-none">Asaas</h3>
+                        <div className="mt-2">
+                            {isLoading ? (
+                                <div className="flex items-center gap-1.5 opacity-30"><Loader2 size={10} className="animate-spin"/><span className="text-[8px] font-black uppercase">Verificando...</span></div>
+                            ) : (
+                                <span className={cn(
+                                    "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
+                                    asaasStatus ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "bg-slate-100 text-slate-500 border-slate-200"
+                                )}>
+                                    {asaasStatus ? 'ATIVO' : 'DESATIVADO'}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:text-blue-600 transition-colors">
+                    <Plug size={20} />
+                </div>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                Pagamento online via PIX no cardápio digital com QR Code dinâmico.
+            </p>
+
+            <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest italic group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                    Configurar Asaas <ChevronRight size={12} />
+                </span>
+                <div className={cn("w-2 h-2 rounded-full", asaasStatus ? "bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-300")} />
             </div>
           </div>
         </Card>

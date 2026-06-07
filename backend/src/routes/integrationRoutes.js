@@ -49,4 +49,8 @@ router.post('/ifood/accept-dispute', IntegrationController.acceptIfoodDispute);
 router.post('/ifood/reject-dispute', IntegrationController.rejectIfoodDispute);
 router.post('/ifood/alternative-dispute', IntegrationController.offerIfoodAlternative);
 
+// === ASAAS (Pagamento PIX Online) ===
+router.get('/asaas', IntegrationController.getAsaasSettings);
+router.put('/asaas', IntegrationController.updateAsaasSettings);
+
 module.exports = router;

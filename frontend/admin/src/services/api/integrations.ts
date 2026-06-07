@@ -248,3 +248,20 @@ export const handleFood99RefundApply = async (orderId: number, applyId: number, 
   const response = await apiClient.post('/integrations/food99/refund-apply', { orderId, applyId, agree, reason });
   return response.data;
 };
+
+// === ASAAS (Pagamento PIX Online) ===
+
+export const getAsaasSettings = async () => {
+  const response = await apiClient.get('/integrations/asaas');
+  return response.data;
+};
+
+export const updateAsaasSettings = async (settingsData: Record<string, unknown>) => {
+  const response = await apiClient.put('/integrations/asaas', settingsData);
+  return response.data;
+};
+
+export const testAsaasConnection = async () => {
+  const response = await apiClient.post('/payments/asaas/test-connection');
+  return response.data;
+};

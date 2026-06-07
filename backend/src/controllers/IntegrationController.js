@@ -685,6 +685,81 @@ const offerIfoodAlternative = async (req, res) => {
     }
 };
 
+// === ASAAS (Pagamento PIX Online) ===
+
+const.getAsaasSettings = async (req, res) => {
+    try {
+        let settings = await prisma.integrationSettings.findUnique({
+            where: { restaurantId: req.restaurantId }
+        });
+
+        if (!settings) {
+            settings = await prisma.integrationSettings.create({
+                data: { restaurantId: req.restaurantId }
+            });
+        }
+
+        // NUNCA retornar a API Key completa - apenas indicar se está configurada
+        res.json({
+            asaasConfigured: !!settings.asaasApiKey,
+            asaasActive: settings.asaasActive,
+            asaasEnvironment: settings.asaasEnvironment,
+            asaasPixEnabled: settings.asaasPixEnabled,
+        });
+    } catch (error) {
+        logger.error('[ASAAS] Erro ao buscar configurações:', error);
+        res.status(500).json({ error: 'Erro ao buscar configurações do Asaas.' });
+    }
+};
+
+const updateAsaasSettings = async (req, res) => {
+    const { asaasApiKey, asaasEnvironment, asaasActive, asaasWebhookToken, asaasPixEnabled } = req.body;
+
+    try {
+        const updateData = {};
+        const createData = { restaurantId: req.restaurantId };
+
+        // Só atualiza a API Key se fornecida (não sobrescrever com vazio)
+        if (asaasApiKey !== undefined) {
+            updateData.asaasApiKey = asaasApiKey;
+            createData.asaasApiKey = asaasApiKey;
+        }
+        if (asaasEnvironment !== undefined) {
+            updateData.asaasEnvironment = asaasEnvironment;
+            createData.asaasEnvironment = asaasEnvironment;
+        }
+        if (asaasActive !== undefined) {
+            updateData.asaasActive = asaasActive;
+            createData.asaasActive = asaasActive;
+        }
+        if (asaasWebhookToken !== undefined) {
+            updateData.asaasWebhookToken = asaasWebhookToken;
+            createData.asaasWebhookToken = asaasWebhookToken;
+        }
+        if (asaasPixEnabled !== undefined) {
+            updateData.asaasPixEnabled = asaasPixEnabled;
+            createData.asaasPixEnabled = asaasPixEnabled;
+        }
+
+        const settings = await prisma.integrationSettings.upsert({
+            where: { restaurantId: req.restaurantId },
+            update: updateData,
+            create: createData
+        });
+
+        // Retornar sem a API Key
+        res.json({
+            asaasConfigured: !!settings.asaasApiKey,
+            asaasActive: settings.asaasActive,
+            asaasEnvironment: settings.asaasEnvironment,
+            asaasPixEnabled: settings.asaasPixEnabled,
+        });
+    } catch (error) {
+        logger.error('[ASAAS] Erro ao atualizar configurações:', error);
+        res.status(500).json({ error: 'Erro ao atualizar configurações do Asaas.' });
+    }
+};
+
 module.exports = {
     getSaiposSettings,
     updateSaiposSettings,
@@ -714,5 +789,7 @@ module.exports = {
     validateIfoodPickupCode,
     acceptIfoodDispute,
     rejectIfoodDispute,
-    offerIfoodAlternative
+    offerIfoodAlternative,
+    getAsaasSettings,
+    updateAsaasSettings
 };

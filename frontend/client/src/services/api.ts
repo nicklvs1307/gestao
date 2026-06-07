@@ -128,13 +128,13 @@ export const requestPayment = async (tableId: string) => {
 };
 
 export const generatePixPayment = async (orderId: string) => {
-  const response = await api.post(`/payments/pix/${orderId}`);
-  return response.data;
+  const response = await api.post(`/payments/asaas/pix/${orderId}`);
+  return response.data.data;
 };
 
 export const checkPixStatus = async (orderId: string) => {
-  const response = await api.get(`/payments/pix/${orderId}/status`);
-  return response.data;
+  const response = await api.get(`/payments/asaas/pix/${orderId}/status`);
+  return response.data.data;
 };
 
 export const getOrderById = async (orderId: string): Promise<Order> => {

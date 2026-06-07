@@ -32,6 +32,7 @@ const Food99SettingsPage = lazy(() => import('./pages/Food99SettingsPage'));
 const SaiposSettingsPage = lazy(() => import('./pages/SaiposSettingsPage'));
 const UairangoSettingsPage = lazy(() => import('./pages/UairangoSettingsPage'));
 const VoltakiSettingsPage = lazy(() => import('./pages/VoltakiSettingsPage'));
+const AsaasSettingsPage = lazy(() => import('./pages/AsaasSettingsPage'));
 const UserAndPermissions = lazy(() => import('./components/UserAndPermissions'));
 const UserPermissionPage = lazy(() => import('./pages/UserPermissionPage'));
 const DriverManagement = lazy(() => import('./components/DriverManagement'));
@@ -194,6 +195,7 @@ function AdminRoutes() {
           <Route path="/integrations/saipos" element={<ProtectedRoute permission="integrations:manage"><SaiposSettingsPage /></ProtectedRoute>} />
           <Route path="/integrations/uairango" element={<ProtectedRoute permission="integrations:manage"><UairangoSettingsPage /></ProtectedRoute>} />
           <Route path="/integrations/voltaki" element={<ProtectedRoute permission="integrations:manage"><VoltakiSettingsPage /></ProtectedRoute>} />
+          <Route path="/integrations/asaas" element={<ProtectedRoute permission="integrations:manage"><AsaasSettingsPage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute permission="users:manage"><UserAndPermissions /></ProtectedRoute>} />
           <Route path="/users/:id" element={<ProtectedRoute permission="users:manage"><UserPermissionPage /></ProtectedRoute>} />
 

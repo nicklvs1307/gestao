@@ -26,6 +26,7 @@ import { DeliveryHeader, CategoryNav, SearchModal, ProductSection } from '../com
 import { RESTAURANT_KEY } from '../hooks/useRestaurant';
 import { usePixelTracking } from '../hooks/usePixelTracking';
 import ConsentBanner from '../components/ConsentBanner';
+import { getSocket, disconnectSocket } from '../services/socket';
 
 interface DeliveryPageProps {
   restaurantSlug?: string;
@@ -79,7 +80,7 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
   const reorderSectionRef = useRef<HTMLDivElement>(null);
 
   const [isPixModalOpen, setPixModalOpen] = useState(false);
-  const [pixData, setPixData] = useState<{ qrCodeImage: string; pixCopiaECola: string } | null>(null);
+  const [pixData, setPixData] = useState<{ qrCodeBase64: string; pixPayload: string; amount: number; expiresAt: string } | null>(null);
   const [isPixPaymentLoading, setPixPaymentLoading] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -92,6 +93,31 @@ const DeliveryPage: React.FC<DeliveryPageProps> = ({ restaurantSlug }) => {
       }
     };
   }, []);
+
+  // Socket.io: Escutar confirmação de pagamento em tempo real
+  useEffect(() => {
+    if (!isPixModalOpen || !currentOrderId || !restaurant?.id) return;
+
+    const socket = getSocket(restaurant.id);
+
+    const handlePaymentConfirmed = (data: { orderId: string; amount: number }) => {
+      if (data.orderId === currentOrderId) {
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        setPixModalOpen(false);
+        clearCart();
+        setSuccessModalOpen(true);
+        setCurrentOrderId(null);
+        setPixData(null);
+        toast.success('Pagamento confirmado!');
+      }
+    };
+
+    socket.on('payment_confirmed', handlePaymentConfirmed);
+
+    return () => {
+      socket.off('payment_confirmed', handlePaymentConfirmed);
+    };
+  }, [isPixModalOpen, currentOrderId, restaurant?.id, clearCart]);
 
 const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profile') => {
     setActiveTab(tab);
@@ -151,7 +177,7 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
     pollingIntervalRef.current = setInterval(async () => {
       try {
         const status = await checkPixStatus(orderId);
-        if (status.paid) {
+        if (status.status === 'RECEIVED' || status.status === 'CONFIRMED') {
           if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
           trackPurchase(orderId, orderTotal, orderItems);
           setPixModalOpen(false);
@@ -420,8 +446,10 @@ const handleTabChange = useCallback((tab: 'home' | 'search' | 'orders' | 'profil
           <PixPaymentModal
             isOpen={isPixModalOpen}
             onClose={handleCancelPixPayment}
-            qrCodeImage={pixData.qrCodeImage}
-            pixCopiaECola={pixData.pixCopiaECola}
+            qrCodeBase64={pixData.qrCodeBase64}
+            pixPayload={pixData.pixPayload}
+            amount={pixData.amount}
+            expiresAt={pixData.expiresAt}
             onPaymentConfirmed={() => {}}
             onCancelPayment={handleCancelPixPayment}
             isLoading={isPixPaymentLoading}
