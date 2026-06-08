@@ -44,6 +44,7 @@ const PromotionFormPage: React.FC = () => {
         code: '',
         minOrderValue: 0 as number | string,
         usageLimit: '' as number | string,
+        allowCouponOnPromotion: true,
     });
 
     // Dados de Suporte
@@ -83,6 +84,7 @@ const PromotionFormPage: React.FC = () => {
                             code: promo.code || '',
                             minOrderValue: promo.minOrderValue || 0,
                             usageLimit: promo.usageLimit || '',
+                            allowCouponOnPromotion: promo.allowCouponOnPromotion !== false,
                         });
                         
                         if (promo.productId) setTargetType('PRODUCT');
@@ -117,7 +119,8 @@ const PromotionFormPage: React.FC = () => {
                 productId: targetType === 'PRODUCT' ? formData.productId : null,
                 addonId: targetType === 'ADDON' ? formData.addonId : null,
                 categoryId: targetType === 'CATEGORY' ? formData.categoryId : null,
-                code: formData.code || null
+                code: formData.code || null,
+                allowCouponOnPromotion: formData.allowCouponOnPromotion
             };
 
             if (isEditing) await updatePromotion(id!, payload);
@@ -238,6 +241,36 @@ const PromotionFormPage: React.FC = () => {
                                 <input type="number" className="w-full bg-white/10 border border-white/20 rounded-xl h-12 px-4 text-sm font-black placeholder:text-indigo-300 outline-none focus:ring-2 focus:ring-white/30" placeholder="Sem limite" value={formData.usageLimit} onChange={e => setFormData({...formData, usageLimit: e.target.value})} />
                             </div>
                         </div>
+                        
+                        {/* Toggle de Combinação - aparece apenas quando code está preenchido */}
+                        {formData.code && (
+                            <div className="relative z-10 pt-2 border-t border-white/10">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-black text-white uppercase tracking-widest">
+                                            Permitir combinar com promoções
+                                        </label>
+                                        <p className="text-[9px] text-indigo-200 font-bold uppercase italic leading-tight mt-1">
+                                            Se desativado, este cupom não poderá ser usado quando o carrinho contiver itens em promoção
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({...formData, allowCouponOnPromotion: !formData.allowCouponOnPromotion})}
+                                        className={cn(
+                                            "w-12 h-6 rounded-full relative transition-all duration-300 ml-4",
+                                            formData.allowCouponOnPromotion ? "bg-emerald-500" : "bg-white/20"
+                                        )}
+                                    >
+                                        <motion.div 
+                                            animate={{ x: formData.allowCouponOnPromotion ? 26 : 2 }} 
+                                            className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" 
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        
                         <p className="text-[9px] text-indigo-200 font-bold uppercase italic leading-tight flex items-center gap-2 relative z-10">
                             <Info size={12}/> Se o código estiver preenchido, o cliente precisa digitar o cupom para ganhar o desconto.
                         </p>

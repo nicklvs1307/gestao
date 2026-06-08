@@ -216,7 +216,8 @@ class OrderService {
         sizeJson: calculation.sizeObj ? JSON.stringify(calculation.sizeObj) : null,
         addonsJson: addonsList.length ? JSON.stringify(addonsList) : null,
         flavorsJson: flavorsList.length ? JSON.stringify(flavorsList) : null,
-        observations: item.observations || ''
+        observations: item.observations || '',
+        hasActivePromotion: calculation.hasActivePromotion
       });
     }
 
@@ -293,6 +294,14 @@ class OrderService {
         }
         if (promotion.minOrderValue && orderTotal < promotion.minOrderValue) {
             throw new Error(`Valor mínimo para este cupom é R$ ${promotion.minOrderValue.toFixed(2)}.`);
+        }
+
+        // NOVO: Verificação de combinação cupom + promoção
+        if (promotion.allowCouponOnPromotion === false) {
+            const hasPromotionInCart = processedItems.some(item => item.hasActivePromotion);
+            if (hasPromotionInCart) {
+                throw new Error('Este cupom não pode ser usado com itens em promoção. Remova os itens promocionais ou use outro cupom.');
+            }
         }
 
         // Calcular desconto baseado no cupom validado (NUNCA confiar no client)

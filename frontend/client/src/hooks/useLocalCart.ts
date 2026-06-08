@@ -46,6 +46,7 @@ export const useLocalCart = () => {
 
     // Aplicar Promoção se houver
     const activePromotion = product.promotions?.find(p => p.isActive);
+    const hasActivePromotion = !!activePromotion;
     if (activePromotion) {
         if (activePromotion.discountType === 'percentage') {
             basePrice = basePrice * (1 - activePromotion.discountValue / 100);
@@ -95,6 +96,7 @@ export const useLocalCart = () => {
         addonsJson: selectedAddons.length > 0 ? JSON.stringify(selectedAddons) : null,
         flavorsJson: selectedFlavors && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : null,
         observations: observations || null,
+        hasActivePromotion,
       };
 
       return [...prevItems, newCartItem];

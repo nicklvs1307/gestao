@@ -127,6 +127,7 @@ export interface Promotion {
   product?: Product;
   saiposIntegrationCode?: string | null;
   minOrderValue?: number;
+  allowCouponOnPromotion?: boolean;
 }
 
 export interface LocalCartItem {
@@ -142,6 +143,7 @@ export interface LocalCartItem {
   addonsJson: string | null;
   flavorsJson: string | null;
   observations?: string | null;
+  hasActivePromotion?: boolean;
 }
 
 export interface OrderItem {

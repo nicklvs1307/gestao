@@ -342,3 +342,31 @@ export type Coords = [number, number];
 export type DriverView = 'list' | 'detail';
 export type DriverTab = 'home' | 'history' | 'profile';
 export type DriverHomeSubTab = 'my' | 'queue';
+
+// ============================================================
+// Types para Promoções e Cupons
+// ============================================================
+
+export interface Promotion {
+  id: string;
+  name: string;
+  description?: string;
+  code?: string | null;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  productId?: string;
+  addonId?: string;
+  categoryId?: string;
+  product?: { id: string; name: string; imageUrl?: string };
+  addon?: { id: string; name: string };
+  category?: { id: string; name: string };
+  minOrderValue?: number;
+  usageLimit?: number;
+  usedCount?: number;
+  allowCouponOnPromotion?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}

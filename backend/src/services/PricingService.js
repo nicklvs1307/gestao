@@ -152,7 +152,8 @@ class PricingService {
       basePrice: unitPrice,      
       totalPrice: totalItemPrice,
       sizeObj,
-      addonsObjects
+      addonsObjects,
+      hasActivePromotion: !!activePromotion
     };
   }
 

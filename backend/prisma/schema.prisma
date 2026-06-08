@@ -1279,6 +1279,9 @@ model Promotion {
   usageLimit    Int? // Limite total de usos do cupom
   usedCount     Int     @default(0)
 
+  // === Regra de Combinação Cupom + Promoção ===
+  allowCouponOnPromotion Boolean @default(true) // Se false, cupom não pode ser usado com itens em promoção
+
   discountType  String // Ex: "percentage", "fixed_amount"
   discountValue Float
   startDate     DateTime

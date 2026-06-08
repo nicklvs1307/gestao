@@ -90,7 +90,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
     module: 'customers',
     items: [
       { label: "Cadastro de Clientes", path: "/customers", icon: UserCog, permission: 'orders:view' },
-      { label: "Cupons de Desconto", path: "/promotions?filter=coupons", icon: Ticket, permission: 'products:manage' },
+      { label: "Cupons de Desconto", path: "/promotions", icon: Ticket, permission: 'products:manage' },
     ]
   },
   {

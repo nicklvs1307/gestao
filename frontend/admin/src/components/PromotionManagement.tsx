@@ -8,13 +8,13 @@ import { formatSP } from '@/lib/timezone';
 import { Button } from './ui/Button';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
-
-type Promotion = any;
+import type { Promotion } from '../types';
 
 const PromotionManagement: React.FC = () => {
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
+    const [filterType, setFilterType] = useState<'ALL' | 'PROMOTION' | 'COUPON'>('ALL');
     const navigate = useNavigate();
 
     const fetchPromotions = async () => {
@@ -71,6 +71,12 @@ const PromotionManagement: React.FC = () => {
         return <Tag size={14} className="text-slate-500" />;
     };
 
+    const filteredPromotions = promotions.filter(promo => {
+        if (filterType === 'PROMOTION') return !promo.code;
+        if (filterType === 'COUPON') return !!promo.code;
+        return true;
+    });
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
             {/* Header com Navegação */}
@@ -89,12 +95,46 @@ const PromotionManagement: React.FC = () => {
                 </div>
             </div>
 
+            {/* Filtros */}
+            <div className="flex items-center gap-3">
+                <div className="flex p-1.5 bg-slate-50 border border-slate-100 rounded-2xl gap-1.5">
+                    <button 
+                        onClick={() => setFilterType('ALL')}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
+                            filterType === 'ALL' ? "bg-white text-slate-900 shadow-sm border border-slate-100" : "text-slate-500 hover:bg-white/50"
+                        )}
+                    >
+                        Todos
+                    </button>
+                    <button 
+                        onClick={() => setFilterType('PROMOTION')}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
+                            filterType === 'PROMOTION' ? "bg-orange-100 text-orange-600 shadow-sm border border-orange-200" : "text-slate-500 hover:bg-white/50"
+                        )}
+                    >
+                        Promoções
+                    </button>
+                    <button 
+                        onClick={() => setFilterType('COUPON')}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
+                            filterType === 'COUPON' ? "bg-purple-100 text-purple-600 shadow-sm border border-purple-200" : "text-slate-500 hover:bg-white/50"
+                        )}
+                    >
+                        Cupons
+                    </button>
+                </div>
+            </div>
+
             {/* Tabela Densa de Promoções */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <table className="w-full text-sm">
                     <thead className="bg-slate-50/70 border-b border-slate-100">
                         <tr>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Campanha</th>
+                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Tipo</th>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</th>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Desconto</th>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Alvo</th>
@@ -105,13 +145,13 @@ const PromotionManagement: React.FC = () => {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan={6} className="text-center py-20">
+                                <td colSpan={7} className="text-center py-20">
                                     <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto" />
                                 </td>
                             </tr>
-                        ) : promotions.length === 0 ? (
+                        ) : filteredPromotions.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center py-20">
+                                <td colSpan={7} className="text-center py-20">
                                     <div className="flex flex-col items-center justify-center text-slate-500 opacity-50">
                                         <Sparkles size={48} strokeWidth={1} className="mb-4" />
                                         <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhuma campanha criada</p>
@@ -119,7 +159,7 @@ const PromotionManagement: React.FC = () => {
                                 </td>
                             </tr>
                         ) : (
-                            promotions.map(promo => {
+                            filteredPromotions.map(promo => {
                                 const status = getStatusInfo(promo);
                                 return (
                                     <tr key={promo.id} className="border-b border-slate-50 last:border-b-0">
@@ -132,6 +172,21 @@ const PromotionManagement: React.FC = () => {
                                                     <p className="font-bold text-slate-900 leading-tight">{promo.name}</p>
                                                     {promo.code && <p className="text-xs text-slate-500 font-mono bg-slate-50 px-1.5 py-0.5 rounded-md inline-block mt-1">{promo.code}</p>}
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                {promo.code ? (
+                                                    <>
+                                                        <Ticket size={14} className="text-purple-500" />
+                                                        <span className="text-[9px] font-black text-purple-600 uppercase tracking-widest">Cupom</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Percent size={14} className="text-orange-500" />
+                                                        <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Promoção</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

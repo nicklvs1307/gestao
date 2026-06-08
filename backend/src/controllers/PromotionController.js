@@ -76,7 +76,7 @@ const getAllPromotions = async (req, res) => {
 };
 
 const createPromotion = async (req, res) => {
-    const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit } = req.body;
+    const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit, allowCouponOnPromotion } = req.body;
     try {
         let end = new Date(endDate);
         if (end.getHours() === 0 && end.getMinutes() === 0) {
@@ -94,6 +94,7 @@ const createPromotion = async (req, res) => {
             code: code ? code.toUpperCase() : null,
             minOrderValue: parseFloat(minOrderValue || 0),
             usageLimit: usageLimit ? parseInt(usageLimit) : null,
+            allowCouponOnPromotion: allowCouponOnPromotion !== false,
             restaurant: { connect: { id: req.restaurantId } },
             addonId: addonId || null,
             categoryId: categoryId || null
@@ -140,7 +141,7 @@ const validateCoupon = async (req, res) => {
 
 const updatePromotion = async (req, res) => {
     const { id } = req.params;
-    const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit } = req.body;
+    const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit, allowCouponOnPromotion } = req.body;
     try {
         let end = new Date(endDate);
         if (end.getHours() === 0 && end.getMinutes() === 0) {
@@ -158,6 +159,7 @@ const updatePromotion = async (req, res) => {
             code: code ? code.toUpperCase() : null,
             minOrderValue: parseFloat(minOrderValue || 0),
             usageLimit: usageLimit ? parseInt(usageLimit) : null,
+            allowCouponOnPromotion: allowCouponOnPromotion !== false,
             addonId: addonId || null,
             categoryId: categoryId || null
         };

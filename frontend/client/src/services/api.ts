@@ -80,6 +80,7 @@ export interface CouponValidation {
   discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
   minOrderValue?: number;
+  allowCouponOnPromotion?: boolean;
 }
 
 export const validateCoupon = async (code: string, cartTotal: number, restaurantId: string): Promise<CouponValidation> => {

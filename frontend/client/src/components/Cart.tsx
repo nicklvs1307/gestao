@@ -55,6 +55,18 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
     try {
       const restaurantId = restaurantSettings?.restaurantId || restaurantSettings?.restaurant?.id || '';
       const result = await validateCoupon(code, total, restaurantId);
+      
+      // Verificar se cupom permite combinação com promoções
+      if (result.allowCouponOnPromotion === false) {
+        const hasPromotionItem = items.some(item => item.hasActivePromotion);
+        if (hasPromotionItem) {
+          setCouponError('Este cupom não pode ser usado com itens em promoção. Remova os itens promocionais ou use outro cupom.');
+          setAppliedCoupon(null);
+          setIsCouponLoading(false);
+          return;
+        }
+      }
+      
       setAppliedCoupon(result);
       setCouponError('');
       toast.success(`Cupom "${result.name}" aplicado com sucesso!`);
@@ -65,7 +77,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, items, total, onRemoveItem
     } finally {
       setIsCouponLoading(false);
     }
-  }, [couponCode, total, restaurantSettings]);
+  }, [couponCode, total, restaurantSettings, items]);
 
   const handleRemoveCoupon = useCallback(() => {
     setAppliedCoupon(null);
