@@ -14,7 +14,7 @@ const PromotionManagement: React.FC = () => {
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [confirmData, setConfirmData] = useState<{open: boolean; title: string; message: string; onConfirm: () => void}>({open: false, title: '', message: '', onConfirm: () => {}});
-    const [filterType, setFilterType] = useState<'ALL' | 'PROMOTION' | 'COUPON'>('ALL');
+
     const navigate = useNavigate();
 
     const fetchPromotions = async () => {
@@ -71,62 +71,29 @@ const PromotionManagement: React.FC = () => {
         return <Tag size={14} className="text-slate-500" />;
     };
 
-    const filteredPromotions = promotions.filter(promo => {
-        if (filterType === 'PROMOTION') return !promo.code;
-        if (filterType === 'COUPON') return !!promo.code;
-        return true;
-    });
+    const filteredPromotions = promotions.filter(promo => !promo.code);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-            {/* Header com Navegação */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Marketing & Ofertas</h1>
-                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Gestão de Promoções e Cupons</p>
+                    <h1 className="text-2xl font-bold tracking-wide uppercase leading-none">Promoções</h1>
+                    <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                        <Percent size={12} className="text-orange-500" /> 
+                        Preços especiais em itens do cardápio
+                    </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" size="icon" className="bg-white rounded-xl" onClick={fetchPromotions}>
-                        <RefreshCw size={16} />
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" className="h-10 w-10 bg-white border-border rounded-xl" onClick={fetchPromotions}>
+                        <RefreshCw size={16} className={cn("text-muted-foreground", isLoading && "animate-spin")} />
                     </Button>
-                    <Button onClick={() => navigate('/promotions/new')} className="rounded-xl px-6 italic font-black shadow-lg shadow-orange-100">
-                        <Plus size={16} /> Nova Campanha
+                    <Button onClick={() => navigate('/promotions/new')} className="rounded-xl px-6 font-bold h-10 shadow-lg text-xs gap-2">
+                        <Plus size={16} /> NOVA PROMOÇÃO
                     </Button>
                 </div>
             </div>
 
-            {/* Filtros */}
-            <div className="flex items-center gap-3">
-                <div className="flex p-1.5 bg-slate-50 border border-slate-100 rounded-2xl gap-1.5">
-                    <button 
-                        onClick={() => setFilterType('ALL')}
-                        className={cn(
-                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
-                            filterType === 'ALL' ? "bg-white text-slate-900 shadow-sm border border-slate-100" : "text-slate-500 hover:bg-white/50"
-                        )}
-                    >
-                        Todos
-                    </button>
-                    <button 
-                        onClick={() => setFilterType('PROMOTION')}
-                        className={cn(
-                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
-                            filterType === 'PROMOTION' ? "bg-orange-100 text-orange-600 shadow-sm border border-orange-200" : "text-slate-500 hover:bg-white/50"
-                        )}
-                    >
-                        Promoções
-                    </button>
-                    <button 
-                        onClick={() => setFilterType('COUPON')}
-                        className={cn(
-                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
-                            filterType === 'COUPON' ? "bg-purple-100 text-purple-600 shadow-sm border border-purple-200" : "text-slate-500 hover:bg-white/50"
-                        )}
-                    >
-                        Cupons
-                    </button>
-                </div>
-            </div>
+
 
             {/* Tabela Densa de Promoções */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -134,7 +101,6 @@ const PromotionManagement: React.FC = () => {
                     <thead className="bg-slate-50/70 border-b border-slate-100">
                         <tr>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Campanha</th>
-                            <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Tipo</th>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</th>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Desconto</th>
                             <th className="px-6 py-3 text-left text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Alvo</th>
@@ -154,7 +120,7 @@ const PromotionManagement: React.FC = () => {
                                 <td colSpan={7} className="text-center py-20">
                                     <div className="flex flex-col items-center justify-center text-slate-500 opacity-50">
                                         <Sparkles size={48} strokeWidth={1} className="mb-4" />
-                                        <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhuma campanha criada</p>
+                                        <p className="font-bold text-[10px] uppercase tracking-[0.2em]">Nenhuma promoção criada</p>
                                     </div>
                                 </td>
                             </tr>
@@ -165,28 +131,12 @@ const PromotionManagement: React.FC = () => {
                                     <tr key={promo.id} className="border-b border-slate-50 last:border-b-0">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", promo.code ? "bg-purple-100 text-purple-600" : "bg-orange-100 text-orange-600")}>
-                                                    {promo.code ? <Ticket size={18} /> : <Percent size={18} />}
+                                                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-orange-100 text-orange-600">
+                                                    <Percent size={18} />
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-slate-900 leading-tight">{promo.name}</p>
-                                                    {promo.code && <p className="text-xs text-slate-500 font-mono bg-slate-50 px-1.5 py-0.5 rounded-md inline-block mt-1">{promo.code}</p>}
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                {promo.code ? (
-                                                    <>
-                                                        <Ticket size={14} className="text-purple-500" />
-                                                        <span className="text-[9px] font-black text-purple-600 uppercase tracking-widest">Cupom</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Percent size={14} className="text-orange-500" />
-                                                        <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Promoção</span>
-                                                    </>
-                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

@@ -19,6 +19,8 @@ const CategoryManagement = lazy(() => import('./components/CategoryManagement'))
 const CategoryFormPage = lazy(() => import('./pages/CategoryFormPage'));
 const PromotionManagement = lazy(() => import('./components/PromotionManagement'));
 const PromotionFormPage = lazy(() => import('./pages/PromotionFormPage'));
+const CouponManagement = lazy(() => import('./components/CouponManagement'));
+const CouponFormPage = lazy(() => import('./pages/CouponFormPage'));
 const OrderManagement = lazy(() => import('./components/OrderManagement'));
 const TableManagement = lazy(() => import('./components/TableManagement'));
 const ReportManagement = lazy(() => import('./pages/ReportManagement'));
@@ -86,6 +88,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/categories': 'Categorias',
   '/addons': 'Adicionais',
   '/promotions': 'Promoções',
+  '/coupons': 'Cupons de Desconto',
+  '/coupons/new': 'Novo Cupom',
   '/orders': 'Pedidos',
   '/tables': 'Mesas',
   '/customers': 'Clientes',
@@ -169,6 +173,10 @@ function AdminRoutes() {
           <Route path="/promotions" element={<ProtectedRoute permission="products:manage"><PromotionManagement /></ProtectedRoute>} />
           <Route path="/promotions/new" element={<ProtectedRoute permission="products:manage"><PromotionFormPage /></ProtectedRoute>} />
           <Route path="/promotions/:id" element={<ProtectedRoute permission="products:manage"><PromotionFormPage /></ProtectedRoute>} />
+
+          <Route path="/coupons" element={<ProtectedRoute permission="products:manage"><CouponManagement /></ProtectedRoute>} />
+          <Route path="/coupons/new" element={<ProtectedRoute permission="products:manage"><CouponFormPage /></ProtectedRoute>} />
+          <Route path="/coupons/:id" element={<ProtectedRoute permission="products:manage"><CouponFormPage /></ProtectedRoute>} />
 
           <Route path="/customers" element={<ProtectedRoute permission="orders:view"><CustomerManagement /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute permission="orders:view"><OrderManagement /></ProtectedRoute>} />

@@ -41,10 +41,6 @@ const PromotionFormPage: React.FC = () => {
         productId: '',
         addonId: '',
         categoryId: '',
-        code: '',
-        minOrderValue: 0 as number | string,
-        usageLimit: '' as number | string,
-        allowCouponOnPromotion: true,
     });
 
     // Dados de Suporte
@@ -81,10 +77,6 @@ const PromotionFormPage: React.FC = () => {
                             productId: promo.productId || '',
                             addonId: promo.addonId || '',
                             categoryId: promo.categoryId || '',
-                            code: promo.code || '',
-                            minOrderValue: promo.minOrderValue || 0,
-                            usageLimit: promo.usageLimit || '',
-                            allowCouponOnPromotion: promo.allowCouponOnPromotion !== false,
                         });
                         
                         if (promo.productId) setTargetType('PRODUCT');
@@ -114,13 +106,9 @@ const PromotionFormPage: React.FC = () => {
             const payload = {
                 ...formData,
                 discountValue: Number(formData.discountValue),
-                minOrderValue: Number(formData.minOrderValue),
-                usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null,
                 productId: targetType === 'PRODUCT' ? formData.productId : null,
                 addonId: targetType === 'ADDON' ? formData.addonId : null,
                 categoryId: targetType === 'CATEGORY' ? formData.categoryId : null,
-                code: formData.code || null,
-                allowCouponOnPromotion: formData.allowCouponOnPromotion
             };
 
             if (isEditing) await updatePromotion(id!, payload);
@@ -165,7 +153,7 @@ const PromotionFormPage: React.FC = () => {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h1 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter">
-                                    {isEditing ? 'Editar Campanha' : 'Nova Promoção'}
+                                    {isEditing ? 'Editar Promoção' : 'Nova Promoção'}
                                 </h1>
                                 <span className={cn(
                                     "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border",
@@ -194,7 +182,7 @@ const PromotionFormPage: React.FC = () => {
                     <Card className="p-8 border-none shadow-sm space-y-6">
                         <div className="flex items-center gap-3 border-b border-slate-50 pb-4 mb-2">
                             <div className="bg-slate-900 text-white p-2 rounded-lg"><Tag size={18} /></div>
-                            <h3 className="text-sm font-black text-slate-900 uppercase italic">Dados da Campanha</h3>
+                            <h3 className="text-sm font-black text-slate-900 uppercase italic">Dados da Promoção</h3>
                         </div>
                         <div className="grid grid-cols-1 gap-6">
                             <Input label="Nome Interno da Campanha" required placeholder="Ex: Black Friday 2026" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
@@ -220,61 +208,7 @@ const PromotionFormPage: React.FC = () => {
                         </div>
                     </Card>
 
-                    {/* CARD 3: CUPOM E LIMITES */}
-                    <Card className="p-8 border-none shadow-sm bg-indigo-900 text-white space-y-6 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-10"><Ticket size={120} /></div>
-                        <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-2 relative z-10">
-                            <div className="bg-white/20 text-white p-2 rounded-lg"><Ticket size={18} /></div>
-                            <h3 className="text-sm font-black uppercase italic">Configurações de Cupom</h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-indigo-200 uppercase tracking-widest ml-1">Código do Cupom</label>
-                                <input className="w-full bg-white/10 border border-white/20 rounded-xl h-12 px-4 text-sm font-black uppercase placeholder:text-indigo-300 outline-none focus:ring-2 focus:ring-white/30" placeholder="Ex: PIZZA10" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-indigo-200 uppercase tracking-widest ml-1">Pedido Mínimo</label>
-                                <input type="number" className="w-full bg-white/10 border border-white/20 rounded-xl h-12 px-4 text-sm font-black placeholder:text-indigo-300 outline-none focus:ring-2 focus:ring-white/30" value={formData.minOrderValue} onChange={e => setFormData({...formData, minOrderValue: e.target.value})} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-indigo-200 uppercase tracking-widest ml-1">Limite de Uso Total</label>
-                                <input type="number" className="w-full bg-white/10 border border-white/20 rounded-xl h-12 px-4 text-sm font-black placeholder:text-indigo-300 outline-none focus:ring-2 focus:ring-white/30" placeholder="Sem limite" value={formData.usageLimit} onChange={e => setFormData({...formData, usageLimit: e.target.value})} />
-                            </div>
-                        </div>
-                        
-                        {/* Toggle de Combinação - aparece apenas quando code está preenchido */}
-                        {formData.code && (
-                            <div className="relative z-10 pt-2 border-t border-white/10">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-black text-white uppercase tracking-widest">
-                                            Permitir combinar com promoções
-                                        </label>
-                                        <p className="text-[9px] text-indigo-200 font-bold uppercase italic leading-tight mt-1">
-                                            Se desativado, este cupom não poderá ser usado quando o carrinho contiver itens em promoção
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({...formData, allowCouponOnPromotion: !formData.allowCouponOnPromotion})}
-                                        className={cn(
-                                            "w-12 h-6 rounded-full relative transition-all duration-300 ml-4",
-                                            formData.allowCouponOnPromotion ? "bg-emerald-500" : "bg-white/20"
-                                        )}
-                                    >
-                                        <motion.div 
-                                            animate={{ x: formData.allowCouponOnPromotion ? 26 : 2 }} 
-                                            className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" 
-                                        />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                        
-                        <p className="text-[9px] text-indigo-200 font-bold uppercase italic leading-tight flex items-center gap-2 relative z-10">
-                            <Info size={12}/> Se o código estiver preenchido, o cliente precisa digitar o cupom para ganhar o desconto.
-                        </p>
-                    </Card>
+
                 </div>
 
                 {/* COLUNA DIREITA: ALVOS E VALIDADE */}
