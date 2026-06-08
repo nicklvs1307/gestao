@@ -687,7 +687,7 @@ const offerIfoodAlternative = async (req, res) => {
 
 // === ASAAS (Pagamento PIX Online) ===
 
-const.getAsaasSettings = async (req, res) => {
+const getAsaasSettings = async (req, res) => {
     try {
         let settings = await prisma.integrationSettings.findUnique({
             where: { restaurantId: req.restaurantId }
