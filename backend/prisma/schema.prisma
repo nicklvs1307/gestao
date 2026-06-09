@@ -1250,6 +1250,7 @@ model OrderItem {
   sizeJson    Json? // Ex: { "name": "Média", "price": 25.90, "saiposIntegrationCode": "..." }
   addonsJson  Json? // Ex: [{ "name": "Bacon", "price": 5.00, "saiposIntegrationCode": "..." }]
   flavorsJson Json? // Ex: [{ "id": "...", "name": "Calabresa", "price": 40.00 }]
+  hasActivePromotion Boolean @default(false) // Se true, item está em promoção ativa
 
   @@index([orderId])
   @@index([productId])
