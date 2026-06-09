@@ -106,10 +106,38 @@ async handleWebhook(req, res) {
 
     logger.info(`[IFOOD WEBHOOK] Recebido evento(s): ${req.body?.length || 1}`);
 
-    res.status(202).json({ received: true });
-
     const events = Array.isArray(req.body) ? req.body : [req.body];
     const platform = 'ifood';
+
+    // Handle KEEPALIVE presence requests (with merchantIds)
+    // Quando byMerchant está habilitado, o iFood envia merchantIds no body
+    // e espera receber de volta apenas os merchants que estão online
+    if (events.length === 1 && events[0].code === 'KEEPALIVE' && events[0].merchantIds) {
+      const keepaliveEvent = events[0];
+      logger.info(`[IFOOD WEBHOOK] Recebido KEEPALIVE com ${keepaliveEvent.merchantIds.length} merchants, verificando presença...`);
+      
+      try {
+        const activeMerchants = await prisma.integrationSettings.findMany({
+          where: {
+            ifoodIntegrationActive: true,
+            ifoodMerchantId: { in: keepaliveEvent.merchantIds }
+          },
+          select: { ifoodMerchantId: true }
+        });
+        
+        const onlineMerchantIds = activeMerchants.map(m => m.ifoodMerchantId).filter(Boolean);
+        
+        logger.info(`[IFOOD WEBHOOK] KEEPALIVE respondido: ${onlineMerchantIds.length} de ${keepaliveEvent.merchantIds.length} merchants online`);
+        
+        return res.status(202).json({ merchantIds: onlineMerchantIds });
+      } catch (error) {
+        logger.error(`[IFOOD WEBHOOK] Erro ao processar KEEPALIVE:`, error.message);
+        return res.status(202).json({ merchantIds: [] });
+      }
+    }
+
+    // Para eventos regulares, responde 202 e processa assincronamente
+    res.status(202).json({ received: true });
 
     for (const event of events) {
       const { orderId, code, id: eventId } = event;
