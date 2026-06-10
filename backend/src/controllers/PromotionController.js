@@ -80,6 +80,7 @@ const createPromotion = async (req, res) => {
         return res.status(400).json({ error: 'Contexto do restaurante é obrigatório.' });
     }
     const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit, allowCouponOnPromotion } = req.body;
+    console.log('CREATE PROMO body:', JSON.stringify(req.body, null, 2));
     try {
         let end = new Date(endDate);
         if (end.getHours() === 0 && end.getMinutes() === 0) {
@@ -114,8 +115,9 @@ const createPromotion = async (req, res) => {
         });
         res.status(201).json(promotion);
     } catch (error) { 
-        logger.error(error);
-        res.status(500).json({ error: 'Erro ao criar promoção.' }); 
+        logger.error('createPromotion error:', error.message || error);
+        if (error.meta) logger.error('Prisma meta:', JSON.stringify(error.meta));
+        res.status(500).json({ error: 'Erro ao criar promoção.', detail: error.message }); 
     }
 };
 
@@ -187,8 +189,9 @@ const updatePromotion = async (req, res) => {
         });
         res.json(updated);
     } catch (error) {
-        logger.error("Erro ao atualizar promoção:", error);
-        res.status(500).json({ error: 'Erro ao atualizar promoção.' });
+        logger.error("updatePromotion error:", error.message || error);
+        if (error.meta) logger.error('Prisma meta:', JSON.stringify(error.meta));
+        res.status(500).json({ error: 'Erro ao atualizar promoção.', detail: error.message });
     }
 };
 
