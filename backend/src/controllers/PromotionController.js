@@ -76,6 +76,9 @@ const getAllPromotions = async (req, res) => {
 };
 
 const createPromotion = async (req, res) => {
+    if (!req.restaurantId) {
+        return res.status(400).json({ error: 'Contexto do restaurante é obrigatório.' });
+    }
     const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit, allowCouponOnPromotion } = req.body;
     try {
         let end = new Date(endDate);
@@ -140,6 +143,9 @@ const validateCoupon = async (req, res) => {
 };
 
 const updatePromotion = async (req, res) => {
+    if (!req.restaurantId) {
+        return res.status(400).json({ error: 'Contexto do restaurante é obrigatório.' });
+    }
     const { id } = req.params;
     const { name, description, discountType, discountValue, startDate, endDate, isActive, productId, addonId, categoryId, code, minOrderValue, usageLimit, allowCouponOnPromotion } = req.body;
     try {

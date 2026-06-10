@@ -9,13 +9,16 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     const selectedRestaurantId = localStorage.getItem('selectedRestaurantId');
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const restaurantId = selectedRestaurantId || user?.restaurantId;
     
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     
-    if (selectedRestaurantId) {
-      config.headers['x-restaurant-id'] = selectedRestaurantId;
+    if (restaurantId) {
+      config.headers['x-restaurant-id'] = restaurantId;
     }
     
     return config;
