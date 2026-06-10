@@ -100,10 +100,10 @@ const createPromotion = async (req, res) => {
             usageLimit: usageLimit ? parseInt(usageLimit) : null,
             allowCouponOnPromotion: allowCouponOnPromotion !== false,
             restaurant: { connect: { id: req.restaurantId } },
-            addonId: addonId || null,
-            categoryId: categoryId || null
+            ...(productId ? { product: { connect: { id: productId } } } : {}),
+            ...(addonId ? { addon: { connect: { id: addonId } } } : {}),
+            ...(categoryId ? { category: { connect: { id: categoryId } } } : {})
         };
-        if (productId) data.product = { connect: { id: productId } };
         
         const promotion = await prisma.promotion.create({ 
             data, 
@@ -168,14 +168,24 @@ const updatePromotion = async (req, res) => {
             minOrderValue: parseFloat(minOrderValue || 0),
             usageLimit: usageLimit ? parseInt(usageLimit) : null,
             allowCouponOnPromotion: allowCouponOnPromotion !== false,
-            addonId: addonId || null,
-            categoryId: categoryId || null
         };
 
         if (productId) {
             data.product = { connect: { id: productId } };
         } else {
-            data.productId = null;
+            data.product = { disconnect: true };
+        }
+
+        if (addonId) {
+            data.addon = { connect: { id: addonId } };
+        } else {
+            data.addon = { disconnect: true };
+        }
+
+        if (categoryId) {
+            data.category = { connect: { id: categoryId } };
+        } else {
+            data.category = { disconnect: true };
         }
 
         const updated = await prisma.promotion.update({
