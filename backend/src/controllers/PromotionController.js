@@ -115,9 +115,9 @@ const createPromotion = async (req, res) => {
         });
         res.status(201).json(promotion);
     } catch (error) { 
-        logger.error('createPromotion error:', error.message || error);
-        if (error.meta) logger.error('Prisma meta:', JSON.stringify(error.meta));
-        res.status(500).json({ error: 'Erro ao criar promoção.', detail: error.message }); 
+        console.error('CREATE PROMO FULL ERROR:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        logger.error('createPromotion error:', error);
+        res.status(500).json({ error: 'Erro ao criar promoção.', detail: error.message, meta: error.meta }); 
     }
 };
 
