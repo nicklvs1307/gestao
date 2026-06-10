@@ -1,6 +1,6 @@
 const prisma = require('../lib/prisma');
 const AppError = require('../utils/AppError');
-const { PUBLIC_PRODUCT_SELECT, applyAddonGroupOrder } = require('../utils/productUtils');
+const { PUBLIC_PRODUCT_SELECT, applyAddonGroupOrder, pickProductFields } = require('../utils/productUtils');
 
 class ProductService {
   /**
@@ -110,35 +110,32 @@ class ProductService {
     const hasRequiredAddonGroups = data.addonGroups?.some(g => g.isRequired);
     
     if (!hasPrice && !hasSizes && !hasRequiredAddonGroups) {
-      // Apenas avisa (warning) mas não bloqueia - produto pode ter preço específico via promoção
       console.warn(`[PRODUCT_SERVICE] Produto "${data.name}" criado com preço zero. Considere adicionar preços base ou tamanhos.`);
     }
 
-    const { 
-      categoryIds = [], 
-      sizes = [], 
-      addonGroups = [], 
-      ingredients = [],
-      promotions,
-      ...productData 
-    } = data;
+    // Whitelist: extrair apenas campos escalares permitidos (rejeita restaurantId, id, createdAt, relações)
+    const scalarData = pickProductFields(data);
 
-    // Se addonGroups foi enviado, salvamos a ordem dos IDs
-    const addonGroupsOrder = (addonGroups || []).map(g => g.id);
+    const categoryIds = data.categoryIds || [];
+    const sizes = data.sizes || [];
+    const addonGroups = data.addonGroups || [];
+
+    // Ordem dos grupos de adicionais
+    const addonGroupsOrder = addonGroups.map(g => g.id);
 
     const product = await prisma.product.create({
       data: {
-        ...productData,
+        ...scalarData,
         addonGroupsOrder,
         restaurantId,
         categories: {
-          connect: (categoryIds || []).map((id) => ({ id })),
+          connect: categoryIds.map((id) => ({ id })),
         },
         sizes: {
-          create: sizes || [],
+          create: sizes,
         },
         addonGroups: {
-          connect: (addonGroups || []).map((group) => ({ id: group.id })),
+          connect: addonGroups.map((group) => ({ id: group.id })),
         },
       },
       include: {
@@ -155,21 +152,17 @@ class ProductService {
   async updateProduct(id, data, restaurantId) {
     const existingProduct = await this.getProductById(id, restaurantId);
 
-    const { 
-      id: _id,
-      createdAt: _createdAt,
-      updatedAt: _updatedAt,
-      categoryIds, 
-      sizes, 
-      addonGroups, 
-      ingredients,
-      promotions,
-      ...productData 
-    } = data;
+    // Whitelist: extrair apenas campos escalares permitidos
+    // Rejeita: restaurantId (vem do middleware), id, createdAt, updatedAt, relações
+    const scalarData = pickProductFields(data);
+
+    const categoryIds = data.categoryIds;
+    const sizes = data.sizes;
+    const addonGroups = data.addonGroups;
 
     // Validação de Preço Zero sem tamanhos ou grupos obrigatórios
     const hasSizes = sizes && sizes.length > 0;
-    const hasPrice = productData.price && productData.price > 0;
+    const hasPrice = scalarData.price && scalarData.price > 0;
     const hasRequiredAddonGroups = addonGroups?.some(g => g.isRequired);
     
     if (!hasPrice && !hasSizes && !hasRequiredAddonGroups) {
@@ -225,11 +218,11 @@ class ProductService {
         }
       }
 
-      // Update do produto (mantém o resto)
+      // Update do produto: apenas campos escalares da whitelist
       return await tx.product.update({
         where: { id },
         data: {
-          ...productData,
+          ...scalarData,
           ...(addonGroupsOrder !== undefined && { addonGroupsOrder }),
           ...(categoryIds && {
             categories: { set: categoryIds.map((cid) => ({ id: cid })) },

@@ -3,6 +3,60 @@
  */
 
 /**
+ * Campos escalares permitidos no create/update de Product.
+ * Segurança: campos não listados são REJEITADOS, evitando que o body
+ * injete campos indevidos (ex: restaurantId, id, createdAt, relações).
+ *
+ * Sync manual com schema.prisma → model Product.
+ */
+const PRODUCT_SCALAR_FIELDS = [
+  'name',
+  'description',
+  'price',
+  'costPrice',
+  'imageUrl',
+  'isFeatured',
+  'isAvailable',
+  'stock',
+  'tags',
+  'order',
+  'productionArea',
+  'saiposIntegrationCode',
+  'integrationCode',
+  'showInMenu',
+  'isFlavor',
+  'allowDelivery',
+  'allowPos',
+  'allowOnline',
+  'ncm',
+  'cfop',
+  'cest',
+  'measureUnit',
+  'origin',
+  'taxPercentage',
+  'pizzaConfig',
+  'addonGroupsOrder',
+  'globalSizeId',
+  'fichaTecnicaId',
+];
+
+/**
+ * Extrai apenas os campos permitidos de um objeto.
+ * @param {object} source - Objeto de origem (req.body)
+ * @param {string[]} allowed - Lista de chaves permitidas
+ * @returns {object} Novo objeto com apenas as chaves permitidas
+ */
+function pickProductFields(source, allowed = PRODUCT_SCALAR_FIELDS) {
+  const result = {};
+  for (const key of allowed) {
+    if (key in source) {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
+/**
  * Seleção de campos seguros para o cliente final (Cardápio Digital)
  * EXCLUI: costPrice, ingredients, ncm, cfop, cest, taxPercentage, averageCost, lastUnitCost
  */
@@ -113,6 +167,8 @@ function applyAddonGroupOrder(product) {
 }
 
 module.exports = {
+  PRODUCT_SCALAR_FIELDS,
+  pickProductFields,
   PUBLIC_PRODUCT_SELECT,
   applyAddonGroupOrder
 };
