@@ -125,6 +125,10 @@ export interface Promotion {
   isActive: boolean;
   productId?: string;
   product?: Product;
+  addonId?: string;
+  addon?: { id: string; name: string };
+  categoryId?: string;
+  category?: { id: string; name: string };
   saiposIntegrationCode?: string | null;
   minOrderValue?: number;
   allowCouponOnPromotion?: boolean;

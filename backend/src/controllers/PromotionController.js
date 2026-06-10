@@ -39,7 +39,9 @@ const getActivePromotions = async (req, res) => {
                             where: { isActive: true }
                         }
                     }
-                } 
+                },
+                addon: { select: { id: true, name: true, price: true } },
+                category: { select: { id: true, name: true } }
             },
             orderBy: { createdAt: 'desc' }
         });

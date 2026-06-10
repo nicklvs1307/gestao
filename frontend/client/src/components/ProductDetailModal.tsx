@@ -255,8 +255,25 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ isOpen, onClose
   };
 
   const FlavorCard = ({ item, isSelected, onToggle, price, quantity: itemQty, fractionText, showControls, onIncrement, onDecrement }: any) => {
-    const activePromo = isPromoActive(item);
-    const displayPrice = activePromo ? item.promoPrice : price;
+    const promo = getAddonPromotion(item);
+    const hasNewPromo = !!promo;
+    const hasLegacyPromo = !hasNewPromo && item.promoPrice && (
+      !item.promoStartDate || 
+      (new Date() >= new Date(item.promoStartDate) && (!item.promoEndDate || new Date() <= new Date(item.promoEndDate)))
+    );
+    const activePromo = hasNewPromo || hasLegacyPromo;
+    
+    let computedPromoPrice = price;
+    if (hasNewPromo) {
+      if (promo.discountType === 'percentage') {
+        computedPromoPrice = Number(price) * (1 - promo.discountValue / 100);
+      } else {
+        computedPromoPrice = Math.max(0, Number(price) - promo.discountValue);
+      }
+    } else if (hasLegacyPromo) {
+      computedPromoPrice = Number(item.promoPrice);
+    }
+    const displayPrice = activePromo ? computedPromoPrice : price;
 
     return (
     <motion.div layout initial={false} animate={{ height: isSelected ? 'auto' : '9.5rem' }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="w-full">

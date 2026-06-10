@@ -10,6 +10,7 @@ interface FlavorCardProps {
   isSelected: boolean;
   onToggle: () => void;
   price: number;
+  promoPrice?: number;
   quantity: number;
   fractionText?: string;
   showControls: boolean;
@@ -22,14 +23,21 @@ const FlavorCard: React.FC<FlavorCardProps> = ({
   isSelected,
   onToggle,
   price,
+  promoPrice,
   quantity,
   fractionText,
   showControls,
   onIncrement,
   onDecrement,
 }) => {
-  const isPromoActive = item.promoPrice && !item.promoStartDate || item.promoStartDate && new Date() >= new Date(item.promoStartDate) && (!item.promoEndDate || new Date() <= new Date(item.promoEndDate));
-  const displayPrice = isPromoActive ? item.promoPrice : price;
+  // Determinar se há promoção ativa
+  const hasNewPromo = promoPrice !== undefined && promoPrice !== price;
+  const hasLegacyPromo = !hasNewPromo && item.promoPrice && (
+    !item.promoStartDate || 
+    (new Date() >= new Date(item.promoStartDate) && (!item.promoEndDate || new Date() <= new Date(item.promoEndDate)))
+  );
+  const isPromoActive = hasNewPromo || hasLegacyPromo;
+  const displayPrice = hasNewPromo ? promoPrice : (hasLegacyPromo ? Number(item.promoPrice) : price);
 
   return (
     <motion.div 

@@ -130,8 +130,47 @@ class PricingService {
       };
     }
 
-    // 2. Aplicação de Promoção
-    const activePromotion = product.promotions?.[0];
+    // 2. Aplicação de Promoção (produto, categoria ou global)
+    let activePromotion = product.promotions?.[0];
+    
+    // Se não tem promoção direta no produto, verificar promoções de categoria
+    if (!activePromotion && product.categories?.length > 0) {
+      const categoryIds = product.categories.map(c => c.id);
+      const now = new Date();
+      const categoryPromo = await prisma.promotion.findFirst({
+        where: {
+          isActive: true,
+          categoryId: { in: categoryIds },
+          startDate: { lte: now },
+          endDate: { gte: now }
+        },
+        orderBy: { discountValue: 'desc' }
+      });
+      if (categoryPromo) {
+        activePromotion = categoryPromo;
+        logger.info(`[PRICING] Promoção de categoria aplicada: "${categoryPromo.name}" (desconto: ${categoryPromo.discountValue})`);
+      }
+    }
+
+    // Se não tem promoção de produto/categoria, verificar promoção global
+    if (!activePromotion) {
+      const now = new Date();
+      const globalPromo = await prisma.promotion.findFirst({
+        where: {
+          isActive: true,
+          productId: null,
+          addonId: null,
+          categoryId: null,
+          startDate: { lte: now },
+          endDate: { gte: now }
+        }
+      });
+      if (globalPromo) {
+        activePromotion = globalPromo;
+        logger.info(`[PRICING] Promoção global aplicada: "${globalPromo.name}"`);
+      }
+    }
+
     if (activePromotion) {
         if (activePromotion.discountType === 'percentage') {
             unitPrice = unitPrice * (1 - activePromotion.discountValue / 100);
@@ -173,6 +212,18 @@ class PricingService {
       return { addonsTotal, addonsObjects };
     }
 
+    // Buscar promoções ativas para os addons selecionados
+    const now = new Date();
+    const activeAddonPromotions = await prisma.promotion.findMany({
+      where: {
+        isActive: true,
+        addonId: { in: addonsIds.filter(Boolean) },
+        startDate: { lte: now },
+        endDate: { gte: now }
+      }
+    });
+    const addonPromoMap = new Map(activeAddonPromotions.map(p => [p.addonId, p]));
+
     // 1. Coletar grupos do Produto e das Categorias (Herança)
     const productGroups = product.addonGroups || [];
     const categoryGroups = (product.categories || []).flatMap(c => c.addonGroups || []);
@@ -201,12 +252,24 @@ class PricingService {
 
         if (group.isFlavorGroup) {
             logger.info(`[PRICING] Processando como GRUPO DE SABOR (Regra: ${group.priceRule || 'higher'})`);
-            // Coleta os preços de cada seleção individual (considerando quantidade)
             const selectionPrices = [];
             selectedAddonsInGroup.forEach(addon => {
                 const qty = counts[addon.id];
+                let addonPrice = Number(addon.price);
+
+                // Aplicar promoção de addon se existir
+                const promo = addonPromoMap.get(addon.id);
+                if (promo) {
+                    if (promo.discountType === 'percentage') {
+                        addonPrice = addonPrice * (1 - promo.discountValue / 100);
+                    } else if (promo.discountType === 'fixed_amount') {
+                        addonPrice = Math.max(0, addonPrice - promo.discountValue);
+                    }
+                    logger.info(`[PRICING] Promoção aplicada ao sabor "${addon.name}": ${promo.discountType} ${promo.discountValue}`);
+                }
+
                 for (let i = 0; i < qty; i++) {
-                    selectionPrices.push(addon.price);
+                    selectionPrices.push(addonPrice);
                 }
             });
 
@@ -217,28 +280,50 @@ class PricingService {
                     const sum = selectionPrices.reduce((a, b) => a + b, 0);
                     addonsTotal += (sum / selectionPrices.length);
                 } else {
-                    // "higher" (Padrão Saipos/iFood)
                     addonsTotal += Math.max(...selectionPrices);
                 }
             }
         } else {
             logger.info(`[PRICING] Processando como GRUPO DE ADICIONAIS COMUNS`);
-            // Regra Normal: Somar todos os itens (Adicionais comuns)
             selectedAddonsInGroup.forEach(addon => {
                 const qty = counts[addon.id];
-                addonsTotal += (addon.price * qty);
+                let addonPrice = Number(addon.price);
+
+                // Aplicar promoção de addon se existir
+                const promo = addonPromoMap.get(addon.id);
+                if (promo) {
+                    if (promo.discountType === 'percentage') {
+                        addonPrice = addonPrice * (1 - promo.discountValue / 100);
+                    } else if (promo.discountType === 'fixed_amount') {
+                        addonPrice = Math.max(0, addonPrice - promo.discountValue);
+                    }
+                    logger.info(`[PRICING] Promoção aplicada ao adicional "${addon.name}": ${promo.discountType} ${promo.discountValue}`);
+                }
+
+                addonsTotal += (addonPrice * qty);
             });
         }
 
         // Monta objetos para o retorno (metadados do pedido)
         selectedAddonsInGroup.forEach(addon => {
+            const promo = addonPromoMap.get(addon.id);
+            let finalPrice = Number(addon.price);
+            if (promo) {
+                if (promo.discountType === 'percentage') {
+                    finalPrice = finalPrice * (1 - promo.discountValue / 100);
+                } else if (promo.discountType === 'fixed_amount') {
+                    finalPrice = Math.max(0, finalPrice - promo.discountValue);
+                }
+            }
             addonsObjects.push({
                 id: addon.id,
                 name: addon.name,
-                price: addon.price,
+                price: finalPrice,
+                originalPrice: Number(addon.price),
                 quantity: counts[addon.id],
                 groupName: group.name,
                 isFlavor: group.isFlavorGroup,
+                hasPromotion: !!promo,
                 saiposIntegrationCode: addon.saiposIntegrationCode || null
             });
         });

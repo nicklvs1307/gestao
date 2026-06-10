@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { AddonOption } from '../../types';
+import type { AddonOption, Promotion } from '../../types';
 import { toast } from 'sonner';
 import { 
   Minus, 
@@ -26,6 +26,7 @@ interface AddonSelectorProps {
   selectedAddons: AddonOption[];
   onAddonChange: (addon: AddonOption, delta: number, group: AddonGroup) => void;
   config: { active: boolean; maxFlavors: number; priceRule: string };
+  promotions?: Promotion[];
 }
 
 const AddonSelector: React.FC<AddonSelectorProps> = ({
@@ -33,15 +34,20 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
   selectedAddons,
   onAddonChange,
   config,
+  promotions = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
 
   const getAddonPromotion = (addon: any) => {
-    return null;
+    return promotions.find(p => p.isActive && p.addonId === addon.id);
   };
 
   const isPromoActive = (addon: any) => {
+    // 1. Novo sistema de promoções
+    if (getAddonPromotion(addon)) return true;
+
+    // 2. Sistema legado
     if (!addon.promoPrice) return false;
     const now = new Date();
     const start = addon.promoStartDate ? new Date(addon.promoStartDate) : null;
@@ -54,6 +60,16 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
   };
 
   const getAddonPrice = (addon: any) => {
+    // 1. Novo sistema
+    const promo = getAddonPromotion(addon);
+    if (promo) {
+        if (promo.discountType === 'percentage') {
+            return Number(addon.price) * (1 - promo.discountValue / 100);
+        }
+        return Math.max(0, Number(addon.price) - promo.discountValue);
+    }
+
+    // 2. Legado
     return isPromoActive(addon) ? Number(addon.promoPrice) : Number(addon.price);
   };
 
@@ -155,6 +171,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                 const isSelected = !!selected;
                 const currentQty = selected?.quantity || 0;
                 const activePromo = isPromoActive(addon);
+                const promoPrice = getAddonPrice(addon);
 
                 if (isFlavor || hasImages) {
                   return (
@@ -168,6 +185,7 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                         onAddonChange(addon, 1, group);
                       }}
                       price={addon.price}
+                      promoPrice={activePromo ? promoPrice : undefined}
                       quantity={currentQty}
                       fractionText={isSelected ? getFractionText(addon, group, config) : undefined}
                       showControls={isSelected}
@@ -220,13 +238,13 @@ const AddonSelector: React.FC<AddonSelectorProps> = ({
                         )}
                         {addon.price > 0 ? (
                           <div className="flex items-center gap-2 mt-1">
-                            {isPromoActive(addon) ? (
+                            {activePromo ? (
                               <>
                                 <span className="text-[9px] font-bold text-slate-500 line-through decoration-rose-500/50 uppercase italic">
                                   + R$ {Number(addon.price).toFixed(2).replace('.', ',')}
                                 </span>
                                 <span className="text-[10px] font-black text-emerald-600 uppercase italic">
-                                  + R$ {Number(addon.promoPrice).toFixed(2).replace('.', ',')}
+                                  + R$ {promoPrice.toFixed(2).replace('.', ',')}
                                 </span>
                               </>
                             ) : (
