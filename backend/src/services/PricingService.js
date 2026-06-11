@@ -111,6 +111,7 @@ class PricingService {
     if (!product) throw new Error(`Produto não encontrado: ${productId}`);
     if (!product.isAvailable) throw new Error(`Produto indisponível: ${product.name}`);
 
+    const restaurantId = product.restaurantId;
     let unitPrice = product.price;
     let sizeName = null;
     let sizeObj = null;
@@ -131,7 +132,7 @@ class PricingService {
     }
 
     // 2. Aplicação de Promoção (produto, categoria ou global)
-    let activePromotion = product.promotions?.[0];
+    let activePromotion = product.promotions?.find(p => p.restaurantId === restaurantId);
     
     // Se não tem promoção direta no produto, verificar promoções de categoria
     if (!activePromotion && product.categories?.length > 0) {
@@ -140,6 +141,7 @@ class PricingService {
       const categoryPromo = await prisma.promotion.findFirst({
         where: {
           isActive: true,
+          restaurantId,
           categoryId: { in: categoryIds },
           startDate: { lte: now },
           endDate: { gte: now }
@@ -158,6 +160,7 @@ class PricingService {
       const globalPromo = await prisma.promotion.findFirst({
         where: {
           isActive: true,
+          restaurantId,
           productId: null,
           addonId: null,
           categoryId: null,
@@ -217,6 +220,7 @@ class PricingService {
     const activeAddonPromotions = await prisma.promotion.findMany({
       where: {
         isActive: true,
+        restaurantId: product.restaurantId,
         addonId: { in: addonsIds.filter(Boolean) },
         startDate: { lte: now },
         endDate: { gte: now }
