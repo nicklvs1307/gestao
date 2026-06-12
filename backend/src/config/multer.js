@@ -1,5 +1,6 @@
 const multer = require('multer');
 const path = require('path');
+const AppError = require('../utils/AppError');
 
 const MAX_SIZES = {
   image: 20 * 1024 * 1024,  // 20MB para imagens
@@ -23,7 +24,7 @@ const fileFilter = (req, file, cb) => {
   if (isImage || isVideo) {
     cb(null, true);
   } else {
-    cb(new Error('Tipo de arquivo inválido. Apenas imagens e vídeos são permitidos.'), false);
+    cb(new AppError('Tipo de arquivo inválido. Apenas imagens e vídeos são permitidos.', 400), false);
   }
 };
 

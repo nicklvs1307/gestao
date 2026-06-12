@@ -619,7 +619,7 @@ class ChecklistReportService {
     // Template data
     const templateData = {
       checklistName: checklist.title,
-      sectorName: checklist.sector.name,
+      sectorName: checklist.sector?.name || 'Setor removido',
       executorName: execution.user?.name || execution.externalUserName || 'N/A',
       completionTime: time,
       individualRate: rate,
@@ -671,7 +671,7 @@ class ChecklistReportService {
         } else {
           message = `*⚠️ CHECKLIST COM ATRASO - ${checklist.sector.name}*\n\n`;
           message += `O checklist *${checklist.title.toUpperCase()}* foi concluído APÓS o horário limite.\n\n`;
-          message += `⏰ Era para ter sido fatto até: ${checklist.deadlineTime || 'N/A'}\n`;
+          message += `⏰ Era para ter sido feito até: ${checklist.deadlineTime || 'N/A'}\n`;
           message += `🕒 Concluído às: ${time} (ATRASADO)\n`;
           message += `📊 Conformidade: *${rate}%*\n`;
           message += `👤 Executor: ${execution.user?.name || execution.externalUserName || 'N/A'}\n\n`;
@@ -835,10 +835,11 @@ class ChecklistReportService {
             });
           }
         } else {
-          const okTasks = execution.responses.filter(r => r.isOk).length;
-          const totalTasks = execution.responses.length;
-          const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
-          const time = format(execution.completedAt, "HH:mm");
+    const responses = Array.isArray(execution.responses) ? execution.responses : [];
+    const okTasks = responses.filter(r => r.isOk).length;
+    const totalTasks = responses.length;
+    const rate = totalTasks > 0 ? ((okTasks / totalTasks) * 100).toFixed(0) : 0;
+    const time = execution.completedAt ? format(execution.completedAt, "HH:mm") : 'N/A';
           const formatType = settings.reportFormat || "PDF";
           const reportLink = `${this.getFrontendUrl()}/checklist/report/${execution.id}`;
 

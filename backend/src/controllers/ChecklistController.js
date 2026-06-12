@@ -336,7 +336,7 @@ show = asyncHandler(async (req, res) => {
 
     const checklist = await prisma.checklist.findUnique({ 
       where: { id: checklistId },
-      include: { tasks: { select: { id: true } } }
+      include: { tasks: { select: { id: true, type: true } } }
     });
 
     if (!checklist) {
@@ -356,6 +356,42 @@ show = asyncHandler(async (req, res) => {
     if (invalidResponses.length > 0) {
       res.status(400);
       throw new Error("Uma ou mais tarefas não pertencem a este checklist");
+    }
+
+    // Validar tipo de cada resposta vs tipo da task
+    const taskTypeMap = new Map(checklistTasks.map(t => [t.id, t.type]));
+    for (const r of responsesArray) {
+      const taskType = taskTypeMap.get(r.taskId);
+      if (!taskType) continue;
+
+      if (taskType === 'CHECKBOX') {
+        if (r.value !== 'true' && r.value !== 'false' && r.value !== true && r.value !== false) {
+          res.status(400);
+          throw new Error(`Resposta inválida para tarefa tipo CHECKBOX: ${r.taskId}`);
+        }
+      } else if (taskType === 'PHOTO') {
+        if (r.value && typeof r.value === 'string') {
+          try {
+            const parsed = JSON.parse(r.value);
+            if (!Array.isArray(parsed)) {
+              res.status(400);
+              throw new Error(`Formato de foto inválido: ${r.taskId}`);
+            }
+          } catch (e) {
+            if (e.status) throw e;
+            res.status(400);
+            throw new Error(`Formato de foto inválido: ${r.taskId}`);
+          }
+        }
+      } else if (taskType === 'NUMBER') {
+        if (r.value !== '' && r.value != null) {
+          const num = Number(r.value);
+          if (isNaN(num)) {
+            res.status(400);
+            throw new Error(`Valor numérico inválido: ${r.taskId}`);
+          }
+        }
+      }
     }
 
     let durationSeconds = null;
@@ -388,8 +424,8 @@ show = asyncHandler(async (req, res) => {
         responses: {
           create: responsesArray.map(r => ({
             taskId: r.taskId,
-            value: String(r.value),
-            isOk: r.isOk ?? true,
+            value: r.value != null ? String(r.value).substring(0, 10000) : '',
+            isOk: r.isOk ?? (r.value ? true : false),
             notes: r.notes
           }))
         }

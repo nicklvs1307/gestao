@@ -65,6 +65,12 @@ router.post('/execute',
   ChecklistController.submitExecution
 );
 
-router.post('/upload', upload.single('file'), ChecklistController.uploadFile);
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { message: "Limite de uploads atingido. Tente novamente em 15 minutos." }
+});
+
+router.post('/upload', uploadLimiter, upload.single('file'), ChecklistController.uploadFile);
 
 module.exports = router;
