@@ -623,16 +623,19 @@ show = asyncHandler(async (req, res) => {
 
     const { originalname, mimetype, size, path: originalPath, filename } = req.file;
     const isImage = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimetype);
-    const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(mimetype);
 
-    // Validar tamanho antes deprocessar
-    const maxSize = isImage ? MAX_SIZES.image : MAX_SIZES.video;
-    if (size > maxSize) {
+    if (!isImage) {
       fs.unlinkSync(originalPath);
-      const typeLabel = isImage ? 'imagem' : 'vídeo';
-      const sizeMB = (maxSize / (1024 * 1024)).toFixed(0);
       res.status(400);
-      throw new Error(`Tamanho máximo para ${typeLabel}: ${sizeMB}MB`);
+      throw new Error("Apenas imagens são permitidas");
+    }
+
+    // Validar tamanho antes de processar
+    if (size > MAX_SIZES.image) {
+      fs.unlinkSync(originalPath);
+      const sizeMB = (MAX_SIZES.image / (1024 * 1024)).toFixed(0);
+      res.status(400);
+      throw new Error(`Tamanho máximo para imagem: ${sizeMB}MB`);
     }
 
     // Se arquivo muito pequeno (< 1KB), provavelmente é inválido
@@ -642,13 +645,7 @@ show = asyncHandler(async (req, res) => {
       throw new Error("Arquivo muito pequeno ou inválido");
     }
 
-    if (isImage) {
-      await this.convertImageToWebP(res, originalPath, filename, maxSize);
-    } else if (isVideo) {
-      await this.processVideo(res, originalPath, filename);
-    } else {
-      res.json({ url: `/uploads/${filename}` });
-    }
+    await this.convertImageToWebP(res, originalPath, filename, MAX_SIZES.image);
   });
 
   convertImageToWebP = async (res, originalPath, filename, maxSize) => {
@@ -685,17 +682,6 @@ show = asyncHandler(async (req, res) => {
       res.status(500);
       throw new Error("Erro ao processar imagem. Tente novamente.");
     }
-  };
-
-  processVideo = async (res, originalPath, filename) => {
-    const path = require('path');
-    const fs = require('fs');
-
-    const ext = path.extname(filename).toLowerCase();
-    const stats = fs.statSync(originalPath);
-    console.log(`Vídeo recebido: ${filename} (${(stats.size / (1024 * 1024)).toFixed(2)}MB)`);
-
-    res.json({ url: `/uploads/${filename}` });
   };
 
   // Histórico de envios de relatórios

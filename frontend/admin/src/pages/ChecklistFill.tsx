@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { cn } from '../lib/utils';
+import CameraCapture from '../components/checklist/CameraCapture';
 
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 1500;
@@ -47,8 +48,7 @@ const mergeDraftWithTasks = (tasks: any[], draftResponses: any[]) => {
 
 const TaskCard = memo(({
     task, resp, idx, error, uploadingTask, isOnline,
-    onUpdate, onToggleExpand, onToggleProcedure, onFileUpload, onRemovePhoto,
-    fileInputRefs,
+    onUpdate, onToggleExpand, onToggleProcedure, onOpenCamera, onRemovePhoto,
 }: {
     task: any;
     resp: any;
@@ -59,9 +59,8 @@ const TaskCard = memo(({
     onUpdate: (taskId: string, field: string, value: any) => void;
     onToggleExpand: (taskId: string) => void;
     onToggleProcedure: (taskId: string) => void;
-    onFileUpload: (taskId: string, file: File) => void;
+    onOpenCamera: (taskId: string) => void;
     onRemovePhoto: (taskId: string, photoUrl: string) => void;
-    fileInputRefs: React.MutableRefObject<{ [key: string]: HTMLInputElement | null }>;
 }) => {
     if (!resp) return null;
 
@@ -245,15 +244,6 @@ const TaskCard = memo(({
                         )}
                         {task.type === 'PHOTO' && (
                             <div className="space-y-4">
-                                <input
-                                    type="file"
-                                    accept="image/*,video/*"
-                                    capture="environment"
-                                    className="hidden"
-                                    ref={el => { fileInputRefs.current[task.id] = el; }}
-                                    onChange={(e) => e.target.files?.[0] && onFileUpload(task.id, e.target.files[0])}
-                                />
-
                                 {photos.length > 0 && (
                                     <div className="grid grid-cols-2 gap-3">
                                         {photos.map((photoUrl: string, pIdx: number) => (
@@ -282,7 +272,7 @@ const TaskCard = memo(({
 
                                 {photos.length < 3 && (
                                     <button
-                                        onClick={() => fileInputRefs.current[task.id]?.click()}
+                                        onClick={() => onOpenCamera(task.id)}
                                         disabled={uploadingTask && uploadingTask.startsWith(task.id)}
                                         className="w-full h-36 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-500 hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50"
                                     >
@@ -306,9 +296,9 @@ const TaskCard = memo(({
                                             <>
                                                 <Camera size={32} />
                                                 <div className="text-center">
-                                                    <span className="text-xs font-semibold block">Adicionar Mídia</span>
+                                                    <span className="text-xs font-semibold block">Tirar Foto</span>
                                                     <span className="text-xs text-slate-500">
-                                                        {photos.length} de 3 • máx 20MB
+                                                        {photos.length} de 3
                                                     </span>
                                                 </div>
                                             </>
@@ -359,9 +349,9 @@ const ChecklistFill: React.FC = () => {
     const [startedAt] = useState(new Date().toISOString());
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [cameraTaskId, setCameraTaskId] = useState<string | null>(null);
 
     const API_URL = import.meta.env.VITE_API_URL || '/api';
-    const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
     const mountedRef = useRef(true);
     const submitControllerRef = useRef<AbortController | null>(null);
     const loadControllerRef = useRef<AbortController | null>(null);
@@ -535,8 +525,11 @@ const ChecklistFill: React.FC = () => {
             return;
         }
 
-        const isImage = file.type.startsWith('image/');
-        const isVideo = file.type.startsWith('video/');
+        if (!file.type.startsWith('image/')) {
+            toast.error("Apenas imagens são permitidas");
+            return;
+        }
+
         const MAX_SIZE_MB = 20;
         const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
@@ -551,7 +544,7 @@ const ChecklistFill: React.FC = () => {
         }
 
         if (!isOnline) {
-            toast.error("Sem conexão. Conecte-se para enviar mídia.");
+            toast.error("Sem conexão. Conecte-se para enviar foto.");
             return;
         }
 
@@ -559,7 +552,6 @@ const ChecklistFill: React.FC = () => {
 
         const formData = new FormData();
         formData.append('file', file);
-        const typeLabel = isImage ? 'imagem' : 'vídeo';
 
         try {
             const response = await axios.post(`${API_URL}/checklists/upload`, formData, {
@@ -578,7 +570,7 @@ const ChecklistFill: React.FC = () => {
             const newPhotos = [...currentPhotos, response.data.url];
             handleUpdateResponse(taskId, 'value', newPhotos);
             handleUpdateResponse(taskId, 'isOk', true);
-            toast.success(isVideo ? "Vídeo anexado" : "Foto anexada");
+            toast.success("Foto anexada");
         } catch (error: any) {
             if (!mountedRef.current) return;
             const message = error.response?.data?.message || error.message;
@@ -587,19 +579,31 @@ const ChecklistFill: React.FC = () => {
             } else if (message?.includes('máximo') || message?.includes('inválido')) {
                 toast.error(message);
             } else if (!error.response) {
-                toast.error(`Falha de conexão ao enviar ${typeLabel}.`);
+                toast.error("Falha de conexão ao enviar foto.");
             } else {
-                toast.error(`Erro ao enviar ${typeLabel}. Tente novamente.`);
+                toast.error("Erro ao enviar foto. Tente novamente.");
             }
         } finally {
             if (mountedRef.current) {
                 setUploadingTask(null);
-                if (fileInputRefs.current[taskId]) {
-                    fileInputRefs.current[taskId]!.value = '';
-                }
             }
         }
     }, [responses, isOnline, API_URL, handleUpdateResponse]);
+
+    const openCamera = useCallback((taskId: string) => {
+        setCameraTaskId(taskId);
+    }, []);
+
+    const handleCapture = useCallback((file: File) => {
+        if (cameraTaskId) {
+            handleFileUpload(cameraTaskId, file);
+            setCameraTaskId(null);
+        }
+    }, [cameraTaskId, handleFileUpload]);
+
+    const closeCamera = useCallback(() => {
+        setCameraTaskId(null);
+    }, []);
 
     const removePhoto = useCallback((taskId: string, photoUrl: string) => {
         const currentResponse = responses.find(r => r.taskId === taskId);
@@ -788,6 +792,7 @@ const ChecklistFill: React.FC = () => {
     const pendingTasks = tasks.length - answeredCount;
 
     return (
+        <>
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 pb-24">
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
@@ -875,9 +880,8 @@ const ChecklistFill: React.FC = () => {
                                         onUpdate={handleUpdateResponse}
                                         onToggleExpand={toggleExpand}
                                         onToggleProcedure={toggleProcedure}
-                                        onFileUpload={handleFileUpload}
+                                        onOpenCamera={openCamera}
                                         onRemovePhoto={removePhoto}
-                                        fileInputRefs={fileInputRefs}
                                     />
                                 );
                             })}
@@ -913,6 +917,13 @@ const ChecklistFill: React.FC = () => {
                 </AnimatePresence>
             </main>
         </div>
+
+        <AnimatePresence>
+            {cameraTaskId && (
+                <CameraCapture onCapture={handleCapture} onClose={closeCamera} />
+            )}
+        </AnimatePresence>
+        </>
     );
 };
 

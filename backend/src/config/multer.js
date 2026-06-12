@@ -4,7 +4,6 @@ const AppError = require('../utils/AppError');
 
 const MAX_SIZES = {
   image: 20 * 1024 * 1024,  // 20MB para imagens
-  video: 20 * 1024 * 1024, // 20MB para vídeos
 };
 
 const storage = multer.diskStorage({
@@ -19,12 +18,11 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const isImage = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype);
-  const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.mimetype);
   
-  if (isImage || isVideo) {
+  if (isImage) {
     cb(null, true);
   } else {
-    cb(new AppError('Tipo de arquivo inválido. Apenas imagens e vídeos são permitidos.', 400), false);
+    cb(new AppError('Tipo de arquivo inválido. Apenas imagens são permitidas.', 400), false);
   }
 };
 
@@ -32,7 +30,7 @@ const upload = multer({
   storage: storage, 
   fileFilter: fileFilter,
   limits: { 
-    fileSize: MAX_SIZES.video, // Limite maior para vídeos (20MB)
+    fileSize: MAX_SIZES.image,
   }
 });
 
