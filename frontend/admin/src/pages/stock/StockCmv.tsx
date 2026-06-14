@@ -53,7 +53,7 @@ const StockCmv: React.FC = () => {
 
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
+        p.categories?.some(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     if (loading) return (
@@ -112,7 +112,7 @@ const StockCmv: React.FC = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-black text-xl text-slate-900 uppercase italic tracking-tighter leading-tight">{product.name}</h3>
-                                            <span className="text-[9px] font-black text-white bg-slate-900 px-2 py-0.5 rounded uppercase tracking-widest mt-2 inline-block">{product.category?.name || 'Geral'}</span>
+                                            <span className="text-[9px] font-black text-white bg-slate-900 px-2 py-0.5 rounded uppercase tracking-widest mt-2 inline-block">{product.categories?.[0]?.name || 'Geral'}</span>
                                         </div>
                                     </div>
                                     <div className="space-y-4 pt-4">

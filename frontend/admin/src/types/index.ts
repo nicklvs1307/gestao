@@ -62,7 +62,7 @@ export interface Product {
   order: number;
   categoryId: string;
   restaurantId: string;
-  category: Category;
+  categories: Category[];
   sizes: SizeOption[];
   addonGroups: AddonGroup[];
   integrationCode?: string | null;
@@ -168,7 +168,7 @@ export interface Order {
   isPrinted?: boolean;
   isSettled?: boolean;
   settledAt?: string | null;
-  invoice?: { id: string; pdfUrl?: string } | null;
+  invoice?: { id: string; number?: number; status: string; accessKey?: string; pdfUrl?: string; protocol?: string } | null;
   pendingAt?: string | null;
   preparingAt?: string | null;
   readyAt?: string | null;

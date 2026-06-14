@@ -4,10 +4,10 @@ import { api, getPaymentMethods } from '../services/api';
 import { getPosTableSummary } from '../services/api/tables';
 import { printOrder } from '../services/printer';
 import {
-    ChevronLeft, Printer, Loader2, X,
+    ChevronLeft, Printer, Loader2, X, Check,
     ShoppingCart, Users, Receipt, Wallet, Banknote,
     QrCode, CreditCard, Percent, FileText, CheckCircle2,
-    ArrowRightLeft, Split, Layers, Clock
+    ArrowRightLeft, Split, Layers, Clock, Minus, Plus, Trash2
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -299,6 +299,10 @@ const TableCheckout: React.FC = () => {
         });
     }, [activeTabId]);
 
+    const removeFromPayment = useCallback((itemId: string) => {
+        setPayingItems(prev => prev.filter(i => i.itemId !== itemId));
+    }, []);
+
     const payEverything = useCallback(() => {
         if (!order) return;
         setPayingItems(allUnpaidItems.map(i => ({
@@ -440,7 +444,7 @@ const TableCheckout: React.FC = () => {
 
     // ── Render ──
     return (
-        <div className="h-screen flex flex-col bg-slate-100 text-slate-700 overflow-hidden font-sans">
+        <div className="h-screen flex flex-col bg-slate-50 text-slate-700 overflow-hidden">
 
             {/* ═══════ HEADER ═══════ */}
             <header className="h-16 bg-slate-900 text-white flex items-center justify-between px-6 shrink-0 shadow-lg z-20">
@@ -448,13 +452,18 @@ const TableCheckout: React.FC = () => {
                     <button onClick={() => navigate('/pos?tab=tables')} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
                         <ChevronLeft size={24} />
                     </button>
-                    <div>
-                        <h1 className="text-xl font-black uppercase tracking-tighter">
-                            Mesa {order.tableNumber < 10 ? `0${order.tableNumber}` : order.tableNumber}
-                        </h1>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">
-                            {tabs.length} {tabs.length === 1 ? 'comanda' : 'comandas'} · {formatSP(order.createdAt, "HH:mm")}
-                        </p>
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                            <Receipt size={20} />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-black uppercase tracking-tighter">
+                                Mesa {order.tableNumber < 10 ? `0${order.tableNumber}` : order.tableNumber}
+                            </h1>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">
+                                {tabs.length} {tabs.length === 1 ? 'comanda' : 'comandas'} · {formatSP(order.createdAt, "HH:mm")}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -475,7 +484,8 @@ const TableCheckout: React.FC = () => {
                     </Button>
 
                     <Button
-                        className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase shadow-lg"
+                        variant="success"
+                        className="h-10 font-bold text-[10px] uppercase shadow-lg"
                         onClick={handleCloseTable}
                     >
                         <CheckCircle2 size={14} className="mr-2" /> Fechar Mesa
@@ -489,7 +499,7 @@ const TableCheckout: React.FC = () => {
 
             {/* ═══════ TABS DE COMANDAS ═══════ */}
             {tabs.length > 1 && (
-                <div className="bg-white border-b border-slate-200 px-6 py-2 shrink-0">
+                <div className="bg-white border-b border-slate-200 px-6 py-3 shrink-0">
                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                         <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mr-1 shrink-0">Comandas:</span>
                         {tabs.map(tab => {
@@ -500,13 +510,13 @@ const TableCheckout: React.FC = () => {
                                     key={tab.orderId}
                                     onClick={() => setActiveTabId(tab.orderId)}
                                     className={cn(
-                                        "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all shrink-0",
+                                        "flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all shrink-0",
                                         isActive
-                                            ? "bg-slate-900 border-slate-900 text-white shadow-md"
-                                            : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300"
+                                            ? "bg-slate-900 border-slate-900 text-white shadow-lg"
+                                            : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
                                     )}
                                 >
-                                    <Users size={12} />
+                                    <Users size={14} />
                                     <span className="text-xs font-bold">{tab.customerName}</span>
                                     <span className={cn(
                                         "text-[10px] font-bold",
@@ -516,7 +526,7 @@ const TableCheckout: React.FC = () => {
                                     </span>
                                     {unpaidCount > 0 && (
                                         <span className={cn(
-                                            "text-[9px] font-black px-1.5 py-0.5 rounded-full",
+                                            "text-[9px] font-black px-2 py-0.5 rounded-full",
                                             isActive ? "bg-white/20 text-white" : "bg-orange-100 text-orange-600"
                                         )}>
                                             {unpaidCount}
@@ -565,23 +575,59 @@ const TableCheckout: React.FC = () => {
                                 </div>
                             ) : activeUnpaidItems.map(item => {
                                 const inPayment = payingItems.find(i => i.itemId === item.id);
+                                const isSelected = !!inPayment;
                                 const isFullySelected = inPayment?.quantity === item.quantity;
                                 return (
                                     <div key={item.id} className={cn(
-                                        "p-3 rounded-xl border transition-all",
-                                        isFullySelected ? "bg-slate-50 border-transparent opacity-50" : "bg-white border-slate-100 shadow-sm"
-                                    )}>
+                                        "p-3 rounded-xl border-2 transition-all cursor-pointer group",
+                                        isSelected
+                                            ? "bg-primary/5 border-primary shadow-sm"
+                                            : "bg-white border-slate-100 shadow-sm hover:border-slate-200"
+                                    )} onClick={() => isSelected ? removeFromPayment(item.id) : addAllToPayment(item)}>
                                         <div className="flex justify-between items-start mb-2">
-                                            <div className="flex-1 pr-2">
-                                                <p className="text-[11px] font-bold text-slate-900 uppercase leading-tight truncate">{item.product?.name || item.productName || 'Produto'}</p>
-                                                <p className="text-[9px] font-medium text-slate-500 mt-1">{item.quantity} UN x R$ {item.priceAtTime.toFixed(2)}</p>
+                                            <div className="flex items-center gap-3 flex-1 pr-2">
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all",
+                                                    isSelected ? "bg-primary border-primary" : "border-slate-300 group-hover:border-slate-400"
+                                                )}>
+                                                    {isSelected && <Check size={12} strokeWidth={4} className="text-white" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[11px] font-bold text-slate-900 uppercase leading-tight truncate">{item.product?.name || item.productName || 'Produto'}</p>
+                                                    <p className="text-[9px] font-medium text-slate-500 mt-1">{item.quantity} UN x R$ {item.priceAtTime.toFixed(2)}</p>
+                                                </div>
                                             </div>
                                             <span className="text-[11px] font-black text-slate-900">R$ {(item.priceAtTime * item.quantity).toFixed(2)}</span>
                                         </div>
-                                        <div className="flex gap-1">
-                                            <button onClick={() => addOneToPayment(item)} className="flex-1 h-7 bg-slate-100 text-slate-600 rounded-lg font-bold text-[9px] uppercase hover:bg-slate-200">Add 1</button>
-                                            <button onClick={() => addAllToPayment(item)} className="flex-1 h-7 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg font-bold text-[9px] uppercase hover:bg-blue-600 hover:text-white">Todos</button>
-                                        </div>
+                                        {/* Controle individual de quantidade quando selecionado */}
+                                        {isSelected && (
+                                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-primary/10" onClick={e => e.stopPropagation()}>
+                                                <button
+                                                    onClick={() => {
+                                                        if (inPayment.quantity <= 1) removeFromPayment(item.id);
+                                                        else setPayingItems(prev => prev.map(i => i.itemId === item.id ? { ...i, quantity: i.quantity - 1 } : i));
+                                                    }}
+                                                    className="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+                                                >
+                                                    <Minus size={12} strokeWidth={3} />
+                                                </button>
+                                                <span className="w-8 text-center text-xs font-black">{inPayment.quantity}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        if (inPayment.quantity < item.quantity) {
+                                                            setPayingItems(prev => prev.map(i => i.itemId === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+                                                        }
+                                                    }}
+                                                    disabled={inPayment.quantity >= item.quantity}
+                                                    className="w-7 h-7 flex items-center justify-center bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-30"
+                                                >
+                                                    <Plus size={12} strokeWidth={3} />
+                                                </button>
+                                                <span className="text-[9px] font-bold text-slate-500 ml-auto">
+                                                    R$ {(inPayment.price * inPayment.quantity).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -592,30 +638,51 @@ const TableCheckout: React.FC = () => {
                 {/* ── COLUNA 2: TERMINAL DE PAGAMENTO ── */}
                 <section className="flex-1 flex flex-col gap-3">
                     <div className="flex gap-2 shrink-0">
-                        <Button onClick={() => setDiscount(d => d + 5)} className="flex-1 h-12 bg-slate-700 hover:bg-slate-800 text-[10px] font-black uppercase">Aplicar Desconto R$ 5</Button>
-                        <Button onClick={() => setSurcharge(s => s + 5)} className="flex-1 h-12 bg-slate-700 hover:bg-slate-800 text-[10px] font-black uppercase">Aplicar Acréscimo R$ 5</Button>
+                        <Button onClick={() => setDiscount(d => d + 5)} className="flex-1 h-10 bg-slate-700 hover:bg-slate-800 text-[9px] font-black uppercase">
+                            Desconto R$ 5
+                        </Button>
+                        <Button onClick={() => setSurcharge(s => s + 5)} className="flex-1 h-10 bg-slate-700 hover:bg-slate-800 text-[9px] font-black uppercase">
+                            Acréscimo R$ 5
+                        </Button>
                     </div>
 
                     <Card className="flex-1 flex flex-col border-slate-200 shadow-xl overflow-hidden" noPadding>
-                        <div className="p-8 bg-slate-900 text-white flex justify-between items-end shrink-0">
-                            <div>
-                                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">
-                                    {activeTab ? `Total ${activeTab.customerName}` : 'Total a Receber'}
-                                </p>
-                                <h2 className="text-5xl font-black italic tracking-tighter">R$ {totalToPay.toFixed(2).replace('.', ',')}</h2>
+                        {/* Header financeiro */}
+                        <div className="p-6 bg-slate-900 text-white shrink-0">
+                            <div className="flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                                        {activeTab ? `Total ${activeTab.customerName}` : 'Total a Receber'}
+                                    </p>
+                                    <h2 className="text-5xl font-black italic tracking-tighter">R$ {totalToPay.toFixed(2).replace('.', ',')}</h2>
+                                </div>
+                                <div className="text-right">
+                                    {amountPaid > 0 && <p className="text-sm font-bold text-emerald-400 uppercase">Pago: R$ {amountPaid.toFixed(2)}</p>}
+                                    <p className={cn("text-lg font-black italic", remainingToPay > 0 ? "text-orange-400" : "text-emerald-400")}>
+                                        {remainingToPay > 0 ? `Falta: R$ ${remainingToPay.toFixed(2)}` : `Troco: R$ ${changeAmount.toFixed(2)}`}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="text-right">
-                                {amountPaid > 0 && <p className="text-sm font-bold text-emerald-400 uppercase">Pago: R$ {amountPaid.toFixed(2)}</p>}
-                                <p className={cn("text-lg font-black italic", remainingToPay > 0 ? "text-orange-400" : "text-emerald-400")}>
-                                    {remainingToPay > 0 ? `Falta: R$ ${remainingToPay.toFixed(2)}` : `Troco: R$ ${changeAmount.toFixed(2)}`}
-                                </p>
+
+                            {/* Barra de progresso */}
+                            <div className="mt-4">
+                                <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, (amountPaid / Math.max(totalToPay, 1)) * 100)}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between mt-1">
+                                    <span className="text-[9px] text-slate-500">0%</span>
+                                    <span className="text-[9px] text-emerald-400 font-bold">{Math.min(100, Math.round((amountPaid / Math.max(totalToPay, 1)) * 100))}%</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* CONFIG DE TAXA E AJUSTES */}
-                        <div className="p-3 bg-slate-50 border-b border-slate-200 flex gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        {/* CONFIG DE TAXE E AJUSTES */}
+                        <div className="p-3 bg-slate-50 border-b border-slate-200 flex gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 shrink-0">
                             <div className="flex items-center gap-2">
-                                <span>Taxa de Serviço ({serviceTaxRate}%):</span>
+                                <span>Taxa ({serviceTaxRate}%):</span>
                                 <button onClick={() => setUseServiceTax(!useServiceTax)} className={cn("w-10 h-5 rounded-full relative transition-colors", useServiceTax ? "bg-emerald-500" : "bg-slate-300")}>
                                     <div className={cn("absolute top-1 w-3 h-3 bg-white rounded-full transition-all", useServiceTax ? "left-6" : "left-1")} />
                                 </button>
@@ -623,10 +690,12 @@ const TableCheckout: React.FC = () => {
                             {(discount > 0 || surcharge > 0) && (
                                 <button onClick={() => { setDiscount(0); setSurcharge(0); }} className="text-rose-500 underline underline-offset-4">Limpar Ajustes</button>
                             )}
+                            {discount > 0 && <span className="text-rose-500">- R$ {discount.toFixed(2)}</span>}
+                            {surcharge > 0 && <span className="text-emerald-600">+ R$ {surcharge.toFixed(2)}</span>}
                         </div>
 
                         {/* ITENS NO CARRINHO DE PAGAMENTO */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                             {payingItems.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center opacity-20 grayscale">
                                     <ShoppingCart size={48} className="mb-4" />
@@ -634,18 +703,18 @@ const TableCheckout: React.FC = () => {
                                 </div>
                             ) : (
                                 payingItems.map(item => (
-                                    <div key={item.itemId} className="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between shadow-sm group">
-                                        <div className="flex items-center gap-4">
+                                    <div key={item.itemId} className="p-3 bg-white border border-slate-100 rounded-xl flex items-center justify-between shadow-sm group">
+                                        <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 flex items-center justify-center bg-slate-900 text-white rounded-lg text-xs font-black">{item.quantity}</div>
                                             <div>
                                                 <p className="text-xs font-bold text-slate-800 uppercase">{item.name}</p>
-                                                <p className="text-[9px] font-medium text-slate-500 uppercase">Valor: R$ {item.price.toFixed(2)}</p>
+                                                <p className="text-[9px] font-medium text-slate-500 uppercase">{item.quantity}x R$ {item.price.toFixed(2)}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-3">
                                             <span className="text-sm font-black text-slate-900">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                            <button onClick={() => setPayingItems(prev => prev.filter(i => i.itemId !== item.itemId))} className="text-slate-500 hover:text-rose-500 transition-colors">
-                                                <X size={18} />
+                                            <button onClick={() => removeFromPayment(item.itemId)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                                                <X size={14} />
                                             </button>
                                         </div>
                                     </div>
@@ -655,13 +724,13 @@ const TableCheckout: React.FC = () => {
 
                         {/* PAGAMENTOS JÁ REALIZADOS NESTA TRANSAÇÃO */}
                         {currentPayments.length > 0 && (
-                            <div className="p-4 bg-slate-50 border-t border-slate-200">
+                            <div className="p-4 bg-slate-50 border-t border-slate-200 shrink-0">
                                 <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Lançamentos:</h4>
                                 <div className="flex flex-wrap gap-2">
                                     {currentPayments.map((p, idx) => (
                                         <div key={idx} className="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200 font-bold text-[10px] uppercase">
                                             {p.methodName}: R$ {p.amount.toFixed(2)}
-                                            <button onClick={() => setCurrentPayments(prev => prev.filter((_, i) => i !== idx))}><X size={12} /></button>
+                                            <button onClick={() => setCurrentPayments(prev => prev.filter((_, i) => i !== idx))} className="hover:text-rose-500"><X size={12} /></button>
                                         </div>
                                     ))}
                                 </div>
@@ -673,32 +742,46 @@ const TableCheckout: React.FC = () => {
                 {/* ── COLUNA 3: MÉTODOS E CONCLUSÃO ── */}
                 <section className="w-1/4 flex flex-col gap-3 min-w-[320px]">
                     <Card className="flex-1 flex flex-col border-slate-200 shadow-sm overflow-hidden" noPadding>
-                        <div className="p-4 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-500">Forma de Recebimento</div>
+                        <div className="p-4 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-500 tracking-widest shrink-0">Forma de Recebimento</div>
                         <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-2 custom-scrollbar">
                             {paymentMethods.map(m => (
                                 <button key={m.id} onClick={() => setSelectedMethodId(m.id)} className={cn(
-                                    "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all",
-                                    selectedMethodId === m.id ? "border-blue-500 bg-blue-50 text-blue-600" : "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
+                                    "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all",
+                                    selectedMethodId === m.id ? "border-primary bg-primary/5 text-primary shadow-md" : "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
                                 )}>
-                                    {m.type === 'CASH' ? <Banknote size={20} /> : m.type === 'PIX' ? <QrCode size={20} /> : <CreditCard size={20} />}
+                                    {m.type === 'CASH' ? <Banknote size={22} /> : m.type === 'PIX' ? <QrCode size={22} /> : <CreditCard size={22} />}
                                     <span className="text-[9px] font-black uppercase text-center">{m.name}</span>
                                 </button>
                             ))}
                         </div>
 
-                        <div className="p-5 border-t border-slate-200 bg-slate-50 space-y-4">
+                        <div className="p-5 border-t border-slate-200 bg-slate-50 space-y-3 shrink-0">
                             <div>
-                                <label className="text-[10px] font-black uppercase text-slate-500 ml-1">Valor do Pagamento</label>
+                                <label className="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Valor do Pagamento</label>
                                 <div className="relative mt-1">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-500">R$</span>
-                                    <input ref={inputRef} type="text" value={inputValue} onChange={e => setInputValue(e.target.value)} className="w-full h-16 pl-12 pr-4 bg-white border-2 border-slate-200 rounded-2xl text-2xl font-black text-slate-900 focus:border-blue-500 outline-none transition-all shadow-inner" placeholder="0,00" />
+                                    <input ref={inputRef} type="text" value={inputValue} onChange={e => setInputValue(e.target.value)} className="w-full h-14 pl-12 pr-4 bg-white border-2 border-slate-200 rounded-xl text-2xl font-black text-slate-900 focus:border-primary outline-none transition-all shadow-inner" placeholder="0,00" />
                                 </div>
                             </div>
-                            <Button onClick={handleAddPayment} className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest shadow-lg">Registrar Valor</Button>
+                            <Button onClick={handleAddPayment} fullWidth variant="success" className="h-12 font-bold uppercase tracking-widest shadow-lg">
+                                Registrar Valor
+                            </Button>
                         </div>
                     </Card>
 
-                    <Button onClick={handleConfirmPayment} disabled={remainingToPay > 0 || currentPayments.length === 0} className={cn("h-24 rounded-3xl font-black text-sm uppercase tracking-widest shadow-2xl transition-all active:scale-95", remainingToPay === 0 && currentPayments.length > 0 ? "bg-slate-900 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")}>Finalizar e Liberar</Button>
+                    <Button
+                        onClick={handleConfirmPayment}
+                        disabled={remainingToPay > 0 || currentPayments.length === 0}
+                        className={cn(
+                            "h-20 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl transition-all active:scale-95",
+                            remainingToPay === 0 && currentPayments.length > 0
+                                ? "bg-slate-900 text-white hover:bg-slate-800"
+                                : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                        )}
+                    >
+                        <CheckCircle2 size={20} className="mr-2" />
+                        Finalizar e Liberar
+                    </Button>
                 </section>
             </main>
 
@@ -707,12 +790,15 @@ const TableCheckout: React.FC = () => {
                 <Button variant="ghost" className="text-slate-500 hover:text-slate-900 font-bold text-xs uppercase" onClick={() => navigate('/pos?tab=tables')}>
                     <ChevronLeft size={16} className="mr-2" /> Voltar ao Salão
                 </Button>
-                <div className="flex gap-4">
+                <div className="flex gap-6">
                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
                         <Layers size={14} /> Comandas: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{tabs.length}</span>
                     </div>
                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
                         <Clock size={14} /> Pagamentos: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{order.payments?.length || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
+                        <ShoppingCart size={14} /> Selecionados: <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{payingItems.length}</span>
                     </div>
                 </div>
             </footer>

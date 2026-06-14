@@ -191,10 +191,7 @@ const WaiterPos: React.FC = () => {
                     observations: i.observation, 
                     sizeId: i.selectedSizeDbId, 
                     addonsIds: i.selectedAddonDbIds, 
-                    flavorIds: i.selectedFlavorIds, 
-                    sizeJson: i.sizeJson, 
-                    addonsJson: i.addonsJson, 
-                    flavorsJson: i.flavorsJson 
+                    flavorIds: i.selectedFlavorIds 
                 })),
                 orderType: 'TABLE', 
                 tableNumber: selectedTable.number, 
@@ -288,7 +285,7 @@ const WaiterPos: React.FC = () => {
                                 <button key={product.id} onClick={() => handleProductClick(product)} className="w-full p-5 bg-slate-900 border-2 border-white/5 rounded-[2rem] flex justify-between items-center active:scale-95 transition-all hover:border-primary/30">
                                     <div className="text-left flex-1 min-w-0 pr-4">
                                         <h4 className="font-black text-white uppercase italic tracking-tight text-sm truncate">{product.name}</h4>
-                                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{product.category?.name}</p>
+                                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{product.categories?.[0]?.name}</p>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <span className="font-black text-primary text-sm italic tracking-tighter">R$ {product.price.toFixed(2)}</span>
